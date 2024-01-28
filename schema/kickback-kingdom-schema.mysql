@@ -1,0 +1,3621 @@
+-- MySQL dump 10.19  Distrib 10.2.38-MariaDB, for Linux (x86_64)
+--
+-- Host: localhost    Database: kickbackdb
+-- ------------------------------------------------------
+-- Server version	10.2.38-MariaDB
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Current Database: `kickbackdb`
+--
+
+/*!40000 DROP DATABASE IF EXISTS `kickbackdb`*/;
+
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `kickbackdb` /*!40100 DEFAULT CHARACTER SET latin1 */;
+
+USE `kickbackdb`;
+
+--
+-- Table structure for table `Media`
+--
+
+DROP TABLE IF EXISTS `Media`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `Media` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `ServiceKey` varchar(36) NOT NULL,
+  `name` varchar(45) NOT NULL,
+  `desc` varchar(255) NOT NULL,
+  `author_id` int(11) NOT NULL,
+  `DateCreated` timestamp NOT NULL DEFAULT utc_timestamp(),
+  `extension` varchar(10) NOT NULL,
+  `Directory` varchar(255) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=227 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ability`
+--
+
+DROP TABLE IF EXISTS `ability`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `ability` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(45) NOT NULL,
+  `desc` varchar(255) NOT NULL,
+  `prestige_gain` int(11) NOT NULL DEFAULT 0,
+  `prestige_multiplier` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `exp_gain` int(11) NOT NULL DEFAULT 0,
+  `exp_multiplier` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `level_gain` int(11) NOT NULL DEFAULT 0,
+  `level_multiplier` decimal(10,2) NOT NULL DEFAULT 0.00,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `account`
+--
+
+DROP TABLE IF EXISTS `account`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `account` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `Email` varchar(30) COLLATE utf8mb4_bin NOT NULL,
+  `Password` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `FirstName` varchar(30) COLLATE utf8mb4_bin NOT NULL,
+  `LastName` varchar(30) COLLATE utf8mb4_bin NOT NULL,
+  `DateCreated` timestamp NOT NULL DEFAULT utc_timestamp(),
+  `Username` varchar(30) COLLATE utf8mb4_bin NOT NULL,
+  `Banned` tinyint(1) NOT NULL DEFAULT 0,
+  `pass_reset` int(11) DEFAULT NULL,
+  `passage_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`Id`),
+  UNIQUE KEY `Email` (`Email`),
+  UNIQUE KEY `unique_passage_id` (`passage_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `account_badge`
+--
+
+DROP TABLE IF EXISTS `account_badge`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `account_badge` (
+  `account_id` int(11) NOT NULL,
+  `badge_id` int(11) NOT NULL,
+  PRIMARY KEY (`account_id`,`badge_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `account_equipment`
+--
+
+DROP TABLE IF EXISTS `account_equipment`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `account_equipment` (
+  `account_id` int(11) NOT NULL,
+  `avatar_loot_id` int(11) DEFAULT NULL,
+  `player_card_border_loot_id` int(11) DEFAULT NULL,
+  `banner_loot_id` int(11) DEFAULT NULL,
+  `background_loot_id` int(11) DEFAULT NULL,
+  `charm_loot_id` int(11) DEFAULT NULL,
+  `companion_loot_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`account_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `account_game_elo`
+--
+
+DROP TABLE IF EXISTS `account_game_elo`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `account_game_elo` (
+  `account_id` int(11) NOT NULL,
+  `game_id` int(11) NOT NULL,
+  `elo_rating` float DEFAULT NULL,
+  `is_ranked` tinyint(1) DEFAULT NULL,
+  `total_matches` int(11) DEFAULT NULL,
+  `total_wins` int(11) DEFAULT NULL,
+  `total_losses` int(11) DEFAULT NULL,
+  `win_rate` float DEFAULT NULL,
+  PRIMARY KEY (`account_id`,`game_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `account_role`
+--
+
+DROP TABLE IF EXISTS `account_role`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `account_role` (
+  `account_id` int(10) unsigned NOT NULL,
+  `role_id` int(11) NOT NULL,
+  PRIMARY KEY (`account_id`,`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `account_sessions`
+--
+
+DROP TABLE IF EXISTS `account_sessions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `account_sessions` (
+  `SessionToken` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `ServiceKey` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `account_id` int(10) unsigned NOT NULL,
+  `login_time` timestamp NOT NULL DEFAULT utc_timestamp(),
+  PRIMARY KEY (`ServiceKey`,`account_id`),
+  CONSTRAINT `ServiceKey_FK` FOREIGN KEY (`ServiceKey`) REFERENCES `service` (`PublicKey`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `account_skill`
+--
+
+DROP TABLE IF EXISTS `account_skill`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `account_skill` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `account_id` int(11) NOT NULL,
+  `skill_id` int(11) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `blog`
+--
+
+DROP TABLE IF EXISTS `blog`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `blog` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `Name` varchar(45) NOT NULL,
+  `image_id` int(11) NOT NULL,
+  `Desc` varchar(512) NOT NULL,
+  `Locator` varchar(45) NOT NULL,
+  `manager_item_id` int(11) DEFAULT NULL,
+  `writer_item_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `blog_post`
+--
+
+DROP TABLE IF EXISTS `blog_post`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `blog_post` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `Blog_id` int(11) DEFAULT NULL,
+  `Title` varchar(100) NOT NULL,
+  `Content_id` int(11) DEFAULT NULL,
+  `PostDate` datetime NOT NULL DEFAULT current_timestamp(),
+  `Author_id` int(11) NOT NULL,
+  `Image_id` int(11) DEFAULT NULL,
+  `Desc` varchar(512) NOT NULL,
+  `Locator` varchar(45) NOT NULL,
+  `Published` tinyint(4) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`Id`),
+  KEY `Blog_id` (`Blog_id`),
+  KEY `Author_id` (`Author_id`),
+  KEY `Content_id` (`Content_id`),
+  CONSTRAINT `blog_post_ibfk_1` FOREIGN KEY (`Blog_id`) REFERENCES `blog` (`Id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `blog_post_ibfk_3` FOREIGN KEY (`Content_id`) REFERENCES `content` (`Id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `calendar_events`
+--
+
+DROP TABLE IF EXISTS `calendar_events`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `calendar_events` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `start_date` datetime DEFAULT NULL,
+  `end_date` datetime DEFAULT NULL,
+  `recurrence` enum('NONE','DAILY','WEEKLY','MONTHLY','YEARLY') DEFAULT NULL,
+  `day_of_week` enum('SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY') DEFAULT NULL,
+  `day_of_month` int(11) DEFAULT NULL,
+  `week_of_month` enum('FIRST','SECOND','THIRD','FOURTH','LAST') DEFAULT NULL,
+  `month` int(11) DEFAULT NULL,
+  `event_type` enum('MEETING','QUEST','WORKSHOP','WEBINAR','TOWN-HALL') DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `certifications`
+--
+
+DROP TABLE IF EXISTS `certifications`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `certifications` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(45) NOT NULL,
+  `summary` varchar(255) NOT NULL,
+  `content_id` int(11) NOT NULL,
+  `icon_id` int(11) NOT NULL,
+  `master_account_id` int(11) NOT NULL,
+  `date_created` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `content`
+--
+
+DROP TABLE IF EXISTS `content`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `content` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `summary` text DEFAULT NULL,
+  `date_created` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `content_detail`
+--
+
+DROP TABLE IF EXISTS `content_detail`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `content_detail` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `content_id` int(11) NOT NULL,
+  `content_type_id` int(11) NOT NULL,
+  `order` int(11) DEFAULT 0,
+  PRIMARY KEY (`Id`),
+  KEY `content_id` (`content_id`),
+  KEY `content_type_id` (`content_type_id`),
+  CONSTRAINT `content_detail_ibfk_1` FOREIGN KEY (`content_id`) REFERENCES `content` (`Id`),
+  CONSTRAINT `content_detail_ibfk_2` FOREIGN KEY (`content_type_id`) REFERENCES `content_type` (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=445 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `content_detail_data`
+--
+
+DROP TABLE IF EXISTS `content_detail_data`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `content_detail_data` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `content_detail_id` int(11) NOT NULL,
+  `data` text DEFAULT NULL,
+  `data_order` int(11) DEFAULT 0,
+  `media_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`Id`),
+  KEY `content_detail_id` (`content_detail_id`),
+  CONSTRAINT `content_detail_data_ibfk_1` FOREIGN KEY (`content_detail_id`) REFERENCES `content_detail` (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=464 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `content_type`
+--
+
+DROP TABLE IF EXISTS `content_type`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `content_type` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `type_name` varchar(255) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `feature`
+--
+
+DROP TABLE IF EXISTS `feature`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `feature` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `Name` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `Description` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `game`
+--
+
+DROP TABLE IF EXISTS `game`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `game` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `Name` varchar(255) NOT NULL,
+  `Desc` varchar(255) NOT NULL,
+  `MinRankedMatches` int(11) NOT NULL DEFAULT 10,
+  `ShortName` varchar(20) DEFAULT NULL,
+  `CanRank` tinyint(4) NOT NULL DEFAULT 1,
+  `media_icon_id` int(11) DEFAULT NULL,
+  `media_banner_id` int(11) DEFAULT NULL,
+  `media_banner_mobile_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `game_match`
+--
+
+DROP TABLE IF EXISTS `game_match`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `game_match` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `game_id` int(11) NOT NULL,
+  `tournament_id` int(11) DEFAULT NULL,
+  `Date` timestamp NULL DEFAULT utc_timestamp(),
+  `desc` varchar(255) DEFAULT NULL,
+  `bracket` int(11) DEFAULT 0,
+  `round` int(11) DEFAULT 0,
+  `match` int(11) DEFAULT 0,
+  `set` int(11) DEFAULT 0,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=159 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `game_record`
+--
+
+DROP TABLE IF EXISTS `game_record`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `game_record` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `game_id` int(11) NOT NULL,
+  `account_id` int(11) NOT NULL,
+  `win` tinyint(4) NOT NULL,
+  `game_match_id` int(11) NOT NULL,
+  `Date` timestamp NOT NULL DEFAULT utc_timestamp(),
+  `team_name` varchar(255) DEFAULT NULL,
+  `character` varchar(255) DEFAULT NULL,
+  `random_character` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=363 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `guild`
+--
+
+DROP TABLE IF EXISTS `guild`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `guild` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(45) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `interest_payments`
+--
+
+DROP TABLE IF EXISTS `interest_payments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `interest_payments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `accountId` int(11) NOT NULL,
+  `shares_added` decimal(16,6) NOT NULL,
+  `interest_rate` decimal(5,2) NOT NULL,
+  `interest_period` date NOT NULL,
+  `payment_date` datetime NOT NULL DEFAULT utc_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `accountId` (`accountId`),
+  CONSTRAINT `interest_payments_ibfk_1` FOREIGN KEY (`accountId`) REFERENCES `account` (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=115 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `item`
+--
+
+DROP TABLE IF EXISTS `item`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `item` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `type` int(11) NOT NULL,
+  `rarity` int(11) NOT NULL,
+  `media_id_large` int(11) NOT NULL,
+  `media_id_small` int(11) NOT NULL,
+  `desc` varchar(1024) NOT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `nominated_by_id` int(11) DEFAULT NULL,
+  `collection_id` int(11) DEFAULT NULL,
+  `equipable` tinyint(4) NOT NULL DEFAULT 0,
+  `equipment_slot` enum('AVATAR','PC_BORDER','BANNER','BACKGROUND','CHARM','PET') DEFAULT NULL,
+  `redeemable` tinyint(4) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=75 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `item_ability`
+--
+
+DROP TABLE IF EXISTS `item_ability`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `item_ability` (
+  `item_id` int(11) NOT NULL,
+  `ability_id` int(11) NOT NULL,
+  PRIMARY KEY (`item_id`,`ability_id`),
+  KEY `item_ability_ability_fk` (`ability_id`),
+  CONSTRAINT `item_ability_ability_fk` FOREIGN KEY (`ability_id`) REFERENCES `ability` (`Id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `item_ability_item_fk` FOREIGN KEY (`item_id`) REFERENCES `item` (`Id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `item_collection`
+--
+
+DROP TABLE IF EXISTS `item_collection`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `item_collection` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `desc` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `loot`
+--
+
+DROP TABLE IF EXISTS `loot`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `loot` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `opened` tinyint(4) NOT NULL DEFAULT 0,
+  `account_id` int(11) DEFAULT NULL,
+  `item_id` int(11) NOT NULL DEFAULT 0,
+  `quest_id` int(11) DEFAULT NULL,
+  `dateObtained` datetime DEFAULT NULL,
+  `redeemed` tinyint(4) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2126 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `merchant_share_statement`
+--
+
+DROP TABLE IF EXISTS `merchant_share_statement`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `merchant_share_statement` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `accountId` int(11) NOT NULL,
+  `statement_date` date NOT NULL,
+  `total_shares` int(11) NOT NULL,
+  `interest_bearing_shares` int(11) NOT NULL,
+  `fractional_shares` decimal(6,6) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `accountId` (`accountId`),
+  CONSTRAINT `merchant_share_statement_ibfk_1` FOREIGN KEY (`accountId`) REFERENCES `account` (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=121 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `prestige`
+--
+
+DROP TABLE IF EXISTS `prestige`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `prestige` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `Desc` varchar(500) DEFAULT NULL,
+  `account_id_from` int(11) NOT NULL,
+  `account_id_to` int(11) DEFAULT NULL,
+  `commend` tinyint(4) DEFAULT NULL,
+  `loot_id` int(11) NOT NULL,
+  `date` timestamp NOT NULL DEFAULT utc_timestamp(),
+  `quest_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `quest`
+--
+
+DROP TABLE IF EXISTS `quest`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `quest` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `desc` text DEFAULT NULL,
+  `tournament_id` int(11) DEFAULT NULL,
+  `end_date` timestamp NULL DEFAULT NULL,
+  `image_id` int(11) DEFAULT NULL,
+  `raffle_id` int(11) DEFAULT NULL,
+  `req_apply` tinyint(4) DEFAULT 0,
+  `max_accounts` int(11) DEFAULT 0,
+  `locator` varchar(255) NOT NULL,
+  `host_id` int(11) NOT NULL,
+  `application_information` varchar(1024) DEFAULT NULL,
+  `show_twitch` tinyint(4) NOT NULL DEFAULT 0,
+  `published` tinyint(4) NOT NULL DEFAULT 0,
+  `host_id_2` int(11) DEFAULT NULL,
+  `summary` varchar(512) DEFAULT NULL,
+  `play_style` int(11) NOT NULL DEFAULT 0,
+  `quest_line_id` int(11) DEFAULT NULL,
+  `finished` tinyint(4) NOT NULL DEFAULT 0,
+  `image_id_icon` int(11) DEFAULT NULL,
+  `content_id` int(11) DEFAULT NULL,
+  `image_id_mobile` int(11) DEFAULT NULL,
+  `being_reviewed` tinyint(4) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`Id`),
+  UNIQUE KEY `locator_UNIQUE` (`locator`)
+) ENGINE=InnoDB AUTO_INCREMENT=97 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `quest_applicant_rewards`
+--
+
+DROP TABLE IF EXISTS `quest_applicant_rewards`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `quest_applicant_rewards` (
+  `applicant_id` int(11) NOT NULL,
+  `reward_id` int(11) NOT NULL,
+  `date_received` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`applicant_id`,`reward_id`),
+  KEY `quest_applicant_rewards_ibfk_2` (`reward_id`),
+  CONSTRAINT `quest_applicant_rewards_ibfk_1` FOREIGN KEY (`applicant_id`) REFERENCES `quest_applicants` (`Id`),
+  CONSTRAINT `quest_applicant_rewards_ibfk_2` FOREIGN KEY (`reward_id`) REFERENCES `quest_reward` (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `quest_applicants`
+--
+
+DROP TABLE IF EXISTS `quest_applicants`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `quest_applicants` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `account_id` int(11) NOT NULL,
+  `accepted` tinyint(4) NOT NULL DEFAULT 0,
+  `quest_id` int(11) NOT NULL,
+  `participated` tinyint(4) NOT NULL DEFAULT 0,
+  `seed_score` int(11) NOT NULL DEFAULT 0,
+  `host_rating` int(11) DEFAULT NULL,
+  `quest_rating` int(11) DEFAULT NULL,
+  `feedback` varchar(1024) DEFAULT NULL,
+  `date_applied` datetime NOT NULL DEFAULT current_timestamp(),
+  `rewards_collected` tinyint(4) NOT NULL DEFAULT 0,
+  `host_viewed` tinyint(4) NOT NULL DEFAULT 0,
+  `host_2_viewed` tinyint(4) NOT NULL DEFAULT 0,
+  `date_reviewed` datetime DEFAULT NULL,
+  PRIMARY KEY (`Id`),
+  UNIQUE KEY `quest_account_unique` (`quest_id`,`account_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=149 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `quest_line`
+--
+
+DROP TABLE IF EXISTS `quest_line`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `quest_line` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `desc` varchar(255) NOT NULL,
+  `date_created` datetime NOT NULL DEFAULT current_timestamp(),
+  `created_by_id` int(11) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `quest_reward`
+--
+
+DROP TABLE IF EXISTS `quest_reward`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `quest_reward` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `quest_id` int(11) NOT NULL,
+  `badge_id` int(11) DEFAULT NULL,
+  `rarity` int(11) DEFAULT NULL,
+  `item_id` int(11) DEFAULT NULL,
+  `category` varchar(45) NOT NULL DEFAULT 'Participation',
+  `participation` tinyint(4) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=134 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `raffle`
+--
+
+DROP TABLE IF EXISTS `raffle`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `raffle` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `winner_submission_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `raffle_submissions`
+--
+
+DROP TABLE IF EXISTS `raffle_submissions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `raffle_submissions` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `raffle_id` int(11) NOT NULL,
+  `loot_id` int(11) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `role`
+--
+
+DROP TABLE IF EXISTS `role`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `role` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(45) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `service`
+--
+
+DROP TABLE IF EXISTS `service`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `service` (
+  `PublicKey` varchar(36) COLLATE utf8mb4_bin NOT NULL DEFAULT uuid(),
+  `Name` varchar(50) COLLATE utf8mb4_bin NOT NULL,
+  `Description` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`PublicKey`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `service_feature`
+--
+
+DROP TABLE IF EXISTS `service_feature`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `service_feature` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `ServiceId` int(11) NOT NULL,
+  `FeatureId` int(11) NOT NULL,
+  `Enabled` tinyint(4) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `share_purchase`
+--
+
+DROP TABLE IF EXISTS `share_purchase`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `share_purchase` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `AccountId` int(11) NOT NULL,
+  `Amount` decimal(16,6) NOT NULL,
+  `SharesPurchased` decimal(16,6) NOT NULL,
+  `Currency` varchar(10) COLLATE utf8mb4_bin NOT NULL,
+  `PurchaseDate` timestamp NOT NULL DEFAULT current_timestamp(),
+  `ADAValue` decimal(16,6) NOT NULL DEFAULT 0.000000,
+  `ADA_USD_Closing` decimal(16,6) NOT NULL DEFAULT 0.000000,
+  `processed` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`Id`),
+  KEY `idx_account` (`AccountId`),
+  KEY `idx_date` (`PurchaseDate`),
+  CONSTRAINT `share_purchase_ibfk_1` FOREIGN KEY (`AccountId`) REFERENCES `account` (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `skill`
+--
+
+DROP TABLE IF EXISTS `skill`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `skill` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `Name` varchar(30) NOT NULL,
+  `GameId` int(11) DEFAULT NULL,
+  `Description` varchar(255) NOT NULL,
+  PRIMARY KEY (`Id`),
+  UNIQUE KEY `Name` (`Name`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tournament`
+--
+
+DROP TABLE IF EXISTS `tournament`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tournament` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `game_id` int(11) NOT NULL,
+  `Name` varchar(255) NOT NULL,
+  `Desc` varchar(255) NOT NULL,
+  `Date` timestamp NOT NULL DEFAULT utc_timestamp(),
+  `hasBracket` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tournament_record`
+--
+
+DROP TABLE IF EXISTS `tournament_record`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tournament_record` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `tournament_id` int(11) DEFAULT NULL,
+  `team_name` varchar(255) DEFAULT NULL,
+  `win` tinyint(4) DEFAULT NULL,
+  `team_captain` int(11) DEFAULT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `trade`
+--
+
+DROP TABLE IF EXISTS `trade`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `trade` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `from_account_id` int(11) DEFAULT NULL,
+  `to_account_id` int(11) DEFAULT NULL,
+  `loot_id` int(11) DEFAULT NULL,
+  `trade_date` timestamp NOT NULL DEFAULT utc_timestamp(),
+  `from_account_obtain_date` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Temporary table structure for view `v_account_badge_count`
+--
+
+DROP TABLE IF EXISTS `v_account_badge_count`;
+/*!50001 DROP VIEW IF EXISTS `v_account_badge_count`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_badge_count` (
+  `account_id` tinyint NOT NULL,
+  `badges` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_badge_info`
+--
+
+DROP TABLE IF EXISTS `v_account_badge_info`;
+/*!50001 DROP VIEW IF EXISTS `v_account_badge_info`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_badge_info` (
+  `Id` tinyint NOT NULL,
+  `BigImgPath` tinyint NOT NULL,
+  `SmallImgPath` tinyint NOT NULL,
+  `name` tinyint NOT NULL,
+  `desc` tinyint NOT NULL,
+  `quest_id` tinyint NOT NULL,
+  `quest_name` tinyint NOT NULL,
+  `quest_locator` tinyint NOT NULL,
+  `account_id` tinyint NOT NULL,
+  `nominated_by_id` tinyint NOT NULL,
+  `nominated_by` tinyint NOT NULL,
+  `dateObtained` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_equipment_media`
+--
+
+DROP TABLE IF EXISTS `v_account_equipment_media`;
+/*!50001 DROP VIEW IF EXISTS `v_account_equipment_media`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_equipment_media` (
+  `account_id` tinyint NOT NULL,
+  `avatar_media` tinyint NOT NULL,
+  `player_card_border_media` tinyint NOT NULL,
+  `banner_media` tinyint NOT NULL,
+  `background_media` tinyint NOT NULL,
+  `charm_media` tinyint NOT NULL,
+  `companion_media` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_experience`
+--
+
+DROP TABLE IF EXISTS `v_account_experience`;
+/*!50001 DROP VIEW IF EXISTS `v_account_experience`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_experience` (
+  `account_id` tinyint NOT NULL,
+  `exp` tinyint NOT NULL,
+  `level` tinyint NOT NULL,
+  `exp_needed` tinyint NOT NULL,
+  `exp_started` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_info`
+--
+
+DROP TABLE IF EXISTS `v_account_info`;
+/*!50001 DROP VIEW IF EXISTS `v_account_info`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_info` (
+  `Username` tinyint NOT NULL,
+  `FirstName` tinyint NOT NULL,
+  `LastName` tinyint NOT NULL,
+  `Id` tinyint NOT NULL,
+  `Banned` tinyint NOT NULL,
+  `pass_reset` tinyint NOT NULL,
+  `email` tinyint NOT NULL,
+  `exp` tinyint NOT NULL,
+  `level` tinyint NOT NULL,
+  `exp_needed` tinyint NOT NULL,
+  `exp_started` tinyint NOT NULL,
+  `prestige` tinyint NOT NULL,
+  `badges` tinyint NOT NULL,
+  `exp_current` tinyint NOT NULL,
+  `exp_goal` tinyint NOT NULL,
+  `IsAdmin` tinyint NOT NULL,
+  `IsArtist` tinyint NOT NULL,
+  `IsQuestGiver` tinyint NOT NULL,
+  `IsProgressScribe` tinyint NOT NULL,
+  `IsMerchant` tinyint NOT NULL,
+  `IsApprentice` tinyint NOT NULL,
+  `IsMaster` tinyint NOT NULL,
+  `avatar_media` tinyint NOT NULL,
+  `player_card_border_media` tinyint NOT NULL,
+  `banner_media` tinyint NOT NULL,
+  `background_media` tinyint NOT NULL,
+  `charm_media` tinyint NOT NULL,
+  `companion_media` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_inventory`
+--
+
+DROP TABLE IF EXISTS `v_account_inventory`;
+/*!50001 DROP VIEW IF EXISTS `v_account_inventory`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_inventory` (
+  `account_id` tinyint NOT NULL,
+  `item_id` tinyint NOT NULL,
+  `amount` tinyint NOT NULL,
+  `next_loot_id` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_inventory_desc`
+--
+
+DROP TABLE IF EXISTS `v_account_inventory_desc`;
+/*!50001 DROP VIEW IF EXISTS `v_account_inventory_desc`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_inventory_desc` (
+  `account_id` tinyint NOT NULL,
+  `item_id` tinyint NOT NULL,
+  `amount` tinyint NOT NULL,
+  `next_loot_id` tinyint NOT NULL,
+  `name` tinyint NOT NULL,
+  `desc` tinyint NOT NULL,
+  `large_image` tinyint NOT NULL,
+  `small_image` tinyint NOT NULL,
+  `artist` tinyint NOT NULL,
+  `nominator` tinyint NOT NULL,
+  `DateCreated` tinyint NOT NULL,
+  `equipable` tinyint NOT NULL,
+  `equipment_slot` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_monthly_statement_process_status`
+--
+
+DROP TABLE IF EXISTS `v_account_monthly_statement_process_status`;
+/*!50001 DROP VIEW IF EXISTS `v_account_monthly_statement_process_status`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_monthly_statement_process_status` (
+  `account_id` tinyint NOT NULL,
+  `statement_date` tinyint NOT NULL,
+  `processed` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_non_usable_loot`
+--
+
+DROP TABLE IF EXISTS `v_account_non_usable_loot`;
+/*!50001 DROP VIEW IF EXISTS `v_account_non_usable_loot`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_non_usable_loot` (
+  `account_id` tinyint NOT NULL,
+  `item_id` tinyint NOT NULL,
+  `amount` tinyint NOT NULL,
+  `next_loot_id` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_opponent_game_stats`
+--
+
+DROP TABLE IF EXISTS `v_account_opponent_game_stats`;
+/*!50001 DROP VIEW IF EXISTS `v_account_opponent_game_stats`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_opponent_game_stats` (
+  `game_id` tinyint NOT NULL,
+  `account_id` tinyint NOT NULL,
+  `wins` tinyint NOT NULL,
+  `opponent_id` tinyint NOT NULL,
+  `matches` tinyint NOT NULL,
+  `wlr` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_permisions`
+--
+
+DROP TABLE IF EXISTS `v_account_permisions`;
+/*!50001 DROP VIEW IF EXISTS `v_account_permisions`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_permisions` (
+  `account_id` tinyint NOT NULL,
+  `IsAdmin` tinyint NOT NULL,
+  `IsArtist` tinyint NOT NULL,
+  `IsQuestGiver` tinyint NOT NULL,
+  `IsProgressScribe` tinyint NOT NULL,
+  `IsMerchant` tinyint NOT NULL,
+  `IsApprentice` tinyint NOT NULL,
+  `IsMaster` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_prestige_net`
+--
+
+DROP TABLE IF EXISTS `v_account_prestige_net`;
+/*!50001 DROP VIEW IF EXISTS `v_account_prestige_net`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_prestige_net` (
+  `account_id` tinyint NOT NULL,
+  `prestige` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_prestige_tokens`
+--
+
+DROP TABLE IF EXISTS `v_account_prestige_tokens`;
+/*!50001 DROP VIEW IF EXISTS `v_account_prestige_tokens`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_prestige_tokens` (
+  `account_Id` tinyint NOT NULL,
+  `remaining` tinyint NOT NULL,
+  `next_token` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_prestige_tokens_full`
+--
+
+DROP TABLE IF EXISTS `v_account_prestige_tokens_full`;
+/*!50001 DROP VIEW IF EXISTS `v_account_prestige_tokens_full`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_prestige_tokens_full` (
+  `account_Id` tinyint NOT NULL,
+  `remaining` tinyint NOT NULL,
+  `next_token` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_raffle_tickets`
+--
+
+DROP TABLE IF EXISTS `v_account_raffle_tickets`;
+/*!50001 DROP VIEW IF EXISTS `v_account_raffle_tickets`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_raffle_tickets` (
+  `account_id` tinyint NOT NULL,
+  `remaining` tinyint NOT NULL,
+  `next_loot_id` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_account_writs_of_passage`
+--
+
+DROP TABLE IF EXISTS `v_account_writs_of_passage`;
+/*!50001 DROP VIEW IF EXISTS `v_account_writs_of_passage`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_account_writs_of_passage` (
+  `account_id` tinyint NOT NULL,
+  `item_id` tinyint NOT NULL,
+  `remaining` tinyint NOT NULL,
+  `next_item_id` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_admins`
+--
+
+DROP TABLE IF EXISTS `v_admins`;
+/*!50001 DROP VIEW IF EXISTS `v_admins`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_admins` (
+  `account_id` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_apprentice`
+--
+
+DROP TABLE IF EXISTS `v_apprentice`;
+/*!50001 DROP VIEW IF EXISTS `v_apprentice`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_apprentice` (
+  `account_id` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_artist`
+--
+
+DROP TABLE IF EXISTS `v_artist`;
+/*!50001 DROP VIEW IF EXISTS `v_artist`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_artist` (
+  `account_id` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_blog_feed`
+--
+
+DROP TABLE IF EXISTS `v_blog_feed`;
+/*!50001 DROP VIEW IF EXISTS `v_blog_feed`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_blog_feed` (
+  `type` tinyint NOT NULL,
+  `Id` tinyint NOT NULL,
+  `title` tinyint NOT NULL,
+  `text` tinyint NOT NULL,
+  `date` tinyint NOT NULL,
+  `locator` tinyint NOT NULL,
+  `account_1_id` tinyint NOT NULL,
+  `account_1_username` tinyint NOT NULL,
+  `account_2_id` tinyint NOT NULL,
+  `account_2_username` tinyint NOT NULL,
+  `style` tinyint NOT NULL,
+  `image` tinyint NOT NULL,
+  `published` tinyint NOT NULL,
+  `finished` tinyint NOT NULL,
+  `expired` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_blog_info`
+--
+
+DROP TABLE IF EXISTS `v_blog_info`;
+/*!50001 DROP VIEW IF EXISTS `v_blog_info`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_blog_info` (
+  `Id` tinyint NOT NULL,
+  `name` tinyint NOT NULL,
+  `desc` tinyint NOT NULL,
+  `image_id` tinyint NOT NULL,
+  `manager_item_id` tinyint NOT NULL,
+  `writer_item_id` tinyint NOT NULL,
+  `imagePath` tinyint NOT NULL,
+  `locator` tinyint NOT NULL,
+  `LastWriterUsername` tinyint NOT NULL,
+  `LastWriterId` tinyint NOT NULL,
+  `LastPostDate` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_blog_permissions`
+--
+
+DROP TABLE IF EXISTS `v_blog_permissions`;
+/*!50001 DROP VIEW IF EXISTS `v_blog_permissions`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_blog_permissions` (
+  `account_id` tinyint NOT NULL,
+  `blog_id` tinyint NOT NULL,
+  `IsManager` tinyint NOT NULL,
+  `IsWriter` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_blog_post_feed`
+--
+
+DROP TABLE IF EXISTS `v_blog_post_feed`;
+/*!50001 DROP VIEW IF EXISTS `v_blog_post_feed`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_blog_post_feed` (
+  `type` tinyint NOT NULL,
+  `Id` tinyint NOT NULL,
+  `title` tinyint NOT NULL,
+  `text` tinyint NOT NULL,
+  `date` tinyint NOT NULL,
+  `locator` tinyint NOT NULL,
+  `account_1_id` tinyint NOT NULL,
+  `account_1_username` tinyint NOT NULL,
+  `account_2_id` tinyint NOT NULL,
+  `account_2_username` tinyint NOT NULL,
+  `style` tinyint NOT NULL,
+  `image` tinyint NOT NULL,
+  `published` tinyint NOT NULL,
+  `finished` tinyint NOT NULL,
+  `expired` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_blog_post_info`
+--
+
+DROP TABLE IF EXISTS `v_blog_post_info`;
+/*!50001 DROP VIEW IF EXISTS `v_blog_post_info`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_blog_post_info` (
+  `Id` tinyint NOT NULL,
+  `Blog_id` tinyint NOT NULL,
+  `Title` tinyint NOT NULL,
+  `Content_id` tinyint NOT NULL,
+  `Desc` tinyint NOT NULL,
+  `PostDate` tinyint NOT NULL,
+  `Postlocator` tinyint NOT NULL,
+  `Bloglocator` tinyint NOT NULL,
+  `BlogName` tinyint NOT NULL,
+  `BlogPublished` tinyint NOT NULL,
+  `Author_Username` tinyint NOT NULL,
+  `Author_id` tinyint NOT NULL,
+  `Image_Id` tinyint NOT NULL,
+  `Image_Path` tinyint NOT NULL,
+  `Prev_Title` tinyint NOT NULL,
+  `Prev_PostDate` tinyint NOT NULL,
+  `Prev_Author` tinyint NOT NULL,
+  `Prev_Image_Path` tinyint NOT NULL,
+  `Prev_Locator` tinyint NOT NULL,
+  `Prev_Content_id` tinyint NOT NULL,
+  `Prev_Desc` tinyint NOT NULL,
+  `Next_Title` tinyint NOT NULL,
+  `Next_PostDate` tinyint NOT NULL,
+  `Next_Author` tinyint NOT NULL,
+  `Next_Image_Path` tinyint NOT NULL,
+  `Next_Locator` tinyint NOT NULL,
+  `Next_Content_id` tinyint NOT NULL,
+  `Next_Desc` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_certifications`
+--
+
+DROP TABLE IF EXISTS `v_certifications`;
+/*!50001 DROP VIEW IF EXISTS `v_certifications`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_certifications` (
+  `Id` tinyint NOT NULL,
+  `name` tinyint NOT NULL,
+  `summary` tinyint NOT NULL,
+  `content_id` tinyint NOT NULL,
+  `icon_id` tinyint NOT NULL,
+  `master_account_id` tinyint NOT NULL,
+  `date_created` tinyint NOT NULL,
+  `imagePath_icon` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_content_data_info`
+--
+
+DROP TABLE IF EXISTS `v_content_data_info`;
+/*!50001 DROP VIEW IF EXISTS `v_content_data_info`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_content_data_info` (
+  `content_id` tinyint NOT NULL,
+  `content_detail_id` tinyint NOT NULL,
+  `content_detail_data_id` tinyint NOT NULL,
+  `content_type_name` tinyint NOT NULL,
+  `data` tinyint NOT NULL,
+  `element_order` tinyint NOT NULL,
+  `data_order` tinyint NOT NULL,
+  `content_type` tinyint NOT NULL,
+  `Image_Path` tinyint NOT NULL,
+  `media_id` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_experience_records`
+--
+
+DROP TABLE IF EXISTS `v_experience_records`;
+/*!50001 DROP VIEW IF EXISTS `v_experience_records`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_experience_records` (
+  `account_id` tinyint NOT NULL,
+  `exp` tinyint NOT NULL,
+  `from` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_feed`
+--
+
+DROP TABLE IF EXISTS `v_feed`;
+/*!50001 DROP VIEW IF EXISTS `v_feed`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_feed` (
+  `type` tinyint NOT NULL,
+  `Id` tinyint NOT NULL,
+  `title` tinyint NOT NULL,
+  `text` tinyint NOT NULL,
+  `date` tinyint NOT NULL,
+  `locator` tinyint NOT NULL,
+  `account_1_id` tinyint NOT NULL,
+  `account_1_username` tinyint NOT NULL,
+  `account_2_id` tinyint NOT NULL,
+  `account_2_username` tinyint NOT NULL,
+  `style` tinyint NOT NULL,
+  `image` tinyint NOT NULL,
+  `published` tinyint NOT NULL,
+  `finished` tinyint NOT NULL,
+  `expired` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_game_elo_rank_info`
+--
+
+DROP TABLE IF EXISTS `v_game_elo_rank_info`;
+/*!50001 DROP VIEW IF EXISTS `v_game_elo_rank_info`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_game_elo_rank_info` (
+  `account_id` tinyint NOT NULL,
+  `game_id` tinyint NOT NULL,
+  `elo_rating` tinyint NOT NULL,
+  `is_ranked` tinyint NOT NULL,
+  `ranked_matches` tinyint NOT NULL,
+  `total_wins` tinyint NOT NULL,
+  `total_losses` tinyint NOT NULL,
+  `win_rate` tinyint NOT NULL,
+  `minimum_ranked_matches_required` tinyint NOT NULL,
+  `name` tinyint NOT NULL,
+  `rank` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_game_info`
+--
+
+DROP TABLE IF EXISTS `v_game_info`;
+/*!50001 DROP VIEW IF EXISTS `v_game_info`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_game_info` (
+  `Id` tinyint NOT NULL,
+  `Name` tinyint NOT NULL,
+  `Desc` tinyint NOT NULL,
+  `MinRankedMatches` tinyint NOT NULL,
+  `ShortName` tinyint NOT NULL,
+  `CanRank` tinyint NOT NULL,
+  `media_icon_id` tinyint NOT NULL,
+  `media_banner_id` tinyint NOT NULL,
+  `media_banner_mobile_id` tinyint NOT NULL,
+  `icon_path` tinyint NOT NULL,
+  `banner_path` tinyint NOT NULL,
+  `banner_mobile_path` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_game_match_team`
+--
+
+DROP TABLE IF EXISTS `v_game_match_team`;
+/*!50001 DROP VIEW IF EXISTS `v_game_match_team`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_game_match_team` (
+  `me` tinyint NOT NULL,
+  `team` tinyint NOT NULL,
+  `game_match_id` tinyint NOT NULL,
+  `team_name` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_loot_item`
+--
+
+DROP TABLE IF EXISTS `v_loot_item`;
+/*!50001 DROP VIEW IF EXISTS `v_loot_item`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_loot_item` (
+  `Id` tinyint NOT NULL,
+  `opened` tinyint NOT NULL,
+  `account_id` tinyint NOT NULL,
+  `item_id` tinyint NOT NULL,
+  `quest_id` tinyint NOT NULL,
+  `media_id_small` tinyint NOT NULL,
+  `media_id_large` tinyint NOT NULL,
+  `loot_type` tinyint NOT NULL,
+  `desc` tinyint NOT NULL,
+  `rarity` tinyint NOT NULL,
+  `dateObtained` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_master`
+--
+
+DROP TABLE IF EXISTS `v_master`;
+/*!50001 DROP VIEW IF EXISTS `v_master`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_master` (
+  `account_id` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_media`
+--
+
+DROP TABLE IF EXISTS `v_media`;
+/*!50001 DROP VIEW IF EXISTS `v_media`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_media` (
+  `Id` tinyint NOT NULL,
+  `name` tinyint NOT NULL,
+  `desc` tinyint NOT NULL,
+  `author_id` tinyint NOT NULL,
+  `DateCreated` tinyint NOT NULL,
+  `extension` tinyint NOT NULL,
+  `directory` tinyint NOT NULL,
+  `mediaPath` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_media_directories`
+--
+
+DROP TABLE IF EXISTS `v_media_directories`;
+/*!50001 DROP VIEW IF EXISTS `v_media_directories`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_media_directories` (
+  `Directory` tinyint NOT NULL,
+  `total_media` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_merchant_guild_share_processing_tasks`
+--
+
+DROP TABLE IF EXISTS `v_merchant_guild_share_processing_tasks`;
+/*!50001 DROP VIEW IF EXISTS `v_merchant_guild_share_processing_tasks`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_merchant_guild_share_processing_tasks` (
+  `purchase_id` tinyint NOT NULL,
+  `account_id` tinyint NOT NULL,
+  `Username` tinyint NOT NULL,
+  `avatar_media` tinyint NOT NULL,
+  `SharesPurchased` tinyint NOT NULL,
+  `execution_date` tinyint NOT NULL,
+  `Amount` tinyint NOT NULL,
+  `Currency` tinyint NOT NULL,
+  `ADAValue` tinyint NOT NULL,
+  `statement_date` tinyint NOT NULL,
+  `TaskType` tinyint NOT NULL,
+  `processed` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_merchant_share_interest_statement`
+--
+
+DROP TABLE IF EXISTS `v_merchant_share_interest_statement`;
+/*!50001 DROP VIEW IF EXISTS `v_merchant_share_interest_statement`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_merchant_share_interest_statement` (
+  `statementId` tinyint NOT NULL,
+  `interestId` tinyint NOT NULL,
+  `accountId` tinyint NOT NULL,
+  `statement_date` tinyint NOT NULL,
+  `statement_period` tinyint NOT NULL,
+  `total_shares` tinyint NOT NULL,
+  `interest_bearing_shares` tinyint NOT NULL,
+  `shares_acquired_this_period` tinyint NOT NULL,
+  `SharesPurchasedThisPeriod` tinyint NOT NULL,
+  `fractional_shares` tinyint NOT NULL,
+  `fractional_shares_earned` tinyint NOT NULL,
+  `fractional_shares_after_interest` tinyint NOT NULL,
+  `new_full_shares_earned` tinyint NOT NULL,
+  `interest_rate` tinyint NOT NULL,
+  `payment_date` tinyint NOT NULL,
+  `last_statement_fractional_shares` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_merchants`
+--
+
+DROP TABLE IF EXISTS `v_merchants`;
+/*!50001 DROP VIEW IF EXISTS `v_merchants`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_merchants` (
+  `account_id` tinyint NOT NULL,
+  `shares` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_monthly_statement_process_status`
+--
+
+DROP TABLE IF EXISTS `v_monthly_statement_process_status`;
+/*!50001 DROP VIEW IF EXISTS `v_monthly_statement_process_status`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_monthly_statement_process_status` (
+  `statement_date` tinyint NOT NULL,
+  `percent_complete` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_notifications`
+--
+
+DROP TABLE IF EXISTS `v_notifications`;
+/*!50001 DROP VIEW IF EXISTS `v_notifications`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_notifications` (
+  `account_id` tinyint NOT NULL,
+  `Id` tinyint NOT NULL,
+  `quest_id` tinyint NOT NULL,
+  `name` tinyint NOT NULL,
+  `locator` tinyint NOT NULL,
+  `Type` tinyint NOT NULL,
+  `date` tinyint NOT NULL,
+  `style` tinyint NOT NULL,
+  `image` tinyint NOT NULL,
+  `host_id` tinyint NOT NULL,
+  `host_name` tinyint NOT NULL,
+  `host_id_2` tinyint NOT NULL,
+  `host_name_2` tinyint NOT NULL,
+  `rewards_collected` tinyint NOT NULL,
+  `text` tinyint NOT NULL,
+  `rewards` tinyint NOT NULL,
+  `host_rating` tinyint NOT NULL,
+  `quest_rating` tinyint NOT NULL,
+  `from_name` tinyint NOT NULL,
+  `from_id` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_notifications_reviewed_quests`
+--
+
+DROP TABLE IF EXISTS `v_notifications_reviewed_quests`;
+/*!50001 DROP VIEW IF EXISTS `v_notifications_reviewed_quests`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_notifications_reviewed_quests` (
+  `account_id` tinyint NOT NULL,
+  `Id` tinyint NOT NULL,
+  `quest_id` tinyint NOT NULL,
+  `name` tinyint NOT NULL,
+  `locator` tinyint NOT NULL,
+  `type` tinyint NOT NULL,
+  `date` tinyint NOT NULL,
+  `play_style` tinyint NOT NULL,
+  `image` tinyint NOT NULL,
+  `host_id` tinyint NOT NULL,
+  `host_name` tinyint NOT NULL,
+  `host_id_2` tinyint NOT NULL,
+  `host_name_2` tinyint NOT NULL,
+  `rewards_collected` tinyint NOT NULL,
+  `text` tinyint NOT NULL,
+  `rewards` tinyint NOT NULL,
+  `host_rating` tinyint NOT NULL,
+  `quest_rating` tinyint NOT NULL,
+  `from_name` tinyint NOT NULL,
+  `account_id_from` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_prestige_info`
+--
+
+DROP TABLE IF EXISTS `v_prestige_info`;
+/*!50001 DROP VIEW IF EXISTS `v_prestige_info`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_prestige_info` (
+  `Username` tinyint NOT NULL,
+  `account_id_from` tinyint NOT NULL,
+  `account_id_to` tinyint NOT NULL,
+  `desc` tinyint NOT NULL,
+  `commend` tinyint NOT NULL,
+  `quest_id` tinyint NOT NULL,
+  `imagePath` tinyint NOT NULL,
+  `name` tinyint NOT NULL,
+  `date` tinyint NOT NULL,
+  `locator` tinyint NOT NULL,
+  `account_from_avatar_media` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_progress_scribes`
+--
+
+DROP TABLE IF EXISTS `v_progress_scribes`;
+/*!50001 DROP VIEW IF EXISTS `v_progress_scribes`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_progress_scribes` (
+  `account_id` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_quest_applicant_reward_count`
+--
+
+DROP TABLE IF EXISTS `v_quest_applicant_reward_count`;
+/*!50001 DROP VIEW IF EXISTS `v_quest_applicant_reward_count`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_quest_applicant_reward_count` (
+  `applicant_id` tinyint NOT NULL,
+  `reward_id` tinyint NOT NULL,
+  `account_id` tinyint NOT NULL,
+  `quest_id` tinyint NOT NULL,
+  `rewards` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_quest_applicants_account`
+--
+
+DROP TABLE IF EXISTS `v_quest_applicants_account`;
+/*!50001 DROP VIEW IF EXISTS `v_quest_applicants_account`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_quest_applicants_account` (
+  `Username` tinyint NOT NULL,
+  `FirstName` tinyint NOT NULL,
+  `LastName` tinyint NOT NULL,
+  `Id` tinyint NOT NULL,
+  `Banned` tinyint NOT NULL,
+  `pass_reset` tinyint NOT NULL,
+  `email` tinyint NOT NULL,
+  `exp` tinyint NOT NULL,
+  `level` tinyint NOT NULL,
+  `exp_needed` tinyint NOT NULL,
+  `exp_started` tinyint NOT NULL,
+  `prestige` tinyint NOT NULL,
+  `badges` tinyint NOT NULL,
+  `exp_current` tinyint NOT NULL,
+  `exp_goal` tinyint NOT NULL,
+  `accepted` tinyint NOT NULL,
+  `participated` tinyint NOT NULL,
+  `quest_id` tinyint NOT NULL,
+  `seed_score` tinyint NOT NULL,
+  `seed` tinyint NOT NULL,
+  `rank` tinyint NOT NULL,
+  `avatar_media` tinyint NOT NULL,
+  `player_card_border_media` tinyint NOT NULL,
+  `banner_media` tinyint NOT NULL,
+  `background_media` tinyint NOT NULL,
+  `charm_media` tinyint NOT NULL,
+  `companion_media` tinyint NOT NULL,
+  `IsMerchant` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_quest_feed`
+--
+
+DROP TABLE IF EXISTS `v_quest_feed`;
+/*!50001 DROP VIEW IF EXISTS `v_quest_feed`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_quest_feed` (
+  `type` tinyint NOT NULL,
+  `Id` tinyint NOT NULL,
+  `title` tinyint NOT NULL,
+  `text` tinyint NOT NULL,
+  `date` tinyint NOT NULL,
+  `locator` tinyint NOT NULL,
+  `account_1_id` tinyint NOT NULL,
+  `account_1_username` tinyint NOT NULL,
+  `account_2_id` tinyint NOT NULL,
+  `account_2_username` tinyint NOT NULL,
+  `style` tinyint NOT NULL,
+  `image` tinyint NOT NULL,
+  `published` tinyint NOT NULL,
+  `finished` tinyint NOT NULL,
+  `expired` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_quest_givers`
+--
+
+DROP TABLE IF EXISTS `v_quest_givers`;
+/*!50001 DROP VIEW IF EXISTS `v_quest_givers`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_quest_givers` (
+  `account_id` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_quest_info`
+--
+
+DROP TABLE IF EXISTS `v_quest_info`;
+/*!50001 DROP VIEW IF EXISTS `v_quest_info`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_quest_info` (
+  `Id` tinyint NOT NULL,
+  `name` tinyint NOT NULL,
+  `desc` tinyint NOT NULL,
+  `tournament_id` tinyint NOT NULL,
+  `end_date` tinyint NOT NULL,
+  `image_id` tinyint NOT NULL,
+  `raffle_id` tinyint NOT NULL,
+  `req_apply` tinyint NOT NULL,
+  `max_accounts` tinyint NOT NULL,
+  `locator` tinyint NOT NULL,
+  `host_id` tinyint NOT NULL,
+  `host_id_2` tinyint NOT NULL,
+  `application_information` tinyint NOT NULL,
+  `show_twitch` tinyint NOT NULL,
+  `published` tinyint NOT NULL,
+  `imagePath` tinyint NOT NULL,
+  `imagePath_icon` tinyint NOT NULL,
+  `imagePath_mobile` tinyint NOT NULL,
+  `host_name` tinyint NOT NULL,
+  `hasBracket` tinyint NOT NULL,
+  `host_name_2` tinyint NOT NULL,
+  `summary` tinyint NOT NULL,
+  `play_style` tinyint NOT NULL,
+  `quest_line_id` tinyint NOT NULL,
+  `finished` tinyint NOT NULL,
+  `content_id` tinyint NOT NULL,
+  `being_reviewed` tinyint NOT NULL,
+  `image_id_icon` tinyint NOT NULL,
+  `image_id_mobile` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_quest_reward_info`
+--
+
+DROP TABLE IF EXISTS `v_quest_reward_info`;
+/*!50001 DROP VIEW IF EXISTS `v_quest_reward_info`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_quest_reward_info` (
+  `quest_id` tinyint NOT NULL,
+  `Id` tinyint NOT NULL,
+  `type` tinyint NOT NULL,
+  `rarity` tinyint NOT NULL,
+  `desc` tinyint NOT NULL,
+  `name` tinyint NOT NULL,
+  `category` tinyint NOT NULL,
+  `BigImgPath` tinyint NOT NULL,
+  `SmallImgPath` tinyint NOT NULL,
+  `artist` tinyint NOT NULL,
+  `DateCreated` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_raffle_participants`
+--
+
+DROP TABLE IF EXISTS `v_raffle_participants`;
+/*!50001 DROP VIEW IF EXISTS `v_raffle_participants`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_raffle_participants` (
+  `Username` tinyint NOT NULL,
+  `FirstName` tinyint NOT NULL,
+  `LastName` tinyint NOT NULL,
+  `Id` tinyint NOT NULL,
+  `Banned` tinyint NOT NULL,
+  `pass_reset` tinyint NOT NULL,
+  `email` tinyint NOT NULL,
+  `exp` tinyint NOT NULL,
+  `level` tinyint NOT NULL,
+  `exp_needed` tinyint NOT NULL,
+  `exp_started` tinyint NOT NULL,
+  `prestige` tinyint NOT NULL,
+  `badges` tinyint NOT NULL,
+  `exp_current` tinyint NOT NULL,
+  `exp_goal` tinyint NOT NULL,
+  `IsAdmin` tinyint NOT NULL,
+  `raffle_id` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_raffle_tickets`
+--
+
+DROP TABLE IF EXISTS `v_raffle_tickets`;
+/*!50001 DROP VIEW IF EXISTS `v_raffle_tickets`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_raffle_tickets` (
+  `loot_id` tinyint NOT NULL,
+  `account_id` tinyint NOT NULL,
+  `raffle_id` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_raffle_winners`
+--
+
+DROP TABLE IF EXISTS `v_raffle_winners`;
+/*!50001 DROP VIEW IF EXISTS `v_raffle_winners`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_raffle_winners` (
+  `raffle_id` tinyint NOT NULL,
+  `account_id` tinyint NOT NULL,
+  `Username` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_share_purchase_month`
+--
+
+DROP TABLE IF EXISTS `v_share_purchase_month`;
+/*!50001 DROP VIEW IF EXISTS `v_share_purchase_month`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_share_purchase_month` (
+  `AccountId` tinyint NOT NULL,
+  `PurchaseMonth` tinyint NOT NULL,
+  `TotalSharesPurchased` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_total_owned_adventurer_shares`
+--
+
+DROP TABLE IF EXISTS `v_total_owned_adventurer_shares`;
+/*!50001 DROP VIEW IF EXISTS `v_total_owned_adventurer_shares`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_total_owned_adventurer_shares` (
+  `account_id` tinyint NOT NULL,
+  `shares` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_total_owned_apprentice_shares`
+--
+
+DROP TABLE IF EXISTS `v_total_owned_apprentice_shares`;
+/*!50001 DROP VIEW IF EXISTS `v_total_owned_apprentice_shares`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_total_owned_apprentice_shares` (
+  `account_id` tinyint NOT NULL,
+  `shares` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_total_owned_craftsmen_shares`
+--
+
+DROP TABLE IF EXISTS `v_total_owned_craftsmen_shares`;
+/*!50001 DROP VIEW IF EXISTS `v_total_owned_craftsmen_shares`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_total_owned_craftsmen_shares` (
+  `account_id` tinyint NOT NULL,
+  `shares` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_total_owned_guild_shares`
+--
+
+DROP TABLE IF EXISTS `v_total_owned_guild_shares`;
+/*!50001 DROP VIEW IF EXISTS `v_total_owned_guild_shares`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_total_owned_guild_shares` (
+  `account_id` tinyint NOT NULL,
+  `adventurer_shares` tinyint NOT NULL,
+  `merchant_shares` tinyint NOT NULL,
+  `craftsmen_shares` tinyint NOT NULL,
+  `apprentice_shares` tinyint NOT NULL,
+  `steward_shares` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_total_owned_merchant_shares`
+--
+
+DROP TABLE IF EXISTS `v_total_owned_merchant_shares`;
+/*!50001 DROP VIEW IF EXISTS `v_total_owned_merchant_shares`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_total_owned_merchant_shares` (
+  `account_id` tinyint NOT NULL,
+  `shares` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_total_share_purchase`
+--
+
+DROP TABLE IF EXISTS `v_total_share_purchase`;
+/*!50001 DROP VIEW IF EXISTS `v_total_share_purchase`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_total_share_purchase` (
+  `accountId` tinyint NOT NULL,
+  `Username` tinyint NOT NULL,
+  `TotalADAValue` tinyint NOT NULL,
+  `Shares` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_tournament_bracket_info`
+--
+
+DROP TABLE IF EXISTS `v_tournament_bracket_info`;
+/*!50001 DROP VIEW IF EXISTS `v_tournament_bracket_info`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_tournament_bracket_info` (
+  `Id` tinyint NOT NULL,
+  `game_id` tinyint NOT NULL,
+  `account_id` tinyint NOT NULL,
+  `win` tinyint NOT NULL,
+  `game_match_id` tinyint NOT NULL,
+  `Date` tinyint NOT NULL,
+  `team_name` tinyint NOT NULL,
+  `Username` tinyint NOT NULL,
+  `tournament_id` tinyint NOT NULL,
+  `bracket` tinyint NOT NULL,
+  `round` tinyint NOT NULL,
+  `match` tinyint NOT NULL,
+  `set` tinyint NOT NULL,
+  `desc` tinyint NOT NULL,
+  `character` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `v_tournament_results`
+--
+
+DROP TABLE IF EXISTS `v_tournament_results`;
+/*!50001 DROP VIEW IF EXISTS `v_tournament_results`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `v_tournament_results` (
+  `account_id` tinyint NOT NULL,
+  `win` tinyint NOT NULL,
+  `tournament_id` tinyint NOT NULL,
+  `team_name` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Dumping events for database 'kickbackdb'
+--
+
+--
+-- Dumping routines for database 'kickbackdb'
+--
+/*!50003 DROP FUNCTION IF EXISTS `RandomObjectID` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`$definer_user`@`$definer_host` FUNCTION `RandomObjectID`() RETURNS char(12) CHARSET latin1
+BEGIN
+  DECLARE i INT DEFAULT 0;
+  DECLARE random_str CHAR(12) DEFAULT '';
+
+  WHILE i < 12 DO
+    SET random_str = CONCAT(random_str, CHAR(IF(FLOOR(2 * RAND()) = 1, FLOOR(65 + RAND() * 26), FLOOR(48 + RAND() * 10))));
+    SET i = i + 1;
+  END WHILE;
+  
+  RETURN random_str;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `GetHistoricalLoot` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`$definer_user`@`$definer_host` PROCEDURE `GetHistoricalLoot`(accountId INT, targetDate DATETIME,  targetItemId INT)
+BEGIN
+    SELECT 
+        l.Id, 
+        l.opened, 
+        AggregatedLoot.account_id,
+        l.item_id, 
+        l.quest_id, 
+        COALESCE(
+            CASE WHEN AggregatedLoot.flag = -1 THEN t.trade_date ELSE NULL END,
+            t.from_account_obtain_date, 
+            l.dateObtained
+        ) AS dateObtained, 
+        l.redeemed
+    FROM (
+        -- Current loot items
+        SELECT Id, NULL AS trade_id, 1 AS flag, account_id FROM loot 
+        WHERE account_id = accountId and dateObtained <= targetDate
+
+        UNION ALL
+
+        -- Items traded TO the account after targetDate
+        SELECT loot_id AS Id, id AS trade_id, -1 AS flag, to_account_id AS account_id FROM trade 
+        WHERE to_account_id = accountId AND trade_date > targetDate
+
+        UNION ALL
+
+        -- Items traded AWAY from the account after targetDate
+        SELECT loot_id AS Id, id AS trade_id, 1 AS flag, from_account_id AS account_id FROM trade 
+        WHERE from_account_id = accountId AND trade_date > targetDate AND from_account_obtain_date <= targetDate
+    ) AS AggregatedLoot
+    JOIN loot l ON AggregatedLoot.Id = l.Id
+    AND (targetItemId IS NULL OR l.item_id = targetItemId)
+    LEFT JOIN trade t ON AggregatedLoot.trade_id = t.id
+    GROUP BY 
+        l.Id, l.opened, l.account_id, l.item_id, l.quest_id, t.trade_date, t.from_account_obtain_date, l.dateObtained, l.redeemed
+    HAVING SUM(flag) > 0;
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `GetUniqueObjectID` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`$definer_user`@`$definer_host` PROCEDURE `GetUniqueObjectID`(IN tablename VARCHAR(64), OUT uniqueID CHAR(12))
+BEGIN
+  DECLARE existingID INT DEFAULT 1;
+
+  WHILE existingID IS NOT NULL DO
+    SET uniqueID = RandomObjectID();
+    SET @s = CONCAT('SELECT ObjectID INTO @existingID FROM ', tablename, ' WHERE ObjectID = "', uniqueID, '" LIMIT 1');
+    PREPARE stmt FROM @s;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+  END WHILE;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `ProcessPurchase` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`$definer_user`@`$definer_host` PROCEDURE `ProcessPurchase`(IN purchaseID INT, IN shareAmount INT)
+BEGIN
+    DECLARE vAccountId INT;
+    DECLARE vPurchaseDate DATETIME;
+    DECLARE vValuesToInsert TEXT DEFAULT '';
+    
+    -- Declare a named label for our main block
+    main_block: BEGIN
+
+        -- Check if the purchase has already been processed
+        SELECT AccountId, PurchaseDate INTO vAccountId, vPurchaseDate FROM share_purchase WHERE Id = purchaseID AND processed = 0;
+
+        IF vAccountId IS NULL THEN
+            LEAVE main_block;
+        END IF;
+
+        -- Start a transaction
+        START TRANSACTION;
+
+        -- Only insert loot items if shareAmount is greater than 0
+        IF shareAmount > 0 THEN
+            -- Prepare a single insert operation for all rows
+            WHILE shareAmount > 0 DO
+                SET vValuesToInsert = CONCAT(vValuesToInsert, '(16, 0, ', vAccountId, ', "', vPurchaseDate, '"),');
+                SET shareAmount = shareAmount - 1;
+            END WHILE;
+    
+            -- Removing the trailing comma
+            SET vValuesToInsert = LEFT(vValuesToInsert, CHAR_LENGTH(vValuesToInsert) - 1);
+
+            SET @finalInsertQuery = CONCAT('INSERT INTO loot (item_id, opened, account_id, dateObtained) VALUES ', vValuesToInsert);
+            PREPARE stmt FROM @finalInsertQuery;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+        END IF;
+
+        -- Set the processed value to 1 for this purchase
+        UPDATE share_purchase SET processed = 1 WHERE Id = purchaseID;
+
+        -- Commit the transaction
+        COMMIT;
+
+    END main_block;
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `RandomObjectID` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`$definer_user`@`$definer_host` PROCEDURE `RandomObjectID`()
+BEGIN
+  DECLARE i INT DEFAULT 0;
+  DECLARE random_str CHAR(12) DEFAULT '';
+
+  WHILE i < 12 DO
+    SET random_str = CONCAT(random_str, CHAR(IF(FLOOR(2 * RAND()) = 1, FLOOR(65 + RAND() * 26), FLOOR(48 + RAND() * 10))));
+    SET i = i + 1;
+  END WHILE;
+  
+  SELECT random_str AS 'ObjectID';
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `SaveStatement` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`$definer_user`@`$definer_host` PROCEDURE `SaveStatement`(
+  IN p_accountId INT, 
+  IN p_statement_date DATE, 
+  IN p_total_shares INT, 
+  IN p_interest_bearing_shares INT, 
+  IN p_fractional_shares DECIMAL(6,6), 
+  IN p_shares_added DECIMAL(16,6), 
+  IN p_interest_rate DECIMAL(5,2)
+)
+BEGIN
+
+  DECLARE existingMerchantStatementId INT;
+  DECLARE existingInterestPaymentId INT;
+
+  -- Check if a record already exists in the merchant_share_statement table
+  SELECT id INTO existingMerchantStatementId 
+  FROM merchant_share_statement 
+  WHERE accountId = p_accountId AND statement_date = p_statement_date;
+
+  -- Check if a record already exists in the interest_payments table
+  SELECT id INTO existingInterestPaymentId 
+  FROM interest_payments 
+  WHERE accountId = p_accountId AND interest_period = p_statement_date;
+
+  START TRANSACTION;
+
+  -- If no record in merchant_share_statement table, then insert
+  IF existingMerchantStatementId IS NULL THEN
+    INSERT INTO merchant_share_statement(accountId, statement_date, total_shares, interest_bearing_shares, fractional_shares)
+    VALUES(p_accountId, p_statement_date, p_total_shares, p_interest_bearing_shares, p_fractional_shares);
+  END IF;
+
+  -- If no record in interest_payments table, then insert
+  IF existingInterestPaymentId IS NULL THEN
+    INSERT INTO interest_payments(accountId, shares_added, interest_rate, interest_period)
+    VALUES(p_accountId, p_shares_added, p_interest_rate, p_statement_date);
+  END IF;
+
+  COMMIT;
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `SubmitFeedbackAndCollectRewards` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`$definer_user`@`$definer_host` PROCEDURE `SubmitFeedbackAndCollectRewards`(
+  IN p_account_id INT,
+  IN p_quest_id INT,
+  IN p_host_rating INT,
+  IN p_quest_rating INT,
+  IN p_feedback VARCHAR(1024)
+)
+BEGIN
+  DECLARE v_applicant_id INT;
+  DECLARE v_reward_rarity INT;
+  DECLARE v_item_id INT;
+  DECLARE v_reward_id INT;
+  DECLARE v_random_loot_id INT;
+  DECLARE done INT DEFAULT 0;
+ 
+  DECLARE reward_cursor CURSOR FOR 
+    SELECT qr.Id, qr.rarity, qr.item_id
+    FROM quest_applicant_rewards qar
+    INNER JOIN quest_reward qr ON qar.reward_id = qr.Id
+    WHERE qar.applicant_id = v_applicant_id and qr.quest_id = p_quest_id;
+  DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+  -- Start transaction
+  START TRANSACTION;
+
+  -- Update feedback
+  UPDATE quest_applicants 
+  SET host_rating = p_host_rating, 
+      quest_rating = p_quest_rating, 
+      feedback = p_feedback,
+      date_reviewed = NOW()
+  WHERE account_id = p_account_id AND quest_id = p_quest_id;
+
+  -- Get the applicant id
+  SET v_applicant_id = (SELECT Id FROM quest_applicants WHERE account_id = p_account_id AND quest_id = p_quest_id);
+
+  OPEN reward_cursor;
+
+  FETCH NEXT FROM reward_cursor INTO v_reward_id, v_reward_rarity, v_item_id;
+
+  WHILE done = 0 DO
+    IF v_reward_rarity IS NOT NULL THEN
+      -- Loot box mode: select a random loot item with the same rarity
+      SET v_random_loot_id = (
+        SELECT Id
+        FROM loot
+        INNER JOIN item ON loot.item_id = item.Id
+        WHERE item.rarity = v_reward_rarity AND loot.account_id IS NULL
+        ORDER BY RAND()
+        LIMIT 1
+      );
+      
+      -- Update the loot's account_id and dateObtained fields to reflect that it's now owned
+      UPDATE loot SET account_id = p_account_id, dateObtained = NOW() WHERE Id = v_random_loot_id;
+    ELSEIF v_item_id IS NOT NULL THEN
+      -- Specific item mode: insert a new loot record with the specific item
+      INSERT INTO loot (opened, account_id, item_id, quest_id, dateObtained, redeemed)
+      VALUES (0, p_account_id, v_item_id, p_quest_id, NOW(), 0);
+    END IF;
+
+    -- Delete processed reward from quest_applicant_rewards
+    DELETE FROM quest_applicant_rewards WHERE applicant_id = v_applicant_id and reward_id = v_reward_id;
+
+    FETCH NEXT FROM reward_cursor INTO v_reward_id, v_reward_rarity, v_item_id;
+  END WHILE;
+
+  CLOSE reward_cursor;
+
+  -- Mark the rewards as collected
+  UPDATE quest_applicants 
+  SET rewards_collected = 1 
+  WHERE Id = v_applicant_id;
+
+  -- Commit transaction
+  COMMIT;
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+
+--
+-- Current Database: `kickbackdb`
+--
+
+USE `kickbackdb`;
+
+--
+-- Final view structure for view `v_account_badge_count`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_badge_count`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_badge_count`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_badge_count` AS select `v_loot_item`.`account_id` AS `account_id`,count(0) AS `badges` from `v_loot_item` where `v_loot_item`.`loot_type` = 0 group by `v_loot_item`.`account_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_badge_info`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_badge_info`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_badge_info`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_badge_info` AS select `loot`.`Id` AS `Id`,concat(`b`.`Directory`,'/',`b`.`Id`,'.',`b`.`extension`) AS `BigImgPath`,concat(`s`.`Directory`,'/',`s`.`Id`,'.',`b`.`extension`) AS `SmallImgPath`,`item`.`name` AS `name`,`item`.`desc` AS `desc`,`loot`.`quest_id` AS `quest_id`,`quest`.`name` AS `quest_name`,`quest`.`locator` AS `quest_locator`,`loot`.`account_id` AS `account_id`,`item`.`nominated_by_id` AS `nominated_by_id`,`account`.`Username` AS `nominated_by`,`loot`.`dateObtained` AS `dateObtained` from (((((`v_loot_item` `loot` left join `Media` `s` on(`s`.`Id` = `loot`.`media_id_small`)) left join `Media` `b` on(`b`.`Id` = `loot`.`media_id_large`)) left join `item` on(`loot`.`item_id` = `item`.`Id`)) left join `quest` on(`loot`.`quest_id` = `quest`.`Id`)) left join `account` on(`item`.`nominated_by_id` = `account`.`Id`)) where `loot`.`loot_type` = 0 order by `loot`.`dateObtained` desc */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_equipment_media`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_equipment_media`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_equipment_media`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_equipment_media` AS select `ae`.`account_id` AS `account_id`,max(case when `l`.`Id` = `ae`.`avatar_loot_id` then concat(`m`.`Directory`,'/',`m`.`Id`,'.',`m`.`extension`) end) AS `avatar_media`,max(case when `l`.`Id` = `ae`.`player_card_border_loot_id` then concat(`m`.`Directory`,'/',`m`.`Id`,'.',`m`.`extension`) end) AS `player_card_border_media`,max(case when `l`.`Id` = `ae`.`banner_loot_id` then concat(`m`.`Directory`,'/',`m`.`Id`,'.',`m`.`extension`) end) AS `banner_media`,max(case when `l`.`Id` = `ae`.`background_loot_id` then concat(`m`.`Directory`,'/',`m`.`Id`,'.',`m`.`extension`) end) AS `background_media`,max(case when `l`.`Id` = `ae`.`charm_loot_id` then concat(`m`.`Directory`,'/',`m`.`Id`,'.',`m`.`extension`) end) AS `charm_media`,max(case when `l`.`Id` = `ae`.`companion_loot_id` then concat(`m`.`Directory`,'/',`m`.`Id`,'.',`m`.`extension`) end) AS `companion_media` from (((`account_equipment` `ae` join `loot` `l` on(`l`.`Id` in (`ae`.`avatar_loot_id`,`ae`.`player_card_border_loot_id`,`ae`.`banner_loot_id`,`ae`.`background_loot_id`,`ae`.`charm_loot_id`,`ae`.`companion_loot_id`))) join `item` `i` on(`l`.`item_id` = `i`.`Id`)) join `Media` `m` on(`m`.`Id` in (`i`.`media_id_large`,`i`.`media_id_small`))) group by `ae`.`account_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_experience`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_experience`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_experience`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_experience` AS select `exp`.`account_id` AS `account_id`,sum(`exp`.`exp`) AS `exp`,floor(pow(2 + greatest(sum(`exp`.`exp`),-2),0.5)) AS `level`,pow(floor(pow(2 + greatest(sum(`exp`.`exp`),-2),0.5)) + 1,2) - 2 AS `exp_needed`,greatest(pow(floor(pow(2 + greatest(sum(`exp`.`exp`),-2),0.5)),2) - 2,0) AS `exp_started` from `kickbackdb`.`v_experience_records` `exp` group by `exp`.`account_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_info`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_info`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_info`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_info` AS select `kickbackdb`.`account`.`Username` AS `Username`,`kickbackdb`.`account`.`FirstName` AS `FirstName`,`kickbackdb`.`account`.`LastName` AS `LastName`,`kickbackdb`.`account`.`Id` AS `Id`,`kickbackdb`.`account`.`Banned` AS `Banned`,`kickbackdb`.`account`.`pass_reset` AS `pass_reset`,`kickbackdb`.`account`.`Email` AS `email`,ifnull(`v_account_experience`.`exp`,0) AS `exp`,ifnull(`v_account_experience`.`level`,0) AS `level`,ifnull(`v_account_experience`.`exp_needed`,1) AS `exp_needed`,ifnull(`v_account_experience`.`exp_started`,0) AS `exp_started`,ifnull(`v_account_prestige_net`.`prestige`,0) AS `prestige`,ifnull(`v_account_badge_count`.`badges`,0) AS `badges`,ifnull(`v_account_experience`.`exp`,0) - ifnull(`v_account_experience`.`exp_started`,0) AS `exp_current`,ifnull(`v_account_experience`.`exp_needed`,1) - ifnull(`v_account_experience`.`exp_started`,0) AS `exp_goal`,`v_account_permisions`.`IsAdmin` AS `IsAdmin`,`v_account_permisions`.`IsArtist` AS `IsArtist`,`v_account_permisions`.`IsQuestGiver` AS `IsQuestGiver`,`v_account_permisions`.`IsProgressScribe` AS `IsProgressScribe`,`v_account_permisions`.`IsMerchant` AS `IsMerchant`,`v_account_permisions`.`IsApprentice` AS `IsApprentice`,`v_account_permisions`.`IsMaster` AS `IsMaster`,`v_account_equipment_media`.`avatar_media` AS `avatar_media`,`v_account_equipment_media`.`player_card_border_media` AS `player_card_border_media`,`v_account_equipment_media`.`banner_media` AS `banner_media`,`v_account_equipment_media`.`background_media` AS `background_media`,`v_account_equipment_media`.`charm_media` AS `charm_media`,`v_account_equipment_media`.`companion_media` AS `companion_media` from ((((((`kickbackdb`.`account` left join `kickbackdb`.`v_account_experience` on(`kickbackdb`.`account`.`Id` = `v_account_experience`.`account_id`)) left join `kickbackdb`.`v_account_prestige_net` on(`kickbackdb`.`account`.`Id` = `v_account_prestige_net`.`account_id`)) left join `kickbackdb`.`v_account_badge_count` on(`kickbackdb`.`account`.`Id` = `v_account_badge_count`.`account_id`)) left join `kickbackdb`.`v_admins` on(`v_admins`.`account_id` = `kickbackdb`.`account`.`Id`)) left join `kickbackdb`.`v_account_permisions` on(`v_account_permisions`.`account_id` = `kickbackdb`.`account`.`Id`)) left join `kickbackdb`.`v_account_equipment_media` on(`kickbackdb`.`account`.`Id` = `v_account_equipment_media`.`account_id`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_inventory`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_inventory`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_inventory`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_inventory` AS select `v_account_prestige_tokens`.`account_Id` AS `account_id`,3 AS `item_id`,`v_account_prestige_tokens`.`remaining` AS `amount`,`v_account_prestige_tokens`.`next_token` AS `next_loot_id` from `v_account_prestige_tokens` union select `v_account_non_usable_loot`.`account_id` AS `account_id`,`v_account_non_usable_loot`.`item_id` AS `item_id`,`v_account_non_usable_loot`.`amount` AS `amount`,`v_account_non_usable_loot`.`next_loot_id` AS `next_loot_id` from `v_account_non_usable_loot` union select `v_account_raffle_tickets`.`account_id` AS `account_id`,4 AS `4`,`v_account_raffle_tickets`.`remaining` AS `remaining`,`v_account_raffle_tickets`.`next_loot_id` AS `next_loot_id` from `v_account_raffle_tickets` union select `v_account_writs_of_passage`.`account_id` AS `account_id`,14 AS `14`,`v_account_writs_of_passage`.`remaining` AS `amount`,`v_account_writs_of_passage`.`next_item_id` AS `next_loot_id` from `v_account_writs_of_passage` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_inventory_desc`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_inventory_desc`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_inventory_desc`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_inventory_desc` AS select `v_account_inventory`.`account_id` AS `account_id`,`v_account_inventory`.`item_id` AS `item_id`,`v_account_inventory`.`amount` AS `amount`,`v_account_inventory`.`next_loot_id` AS `next_loot_id`,`item`.`name` AS `name`,`item`.`desc` AS `desc`,concat(`large_image`.`Directory`,'/',`large_image`.`Id`,'.',`large_image`.`extension`) AS `large_image`,concat(`small_image`.`Directory`,'/',`small_image`.`Id`,'.',`small_image`.`extension`) AS `small_image`,`account_artist`.`Username` AS `artist`,`account_nominator`.`Username` AS `nominator`,`large_image`.`DateCreated` AS `DateCreated`,`item`.`equipable` AS `equipable`,`item`.`equipment_slot` AS `equipment_slot` from (((((`v_account_inventory` join `item` on(`v_account_inventory`.`item_id` = `item`.`Id`)) join `Media` `large_image` on(`item`.`media_id_large` = `large_image`.`Id`)) join `Media` `small_image` on(`item`.`media_id_small` = `small_image`.`Id`)) join `account` `account_artist` on(`large_image`.`author_id` = `account_artist`.`Id`)) left join `account` `account_nominator` on(`item`.`nominated_by_id` = `account_nominator`.`Id`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_monthly_statement_process_status`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_monthly_statement_process_status`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_monthly_statement_process_status`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_monthly_statement_process_status` AS with recursive month_list as (select min(date_format(`kickbackdb`.`share_purchase`.`PurchaseDate`,'%Y-%m-01')) AS `month_start`,max(date_format(`kickbackdb`.`share_purchase`.`PurchaseDate`,'%Y-%m-01')) AS `month_end` from `kickbackdb`.`share_purchase`), recursive_months as (select `month_list`.`month_start` AS `month_start` from `month_list` union all select `recursive_months`.`month_start` + interval 1 month AS `DATE_ADD(``month_start``, INTERVAL 1 MONTH)` from `recursive_months` where `recursive_months`.`month_start` < (select `month_list`.`month_end` from `month_list`)), account_months as (select distinct `kickbackdb`.`share_purchase`.`AccountId` AS `account_id`,`recursive_months`.`month_start` AS `statement_date` from (`kickbackdb`.`share_purchase` join `recursive_months`) where `kickbackdb`.`share_purchase`.`PurchaseDate` < `recursive_months`.`month_start`), processed_statements as (select `v_merchant_share_interest_statement`.`accountId` AS `AccountId`,date_format(`v_merchant_share_interest_statement`.`statement_date`,'%Y-%m-01') AS `processed_date` from `kickbackdb`.`v_merchant_share_interest_statement`)select `am`.`account_id` AS `account_id`,`am`.`statement_date` AS `statement_date`,if(`ps`.`AccountId` is not null and `ps`.`processed_date` = `am`.`statement_date`,1,0) AS `processed` from (`account_months` `am` left join `processed_statements` `ps` on(`am`.`account_id` = `ps`.`AccountId` and `am`.`statement_date` = `ps`.`processed_date`)) order by `am`.`statement_date`,`am`.`account_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_non_usable_loot`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_non_usable_loot`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_non_usable_loot`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_non_usable_loot` AS select `loot`.`account_id` AS `account_id`,`loot`.`item_id` AS `item_id`,count(0) AS `amount`,min(`loot`.`Id`) AS `next_loot_id` from (`loot` join `item` on(`loot`.`item_id` = `item`.`Id`)) where `loot`.`opened` = 1 and `loot`.`redeemed` = 0 and (`item`.`type` = 3 or `item`.`type` = 4 or `item`.`type` = 5) group by `loot`.`account_id`,`loot`.`item_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_opponent_game_stats`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_opponent_game_stats`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_opponent_game_stats`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_opponent_game_stats` AS select `a`.`game_id` AS `game_id`,`a`.`account_id` AS `account_id`,sum(`a`.`win`) AS `wins`,`b`.`account_id` AS `opponent_id`,count(0) AS `matches`,sum(`a`.`win`) / count(0) AS `wlr` from (`game_record` `a` left join `game_record` `b` on(`a`.`game_match_id` = `b`.`game_match_id` and `a`.`team_name` <> `b`.`team_name` and `a`.`account_id` <> `b`.`account_id`)) group by `a`.`game_id`,`b`.`account_id`,`a`.`account_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_permisions`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_permisions`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_permisions`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_permisions` AS select `account`.`Id` AS `account_id`,case when `v_admins`.`account_id` is not null then 1 else 0 end AS `IsAdmin`,case when `v_artist`.`account_id` is not null then 1 else 0 end AS `IsArtist`,case when `v_quest_givers`.`account_id` is not null then 1 else 0 end AS `IsQuestGiver`,case when `v_progress_scribes`.`account_id` is not null then 1 else 0 end AS `IsProgressScribe`,case when `v_merchants`.`account_id` is not null then 1 else 0 end AS `IsMerchant`,case when `v_apprentice`.`account_id` is not null then 1 else 0 end AS `IsApprentice`,case when `v_master`.`account_id` is not null then 1 else 0 end AS `IsMaster` from (((((((`account` left join `v_admins` on(`account`.`Id` = `v_admins`.`account_id`)) left join `v_artist` on(`account`.`Id` = `v_artist`.`account_id`)) left join `v_quest_givers` on(`account`.`Id` = `v_quest_givers`.`account_id`)) left join `v_progress_scribes` on(`account`.`Id` = `v_progress_scribes`.`account_id`)) left join `v_merchants` on(`account`.`Id` = `v_merchants`.`account_id`)) left join `v_apprentice` on(`account`.`Id` = `v_apprentice`.`account_id`)) left join `v_master` on(`account`.`Id` = `v_master`.`account_id`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_prestige_net`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_prestige_net`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_prestige_net`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_prestige_net` AS select `prestige`.`account_id_to` AS `account_id`,sum(if(`prestige`.`commend`,1,-1)) AS `prestige` from `prestige` group by `prestige`.`account_id_to` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_prestige_tokens`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_prestige_tokens`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_prestige_tokens`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_prestige_tokens` AS select `loot`.`account_id` AS `account_Id`,count(0) AS `remaining`,min(`loot`.`Id`) AS `next_token` from (`v_loot_item` `loot` left join `prestige` on(`prestige`.`loot_id` = `loot`.`Id`)) where `loot`.`loot_type` = 1 and `prestige`.`Id` is null group by `loot`.`account_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_prestige_tokens_full`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_prestige_tokens_full`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_prestige_tokens_full`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_prestige_tokens_full` AS select `account`.`Id` AS `account_Id`,ifnull(`v_account_prestige_tokens`.`remaining`,0) AS `remaining`,`v_account_prestige_tokens`.`next_token` AS `next_token` from (`account` left join `v_account_prestige_tokens` on(`account`.`Id` = `v_account_prestige_tokens`.`account_Id`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_raffle_tickets`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_raffle_tickets`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_raffle_tickets`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_raffle_tickets` AS select `v_raffle_tickets`.`account_id` AS `account_id`,count(0) AS `remaining`,min(`v_raffle_tickets`.`loot_id`) AS `next_loot_id` from `v_raffle_tickets` where `v_raffle_tickets`.`raffle_id` is null group by `v_raffle_tickets`.`account_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_account_writs_of_passage`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_account_writs_of_passage`*/;
+/*!50001 DROP VIEW IF EXISTS `v_account_writs_of_passage`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_account_writs_of_passage` AS select `loot`.`account_id` AS `account_id`,`loot`.`item_id` AS `item_id`,count(0) AS `remaining`,min(`loot`.`Id`) AS `next_item_id` from ((`loot` left join `account` on(`account`.`passage_id` = `loot`.`Id`)) left join `item` on(`loot`.`item_id` = `item`.`Id`)) where `account`.`Id` is null and `item`.`type` = 6 group by `loot`.`account_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_admins`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_admins`*/;
+/*!50001 DROP VIEW IF EXISTS `v_admins`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_admins` AS select `loot`.`account_id` AS `account_id` from `loot` where `loot`.`item_id` = 9 */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_apprentice`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_apprentice`*/;
+/*!50001 DROP VIEW IF EXISTS `v_apprentice`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_apprentice` AS select `loot`.`account_id` AS `account_id` from `loot` where `loot`.`item_id` = 61 */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_artist`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_artist`*/;
+/*!50001 DROP VIEW IF EXISTS `v_artist`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_artist` AS select `loot`.`account_id` AS `account_id` from `loot` where `loot`.`item_id` = 48 */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_blog_feed`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_blog_feed`*/;
+/*!50001 DROP VIEW IF EXISTS `v_blog_feed`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_blog_feed` AS select 'BLOG' AS `type`,`v_blog_info`.`Id` AS `Id`,`v_blog_info`.`name` AS `title`,`v_blog_info`.`desc` AS `text`,`v_blog_info`.`LastPostDate` AS `date`,`v_blog_info`.`locator` AS `locator`,`v_blog_info`.`LastWriterId` AS `account_1_id`,`v_blog_info`.`LastWriterUsername` AS `account_1_username`,NULL AS `account_2_id`,NULL AS `account_2_username`,NULL AS `style`,`v_blog_info`.`imagePath` AS `image`,1 AS `published`,NULL AS `finished`,NULL AS `expired` from `kickbackdb`.`v_blog_info` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_blog_info`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_blog_info`*/;
+/*!50001 DROP VIEW IF EXISTS `v_blog_info`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_blog_info` AS select `kickbackdb`.`blog`.`Id` AS `Id`,`kickbackdb`.`blog`.`Name` AS `name`,`kickbackdb`.`blog`.`Desc` AS `desc`,`kickbackdb`.`blog`.`image_id` AS `image_id`,`kickbackdb`.`blog`.`manager_item_id` AS `manager_item_id`,`kickbackdb`.`blog`.`writer_item_id` AS `writer_item_id`,concat(`kickbackdb`.`Media`.`Directory`,'/',`kickbackdb`.`Media`.`Id`,'.',`kickbackdb`.`Media`.`extension`) AS `imagePath`,`kickbackdb`.`blog`.`Locator` AS `locator`,`latest_posts`.`Author_Username` AS `LastWriterUsername`,`latest_posts`.`Author_id` AS `LastWriterId`,`latest_posts`.`PostDate` AS `LastPostDate` from ((`kickbackdb`.`blog` left join `kickbackdb`.`Media` on(`kickbackdb`.`blog`.`image_id` = `kickbackdb`.`Media`.`Id`)) left join (select `v_blog_post_info`.`Blog_id` AS `Blog_id`,`v_blog_post_info`.`Author_Username` AS `Author_Username`,`v_blog_post_info`.`Author_id` AS `Author_id`,`v_blog_post_info`.`PostDate` AS `PostDate`,row_number() over ( partition by `v_blog_post_info`.`Blog_id` order by `v_blog_post_info`.`PostDate` desc) AS `rn` from `kickbackdb`.`v_blog_post_info` where `v_blog_post_info`.`BlogPublished` = 1) `latest_posts` on(`kickbackdb`.`blog`.`Id` = `latest_posts`.`Blog_id` and `latest_posts`.`rn` = 1)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_blog_permissions`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_blog_permissions`*/;
+/*!50001 DROP VIEW IF EXISTS `v_blog_permissions`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_blog_permissions` AS select `l`.`account_id` AS `account_id`,`b`.`Id` AS `blog_id`,case when `l`.`item_id` = `b`.`manager_item_id` then 1 else 0 end AS `IsManager`,case when `l`.`item_id` = `b`.`writer_item_id` then 1 else 0 end AS `IsWriter` from (`loot` `l` join `blog` `b` on(`l`.`item_id` in (`b`.`manager_item_id`,`b`.`writer_item_id`))) order by `l`.`account_id`,`b`.`Id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_blog_post_feed`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_blog_post_feed`*/;
+/*!50001 DROP VIEW IF EXISTS `v_blog_post_feed`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_blog_post_feed` AS select 'BLOG-POST' AS `type`,`v_blog_post_info`.`Id` AS `Id`,`v_blog_post_info`.`Title` AS `title`,`v_blog_post_info`.`Desc` AS `text`,`v_blog_post_info`.`PostDate` AS `date`,concat(`v_blog_post_info`.`Bloglocator`,'/',`v_blog_post_info`.`Postlocator`) AS `locator`,`v_blog_post_info`.`Author_id` AS `account_1_id`,`v_blog_post_info`.`Author_Username` AS `account_1_username`,NULL AS `account_2_id`,NULL AS `account_2_username`,NULL AS `style`,`v_blog_post_info`.`Image_Path` AS `image`,`v_blog_post_info`.`BlogPublished` AS `published`,NULL AS `finished`,NULL AS `expired` from `kickbackdb`.`v_blog_post_info` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_blog_post_info`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_blog_post_info`*/;
+/*!50001 DROP VIEW IF EXISTS `v_blog_post_info`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_blog_post_info` AS with PublishedPosts as (select `fp`.`Id` AS `Id`,`fp`.`Blog_id` AS `Blog_id`,`fp`.`Title` AS `Title`,`fp`.`Content_id` AS `Content_id`,`fp`.`PostDate` AS `PostDate`,`fp`.`Author_id` AS `Author_id`,`fp`.`Image_id` AS `Image_id`,`fp`.`Desc` AS `Desc`,`fp`.`Locator` AS `Locator`,`fp`.`Published` AS `Published`,`a`.`Username` AS `Author_Username`,concat(`m`.`Directory`,'/',`m`.`Id`,'.',`m`.`extension`) AS `Image_Path`,lag(`fp`.`Id`,1) over ( partition by `fp`.`Blog_id` order by `fp`.`PostDate`) AS `PreviousPostId`,lead(`fp`.`Id`,1) over ( partition by `fp`.`Blog_id` order by `fp`.`PostDate`) AS `NextPostId` from ((`kickbackdb`.`blog_post` `fp` left join `kickbackdb`.`account` `a` on(`fp`.`Author_id` = `a`.`Id`)) left join `kickbackdb`.`Media` `m` on(`fp`.`Image_id` = `m`.`Id`)) where `fp`.`Published` = 1)select `b`.`Id` AS `Id`,`b`.`Blog_id` AS `Blog_id`,`b`.`Title` AS `Title`,`b`.`Content_id` AS `Content_id`,`b`.`Desc` AS `Desc`,`b`.`PostDate` AS `PostDate`,`b`.`Locator` AS `Postlocator`,`blogtbl`.`Locator` AS `Bloglocator`,`blogtbl`.`Name` AS `BlogName`,`b`.`Published` AS `BlogPublished`,coalesce(`pp`.`Author_Username`,`a`.`Username`) AS `Author_Username`,`b`.`Author_id` AS `Author_id`,coalesce(`pp`.`Image_id`,`m`.`Id`) AS `Image_Id`,coalesce(`pp`.`Image_Path`,concat(`m`.`Directory`,'/',`m`.`Id`,'.',`m`.`extension`)) AS `Image_Path`,`prev`.`Title` AS `Prev_Title`,`prev`.`PostDate` AS `Prev_PostDate`,`prev`.`Author_Username` AS `Prev_Author`,`prev`.`Image_Path` AS `Prev_Image_Path`,`prev`.`Locator` AS `Prev_Locator`,`prev`.`Content_id` AS `Prev_Content_id`,`prev`.`Desc` AS `Prev_Desc`,`next`.`Title` AS `Next_Title`,`next`.`PostDate` AS `Next_PostDate`,`next`.`Author_Username` AS `Next_Author`,`next`.`Image_Path` AS `Next_Image_Path`,`next`.`Locator` AS `Next_Locator`,`next`.`Content_id` AS `Next_Content_id`,`next`.`Desc` AS `Next_Desc` from ((((((`kickbackdb`.`blog_post` `b` left join `kickbackdb`.`blog` `blogtbl` on(`b`.`Blog_id` = `blogtbl`.`Id`)) left join `kickbackdb`.`account` `a` on(`b`.`Author_id` = `a`.`Id`)) left join `kickbackdb`.`Media` `m` on(`b`.`Image_id` = `m`.`Id`)) left join `PublishedPosts` `pp` on(`b`.`Id` = `pp`.`Id`)) left join `PublishedPosts` `prev` on(`pp`.`PreviousPostId` = `prev`.`Id`)) left join `PublishedPosts` `next` on(`pp`.`NextPostId` = `next`.`Id`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_certifications`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_certifications`*/;
+/*!50001 DROP VIEW IF EXISTS `v_certifications`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_certifications` AS select `certifications`.`Id` AS `Id`,`certifications`.`name` AS `name`,`certifications`.`summary` AS `summary`,`certifications`.`content_id` AS `content_id`,`certifications`.`icon_id` AS `icon_id`,`certifications`.`master_account_id` AS `master_account_id`,`certifications`.`date_created` AS `date_created`,concat(`Media`.`Directory`,'/',`Media`.`Id`,'.',`Media`.`extension`) AS `imagePath_icon` from (`certifications` left join `Media` on(`certifications`.`icon_id` = `Media`.`Id`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_content_data_info`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_content_data_info`*/;
+/*!50001 DROP VIEW IF EXISTS `v_content_data_info`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_content_data_info` AS select `cd`.`content_id` AS `content_id`,`cd`.`Id` AS `content_detail_id`,`cdd`.`Id` AS `content_detail_data_id`,`ct`.`type_name` AS `content_type_name`,`cdd`.`data` AS `data`,`cd`.`order` AS `element_order`,`cdd`.`data_order` AS `data_order`,`ct`.`Id` AS `content_type`,concat(`Media`.`Directory`,'/',`Media`.`Id`,'.',`Media`.`extension`) AS `Image_Path`,`Media`.`Id` AS `media_id` from (((`content_detail` `cd` join `content_type` `ct` on(`cd`.`content_type_id` = `ct`.`Id`)) left join `content_detail_data` `cdd` on(`cd`.`Id` = `cdd`.`content_detail_id`)) left join `Media` on(`cdd`.`media_id` = `Media`.`Id`)) order by `cd`.`order`,`cdd`.`data_order` is null,`cdd`.`data_order`,`cd`.`Id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_experience_records`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_experience_records`*/;
+/*!50001 DROP VIEW IF EXISTS `v_experience_records`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_experience_records` AS select `experience_records`.`account_id` AS `account_id`,`experience_records`.`exp` AS `exp`,`experience_records`.`from` AS `from` from (select `kickbackdb`.`prestige`.`account_id_to` AS `account_id`,sum(if(`kickbackdb`.`prestige`.`commend`,2,-2)) AS `exp`,'prestige' AS `from` from `kickbackdb`.`prestige` group by `kickbackdb`.`prestige`.`account_id_to` union (select `kickbackdb`.`quest_applicants`.`account_id` AS `account_id`,sum(`kickbackdb`.`quest_applicants`.`participated`) AS `sum(participated)`,'participation' AS `from` from `kickbackdb`.`quest_applicants` group by `kickbackdb`.`quest_applicants`.`account_id`) union (select `v_loot_item`.`account_id` AS `account_id`,count(0) * 5 AS `count(*)`,'badges' AS `from` from `kickbackdb`.`v_loot_item` where `v_loot_item`.`loot_type` = 0 group by `v_loot_item`.`account_id`) union (select `kickbackdb`.`quest`.`host_id` AS `host_id`,count(0) * 3 AS `count(*)`,'hostings' AS `from` from `kickbackdb`.`quest` where `kickbackdb`.`quest`.`published` = 1 group by `kickbackdb`.`quest`.`host_id`) union (select `quest_host_2`.`host_id_2` AS `host_id`,count(0) * 3 AS `count(*)`,'hostings' AS `from` from `kickbackdb`.`quest` `quest_host_2` where `quest_host_2`.`published` = 1 and `quest_host_2`.`host_id_2` is not null group by `quest_host_2`.`host_id_2`) union (select `kickbackdb`.`blog_post`.`Author_id` AS `account_id`,count(0) * 4 AS `exp`,'blog_posts' AS `from` from `kickbackdb`.`blog_post` where `kickbackdb`.`blog_post`.`Published` = 1 group by `kickbackdb`.`blog_post`.`Author_id`)) `experience_records` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_feed`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_feed`*/;
+/*!50001 DROP VIEW IF EXISTS `v_feed`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_feed` AS select `feed`.`type` AS `type`,`feed`.`Id` AS `Id`,`feed`.`title` AS `title`,`feed`.`text` AS `text`,`feed`.`date` AS `date`,`feed`.`locator` AS `locator`,`feed`.`account_1_id` AS `account_1_id`,`feed`.`account_1_username` AS `account_1_username`,`feed`.`account_2_id` AS `account_2_id`,`feed`.`account_2_username` AS `account_2_username`,`feed`.`style` AS `style`,`feed`.`image` AS `image`,`feed`.`published` AS `published`,`feed`.`finished` AS `finished`,`feed`.`expired` AS `expired` from (select `v_quest_feed`.`type` AS `type`,`v_quest_feed`.`Id` AS `Id`,`v_quest_feed`.`title` AS `title`,`v_quest_feed`.`text` AS `text`,`v_quest_feed`.`date` AS `date`,`v_quest_feed`.`locator` AS `locator`,`v_quest_feed`.`account_1_id` AS `account_1_id`,`v_quest_feed`.`account_1_username` AS `account_1_username`,`v_quest_feed`.`account_2_id` AS `account_2_id`,`v_quest_feed`.`account_2_username` AS `account_2_username`,`v_quest_feed`.`style` AS `style`,`v_quest_feed`.`image` AS `image`,`v_quest_feed`.`published` AS `published`,`v_quest_feed`.`finished` AS `finished`,`v_quest_feed`.`expired` AS `expired` from `kickbackdb`.`v_quest_feed` union select `v_blog_post_feed`.`type` AS `type`,`v_blog_post_feed`.`Id` AS `Id`,`v_blog_post_feed`.`title` AS `title`,`v_blog_post_feed`.`text` AS `text`,`v_blog_post_feed`.`date` AS `date`,`v_blog_post_feed`.`locator` AS `locator`,`v_blog_post_feed`.`account_1_id` AS `account_1_id`,`v_blog_post_feed`.`account_1_username` AS `account_1_username`,`v_blog_post_feed`.`account_2_id` AS `account_2_id`,`v_blog_post_feed`.`account_2_username` AS `account_2_username`,`v_blog_post_feed`.`style` AS `style`,`v_blog_post_feed`.`image` AS `image`,`v_blog_post_feed`.`published` AS `published`,`v_blog_post_feed`.`finished` AS `finished`,`v_blog_post_feed`.`expired` AS `expired` from `kickbackdb`.`v_blog_post_feed` union select `v_blog_feed`.`type` AS `type`,`v_blog_feed`.`Id` AS `Id`,`v_blog_feed`.`title` AS `title`,`v_blog_feed`.`text` AS `text`,`v_blog_feed`.`date` AS `date`,`v_blog_feed`.`locator` AS `locator`,`v_blog_feed`.`account_1_id` AS `account_1_id`,`v_blog_feed`.`account_1_username` AS `account_1_username`,`v_blog_feed`.`account_2_id` AS `account_2_id`,`v_blog_feed`.`account_2_username` AS `account_2_username`,`v_blog_feed`.`style` AS `style`,`v_blog_feed`.`image` AS `image`,`v_blog_feed`.`published` AS `published`,`v_blog_feed`.`finished` AS `finished`,`v_blog_feed`.`expired` AS `expired` from `kickbackdb`.`v_blog_feed`) `feed` order by case when `feed`.`expired` = 1 then 1 else 0 end,case when `feed`.`finished` = 1 then 1 else 0 end,case when `feed`.`date` is null then 1 else 0 end,abs(timestampdiff(DAY,`feed`.`date`,current_timestamp())),`feed`.`date` desc */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_game_elo_rank_info`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_game_elo_rank_info`*/;
+/*!50001 DROP VIEW IF EXISTS `v_game_elo_rank_info`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_game_elo_rank_info` AS select `account_game_elo`.`account_id` AS `account_id`,`account_game_elo`.`game_id` AS `game_id`,`account_game_elo`.`elo_rating` AS `elo_rating`,`account_game_elo`.`is_ranked` AS `is_ranked`,`account_game_elo`.`total_matches` AS `ranked_matches`,`account_game_elo`.`total_wins` AS `total_wins`,`account_game_elo`.`total_losses` AS `total_losses`,`account_game_elo`.`win_rate` AS `win_rate`,`game`.`MinRankedMatches` AS `minimum_ranked_matches_required`,`game`.`ShortName` AS `name`,case when `account_game_elo`.`is_ranked` then rank() over ( partition by `account_game_elo`.`game_id` order by `account_game_elo`.`is_ranked` desc,`account_game_elo`.`elo_rating` desc) else NULL end AS `rank` from (`account_game_elo` left join `game` on(`account_game_elo`.`game_id` = `game`.`Id`)) order by `account_game_elo`.`is_ranked` desc,case when `account_game_elo`.`is_ranked` then rank() over ( partition by `account_game_elo`.`game_id` order by `account_game_elo`.`is_ranked` desc,`account_game_elo`.`elo_rating` desc) else NULL end,`game`.`MinRankedMatches` / `account_game_elo`.`total_matches` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_game_info`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_game_info`*/;
+/*!50001 DROP VIEW IF EXISTS `v_game_info`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_game_info` AS select `game`.`Id` AS `Id`,`game`.`Name` AS `Name`,`game`.`Desc` AS `Desc`,`game`.`MinRankedMatches` AS `MinRankedMatches`,`game`.`ShortName` AS `ShortName`,`game`.`CanRank` AS `CanRank`,`game`.`media_icon_id` AS `media_icon_id`,`game`.`media_banner_id` AS `media_banner_id`,`game`.`media_banner_mobile_id` AS `media_banner_mobile_id`,`icon`.`mediaPath` AS `icon_path`,`banner`.`mediaPath` AS `banner_path`,`banner_mobile`.`mediaPath` AS `banner_mobile_path` from (((`game` left join `v_media` `icon` on(`game`.`media_icon_id` = `icon`.`Id`)) left join `v_media` `banner` on(`game`.`media_icon_id` = `banner`.`Id`)) left join `v_media` `banner_mobile` on(`game`.`media_icon_id` = `banner_mobile`.`Id`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_game_match_team`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_game_match_team`*/;
+/*!50001 DROP VIEW IF EXISTS `v_game_match_team`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_game_match_team` AS select `me`.`account_id` AS `me`,`team`.`account_id` AS `team`,`me`.`game_match_id` AS `game_match_id`,`me`.`team_name` AS `team_name` from (`game_record` `me` left join `game_record` `team` on(`me`.`game_match_id` = `team`.`game_match_id` and `me`.`team_name` = `team`.`team_name`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_loot_item`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_loot_item`*/;
+/*!50001 DROP VIEW IF EXISTS `v_loot_item`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_loot_item` AS select `a`.`Id` AS `Id`,`a`.`opened` AS `opened`,`a`.`account_id` AS `account_id`,`a`.`item_id` AS `item_id`,`a`.`quest_id` AS `quest_id`,`b`.`media_id_small` AS `media_id_small`,`b`.`media_id_large` AS `media_id_large`,`b`.`type` AS `loot_type`,`b`.`desc` AS `desc`,`b`.`rarity` AS `rarity`,`a`.`dateObtained` AS `dateObtained` from (`loot` `a` join `item` `b` on(`a`.`item_id` = `b`.`Id`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_master`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_master`*/;
+/*!50001 DROP VIEW IF EXISTS `v_master`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_master` AS select `loot`.`account_id` AS `account_id` from `loot` where `loot`.`item_id` = 62 */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_media`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_media`*/;
+/*!50001 DROP VIEW IF EXISTS `v_media`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_media` AS select `Media`.`Id` AS `Id`,`Media`.`name` AS `name`,`Media`.`desc` AS `desc`,`Media`.`author_id` AS `author_id`,`Media`.`DateCreated` AS `DateCreated`,`Media`.`extension` AS `extension`,`Media`.`Directory` AS `directory`,concat(`Media`.`Directory`,'/',`Media`.`Id`,'.',`Media`.`extension`) AS `mediaPath` from `Media` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_media_directories`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_media_directories`*/;
+/*!50001 DROP VIEW IF EXISTS `v_media_directories`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_media_directories` AS select `Media`.`Directory` AS `Directory`,count(0) AS `total_media` from `Media` group by `Media`.`Directory` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_merchant_guild_share_processing_tasks`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_merchant_guild_share_processing_tasks`*/;
+/*!50001 DROP VIEW IF EXISTS `v_merchant_guild_share_processing_tasks`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_merchant_guild_share_processing_tasks` AS select `sp`.`Id` AS `purchase_id`,`a`.`Id` AS `account_id`,`a`.`Username` AS `Username`,`a`.`avatar_media` AS `avatar_media`,`sp`.`SharesPurchased` AS `SharesPurchased`,`sp`.`PurchaseDate` AS `execution_date`,`sp`.`Amount` AS `Amount`,`sp`.`Currency` AS `Currency`,`sp`.`ADAValue` AS `ADAValue`,date_format(`sp`.`PurchaseDate`,'%Y-%m-01') + interval 1 month AS `statement_date`,0 AS `TaskType`,`sp`.`processed` AS `processed` from (`kickbackdb`.`share_purchase` `sp` left join `kickbackdb`.`v_account_info` `a` on(`sp`.`AccountId` = `a`.`Id`)) union select NULL AS `purchase_id`,NULL AS `account_id`,NULL AS `Username`,NULL AS `avatar_media`,NULL AS `SharesPurchased`,`v_monthly_statement_process_status`.`statement_date` AS `execution_date`,NULL AS `amount`,NULL AS `currency`,NULL AS `ADAValue`,`v_monthly_statement_process_status`.`statement_date` AS `statement_date`,1 AS `TaskType`,`v_monthly_statement_process_status`.`percent_complete` = 1 AS `processed` from `kickbackdb`.`v_monthly_statement_process_status` order by `statement_date`,`TaskType`,`purchase_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_merchant_share_interest_statement`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_merchant_share_interest_statement`*/;
+/*!50001 DROP VIEW IF EXISTS `v_merchant_share_interest_statement`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_merchant_share_interest_statement` AS select `mss`.`id` AS `statementId`,`ip`.`id` AS `interestId`,`mss`.`accountId` AS `accountId`,`mss`.`statement_date` AS `statement_date`,`mss`.`statement_date` + interval -1 month AS `statement_period`,`mss`.`total_shares` AS `total_shares`,`mss`.`interest_bearing_shares` AS `interest_bearing_shares`,`mss`.`total_shares` - `mss`.`interest_bearing_shares` AS `shares_acquired_this_period`,coalesce(`vsm`.`TotalSharesPurchased`,0) AS `SharesPurchasedThisPeriod`,`mss`.`fractional_shares` AS `fractional_shares`,coalesce(`ip`.`shares_added`,0) AS `fractional_shares_earned`,`mss`.`fractional_shares` + coalesce(`ip`.`shares_added`,0) - coalesce(floor(`mss`.`fractional_shares` + `ip`.`shares_added`),0) AS `fractional_shares_after_interest`,coalesce(floor(`mss`.`fractional_shares` + `ip`.`shares_added`),0) AS `new_full_shares_earned`,`ip`.`interest_rate` AS `interest_rate`,`ip`.`payment_date` AS `payment_date`,coalesce(`prev_mss`.`fractional_shares` + coalesce(`prev_ip`.`shares_added`,0),0) - coalesce(floor(`prev_mss`.`fractional_shares` + `prev_ip`.`shares_added`),0) AS `last_statement_fractional_shares` from ((((`merchant_share_statement` `mss` left join `interest_payments` `ip` on(`ip`.`accountId` = `mss`.`accountId` and `ip`.`interest_period` = `mss`.`statement_date`)) left join `v_share_purchase_month` `vsm` on(`vsm`.`AccountId` = `mss`.`accountId` and `vsm`.`PurchaseMonth` = `mss`.`statement_date` + interval -1 month)) left join `merchant_share_statement` `prev_mss` on(`prev_mss`.`accountId` = `mss`.`accountId` and `prev_mss`.`statement_date` = `mss`.`statement_date` + interval -1 month)) left join `interest_payments` `prev_ip` on(`prev_ip`.`accountId` = `prev_mss`.`accountId` and `prev_ip`.`interest_period` = `prev_mss`.`statement_date`)) order by `mss`.`statement_date` desc */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_merchants`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_merchants`*/;
+/*!50001 DROP VIEW IF EXISTS `v_merchants`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_merchants` AS select `v_total_owned_merchant_shares`.`account_id` AS `account_id`,`v_total_owned_merchant_shares`.`shares` AS `shares` from `v_total_owned_merchant_shares` where `v_total_owned_merchant_shares`.`shares` >= 20 */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_monthly_statement_process_status`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_monthly_statement_process_status`*/;
+/*!50001 DROP VIEW IF EXISTS `v_monthly_statement_process_status`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_monthly_statement_process_status` AS select `v_account_monthly_statement_process_status`.`statement_date` AS `statement_date`,sum(`v_account_monthly_statement_process_status`.`processed`) / count(0) AS `percent_complete` from `kickbackdb`.`v_account_monthly_statement_process_status` group by `v_account_monthly_statement_process_status`.`statement_date` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_notifications`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_notifications`*/;
+/*!50001 DROP VIEW IF EXISTS `v_notifications`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_notifications` AS select `n`.`account_id` AS `account_id`,`n`.`Id` AS `Id`,`n`.`quest_id` AS `quest_id`,`n`.`name` AS `name`,`n`.`locator` AS `locator`,`n`.`Type` AS `Type`,`n`.`date` AS `date`,`n`.`style` AS `style`,`n`.`image` AS `image`,`n`.`host_id` AS `host_id`,`n`.`host_name` AS `host_name`,`n`.`host_id_2` AS `host_id_2`,`n`.`host_name_2` AS `host_name_2`,`n`.`rewards_collected` AS `rewards_collected`,`n`.`text` AS `text`,`n`.`rewards` AS `rewards`,`n`.`host_rating` AS `host_rating`,`n`.`quest_rating` AS `quest_rating`,`n`.`from_name` AS `from_name`,`n`.`account_id_from` AS `from_id` from (select `kickbackdb`.`quest_applicants`.`account_id` AS `account_id`,`kickbackdb`.`quest_applicants`.`Id` AS `Id`,`kickbackdb`.`quest_applicants`.`quest_id` AS `quest_id`,NULL AS `account_id_from`,`quest`.`name` AS `name`,`quest`.`locator` AS `locator`,'Quest Review' AS `Type`,`kickbackdb`.`quest_applicants`.`date_applied` AS `date`,`quest`.`play_style` AS `style`,`quest`.`imagePath_icon` AS `image`,`quest`.`host_id` AS `host_id`,`quest`.`host_name` AS `host_name`,`quest`.`host_id_2` AS `host_id_2`,`quest`.`host_name_2` AS `host_name_2`,`kickbackdb`.`quest_applicants`.`rewards_collected` AS `rewards_collected`,`quest`.`summary` AS `text`,`reward_count`.`rewards` AS `rewards`,0 AS `host_rating`,0 AS `quest_rating`,'' AS `from_name` from ((`kickbackdb`.`quest_applicants` left join `kickbackdb`.`v_quest_info` `quest` on(`quest`.`Id` = `kickbackdb`.`quest_applicants`.`quest_id`)) left join `kickbackdb`.`v_quest_applicant_reward_count` `reward_count` on(`reward_count`.`quest_id` = `quest`.`Id` and `reward_count`.`account_id` = `kickbackdb`.`quest_applicants`.`account_id`)) where `kickbackdb`.`quest_applicants`.`host_rating` is null and `kickbackdb`.`quest_applicants`.`participated` = 1 and `quest`.`published` = 1 and `quest`.`finished` = 1 and (`quest`.`host_id` <> `kickbackdb`.`quest_applicants`.`account_id` or `quest`.`host_id` is null) and (`quest`.`host_id_2` <> `kickbackdb`.`quest_applicants`.`account_id` or `quest`.`host_id_2` is null) union select `kickbackdb`.`prestige`.`account_id_to` AS `account_id`,`kickbackdb`.`prestige`.`Id` AS `Id`,NULL AS `quest_id`,`kickbackdb`.`prestige`.`account_id_from` AS `account_id_from`,`kickbackdb`.`account`.`Username` AS `name`,`kickbackdb`.`account`.`Username` AS `locator`,'Prestige' AS `Type`,`kickbackdb`.`prestige`.`date` AS `date`,`kickbackdb`.`prestige`.`commend` AS `style`,NULL AS `image`,`kickbackdb`.`account`.`Id` AS `host_id`,`kickbackdb`.`account`.`Username` AS `host_name`,NULL AS `host_id_2`,NULL AS `host_name_2`,NULL AS `rewards_collected`,`kickbackdb`.`prestige`.`Desc` AS `text`,0 AS `rewards`,0 AS `host_rating`,0 AS `quest_rating`,'' AS `from_name` from (`kickbackdb`.`prestige` left join `kickbackdb`.`account` on(`kickbackdb`.`account`.`Id` = `kickbackdb`.`prestige`.`account_id_from`)) union select `kickbackdb`.`quest_applicants`.`account_id` AS `account_id`,`kickbackdb`.`quest_applicants`.`Id` AS `Id`,`kickbackdb`.`quest_applicants`.`quest_id` AS `quest_id`,NULL AS `account_id_from`,`quest`.`name` AS `name`,`quest`.`locator` AS `locator`,'Quest In Progress' AS `Type`,`kickbackdb`.`quest_applicants`.`date_applied` AS `date`,`quest`.`play_style` AS `style`,`quest`.`imagePath` AS `image`,`quest`.`host_id` AS `host_id`,`quest`.`host_name` AS `host_name`,`quest`.`host_id_2` AS `host_id_2`,`quest`.`host_name_2` AS `host_name_2`,`kickbackdb`.`quest_applicants`.`rewards_collected` AS `rewards_collected`,`quest`.`summary` AS `text`,0 AS `rewards`,0 AS `host_rating`,0 AS `quest_rating`,'' AS `from_name` from (`kickbackdb`.`quest_applicants` left join `kickbackdb`.`v_quest_info` `quest` on(`quest`.`Id` = `kickbackdb`.`quest_applicants`.`quest_id`)) where `quest`.`finished` = 0 and `quest`.`published` = 1 and `quest`.`end_date` < current_timestamp() union select `kickbackdb`.`quest_applicants`.`account_id` AS `account_id`,`kickbackdb`.`quest_applicants`.`Id` AS `Id`,`kickbackdb`.`quest_applicants`.`quest_id` AS `quest_id`,NULL AS `account_id_from`,`quest`.`name` AS `name`,`quest`.`locator` AS `locator`,'Finalize Quest' AS `Type`,`kickbackdb`.`quest_applicants`.`date_applied` AS `date`,`quest`.`play_style` AS `style`,`quest`.`imagePath` AS `image`,`quest`.`host_id` AS `host_id`,`quest`.`host_name` AS `host_name`,`quest`.`host_id_2` AS `host_id_2`,`quest`.`host_name_2` AS `host_name_2`,`kickbackdb`.`quest_applicants`.`rewards_collected` AS `rewards_collected`,`quest`.`summary` AS `text`,0 AS `rewards`,0 AS `host_rating`,0 AS `quest_rating`,'' AS `from_name` from (`kickbackdb`.`quest_applicants` left join `kickbackdb`.`v_quest_info` `quest` on(`quest`.`Id` = `kickbackdb`.`quest_applicants`.`quest_id`)) where `kickbackdb`.`quest_applicants`.`host_rating` is null and `kickbackdb`.`quest_applicants`.`participated` = 1 and `quest`.`published` = 1 and `quest`.`finished` = 0 and (`quest`.`host_id` = `kickbackdb`.`quest_applicants`.`account_id` or `quest`.`host_id_2` = `kickbackdb`.`quest_applicants`.`account_id`) union select `kickbackdb`.`quest_applicants`.`account_id` AS `account_id`,`kickbackdb`.`quest_applicants`.`Id` AS `Id`,`kickbackdb`.`quest_applicants`.`quest_id` AS `quest_id`,NULL AS `account_id_from`,`quest`.`name` AS `name`,`quest`.`locator` AS `locator`,'Thanks For Hosting' AS `Type`,`kickbackdb`.`quest_applicants`.`date_applied` AS `date`,`quest`.`play_style` AS `style`,`quest`.`imagePath` AS `image`,`quest`.`host_id` AS `host_id`,`quest`.`host_name` AS `host_name`,`quest`.`host_id_2` AS `host_id_2`,`quest`.`host_name_2` AS `host_name_2`,`kickbackdb`.`quest_applicants`.`rewards_collected` AS `rewards_collected`,`quest`.`summary` AS `text`,`reward_count`.`rewards` AS `rewards`,0 AS `host_rating`,0 AS `quest_rating`,'' AS `from_name` from ((`kickbackdb`.`quest_applicants` left join `kickbackdb`.`v_quest_info` `quest` on(`quest`.`Id` = `kickbackdb`.`quest_applicants`.`quest_id`)) left join `kickbackdb`.`v_quest_applicant_reward_count` `reward_count` on(`reward_count`.`quest_id` = `quest`.`Id` and `reward_count`.`account_id` = `kickbackdb`.`quest_applicants`.`account_id`)) where `kickbackdb`.`quest_applicants`.`host_rating` is null and `kickbackdb`.`quest_applicants`.`participated` = 1 and `quest`.`published` = 1 and `quest`.`finished` = 1 and (`quest`.`host_id` = `kickbackdb`.`quest_applicants`.`account_id` or `quest`.`host_id_2` = `kickbackdb`.`quest_applicants`.`account_id`) and `reward_count`.`rewards` > 0 union select `v_notifications_reviewed_quests`.`account_id` AS `account_id`,`v_notifications_reviewed_quests`.`Id` AS `Id`,`v_notifications_reviewed_quests`.`quest_id` AS `quest_id`,`v_notifications_reviewed_quests`.`account_id_from` AS `account_id_from`,`v_notifications_reviewed_quests`.`name` AS `name`,`v_notifications_reviewed_quests`.`locator` AS `locator`,`v_notifications_reviewed_quests`.`type` AS `type`,`v_notifications_reviewed_quests`.`date` AS `date`,`v_notifications_reviewed_quests`.`play_style` AS `play_style`,`v_notifications_reviewed_quests`.`image` AS `image`,`v_notifications_reviewed_quests`.`host_id` AS `host_id`,`v_notifications_reviewed_quests`.`host_name` AS `host_name`,`v_notifications_reviewed_quests`.`host_id_2` AS `host_id_2`,`v_notifications_reviewed_quests`.`host_name_2` AS `host_name_2`,`v_notifications_reviewed_quests`.`rewards_collected` AS `rewards_collected`,`v_notifications_reviewed_quests`.`text` AS `text`,`v_notifications_reviewed_quests`.`rewards` AS `rewards`,`v_notifications_reviewed_quests`.`host_rating` AS `host_rating`,`v_notifications_reviewed_quests`.`quest_rating` AS `quest_rating`,`v_notifications_reviewed_quests`.`from_name` AS `from_name` from `kickbackdb`.`v_notifications_reviewed_quests`) `n` order by `n`.`date` desc */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_notifications_reviewed_quests`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_notifications_reviewed_quests`*/;
+/*!50001 DROP VIEW IF EXISTS `v_notifications_reviewed_quests`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_notifications_reviewed_quests` AS select `quest`.`host_id` AS `account_id`,`quest_applicants`.`Id` AS `Id`,`quest`.`Id` AS `quest_id`,`quest`.`name` AS `name`,`quest`.`locator` AS `locator`,'Quest Reviewed' AS `type`,`quest_applicants`.`date_reviewed` AS `date`,`quest`.`play_style` AS `play_style`,`quest`.`imagePath` AS `image`,`quest`.`host_id` AS `host_id`,`quest`.`host_name` AS `host_name`,`quest`.`host_id_2` AS `host_id_2`,`quest`.`host_name_2` AS `host_name_2`,`quest_applicants`.`rewards_collected` AS `rewards_collected`,`quest_applicants`.`feedback` AS `text`,0 AS `rewards`,`quest_applicants`.`host_rating` AS `host_rating`,`quest_applicants`.`quest_rating` AS `quest_rating`,`account`.`Username` AS `from_name`,`account`.`Id` AS `account_id_from` from ((`quest_applicants` left join `v_quest_info` `quest` on(`quest_applicants`.`quest_id` = `quest`.`Id`)) left join `account` on(`quest_applicants`.`account_id` = `account`.`Id`)) where `quest_applicants`.`host_rating` is not null and `quest`.`host_id` <> `quest_applicants`.`account_id` and `quest`.`host_id` is not null union select `quest`.`host_id_2` AS `account_id`,`quest_applicants`.`account_id` AS `Id`,`quest`.`Id` AS `quest_id`,`quest`.`name` AS `name`,`quest`.`locator` AS `locator`,'Quest Reviewed' AS `type`,`quest_applicants`.`date_reviewed` AS `date`,`quest`.`play_style` AS `play_style`,`quest`.`imagePath` AS `image`,`quest`.`host_id` AS `host_id`,`quest`.`host_name` AS `host_name`,`quest`.`host_id_2` AS `host_id_2`,`quest`.`host_name_2` AS `host_name_2`,`quest_applicants`.`rewards_collected` AS `rewards_collected`,`quest_applicants`.`feedback` AS `text`,0 AS `rewards`,`quest_applicants`.`host_rating` AS `host_rating`,`quest_applicants`.`quest_rating` AS `quest_rating`,`account`.`Username` AS `from_name`,`account`.`Id` AS `account_id_from` from ((`quest_applicants` left join `v_quest_info` `quest` on(`quest_applicants`.`quest_id` = `quest`.`Id`)) left join `account` on(`quest_applicants`.`account_id` = `account`.`Id`)) where `quest_applicants`.`host_rating` is not null and `quest`.`host_id_2` is not null and `quest`.`host_id_2` <> `quest_applicants`.`account_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_prestige_info`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_prestige_info`*/;
+/*!50001 DROP VIEW IF EXISTS `v_prestige_info`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_prestige_info` AS select `account`.`Username` AS `Username`,`account`.`Id` AS `account_id_from`,`prestige`.`account_id_to` AS `account_id_to`,`prestige`.`Desc` AS `desc`,`prestige`.`commend` AS `commend`,`prestige`.`quest_id` AS `quest_id`,concat(`Media`.`Directory`,'/',`Media`.`Id`,'.',`Media`.`extension`) AS `imagePath`,`quest`.`name` AS `name`,`prestige`.`date` AS `date`,`quest`.`locator` AS `locator`,`avatar`.`avatar_media` AS `account_from_avatar_media` from ((((`prestige` left join `account` on(`account`.`Id` = `prestige`.`account_id_from`)) left join `quest` on(`quest`.`Id` = `prestige`.`quest_id`)) left join `Media` on(`quest`.`image_id` = `Media`.`Id`)) left join `v_account_equipment_media` `avatar` on(`avatar`.`account_id` = `account`.`Id`)) order by `prestige`.`date` desc */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_progress_scribes`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_progress_scribes`*/;
+/*!50001 DROP VIEW IF EXISTS `v_progress_scribes`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_progress_scribes` AS select `loot`.`account_id` AS `account_id` from `loot` where `loot`.`item_id` = 59 */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_quest_applicant_reward_count`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_quest_applicant_reward_count`*/;
+/*!50001 DROP VIEW IF EXISTS `v_quest_applicant_reward_count`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_quest_applicant_reward_count` AS select `quest_applicant_rewards`.`applicant_id` AS `applicant_id`,`quest_applicant_rewards`.`reward_id` AS `reward_id`,`quest_applicants`.`account_id` AS `account_id`,`quest_applicants`.`quest_id` AS `quest_id`,count(0) AS `rewards` from (`quest_applicant_rewards` left join `quest_applicants` on(`quest_applicant_rewards`.`applicant_id` = `quest_applicants`.`Id`)) group by `quest_applicants`.`account_id`,`quest_applicants`.`quest_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_quest_applicants_account`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_quest_applicants_account`*/;
+/*!50001 DROP VIEW IF EXISTS `v_quest_applicants_account`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_quest_applicants_account` AS select `account`.`Username` AS `Username`,`account`.`FirstName` AS `FirstName`,`account`.`LastName` AS `LastName`,`account`.`Id` AS `Id`,`account`.`Banned` AS `Banned`,`account`.`pass_reset` AS `pass_reset`,`account`.`email` AS `email`,`account`.`exp` AS `exp`,`account`.`level` AS `level`,`account`.`exp_needed` AS `exp_needed`,`account`.`exp_started` AS `exp_started`,`account`.`prestige` AS `prestige`,`account`.`badges` AS `badges`,`account`.`exp_current` AS `exp_current`,`account`.`exp_goal` AS `exp_goal`,`kickbackdb`.`quest_applicants`.`accepted` AS `accepted`,`kickbackdb`.`quest_applicants`.`participated` AS `participated`,`kickbackdb`.`quest_applicants`.`quest_id` AS `quest_id`,`kickbackdb`.`quest_applicants`.`seed_score` AS `seed_score`,case when `kickbackdb`.`quest_applicants`.`participated` = 1 or `kickbackdb`.`quest_applicants`.`seed_score` > 0 then rank() over ( partition by `kickbackdb`.`quest_applicants`.`quest_id` order by `kickbackdb`.`quest_applicants`.`seed_score` desc,`account`.`exp` desc,`account`.`Id` desc) else NULL end AS `seed`,`v_game_rank`.`rank` AS `rank`,`account`.`avatar_media` AS `avatar_media`,`account`.`player_card_border_media` AS `player_card_border_media`,`account`.`banner_media` AS `banner_media`,`account`.`background_media` AS `background_media`,`account`.`charm_media` AS `charm_media`,`account`.`companion_media` AS `companion_media`,`account`.`IsMerchant` AS `IsMerchant` from ((((`kickbackdb`.`quest_applicants` join `kickbackdb`.`v_account_info` `account` on(`kickbackdb`.`quest_applicants`.`account_id` = `account`.`Id`)) left join `kickbackdb`.`quest` on(`kickbackdb`.`quest_applicants`.`quest_id` = `kickbackdb`.`quest`.`Id`)) left join `kickbackdb`.`tournament` on(`kickbackdb`.`quest`.`tournament_id` = `kickbackdb`.`tournament`.`Id`)) left join `kickbackdb`.`v_game_elo_rank_info` `v_game_rank` on(`v_game_rank`.`account_id` = `account`.`Id` and `v_game_rank`.`game_id` = `kickbackdb`.`tournament`.`game_id`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_quest_feed`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_quest_feed`*/;
+/*!50001 DROP VIEW IF EXISTS `v_quest_feed`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_quest_feed` AS select 'QUEST' AS `type`,`v_quest_info`.`Id` AS `Id`,`v_quest_info`.`name` AS `title`,`v_quest_info`.`summary` AS `text`,`v_quest_info`.`end_date` AS `date`,`v_quest_info`.`locator` AS `locator`,`v_quest_info`.`host_id` AS `account_1_id`,`v_quest_info`.`host_name` AS `account_1_username`,`v_quest_info`.`host_id_2` AS `account_2_id`,`v_quest_info`.`host_name_2` AS `account_2_username`,`v_quest_info`.`play_style` AS `style`,`v_quest_info`.`imagePath_icon` AS `image`,`v_quest_info`.`published` AS `published`,`v_quest_info`.`finished` AS `finished`,`v_quest_info`.`end_date` <= current_timestamp() AS `expired` from `v_quest_info` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_quest_givers`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_quest_givers`*/;
+/*!50001 DROP VIEW IF EXISTS `v_quest_givers`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_quest_givers` AS select `loot`.`account_id` AS `account_id` from `loot` where `loot`.`item_id` = 47 */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_quest_info`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_quest_info`*/;
+/*!50001 DROP VIEW IF EXISTS `v_quest_info`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_quest_info` AS select `quest`.`Id` AS `Id`,`quest`.`name` AS `name`,`quest`.`desc` AS `desc`,`quest`.`tournament_id` AS `tournament_id`,`quest`.`end_date` AS `end_date`,`quest`.`image_id` AS `image_id`,`quest`.`raffle_id` AS `raffle_id`,`quest`.`req_apply` AS `req_apply`,`quest`.`max_accounts` AS `max_accounts`,`quest`.`locator` AS `locator`,`quest`.`host_id` AS `host_id`,`quest`.`host_id_2` AS `host_id_2`,`quest`.`application_information` AS `application_information`,`quest`.`show_twitch` AS `show_twitch`,`quest`.`published` AS `published`,concat(`Media`.`Directory`,'/',`Media`.`Id`,'.',`Media`.`extension`) AS `imagePath`,concat(`m2`.`Directory`,'/',`m2`.`Id`,'.',`m2`.`extension`) AS `imagePath_icon`,concat(`m3`.`Directory`,'/',`m3`.`Id`,'.',`m3`.`extension`) AS `imagePath_mobile`,`account`.`Username` AS `host_name`,`tournament`.`hasBracket` AS `hasBracket`,`account_2`.`Username` AS `host_name_2`,`quest`.`summary` AS `summary`,`quest`.`play_style` AS `play_style`,`quest`.`quest_line_id` AS `quest_line_id`,`quest`.`finished` AS `finished`,`quest`.`content_id` AS `content_id`,`quest`.`being_reviewed` AS `being_reviewed`,`m2`.`Id` AS `image_id_icon`,`m3`.`Id` AS `image_id_mobile` from ((((((`quest` left join `Media` on(`quest`.`image_id` = `Media`.`Id`)) left join `account` on(`account`.`Id` = `quest`.`host_id`)) left join `tournament` on(`quest`.`tournament_id` = `tournament`.`Id`)) left join `account` `account_2` on(`account_2`.`Id` = `quest`.`host_id_2`)) left join `Media` `m2` on(`quest`.`image_id_icon` = `m2`.`Id`)) left join `Media` `m3` on(`quest`.`image_id_mobile` = `m3`.`Id`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_quest_reward_info`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_quest_reward_info`*/;
+/*!50001 DROP VIEW IF EXISTS `v_quest_reward_info`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_quest_reward_info` AS select `quest_reward`.`quest_id` AS `quest_id`,`item`.`Id` AS `Id`,`item`.`type` AS `type`,`item`.`rarity` AS `rarity`,`item`.`desc` AS `desc`,`item`.`name` AS `name`,`quest_reward`.`category` AS `category`,concat(`b`.`Directory`,'/',`b`.`Id`,'.',`b`.`extension`) AS `BigImgPath`,concat(`s`.`Directory`,'/',`s`.`Id`,'.',`b`.`extension`) AS `SmallImgPath`,`artist`.`Username` AS `artist`,`b`.`DateCreated` AS `DateCreated` from ((((`quest_reward` left join `item` on(`item`.`Id` = `quest_reward`.`item_id`)) left join `Media` `b` on(`b`.`Id` = `item`.`media_id_large`)) left join `Media` `s` on(`s`.`Id` = `item`.`media_id_small`)) left join `account` `artist` on(`b`.`author_id` = `artist`.`Id`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_raffle_participants`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_raffle_participants`*/;
+/*!50001 DROP VIEW IF EXISTS `v_raffle_participants`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_raffle_participants` AS select `v_account_info`.`Username` AS `Username`,`v_account_info`.`FirstName` AS `FirstName`,`v_account_info`.`LastName` AS `LastName`,`v_account_info`.`Id` AS `Id`,`v_account_info`.`Banned` AS `Banned`,`v_account_info`.`pass_reset` AS `pass_reset`,`v_account_info`.`email` AS `email`,`v_account_info`.`exp` AS `exp`,`v_account_info`.`level` AS `level`,`v_account_info`.`exp_needed` AS `exp_needed`,`v_account_info`.`exp_started` AS `exp_started`,`v_account_info`.`prestige` AS `prestige`,`v_account_info`.`badges` AS `badges`,`v_account_info`.`exp_current` AS `exp_current`,`v_account_info`.`exp_goal` AS `exp_goal`,`v_account_info`.`IsAdmin` AS `IsAdmin`,`v_raffle_tickets`.`raffle_id` AS `raffle_id` from (`kickbackdb`.`v_raffle_tickets` left join `kickbackdb`.`v_account_info` on(`v_raffle_tickets`.`account_id` = `v_account_info`.`Id`)) where `v_raffle_tickets`.`raffle_id` is not null group by `v_raffle_tickets`.`raffle_id`,`v_raffle_tickets`.`account_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_raffle_tickets`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_raffle_tickets`*/;
+/*!50001 DROP VIEW IF EXISTS `v_raffle_tickets`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_raffle_tickets` AS select `loot`.`Id` AS `loot_id`,`loot`.`account_id` AS `account_id`,`raffle_submissions`.`raffle_id` AS `raffle_id` from (`v_loot_item` `loot` left join `raffle_submissions` on(`loot`.`Id` = `raffle_submissions`.`loot_id`)) where `loot`.`loot_type` = 2 and `loot`.`opened` = 1 */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_raffle_winners`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_raffle_winners`*/;
+/*!50001 DROP VIEW IF EXISTS `v_raffle_winners`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_raffle_winners` AS select `raffle`.`Id` AS `raffle_id`,`account`.`Id` AS `account_id`,`account`.`Username` AS `Username` from (((`raffle` left join `raffle_submissions` on(`raffle`.`winner_submission_id` = `raffle_submissions`.`Id`)) left join `v_loot_item` `loot` on(`raffle_submissions`.`loot_id` = `loot`.`Id`)) left join `account` on(`loot`.`account_id` = `account`.`Id`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_share_purchase_month`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_share_purchase_month`*/;
+/*!50001 DROP VIEW IF EXISTS `v_share_purchase_month`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_share_purchase_month` AS select `share_purchase`.`AccountId` AS `AccountId`,date_format(`share_purchase`.`PurchaseDate`,'%Y-%m-01') AS `PurchaseMonth`,sum(`share_purchase`.`SharesPurchased`) AS `TotalSharesPurchased` from `share_purchase` group by `share_purchase`.`AccountId`,date_format(`share_purchase`.`PurchaseDate`,'%Y-%m-01') order by `share_purchase`.`AccountId`,date_format(`share_purchase`.`PurchaseDate`,'%Y-%m-01') */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_total_owned_adventurer_shares`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_total_owned_adventurer_shares`*/;
+/*!50001 DROP VIEW IF EXISTS `v_total_owned_adventurer_shares`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_total_owned_adventurer_shares` AS select `loot`.`account_id` AS `account_id`,count(0) AS `shares` from `loot` where `loot`.`item_id` = 15 group by `loot`.`account_id` order by 2 desc */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_total_owned_apprentice_shares`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_total_owned_apprentice_shares`*/;
+/*!50001 DROP VIEW IF EXISTS `v_total_owned_apprentice_shares`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_total_owned_apprentice_shares` AS select `loot`.`account_id` AS `account_id`,count(0) AS `shares` from `loot` where `loot`.`item_id` = 17 group by `loot`.`account_id` order by 2 desc */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_total_owned_craftsmen_shares`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_total_owned_craftsmen_shares`*/;
+/*!50001 DROP VIEW IF EXISTS `v_total_owned_craftsmen_shares`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_total_owned_craftsmen_shares` AS select `loot`.`account_id` AS `account_id`,count(0) AS `shares` from `loot` where `loot`.`item_id` = 17 group by `loot`.`account_id` order by 2 desc */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_total_owned_guild_shares`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_total_owned_guild_shares`*/;
+/*!50001 DROP VIEW IF EXISTS `v_total_owned_guild_shares`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_total_owned_guild_shares` AS select `a`.`Id` AS `account_id`,coalesce(`oas`.`shares`,0) AS `adventurer_shares`,coalesce(`oms`.`shares`,0) AS `merchant_shares`,coalesce(`ocs`.`shares`,0) AS `craftsmen_shares`,coalesce(`oaps`.`shares`,0) AS `apprentice_shares`,0 AS `steward_shares` from ((((`account` `a` left join `v_total_owned_adventurer_shares` `oas` on(`a`.`Id` = `oas`.`account_id`)) left join `v_total_owned_merchant_shares` `oms` on(`a`.`Id` = `oms`.`account_id`)) left join `v_total_owned_craftsmen_shares` `ocs` on(`a`.`Id` = `ocs`.`account_id`)) left join `v_total_owned_apprentice_shares` `oaps` on(`a`.`Id` = `oaps`.`account_id`)) order by `a`.`Id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_total_owned_merchant_shares`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_total_owned_merchant_shares`*/;
+/*!50001 DROP VIEW IF EXISTS `v_total_owned_merchant_shares`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_total_owned_merchant_shares` AS select `loot`.`account_id` AS `account_id`,count(0) AS `shares` from `loot` where `loot`.`item_id` = 16 group by `loot`.`account_id` order by 2 desc */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_total_share_purchase`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_total_share_purchase`*/;
+/*!50001 DROP VIEW IF EXISTS `v_total_share_purchase`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_total_share_purchase` AS select `sp`.`AccountId` AS `accountId`,`a`.`Username` AS `Username`,sum(`sp`.`ADAValue`) AS `TotalADAValue`,sum(`sp`.`SharesPurchased`) AS `Shares` from (`share_purchase` `sp` join `account` `a` on(`sp`.`AccountId` = `a`.`Id`)) group by `sp`.`AccountId`,`a`.`Username` order by sum(`sp`.`ADAValue`) desc */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_tournament_bracket_info`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_tournament_bracket_info`*/;
+/*!50001 DROP VIEW IF EXISTS `v_tournament_bracket_info`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_tournament_bracket_info` AS select `game_record`.`Id` AS `Id`,`game_record`.`game_id` AS `game_id`,`game_record`.`account_id` AS `account_id`,`game_record`.`win` AS `win`,`game_record`.`game_match_id` AS `game_match_id`,`game_record`.`Date` AS `Date`,`game_record`.`team_name` AS `team_name`,`account`.`Username` AS `Username`,`game_match`.`tournament_id` AS `tournament_id`,`game_match`.`bracket` AS `bracket`,`game_match`.`round` AS `round`,`game_match`.`match` AS `match`,`game_match`.`set` AS `set`,`game_match`.`desc` AS `desc`,`game_record`.`character` AS `character` from ((`game_match` left join `game_record` on(`game_record`.`game_match_id` = `game_match`.`Id`)) left join `account` on(`game_record`.`account_id` = `account`.`Id`)) order by `game_match`.`tournament_id`,`game_match`.`round`,`game_match`.`bracket`,`game_match`.`match`,`game_match`.`set`,`game_record`.`game_match_id`,`game_record`.`Id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `v_tournament_results`
+--
+
+/*!50001 DROP TABLE IF EXISTS `v_tournament_results`*/;
+/*!50001 DROP VIEW IF EXISTS `v_tournament_results`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`$definer_user`@`$definer_host` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_tournament_results` AS select `v_game_match_team`.`team` AS `account_id`,`tournament_record`.`win` AS `win`,`tournament_record`.`tournament_id` AS `tournament_id`,`tournament_record`.`team_name` AS `team_name` from ((`tournament_record` left join `game_match` on(`tournament_record`.`tournament_id` = `game_match`.`tournament_id`)) left join `v_game_match_team` on(`game_match`.`Id` = `v_game_match_team`.`game_match_id` and `tournament_record`.`team_captain` = `v_game_match_team`.`me`)) group by `tournament_record`.`tournament_id`,`v_game_match_team`.`team` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2024-01-19 21:42:15

@@ -1,0 +1,33 @@
+<?php 
+
+if (!isset($selectUserFormId))
+{
+    $selectUserFormId = "Default";
+}
+
+if (!isset($selectUsersFormPageSize))
+{
+    $selectUsersFormPageSize = 6;
+}
+
+?>
+
+<div class="input-group">
+  <input type="text" class="form-control" onchange="OnSelectAccountChangeSearchParams('<?php echo $selectUserFormId; ?>')" id="<?php echo $selectUserFormId; ?>selectAccountSearchTerm">
+  <button class="btn btn-primary" type="button" onclick="OnSelectAccountChangeSearchParams('<?php echo $selectUserFormId; ?>')">Search</button>
+
+</div>
+<div class="card mt-3">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12">
+                <div id="<?php echo $selectUserFormId; ?>selectUserPagination">
+                    <!-- Pagination buttons will be inserted here via JS -->
+                </div>
+                <div  class="d-flex flex-wrap justify-content-evenly align-items-center mt-3" id="<?php echo $selectUserFormId; ?>selectAccountSearchResults" data-users-per-page="<?php echo $selectUsersFormPageSize; ?>" style="border-style: none;">
+                    
+                </div>
+            </div>
+        </div> 
+    </div>
+</div>

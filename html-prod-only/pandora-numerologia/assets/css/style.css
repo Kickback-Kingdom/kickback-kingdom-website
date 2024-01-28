@@ -1,0 +1,224 @@
+:root {
+    --bs-primary: #FF0000;/*#4020E0;*/
+    --bs-secondary: #4020E0;
+}       
+
+body {
+    background-image: url(../media/dalle-bg.png) !important;
+    background-repeat: no-repeat !important;
+    background-position: top center !important;
+    overflow: hidden;
+    background-size: cover;
+    min-height: 100vh;
+}
+
+.body-finished-loading {
+    overflow: auto;
+}
+
+
+.nav-icon {
+    width: 24px;
+    text-align: center;
+}
+
+/* Primary Color */
+.btn-primary, 
+.bg-primary {
+    background-color: var(--bs-primary) !important;
+}
+
+/* Secondary Color */
+.btn-secondary, 
+.bg-secondary {
+    background-color: var(--bs-secondary) !important;
+    color:#fff;
+}
+/*.bg-primary button.btn {
+    color: white;
+}*/
+.text-bg-primary {
+    color: #fff!important;
+    background-color: var(--bs-primary) !important;
+}
+.text-bg-secondary {
+    color: #fff!important;
+    background-color: var(--bs-secondary) !important;
+}
+.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--bs-primary);
+    --bs-btn-border-color: var(--bs-primary);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #0b5ed7;
+    --bs-btn-hover-border-color: #0a58ca;
+    --bs-btn-focus-shadow-rgb: 49,132,253;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #0a58ca;
+    --bs-btn-active-border-color: #0a53be;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: var(--bs-primary);
+    --bs-btn-disabled-border-color: var(--bs-primary);
+
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-border-color: transparent;
+    --bs-btn-hover-color: #c9d5e4;
+}
+
+.btn-secondary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--bs-secondary);
+    --bs-btn-border-color: var(--bs-secondary);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #5c636a;
+    --bs-btn-hover-border-color: #565e64;
+    --bs-btn-focus-shadow-rgb: 130,138,145;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #565e64;
+    --bs-btn-active-border-color: #51585e;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: var(--bs-secondary);
+    --bs-btn-disabled-border-color: var(--bs-secondary);
+
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-border-color: transparent;
+    --bs-btn-hover-color: #e7c5b0;
+}
+
+.mobile-bar-btn-center {
+    position: fixed;
+    bottom: 0px;
+    z-index: 1031;
+    left: 50%;
+    /* text-align: center; */
+    /* right: 50%; */
+    font-size: 2em;
+    margin-left: auto;
+    margin-right: auto;
+    transform: translateX(-50%);
+}
+.bg-primary li.breadcrumb-item.active {
+    color: white;
+}
+.custom-popover {
+--bs-popover-max-width: 200px;
+--bs-popover-border-color: var(--bs-primary);
+--bs-popover-header-bg: var(--bs-primary);
+--bs-popover-header-color: var(--bs-white);
+--bs-popover-body-padding-x: 1rem;
+--bs-popover-body-padding-y: .5rem;
+}
+.popover {
+min-width: 0; /* Override Bootstrap's minimum width */
+}
+
+.popover .popover-header {
+white-space: nowrap; /* Ensure the title doesn't break into multiple lines */
+}
+
+.popover .popover-body {
+word-wrap: break-word; /* Allow the body content to break into multiple lines if needed */
+}
+
+.mobile-menu-item {
+    
+    border-bottom: #0000003b;
+    border-bottom-width: thin;
+    border-bottom-style: solid;
+    font-size: 1.3em;
+    padding-left: 20px;
+}
+
+.mobile-menu-item:hover {
+    background-color: rgba(0, 0, 0, 0.123);
+}
+
+.mobile-menu-item-arrow {
+    position: absolute;
+    right: 16px;
+    transform: translateY(25%);
+    color: #00000042;
+}
+
+.mobile-navbar-logo {
+    height: 40px;
+}
+
+.kk-logo {
+    height: 100%;
+    width: auto;
+    /*background-color: white;*/
+}
+
+.kk-logo-desktop {
+    height: 40px;
+}
+
+
+.embed-responsive {
+    position: relative;
+    width: 100%;
+    height: 0;
+    overflow: hidden;
+}
+
+/* For screens smaller than 768px (less than 'md') */
+@media (max-width: 767.98px) {
+    .embed-responsive {
+        /* 100 / 2.16 */
+        padding-bottom: 46.3%; 
+    }
+}
+
+/* For 'md' screens and larger (â‰¥768px) */
+@media (min-width: 768px) {
+    .embed-responsive {
+        /* 100 / 3.84 */
+        padding-bottom: 26.04%; 
+    }
+}
+
+.embed-responsive iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+
+.tab-content {   
+    padding: 16px;
+    border-color: #dddddd;
+    border-width: thin;
+    border-style: solid;
+    border-top: none;
+}
+
+  .tab-pane-title {
+    padding-bottom: 16px;
+}
+
+#loading-overlay {
+    position: fixed; /* Fixed position to cover the whole page */
+    z-index: 9999; /* High z-index to be on top of everything */
+    top: 0;
+    left: 0;
+    width: 100vw; /* Cover the whole width of the page */
+    height: 100vh; /* Cover the whole height of the page */
+    background-color: var(--bs-primary); /* Semi-transparent black background */
+    display: flex; /* To center the image both vertically and horizontally */
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-header {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+.text-shadow {
+    text-shadow: 2px 2px 2px #000000;
+}
