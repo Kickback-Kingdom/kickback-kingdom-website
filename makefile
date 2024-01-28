@@ -4,10 +4,6 @@ TARGET_DIR :=
 # Define the (html/php) source directory relative to the project root
 HTML_DIR := html
 
-# Define (html/php) source directory containing things that should be copied into
-# $(TARGET_DIR), but should not be copied into $(TARGET_DIR)/$(BETA_SUBDIR).
-HTML_PROD_ONLY_DIR := html-prod-only
-
 # Define the target subdirectory
 BETA_SUBDIR := beta
 
@@ -17,7 +13,6 @@ BETA_BRANCH := main
 # Shorthands for internal use.
 override target := $(TARGET_DIR)
 override html := $(HTML_DIR)
-override html_prod_only := $(HTML_PROD_ONLY_DIR)
 override beta := $(BETA_SUBDIR)
 
 # The `project_root` variable was originally intended to allow `git clone` to clone the
@@ -119,7 +114,7 @@ endif
 	@# option allows it to remove any files that shouldn't be in the
 	@# target directory, thus creating a pristine like-new install directory,
 	@# even if there was already an older version of code in there.
-	rsync -axHAX --delete "$(project_root)/$(html)/" "$(project_root)/$(html_prod_only)/" "$(target)"
+	rsync -axHAX --delete "$(project_root)/$(html)/" "$(target)"
 	@echo "    ...HTML+PHP copy finished."
 	@echo "Populating '$(beta)' subdirectory with 'git clone'."
 	@git --git-dir=/dev/null clone --progress --branch $(BETA_BRANCH) --single-branch \
