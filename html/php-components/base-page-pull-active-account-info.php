@@ -146,6 +146,21 @@ if (isset($_POST["edit-quest-images-submit"]))
     }
 }
 
+if (isset($_POST["edit-quest-options-submit"]))
+{
+
+    $response = UpdateQuestOptions($_POST);
+    if ($response->Success) {
+        $showPopUpSuccess = true;
+        $PopUpTitle = "Updated Quest";
+        $PopUpMessage= "Your quest options have been updated successfully. ".json_encode($_POST);
+    } else {
+        $showPopUpError = true;
+        $PopUpTitle = "Error";
+        $PopUpMessage = $response->Message." -> ".json_encode($response->Data);
+    }
+}
+
 if (IsAdmin())
 {
     
@@ -243,13 +258,6 @@ if (isset($_POST["submitBlogOptions"])) {
         $PopUpTitle = "Error";
         $PopUpMessage = $response->Message." -> ".json_encode($response->Data);
     }
-}
-
-if (isset($_POST["edit-quest-options-submit"]))
-{
-    $showPopUpSuccess = true;
-    $PopUpTitle = "Recieved Data";
-    $PopUpMessage = json_encode($_POST);
 }
 
 

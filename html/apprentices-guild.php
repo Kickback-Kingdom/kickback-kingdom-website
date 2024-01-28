@@ -5,7 +5,9 @@ $session = require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/session/verifySessi
 
 require("php-components/base-page-pull-active-account-info.php");
 
+$certificationsResp = GetAllCertifications();
 
+$certifications = $certificationsResp->Data;
 ?>
 
 <!DOCTYPE html>
@@ -40,21 +42,34 @@ require("php-components/base-page-pull-active-account-info.php");
                 
                 ?>
 
-                <?php
-                for ($i=0; $i < 1; $i++) 
-                { 
-                    //$news = $homeFeed[$i];
-                ?>
+                <div class="row row-cols-1 row-cols-md-3 g-4">
+                    
+                        <?php
+                        for ($i=0; $i < count($certifications); $i++) 
+                        { 
+                            //$news = $homeFeed[$i];
+                        ?>
+                            <div class="col">
+                                <div class="card" style="width: 18rem;">
+                                    <img src="/assets/media/<?php echo $certifications[$i]["imagePath_icon"]; ?>" class="card-img-top" alt="<?php echo $certifications[$i]["name"]; ?>">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><?php echo $certifications[$i]["name"]; ?></h5>
+                                        <p class="card-text"><?php echo $certifications[$i]["summary"]; ?></p>
+                                        <a href="<?php echo $urlPrefixBeta; ?>/apprentices-guild/certifications.php?id=<?php echo $certifications[$i]["Id"]; ?>" class="btn btn-primary">View Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php
+                        }
+                        ?>
+                </div>
                 
-                <?php
-                }
-                ?>
 
-                <?php require("php-components/coming-soon.php"); ?>
             </div>
             
             <?php require("php-components/base-page-discord.php"); ?>
         </div>
+        <?php require("php-components/base-page-footer.php"); ?>
     </main>
 
     

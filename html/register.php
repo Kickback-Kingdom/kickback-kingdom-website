@@ -151,7 +151,7 @@ if ($showGuard)
                 </div>
                 <div class="modal-body">
                     <img src="/assets/media/context/halt.jpeg" class="img-fluid"/>
-                    <p style="padding: 32px;font-size: 1.3em;text-align: left;">Halt! <?php echo $errorMessage; ?></p>
+                    <p style="padding: 32px;font-size: 1.3em;text-align: left;">Halt! <?php echo $errorMessage."[".$writ_of_passage_quest."] ".$_GET["wq"]; ?></p>
                     <small class="float-end" style="font-size: 1em;"> - Gate Gaurd</small>
                 </div>
                 <div class="modal-footer">
@@ -191,7 +191,7 @@ else
                     <?php } ?>
                     <div class="row">
                         <div class="col-12 col-lg-4">
-                                    <img src="/assets/media/<?php echo htmlspecialchars($quest['imagePath']);?>"  class="img-fluid img-thumbnail">
+                                    <img src="/assets/media/<?php echo htmlspecialchars($quest['imagePath_icon']);?>"  class="img-fluid img-thumbnail">
                                     <h6><?php echo $quest['name']; ?></h6>
                                     <small class="text-body-secondary float-end">Hosted by <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode(htmlspecialchars($quest["host_name"])); ?>" class="username"><?php echo htmlspecialchars($quest["host_name"]); ?></a>
                                     <?php if ($quest['host_name_2'] != null) { ?> and <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode(htmlspecialchars($quest['host_name_2'])); ?>" class="username"><?php echo htmlspecialchars($quest['host_name_2']);?></a><?php } ?>

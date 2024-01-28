@@ -41,13 +41,14 @@ $AllAccounts = $allAccountsResp->Data;
                 $activePageName = "Town Square";
                 require("php-components/base-page-breadcrumbs.php"); 
                 $selectUserFormId = "town-square";
-                $selectUsersFormPageSize = 20;
+                $selectUsersFormPageSize = 21;
                 require("php-components/select-user.php");
                 ?>
             </div>
             
             <?php require("php-components/base-page-discord.php"); ?>
         </div>
+        <?php require("php-components/base-page-footer.php"); ?>
     </main>
 
     

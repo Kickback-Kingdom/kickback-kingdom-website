@@ -574,88 +574,129 @@ if ($thisQuest["raffle_id"] != null)
                                                     </div>
                                                 </div>
                                             </div>
+                                            
+
+                                            <div class="row mb-3">
+                                                <div class="col-12">
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            <h5 class="card-title">Quest Date & Time Information</h5>
+                                                            
+                                                            <div class="row">
+                                                                <div class="col-12">
+                                                                    <div class="form-check form-switch">
+                                                                        <input class="form-check-input" type="checkbox" role="switch" id="edit-quest-options-has-a-date" name="edit-quest-options-has-a-date" <?php echo $thisQuest["end_date"] == null?"":"checked"; ?> onchange="OnDateTimeChangedForQuestOptions();">
+                                                                        <label class="form-check-label" for="edit-quest-options-has-a-date">Quest has a date</label>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row" id="date-time-row">
+                                                                <input type="hidden" name="edit-quest-options-datetime" id="edit-quest-options-datetime" value="<?php echo $thisQuest["end_date"]; ?>">
+
+                                                                <div class="col-md-6 mb-3">
+                                                                    <div class="form-group">
+                                                                        <label for="edit-quest-options-datetime-date" class="form-label">Date:</label>
+                                                                        <input type="date" id="edit-quest-options-datetime-date" name="edit-quest-options-datetime-date" value="<?php echo $thisQuestEndDate->format('Y-m-d'); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6 mb-3">
+                                                                    <div class="form-group">
+                                                                        <label for="edit-quest-options-datetime-time"  class="form-label">Time:</label>
+                                                                        <input type="time" id="edit-quest-options-datetime-time" name="edit-quest-options-datetime-time" value="" data-utc-time="<?php echo $thisQuestEndDate->format('H:i'); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
+                                                                    </div>
+                                                                </div>
+
+                                                                <script>
+                                                                    toggleDateTimeVisibility();
+                                                                    function OnDateTimeChangedForQuestOptions() {
+                                                                        const dateInput = document.getElementById('edit-quest-options-datetime-date');
+                                                                        const timeInput = document.getElementById('edit-quest-options-datetime-time');
+                                                                        const combinedDatetimeInput = document.getElementById('edit-quest-options-datetime');
+
+                                                                        // Combine date and time to create a local datetime string
+                                                                        const localDateTime = `${dateInput.value}T${timeInput.value}:00`;
+
+                                                                        // Convert to a Date object
+                                                                        const localDateObj = new Date(localDateTime);
+
+                                                                        // Format as UTC datetime string in "YYYY-MM-DD HH:MM:SS" format
+                                                                        const utcDate = localDateObj.toISOString().slice(0, 10);
+                                                                        const utcTime = String(localDateObj.getUTCHours()).padStart(2, '0') + ":" + 
+                                                                                        String(localDateObj.getUTCMinutes()).padStart(2, '0') + ":" + 
+                                                                                        String(localDateObj.getUTCSeconds()).padStart(2, '0');
+                                                                        
+                                                                        const utcDateTime = `${utcDate} ${utcTime}`;
+
+                                                                        // Set the hidden input's value to the UTC datetime
+                                                                        combinedDatetimeInput.value = utcDateTime;
+
+                                                                        toggleDateTimeVisibility();
+                                                                    }
+
+                                                                    function GetSelectedQuestStyle() {
+                                                                        return document.getElementById('edit-quest-options-style').value;
+                                                                    }
+
+                                                                    function OnQuestStyleChanged() {
+                                                                            // First, hide all the descriptions
+                                                                        for (let i = 0; i < 4; i++) {
+                                                                            document.getElementById(`quest-style-desc-${i}`).style.display = 'none';
+                                                                            var opt = document.getElementById(`quest-style-options-${i}`);
+                                                                            if (opt != null)
+                                                                                opt.style.display = 'none';
+                                                                        }
+
+                                                                        // Now, get the value of the selected option
+                                                                        const selectedValue = GetSelectedQuestStyle();
+
+                                                                        // If a valid option is selected, show the corresponding description
+                                                                        if (selectedValue !== '') {
+                                                                            document.getElementById(`quest-style-desc-${selectedValue}`).style.display = 'block';
+                                                                            var opt = document.getElementById(`quest-style-options-${selectedValue}`);
+                                                                            if (opt != null)
+                                                                            opt.style.display = 'block';
+                                                                        }
+
+                                                                        OnQuestOptionChanged();
+                                                                    }
+
+                                                                    function OnQuestOptionChanged() {
+                                                                        var bracketOptions = document.getElementById("quest-style-bracket-options");
+                                                                        bracketOptions.style.display = "none";
+
+                                                                        var selectedQuestStyle = GetSelectedQuestStyle();
+
+                                                                        let radioElement = document.getElementById('edit-quest-options-0-bracket');
+                                                                        if (radioElement.checked && selectedQuestStyle == '1') {
+                                                                            bracketOptions.style.display = "block";
+                                                                        }
+                                                                    }
+
+                                                                    function toggleDateTimeVisibility() {
+                                                                        const hasDateCheckbox = document.getElementById('edit-quest-options-has-a-date');
+                                                                        const dateTimeRow = document.getElementById('date-time-row');
+
+                                                                        if (hasDateCheckbox.checked) {
+                                                                            // If the checkbox is checked, show the date-time row
+                                                                            dateTimeRow.style.display = '';
+                                                                        } else {
+                                                                            // If the checkbox is not checked, hide the date-time row
+                                                                            dateTimeRow.style.display = 'none';
+                                                                        }
+                                                                    }
+
+                                                                </script>
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <div class="row">
-                                                <input type="hidden" name="edit-quest-options-datetime" id="edit-quest-options-datetime" value="<?php echo $thisQuest["end_date"]; ?>">
+                                                
 
-                                                <div class="col-md-4 mb-3">
-                                                    <div class="form-group">
-                                                        <label for="edit-quest-options-datetime-date" class="form-label">Date:</label>
-                                                        <input type="date" id="edit-quest-options-datetime-date" name="edit-quest-options-datetime-date" value="<?php echo $thisQuestEndDate->format('Y-m-d'); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-4 mb-3">
-                                                    <div class="form-group">
-                                                        <label for="edit-quest-options-datetime-time"  class="form-label">Time:</label>
-                                                        <input type="time" id="edit-quest-options-datetime-time" name="edit-quest-options-datetime-time" value="" data-utc-time="<?php echo $thisQuestEndDate->format('H:i'); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
-                                                    </div>
-                                                </div>
-
-                                                <script>
-                                                    function OnDateTimeChangedForQuestOptions() {
-                                                        const dateInput = document.getElementById('edit-quest-options-datetime-date');
-                                                        const timeInput = document.getElementById('edit-quest-options-datetime-time');
-                                                        const combinedDatetimeInput = document.getElementById('edit-quest-options-datetime');
-
-                                                        // Combine date and time to create a local datetime string
-                                                        const localDateTime = `${dateInput.value}T${timeInput.value}:00`;
-
-                                                        // Convert to a Date object
-                                                        const localDateObj = new Date(localDateTime);
-
-                                                        // Format as UTC datetime string in "YYYY-MM-DD HH:MM:SS" format
-                                                        const utcDate = localDateObj.toISOString().slice(0, 10);
-                                                        const utcTime = String(localDateObj.getUTCHours()).padStart(2, '0') + ":" + 
-                                                                        String(localDateObj.getUTCMinutes()).padStart(2, '0') + ":" + 
-                                                                        String(localDateObj.getUTCSeconds()).padStart(2, '0');
-                                                        
-                                                        const utcDateTime = `${utcDate} ${utcTime}`;
-
-                                                        // Set the hidden input's value to the UTC datetime
-                                                        combinedDatetimeInput.value = utcDateTime;
-                                                    }
-
-                                                    function GetSelectedQuestStyle() {
-                                                        return document.getElementById('edit-quest-options-style').value;
-                                                    }
-
-                                                    function OnQuestStyleChanged() {
-                                                            // First, hide all the descriptions
-                                                        for (let i = 0; i < 4; i++) {
-                                                            document.getElementById(`quest-style-desc-${i}`).style.display = 'none';
-                                                            var opt = document.getElementById(`quest-style-options-${i}`);
-                                                            if (opt != null)
-                                                                opt.style.display = 'none';
-                                                        }
-
-                                                        // Now, get the value of the selected option
-                                                        const selectedValue = GetSelectedQuestStyle();
-
-                                                        // If a valid option is selected, show the corresponding description
-                                                        if (selectedValue !== '') {
-                                                            document.getElementById(`quest-style-desc-${selectedValue}`).style.display = 'block';
-                                                            var opt = document.getElementById(`quest-style-options-${selectedValue}`);
-                                                            if (opt != null)
-                                                             opt.style.display = 'block';
-                                                        }
-
-                                                        OnQuestOptionChanged();
-                                                    }
-
-                                                    function OnQuestOptionChanged() {
-                                                        var bracketOptions = document.getElementById("quest-style-bracket-options");
-                                                        bracketOptions.style.display = "none";
-
-                                                        var selectedQuestStyle = GetSelectedQuestStyle();
-
-                                                        let radioElement = document.getElementById('edit-quest-options-0-bracket');
-                                                        if (radioElement.checked && selectedQuestStyle == '1') {
-                                                            bracketOptions.style.display = "block";
-                                                        }
-                                                    }
-
-                                                </script>
-
-                                                <div class="col-md-4 mb-3">
+                                                <div class="col-md-12 mb-3">
                                                     <div class="form-group">
                                                         <label for="edit-quest-options-style"  class="form-label">Quest Style:</label>
                                                         
@@ -688,6 +729,7 @@ if ($thisQuest["raffle_id"] != null)
                                                     </div>
                                                 </div>
                                             </div>
+
                                             <div class="row mb-3" id="quest-style-options-0">
                                                 <div class="col-12">
                                                     <div class="card">
@@ -716,6 +758,7 @@ if ($thisQuest["raffle_id"] != null)
                                                     </div>
                                                 </div>
                                             </div>
+
                                             <div class="row mb-3" id="quest-style-options-1">
                                                 <div class="col-12">
                                                     <div class="card">

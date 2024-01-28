@@ -36,16 +36,36 @@ for ($i=0; $i < count($playerRanks); $i++) {
     
 }
 
+
+for ($i = count($playerRanks); $i < 5; $i++ )
+{
+   $rankCode .= '<div><span class="badge float-start unranked" style="
+    width: 160px;
+    background-color: #00000029;
+    color: transparent;
+    margin-bottom:1px;
+"> / </span><span class="badge unranked float-end" style="
+    background: #00000073;
+    color: transparent;
+">X / X</span></div>';
+
+}
+
 ?>
 
 
 <div class="card player-card<?php echo ($isRanked1?" ranked-1":"")?>">
   <div class="ribbons-container">
       <div class="ribbon red"></div>
+      
+    <?php if ($playerCardAccount["IsMerchant"] == 1) { ?>
       <div class="ribbon blue"></div>
+      <?php } ?>
+      <?php if (true == false) { ?>
       <div class="ribbon green"></div>
       <div class="ribbon yellow"></div>
       <div class="ribbon purple"></div>
+      <?php } ?>
   </div>
 
   <div class="card-header<?php echo ($isRanked1?" ranked-1":"")?>">
