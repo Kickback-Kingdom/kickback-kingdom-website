@@ -1,0 +1,71 @@
+# For extensions/paths we don't know about,
+# let git attempt to automatically determine
+# if they are textfiles or not.
+*        text=auto
+
+# Known text files
+*.txt    text
+*.md     text
+*.mk     text
+*.mak    text
+*.c      text
+*.cpp    text
+*.cfg    text
+*.conf   text
+*.cs     text
+*.css    text
+*.d      text
+*.html   text
+*.ini    text
+*.pl     text
+*.php    text
+*.py     text
+*.js     text
+*.json   text
+*.sh     text eol=lf
+*.sql    text
+*.mysql  text
+*.svg    text
+*.vcproj text eol=crlf
+*.xhtml  text
+*.xml    text
+
+# Compressed files = not text
+*.gz     -text
+*.bz     -text
+*.xz     -text
+*.7z     -text
+*.zip    -text
+
+# Binary image files = not text
+*.avif   -text
+*.avifs  -text
+*.apng   -text
+*.png    -text
+*.mng    -text
+*.bmp    -text
+*.gif    -text
+*.jpg    -text
+*.jpeg   -text
+*.ico    -text
+*.pdf    -text
+*.tif    -text
+*.tiff   -text
+*.webp   -text
+
+# Other media files = not text
+*.mp3    -text
+*.mp4    -text
+*.mkv    -text
+*.ogg    -text
+*.wav    -text
+
+# Compiled object files and such = not text
+*.a      -text
+*.bin    -text
+*.dll    -text
+*.exe    -text
+*.lib    -text
+*.o      -text
+*.obj    -text
+*.so     -text
