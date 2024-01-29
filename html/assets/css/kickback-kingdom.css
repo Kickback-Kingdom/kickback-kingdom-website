@@ -80,7 +80,8 @@ body {
 }
 
 .quest-card {
-    background-image: url(/assets/images/kk.jpg) !important;
+    /*background-image: url(/assets/images/kk.jpg) !important;*/
+    background-color: var(--bs-primary);
     background-repeat: no-repeat;
     background-position: center;
     background-size: cover;

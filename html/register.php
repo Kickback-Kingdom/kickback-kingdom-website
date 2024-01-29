@@ -41,7 +41,7 @@ if (isset($_POST["submit"]))
   $hasError = !$resp->Success;
   if ($hasError)
   {
-    $errorMessage = $resp->Message." (Data: ".$resp->Data.")";
+    $errorMessage = $resp->Message;
   }
   else{
     $_POST["serviceKey"] = "***REMOVED***";
