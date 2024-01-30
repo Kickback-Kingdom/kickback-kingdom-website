@@ -1,0 +1,12 @@
+# _Recursively_ ignore everything in `html/assets/{media,images}`
+# except for the directories themselves
+# (and the .gitkeep files that persist the directories).
+# This will prevent git from trying to add a bunch of image files
+# that are going to be removed soon. (These .gitignore rules
+# might change once we have a stable way to manage image files.)
+/html/assets/media/**
+/html/assets/images/**
+!/html/assets/media/**/
+!/html/assets/images/**/
+!/html/assets/media/**/.gitkeep
+!/html/assets/images/**/.gitkeep
