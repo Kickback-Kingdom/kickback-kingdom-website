@@ -1,3 +1,7 @@
+# This folder should remain empty.
+/html/beta
+!/html/beta/.gitkeep
+
 # _Recursively_ ignore everything in `html/assets/{media,images}`
 # except for the directories themselves
 # (and the .gitkeep files that persist the directories).
