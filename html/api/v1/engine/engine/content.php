@@ -361,14 +361,33 @@ function UploadMediaImage($directory, $name, $desc, $imageBase64) {
     ];
     $fileExtension = $extensions[$mime];
 
+    // Start DB transaction
+    $db = $GLOBALS["conn"];
+    mysqli_begin_transaction($db);
+
+    try {
+        // Insert media record
+        $api_response = UploadMediaImageTransaction($db, $directory, $name, $desc, $fileExtension, $decodedImageData);
+        // If everything went well, commit the transaction
+        mysqli_commit($db);
+	return $api_response;
+
+    } catch (Exception $e) {
+        // An error occurred, roll back the transaction
+        mysqli_rollback($db);
+        return new APIResponse(false, $e->getMessage(), null);
+    }
+}
+
+function UploadMediaImageTransaction($db, $directory, $name, $desc, $fileExtension, $decodedImageData) {
     // Insert media record
     $mediaId = InsertMediaRecord($directory, $name, $desc, $fileExtension);
     if (!$mediaId) {
-        return new APIResponse(false, 'Error saving media record: ' . mysqli_error($GLOBALS['conn']), null);
+        throw new Exception('Error saving media record: ' . mysqli_error($db));
     }
 
     // Define the file path
-    $rootPath = "/var/www/html"; // Root path of your web server
+    $rootPath = "/var/www/kickback-kingdom-prod/html"; // Root path of your web server
     $filePath = join(DIRECTORY_SEPARATOR, [$rootPath, 'assets', 'media', $directory, "{$mediaId}.{$fileExtension}"]);
 
     $directoryPath = dirname($filePath);
@@ -379,11 +398,13 @@ function UploadMediaImage($directory, $name, $desc, $imageBase64) {
     }
 
     // Attempt to save the image
-    if (file_put_contents($filePath, $decodedImageData)) {
-        return new APIResponse(true, 'Image uploaded successfully.', ['mediaId' => $mediaId]);
-    } else {
-        return new APIResponse(false, 'Error saving the image.', null);
+    $fileSaved = file_put_contents($filePath, $decodedImageData);
+    $fileFound = file_exists($filePath);
+    if (!$fileSaved || !$fileFound) {
+        throw new Exception('Error saving the image.');
     }
+
+    return new APIResponse(true, 'Image uploaded successfully.', ['mediaId' => $mediaId]);
 }
 
 function SearchForMedia($directory, $searchTerm, $page, $itemsPerPage)
