@@ -1,8 +1,14 @@
 <?php
 
+require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
+
 function DiscordWebHook($msg)
 {
-    $webhookURL = "***REMOVED***";
+    $kk_credentials = LoadServiceCredentialsOnce();
+
+    // Ex: $webhookURL = "https://discord.com/api/webhooks/<some_number>/<api_key>"
+    $webhookURL = $kk_credentials["discord_api_url"] . '/' . $kk_credentials["discord_api_key"];
+
     $message = $msg;
 
     $jsonData = json_encode(array("content" => $message));

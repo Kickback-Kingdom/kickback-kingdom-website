@@ -14,8 +14,12 @@ if (isset($_GET["redirect"]))
 }
 if (isset($_POST["submit"]))
 {
+    require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
+    $kk_credentials = LoadServiceCredentialsOnce();
+    $kk_service_key = $kk_credentials["kk_service_key"];
+    unset($kk_credentials);
 
-    $_POST["serviceKey"] = "***REMOVED***";
+    $_POST["serviceKey"] = $kk_service_key;
     $resp = require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/account/login.php");
     $hasError = !$resp->Success;
     if (!$hasError)

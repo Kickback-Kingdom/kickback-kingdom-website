@@ -278,11 +278,16 @@ function GetMediaDirectories()
     return (new APIResponse(true, "Media Directories",  $dirs ));
 }
 
+require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
+
 function InsertMediaRecord($directory, $name, $desc, $extension) {
     // Get the global database connection and service key
     $db = $GLOBALS["conn"];
-    $serviceKey = $GLOBALS["kkservice"];
-    
+
+    $kk_credentials = LoadServiceCredentialsOnce();
+    $kk_service_key = $kk_credentials["kk_service_key"];
+    unset($kk_credentials);
+
     // Retrieve the author's ID from the session
     $author_id = $_SESSION["account"]["Id"];
 
@@ -298,7 +303,7 @@ function InsertMediaRecord($directory, $name, $desc, $extension) {
     }
     
     // Bind the parameters
-    mysqli_stmt_bind_param($stmt, 'sssiss', $serviceKey, $name, $desc, $author_id, $directory, $extension);
+    mysqli_stmt_bind_param($stmt, 'sssiss', $kk_service_key, $name, $desc, $author_id, $directory, $extension);
     
     // Execute the statement
     if (mysqli_stmt_execute($stmt)) {

@@ -41,10 +41,15 @@ if (isset($_POST["submit"]))
   $hasError = !$resp->Success;
   if ($hasError)
   {
-    $errorMessage = $resp->Message;
+    $errorMessage = $resp->Message." (Data: ".$resp->Data.")";
   }
   else{
-    $_POST["serviceKey"] = "***REMOVED***";
+    require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
+    $kk_credentials = LoadServiceCredentialsOnce();
+    $kk_service_key = $kk_credentials["kk_service_key"];
+    unset($kk_credentials);
+
+    $_POST["serviceKey"] = $kk_service_key;
     $resp = require_once($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/account/login.php");
     $hasError = !$resp->Success;
     if (!$hasError)
@@ -77,12 +82,14 @@ if (isset($_GET['wi']))
 if (isset($_GET['wq']))
 {
     require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
-    LoadServiceCredentials();
+    $kk_credentials = LoadServiceCredentialsOnce();
+    $kk_crypt_key_quest_id = $kk_credentials["crypt_key_quest_id"];
+    unset($kk_credentials);
 
     $writ_of_passage_quest = ($_GET['wq']);
     $writProvided = true;
     require_once($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/engine.php");
-    $crypt = new IDCrypt($kickback_service_credentials["crypt_key_quest_id"]);
+    $crypt = new IDCrypt($kk_crypt_key_quest_id);
     $wq = $crypt->decrypt($writ_of_passage_quest);
     $questResp = GetQuestById($wq);
     if ($questResp->Success)
@@ -151,7 +158,7 @@ if ($showGuard)
                 </div>
                 <div class="modal-body">
                     <img src="/assets/media/context/halt.jpeg" class="img-fluid"/>
-                    <p style="padding: 32px;font-size: 1.3em;text-align: left;">Halt! <?php echo $errorMessage."[".$writ_of_passage_quest."] ".$_GET["wq"]; ?></p>
+                    <p style="padding: 32px;font-size: 1.3em;text-align: left;">Halt! <?php echo $errorMessage; ?></p>
                     <small class="float-end" style="font-size: 1em;"> - Gate Gaurd</small>
                 </div>
                 <div class="modal-footer">
@@ -191,7 +198,7 @@ else
                     <?php } ?>
                     <div class="row">
                         <div class="col-12 col-lg-4">
-                                    <img src="/assets/media/<?php echo htmlspecialchars($quest['imagePath_icon']);?>"  class="img-fluid img-thumbnail">
+                                    <img src="/assets/media/<?php echo htmlspecialchars($quest['imagePath']);?>"  class="img-fluid img-thumbnail">
                                     <h6><?php echo $quest['name']; ?></h6>
                                     <small class="text-body-secondary float-end">Hosted by <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode(htmlspecialchars($quest["host_name"])); ?>" class="username"><?php echo htmlspecialchars($quest["host_name"]); ?></a>
                                     <?php if ($quest['host_name_2'] != null) { ?> and <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode(htmlspecialchars($quest['host_name_2'])); ?>" class="username"><?php echo htmlspecialchars($quest['host_name_2']);?></a><?php } ?>
