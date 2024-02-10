@@ -636,6 +636,8 @@ function GetAccountInventory($account_id)
     return (new APIResponse(true, "Account Inventory",  $rows ));
 }
 
+require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
+
 function RegisterAccount($firstName, $lastName, $password, $confirm_password, $username, $email, $i_agree, $passage_quest, $passage_id)
 {
     $firstName = mysqli_real_escape_string($GLOBALS["conn"], $firstName);
@@ -693,11 +695,12 @@ function RegisterAccount($firstName, $lastName, $password, $confirm_password, $u
     {
         return (new APIResponse(false, "Please use a valid Referrer's Username", null));
     }*/
-    
-    require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
-    LoadServiceCredentials();
 
-    $crypt = new IDCrypt($GLOBALS["kickback_service_credentials"]["crypt_key_quest_id"]);
+    $kk_credentials = LoadServiceCredentialsOnce();
+    $kk_crypt_key_quest_id = $kk_credentials["crypt_key_quest_id"];
+    unset($kk_credentials);
+
+    $crypt = new IDCrypt($kk_crypt_key_quest_id);
     if (ContainsData($passage_id,"passage_id")->Success)
     {
 
@@ -762,7 +765,11 @@ function RegisterAccount($firstName, $lastName, $password, $confirm_password, $u
     $result = mysqli_query($GLOBALS["conn"],$sql);
     if ($result === TRUE) {
 
-        $loginResp = Login($GLOBALS["kkservice"],$email,$password);
+        $kk_credentials = LoadServiceCredentialsOnce();
+        $kk_service_key = $kk_credentials["kk_service_key"];
+        unset($kk_credentials);
+
+        $loginResp = Login($kk_service_key,$email,$password);
         $login = $loginResp->Data;
 
         /*$timestamp = strtotime("2023-06-01");

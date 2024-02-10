@@ -44,7 +44,12 @@ if (isset($_POST["submit"]))
     $errorMessage = $resp->Message." (Data: ".$resp->Data.")";
   }
   else{
-    $_POST["serviceKey"] = "***REMOVED***";
+    require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
+    $kk_credentials = LoadServiceCredentialsOnce();
+    $kk_service_key = $kk_credentials["kk_service_key"];
+    unset($kk_credentials);
+
+    $_POST["serviceKey"] = $kk_service_key;
     $resp = require_once($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/account/login.php");
     $hasError = !$resp->Success;
     if (!$hasError)
@@ -77,12 +82,14 @@ if (isset($_GET['wi']))
 if (isset($_GET['wq']))
 {
     require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
-    LoadServiceCredentials();
+    $kk_credentials = LoadServiceCredentialsOnce();
+    $kk_crypt_key_quest_id = $kk_credentials["crypt_key_quest_id"];
+    unset($kk_credentials);
 
     $writ_of_passage_quest = ($_GET['wq']);
     $writProvided = true;
     require_once($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/engine.php");
-    $crypt = new IDCrypt($kickback_service_credentials["crypt_key_quest_id"]);
+    $crypt = new IDCrypt($kk_crypt_key_quest_id);
     $wq = $crypt->decrypt($writ_of_passage_quest);
     $questResp = GetQuestById($wq);
     if ($questResp->Success)

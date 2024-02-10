@@ -10,7 +10,6 @@
     use PHPMailer\PHPMailer\SMTP;
 
 require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
-LoadServiceCredentials();
 
 $session = require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
@@ -50,7 +49,7 @@ if (isset($_GET["redirect"]))
               //Create an instance; passing `true` enables exceptions
               $mail = new PHPMailer(true);
               try {
-                  $kk_credentials =& $kickback_service_credentials;
+                  $kk_credentials = LoadServiceCredentialsOnce();
 
                   $mail->IsSMTP(); // telling the class to use SMTP
                   //$mail->SMTPDebug  = 2;                     // enables SMTP debug information (for testing)

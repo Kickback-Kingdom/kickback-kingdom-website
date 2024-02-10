@@ -15,10 +15,5 @@ $searchTerm = Validate($_POST["searchTerm"]);
 $page = Validate($_POST["page"]);
 $itemsPerPage = Validate($_POST["itemsPerPage"]);
 
-/*$loginResp = GetLoginSession($GLOBALS["kkservice"], $sessionToken);
-if (!$loginResp->Success)
-{
-    return $loginResp;
-}*/
 return SearchForAccount($searchTerm, $page, $itemsPerPage);
 ?>

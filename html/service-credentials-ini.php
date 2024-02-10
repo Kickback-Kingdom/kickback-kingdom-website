@@ -93,6 +93,13 @@ function ValidateServiceCredentials(&$credentials)
     // Encryption key. As of this writing, used for encrypting quest IDs.
     $error_count += !CredentialStringExists     ("crypt_key_quest_id", $credentials);
 
+    // Discord auth info; used for sending notifications about events and stuff.
+    $error_count += !CredentialStringExists     ("discord_api_url",    $credentials); // https://discord.com/api/webhooks/<some_number>
+    $error_count += !CredentialStringExists     ("discord_api_key",    $credentials); // Concatenated with `discord_api_url` to get the full URL for discord API access.
+
+    // Kickback Kingdom auth info; used to establish sessions with backend API
+    $error_count += !CredentialStringExists     ("kk_service_key",     $credentials);
+
     return ($error_count > 0);
 }
 
@@ -140,5 +147,20 @@ function LoadServiceCredentials()
     }
 
     $GLOBALS["kickback_service_credentials"] = $kickback_service_credentials;
+    return $kickback_service_credentials;
+}
+
+function LoadServiceCredentialsOnce()
+{
+    global $kickback_service_credentials;
+
+    // Memoize results to avoid executing this over and over.
+    // (Technically we could use `!is_null($kickback_service_credentials)` as
+    // the condition here, but we use `isset` just in case caller code unsets
+    // the global value for some reason, and we need to reload it.)
+    if ( isset($kickback_service_credentials) )
+        return $kickback_service_credentials;
+
+    return LoadServiceCredentials();
 }
 ?>

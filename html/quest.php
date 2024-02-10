@@ -148,9 +148,11 @@ if (isset($_POST['submit-apply']))
 }
 
 require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
-LoadServiceCredentials();
+$kk_credentials = LoadServiceCredentialsOnce();
+$kk_crypt_key_quest_id = $kk_credentials["crypt_key_quest_id"];
+unset($kk_credentials);
 
-$crypt = new IDCrypt($kickback_service_credentials["crypt_key_quest_id"]);
+$crypt = new IDCrypt($kk_crypt_key_quest_id);
 $qId = urlencode($crypt->encrypt($thisQuest["Id"]));
 //$qId = urlencode(encode_id($thisQuest["Id"]));
 $redirectURL = $urlPrefixBeta."/login.php?redirect=".urlencode("q/".$thisQuest["locator"]).'&wq='.$qId;
