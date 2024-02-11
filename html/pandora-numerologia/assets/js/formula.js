@@ -32,6 +32,7 @@ function isVowel(character) {
     let vowels = ['a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U'];
     return vowels.includes(character);
 }
+
 function removeAccents(str) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
@@ -76,6 +77,7 @@ function SetSoulNumber(num)
 {
     document.getElementById("soulNumResult").innerText = num;
 }
+
 const soulSumMode = {"Vowels":0, "Consonants":1, "Everything": 2};
 function GetSoulNumbers(str, mode) {
     var nums = [];
@@ -227,11 +229,14 @@ function GetResults()
     //console.log("Challenge 3: "+challenge_1+" - "+challenge_2+" = "+challenge_3);
     //console.log("Challenge 4: "+dobMonthSum+" - "+dobYearSum+" = "+challenge_4);
 
+    var challengeDayValue = SumSoulNumbers(GetDigits(result["calculations"]["lifeLesson"]["numbers"][0]));
+    var challengeMonthValue = SumSoulNumbers(GetDigits(result["calculations"]["lifeLesson"]["numbers"][1]));
+    var challengeYearValue = SumSoulNumbers(GetDigits(result["calculations"]["lifeLesson"]["numbers"][2]));
 
-    var newChallenge1 = Math.abs(result["calculations"]["lifeLesson"]["numbers"][0]- result["calculations"]["lifeLesson"]["numbers"][1]);
-    var newChallenge2 = Math.abs(result["calculations"]["lifeLesson"]["numbers"][0]- result["calculations"]["lifeLesson"]["numbers"][2]);
+    var newChallenge1 = Math.abs(challengeDayValue - challengeMonthValue);
+    var newChallenge2 = Math.abs(challengeDayValue - challengeYearValue);
     var newChallenge3 = Math.abs(newChallenge1-newChallenge2);
-    var newChallenge4 = Math.abs(result["calculations"]["lifeLesson"]["numbers"][1]-result["calculations"]["lifeLesson"]["numbers"][2]);
+    var newChallenge4 = Math.abs(challengeMonthValue - challengeYearValue);
 
     result["calculations"]["lifeChallenges"] = {"challenge_1": newChallenge1,"challenge_2": newChallenge2,"challenge_3": newChallenge3,"challenge_4": newChallenge4};
     result["calculations"]["lifeChallenges"]["primaryChallenge"] = newChallenge3;
@@ -369,6 +374,7 @@ function PopulateLifeLesson(result) {
  html += "<h4 class='p-2 text-bg-primary'>Lição de vida = "+result.calculations.lifeLesson.result+"</h4>";
 
  $("#resultsLifeLessons").html(html);
+ $("#finalResultLifeLessons").html(result.calculations.lifeLesson.result);
 }
 
 function PopulateDestiny(result) {
@@ -396,6 +402,7 @@ function PopulateDestiny(result) {
  html += "<h4 class='p-2 text-bg-primary'>Destino = "+result.fullName.all.result+"</h4>";
 
  $("#resultsDestiny").html(html);
+ $("#finalResultDestiny").html(result.fullName.all.result);
 }
 
 function PopulatePhasesOfLife(result) {
@@ -427,7 +434,7 @@ function PopulatePhasesOfLife(result) {
   </li>       
   </ol>`;
     
-    $("#resultsPhasesOfLife").html(html);
+  $("#resultsPhasesOfLife").html(html);
 }
 
 function PopulateLifeChallenges(result) {
@@ -477,6 +484,7 @@ function PopulatePowerfulNumber(result){
   html += "<h4 class='p-2 text-bg-primary'>Número poderoso = "+result["calculations"]["powerfulNumber"]["result"]+"</h4>";
     
     $("#resultsPowerfulNumber").html(html);
+    $("#finalResultPowerfulNumber").html(result["calculations"]["powerfulNumber"]["result"]);
     
 }
 function PopulateResultsName(result){
@@ -503,6 +511,7 @@ function PopulateResultsName(result){
     html += "<h4 class='p-2 text-bg-primary'>Alma = "+result.fullName.vowels.result+"</h4>";
 
     $("#resultsName").html(html);
+    $("#finalResultName").html(result.fullName.vowels.result);
     
 }
 
@@ -529,6 +538,7 @@ function PopulateResultsNameConsonates(result){
     html += "<h4 class='p-2 text-bg-primary'>Aparência = "+result.fullName.consonants.result+"</h4>";
 
     $("#resultsNameCon").html(html);
+    $("#finalResultNameCon").html(result.fullName.consonants.result);
     
 }
 

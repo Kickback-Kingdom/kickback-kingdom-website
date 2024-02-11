@@ -1,6 +1,7 @@
 :root {
     --bs-primary: #FF0000;/*#4020E0;*/
     --bs-secondary: #4020E0;
+    --bs-accordion-active-bg: #4020E0; 
 }       
 
 body {
@@ -221,4 +222,9 @@ word-wrap: break-word; /* Allow the body content to break into multiple lines if
 
 .text-shadow {
     text-shadow: 2px 2px 2px #000000;
+}
+
+.accordion-button:not(.collapsed) {
+    color: white;
+    background-color: var(--bs-secondary);
 }
