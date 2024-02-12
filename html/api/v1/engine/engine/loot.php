@@ -72,10 +72,10 @@ function ConvertIntoItemInformation($item)
     $itemInfo["desc"] = $item["desc"];
     $itemInfo["name"] = $item["name"];
     $itemInfo["artist"] = $item["artist"];
-    $itemInfo["nominator"] = $item["nominator"];
-    $itemInfo["equipable"] = $item["equipable"];
-    $itemInfo["equipment_slot"] = $item["equipment_slot"];
-    $itemInfo["next_loot_id"] = $item["next_loot_id"];
+    $itemInfo["nominator"] = $item["nominator"] ?? null;
+    $itemInfo["equipable"] = $item["equipable"] ?? false;
+    $itemInfo["equipment_slot"] = $item["equipment_slot"] ?? null;
+    $itemInfo["next_loot_id"] = $item["next_loot_id"] ?? null;
     $itemInfo["date_created"] = date_format(date_create($item["DateCreated"]),"M j, Y");
     
     $itemInfo["image"] = null;

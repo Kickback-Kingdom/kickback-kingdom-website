@@ -36,7 +36,7 @@ $homeFeed = $homeFeedResp->Data;
                 
                 <?php 
                 
-                $randomQuote = getRandomQuote($quotes);
+                $randomQuote = getRandomQuote();
 
                 $feedCard["type"] = "QUOTE";
                 $feedCard["text"] = $randomQuote["text"];
@@ -59,7 +59,6 @@ $homeFeed = $homeFeedResp->Data;
                 for ($i=0; $i < count($homeFeed); $i++) 
                 { 
                     $news = $homeFeed[$i];
-                    echo "<!--".htmlspecialchars($news["summary"])."-->";
                     $feedCard = $news;
                     require ("php-components/feed-card.php");
                 }

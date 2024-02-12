@@ -22,13 +22,30 @@ $feedCardHostName2 = null;
 $feedCardDate = new DateTime();
 $feedCardHasCreatedBy = true;
 $feedCardExpired = false;
-$feedCardTitle = htmlspecialchars($feedCard["title"]);
+
+if (isset($feedCard["title"]))
+    $feedCardTitle = htmlspecialchars($feedCard["title"]);
+
 $feedCardImagePath = htmlspecialchars($feedCard['image']);
 $feedCardDesc = htmlspecialchars($feedCard["text"]);
 $feedCardHostName = htmlspecialchars($feedCard["account_1_username"]);
-$feedCardHostName2 = htmlspecialchars($feedCard['account_2_username']);
-$feedCardHasDate = $feedCard["date"] != null;
-$feedCardDate = date_create($feedCard["date"]);
+
+if (isset($feedCard["account_2_username"]))
+    $feedCardHostName2 = htmlspecialchars($feedCard['account_2_username']);
+
+if (isset($feedCard["date"]))
+{
+    $feedCardHasDate = $feedCard["date"] != null;
+    $feedCardDate = date_create($feedCard["date"]);
+}
+else
+    $feedCardHasDate = false;
+
+if (!array_key_exists("style",$feedCard))
+{
+    $feedCard["style"] = 0;
+}
+
 $feedCardCTA = "Learn More";
 $feedCardHideCTA = false;
 $feedCardHideType = false;

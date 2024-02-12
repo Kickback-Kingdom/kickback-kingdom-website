@@ -330,7 +330,7 @@ $mediaDirs = $mediaDirsResp->Data;
     </div>
     <div class="offcanvas-body">
         <?php 
-        print_r($notifications);
+        
             if (IsLoggedIn() && !is_null($activeAccountInfo->notifications))
             {
                 
@@ -803,7 +803,21 @@ $mediaDirs = $mediaDirsResp->Data;
                 ?>
                 <li class="nav-item dropdown">
                     <a class="btn dropdown-toggle btn-primary" type="button" style="height: 38px;" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <?php
+
+                            if (IsLoggedIn())
+                            {
+                        ?>
                         <img class="rounded-circle" style="height: 100%;width: auto;" src="/assets/media/<?php echo GetAccountProfilePicture($_SESSION["account"]); ?>"/>
+                        <?php
+                            }
+                            else
+                            {
+                        ?>
+                            <img class="rounded-circle" style="height: 100%;width: auto;" src=""/>
+                        <?php
+                            }
+                        ?>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" data-bs-theme="light">
                         <?php

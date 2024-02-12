@@ -58,7 +58,7 @@ for ($i = count($playerRanks); $i < 5; $i++ )
   <div class="ribbons-container">
       <div class="ribbon red"></div>
       
-    <?php if ($playerCardAccount["IsMerchant"] == 1) { ?>
+    <?php if (isset($playerCardAccount["IsMerchant"]) && $playerCardAccount["IsMerchant"] == 1) { ?>
       <div class="ribbon blue"></div>
       <?php } ?>
       <?php if (true == false) { ?>
