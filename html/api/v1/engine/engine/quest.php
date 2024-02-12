@@ -324,7 +324,6 @@ function GetTBAQuestsFeed($page = 1, $itemsPerPage = 10)
 function GetAvailableQuestsFeed($page = 1, $itemsPerPage = 10)
 {
     $offset = ($page - 1) * $itemsPerPage;
-    $id = mysqli_real_escape_string($GLOBALS["conn"], $id);
     $sql = "SELECT * FROM kickbackdb.v_feed WHERE type = 'QUEST' and date > CURRENT_TIMESTAMP and published = 1 order by date asc";
 
     
@@ -339,7 +338,6 @@ function GetAvailableQuestsFeed($page = 1, $itemsPerPage = 10)
 function GetArchivedQuestsFeed($page = 1, $itemsPerPage = 10)
 {
     $offset = ($page - 1) * $itemsPerPage;
-    $id = mysqli_real_escape_string($GLOBALS["conn"], $id);
     $sql = "SELECT * FROM kickbackdb.v_feed WHERE type = 'QUEST' and date <= CURRENT_TIMESTAMP and published = 1 and finished = 1 order by date desc";
 
     

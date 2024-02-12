@@ -33,6 +33,9 @@ function LoginToService($accountId, $serviceKey)
 
 function IsLoggedIn()
 {
+    if (!array_key_exists("sessionToken", $_SESSION))
+        return false;
+
     return ($_SESSION["sessionToken"] != null && $_SESSION["serviceKey"] != null && $_SESSION["account"] != null);
 }
 
@@ -409,8 +412,8 @@ function GetBadgesByAccountId($id)
 
     // Close statement
     mysqli_stmt_close($stmt);
-
-    return (new APIResponse(true, $row["Username"]."'s Badges.",  $rows ));
+    
+    return (new APIResponse(true, "Requested users badges.",  $rows ));
 }
 
 function GetSkillsByAccountId($id)
@@ -801,17 +804,17 @@ function RegisterAccount($firstName, $lastName, $password, $confirm_password, $u
 
 function GetAccountProfilePicture($account)
 {
-    if ($account["avatar_media"] == null)
+    if (isset($account["avatar_media"]))
+    {
+        return $account["avatar_media"];
+    }
+    else
     {
         if (isset($account["AccountId"]))
             $accountId = $account["AccountId"];
         else
             $accountId = $account["Id"];
         return "profiles/young-".GetAccountDefaultProfilePicture($accountId).".jpg";
-    }
-    else
-    {
-        return $account["avatar_media"];
     }
 }
 

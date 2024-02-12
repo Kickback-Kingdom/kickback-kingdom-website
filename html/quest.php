@@ -870,7 +870,7 @@ if ($thisQuest["raffle_id"] != null)
                                                 <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Summary is too short</p>
                                             <?php } ?>
 
-                                            <?php if(QuestPageContentIsValid($pageContent["data"])) { ?>
+                                            <?php if((is_null($thisQuest["content_id"])) || QuestPageContentIsValid($pageContent["data"])) { ?>
                                                 <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Content</p>
                                             <?php } else { ?>
                                                 <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Content is too short</p>

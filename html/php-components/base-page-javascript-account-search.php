@@ -29,7 +29,7 @@ function SearchForAccount(formId, pageIndex = 1, clickableFunction = null)
     ClearSearchAccountResults(formId); 
     const data = {
         searchTerm: $("#"+formId+"selectAccountSearchTerm").val(),
-        sessionToken: "<?php echo $_SESSION["sessionToken"]; ?>",
+        sessionToken: "<?php echo $_SESSION["sessionToken"] ?? ""; ?>",
         page: pageIndex, // added this line
         itemsPerPage: usersPerPage // and this line
     };

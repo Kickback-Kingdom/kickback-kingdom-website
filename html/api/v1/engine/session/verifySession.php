@@ -1,5 +1,5 @@
 <?php
-require(__DIR__."/../../engine/engine.php");
+require_once(__DIR__."/../../engine/engine.php");
 
 if (IsPOST())
 {

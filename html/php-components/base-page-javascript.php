@@ -9,7 +9,7 @@
 
     <!--<script src="assets/owl-carousel/owl.carousel.js"></script>-->
     <script>
-
+        const KKAPI = new KickbackKingdomAPI("<?php echo ($_SESSION["sessionToken"] ?? ""); ?>");
         var play_styles = <?php echo GetPlayStyleJSON(); ?>;
         $(document).ready(function () {
 
