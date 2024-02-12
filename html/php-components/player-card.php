@@ -45,9 +45,12 @@ for ($i=0; $i < count($playerRanks); $i++) {
       
     <?php if (isset($playerCardAccount["IsMerchant"]) && $playerCardAccount["IsMerchant"] == 1) { ?>
       <div class="ribbon blue"></div>
+      <?php } ?>
+      <?php if (true == false) { ?>
       <div class="ribbon green"></div>
       <div class="ribbon yellow"></div>
       <div class="ribbon purple"></div>
+      <?php } ?>
   </div>
 
   <div class="card-header<?php echo ($isRanked1?" ranked-1":"")?>">
