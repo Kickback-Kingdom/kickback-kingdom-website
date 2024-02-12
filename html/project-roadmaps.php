@@ -80,8 +80,8 @@ require("php-components/base-page-pull-active-account-info.php");
                 <ol>
                     <li><strong>Develop Website & Automate Growth</strong>
                         <ul>
-                            <li><strong>Phase 1 - Planning:</strong> Define essential features, plan out a roadmap timeline, write TOS and consult a lawyer</li>
-                            <li><strong>Phase 2 - Build & Test:</strong> Adopt Agile practices for development and engage the community for beta testing.</li>
+                            <li><strong>Phase 1 - Planning:</strong> Define official features, plan out a roadmap timeline, write TOS and consult a lawyer</li>
+                            <li><strong>Phase 2 - Build & Test:</strong> Adopt Agile practices for development and engage the community for beta testing. Create social media accounts.</li>
                             <li><strong>Phase 3 - Launch:</strong> Roll out the website and each guild</li>
                             <li><strong>Phase 4 - Grow:</strong> Plan out quests/community events such as raffles and tournaments</li>
                             <li><strong>Goal:</strong> Finished & released website and all legal questions answered</li>
@@ -198,32 +198,16 @@ var events = [
         title: 'Kickback Kingdom - Planning',
         description: '',
         checklist: [
-            [true, null, "Finish grand strategy planning"],
+            [false, null, "Finish grand strategy planning"],
             [false, null, "Finish roadmap for the grand strategy "],
+            [false, null, "Define official features"],
             [false, 2, "Write document about how the guild share payment system will work"],
             [false, 2, "Build presentation for lawyer consultation"],
             [false, 2, "Write TOS for the website/guilds"],
             [false, 2, "Find a lawyer to consult with about legalities"],
+            [false, 2, "Find and setup a password manager"],
+            [false, 1, "Make a dropdown for each step in the grand strategy in the roadmap"],
             [false, null, "consult with lawyer"],
-        ]
-    },
-    {
-        group: 'Develop Website & Automate Growth - Phase 2',
-        title: 'Website - Admin Dashboard',
-        description: '',
-        checklist: [
-            [false, 1, "Finish merchant guild share processing system"],
-            [false, 1, "Account management (banning/unbanning)"],
-            [false, 1, "write blog post about new feature"],
-        ]
-    },
-    {
-        group: 'Develop Website & Automate Growth - Phase 2',
-        title: 'Website - Data Analyst Dashboard',
-        description: '',
-        checklist: [
-            [false, 1, "data on user retention rate"],
-            [false, 1, "write blog post about new feature"],
         ]
     },
     {
@@ -231,20 +215,8 @@ var events = [
         title: 'Website - Security Audit',
         description: '',
         checklist: [
-            [false, 3, "Fix SSL Chain Issue"],
+            [true, 3, "Fix SSL Chain Issue"],
             [false, 1, "Do an entire API Audit"],
-            [false, 1, "write blog post about new feature"],
-        ]
-    },
-    {
-        group: 'Develop Website & Automate Growth - Phase 2',
-        title: 'Website - Maintenance Systems',
-        description: '',
-        checklist: [
-            [false, 1, "Create a SQL and File backup system"],
-            [false, 1, "Image Reviewer tool to be able to delete and replace images"],
-            [false, 1, "A way to push beta to production with a easy way to revert"],
-            [false, 1, "write blog post about new feature"],
         ]
     },
     {
@@ -284,35 +256,19 @@ var events = [
             [false, 2, "create a banner for the admin dashboard page"],
             [false, 2, "create a banner for the home feed page"],
             [false, 2, "review all the images currently uploaded and replace any with the 'Bing' logo"],
+            [false, 2, "Identify bad load time areas"],
+            [false, 1, "Optimize the identified bad load time areas if they are code based"],
+            [false, 2, "Optimize the identified bad load time areas if they are image based"],
         ]
     },
     {
         group: 'Develop Website & Automate Growth - Phase 2',
-        title: 'Website - Town Square',
-        description: 'A collection of UI/UX enhancements for the \'Town Square\' platform feature. Changes span from visual consistency in player cards to improved search functionalities and tooltip interactions, all designed to refine the user experience.',
+        title: 'Website - Maintenance Systems',
+        description: '',
         checklist: [
-            [false, 1, "Put gray placeholder boxes on game rankings for player cards that dont have 4 stats"],
-            [false, 1, "When a user clicks on a badge, open the item modal instead of the tooltip"],
-            [false, 1, "Fix tooltip hover for ranking stats"],
-            [false, 1, "Guild ribbons on player cards to show accurate information"],
-            [false, 1, "Hoving over experience bar doesnt show exp anymore"],
-            [false, 1, "Put an icon to the left of the search bar"],
-            [false, 1, "Make it so the search bar isnt stretching across the screen."],
-            [false, 1, "write blog post about new feature"],
-        ]
-    },
-    {
-        group: 'Develop Website & Automate Growth - Phase 2',
-        title: 'Website - Forums',
-        description: 'Enhancements to the \'Forums\' segment of our platform include foundational features allowing users to create, interact with, and moderate content. This update suite introduces forum creation, post interactions, a dedicated moderator dashboard, and robust moderation tools, ensuring a structured and safe community space.',
-        checklist: [
-            [false, 1, "Ability to create forums"],
-            [false, 1, "Ability to create posts"],
-            [false, 1, "Ability to comment on posts"],
-            [false, 1, "Moderation can delete a post or comment"],
-            [false, 2, "Forum moderator badge"],
-            [false, 1, "Users can flag a post for review"],
-            [false, 1, "Moderator Dashboard where flagged comments can be seen"],
+            [false, 1, "Create a SQL and File backup system"],
+            [false, 1, "Image Reviewer tool to be able to delete and replace images"],
+            [false, 1, "A way to push beta to production with a easy way to revert"],
             [false, 1, "write blog post about new feature"],
         ]
     },
@@ -329,6 +285,114 @@ var events = [
             [false, 1, "Photo upload doesnt clear and bring you back to the first step"],
             [false, 1, "After uploading it should auto select the image you just uploaded to be used for image selection"],
             [false, 1, "Highlight the last moved item"],
+            [false, 1, "write blog post about new feature"],
+        ]
+    },
+    {
+        group: 'Develop Website & Automate Growth - Phase 2',
+        title: 'Website - Town Square',
+        description: 'A collection of UI/UX enhancements for the \'Town Square\' platform feature. Changes span from visual consistency in player cards to improved search functionalities and tooltip interactions, all designed to refine the user experience.',
+        checklist: [
+            [true, 1, "Put gray placeholder boxes on game rankings for player cards that dont have 4 stats"],
+            [false, 1, "When a user clicks on a badge, open the item modal instead of the tooltip"],
+            [true, 1, "Fix tooltip hover for ranking stats"],
+            [true, 1, "Guild ribbons on player cards to show accurate information"],
+            [true, 1, "Hoving over experience bar doesnt show exp anymore"],
+            [true, 1, "Put an icon to the left of the search bar"],
+            [true, 1, "Make it so the search bar isnt stretching across the screen."],
+            [true, 1, "Make it so that if you aren't logged in you can still use the town square"],
+            [true, 1, "Add footer to the page"],
+            [false, 1, "write blog post about new feature"],
+
+        ]
+    },
+    {
+        group: 'Develop Website & Automate Growth - Phase 2',
+        title: 'Website - Notifications',
+        description: '',
+        checklist: [
+            [false, 1, "when a user logs-in have a popup that says 'you have unclaimed rewards' and then it opens your notifications tab - only if a notification has pending rewards"],
+            [false, 1, "email the accounts when they recieve a notification"],
+            [false, 1, "Get notified if someone comments on your post in a forum or in a blog or on your quest"],
+            [false, 1, "Collect raffle tickets when people review your quests"],
+            [false, 1, "Remove prestige from the notifications"],
+            [false, 1, "write blog post about new feature"],
+        ]
+    },
+    {
+        group: 'Develop Website & Automate Growth - Phase 2',
+        title: 'Website - Prestige',
+        description: '',
+        checklist: [
+            [false, 1, "Collect a raffle ticket when you use a prestige token"],
+            [false, 1, "use form token to prevent using multiple prestige tokens"],
+            [false, 1, "write blog post about new feature"],
+        ]
+    },
+    {
+        group: 'Develop Website & Automate Growth - Phase 2',
+        title: 'Website - Adventurers\' Guild',
+        description: '',
+        checklist: [
+            [false, 1, "Make it cost 50 raffle tickets to create a quest"],
+            [false, 1, "Make it so hosts will receive 1 raffle ticket per star rating on host and quest review per participant"],
+            [false, 1, "Allow host to submit quest for review"],
+            [false, 1, "Allow admins to published quests after being reviewed"],
+            [false, 1, "Allow admins to reject quests with response after being reviewed"],
+            [false, 1, "Allow hosts to setup their prizes based on their owned items"],
+            [false, 1, "Add comment section to quests"],
+            [false, 1, "add proof submission section to quests"],
+            [false, 1, "write blog post about new feature"],
+        ]
+    },
+    {
+        group: 'Develop Website & Automate Growth - Phase 2',
+        title: 'Website - Admin Dashboard',
+        description: '',
+        checklist: [
+            [true, 1, "Finish merchant guild share processing system"],
+            [false, 1, "Account management (banning/unbanning)"],
+            [false, 1, "write blog post about new feature"],
+        ]
+    },
+    {
+        group: 'Develop Website & Automate Growth - Phase 2',
+        title: 'Website - Data Analyst Dashboard',
+        description: '',
+        checklist: [
+            [false, 1, "data on user retention rate"],
+            [false, 1, "write blog post about new feature"],
+        ]
+    },
+    {
+        group: 'Develop Website & Automate Growth - Phase 2',
+        title: 'Website - Merchant\'s Guild',
+        description: '',
+        checklist: [
+            [false, 1, "Add subscription plan maker"],
+            [false, 1, "write blog post about new feature"],
+        ]
+    },
+    {
+        group: 'Develop Website & Automate Growth - Phase 2',
+        title: 'Website - Trading',
+        description: '',
+        checklist: [
+            [false, 1, "write blog post about new feature"],
+        ]
+    },
+    {
+        group: 'Develop Website & Automate Growth - Phase 2',
+        title: 'Website - Forums',
+        description: 'Enhancements to the \'Forums\' segment of our platform include foundational features allowing users to create, interact with, and moderate content. This update suite introduces forum creation, post interactions, a dedicated moderator dashboard, and robust moderation tools, ensuring a structured and safe community space.',
+        checklist: [
+            [false, 1, "Ability to create forums"],
+            [false, 1, "Ability to create posts"],
+            [false, 1, "Ability to comment on posts"],
+            [false, 1, "Moderation can delete a post or comment"],
+            [false, 2, "Forum moderator badge"],
+            [false, 1, "Users can flag a post for review"],
+            [false, 1, "Moderator Dashboard where flagged comments can be seen"],
             [false, 1, "write blog post about new feature"],
         ]
     },
@@ -387,15 +451,6 @@ var events = [
     },
     {
         group: 'Develop Website & Automate Growth - Phase 2',
-        title: 'Website - Notifications',
-        description: '',
-        checklist: [
-            [false, 1, "Get notified if someone comments on your post in a forum or in a blog or on your quest"],
-            [false, 1, "write blog post about new feature"],
-        ]
-    },
-    {
-        group: 'Develop Website & Automate Growth - Phase 2',
         title: 'Website - Profile Page',
         description: '',
         checklist: [
@@ -412,23 +467,7 @@ var events = [
     },
     {
         group: 'Develop Website & Automate Growth - Phase 2',
-        title: 'Website - Adventurers\' Guild',
-        description: '',
-        checklist: [
-            [false, 1, "write blog post about new feature"],
-        ]
-    },
-    {
-        group: 'Develop Website & Automate Growth - Phase 2',
         title: 'Website - Craftsmen\'s Guild',
-        description: '',
-        checklist: [
-            [false, 1, "write blog post about new feature"],
-        ]
-    },
-    {
-        group: 'Develop Website & Automate Growth - Phase 2',
-        title: 'Website - Merchant\'s Guild',
         description: '',
         checklist: [
             [false, 1, "write blog post about new feature"],
@@ -471,14 +510,7 @@ var events = [
         title: 'Marketing - Social Media',
         description: '',
         checklist: [
-            [false, 1, "write blog post about new feature"],
-        ]
-    },
-    {
-        group: 'Develop Website & Automate Growth - Phase 2',
-        title: 'Website - Trading',
-        description: '',
-        checklist: [
+            [true, 2, "Create Twitter (X) Account"],
             [false, 1, "write blog post about new feature"],
         ]
     },
@@ -501,6 +533,14 @@ var events = [
     {
         group: 'Develop Website & Automate Growth - Phase 2',
         title: 'Website - Item Forge',
+        description: '',
+        checklist: [
+            [false, 1, "write blog post about new feature"],
+        ]
+    },
+    {
+        group: 'Develop Website & Automate Growth - Phase 2',
+        title: 'Website - Item Shop',
         description: '',
         checklist: [
             [false, 1, "write blog post about new feature"],
@@ -668,7 +708,7 @@ $(document).ready(function() {
                 username = `<a href="<?php echo $urlPrefixBeta; ?>/u/${accounts[item[1]]}" class="username">${accounts[item[1]]}</a>`
                 
             let icon = item[0] ? '<i class="fa-solid fa-square-check"></i>' : '<i class="fa-regular fa-square"></i>'; // Replace with your preferred icons
-            checklistHtml += `<div class="checklist-item">${icon} ${username} ${item[2]}</div>`;
+            checklistHtml += `<div class="checklist-item " ${item[0] ? "style='text-decoration: line-through;'" : ""} >${icon} ${username} ${item[2]}</div>`;
         });
         <?php } ?>
         
