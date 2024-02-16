@@ -6,11 +6,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/run_prettify.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
-    <script src="<?php echo $urlPrefixBeta; ?>/assets/js/kickback-kingdom-api.js"></script>
 
     <!--<script src="assets/owl-carousel/owl.carousel.js"></script>-->
     <script>
-        const KKAPI = new KickbackKingdomAPI("<?php echo ($_SESSION["sessionToken"] ?? ""); ?>");
         var play_styles = <?php echo GetPlayStyleJSON(); ?>;
         $(document).ready(function () {
 
@@ -359,8 +357,6 @@
                     return item;
                 }
             }
-
-            //query the api
             return null;
         }
 
