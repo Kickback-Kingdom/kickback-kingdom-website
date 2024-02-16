@@ -268,7 +268,7 @@ var events = [
         checklist: [
             [false, 1, "Create a SQL and File backup system"],
             [false, 1, "Image Reviewer tool to be able to delete and replace images"],
-            [false, 1, "A way to push beta to production with a easy way to revert"],
+            [true, 1, "A way to push beta to production with a easy way to revert"],
             [false, 1, "write blog post about new feature"],
         ]
     },
