@@ -20,4 +20,4 @@
 !/html/scratch-pad/.gitkeep
 
 #ignore visual studio folder
-/.vs/*
+/.vs/**
