@@ -36,6 +36,21 @@ for ($i=0; $i < count($playerRanks); $i++) {
     
 }
 
+
+for ($i = count($playerRanks); $i < 5; $i++ )
+{
+   $rankCode .= '<div><span class="badge float-start unranked" style="
+    width: 160px;
+    background-color: #00000029;
+    color: transparent;
+    margin-bottom:1px;
+"> / </span><span class="badge unranked float-end" style="
+    background: #00000073;
+    color: transparent;
+">X / X</span></div>';
+
+}
+
 ?>
 
 

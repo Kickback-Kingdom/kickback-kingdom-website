@@ -52,9 +52,12 @@ $feedCardHideType = false;
 $feedCardQuoteStyleText = false;
 $feedCardImageColSize = "col col-auto col-md";
 $feedCardTextColSize = "col col-12 col-md-8 col-lg-9";
-
+$feedCardClass = "";
+$feedCardClassRight = "";
 switch ($feedCardType) {
     case 'QUEST':
+        $feedCardClass = "quest-card";
+        $feedCardClassRight = "quest-card-right";
         $feedCardHasCreatedBy = true;
         $feedCardCreatedByPrefix = "Hosted";
         $feedCardLearnMoreURL = $urlPrefixBeta."/q/".htmlspecialchars($feedCard['locator']);
@@ -107,13 +110,13 @@ $feedCardDateDetailed = date_format($feedCardDate,"M j, Y H:i:s");
 
 ?>
 
-<div class="card mb-3 feed-card">
+<div class="card mb-3 feed-card <?php echo $feedCardClass; ?>">
     <div class="row g-0">
         <div class="<?php echo $feedCardImageColSize; ?>" style="margin:auto;position: relative;">
             <?php if (!$feedCardHideType) { ?><span class="feed-stamp feed-stamp-quest <?php echo ($feedCardExpired?"bg-primary":"bg-secondary bg-ranked-1"); ?>"><?php echo $feedCardTypeText; ?></span><?php } ?>
             <img src="/assets/media/<?php echo htmlspecialchars($feedCardImagePath);?>"  class="img-fluid img-thumbnail"/>
         </div>
-        <div class="<?php echo $feedCardTextColSize; ?>">
+        <div class="<?php echo $feedCardTextColSize; ?> <?php echo $feedCardClassRight; ?>" >
             <div class="card-body <?php echo ($feedCardQuoteStyleText?"card-body-vertical-center":""); ?>">
                 <a class="feed-title" href="<?php echo $feedCardLearnMoreURL; ?>">
                     <h5 class="card-title"><?php echo $feedCardTitle; ?></h5>

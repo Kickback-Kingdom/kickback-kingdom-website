@@ -79,6 +79,22 @@ body {
     padding-bottom: 10px;
 }
 
+.quest-card {
+    /*background-image: url(/assets/images/kk.jpg) !important;*/
+    background-color: var(--bs-primary);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.quest-card-right {
+    background-color: #ffffff99;
+    border-radius: 8px;
+    margin-left: 10px;
+}
+
 .loot-badge {
     width: 32px;
     height: 32px;
@@ -429,6 +445,12 @@ animation: confetti-fast 1.25s linear 1 forwards;
     height: 200px;
     margin-bottom:10px;
     text-align: left;
+}
+.player-card .card-footer {
+    padding-left: 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-right: 10px;
 }
 
 .player-card .card-body img {

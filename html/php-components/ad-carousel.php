@@ -127,7 +127,7 @@ $hadFirstPage = false;
                 <iframe src="https://www.youtube.com/embed/BCr7y4SLhck?modestbranding=1&showinfo=0&rel=0&autoplay=1&mute=1&controls=0&loop=1&playlist=BCr7y4SLhck" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
             <div class="carousel-caption d-block d-md-block">
-                <h5>L.I.C.H.</h5>https://www.youtube.com/watch?v=kywr54C369w
+                <h5>L.I.C.H</h5>https://www.youtube.com/watch?v=kywr54C369w
                 <p>Face the dark magic, hone your hunter's instinct, slay the Lich</p>
             </div>
         </div>-->
