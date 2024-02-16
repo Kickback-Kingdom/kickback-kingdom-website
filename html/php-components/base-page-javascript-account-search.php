@@ -81,8 +81,16 @@ function AddSearchAccountResult(formId, account, clickableFunction = null) {
     var cardHtml = generatePlayerCardHTML(account, clickableFunction);
 
     // Append the card to the results container
-    $("#"+formId+"selectAccountSearchResults").append(cardHtml);
+    //$("#"+formId+"selectAccountSearchResults").append(cardHtml);
     
+    // Append the card to the results container
+    var container = $("#"+formId+"selectAccountSearchResults");
+    container.append(cardHtml);
+
+    // Initialize tooltips for the newly appended card
+    container.find('.player-card').last().find('[data-bs-toggle="tooltip"]').tooltip();
+
+
     // Optional: Event listener for the select button
     $('.select-account-btn').last().on('click', function() {
         var accountId = $(this).data('account-id');
@@ -127,23 +135,38 @@ for (let i = 0; i < badges.length && i < 5; i++) {
 
 let rankCode = '';
 let isRanked1 = playerCardAccount.IsRanked1;
+let ranks = 0;
 for (let rank of playerRanks) {
+    ranks++;
     if (rank.rank === null) {
         rankCode += `<div>${rank.name} <span class="badge unranked float-end" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Unranked: ${(rank.minimum_ranked_matches_required - rank.ranked_matches)} matches remaining">${rank.ranked_matches} / ${rank.minimum_ranked_matches_required}</span></div>`;
     } else {
         rankCode += `<div>${rank.name} <span class="badge ranked${rank.rank == 1 ? "-1" : ""} float-end" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Ranked #${rank.rank} Kingdom Wide">#${rank.rank}</span></div>`;
     }
 }
+for (var i = ranks; i < 5; i ++ )
+{
+    rankCode += `<div><span class="badge float-start unranked" style="
+    width: 160px;
+    background-color: #00000029;
+    color: transparent;
+    margin-bottom:1px;
+"> / </span><span class="badge unranked float-end" style="
+    background: #00000073;
+    color: transparent;
+">X / X</span></div>`;
+
+}
 const clickableLayer = clickableFunction ? `<div class="clickable-layer" onclick="${clickableFunction}(${playerCardAccount.Id})"></div>` : '';
 
 let playerCardHTML = `<div class="card player-card${isRanked1 ? " ranked-1" : ""}">
 ${clickableLayer}
         <div class="ribbons-container">
-            <div class="ribbon red"></div>
-            <div class="ribbon blue"></div>
-            <div class="ribbon green"></div>
-            <div class="ribbon yellow"></div>
-            <div class="ribbon purple"></div>
+            ${true ? "<div class='ribbon red'></div>" : ""}
+            ${playerCardAccount["IsMerchant"] == 1 ? "<div class='ribbon blue'></div>" : ""}
+            ${false ? "<div class='ribbon green'></div>" : ""}
+            ${false ? "<div class='ribbon yellow'></div>" : ""}
+            ${false ? "<div class='ribbon purple'></div>" : ""}
         </div>
 
         <div class="card-header${isRanked1 ? " ranked-1" : ""}">
