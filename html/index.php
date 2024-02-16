@@ -67,6 +67,7 @@ $homeFeed = $homeFeedResp->Data;
             
             <?php require("php-components/base-page-discord.php"); ?>
         </div>
+        <?php require("php-components/base-page-footer.php"); ?>
     </main>
 
     
