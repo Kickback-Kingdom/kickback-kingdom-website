@@ -504,6 +504,13 @@ function removePrefix(str, prefix) {
     return str;
 }
 
+function initializeTooltipsInElement(element) {
+    var tooltipTriggerList = [].slice.call(element.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+}
+
 window.onload = function() {
     const timeInputs = document.querySelectorAll('input[data-utc-time]');
 
