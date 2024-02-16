@@ -12,10 +12,13 @@ if (!isset($selectUsersFormPageSize))
 
 ?>
 
+<div class="col-lg-6 offset-lg-3">
 <div class="input-group">
+<span class="input-group-text text-bg-primary" ><i class="fa-solid fa-address-card"></i></span>
   <input type="text" class="form-control" onchange="OnSelectAccountChangeSearchParams('<?php echo $selectUserFormId; ?>')" id="<?php echo $selectUserFormId; ?>selectAccountSearchTerm">
   <button class="btn btn-primary" type="button" onclick="OnSelectAccountChangeSearchParams('<?php echo $selectUserFormId; ?>')">Search</button>
 
+</div>
 </div>
 <div class="card mt-3">
     <div class="card-body">
