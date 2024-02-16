@@ -14,3 +14,7 @@
 !/html/assets/images/**/
 !/html/assets/media/**/.gitkeep
 !/html/assets/images/**/.gitkeep
+
+#this is for a directory to test code and various things outside of version control 
+/html/scratch-pad/**
+!/html/scratch-pad/.gitkeep
