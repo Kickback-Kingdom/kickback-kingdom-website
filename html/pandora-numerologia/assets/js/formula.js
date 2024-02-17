@@ -52,6 +52,13 @@ function GetDOB() {
     var parts = dateValue.split('-');
     return parts[2] + "/" + parts[1] + "/" + parts[0]; // Format it as DD/MM/YYYY
 }
+function GetDOBLocal() {
+    var dateValue = document.getElementById("dob").value;
+    var parts = dateValue.split('-'); // parts[0] = year, parts[1] = month, parts[2] = day
+    var date = new Date(parts[0], parts[1] - 1, parts[2]); // Construct a Date object, month is 0-indexed
+    return date.toLocaleDateString(); // Format it according to the user's locale
+}
+
 
 function GetDOBDay() {
     var dateValue = document.getElementById("dob").value;
@@ -341,8 +348,16 @@ function PopuplateResults(result)
     PopulatePowerfulNumber(result);
     PopulateLifeChallenges(result);
     PopulatePhasesOfLife(result);
+    PopulateResultsDisplayInputs()
 }
 
+function PopulateResultsDisplayInputs() {
+
+    $("#result_display_name").html(GetFullName());
+    $("#result_display_birth").html(GetDOBLocal());
+    $("#result_display_address").html(GetHouseNumber());
+    $("#result_display_prof_name").html(GetProfessionalName());
+}
 function PopulateLifeLesson(result) {
 
     
