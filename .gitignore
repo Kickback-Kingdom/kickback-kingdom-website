@@ -21,3 +21,14 @@
 
 #ignore visual studio folder
 /.vs/**
+
+# This exclusion is convenient for anyone that wants to run phpMyAdmin from
+# their local HTTP server while the Kickback Kingdom website is still
+# available for testing. (Ex: you'd put your phpMyAdmin folder at
+# `./html/phpmyadmin`, then have your browser navigate to `http://localhost/index.php`
+# to access your development version of the Kickback Kingdom website, or
+# have your browser navigate to `http://localhost/phpmyadmin/index.php` to
+# access phpMyAdmin, all without having to switch out what folder the
+# HTTP server is hosting.)
+/html/phpmyadmin/**
+
