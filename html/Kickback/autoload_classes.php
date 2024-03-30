@@ -26,50 +26,9 @@
 //
 namespace Kickback;
 
-// Note that the `define` statement is not aware of the enclosing namespace,
-// so the (Fully) Qualified Name (ex: `Kickback\_SCRIPT_ROOT` below) must
-// be provided as its first argument, not just the constant's
-// unqualified name (ex: `_SCRIPT_ROOT` below).
-//
-// Also, we can't specify the _absolute_ qualified name, for... reasons?
-// (I honestly don't know why define makes us write `Kickback\_SCRIPT_ROOT`
-// instead of the more explicit/precise `\Kickback\_SCRIPT_ROOT`. But if we
-// use the latter, it will make the constant appear as an "undefined"
-// constant everywhere and it will become unusable. So while we're more
-// explicit about it everywhere else in this file, in THIS spot we'll
-// elide the leading `\` just because that's what makes everything work.)
-//
-if ( !empty($_SERVER["KICKBACK_SCRIPT_ROOT"]) ) {
-    // Branch that is executed when the script is being executed as part
-    // of an HTTP query on a web server (including local dev machines
-    // running an HTTP server).
-    //
-    // In this case, we look for the KICKBACK_SCRIPT_ROOT server definition.
-    // This allows the HTTP server's configuration (ex: httpd.conf) to
-    // define a `KICKBACK_SCRIPT_ROOT` environment variable that tells us
-    // which root to use for scripts, specifically. This is especially
-    // important for ensuring that the beta version of the site is
-    // able to pull the correct scripts, instead of accidentally pulling
-    // production scripts. (At least, this line below makes it work
-    // for autoloading scripts and anything that uses
-    // the `\Kickback\_SCRIPT_ROOT` constant.)
-    //
-    define('Kickback\_SCRIPT_ROOT', $_SERVER["KICKBACK_SCRIPT_ROOT"]);
-}
-else
-if ( !empty($_SERVER["DOCUMENT_ROOT"]) ) {
-    // Same as above, but it's a fallback for if the admin didn't do
-    // `SetEnv KICKBACK_SCRIPT_ROOT "/var/blah/blah/blah"`
-    // in the HTTP server's (ex: httpd/apache) config file.
-    // We'll presume that `$_SERVER["DOCUMENT_ROOT"]` has the correct info.
-    //
-    define('Kickback\_SCRIPT_ROOT', $_SERVER["DOCUMENT_ROOT"]);
-}
-else {
-    // Branch that is probably executed when PHP runs the sites scripts
-    // from the command line, instead of from the HTTP server (ex: Apache/HTTPD).
-    define('Kickback\_SCRIPT_ROOT', __DIR__ . DIRECTORY_SEPARATOR . "..");
-}
+// We need `\Kickback\_SCRIPT_ROOT` to be defined for the autoloader to find
+// the files that declare the classes.
+require_once("script_root.php");
 
 function generic_autoload_function(string $class_name, string $namespace_prefix) : void
 {

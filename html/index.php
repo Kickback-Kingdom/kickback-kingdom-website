@@ -1,8 +1,8 @@
 <?php 
 
-require_once(__DIR__
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__)
     . DIRECTORY_SEPARATOR . "Kickback"
-    . DIRECTORY_SEPARATOR . "autoload_classes.php");
+    . DIRECTORY_SEPARATOR . "init.php");
 
 $session = require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/session/verifySession.php");
 
