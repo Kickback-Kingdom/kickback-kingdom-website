@@ -1,6 +1,6 @@
 <?php 
 
-require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__)
+require_once(__DIR__
     . DIRECTORY_SEPARATOR . "Kickback"
     . DIRECTORY_SEPARATOR . "autoload_classes.php");
 
