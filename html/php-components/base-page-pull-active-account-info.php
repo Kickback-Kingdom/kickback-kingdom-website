@@ -214,21 +214,11 @@ $activeAccountInfo = GetLoggedInAccountInformation();
 
 $chestsJSON = $activeAccountInfo->chestsJSON;
 
-// Split the path into its components
-$pathComponents = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
 
-// Check if the first component of the path is 'beta'
-if ($pathComponents[0] == 'beta') 
-{
-    $_SESSION["beta"] = true;
-} 
-else 
-{
-    $_SESSION["beta"] = false;
+$urlPrefixBeta = "";
+if ( $_SERVER["KICKBACK_IS_BETA"] ) {
+    $urlPrefixBeta = "/beta";
 }
-
-$urlPrefixBeta = ($_SESSION["beta"]?"/beta":"");
-
 
 
 if (isset($_POST["submitBlogOptions"])) {
