@@ -216,7 +216,8 @@ $chestsJSON = $activeAccountInfo->chestsJSON;
 
 
 $urlPrefixBeta = "";
-if ( $_SERVER["KICKBACK_IS_BETA"] ) {
+//if ( $_SERVER["KICKBACK_IS_BETA"] ) {
+if ( array_key_exists("KICKBACK_IS_BETA",$_SERVER) && $_SERVER["KICKBACK_IS_BETA"] ) {
     $urlPrefixBeta = "/beta";
 }
 
