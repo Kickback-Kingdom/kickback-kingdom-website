@@ -26,7 +26,7 @@
 //
 namespace Kickback;
 
-// We need `\Kickback\_SCRIPT_ROOT` to be defined for the autoloader to find
+// We need `\Kickback\SCRIPT_ROOT` to be defined for the autoloader to find
 // the files that declare the classes.
 require_once("script_root.php");
 
@@ -37,7 +37,7 @@ function generic_autoload_function(string $class_name, string $namespace_prefix)
     //   https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-4-autoloader-examples.md
     //
     // Ours is modified because we look up our files relative to the
-    // document root by using the `\Kickback\_SCRIPT_ROOT . "/"` string.
+    // document root by using the `\Kickback\SCRIPT_ROOT . "/"` string.
     // This will only work if PHP is invoked from within a server that provides
     // When executed in a server context such that the
     // `$_SERVER["DOCUMENT_ROOT"]` variable is available, this will have
@@ -53,7 +53,7 @@ function generic_autoload_function(string $class_name, string $namespace_prefix)
     // Don't do this. It breaks if the entry-point script isn't in document root.
     //    $base_dir = __DIR__ . '/src/'; <- Don't do this. It breaks if the entry-point script isn't in document root.
     // Do this instead:
-    $base_dir = \Kickback\_SCRIPT_ROOT . DIRECTORY_SEPARATOR . $path_prefix;
+    $base_dir = \Kickback\SCRIPT_ROOT . DIRECTORY_SEPARATOR . $path_prefix;
     // Also note that we put our namespace prefix in the path.
     // That seems to diverge from PSR-4. (Maybe?)
     // But it makes sense in our file hierarchy.
