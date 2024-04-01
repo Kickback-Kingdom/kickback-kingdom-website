@@ -1,6 +1,6 @@
 <?php
 
-require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: (__DIR__ . "/../../..")) . "/Kickback/init.php");
 use \Kickback\Config\ServiceCredentials;
 $kk_servername = ServiceCredentials::get("sql_server_host");
 $kk_username   = ServiceCredentials::get("sql_username");

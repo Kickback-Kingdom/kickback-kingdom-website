@@ -1,6 +1,6 @@
 <?php
 
-require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: (__DIR__ . "/../../../..")) . "/Kickback/init.php");
 
 function LoginToService($accountId, $serviceKey)
 {

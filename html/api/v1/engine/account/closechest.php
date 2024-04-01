@@ -1,6 +1,6 @@
 <?php
 
-require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: (__DIR__ . "/../../../..")) . "/Kickback/init.php");
 
 require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/engine.php");
 
