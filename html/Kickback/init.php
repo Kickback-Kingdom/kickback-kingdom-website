@@ -29,4 +29,9 @@ require_once("script_root.php");
 // (ex: things in (\Kickback\SCRIPT_ROOT . "/vendor"))
 require_once(\Kickback\SCRIPT_ROOT . "/Kickback/autoload_classes.php");
 
+// Initialize+register composer's autoloader.
+// We use `include_once` instead of `require_once` so that the site
+// doesn't break if the admin hasn't made composer install anything yet.
+include_once(\Kickback\SCRIPT_ROOT . "/vendor/composer/autoload.php");
+
 ?>
