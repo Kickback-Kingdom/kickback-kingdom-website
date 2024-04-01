@@ -2,7 +2,7 @@
 
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
-function DiscordWebHook($msg)
+function DiscordWebHook(mixed $msg) : void
 {
     $kk_credentials = \Kickback\Config\ServiceCredentials::instance();
 
@@ -12,9 +12,18 @@ function DiscordWebHook($msg)
     $message = $msg;
 
     $jsonData = json_encode(array("content" => $message));
+    if ($jsonData === false) {
+        echo 'Error: `json_encode` failed to encode message in `DiscordWebHook` function.';
+        echo "Input message: $jsonData";
+        return;
+    }
 
     // Initialize a cURL session
     $ch = curl_init($webhookURL);
+    if ($ch === false) {
+        echo 'Error: `curl_init` returned `false`.';
+        return;
+    }
 
     // Set the options for the cURL session
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
@@ -29,7 +38,7 @@ function DiscordWebHook($msg)
     $result = curl_exec($ch);
 
     // Check for errors
-    if (curl_errno($ch)) {
+    if (0 < curl_errno($ch)) {
         echo 'Error:' . curl_error($ch);
     }
 
