@@ -1,16 +1,16 @@
 <?php
-require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
-
 //ini_set('display_errors', 0);
 //ini_set('display_startup_errors', 0);
 //error_reporting(E_ALL);
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\SMTP;
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
 
 
 $redirectUrl = 'index.php';
@@ -27,15 +27,6 @@ if (isset($_GET["redirect"]))
   $errorMessage = "";
   if (isset($_POST["submit"]))
   {
-
-      //use PHPMailer\PHPMailer\PHPMailer;
-      //use PHPMailer\PHPMailer\Exception;
-
-      // TODO: Move these files to the appropriate folder (ex: vendors?),
-      // TODO: then make them autoload so that these `require`s aren't necessary.
-      require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/PHPMailer/Exception.php");
-      require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/PHPMailer/PHPMailer.php");
-      require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/PHPMailer/SMTP.php");
       $email = $_POST["email"];
       $emailResp = GetAccountByEmail($email);
       if ($emailResp->Success)

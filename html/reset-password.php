@@ -1,17 +1,12 @@
 <?php
-require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
-
-$session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
-require("php-components/base-page-pull-active-account-info.php");
-
 //ini_set('display_errors', 0);
 //ini_set('display_startup_errors', 0);
 //error_reporting(E_ALL);
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\SMTP;
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
+$session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
+require("php-components/base-page-pull-active-account-info.php");
 
 $redirectUrl = 'index.php';
 
