@@ -290,7 +290,8 @@ final class ServiceCredentials implements \ArrayAccess
         return $entries;
     }
 
-    public static function get(string $entry_name) : mixed
+    /** @return mixed */
+    public static function get(string $entry_name)
     {
         $entries = self::get_all();
         if ( is_null($entries) ) {
@@ -312,19 +313,37 @@ final class ServiceCredentials implements \ArrayAccess
     /* ----- ArrayAccess implementation ----- */
     // (Unfortunately, this only works for object instances, not for static access.
     // So we still need (=want) things like `get` and `get_all`, declared earlier.)
-    public function offsetSet(mixed $offset, mixed $value) : void {
+    /**
+    * @param mixed  $offset
+    * @param mixed  $value
+    */
+    public function offsetSet($offset, $value) : void {
         echo "<!-- ERROR: Attempt to set element on read-only ServiceCredentials object. -->";
     }
 
-    public function offsetExists(mixed $offset) : bool {
+    /// @param mixed  $offset
+    public function offsetExists($offset) : bool {
         return isset($this->entries[$offset]);
     }
 
-    public function offsetUnset(mixed $offset) : void {
+    /// @param mixed  $offset
+    public function offsetUnset($offset) : void {
         unset($this->entries[$offset]);
     }
 
-    public function offsetGet(mixed $offset) : mixed {
+    // Note: PHPStan complains that `mixed` is not covariant with
+    // the return type (also `mixed`, lol) of ArrayAccess<...>::offsetGet(...).
+    // It says we can silence the error with  #[\ReturnTypeWillChange],
+    // but that's only available in PHP 8.1.
+    // (And the error is "non-ignorable", so `phpstan-ignore` does not help.)
+    // The error goes away if we just put `: mixed` at the end of the function
+    // declaration, but that's only available in PHP 8.0.
+    // TODO: Install PHP 8.X to make PHPStan errors go away.
+    /**
+    * @param mixed  $offset
+    * @return mixed
+    */
+    public function offsetGet($offset) {
         return isset($this->entries[$offset]) ? $this->entries[$offset] : null;
     }
 
