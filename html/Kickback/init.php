@@ -32,6 +32,13 @@ require_once(\Kickback\SCRIPT_ROOT . "/Kickback/autoload_classes.php");
 // Initialize+register composer's autoloader.
 // We use `include_once` instead of `require_once` so that the site
 // doesn't break if the admin hasn't made composer install anything yet.
-include_once(\Kickback\SCRIPT_ROOT . "/vendor/composer/autoload.php");
+// This is admissible because, as of this writing, any composer modules
+// are optional dependencies, and most site functionality can work without them.
+// Also seems to be important to wrap it in a "file_exists" if-statement
+// because `include_once` can still generate HTML code (for displaying
+// the warning) that may pollute the page (as seen by the user).
+if ( file_exists(\Kickback\SCRIPT_ROOT . "/vendor/composer/autoload.php") ) {
+    include_once(\Kickback\SCRIPT_ROOT . "/vendor/composer/autoload.php");
+}
 
 ?>
