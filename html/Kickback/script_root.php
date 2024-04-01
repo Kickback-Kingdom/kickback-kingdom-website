@@ -27,13 +27,13 @@
 namespace Kickback;
 
 // Note that the `define` statement is not aware of the enclosing namespace,
-// so the (Fully) Qualified Name (ex: `Kickback\_SCRIPT_ROOT` below) must
+// so the (Fully) Qualified Name (ex: `Kickback\SCRIPT_ROOT` below) must
 // be provided as its first argument, not just the constant's
-// unqualified name (ex: `_SCRIPT_ROOT` below).
+// unqualified name (ex: `SCRIPT_ROOT` below).
 //
 // Also, we can't specify the _absolute_ qualified name, for... reasons?
-// (I honestly don't know why define makes us write `Kickback\_SCRIPT_ROOT`
-// instead of the more explicit/precise `\Kickback\_SCRIPT_ROOT`. But if we
+// (I honestly don't know why define makes us write `Kickback\SCRIPT_ROOT`
+// instead of the more explicit/precise `\Kickback\SCRIPT_ROOT`. But if we
 // use the latter, it will make the constant appear as an "undefined"
 // constant everywhere and it will become unusable. So while we're more
 // explicit about it everywhere else in this file, in THIS spot we'll
@@ -52,9 +52,9 @@ if ( !empty($_SERVER["KICKBACK_SCRIPT_ROOT"]) ) {
     // able to pull the correct scripts, instead of accidentally pulling
     // production scripts. (At least, this line below makes it work
     // for autoloading scripts and anything that uses
-    // the `\Kickback\_SCRIPT_ROOT` constant.)
+    // the `\Kickback\SCRIPT_ROOT` constant.)
     //
-    define('Kickback\_SCRIPT_ROOT', $_SERVER["KICKBACK_SCRIPT_ROOT"]);
+    define('Kickback\SCRIPT_ROOT', $_SERVER["KICKBACK_SCRIPT_ROOT"]);
 }
 else
 if ( !empty($_SERVER["DOCUMENT_ROOT"]) ) {
@@ -63,12 +63,12 @@ if ( !empty($_SERVER["DOCUMENT_ROOT"]) ) {
     // in the HTTP server's (ex: httpd/apache) config file.
     // We'll presume that `$_SERVER["DOCUMENT_ROOT"]` has the correct info.
     //
-    define('Kickback\_SCRIPT_ROOT', $_SERVER["DOCUMENT_ROOT"]);
+    define('Kickback\SCRIPT_ROOT', $_SERVER["DOCUMENT_ROOT"]);
 }
 else {
     // Branch that is probably executed when PHP runs the sites scripts
     // from the command line, instead of from the HTTP server (ex: Apache/HTTPD).
-    define('Kickback\_SCRIPT_ROOT', __DIR__ . DIRECTORY_SEPARATOR . "..");
+    define('Kickback\SCRIPT_ROOT', __DIR__ . DIRECTORY_SEPARATOR . "..");
 }
 
 ?>
