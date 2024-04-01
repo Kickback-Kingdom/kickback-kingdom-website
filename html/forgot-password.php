@@ -1,17 +1,15 @@
+<?php
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
+//ini_set('display_errors', 0);
+//ini_set('display_startup_errors', 0);
+//error_reporting(E_ALL);
 
-<?php 
-     //ini_set('display_errors', 0);
-     //ini_set('display_startup_errors', 0);
-     //error_reporting(E_ALL);
-    
-    use PHPMailer\PHPMailer\PHPMailer;
-    use PHPMailer\PHPMailer\Exception;
-    use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
 
-require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
-
-$session = require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/session/verifySession.php");
+$session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
 
@@ -33,9 +31,11 @@ if (isset($_GET["redirect"]))
       //use PHPMailer\PHPMailer\PHPMailer;
       //use PHPMailer\PHPMailer\Exception;
 
-      require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/PHPMailer/Exception.php");
-      require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/PHPMailer/PHPMailer.php");
-      require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/PHPMailer/SMTP.php");
+      // TODO: Move these files to the appropriate folder (ex: vendors?),
+      // TODO: then make them autoload so that these `require`s aren't necessary.
+      require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/PHPMailer/Exception.php");
+      require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/PHPMailer/PHPMailer.php");
+      require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/PHPMailer/SMTP.php");
       $email = $_POST["email"];
       $emailResp = GetAccountByEmail($email);
       if ($emailResp->Success)
@@ -49,7 +49,7 @@ if (isset($_GET["redirect"]))
               //Create an instance; passing `true` enables exceptions
               $mail = new PHPMailer(true);
               try {
-                  $kk_credentials = LoadServiceCredentialsOnce();
+                  $kk_credentials = \Kickback\Config\ServiceCredentials::instance();
 
                   $mail->IsSMTP(); // telling the class to use SMTP
                   //$mail->SMTPDebug  = 2;                     // enables SMTP debug information (for testing)

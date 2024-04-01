@@ -1,8 +1,7 @@
-<?php 
+<?php
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
-$session = require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/session/verifySession.php");
-
-
+$session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
 $hasError = false;
@@ -147,14 +146,12 @@ if (isset($_POST['submit-apply']))
     }
 }
 
-require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
-$kk_credentials = LoadServiceCredentialsOnce();
-$kk_crypt_key_quest_id = $kk_credentials["crypt_key_quest_id"];
-unset($kk_credentials);
-
+$kk_crypt_key_quest_id = \Kickback\Config\ServiceCredentials::get("crypt_key_quest_id");
 $crypt = new IDCrypt($kk_crypt_key_quest_id);
 $qId = urlencode($crypt->encrypt($thisQuest["Id"]));
 //$qId = urlencode(encode_id($thisQuest["Id"]));
+unset($kk_crypt_key_quest_id);
+
 $redirectURL = $urlPrefixBeta."/login.php?redirect=".urlencode("q/".$thisQuest["locator"]).'&wq='.$qId;
 //echo $redirectURL;
 //echo "<br/>";

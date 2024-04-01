@@ -1,6 +1,7 @@
 <?php
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
-$session = require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/session/verifySession.php");
+$session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
 $hasError = false;
@@ -37,20 +38,15 @@ if (isset($_POST["submit"]))
 {
 
   //$resp = RegisterAccount($firstName,$lastName ,$password,$password2,$username, $refUsername ,$email,$i_agree);
-  $resp = require_once($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/account/register.php");
+  $resp = require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/account/register.php");
   $hasError = !$resp->Success;
   if ($hasError)
   {
     $errorMessage = $resp->Message." (Data: ".$resp->Data.")";
   }
   else{
-    require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
-    $kk_credentials = LoadServiceCredentialsOnce();
-    $kk_service_key = $kk_credentials["kk_service_key"];
-    unset($kk_credentials);
-
-    $_POST["serviceKey"] = $kk_service_key;
-    $resp = require_once($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/account/login.php");
+    $_POST["serviceKey"] = \Kickback\Config\ServiceCredentials::get("kk_service_key");
+    $resp = require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/account/login.php");
     $hasError = !$resp->Success;
     if (!$hasError)
     {
@@ -81,14 +77,11 @@ if (isset($_GET['wi']))
 
 if (isset($_GET['wq']))
 {
-    require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
-    $kk_credentials = LoadServiceCredentialsOnce();
-    $kk_crypt_key_quest_id = $kk_credentials["crypt_key_quest_id"];
-    unset($kk_credentials);
+    $kk_crypt_key_quest_id = \Kickback\Config\ServiceCredentials::get("crypt_key_quest_id");
 
     $writ_of_passage_quest = ($_GET['wq']);
     $writProvided = true;
-    require_once($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/engine.php");
+    require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/engine.php");
     $crypt = new IDCrypt($kk_crypt_key_quest_id);
     $wq = $crypt->decrypt($writ_of_passage_quest);
     $questResp = GetQuestById($wq);
