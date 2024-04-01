@@ -607,6 +607,7 @@ if ($thisQuest["raffle_id"] != null)
 
                                                                 <script>
                                                                     toggleDateTimeVisibility();
+                                                                    
                                                                     function OnDateTimeChangedForQuestOptions() {
                                                                         const dateInput = document.getElementById('edit-quest-options-datetime-date');
                                                                         const timeInput = document.getElementById('edit-quest-options-datetime-time');

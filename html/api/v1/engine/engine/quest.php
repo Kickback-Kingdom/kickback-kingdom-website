@@ -147,9 +147,13 @@ function UpdateQuestOptions($data)
     // Determine the value for host_id_2 and end_date
     $host_id_2 = empty($questHostId2) ? NULL : $questHostId2;
     $end_date = $hasADate && !empty($dateTime) ? $dateTime : NULL;
+    
+    //$date = $data["edit-quest-options-datetime-date"];
+    //$time = $data["edit-quest-options-datetime-time"];
+    //$end_date = $hasADate && !empty($date) && !empty($time) ? $date . ' ' . $time . ":00": NULL;
 
     // Bind the parameters
-    mysqli_stmt_bind_param($stmt, 'ssisisi', $questName, $questLocator, $host_id_2, $questSummary, $end_date, $playStyle, $questId);
+    mysqli_stmt_bind_param($stmt, 'ssissii', $questName, $questLocator, $host_id_2, $questSummary, $end_date, $playStyle, $questId);
 
 
     // Execute the statement
