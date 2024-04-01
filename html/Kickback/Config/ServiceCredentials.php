@@ -161,8 +161,8 @@ final class ServiceCredentials implements \ArrayAccess
         $error_count += (int)!$this->credential_string_exists       ("smtp_password");
         $error_count += (int)!$this->credential_of_given_type_exists("smtp_from_email",    "email", FILTER_VALIDATE_EMAIL);
         $error_count += (int)!$this->credential_of_given_type_exists("smtp_replyto_email", "email", FILTER_VALIDATE_EMAIL);
-        $error_count += (int)!$this->credential_string_exists       ("smtp_from_name",);
-        $error_count += (int)!$this->credential_string_exists       ("smtp_replyto_name",);
+        $error_count += (int)!$this->credential_string_exists       ("smtp_from_name");
+        $error_count += (int)!$this->credential_string_exists       ("smtp_replyto_name");
 
         // Encryption key. As of this writing, used for encrypting quest IDs.
         $error_count += (int)!$this->credential_string_exists       ("crypt_key_quest_id");
