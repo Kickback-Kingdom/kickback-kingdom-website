@@ -37,8 +37,10 @@ require_once(\Kickback\SCRIPT_ROOT . "/Kickback/autoload_classes.php");
 // Also seems to be important to wrap it in a "file_exists" if-statement
 // because `include_once` can still generate HTML code (for displaying
 // the warning) that may pollute the page (as seen by the user).
-if ( file_exists(\Kickback\SCRIPT_ROOT . "/vendor/composer/autoload.php") ) {
-    include_once(\Kickback\SCRIPT_ROOT . "/vendor/composer/autoload.php");
+$composer_autoloader_path = \Kickback\SCRIPT_ROOT . "/vendor/composer/autoload.php";
+if ( file_exists($composer_autoloader_path) ) {
+    include_once($composer_autoloader_path);
 }
+unset($composer_autoloader_path);
 
 ?>
