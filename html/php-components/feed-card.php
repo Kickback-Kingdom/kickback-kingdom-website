@@ -66,6 +66,20 @@ switch ($feedCardType) {
         $now = new DateTime(); // Current date and time
         $feedCardCTA = "View Quest";
         $feedCardExpired = ($feedCardDate < $now);
+        if ($feedCard["published"] == false) {
+            $feedCardTitle = "[DRAFT] ".$feedCardTitle." [DRAFT]"; 
+        }
+        break;
+
+    case 'QUEST-LINE':
+        $feedCardLearnMoreURL = $urlPrefixBeta."/quest-line/".htmlspecialchars($feedCard['locator']);
+
+        $feedCardTypeText = "QUEST LINE";
+        $feedCardCTA = "View Quest Line";
+        $feedCardCreatedByPrefix = "Created";
+        if ($feedCard["published"] == false) {
+            $feedCardTitle = "[DRAFT] ".$feedCardTitle." [DRAFT]"; 
+        }
         break;
 
     case 'BLOG':

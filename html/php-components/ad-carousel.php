@@ -20,7 +20,7 @@ $hadFirstPage = false;
             <img src="/assets/media/context/Kickback_Banners_Adventure_Guild_1920-500_01.png" class="d-none d-md-block w-100">
             <img src="/assets/media/context/Kickback_Banners_Adventure_Guild_1080-500_01.png" class="d-block d-md-none w-100">
             <div class="carousel-caption d-block d-md-block text-shadow carousel-caption-top">
-                <h3>Welcome to the Adventurer's Guild</h3>
+                <h3>Welcome to the Adventurers' Guild</h3>
                 <p>where every quest counts and legends are born!</p>
             </div>
         </div>
@@ -50,7 +50,7 @@ $hadFirstPage = false;
             <img src="/assets/media/context/Kickback_Banners_Merchant_Guild_1920-500_01.png" class="d-none d-md-block w-100">
             <img src="/assets/media/context/Kickback_Banners_Merchant_Guild_1080-500_01.png" class="d-block d-md-none w-100">
             <div class="carousel-caption d-block d-md-block text-shadow carousel-caption-top">
-                <h3>Welcome to the Merchant's Guild</h3>
+                <h3>Welcome to the Merchants' Guild</h3>
                 <p>Empower the Kingdom and Prosper Together</p>
             </div>
         </div>
@@ -70,7 +70,7 @@ $hadFirstPage = false;
             <img src="/assets/media/context/Kickback_Banners_Apprentice_Guild_1920-500_03.png" class="d-none d-md-block w-100">
             <img src="/assets/media/context/Kickback_Banners_Apprentice_Guild_1080-500_03.png" class="d-block d-md-none w-100">
             <div class="carousel-caption d-block d-md-block text-shadow carousel-caption-top">
-                <h3>Welcome to the Apprentice's Guild</h3>
+                <h3>Welcome to the Apprentices' Guild</h3>
                 <p>Unleashing the potential of limitless minds</p>
             </div>
         </div>
@@ -80,7 +80,7 @@ $hadFirstPage = false;
             <img src="/assets/media/context/Kickback_Banners_Stewards_Guild_1920-500_01.png" class="d-none d-md-block w-100">
             <img src="/assets/media/context/Kickback_Banners_Stewards_Guild_1080-500_01.png" class="d-block d-md-none w-100">
             <div class="carousel-caption d-block d-md-block text-shadow carousel-caption-top">
-                <h3>Welcome to the Steward's Guild</h3>
+                <h3>Welcome to the Stewards' Guild</h3>
                 <p>Shaping the Kingdom through service and dedication</p>
             </div>
         </div>

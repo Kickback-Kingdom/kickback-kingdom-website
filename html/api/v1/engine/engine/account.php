@@ -126,7 +126,6 @@ function Logout()
     if (IsLoggedIn())
     {
 
-        //$accountId = $GLOBALS["account"]["Id"];
         $sessionToken = $_SESSION["sessionToken"];
         $serviceKey = $_SESSION["serviceKey"];
         $sql = "delete from account_sessions where SessionToken = '$sessionToken' and ServiceKey = '$serviceKey'";

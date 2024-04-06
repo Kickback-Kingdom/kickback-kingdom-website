@@ -3,6 +3,7 @@
 require ("engine/utility.php");
 require ("engine/math.php");
 require ("engine/quest.php");
+require ("engine/quest-line.php");
 require ("engine/blog.php");
 require ("engine/account.php");
 require ("engine/bracket.php");

@@ -1,4 +1,11 @@
 <?php
+
+
+$pageTitle = "Adventurers' Guild";
+$pageImage = "https://kickback-kingdom.com/assets/media/context/loading.gif";
+$pageDesc = "Top secret super cool hangout spot";
+
+
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
@@ -12,6 +19,9 @@ $archivedQuests = $archivedQuestsResp->Data;
 
 $questGiversResp = GetAllQuestGivers();
 $questGivers = $questGiversResp->Data;
+
+$questLinesResp = GetAvailableQuestLinesFeed();
+$questLines = $questLinesResp->Data;
 
 $tbaQuestsResp = GetTBAQuestsFeed();
 $tbaQuests = $tbaQuestsResp->Data;
@@ -47,7 +57,7 @@ $tabPageActive = "active show";
                 <?php 
                 
                 
-                $activePageName = "Adventurer's Guild";
+                $activePageName = "Adventurers' Guild";
                 require("php-components/base-page-breadcrumbs.php"); 
                 
                 ?>
@@ -62,6 +72,7 @@ $tabPageActive = "active show";
                             <div class="card-body">
                                 
                                 <a href="<?php echo $urlPrefixBeta; ?>/quest.php?new" class="btn btn-primary">Post a New Quest</a>
+                                <a href="<?php echo $urlPrefixBeta; ?>/quest-line.php?new" class="btn btn-primary">Create New Quest Line</a>
                             </div>
                         </div>
                     </div>
@@ -109,6 +120,15 @@ $tabPageActive = "active show";
                             </div>
                             <div class="tab-pane fade" id="nav-quest-lines" role="tabpanel" aria-labelledby="nav-quest-lines-tab" tabindex="0">
                                 <div class="display-6 tab-pane-title">Quests Lines</div>
+                                <?php 
+
+                                    for ($i=0; $i < count($questLines); $i++) 
+                                    { 
+                                        $feedCard = $questLines[$i];
+                                        
+                                        require ("php-components/feed-card.php");
+                                    }
+                                ?>
                             </div>
                             <div class="tab-pane fade" id="nav-reflections" role="tabpanel" aria-labelledby="nav-reflections-tab" tabindex="0">
                                 <div class="display-6 tab-pane-title">Archive of Reflections</div>

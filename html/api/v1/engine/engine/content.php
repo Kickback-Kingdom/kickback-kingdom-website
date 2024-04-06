@@ -43,7 +43,18 @@ function CanUpdateContent($contentData)
                     return false;
                 }
                 break;
-            
+            case 'QUEST-LINE':
+
+                $questResp = GetQuestLineByLocator($ids[0]);
+                if ($questResp->Success)
+                {
+                    return CanEditQuestLine($questResp->Data);
+                }
+                else
+                {
+                    return false;
+                }
+                break;
             default:
             return false;
         }

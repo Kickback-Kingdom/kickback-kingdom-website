@@ -4,10 +4,6 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-$hasError = false;
-$hasSuccess = false;
-$successMessage = "";
-$errorMessage = "";
 $newPost = false;
 if (isset($_GET['id']))
 {
@@ -37,7 +33,7 @@ if (!$questResp->Success)
 }
 if (!isset($questResp))
 {
-    header("Location: adventurers-guild.php");
+    Redirect("adventurers-guild.php");
 }
 
 $thisQuest = $questResp->Data;
@@ -70,6 +66,7 @@ foreach ($questRewards as $questReward) {
     $questRewardsByCategory[$questReward['category']][] = $questReward;
 }
 
+$hasStandardParticipationRewards = CheckSpecificParticipationRewardsExistById($questRewardsByCategory);
 
 
 $activeTab = 'active';
@@ -188,14 +185,38 @@ $showBracketTab = ($thisQuest["hasBracket"]==1);
 $showResultsTab = ($thisQuestIsRanked && $thisQuestPassed && !$showBracketTab);
 $showParticipantsTab = (($thisQuestPassed)||($showRaffleTab));
 $showApplicantsTab = ($thisQuest["raffle_id"] == null);
+$showQuestLineTab = ($thisQuest["quest_line_id"] != null);
 
 $games = null;
-
+$questLines = null;
+$thisQuestsQuestLine = null;
+$thisQuestsQuestLineQuests = null;
 if (CanEditQuest($thisQuest))
 {
     $allGamesResp = GetAllGames();
     $games = $allGamesResp->Data;
+
+    $questLinesResp = GetMyQuestLines();
+    $questLines = $questLinesResp->Data;
 }
+if ($showQuestLineTab)
+{
+
+    $questLineResp = GetQuestLineById($thisQuest["quest_line_id"]);
+    $thisQuestsQuestLine = $questLineResp->Data;
+    if ($thisQuestsQuestLine["published"])
+    {
+        $questLineQuestsResp = GetQuestsByQuestLineId($thisQuest["quest_line_id"]);
+        $thisQuestsQuestLineQuests =  $questLineQuestsResp->Data;
+    }
+    else{
+        $thisQuestsQuestLine = null;
+        $showQuestLineTab = false;
+    }
+
+}
+
+
 //$feedCardDateBasic = date_format($feedCardDate,"M j, Y");
 //$feedCardDateDetailed = date_format($feedCardDate,"M j, Y H:i:s");
 
@@ -206,6 +227,8 @@ if ($thisQuest["raffle_id"] != null)
     $raffleParticipants = $GetRaffleParticipantsResp->Data;
 
 }
+
+
 ?>
 
 <!DOCTYPE html>
@@ -436,7 +459,40 @@ if ($thisQuest["raffle_id"] != null)
                 <div class="row">
                     <div class="col-12">
                     
-                        <?php if (CanEditQuest($thisQuest)) { ?>
+                        <?php if (!$thisQuest["published"]) { ?>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="card mb-3">
+                                        <div class="bg-danger card-body text-bg-danger">
+                                            <div class="d-flex align-items-center">
+                                                <h3 role="status">This quest has not been published and is in draft mode.</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php } ?>
+                        <?php if ($thisQuest["being_reviewed"]) { ?>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="card mb-3">
+                                        <div class="bg-ranked-1 card-body">
+                                            <div class="d-flex align-items-center">
+                                                <h3 role="status">This Quest is under review...</h3>
+                                                <div class="spinner-border ms-auto" aria-hidden="true"></div>
+                                            </div>
+                                        </div>
+                                        <?php if (IsAdmin()) { ?>
+                                        <div class="card-footer">
+                                            <button type="button" class="btn btn-success float-end mx-1" onclick="OpenModalApprove()">Approve Quest</button>
+                                            <button type="button" class="btn btn-danger float-end" onclick="OpenModalReject()">Reject Quest</button>
+                                        </div>
+                                        <?php } ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php } ?>
+                        <?php if (CanEditQuest($thisQuest) && !$thisQuestPassed) { ?>
                         <div class="row mt-3">
                             <div class="col-12">
                                 <div class="card mb-3">
@@ -448,31 +504,101 @@ if ($thisQuest["raffle_id"] != null)
                                         <button type="button" class="btn btn-primary" onclick="OpenModalEditQuestRewards()">Edit Rewards</button>
                                         <button type="button" class="btn btn-primary" onclick="OpenModalEditQuestImages()">Edit Banner & Icon</button>
                                         <button type="button" class="btn btn-primary" onclick="OpenModalEditQuestOptions()">Quest Options</button>
-                                        <button type="button" class="btn btn-primary" onclick="OpenModalPublishQuest()">Publish Quest</button>
+                                        <?php if (!$thisQuest["being_reviewed"] && !$thisQuest["published"]) { ?><button type="button" class="btn btn-success float-end" onclick="OpenModalPublishQuest()">Publish Quest</button><?php } ?>
+                                    </div>
+                                    
+                                    <?php if ($thisQuest["published"] || $thisQuest["being_reviewed"]) { ?>
+                                        <div class="card-footer">
+                                            <h5>Editing this quest will unpublish it and remove it from the review queue.</h5>
+                                        </div>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <form method="POST">
+                            <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
+                            <input type="hidden" value="<?php echo $thisQuest["Id"]; ?>" name="edit-quest-id" />
+                            <div class="modal modal-lg fade" id="modalEditQuestRewards" tabindex="-1" aria-labelledby="modalEditQuestRewardsLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h1 class="modal-title fs-5">Edit Quest Rewards</h1>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row mb-3">
+                                                <div class="col-12">
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            <h5 class="card-title">Standard Participation Rewards</h5>
+                                                            
+                                                            <div class="row">
+                                                                <div class="col-12">
+                                                                    <div class="form-check form-switch">
+                                                                        <input class="form-check-input" type="checkbox" role="switch" id="edit-quest-rewards-has-standard" name="edit-quest-rewards-has-standard" <?php echo $hasStandardParticipationRewards?"checked":""; ?> onchange="">
+                                                                        <label class="form-check-label" for="edit-quest-rewards-has-standard">Quest has standard participation rewards</label>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-12">
+
+                                                    <?php
+
+
+                                                        // Now loop through the grouped array
+                                                        foreach ($questRewardsByCategory as $category => $questRewards) {
+                                                    ?>
+                                                    <div class="card mb-2">
+                                                        <div class="card-header">
+                                                            <h2><?php echo htmlspecialchars($category);?></h2>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <!-- side-bar colleps block stat-->
+                                                            <div class="inventory-grid">
+                                                                <?php
+                                                            
+                                                                    // Show category title
+
+                                                                    foreach ($questRewards as $questReward) {
+                                                                ?>
+                                                                <div class="inventory-item" onclick="ShowInventoryItemModal(<?php echo htmlspecialchars($questReward['Id']); ?>);"  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo htmlspecialchars($questReward["name"]) ?>">
+                                                                    <img src="/assets/media/<?php echo htmlspecialchars($questReward["BigImgPath"])?>" alt="Item Name 1" />
+                                                                    <!--<div class="item-count">x1</div>-->
+                                                                </div>
+                                                            
+                                                                <?php
+                                                                    }
+                                                                ?>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                    <?php
+
+                                                        }
+                                                    
+                                                    ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                                            <input type="submit" name="edit-quest-rewards-submit" class="btn bg-ranked-1" value="Apply Changes" />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-
-                        <div class="modal modal-lg fade" id="modalEditQuestRewards" tabindex="-1" aria-labelledby="modalEditQuestRewardsLabel" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                <div class="modal-header">
-                                    <h1 class="modal-title fs-5">Edit Quest Rewards</h1>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-                                    <button type="button" class="btn bg-ranked-1" onclick="">Apply changes</button>
-                                </div>
-                                </div>
-                            </div>
-                        </div>
+                        </form>
                         <form method="POST">
+                            <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
                             <input type="hidden" value="<?php echo $thisQuest["Id"]; ?>" name="edit-quest-id" />
                             <input type="hidden" value="<?php echo $thisQuest["image_id"]; ?>" name="edit-quest-images-desktop-banner-id" id="edit-quest-images-desktop-banner-id"/>
                             <input type="hidden" value="<?php echo $thisQuest["image_id_mobile"]; ?>" name="edit-quest-images-mobile-banner-id" id="edit-quest-images-mobile-banner-id" />
@@ -516,6 +642,7 @@ if ($thisQuest["raffle_id"] != null)
                             </div>
                         </form>
                         <form method="POST">
+                            <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
                             <input type="hidden" value="<?php echo $thisQuest["Id"]; ?>" name="edit-quest-id" />
                             <input type="hidden" value="<?php echo $thisQuest["host_id_2"]; ?>" name="edit-quest-options-host-2-id" id="edit-quest-options-host-2-id"/>
                             <div class="modal modal-lg fade" id="modalEditQuestOptions" tabindex="-1" aria-labelledby="modalEditQuestOptionsLabel" aria-hidden="true">
@@ -557,11 +684,23 @@ if ($thisQuest["raffle_id"] != null)
                                                         
                                                         <div class="input-group">
                                                             <select class="form-select" name="edit-quest-options-questline" id="edit-quest-options-questline" aria-label="Default select example">
-                                                                <option value="" selected>Does this quest belong to a questline?</option>
+                                                                <optgroup label="This is a standalone quest">    
+                                                                    <option value="">No quest line</option>
+                                                                </optgroup>
+                                                                <optgroup label="Available Quest Lines">  
+                                                                <?php
+                                                                    foreach ($questLines as $questLine) {
+                                                                        $questLineValue = $questLine["Id"];
+                                                                        $questLineName = $questLine["name"];
+                                                                        $questLineSelected = ($questLine["Id"] == $thisQuest["quest_line_id"] ? "selected" : "");
+                                                                        echo "<option value=\"$questLineValue\" $questLineSelected>$questLineName</option>";
+                                                                    }
+                                                                ?>
+                                                                </optgroup>
                                                             </select>
                                                         </div>
                                                     </div>
-                                                    <div class="form-text" id="basic-addon4">Need to create a questiline? Click <a href="<?php echo $urlPrefixBeta; ?>/adventurers-guild.php?new-quest-line=1">HERE</a></div>
+                                                    <div class="form-text" id="basic-addon4">Need to create a questiline? Click <a href="<?php echo $urlPrefixBeta; ?>/quest-line.php?new">HERE</a></div>
 
                                                 </div>
                                             </div>
@@ -869,84 +1008,171 @@ if ($thisQuest["raffle_id"] != null)
                             </div>
                         </form>
 
-                        <div class="modal modal-xl fade" id="modalQuestPublish" tabindex="-1" aria-labelledby="modalQuestPublishLabel" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                <div class="modal-header">
-                                    <h1 class="modal-title fs-5">Publish Quest</h1>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    
-                                    <div class="row mb-3">
-                                        <div class="col-12">
-                                            <p>Please make sure you save all of your changes before publishing your quest! Below are a list of items that need to be met before publishing a quest on Kickback Kingdom: </p>
+                        <form method="POST">
+                            <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
+                            <input type="hidden" name="quest-id" value="<?php echo $thisQuest["Id"]; ?>" />
+                            <div class="modal modal-xl fade" id="modalQuestPublish" tabindex="-1" aria-labelledby="modalQuestPublishLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5">Publish Quest</h1>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <p>Please make sure you save all of your changes before publishing your quest! Below are a list of items that need to be met before publishing a quest on Kickback Kingdom: </p>
+                                            </div>
+                                            
                                         </div>
+                                        <div class="row mb-3">
+                                            <div class="col-lg-12 col-xl-9">
+                                                <?php 
+                                                    $feedCard = $thisQuest;
+                                                    $feedCard["type"] = "QUEST";
+                                                    $feedCard["title"] = $thisQuest["name"];
+                                                    $feedCard["image"] = $thisQuest["imagePath_icon"];
+                                                    $feedCard["published"] = true;
+                                                    $feedCard["account_1_username"] = $thisQuest["host_name"];
+                                                    $feedCard["account_2_username"] = $thisQuest["host_name_2"];
+                                                    $feedCard["text"] =  $thisQuest["summary"];
+                                                    require("php-components/feed-card.php");
+                                                ?>
+                                            </div>
+                                            <div class="col-lg-12 col-xl-3">
+                                                <?php if(QuestNameIsValid($feedCard["title"])) { ?>
+                                                    <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Title</p>
+                                                <?php } else { ?>
+                                                    <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Title is too short or invalid</p>
+                                                <?php } ?>
+
+                                                <?php if(QuestSummaryIsValid($feedCard["text"])) { ?>
+                                                    <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Summary</p>
+                                                <?php } else { ?>
+                                                    <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Summary is too short</p>
+                                                <?php } ?>
+
+                                                <?php if((is_null($thisQuest["content_id"])) || QuestPageContentIsValid($pageContent["data"])) { ?>
+                                                    <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Content</p>
+                                                <?php } else { ?>
+                                                    <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Content is too short</p>
+                                                <?php } ?>
+
+                                                <?php if(QuestLocatorIsValid($thisQuest["locator"])) { ?>
+                                                    <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid URL Locator</p>
+                                                <?php } else { ?>
+                                                    <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Please use a valid url locator</p>
+                                                <?php } ?>
+
+                                                <?php if(QuestImagesAreValid($thisQuest)) { ?>
+                                                    <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Images</p>
+                                                <?php } else { ?>
+                                                    <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Please select a valid icon and banners</p>
+                                                <?php } ?>
+                                                <?php if(QuestRewardsAreValid($questRewards)) { ?>
+                                                    <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Rewards</p>
+                                                <?php } else { ?>
+                                                    <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Please add rewards</p>
+                                                <?php } ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                                            <input type="submit" name="submit-quest-publish" class="btn bg-ranked-1" onclick="" <?php if(!QuestIsValidForPublish($thisQuest,$pageContent, $questRewards)) { ?>disabled<?php } ?> value="Submit Quest For Review" />
                                         
                                     </div>
-                                    <div class="row mb-3">
-                                        <div class="col-lg-12 col-xl-9">
-                                            <?php 
-                                                $feedCard = $thisQuest;
-                                                $feedCard["type"] = "QUEST";
-                                                $feedCard["title"] = $thisQuest["name"];
-                                                $feedCard["image"] = $thisQuest["imagePath_icon"];
-                                                $feedCard["published"] = true;
-                                                $feedCard["account_1_username"] = $thisQuest["host_name"];
-                                                $feedCard["account_2_username"] = $thisQuest["host_name_2"];
-                                                $feedCard["text"] =  $thisQuest["summary"];
-                                                require("php-components/feed-card.php");
-                                            ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <?php if (IsAdmin()) { ?>
+                        <form method="POST">
+                            <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
+                            <input type="hidden" name="quest-id" value="<?php echo $thisQuest["Id"]; ?>" />
+                            <div class="modal modal-xl fade" id="modalQuestApprove" tabindex="-1" aria-labelledby="modalQuestApproveLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-success">
+                                            <h1 class="modal-title fs-5">Approve Quest</h1>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
-                                        <div class="col-lg-12 col-xl-3">
-                                            <?php if(QuestNameIsValid($feedCard["title"])) { ?>
-                                                <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Title</p>
-                                            <?php } else { ?>
-                                                <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Title is too short or invalid</p>
-                                            <?php } ?>
-
-                                            <?php if(QuestSummaryIsValid($feedCard["text"])) { ?>
-                                                <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Summary</p>
-                                            <?php } else { ?>
-                                                <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Summary is too short</p>
-                                            <?php } ?>
-
-                                            <?php if((is_null($thisQuest["content_id"])) || QuestPageContentIsValid($pageContent["data"])) { ?>
-                                                <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Content</p>
-                                            <?php } else { ?>
-                                                <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Content is too short</p>
-                                            <?php } ?>
-
-                                            <?php if(QuestLocatorIsValid($thisQuest["locator"])) { ?>
-                                                <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid URL Locator</p>
-                                            <?php } else { ?>
-                                                <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Please use a valid url locator</p>
-                                            <?php } ?>
-
-                                            <?php if(QuestImagesAreValid($thisQuest)) { ?>
-                                                <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Images</p>
-                                            <?php } else { ?>
-                                                <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Please select a valid icon and banners</p>
-                                            <?php } ?>
-                                            <?php if(QuestRewardsAreValid($questRewards)) { ?>
-                                                <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Rewards</p>
-                                            <?php } else { ?>
-                                                <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Please add rewards</p>
-                                            <?php } ?>
+                                        <div class="modal-body">
+                                            <div class="row mb-3">
+                                                <div class="col-12">
+                                                <?php 
+                                                    $feedCard = $thisQuest;
+                                                    $feedCard["type"] = "QUEST";
+                                                    $feedCard["title"] = $thisQuest["name"];
+                                                    $feedCard["image"] = $thisQuest["imagePath_icon"];
+                                                    $feedCard["published"] = true;
+                                                    $feedCard["account_1_username"] = $thisQuest["host_name"];
+                                                    $feedCard["account_2_username"] = $thisQuest["host_name_2"];
+                                                    $feedCard["text"] =  $thisQuest["summary"];
+                                                    require("php-components/feed-card.php");
+                                                ?>
+                                                </div>
+                                                
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                                            <input type="submit" name="quest-approve-submit" class="btn btn-success" value="Approve Quest" />
+                                            
                                         </div>
                                     </div>
                                 </div>
-                                <div class="modal-footer">
-                                    <form method="POST">
-                                        <input type="hidden" name="quest-id" value="<?php echo $thisQuest["Id"]; ?>" />
-                                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-                                        <input type="submit" name="submit-quest-publish" class="btn bg-ranked-1" onclick="" <?php if(!QuestIsValidForPublish($thisQuest,$pageContent, $questRewards)) { ?>disabled<?php } ?> value="Submit Quest For Review" />
-                                    </form>
-                                </div>
+                            </div>
+                        </form>
+                        
+                        <form method="POST">
+                            <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
+                            <input type="hidden" name="quest-id" value="<?php echo $thisQuest["Id"]; ?>" />
+                            <div class="modal modal-xl fade" id="modalQuestReject" tabindex="-1" aria-labelledby="modalQuestRejectLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-danger">
+                                            <h1 class="modal-title fs-5">Reject Quest</h1>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row mb-3">
+                                                <div class="col-12">
+                                                <?php 
+                                                    $feedCard = $thisQuest;
+                                                    $feedCard["type"] = "QUEST";
+                                                    $feedCard["title"] = $thisQuest["name"];
+                                                    $feedCard["image"] = $thisQuest["imagePath_icon"];
+                                                    $feedCard["published"] = true;
+                                                    $feedCard["account_1_username"] = $thisQuest["host_name"];
+                                                    $feedCard["account_2_username"] = $thisQuest["host_name_2"];
+                                                    $feedCard["text"] =  $thisQuest["summary"];
+                                                    require("php-components/feed-card.php");
+                                                ?>
+                                                </div>
+                                                
+                                            </div>
+                                            <!--<div class="row">
+                                                <div class="col">
+                                                    <div class="form-floating">
+                                                        <textarea class="form-control" placeholder="Leave a reason for rejection" id="floatingTextarea2" style="height: 100px" required></textarea>
+                                                        <label for="floatingTextarea2">Reason for rejection</label>
+                                                    </div>
+                                                </div>                
+                                            </div>-->
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                                            <input type="submit" name="quest-reject-submit" class="btn btn-danger" value="Reject Quest" />
+                                            
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-
+                        </form>
+                        <?php } ?>
                         <script>
                             function OpenModalEditQuestRewards()
                             {
@@ -971,6 +1197,21 @@ if ($thisQuest["raffle_id"] != null)
 
                                 $("#modalQuestPublish").modal("show");
                             }
+
+                            
+                            <?php if (IsAdmin()) { ?>
+                            function OpenModalApprove()
+                            {
+                                $("#modalQuestApprove").modal("show");
+                            }
+
+                            function OpenModalReject()
+                            {
+                                $("#modalQuestReject").modal("show");
+                                
+                            }
+                            <?php } ?>
+
                         </script>
 
                         <?php } ?>
@@ -987,6 +1228,7 @@ if ($thisQuest["raffle_id"] != null)
                                 <?php if ($showBracketTab) { ?><button class="nav-link <?php echo $activeTab; $activeTab = ''; ?>" id="nav-bracket-tab" data-bs-toggle="tab" data-bs-target="#nav-bracket" type="button" role="tab" aria-controls="nav-bracket" aria-selected="false" onclick="LoadBracket();"><i class="fa-solid fa-ranking-star"></i></button><?php } ?>
                                 <?php if ($showParticipantsTab) { ?><button class="nav-link <?php echo $activeTab; $activeTab = ''; ?>" id="nav-participants-tab" data-bs-toggle="tab" data-bs-target="#nav-participants" type="button" role="tab" aria-controls="nav-participants" aria-selected="false"><i class="fa-solid fa-person-circle-check"></i></button><?php } ?>
                                 <?php if ($showApplicantsTab) { ?><button class="nav-link <?php echo $activeTab; $activeTab = ''; ?>" id="nav-registrants-tab" data-bs-toggle="tab" data-bs-target="#nav-registrants" type="button" role="tab" aria-controls="nav-registrants" aria-selected="false"><i class="fa-solid fa-user-pen"></i></button><?php } ?>
+                                <?php if ($showQuestLineTab) { ?><button class="nav-link <?php echo $activeTab; $activeTab = ''; ?>" id="nav-quest-line-tab" data-bs-toggle="tab" data-bs-target="#nav-quest-line" type="button" role="tab" aria-controls="nav-quest-line" aria-selected="false"><i class="fa-solid fa-route"></i></button><?php } ?>
                             </div>
                         </nav>
                         <div class="tab-content" id="nav-tabContent">
@@ -1089,16 +1331,16 @@ if ($thisQuest["raffle_id"] != null)
                             </div>
                             <?php if ($showRewardsTab) { ?>
                             <div class="tab-pane fade <?php echo $activeTabPage; $activeTabPage = ''; ?>" id="nav-rewards" role="tabpanel" aria-labelledby="nav-rewards-tab" tabindex="0">
-                            <div class="display-6 tab-pane-title">Quest Rewards</div>        
-                            <div class="row">
+                                <div class="display-6 tab-pane-title">Quest Rewards</div>        
+                                <div class="row">
                                     <div class="col-md-12">
 
                                         <?php
 
 
-                                                // Now loop through the grouped array
-                                        foreach ($questRewardsByCategory as $category => $questRewards) {
-                                            ?>
+                                            // Now loop through the grouped array
+                                            foreach ($questRewardsByCategory as $category => $questRewards) {
+                                        ?>
                                         <div class="card mb-2">
                                             <div class="card-header">
                                                 <h2><?php echo htmlspecialchars($category);?></h2>
@@ -1107,31 +1349,28 @@ if ($thisQuest["raffle_id"] != null)
                                                 <!-- side-bar colleps block stat-->
                                                 <div class="inventory-grid">
                                                     <?php
-                                                    
-                                                    // Show category title
+                                                
+                                                        // Show category title
 
-                                                    foreach ($questRewards as $questReward) {
-                                                        ?>
-                                                    <div class="inventory-item" onclick="ShowInventoryItemModal(<?php echo htmlspecialchars($questReward["Id"])?>);"  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo htmlspecialchars($questReward["name"])?>">
-                                                        <img src="/assets/media/<?php echo htmlspecialchars($questReward["BigImgPath"])?>" alt="Item Name 1">
+                                                        foreach ($questRewards as $questReward) {
+                                                    ?>
+                                                    <div class="inventory-item" onclick="ShowInventoryItemModal(<?php echo htmlspecialchars($questReward['Id']); ?>);"  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo htmlspecialchars($questReward["name"]) ?>">
+                                                        <img src="/assets/media/<?php echo htmlspecialchars($questReward["BigImgPath"])?>" alt="Item Name 1" />
                                                         <!--<div class="item-count">x1</div>-->
                                                     </div>
-                                                    
+                                                
                                                     <?php
-                                                    }
-
+                                                        }
                                                     ?>
                                                 </div>
 
                                             </div>
                                         </div>
                                         <?php
-                                                }
 
-                                                ?>
-
-
-
+                                            }
+                                        
+                                        ?>
                                     </div>
                                 </div>
                             </div>
@@ -1268,6 +1507,35 @@ if ($thisQuest["raffle_id"] != null)
                                         }
                                     ?>
                                 </div>
+                            </div>
+                            <?php } ?>
+                            <?php if ($showQuestLineTab) { ?>
+                            <div class="tab-pane fade <?php echo $activeTabPage; $activeTabPage = ''; ?>" id="nav-quest-line" role="tabpanel" aria-labelledby="nav-quest-line-tab" tabindex="0">
+                                <div class="display-6 tab-pane-title">Quest Line</div>
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <?php 
+                                            $feedCard = $thisQuestsQuestLine;
+                                            $feedCard["type"] = "QUEST-LINE";
+                                            $feedCard["title"] = $thisQuestsQuestLine["name"];
+                                            $feedCard["image"] = $thisQuestsQuestLine["imagePath_icon"];
+                                            $feedCard["published"] = true;
+                                            $feedCard["account_1_username"] = $thisQuestsQuestLine["created_by_username"];
+                                            $feedCard["text"] =  $thisQuestsQuestLine["desc"];
+                                            $feedCard["date"] = $thisQuestsQuestLine["date_created"];
+                                            require("php-components/feed-card.php");
+                                        ?>
+                                    </div>
+                                </div>
+                                <div class="display-6 tab-pane-title">Quests</div>
+                                <?php 
+                                    for ($i=0; $i < count($thisQuestsQuestLineQuests); $i++) 
+                                    { 
+                                        $feedCard = $thisQuestsQuestLineQuests[$i];
+                                        
+                                        require ("php-components/feed-card.php");
+                                    }
+                                ?>
                             </div>
                             <?php } ?>
                         </div>

@@ -67,8 +67,8 @@ function ConvertIntoItemInformation($item)
         $itemInfo["Id"] = $item["item_id"];
     }
 
-    $itemInfo["type"] = $item["type"];
-    $itemInfo["rarity"] = $item["rarity"];
+    $itemInfo["type"] = $item["type"] ?? null;
+    $itemInfo["rarity"] = $item["rarity"] ?? null;
     $itemInfo["desc"] = $item["desc"];
     $itemInfo["name"] = $item["name"];
     $itemInfo["artist"] = $item["artist"];
