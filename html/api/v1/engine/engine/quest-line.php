@@ -186,6 +186,10 @@ function InsertNewQuestLine()
 
             // Assuming you will fetch the newly inserted quest line
             $questLineResp = GetQuestLineByLocator($questLineLocator);
+            if (!$questLineResp->Success)
+            {
+                return new APIResponse(false, "Failed to find newly inserted quest by locator", $questLineLocator);
+            }
         }
 
         // This section seems to imply content handling that's outside the scope of provided details

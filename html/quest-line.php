@@ -21,7 +21,7 @@ if (isset($_GET['locator'])){
 
 if (isset($_GET['new']))
 {
-    $name = "New Quest";
+    $name = "New Quest Line";
     $newPost = true;
     $questLineResp = InsertNewQuestLine();
 }
