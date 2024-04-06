@@ -166,7 +166,7 @@ function InsertNewQuestLine()
 
         if (!$questLineResp->Success)
         {
-            $stmt = $conn->prepare("INSERT INTO quest_line (name, locator, created_by_id) VALUES (?, ?, ?)");
+            $stmt = $conn->prepare("INSERT INTO quest_line (name, locator, created_by_id, `desc`) VALUES (?, ?, ?, '')");
             if (!$stmt) {
                 // Prepare failed.
                 return new APIResponse(false, "Failed to prepare statement for inserting new quest line.", null);
