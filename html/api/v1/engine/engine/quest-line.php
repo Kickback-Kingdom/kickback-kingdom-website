@@ -205,6 +205,11 @@ function InsertNewQuestLine()
             }
         }
 
+        if (!$questLineResp->Success)
+        {
+            return new APIResponse(false, "Failed to find newly inserted quest.", $questLineResp);
+        }
+
         return new APIResponse(true, "New quest line created.", $questLineResp->Data);
     }
     else
