@@ -199,6 +199,10 @@ function InsertNewQuestLine()
             UpdateQuestLineContent($questLineResp->Data["Id"], $newContentId);
 
             $questLineResp = GetQuestLineByLocator($questLineLocator);
+            if (!$questLineResp->Success)
+            {
+                return new APIResponse(false, "Failed to find newly inserted quest by locator after inserting content record", $questLineLocator);
+            }
         }
 
         return new APIResponse(true, "New quest line created.", $questLineResp->Data);
