@@ -45,7 +45,7 @@ if (!$questLineResp->Success)
 }
 if (!isset($questLineResp))
 {
-    Redirect("adventurers-guild.php");
+    //Redirect("adventurers-guild.php");
 }
 
 
