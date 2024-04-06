@@ -11,12 +11,20 @@ if (isset($_GET['id']))
 
     $id = $_GET['id'];
     $questLineResp = GetQuestLineById($id);
+
+    $showPopUpSuccess = true;
+    $PopUpTitle = "Loaded quest line by id";
+    $PopUpMessage= json_encode($questLineResp);
 }
 
 if (isset($_GET['locator'])){
         
     $name = $_GET['locator'];
     $questLineResp = GetQuestLineByLocator($name);
+
+    $showPopUpSuccess = true;
+    $PopUpTitle = "Loaded quest line by locator";
+    $PopUpMessage= json_encode($questLineResp);
 }
 
 if (isset($_GET['new']))
@@ -24,6 +32,11 @@ if (isset($_GET['new']))
     $name = "New Quest Line";
     $newPost = true;
     $questLineResp = InsertNewQuestLine();
+
+    
+    $showPopUpSuccess = true;
+    $PopUpTitle = "New Quest Line Debug";
+    $PopUpMessage= json_encode($questLineResp);
 }
 
 if (!$questLineResp->Success)
