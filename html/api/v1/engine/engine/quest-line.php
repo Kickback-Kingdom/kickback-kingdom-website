@@ -173,10 +173,23 @@ function InsertNewQuestLine()
             }
 
             mysqli_stmt_bind_param($stmt, 'ssi', $questLineName, $questLineLocator, $_SESSION["account"]["Id"]);
-            if (!mysqli_stmt_execute($stmt)) {
-                // Execute failed.
-                return new APIResponse(false, "Failed to execute statement for inserting new quest line.", null);
+            if (IsAdmin())
+            {
+                if (!mysqli_stmt_execute($stmt)) {
+                    error_log(mysqli_error($conn)); // Log the error to the PHP error log
+                    return new APIResponse(false, "Failed to execute statement for inserting new quest line: " . mysqli_error($conn), null);
+                }
+
             }
+            else
+            {
+
+                if (!mysqli_stmt_execute($stmt)) {
+                    // Execute failed.
+                    return new APIResponse(false, "Failed to execute statement for inserting new quest line.", null);
+                }
+            }
+            
             
             $newId = mysqli_insert_id($conn);
             if ($newId == 0) {
