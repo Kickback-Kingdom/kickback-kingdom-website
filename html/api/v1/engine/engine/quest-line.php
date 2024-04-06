@@ -163,13 +163,26 @@ function InsertNewQuestLine()
 
         // Assuming GetQuestLineByLocator is a function you have for checking quest lines
         $questLineResp = GetQuestLineByLocator($questLineLocator);
+
         if (!$questLineResp->Success)
         {
-            // Assuming 'created_by_id' is the correct column name based on your schema
             $stmt = $conn->prepare("INSERT INTO quest_line (name, locator, created_by_id) VALUES (?, ?, ?)");
+            if (!$stmt) {
+                // Prepare failed.
+                return new APIResponse(false, "Failed to prepare statement for inserting new quest line.", null);
+            }
+
             mysqli_stmt_bind_param($stmt, 'ssi', $questLineName, $questLineLocator, $_SESSION["account"]["Id"]);
-            mysqli_stmt_execute($stmt);
+            if (!mysqli_stmt_execute($stmt)) {
+                // Execute failed.
+                return new APIResponse(false, "Failed to execute statement for inserting new quest line.", null);
+            }
+            
             $newId = mysqli_insert_id($conn);
+            if ($newId == 0) {
+                // Insert failed, no new ID generated.
+                return new APIResponse(false, "Insert operation failed or did not generate a new ID.", null);
+            }
 
             // Assuming you will fetch the newly inserted quest line
             $questLineResp = GetQuestLineByLocator($questLineLocator);
