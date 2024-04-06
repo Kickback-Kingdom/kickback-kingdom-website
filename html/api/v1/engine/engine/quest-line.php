@@ -138,7 +138,7 @@ function GetQuestLineById($id)
 
 function UpdateQuestLineContent($questLineId, $contentId)
 {
-    global $conn; 
+    $conn = $GLOBALS["conn"];
     // Assuming the quest_line table structure is similar and has a content_id column
     $stmt = $conn->prepare("UPDATE quest_line SET content_id = ? WHERE Id = ?");
     mysqli_stmt_bind_param($stmt, 'ii', $contentId, $questLineId);
@@ -157,7 +157,7 @@ function InsertNewQuestLine()
 {
     if (IsQuestGiver())
     {
-        global $conn;
+        $conn = $GLOBALS["conn"];
         $questLineName = "New Quest Line";
         $questLineLocator = "new-quest-line-" . $_SESSION["account"]["Id"];
 
