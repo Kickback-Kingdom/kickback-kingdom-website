@@ -308,6 +308,15 @@ function getRandomQuote() {
             "accountId" => 2
         ],
 
+        //Alibaba
+        [
+            "text" => "Anything can be solved with a little patience and understading",
+            "image" => "quotes/people/122.png",
+            "author" => "Alexander Atlas",
+            "date" => "2020s AD",
+            "accountId" => 1
+        ],
+
         // Socrates
         [
             "text" => "The best seasoning for food is hunger.",
@@ -411,5 +420,15 @@ function GetNewcomerIntroduction($username) {
     $randomIndex = array_rand($introductions);
     return $introductions[$randomIndex];
 }
+function Redirect($localPath) {
+    $basePath = rtrim($GLOBALS["urlPrefixBeta"], '/');
+    header("Location: ".$basePath."/".ltrim($localPath, '/'), true, 302);
+    exit;
+}
+
+function StringStartsWith($str, $startsWith) {
+    return (strpos(strtolower($str), strtolower($startsWith)) === 0);
+}
+
 
 ?>

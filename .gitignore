@@ -32,3 +32,9 @@
 # HTTP server is hosting.)
 /html/phpmyadmin/**
 
+# Don't store code for composer-based vendor projects.
+# These are easily reproduced using composer, so there's no point in
+# having our git repo track someone else's code.
+/html/vendor/composer/**
+!/html/vendor/composer/.gitkeep
+

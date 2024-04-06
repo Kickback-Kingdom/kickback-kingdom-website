@@ -1,5 +1,7 @@
 <?php
 
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: (__DIR__ . "/../../../..")) . "/Kickback/init.php");
+
 function InsertNewContent()
 {
     global $conn; 
@@ -41,7 +43,18 @@ function CanUpdateContent($contentData)
                     return false;
                 }
                 break;
-            
+            case 'QUEST-LINE':
+
+                $questResp = GetQuestLineByLocator($ids[0]);
+                if ($questResp->Success)
+                {
+                    return CanEditQuestLine($questResp->Data);
+                }
+                else
+                {
+                    return false;
+                }
+                break;
             default:
             return false;
         }
@@ -278,15 +291,11 @@ function GetMediaDirectories()
     return (new APIResponse(true, "Media Directories",  $dirs ));
 }
 
-require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
-
 function InsertMediaRecord($directory, $name, $desc, $extension) {
     // Get the global database connection and service key
     $db = $GLOBALS["conn"];
 
-    $kk_credentials = LoadServiceCredentialsOnce();
-    $kk_service_key = $kk_credentials["kk_service_key"];
-    unset($kk_credentials);
+    $kk_service_key = \Kickback\Config\ServiceCredentials::get("kk_service_key");
 
     // Retrieve the author's ID from the session
     $author_id = $_SESSION["account"]["Id"];

@@ -1,8 +1,7 @@
-<?php 
+<?php
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
-$session = require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/session/verifySession.php");
-
-
+$session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
 if (!IsAdmin())
@@ -38,6 +37,10 @@ else
 {
 
 }
+
+
+$reviewFeedResp = GetNeedsReviewedFeed();
+$reviewFeed = $reviewFeedResp->Data;
 ?>
 
 <!DOCTYPE html>
@@ -185,16 +188,30 @@ else
                 $activePageName = "Admin Dashboard";
                 require("php-components/base-page-breadcrumbs.php"); 
                 ?>
-<div class="row">
+                <div class="row">
                     <div class="col-12">
                         
                         <nav>
                             <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                                <button class="nav-link active" id="nav-merchant-processing-tab" data-bs-toggle="tab" data-bs-target="#nav-merchant-processing" type="button" role="tab" aria-controls="nav-merchant-processing" aria-selected="true"><i class="fa-solid fa-globe"></i></button>
+                                <button class="nav-link active" id="nav-review-tab" data-bs-toggle="tab" data-bs-target="#nav-review" type="button" role="tab" aria-controls="nav-review" aria-selected="true"><i class="fa-solid fa-magnifying-glass"></i></button>
+                                <button class="nav-link" id="nav-merchant-processing-tab" data-bs-toggle="tab" data-bs-target="#nav-merchant-processing" type="button" role="tab" aria-controls="nav-merchant-processing" aria-selected="true"><i class="fa-solid fa-globe"></i></button>
                             </div>
                         </nav>
                         <div class="tab-content" id="nav-tabContent">
-                            <div class="tab-pane fade active show" id="nav-merchant-processing" role="tabpanel" aria-labelledby="nav-merchant-processing-tab" tabindex="0">
+                        <div class="tab-pane fade active show" id="nav-review" role="tabpanel" aria-labelledby="nav-review-tab" tabindex="0">
+                                <div class="display-6 tab-pane-title">Community Review</div>
+
+                                <?php 
+
+                                    for ($i=0; $i < count($reviewFeed); $i++) 
+                                    { 
+                                        $feedCard = $reviewFeed[$i];
+                                        
+                                        require ("php-components/feed-card.php");
+                                    }
+                                ?>
+                            </div>
+                            <div class="tab-pane fade" id="nav-merchant-processing" role="tabpanel" aria-labelledby="nav-merchant-processing-tab" tabindex="0">
                                 <div class="display-6 tab-pane-title">Merchant Guild Processing</div>
 
                                 <table class="table">
@@ -268,7 +285,6 @@ else
                                     endforeach; ?>
                                     </tbody>
                                 </table>
-                                
                             </div>
                         </div>
                     </div>
@@ -278,6 +294,7 @@ else
             
             <?php require("php-components/base-page-discord.php"); ?>
         </div>
+        <?php require("php-components/base-page-footer.php"); ?>
     </main>
 
     

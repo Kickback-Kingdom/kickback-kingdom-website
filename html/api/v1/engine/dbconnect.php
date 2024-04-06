@@ -1,12 +1,11 @@
 <?php
 
-require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
-$kk_credentials = LoadServiceCredentialsOnce();
-$kk_servername = $kk_credentials["sql_server_host"];
-$kk_username   = $kk_credentials["sql_username"];
-$kk_password   = $kk_credentials["sql_password"];
-$kk_database   = $kk_credentials["sql_server_db_name"];
-unset($kk_credentials);
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: (__DIR__ . "/../../..")) . "/Kickback/init.php");
+use \Kickback\Config\ServiceCredentials;
+$kk_servername = ServiceCredentials::get("sql_server_host");
+$kk_username   = ServiceCredentials::get("sql_username");
+$kk_password   = ServiceCredentials::get("sql_password");
+$kk_database   = ServiceCredentials::get("sql_server_db_name");
 
 // Create connection
 $GLOBALS["conn"] = new mysqli($kk_servername, $kk_username, $kk_password, $kk_database);

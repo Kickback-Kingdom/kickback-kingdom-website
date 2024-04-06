@@ -1,11 +1,12 @@
-<?php 
+<?php
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
-$session = require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/session/verifySession.php");
+$session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
 
 $hasError = false;
-$resp = require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/account/logout.php");
+$resp = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/account/logout.php");
 $redirectUrl = 'index.php';
 
 if (isset($_GET["redirect"]))
@@ -14,13 +15,8 @@ if (isset($_GET["redirect"]))
 }
 if (isset($_POST["submit"]))
 {
-    require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
-    $kk_credentials = LoadServiceCredentialsOnce();
-    $kk_service_key = $kk_credentials["kk_service_key"];
-    unset($kk_credentials);
-
-    $_POST["serviceKey"] = $kk_service_key;
-    $resp = require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/account/login.php");
+    $_POST["serviceKey"] = \Kickback\Config\ServiceCredentials::get("kk_service_key");
+    $resp = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/account/login.php");
     $hasError = !$resp->Success;
     if (!$hasError)
     {

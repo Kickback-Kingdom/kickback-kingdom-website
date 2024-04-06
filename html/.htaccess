@@ -16,11 +16,11 @@ RewriteRule ^(.*)$ /profile.php?u=%1 [L]
 RewriteCond %{REQUEST_URI} ^/beta/u/([^/]+)$
 RewriteRule ^(.*)$ /beta/profile.php?u=%1 [L]
 
-# Redirect /u/ URLs to blog.php
+# Redirect /blog/ URLs to blog.php
 RewriteCond %{REQUEST_URI} ^/blog/([^/]+)$
 RewriteRule ^(.*)$ /blog.php?locator=%1 [L]
 
-# Redirect /beta/u/ URLs to /beta/blog.php
+# Redirect /beta/blog/ URLs to /beta/blog.php
 RewriteCond %{REQUEST_URI} ^/beta/blog/([^/]+)$
 RewriteRule ^(.*)$ /beta/blog.php?locator=%1 [L]
 
@@ -31,3 +31,11 @@ RewriteRule ^(.*)$ /blogpost.php?blogLocator=%1&postLocator=%2 [L]
 # Redirect /beta/blog/blogLocator/postLocator URLs to /beta/blogpost.php
 RewriteCond %{REQUEST_URI} ^/beta/blog/([^/]+)/([^/]+)$
 RewriteRule ^(.*)$ /beta/blogpost.php?blogLocator=%1&postLocator=%2 [L]
+
+# Redirect /quest-line/ URLs to quest-line.php
+RewriteCond %{REQUEST_URI} ^/quest-line/([^/]+)$
+RewriteRule ^(.*)$ /quest-line.php?locator=%1 [L]
+
+# Redirect /beta/quest-line/ URLs to /beta/quest-line.php
+RewriteCond %{REQUEST_URI} ^/beta/quest-line/([^/]+)$
+RewriteRule ^(.*)$ /beta/quest-line.php?locator=%1 [L]

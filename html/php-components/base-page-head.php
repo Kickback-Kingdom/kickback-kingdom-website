@@ -1,13 +1,22 @@
 <?php 
-
-$pageTitle = "Kickback Kingdom";
-$pageImage = "https://kickback-kingdom.com/assets/media/context/loading.gif";
-$pageDesc = "Top secret super cool hangout spot";
+if (!isset($pageTitle))
+{
+    $pageTitle = "Kickback Kingdom";
+    $pageImage = "https://kickback-kingdom.com/assets/media/context/loading.gif";
+    $pageDesc = "Top secret super cool hangout spot";
+}
 
 if (isset($thisQuest))
 {
     $pageTitle = $thisQuest["name"];
     $pageImage = "https://kickback-kingdom.com/assets/media/".$thisQuest["imagePath_icon"];
+    $pageDesc = 'Hosted on Kickback Kingdom';
+}
+
+if (isset($thisQuestLine))
+{
+    $pageTitle = $thisQuestLine["name"];
+    $pageImage = "https://kickback-kingdom.com/assets/media/".$thisQuestLine["imagePath_icon"];
     $pageDesc = 'Hosted on Kickback Kingdom';
 }
 

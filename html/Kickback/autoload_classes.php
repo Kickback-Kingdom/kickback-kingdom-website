@@ -30,52 +30,74 @@ namespace Kickback;
 // the files that declare the classes.
 require_once("script_root.php");
 
-function generic_autoload_function(string $class_name, string $namespace_prefix) : void
+function generic_autoload_function(string $class_fqn, string $namespace_to_try, string $root) : bool
 {
+    //echo "<!-- INFO: generic_autoload_function('$class_fqn','$namespace_to_try','$root') --> \n";
+
     // This implements a slightly modified version of PSR-4:
     //   https://www.php-fig.org/psr/psr-4/
     //   https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-4-autoloader-examples.md
     //
     // Ours is modified because we look up our files relative to the
-    // document root by using the `\Kickback\SCRIPT_ROOT . "/"` string.
-    // This will only work if PHP is invoked from within a server that provides
+    // document root by using the `"$root/"` string.
+    //
+    // For the `\Kickback` namespace, $root is `\Kickback\SCRIPT_ROOT`.
     // When executed in a server context such that the
     // `$_SERVER["DOCUMENT_ROOT"]` variable is available, this will have
     // the tremendous advantage of ALWAYS working regardless of which script
     // was the entry point (and regardless of which directory that script was
     // within) when the autoloading function is called.
 
-    // Project-specific namespace prefix
-    $path_prefix = str_replace('\\', DIRECTORY_SEPARATOR, $namespace_prefix);
+    // Does the class use the namespace prefix?
+    // (Optimization: Do this first, so that we can exit quickly
+    // if the class isn't in the given $namespace_to_try.)
+    $namespace_name_len = strlen($namespace_to_try);
+    if (strlen($class_fqn) <= $namespace_name_len+1) {
+        // No, move on to the next registered autoloader
+        // ($class_fqn isn't long enough to contain both the namespace and a classname.)
+        return false;
+    }
+
+    if ("\\" !== substr($class_fqn, $namespace_name_len, 1)) {
+        // No, move on to the next registered autoloader
+        // We know this because:
+        // $class_fqn should have a name separator ("\\") right after the
+        // its namespace portion. But in this case, it's not at the correct
+        // position for its namespace to match $namespace_to_try, so we know
+        // that the class is in a different namespace.
+        return false;
+    }
+
+    if (0 !== strncmp($namespace_to_try, $class_fqn, $namespace_name_len)) {
+        // No, move on to the next registered autoloader
+        return false;
+    }
+
+    // Now we have proven that the $namespace_to_try is actually the namespace
+    // mentioned in $class_fqn.
+    $namespace_name = $namespace_to_try;
 
     // Base directory for the namespace prefix
     // Modification:
-    // Don't do this. It breaks if the entry-point script isn't in document root.
-    //    $base_dir = __DIR__ . '/src/'; <- Don't do this. It breaks if the entry-point script isn't in document root.
+    // Don't do the below. It breaks if the entry-point script isn't in document root.
+    //    $base_dir = __DIR__ . '/src/'; <- Don't do this.
     // Do this instead:
-    $base_dir = \Kickback\SCRIPT_ROOT . DIRECTORY_SEPARATOR . $path_prefix;
+    $base_dir = $root . DIRECTORY_SEPARATOR . $namespace_name . DIRECTORY_SEPARATOR;
     // Also note that we put our namespace prefix in the path.
     // That seems to diverge from PSR-4. (Maybe?)
     // But it makes sense in our file hierarchy.
 
-    // Does the class use the namespace prefix?
-    $len = strlen($namespace_prefix);
-    if (strncmp($namespace_prefix, $class_name, $len) !== 0) {
-        // No, move on to the next registered autoloader
-        return;
-    }
-
     // Get the relative class name
-    $relative_class_name = substr($class_name, $len);
+    $relative_class_name = substr($class_fqn, $namespace_name_len+1);
 
     // Replace the namespace prefix with the base directory, replace namespace
     // separators with directory separators in the relative class name, append
     // with .php
-    $class_file_path = $base_dir .  str_replace('\\', DIRECTORY_SEPARATOR, $relative_class_name) . '.php';
+    $class_file_path = $base_dir . str_replace('\\', DIRECTORY_SEPARATOR, $relative_class_name) . '.php';
 
     // Modification:
     // We diverge from the PSR-4 by possibly triggering an exception/error
-    // if the required class file doesn't exist.
+    // if the required class file doesn't exist (by using `require` instead of `include`).
     // PSR-4 forbids such things, because other autoloaders are supposed to get
     // a chance to load any classes that don't exist.
     // However, if some other class has the `Kickback\` namespace prefix
@@ -90,11 +112,50 @@ function generic_autoload_function(string $class_name, string $namespace_prefix)
     //if (file_exists($class_file_path)) {
     //    require $class_file_path;
     //}
+
+    return true;
 }
 
-function autoload_function(string $class_name) : void
+function autoload_function(string $class_fqn) : void
 {
-    generic_autoload_function($class_name, 'Kickback\\');
+    // Attempt to load Kickback classes first.
+    // These are the highest priority.
+    if ( generic_autoload_function($class_fqn, 'Kickback', \Kickback\SCRIPT_ROOT) ) {
+        return;
+    }
+
+    // If the class wasn't found in the Kickback namespace, then search
+    // the `vendor` folder for code that implements the class.
+    $vendor_dirs = scandir(\Kickback\SCRIPT_ROOT . "/vendor", SCANDIR_SORT_NONE);
+    if ( false === $vendor_dirs ) {
+        // Vendor directory not present.
+        echo "<!-- WARNING: Could not find ./vendor directory. -->\n";
+        return;
+    }
+
+    foreach ( $vendor_dirs as $dir )
+    {
+        // Skip the composer directory. It is not a namespace.
+        // Rather, it contains all of the packages installed by composer,
+        // and those are autoloaded by composer's autoloader.
+        if ( $dir === "composer"
+        ||   $dir === ".."
+        ||   $dir === "." ) {
+            continue;
+        }
+
+        // Attempt to autoload the class using this namespace+directory.
+        if ( generic_autoload_function($class_fqn, $dir, \Kickback\SCRIPT_ROOT . "/vendor") ) {
+            return;
+        }
+    }
+
+    // If nothing autoloaded in the above namespaces, then PHP's
+    // logic should move on to the next autoloader (ex: composer's autoloader).
+    // Note that we don't seem to have any guarantee about what order this
+    // happens in, so it's possible that composer's autoloader will run
+    // FIRST, then ours will run.
+    // TODO: The undefined order-of-operations is undesirable. Ideally, we want our autoloader to run first!
 }
 
 spl_autoload_register("\Kickback\autoload_function");

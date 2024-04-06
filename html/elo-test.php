@@ -1,4 +1,7 @@
 <?php
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
+
+$session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 
 function updateEloScoreAndRankedStatus($accountId, $gameId, $eloScore, $totalMatches, $wins, $losses, $winRate, $minRankedMatches) {
     $isRanked = $totalMatches >= $minRankedMatches ? 1 : 0;
@@ -12,8 +15,6 @@ function updateEloScoreAndRankedStatus($accountId, $gameId, $eloScore, $totalMat
     }
     mysqli_stmt_close($stmt);
 }
-
-$session = require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/session/verifySession.php");
 
 $baseRating = 1500;
 $kFactor = 30;

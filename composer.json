@@ -1,0 +1,11 @@
+{
+    "name": "kickback-kingdom/website",
+    "type": "project",
+    "license": "Boost",
+    "require": {
+        "stripe/stripe-php": "^13.16"
+    },
+    "config": {
+        "vendor-dir": "html/vendor/composer"
+    }
+}

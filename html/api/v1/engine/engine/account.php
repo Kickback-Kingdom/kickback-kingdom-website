@@ -1,5 +1,7 @@
 <?php
 
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: (__DIR__ . "/../../../..")) . "/Kickback/init.php");
+
 function LoginToService($accountId, $serviceKey)
 {
     if (session_status() == PHP_SESSION_ACTIVE)
@@ -124,7 +126,6 @@ function Logout()
     if (IsLoggedIn())
     {
 
-        //$accountId = $GLOBALS["account"]["Id"];
         $sessionToken = $_SESSION["sessionToken"];
         $serviceKey = $_SESSION["serviceKey"];
         $sql = "delete from account_sessions where SessionToken = '$sessionToken' and ServiceKey = '$serviceKey'";
@@ -639,8 +640,6 @@ function GetAccountInventory($account_id)
     return (new APIResponse(true, "Account Inventory",  $rows ));
 }
 
-require_once($_SERVER['DOCUMENT_ROOT']."/service-credentials-ini.php");
-
 function RegisterAccount($firstName, $lastName, $password, $confirm_password, $username, $email, $i_agree, $passage_quest, $passage_id)
 {
     $firstName = mysqli_real_escape_string($GLOBALS["conn"], $firstName);
@@ -699,10 +698,7 @@ function RegisterAccount($firstName, $lastName, $password, $confirm_password, $u
         return (new APIResponse(false, "Please use a valid Referrer's Username", null));
     }*/
 
-    $kk_credentials = LoadServiceCredentialsOnce();
-    $kk_crypt_key_quest_id = $kk_credentials["crypt_key_quest_id"];
-    unset($kk_credentials);
-
+    $kk_crypt_key_quest_id = \Kickback\Config\ServiceCredentials::get("crypt_key_quest_id");
     $crypt = new IDCrypt($kk_crypt_key_quest_id);
     if (ContainsData($passage_id,"passage_id")->Success)
     {
@@ -768,10 +764,7 @@ function RegisterAccount($firstName, $lastName, $password, $confirm_password, $u
     $result = mysqli_query($GLOBALS["conn"],$sql);
     if ($result === TRUE) {
 
-        $kk_credentials = LoadServiceCredentialsOnce();
-        $kk_service_key = $kk_credentials["kk_service_key"];
-        unset($kk_credentials);
-
+        $kk_service_key = \Kickback\Config\ServiceCredentials::get("kk_service_key");
         $loginResp = Login($kk_service_key,$email,$password);
         $login = $loginResp->Data;
 

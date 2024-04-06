@@ -363,6 +363,8 @@ if ($_canEditContent)
         <?php if ($pageContentEditMode) { ?>
 
             <form method="POST">
+                <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
+
                 <input type="hidden" name="edit-content-container-type" value="<?php echo $pageContent["container_type"]; ?>"/>
                 <input type="hidden" name="edit-content-container-id" value="<?php echo $pageContent["container_id"]; ?>"/>
                 <input type="hidden" name="edit-content-content-data" id="edit-content-content-data" value="<?php echo $pageContent["content_data"]; ?>"/>
