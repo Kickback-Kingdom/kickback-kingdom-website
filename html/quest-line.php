@@ -12,9 +12,9 @@ if (isset($_GET['id']))
     $id = $_GET['id'];
     $questLineResp = GetQuestLineById($id);
 
-    $showPopUpSuccess = true;
+    /*$showPopUpSuccess = true;
     $PopUpTitle = "Loaded quest line by id";
-    $PopUpMessage= json_encode($questLineResp);
+    $PopUpMessage= json_encode($questLineResp);*/
 }
 
 if (isset($_GET['locator'])){
@@ -22,9 +22,9 @@ if (isset($_GET['locator'])){
     $name = $_GET['locator'];
     $questLineResp = GetQuestLineByLocator($name);
 
-    $showPopUpSuccess = true;
+    /*$showPopUpSuccess = true;
     $PopUpTitle = "Loaded quest line by locator";
-    $PopUpMessage= json_encode($questLineResp);
+    $PopUpMessage= json_encode($questLineResp);*/
 }
 
 if (isset($_GET['new']))
@@ -34,9 +34,9 @@ if (isset($_GET['new']))
     $questLineResp = InsertNewQuestLine();
 
     
-    $showPopUpSuccess = true;
+    /*$showPopUpSuccess = true;
     $PopUpTitle = "New Quest Line Debug";
-    $PopUpMessage= json_encode($questLineResp);
+    $PopUpMessage= json_encode($questLineResp);*/
 }
 
 if (!$questLineResp->Success)
@@ -45,7 +45,7 @@ if (!$questLineResp->Success)
 }
 if (!isset($questLineResp))
 {
-    //Redirect("adventurers-guild.php");
+    Redirect("adventurers-guild.php");
 }
 
 
@@ -53,8 +53,8 @@ if (!isset($questLineResp))
 $thisQuestLine = $questLineResp->Data;
 
 
-$hasSuccess = true;
-$successMessage = json_encode($thisQuestLine);
+/*$hasSuccess = true;
+$successMessage = json_encode($thisQuestLine);*/
 
 $pageContent = null;
 if ($thisQuestLine["content_id"] != null)
