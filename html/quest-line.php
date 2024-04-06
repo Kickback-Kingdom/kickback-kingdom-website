@@ -35,7 +35,14 @@ if (!isset($questLineResp))
     Redirect("adventurers-guild.php");
 }
 
+
+
 $thisQuestLine = $questLineResp->Data;
+
+
+$hasSuccess = true;
+$successMessage = json_encode($thisQuestLine);
+
 $pageContent = null;
 if ($thisQuestLine["content_id"] != null)
 {
