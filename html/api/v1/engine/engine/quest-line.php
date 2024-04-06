@@ -138,7 +138,7 @@ function GetQuestLineById($id)
 
 function UpdateQuestLineContent($questLineId, $contentId)
 {
-    global $conn; 
+    $conn = $GLOBALS["conn"];
     // Assuming the quest_line table structure is similar and has a content_id column
     $stmt = $conn->prepare("UPDATE quest_line SET content_id = ? WHERE Id = ?");
     mysqli_stmt_bind_param($stmt, 'ii', $contentId, $questLineId);
@@ -157,22 +157,39 @@ function InsertNewQuestLine()
 {
     if (IsQuestGiver())
     {
-        global $conn;
+        $conn = $GLOBALS["conn"];
         $questLineName = "New Quest Line";
         $questLineLocator = "new-quest-line-" . $_SESSION["account"]["Id"];
 
         // Assuming GetQuestLineByLocator is a function you have for checking quest lines
         $questLineResp = GetQuestLineByLocator($questLineLocator);
+
         if (!$questLineResp->Success)
         {
-            // Assuming 'created_by_id' is the correct column name based on your schema
             $stmt = $conn->prepare("INSERT INTO quest_line (name, locator, created_by_id) VALUES (?, ?, ?)");
+            if (!$stmt) {
+                // Prepare failed.
+                return new APIResponse(false, "Failed to prepare statement for inserting new quest line.", null);
+            }
+
             mysqli_stmt_bind_param($stmt, 'ssi', $questLineName, $questLineLocator, $_SESSION["account"]["Id"]);
-            mysqli_stmt_execute($stmt);
+            if (!mysqli_stmt_execute($stmt)) {
+                // Execute failed.
+                return new APIResponse(false, "Failed to execute statement for inserting new quest line.", null);
+            }
+            
             $newId = mysqli_insert_id($conn);
+            if ($newId == 0) {
+                // Insert failed, no new ID generated.
+                return new APIResponse(false, "Insert operation failed or did not generate a new ID.", null);
+            }
 
             // Assuming you will fetch the newly inserted quest line
             $questLineResp = GetQuestLineByLocator($questLineLocator);
+            if (!$questLineResp->Success)
+            {
+                return new APIResponse(false, "Failed to find newly inserted quest by locator", $questLineLocator);
+            }
         }
 
         // This section seems to imply content handling that's outside the scope of provided details
@@ -182,6 +199,15 @@ function InsertNewQuestLine()
             UpdateQuestLineContent($questLineResp->Data["Id"], $newContentId);
 
             $questLineResp = GetQuestLineByLocator($questLineLocator);
+            if (!$questLineResp->Success)
+            {
+                return new APIResponse(false, "Failed to find newly inserted quest by locator after inserting content record", $questLineLocator);
+            }
+        }
+
+        if (!$questLineResp->Success)
+        {
+            return new APIResponse(false, "Failed to find newly inserted quest.", $questLineResp);
         }
 
         return new APIResponse(true, "New quest line created.", $questLineResp->Data);
