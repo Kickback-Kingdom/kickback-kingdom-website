@@ -39,36 +39,39 @@ namespace Kickback;
 // explicit about it everywhere else in this file, in THIS spot we'll
 // elide the leading `\` just because that's what makes everything work.)
 //
-if ( !empty($_SERVER["KICKBACK_SCRIPT_ROOT"]) ) {
-    // Branch that is executed when the script is being executed as part
-    // of an HTTP query on a web server (including local dev machines
-    // running an HTTP server).
-    //
-    // In this case, we look for the KICKBACK_SCRIPT_ROOT server definition.
-    // This allows the HTTP server's configuration (ex: httpd.conf) to
-    // define a `KICKBACK_SCRIPT_ROOT` environment variable that tells us
-    // which root to use for scripts, specifically. This is especially
-    // important for ensuring that the beta version of the site is
-    // able to pull the correct scripts, instead of accidentally pulling
-    // production scripts. (At least, this line below makes it work
-    // for autoloading scripts and anything that uses
-    // the `\Kickback\SCRIPT_ROOT` constant.)
-    //
-    define('Kickback\SCRIPT_ROOT', $_SERVER["KICKBACK_SCRIPT_ROOT"]);
-}
-else
-if ( !empty($_SERVER["DOCUMENT_ROOT"]) ) {
-    // Same as above, but it's a fallback for if the admin didn't do
-    // `SetEnv KICKBACK_SCRIPT_ROOT "/var/blah/blah/blah"`
-    // in the HTTP server's (ex: httpd/apache) config file.
-    // We'll presume that `$_SERVER["DOCUMENT_ROOT"]` has the correct info.
-    //
-    define('Kickback\SCRIPT_ROOT', $_SERVER["DOCUMENT_ROOT"]);
-}
-else {
-    // Branch that is probably executed when PHP runs the sites scripts
-    // from the command line, instead of from the HTTP server (ex: Apache/HTTPD).
-    define('Kickback\SCRIPT_ROOT', __DIR__ . DIRECTORY_SEPARATOR . "..");
+
+// Check if the constant is already defined to prevent the 'constant already defined' notice.
+if (!defined('Kickback\SCRIPT_ROOT')) {
+    if ( !empty($_SERVER["KICKBACK_SCRIPT_ROOT"]) ) {
+        // Branch that is executed when the script is being executed as part
+        // of an HTTP query on a web server (including local dev machines
+        // running an HTTP server).
+        //
+        // In this case, we look for the KICKBACK_SCRIPT_ROOT server definition.
+        // This allows the HTTP server's configuration (ex: httpd.conf) to
+        // define a `KICKBACK_SCRIPT_ROOT` environment variable that tells us
+        // which root to use for scripts, specifically. This is especially
+        // important for ensuring that the beta version of the site is
+        // able to pull the correct scripts, instead of accidentally pulling
+        // production scripts. (At least, this line below makes it work
+        // for autoloading scripts and anything that uses
+        // the `\Kickback\SCRIPT_ROOT` constant.)
+        //
+        define('Kickback\SCRIPT_ROOT', $_SERVER["KICKBACK_SCRIPT_ROOT"]);
+    }
+    elseif ( !empty($_SERVER["DOCUMENT_ROOT"]) ) {
+        // Same as above, but it's a fallback for if the admin didn't do
+        // `SetEnv KICKBACK_SCRIPT_ROOT "/var/blah/blah/blah"`
+        // in the HTTP server's (ex: httpd/apache) config file.
+        // We'll presume that `$_SERVER["DOCUMENT_ROOT"]` has the correct info.
+        //
+        define('Kickback\SCRIPT_ROOT', $_SERVER["DOCUMENT_ROOT"]);
+    }
+    else {
+        // Branch that is probably executed when PHP runs the sites scripts
+        // from the command line, instead of from the HTTP server (ex: Apache/HTTPD).
+        define('Kickback\SCRIPT_ROOT', __DIR__ . DIRECTORY_SEPARATOR . "..");
+    }
 }
 
 ?>
