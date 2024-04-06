@@ -215,7 +215,11 @@ if ($showQuestLineTab)
     }
 
 }
-
+$canEditQuest = true;
+if ($thisQuestPassed && $thisQuest["published"])
+{
+    $canEditQuest = false;
+}
 
 //$feedCardDateBasic = date_format($feedCardDate,"M j, Y");
 //$feedCardDateDetailed = date_format($feedCardDate,"M j, Y H:i:s");
@@ -492,7 +496,7 @@ if ($thisQuest["raffle_id"] != null)
                                 </div>
                             </div>
                         <?php } ?>
-                        <?php if (CanEditQuest($thisQuest) && !$thisQuestPassed) { ?>
+                        <?php if (CanEditQuest($thisQuest) && $canEditQuest) { ?>
                         <div class="row mt-3">
                             <div class="col-12">
                                 <div class="card mb-3">
