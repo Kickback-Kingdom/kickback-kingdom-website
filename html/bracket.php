@@ -264,6 +264,9 @@ function BuildMatchArray($bracketData, $teams){
             $match->DisplayNames[0] = GetDisplayName($teamName,$teams);
             $match->Sets = [];
             $match->Sets[0] = [];
+            if (!isset($match->Sets[$setIndex])) {
+                $match->Sets[$setIndex] = [];
+            }
             $match->Sets[$setIndex][0] = [$game_record['win'],$game_record['character']];
             array_push($matchArray, $match);
         }
@@ -278,9 +281,16 @@ function BuildMatchArray($bracketData, $teams){
             else
             {
                 //$match->TeamB = $teamName;
-                $match->Teams[1] = $teamName;
-                $match->DisplayNames[1] = GetDisplayName($teamName,$teams);
-                $match->Scores[1] = $match->Scores[1] + $game_record['win'];
+                if (!isset($match->Teams[1])) {
+                    $match->Teams[1] = $teamName;
+                    $match->DisplayNames[1] = GetDisplayName($teamName, $teams);
+                    $match->Scores[1] = 0; // Initialize the score for team B
+                }
+                
+                $match->Scores[1] += $game_record['win'];
+                if (!isset($match->Sets[$setIndex])) {
+                    $match->Sets[$setIndex] = [[], []]; // Initialize with two elements
+                }
                 $match->Sets[$setIndex][1] = [$game_record['win'],$game_record['character']];
                 //$match->ScoreB = $match->ScoreB + $game_record['win'];
             }
