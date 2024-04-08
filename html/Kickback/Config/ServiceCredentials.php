@@ -38,6 +38,10 @@ final class ServiceCredentials implements \ArrayAccess
     // for connecting to services that must exist for the server to
     // function at all (ex: SQL server).
     //
+    // For an example of this config file, check out the
+    // `meta/config-examples/credentials.ini` file,
+    // as specified from the root of the project.
+    //
     /** @var array<string> */
     private const SERVICE_CREDENTIAL_SOURCES =
         [
