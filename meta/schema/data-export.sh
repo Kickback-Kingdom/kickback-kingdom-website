@@ -24,9 +24,9 @@ fi
 
 echo "Full export of the database '$KKDB_DATABASE_NAME' will now begin."
 mysqldump --user=root --single-transaction --add-drop-database --add-drop-trigger --comments --complete-insert --default-character-set=utf8mb4 --events --log-error --opt --routines --triggers --skip-compact --databases "$KKDB_DATABASE_NAME" --password > "$KKDB_EXPORT_PATH"
-success="$?"
+retcode="$?"
 
-if [ "0" -eq "$success" ]; then
+if [ "0" -eq "$retcode" ]; then
     if [ -f "$KKDB_EXPORT_PATH" ]; then
         echo "Database successfully exported to '$KKDB_EXPORT_PATH'"
     else
@@ -38,6 +38,23 @@ else
     else
         echo "ERROR: Could not export database, errors were encountered."
     fi
+
+    # Source of error code explanations:
+    #   https://stackoverflow.com/a/7495907/1261963
+    # Also verified against code that is current on 2024-04-08:
+    #   https://github.com/mysql/mysql-server/blob/trunk/client/mysqldump.cc
+    explanation=""
+    case "$retcode" in
+        "1") explanation=" == EX_USAGE: 'mysqldump' was called with an invalid combination of arguments, or was asked to do something unsupported.";;
+        "2") explanation=" == EX_MYSQLERR: This error code seems to mostly be used for server-side errors (including, notably, an incorrect password!), but can happen due to 'malloc' failing, too.";;
+        "3") explanation=" == EX_CONSCHECK: Seems to stand for \"consistency checks\"; perhaps some consistency check failed?";;
+        "4") explanation=" == EX_EOM: Returned when _alloc calls fail, possibly stands for \"End Of Memory\".";;
+        "5") explanation=" == EX_EOF: Usually this stands for \"End Of File\". Not sure which file, though. Sorry.";;
+        "6") explanation=" == EX_ILLEGAL_TABLE: At the time of this writing, we don't know what this means exactly. Sorry.";;
+        *) explanation="(this script does not know what this error code means, sorry)"
+    esac
+    echo "... 'mysqldump' returned error code $retcode$explanation"
+    echo "... If more details are needed, it is advisable to look through the SQL server's log files."
 fi
 
 # The above `mysqldump` command creates an empty `--opt` file for some reason.
