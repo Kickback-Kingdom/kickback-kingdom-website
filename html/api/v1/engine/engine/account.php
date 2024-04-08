@@ -33,14 +33,16 @@ function LoginToService($accountId, $serviceKey)
     return false;
 }
 
-function IsLoggedIn()
+function IsLoggedIn() : bool
 {
-    if (!array_key_exists("sessionToken", $_SESSION))
+    if (!array_key_exists("sessionToken", $_SESSION)
+    ||  !array_key_exists("serviceKey", $_SESSION)
+    ||  !array_key_exists("account", $_SESSION) ) {
         return false;
+    }
 
-    return ($_SESSION["sessionToken"] != null && $_SESSION["serviceKey"] != null && $_SESSION["account"] != null);
+    return isset($_SESSION["sessionToken"], $_SESSION["serviceKey"], $_SESSION["account"]);
 }
-
 
 function IsQuestGiver()
 {
