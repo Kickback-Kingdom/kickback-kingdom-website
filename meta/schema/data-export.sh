@@ -13,6 +13,7 @@
 # that would be a significant security concern (disclosure vulnerability).
 #
 KKDB_EXPORT_PATH="${KKDB_EXPORT_PATH:-$HOME/kickback-kingdom-full-database-backup.mysql}"
+KKDB_USER_NAME="${KKDB_USER_NAME:-root}"
 KKDB_DATABASE_NAME="${KKDB_DATABASE_NAME:-kickbackdb}"
 
 if [ -f "$KKDB_EXPORT_PATH" ]; then
@@ -22,8 +23,11 @@ if [ -f "$KKDB_EXPORT_PATH" ]; then
     mv "$KKDB_EXPORT_PATH" "$KKDB_EXPORT_PATH.$KKDB_TIMESTAMP"
 fi
 
+KKDB_ARGS="--single-transaction --add-drop-database --add-drop-trigger --comments --complete-insert --default-character-set=utf8mb4 --events --log-error --opt --routines --triggers --skip-compact --databases"
+
 echo "Full export of the database '$KKDB_DATABASE_NAME' will now begin."
-mysqldump --user=root --single-transaction --add-drop-database --add-drop-trigger --comments --complete-insert --default-character-set=utf8mb4 --events --log-error --opt --routines --triggers --skip-compact --databases "$KKDB_DATABASE_NAME" --password > "$KKDB_EXPORT_PATH"
+echo "mysqldump --user=\"$KKDB_USER_NAME\" $KKDB_ARGS \"$KKDB_DATABASE_NAME\" --password > \"$KKDB_EXPORT_PATH\""
+mysqldump --user="$KKDB_USER_NAME" $KKDB_ARGS "$KKDB_DATABASE_NAME" --password > "$KKDB_EXPORT_PATH"
 retcode="$?"
 
 if [ "0" -eq "$retcode" ]; then
