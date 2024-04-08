@@ -182,7 +182,7 @@ $thisQuestIsRanked = ($thisQuest["tournament_id"] != null);
 $showRaffleTab = ($thisQuest["raffle_id"] != null);
 $showRewardsTab = (count($questRewards)>0);
 $showBracketTab = ($thisQuest["hasBracket"]==1);
-$showResultsTab = ($thisQuestIsRanked && $thisQuestPassed && !$showBracketTab);
+$showResultsTab = ($thisQuestIsRanked && $thisQuestPassed);
 $showParticipantsTab = (($thisQuestPassed)||($showRaffleTab));
 $showApplicantsTab = ($thisQuest["raffle_id"] == null);
 $showQuestLineTab = ($thisQuest["quest_line_id"] != null);
@@ -219,6 +219,23 @@ $canEditQuest = true;
 if ($thisQuestPassed && $thisQuest["published"])
 {
     $canEditQuest = false;
+}
+$playersInRankedMatch = null;
+$champions = null;
+if ($thisQuestIsRanked)
+{
+    $championResp = GetTournamentResults($thisQuest["tournament_id"]);
+    $playersInRankedMatch = $championResp->Data;
+
+    
+    $playersByTeam = [];
+    foreach ($playersInRankedMatch as $playerInRankedMatch) {
+        $playersByTeam[$playerInRankedMatch['team_name']][] = $playerInRankedMatch;
+        if ($playerInRankedMatch["win"] == 1)
+        {
+            $champions[] = $playerInRankedMatch;
+        }
+    }
 }
 
 //$feedCardDateBasic = date_format($feedCardDate,"M j, Y");
@@ -1229,7 +1246,7 @@ if ($thisQuest["raffle_id"] != null)
                                 <button class="nav-link <?php echo $activeTab; $activeTab = ''; ?>" id="nav-info-tab" data-bs-toggle="tab" data-bs-target="#nav-info" type="button" role="tab" aria-controls="nav-info" aria-selected="true"><i class="fa-solid fa-newspaper"></i></button>
                                 <?php if ($showRewardsTab) { ?><button class="nav-link <?php echo $activeTab; $activeTab = ''; ?>" id="nav-rewards-tab" data-bs-toggle="tab" data-bs-target="#nav-rewards" type="button" role="tab" aria-controls="nav-rewards" aria-selected="false"><i class="fa-solid fa-gift"></i></button><?php } ?>
                                 <?php if ($showResultsTab) { ?><button class="nav-link <?php echo $activeTab; $activeTab = ''; ?>" id="nav-results-tab" data-bs-toggle="tab" data-bs-target="#nav-results" type="button" role="tab" aria-controls="nav-results" aria-selected="false"><i class="fa-solid fa-ranking-star"></i></button><?php } ?>
-                                <?php if ($showBracketTab) { ?><button class="nav-link <?php echo $activeTab; $activeTab = ''; ?>" id="nav-bracket-tab" data-bs-toggle="tab" data-bs-target="#nav-bracket" type="button" role="tab" aria-controls="nav-bracket" aria-selected="false" onclick="LoadBracket();"><i class="fa-solid fa-ranking-star"></i></button><?php } ?>
+                                <?php if ($showBracketTab) { ?><button class="nav-link <?php echo $activeTab; $activeTab = ''; ?>" id="nav-bracket-tab" data-bs-toggle="tab" data-bs-target="#nav-bracket" type="button" role="tab" aria-controls="nav-bracket" aria-selected="false" onclick="LoadBracket();"><i class="fa-solid fa-code-fork"></i></button><?php } ?>
                                 <?php if ($showParticipantsTab) { ?><button class="nav-link <?php echo $activeTab; $activeTab = ''; ?>" id="nav-participants-tab" data-bs-toggle="tab" data-bs-target="#nav-participants" type="button" role="tab" aria-controls="nav-participants" aria-selected="false"><i class="fa-solid fa-person-circle-check"></i></button><?php } ?>
                                 <?php if ($showApplicantsTab) { ?><button class="nav-link <?php echo $activeTab; $activeTab = ''; ?>" id="nav-registrants-tab" data-bs-toggle="tab" data-bs-target="#nav-registrants" type="button" role="tab" aria-controls="nav-registrants" aria-selected="false"><i class="fa-solid fa-user-pen"></i></button><?php } ?>
                                 <?php if ($showQuestLineTab) { ?><button class="nav-link <?php echo $activeTab; $activeTab = ''; ?>" id="nav-quest-line-tab" data-bs-toggle="tab" data-bs-target="#nav-quest-line" type="button" role="tab" aria-controls="nav-quest-line" aria-selected="false"><i class="fa-solid fa-route"></i></button><?php } ?>
@@ -1381,7 +1398,71 @@ if ($thisQuest["raffle_id"] != null)
                             <?php } ?>
                             <?php if ($showResultsTab) { ?>
                             <div class="tab-pane fade <?php echo $activeTabPage; $activeTabPage = ''; ?>" id="nav-results" role="tabpanel" aria-labelledby="nav-results-tab" tabindex="0">
-                            <div class="display-6 tab-pane-title">Quest Results</div>    
+                            <!--<div class="display-6 tab-pane-title">Quest Results</div>-->
+                            
+<?php if ($champions != null) { ?>
+<div class="container py-5">
+        <h2 class="text-center mb-4">Grand Champion</h2>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow bg-ranked-1">
+                <div class="text-center" style="padding: 20px;">
+                    <img src="/assets/media/<?php echo GetAccountProfilePicture($champions[0]); ?>" class="img-thumbnail" alt="<?php echo $champions[0]["Username"]; ?> team logo" style="height: 250px; width: auto; object-fit: cover;">
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title text-center" style="font-size: 2rem; font-weight: bold; margin-bottom: 15px;">Team: <?php echo htmlspecialchars($champions[0]["team_name"]); ?></h3>
+                    
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Team Members:</strong></li>
+                        <?php foreach ($champions as $champion) { ?>
+                    <li class="list-group-item d-flex align-items-center"><img src="/assets/media/<?php echo GetAccountProfilePicture($champion); ?>" class="rounded-circle me-3" alt="<?php echo htmlspecialchars($champion["Username"]); ?> profile picture" style="width: 50px; height: 50px; object-fit: cover;"> <?php echo htmlspecialchars($champion["Username"]); ?></li>
+                    
+                    
+                    <?php } ?>
+                    <!-- Add more members here -->
+                </ul>
+                <div class="card-footer text-muted">
+                    <!-- Optional Footer Content -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php } ?>
+<?php if ($playersInRankedMatch != null) { ?>
+    <div class="container py-5">
+        <h2 class="text-center mb-4">Participating Teams</h2>
+        <div class="row justify-content-center">
+            <?php foreach ($playersByTeam as $teamName => $teamMembers) { ?>
+                <!-- Skip the champions team -->
+                <?php if (!in_array($teamMembers[0], $champions)) { ?>
+                    <div class="col-lg-8 mb-4">
+                        <div class="card shadow">
+                            <!-- Optionally include a team image if available -->
+                            <!-- <img src="path_to_team_image" class="card-img-top img-thumbnail" alt="Team image" style="max-height: 250px; object-fit: cover;"> -->
+                            <div class="card-body">
+                                <h4 class="card-title text-center"><img src="/assets/media/<?php echo GetAccountProfilePicture($teamMembers[0]); ?>" class="img-thumbnail" alt="<?php echo htmlspecialchars($teamMembers[0]["Username"]); ?> team logo" style="height: 64px;width: auto;margin-right: 16px;">Team: <?php echo htmlspecialchars($teamName); ?></h4>
+                            </div>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><strong>Team Members:</strong></li>
+                                <?php foreach ($teamMembers as $member) { ?>
+                                    <li class="list-group-item d-flex align-items-center">
+                                        <img src="/assets/media/<?php echo GetAccountProfilePicture($member); ?>" class="rounded-circle me-3" alt="<?php echo htmlspecialchars($member["Username"]); ?> profile picture" style="width: 50px; height: 50px; object-fit: cover;">
+                                        <?php echo htmlspecialchars($member["Username"]); ?>
+                                    </li>
+                                <?php } ?>
+                            </ul>
+                            <div class="card-footer text-muted">
+                                <!-- Optional Footer Content -->
+                            </div>
+                        </div>
+                    </div>
+                <?php } ?>
+            <?php } ?>
+        </div>
+    </div>
+<?php } ?>
                             </div>
                             <?php } ?>
                             <?php if ($showBracketTab) { ?>

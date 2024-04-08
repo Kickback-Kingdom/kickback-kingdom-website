@@ -7,6 +7,7 @@ require ("engine/quest-line.php");
 require ("engine/blog.php");
 require ("engine/account.php");
 require ("engine/bracket.php");
+require ("engine/ranked.php");
 require ("engine/content.php");
 require ("engine/feed.php");
 require ("engine/game.php");
