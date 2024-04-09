@@ -2,35 +2,34 @@
 
 require("account.php");
 
-  class APIResponse {
+class APIResponse {
 
-    public $Success;
-    public $Message;
-    public $Data;
+    public bool    $Success;
+    public string  $Message;
+    public mixed   $Data;
 
-    function __construct($success, $message, $data)
+    function __construct(bool $success, string $message, mixed $data)
     {
-      $this->Success = $success;
-      $this->Message = $message;
-      $this->Data = $data;
-      
+        $this->Success = $success;
+        $this->Message = $message;
+        $this->Data = $data;
     }
 
-    function Return()
+    function Return() : void
     {
-      echo json_encode($this);
+        echo json_encode($this);
     }
 
-    function ToString()
+    function ToString() : string|false
     {
-      return json_encode($this);
+        return json_encode($this);
     }
 
-    function Exit()
+    function Exit() : never
     {
-      exit($this->ToString());
+        exit($this->ToString());
     }
-  }
+}
 
 
 ?>

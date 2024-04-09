@@ -38,6 +38,10 @@ final class ServiceCredentials implements \ArrayAccess
     // for connecting to services that must exist for the server to
     // function at all (ex: SQL server).
     //
+    // For an example of this config file, check out the
+    // `meta/config-examples/credentials.ini` file,
+    // as specified from the root of the project.
+    //
     /** @var array<string> */
     private const SERVICE_CREDENTIAL_SOURCES =
         [
@@ -236,21 +240,6 @@ final class ServiceCredentials implements \ArrayAccess
             // ex: in development environments.
         }
 
-/*
-        // Commit the entries if the load is successful.
-        if ( !empty($kickback_service_credentials) ) {
-            $this->entries = $kickback_service_credentials;
-        }
-
-        // This is `true` regardless of success, because even if this failed,
-        // we expect the failure to be deterministic in nature and we don't
-        // want to try over and over again (ex: `get_all()` should just
-        // immediately return `null` on all subsequent calls).
-        // (And if the caller wants to force a re-attempt, they can call
-        // `load_service_credentials` to explicitly attempt a load.)
-        $this->$loading_was_attempted = true;
-*/
-
         // Finalize/commit any error-related state.
         $this->error_epilog();
     }
@@ -262,13 +251,9 @@ final class ServiceCredentials implements \ArrayAccess
     }
 
     /**
-    * TODO: In PHP 8.0, we can declare the return value as `null|array`
-    * TODO: (Then we can get rid of the `phpstan-ignore` lines.)
     * @return    null|array<string,mixed>
-    * @phpstan-ignore  return.phpDocType
-    * @phpstan-ignore  missingType.iterableValue
     */
-    public static function get_all() : array
+    public static function get_all() : null|array
     {
         // Memoize results to avoid executing this over and over.
         // (Technically we could use `!is_null($kickback_service_credentials)` as
@@ -282,7 +267,6 @@ final class ServiceCredentials implements \ArrayAccess
         $entries = self::$instance->entries;
         /** @phpstan-ignore  empty.notAllowed */
         if ( empty($entries) ) {
-            /** @phpstan-ignore  return.type */ // <- because return type needs to be `null|array` (TODO: install PHP 8.0)
             return null;
         }
 
@@ -317,42 +301,26 @@ final class ServiceCredentials implements \ArrayAccess
     * @param mixed  $offset
     * @param mixed  $value
     */
-    public function offsetSet($offset, $value) : void {
+    public function offsetSet(mixed $offset, mixed $value) : void {
         echo "<!-- ERROR: Attempt to set element on read-only ServiceCredentials object. -->";
     }
 
     /// @param mixed  $offset
-    public function offsetExists($offset) : bool {
+    public function offsetExists(mixed $offset) : bool {
         return isset($this->entries[$offset]);
     }
 
     /// @param mixed  $offset
-    public function offsetUnset($offset) : void {
+    public function offsetUnset(mixed $offset) : void {
         unset($this->entries[$offset]);
     }
 
-    // Note: PHPStan complains that `mixed` is not covariant with
-    // the return type (also `mixed`, lol) of ArrayAccess<...>::offsetGet(...).
-    // It says we can silence the error with  #[\ReturnTypeWillChange],
-    // but that's only available in PHP 8.1.
-    // (And the error is "non-ignorable", so `phpstan-ignore` does not help.)
-    // The error goes away if we just put `: mixed` at the end of the function
-    // declaration, but that's only available in PHP 8.0.
-    // TODO: Install PHP 8.X to make PHPStan errors go away.
     /**
     * @param mixed  $offset
     * @return mixed
     */
-    public function offsetGet($offset) {
+    public function offsetGet(mixed $offset) : mixed {
         return isset($this->entries[$offset]) ? $this->entries[$offset] : null;
     }
-
-    // Prevent instantiation/construction of the (static/constant) class.
-    /** @return never */
-    /*
-    private function __construct() {
-        throw new \Exception("Instantiation of static class " . get_class($this) . "is not allowed.");
-    }
-    */
 }
 ?>

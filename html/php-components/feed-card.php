@@ -26,12 +26,25 @@ $feedCardExpired = false;
 if (isset($feedCard["title"]))
     $feedCardTitle = htmlspecialchars($feedCard["title"]);
 
-$feedCardImagePath = htmlspecialchars($feedCard['image']);
-$feedCardDesc = htmlspecialchars($feedCard["text"]);
-$feedCardHostName = htmlspecialchars($feedCard["account_1_username"]);
+if (isset($feedCard["image"]))
+    $feedCardImagePath = htmlspecialchars($feedCard['image']);
+
+if (isset($feedCard["event_icon_path"]))
+    $feedCardImagePath = htmlspecialchars($feedCard['event_icon_path']);
+
+if (isset($feedCard["text"]))
+    $feedCardDesc = htmlspecialchars($feedCard["text"]);
+
+if (isset($feedCard["account_1_username"]))
+    $feedCardHostName = htmlspecialchars($feedCard["account_1_username"]);
 
 if (isset($feedCard["account_2_username"]))
     $feedCardHostName2 = htmlspecialchars($feedCard['account_2_username']);
+
+if (isset($feedCard["event_date"]))
+{
+    $feedCard["date"] = $feedCard["event_date"];
+}
 
 if (isset($feedCard["date"]))
 {
@@ -45,7 +58,7 @@ if (!array_key_exists("style",$feedCard))
 {
     $feedCard["style"] = 0;
 }
-
+$feedCardCreatedByShowOnlyDate = false;
 $feedCardCTA = "Learn More";
 $feedCardHideCTA = false;
 $feedCardHideType = false;
@@ -117,6 +130,137 @@ switch ($feedCardType) {
         $feedCardImageColSize = "col col-md";
         $feedCardTextColSize = "col col-8 col-md-8 col-lg-9";
         break;
+
+    case 'QUEST-PARTICIPANT':
+        $feedCardCTA = "View Quest";
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardTypeText = "PARTICIPATION";
+        $feedCardCreatedByShowOnlyDate = true;
+        $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." ".$feedCard["event_name"];
+        if ($feedCard["event_verb"] == "BAILED ON")
+        {
+
+            $feedCardDesc = GetBailedFlavorText($profile["Username"], $feedCard["event_name"], $profile["Username"].$feedCard["event_name"].$feedCard["event_date"]);
+        }
+        else{
+            $feedCardDesc = GetParticipationFlavorText($profile["Username"], $feedCard["event_name"], $profile["Username"].$feedCard["event_name"].$feedCard["event_date"]);
+
+        }
+
+        break;
+    case 'GAME-RECORD':
+        $feedCardHideCTA = true;
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardTypeText = "RANKED MATCH";
+        $feedCardCreatedByShowOnlyDate = true;
+        $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." a ranked match of ".$feedCard["event_name"];
+        $feedCardDesc = '<strong>Team:</strong> '.$feedCard["event_team"]. " <strong>Character:</strong> ".$feedCard["event_character"]. " <strong>Random Character:</strong> ".($feedCard["event_character_was_random"] ? "Yes":"No");
+
+
+        if ($feedCard["event_verb"] == "WON")
+        {
+            $feedCardDesc = GetWonMatchFlavorText($profile["Username"], $feedCard["event_name"], $profile["Username"].$feedCard["event_name"].$feedCard["event_date"]);
+        }
+        else{
+            //GetLostMatchFlavorText
+            $feedCardDesc = GetLostMatchFlavorText($profile["Username"], $feedCard["event_name"], $profile["Username"].$feedCard["event_name"].$feedCard["event_date"]);
+        }
+
+        break;
+
+    case 'SPENT-PRESTIGE-TOKEN':
+        $feedCardHideCTA = true;
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardTypeText = $feedCard["event_verb"];
+        $feedCardCreatedByShowOnlyDate = true;
+        $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." ".$feedCard["event_name"];
+        $tempAccount = [];
+        $tempAccount["Id"] = $feedCard["event_name_id"];
+        if (!empty($feedCardImagePath))
+            $tempAccount["avatar_media"] = $feedCardImagePath;
+        $feedCardImagePath = GetAccountProfilePicture($tempAccount);
+        if ($feedCard["event_verb"] == "COMMENDED")
+        {
+            $feedCardDesc = GetCommendedSomeoneFlavorText($profile["Username"], $feedCard["event_name"], $profile["Username"].$feedCard["event_name"].$feedCard["event_date"]);
+        }
+        else{
+            
+            $feedCardDesc = GetDenouncedSomeoneFlavorText($profile["Username"], $feedCard["event_name"], $profile["Username"].$feedCard["event_name"].$feedCard["event_date"]);
+        }
+        break;
+
+    case 'RECEIVED-PRESTIGE':
+        $feedCardHideCTA = true;
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardTypeText = $feedCard["event_verb"];
+        $feedCardCreatedByShowOnlyDate = true;
+        $feedCardTitle = $feedCard["event_name"].' '.$feedCard["event_verb"]." ".$profile["Username"];
+        
+        $tempAccount = [];
+        $tempAccount["Id"] = $feedCard["event_name_id"];
+        if (!empty($feedCardImagePath))
+            $tempAccount["avatar_media"] = $feedCardImagePath;
+        $feedCardImagePath = GetAccountProfilePicture($tempAccount);
+        if ($feedCard["event_verb"] == "COMMENDED")
+        {
+            $feedCardDesc = GetCommendedSomeoneFlavorText($feedCard["event_name"], $profile["Username"], $feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
+        }
+        else{
+            
+            $feedCardDesc = GetDenouncedSomeoneFlavorText($feedCard["event_name"], $profile["Username"], $feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
+        }
+        break;
+
+    case 'QUEST-HOSTED':
+        $feedCardCTA = "View Quest";
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+
+        $feedCardTypeText = $feedCard["event_verb"];
+        $feedCardCreatedByShowOnlyDate = true;
+        $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." ".$feedCard["event_name"];
+        $feedCardDesc = GetHostedQuestFlavorText($profile["Username"],$feedCard["event_name"],$feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
+        break;
+
+    case 'BADGE':
+        $feedCardHideCTA = true;
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardTypeText = "NEW BADGE";
+        $feedCardCreatedByShowOnlyDate = true;
+        if ($feedCard["event_verb"] == "NOMINATED")
+        {
+            $feedCard["event_verb"] = "was NOMINATED for";
+        }
+        $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." the ".$feedCard["event_name"]." badge!";
+        $feedCardDesc = GetEarnedBadgeFlavorText($profile["Username"],$feedCard["event_name"],$feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
+        break;
+
+    case 'TOURNAMENT':
+
+        $feedCardCTA = "View Tournament";
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardTypeText = $feedCard["event_verb"]." TOURNAMENT";
+        $feedCardCreatedByShowOnlyDate = true;
+        $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." in the ".$feedCard["event_name"]." quest!";
+        if ($feedCard["event_verb"] == "WON")
+        {
+            $feedCardDesc = GetWinTournamentFlavorText($profile["Username"],$feedCard["event_name"],$feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
+        }
+        else
+        {
+            $feedCardDesc = GetLostTournamentFlavorText($profile["Username"],$feedCard["event_name"],$feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
+        }
+
+        break;
+
+    case 'WROTE-BLOG-POST':
+//GetWroteBlogPostFlavorText
+        $feedCardHideCTA = true;
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardTypeText = "NEW POST";
+        $feedCardCreatedByShowOnlyDate = true;
+        $feedCardTitle = $profile["Username"].' just '.$feedCard["event_verb"]." \"".$feedCard["event_name"]."\"";
+        $feedCardDesc = GetWroteBlogPostFlavorText($profile["Username"],$feedCard["event_name"],$feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
+        break;
 }
 
 $feedCardDateBasic = date_format($feedCardDate,"M j, Y");
@@ -137,9 +281,9 @@ $feedCardDateDetailed = date_format($feedCardDate,"M j, Y H:i:s");
                 </a>
                 <?php if ($feedCardHasCreatedBy) { ?>
                 <p class="card-text">
-                    <small class="text-body-secondary"><?php echo $feedCardCreatedByPrefix; ?> by <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode($feedCardHostName); ?>" class="username"><?php echo $feedCardHostName; ?></a>
+                    <small class="text-body-secondary"><?php if (!$feedCardCreatedByShowOnlyDate) { ?><?php echo $feedCardCreatedByPrefix; ?> by <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode($feedCardHostName); ?>" class="username"><?php echo $feedCardHostName; ?></a>
                     <?php if ($feedCardHostName2 != null) { ?> and <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode($feedCardHostName2); ?>" class="username"><?php echo $feedCardHostName2;?></a><?php } ?>
-                    <?php if ($feedCardHasDate) { ?>on <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                    <?php } if ($feedCardHasDate) { ?>on <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom"
                         data-bs-title="<?php echo $feedCardDateDetailed; ?> UTC"><?php echo $feedCardDateBasic; ?></span><?php } else { ?>until completed<?php } ?>
                     </small>
                 </p>

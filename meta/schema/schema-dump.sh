@@ -1,7 +1,9 @@
-# Command to dump the Kickback Kingdom database's schema (but not data: this is NOT a backup).
-# If the `--no-data` argument were elided, it might be possible to use this as a backup command.
-# (And for a really pristine backup, albeit with a small amount of security
-# leakage, also remove the `sed` command from this pipe.)
+#!/bin/sh
+
+# This script dumps the Kickback Kingdom database's schema (but not data: this is NOT a backup).
+#
+# To dump the entire `kickbackdb` database, including the _data_, use the
+# `data-export.sh` script instead.
 #
 # Note that we are replacing the DEFINER user@host with placeholders (using the
 # `sed` command), so that the schema dump doesn't contain any details about

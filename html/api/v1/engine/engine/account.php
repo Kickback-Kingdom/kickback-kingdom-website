@@ -33,14 +33,16 @@ function LoginToService($accountId, $serviceKey)
     return false;
 }
 
-function IsLoggedIn()
+function IsLoggedIn() : bool
 {
-    if (!array_key_exists("sessionToken", $_SESSION))
+    if (!array_key_exists("sessionToken", $_SESSION)
+    ||  !array_key_exists("serviceKey", $_SESSION)
+    ||  !array_key_exists("account", $_SESSION) ) {
         return false;
+    }
 
-    return ($_SESSION["sessionToken"] != null && $_SESSION["serviceKey"] != null && $_SESSION["account"] != null);
+    return isset($_SESSION["sessionToken"], $_SESSION["serviceKey"], $_SESSION["account"]);
 }
-
 
 function IsQuestGiver()
 {
@@ -121,78 +123,72 @@ function IsMasterOrApprentice() {
     return false;
 }
 
-function Logout()
+function Logout() : APIResponse
 {
-    if (IsLoggedIn())
-    {
-
-        $sessionToken = $_SESSION["sessionToken"];
-        $serviceKey = $_SESSION["serviceKey"];
-        $sql = "delete from account_sessions where SessionToken = '$sessionToken' and ServiceKey = '$serviceKey'";
-        $result = mysqli_query($GLOBALS["conn"],$sql);
-        if ($result === TRUE) {
-            
-            $GLOBALS["account"] = null;
-            $_SESSION["sessionToken"] = null;
-            $_SESSION["account"] = null;
-            return (new APIResponse(true, "logged out successfully",null));
-            } else {
-            return (new APIResponse(false, "Failed to logout with error: ".GetSQLError(), null));
-            }
+    if (!IsLoggedIn()) {
+        return (new APIResponse(false, "Failed to logout because no one is logged in", null));
     }
-    return (new APIResponse(false, "Failed to logout because no one is logged in", null));
+
+    $conn = $GLOBALS["conn"];
+    assert($conn instanceof mysqli);
+
+    $sessionToken = $_SESSION["sessionToken"];
+    $serviceKey = $_SESSION["serviceKey"];
+    $query = "delete from account_sessions where SessionToken = '$sessionToken' and ServiceKey = '$serviceKey'";
+    $result = $conn->query($query);
+    if (false === $result) {
+        return (new APIResponse(false, "Failed to log out with error: ".GetSQLError(), null));
+    }
+
+    $GLOBALS["account"] = null;
+    $_SESSION["sessionToken"] = null;
+    $_SESSION["account"] = null;
+    return (new APIResponse(true, "Logged out successfully",null));
 }
 
-function Login($serviceKey,$email,$pwd)
+function Login($serviceKey,$email,$pwd) : APIResponse
 {
-    
-    $serviceKey = mysqli_real_escape_string($GLOBALS["conn"], $serviceKey);
-    $email = mysqli_real_escape_string($GLOBALS["conn"], $email);
-    $pwd = mysqli_real_escape_string($GLOBALS["conn"], $pwd);
-        
-    $sql = "SELECT account.Id, account.Password, service.Name as ServiceName FROM account inner join service on service.PublicKey = '$serviceKey' WHERE Email = '$email' and Banned = 0;";
+    $conn = $GLOBALS["conn"];
+    assert($conn instanceof mysqli);
 
-    $result = mysqli_query($GLOBALS["conn"],$sql);
+    $serviceKey = mysqli_real_escape_string($conn, $serviceKey);
+    $email = mysqli_real_escape_string($conn, $email);
+    $pwd = mysqli_real_escape_string($conn, $pwd);
 
-    $num_rows = mysqli_num_rows($result);
-    if ($num_rows === 0)
-    {
+    $query = "SELECT account.Id, account.Password, service.Name as ServiceName FROM account inner join service on service.PublicKey = '$serviceKey' WHERE Email = '$email' and Banned = 0;";
+    $result = $conn->query($query);
+    if (false === $result) {
+        return (new APIResponse(false, "Failed to log in with error: ".GetSQLError(), null));
+    }
+
+    $num_rows = $result->num_rows;
+    if ($num_rows === 0) {
         return (new APIResponse(false, "Credentials are incorrect", null));
     }
-    else
-    {
-        $row = mysqli_fetch_assoc($result);
-        $serviceName = $row["ServiceName"];
-        if (password_verify($pwd, $row["Password"]))
-        {
-            $accountId = $row["Id"];
-            if (LoginToService($accountId, $serviceKey))
-            {
-                $sql = "SELECT * FROM account_sessions WHERE ServiceKey = '$serviceKey' and account_id = $accountId";
-                $result = mysqli_query($GLOBALS["conn"],$sql);
-                $num_rows = mysqli_num_rows($result);
-                if ($num_rows > 0)
-                {
-                    $row = mysqli_fetch_assoc($result);
-                    
-                    $_SESSION["sessionToken"] = $row["SessionToken"];
-                    $_SESSION["serviceKey"] = $serviceKey;
-                    return GetLoginSession($serviceKey, $row["SessionToken"]);
-                }
-                else{
-                    return (new APIResponse(false, "Failed to login", null));
-                }
-            }
-            else
-            {
-                return (new APIResponse(false, "Failed to login", null));
-            }
-        }
-        else
-        {
-            return (new APIResponse(false, "Credentials are incorrect",null));
-        }
+
+    $row = $result->fetch_assoc();
+    $serviceName = $row["ServiceName"];
+    if (!password_verify($pwd, $row["Password"])) {
+        return (new APIResponse(false, "Credentials are incorrect",null));
     }
+
+    $accountId = $row["Id"];
+    if (!LoginToService($accountId, $serviceKey)) {
+        return (new APIResponse(false, "Failed to login", null));
+    }
+
+    $query = "SELECT * FROM account_sessions WHERE ServiceKey = '$serviceKey' and account_id = $accountId";
+    $result = $conn->query($query);
+    $num_rows = $result->num_rows;
+    if ($num_rows === 0) {
+        return (new APIResponse(false, "Failed to login", null));
+    }
+
+    $row = $result->fetch_assoc();
+
+    $_SESSION["sessionToken"] = $row["SessionToken"];
+    $_SESSION["serviceKey"] = $serviceKey;
+    return GetLoginSession($serviceKey, $row["SessionToken"]);
 }
 
 function GetLoginSession($serviceKey, $sessionToken)
@@ -240,6 +236,26 @@ function GetLoginSession($serviceKey, $sessionToken)
         }
     } catch (Throwable $th) {
         return (new APIResponse(false, "Error. Check the data for more info.", $th));
+    }
+}
+
+function GetAccountActivity($account_id)
+{
+    $stmt = mysqli_prepare($GLOBALS["conn"], "SELECT * FROM v_account_activity where account_id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $account_id);
+    mysqli_stmt_execute($stmt);
+
+    $result = mysqli_stmt_get_result($stmt);
+    
+    $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    $num_rows = mysqli_num_rows($result);
+    if ($num_rows === 0)
+    {
+        return (new APIResponse(false, "Couldn't find account activity for Id", null));
+    }
+    else
+    {
+        return (new APIResponse(true, "Account Activity",  $rows ));
     }
 }
 
@@ -1031,51 +1047,123 @@ function GetAccountTitle($account) {
     return $prestige_title . " " . $level_title;
 }
 
-function SearchForAccount($searchTerm, $page, $itemsPerPage) {
-    $db = $GLOBALS['conn'];
+function SearchForAccount(string $searchTerm, int $page, int $itemsPerPage) : APIResponse
+{
+    $conn = $GLOBALS['conn'];
+    assert($conn instanceof mysqli);
 
     // Add the wildcards to the searchTerm itself and convert to lowercase
     $searchTerm = "%" . strtolower($searchTerm) . "%";
 
     $offset = ($page - 1) * $itemsPerPage;
 
-    // Convert both the column data and the searchTerm to lowercase
+    // Prepare the count statement
     $countQuery = "SELECT COUNT(*) as total FROM v_account_info WHERE (LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?)  AND Banned = 0";
-    $stmtCount = mysqli_prepare($db, $countQuery);
-    mysqli_stmt_bind_param($stmtCount, 'ssss', $searchTerm, $searchTerm, $searchTerm, $searchTerm);
+    $stmtCount = $conn->prepare($countQuery);
+    if (false === $stmtCount) {
+        error_log($conn->error);
+        return new APIResponse(false,
+            "Couldn't find account due to error(s).",
+            ["Error in SearchForAccount(...) when preparing SQL query. (mysqli_prepare)"]);
+    }
 
-    $query = "SELECT *, 
+    $success = $stmtCount->bind_param('ssss', $searchTerm, $searchTerm, $searchTerm, $searchTerm);
+    if (false === $success) {
+        error_log($stmtCount->error);
+        $stmtCount->close();
+        return new APIResponse(false,
+            "Couldn't find account due to error(s).",
+            ["Error in SearchForAccount(...) binding SQL query parameters. (mysqli_stmt_bind_param)"]);
+    }
+
+    // Execute the count statement
+    $success = $stmtCount->execute();
+    if (false === $success) {
+        error_log($stmtCount->error);
+        $stmtCount->close();
+        return new APIResponse(false,
+            "Couldn't find account due to error(s).",
+            ["Error in SearchForAccount(...) when executing SQL query. (mysqli_stmt_execute)"]);
+    }
+
+    $resultCount = $stmtCount->get_result();
+    if (false === $resultCount) {
+        error_log($stmtCount->error);
+        $stmtCount->close();
+        return new APIResponse(false,
+            "Couldn't find account due to error(s).",
+            ["Error in SearchForAccount(...) when retrieving SQL query results. (mysqli_stmt_get_result)"]);
+    }
+
+    $countRow = $resultCount->fetch_assoc();
+    if (!isset($countRow)) {
+        error_log($stmtCount->error);
+        $stmtCount->close();
+        return new APIResponse(false,
+            "Couldn't find account due to error(s).",
+            ["Error in SearchForAccount(...) when fetching next row from SQL query results. (mysqli_fetch_assoc)"]);
+    }
+
+    $count = $countRow["total"];
+    $stmtCount->close();
+
+    // Prepare the main search statement
+    $query = "SELECT *,
         (
             (CASE WHEN LOWER(username) LIKE ? THEN 4 ELSE 0 END) +
             (CASE WHEN LOWER(firstname) LIKE ? THEN 3 ELSE 0 END) +
             (CASE WHEN LOWER(lastname) LIKE ? THEN 2 ELSE 0 END) +
             (CASE WHEN LOWER(email) LIKE ? THEN 1 ELSE 0 END)
-        ) AS relevancy_score 
-        FROM v_account_info 
+        ) AS relevancy_score
+        FROM v_account_info
         WHERE (LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?) AND Banned = 0
         ORDER BY relevancy_score DESC, level DESC, exp_current DESC, Username
         LIMIT ? OFFSET ?";
-    $stmt = mysqli_prepare($db, $query);
-    mysqli_stmt_bind_param($stmt, 'ssssssssii', $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $itemsPerPage, $offset);
+    $stmt = $conn->prepare($query);
+    if (false === $stmt) {
+        error_log($conn->error);
+        return new APIResponse(false,
+            "Couldn't find account due to error(s).",
+            ["Error in SearchForAccount(...) when preparing SQL query. (mysqli_prepare)"]);
+    }
 
-    // Execute the count statement
-    mysqli_stmt_execute($stmtCount);
-    $resultCount = mysqli_stmt_get_result($stmtCount);
-    $count = mysqli_fetch_assoc($resultCount)["total"];
-    mysqli_stmt_close($stmtCount);
+    $success = $stmt->bind_param('ssssssssii', $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $itemsPerPage, $offset);
+    if (false === $success) {
+        error_log($stmt->error);
+        $stmt->close();
+        return new APIResponse(false,
+            "Couldn't find account due to error(s).",
+            ["Error in SearchForAccount(...) binding SQL query parameters. (mysqli_stmt_bind_param)"]);
+    }
 
     // Execute the main search statement
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $accountItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
-    mysqli_stmt_close($stmt);
+    $success = $stmt->execute();
+    if (false === $success) {
+        error_log($stmt->error);
+        $stmt->close();
+        return new APIResponse(false,
+            "Couldn't find account due to error(s).",
+            ["Error in SearchForAccount(...) when executing SQL query. (mysqli_stmt_execute)"]);
+    }
+
+    $result = $stmt->get_result();
+    if (false === $result) {
+        error_log($stmt->error);
+        $stmt->close();
+        return new APIResponse(false,
+            "Couldn't find account due to error(s).",
+            ["Error in SearchForAccount(...) when retrieving SQL query results. (mysqli_stmt_get_result)"]);
+    }
+
+    $accountItems = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
 
     $newAccountItems = [];
     foreach($accountItems as $account) {
         // Remove unwanted fields
         unset($account['pass_reset']);
         unset($account['relevancy_score']);
-        
+
         $badgesResp = GetBadgesByAccountId($account['Id']);
         $account['badge_display'] = $badgesResp->Data;
 
@@ -1094,83 +1182,111 @@ function SearchForAccount($searchTerm, $page, $itemsPerPage) {
     ]));
 }
 
-function SubmitFeedbackAndCollectRewards($account_id, $quest_id, $host_rating, $quest_rating, $feedback)
+function SubmitFeedbackAndCollectRewards($account_id, $quest_id, $host_rating, $quest_rating, $feedback) : APIResponse
 {
     // Use the mysqli connection from the global scope
     $conn = $GLOBALS["conn"];
+    assert($conn instanceof mysqli);
     
     // Prepare the SQL statement
-    $stmt = mysqli_prepare($conn, "CALL SubmitFeedbackAndCollectRewards(?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("CALL SubmitFeedbackAndCollectRewards(?, ?, ?, ?, ?)");
+    if (false === $stmt) {
+        error_log($conn->error);
+        return new APIResponse(false,
+            "Error occurred while collecting rewards",
+            ["Error in SubmitFeedbackAndCollectRewards(...) when preparing SQL query. (mysqli_prepare)"]);
+    }
 
     // Bind the parameters to the SQL statement
-    mysqli_stmt_bind_param($stmt, 'iiiss', $account_id, $quest_id, $host_rating, $quest_rating, $feedback);
+    $success = $stmt->bind_param('iiiss', $account_id, $quest_id, $host_rating, $quest_rating, $feedback);
+    if (false === $success) {
+        error_log($stmt->error);
+        $stmt->close();
+        return new APIResponse(false,
+            "Error occurred while collecting rewards",
+            ["Error in SubmitFeedbackAndCollectRewards(...) binding SQL query parameters. (mysqli_stmt_bind_param)"]);
+    }
 
     // Execute the SQL statement
-    mysqli_stmt_execute($stmt);
-
-    // If there is any error during execution
-    if(mysqli_stmt_error($stmt)){
-        // Free the statement
-        mysqli_stmt_close($stmt);
-        return (new APIResponse(false, "Error occurred while collecting rewards",mysqli_stmt_error($stmt)));
+    $success = $stmt->execute();
+    if (false === $success) {
+        error_log($stmt->error);
+        $stmt->close();
+        return new APIResponse(false,
+            "Error occurred while collecting rewards",
+            ["Error in SubmitFeedbackAndCollectRewards(...) when executing SQL query. (mysqli_stmt_execute)"]);
     }
 
-    // If everything went smoothly
-    else {
-        // Free the statement
-        mysqli_stmt_close($stmt);
-        return (new APIResponse(true, "Feedback submitted and rewards converted successfully", null));
-    }
+    // Success
+    $stmt->close();
+    return (new APIResponse(true, "Feedback submitted and rewards converted successfully", null));
 }
 
-function UpsertAccountEquipment($equipmentData)
+function UpsertAccountEquipment(array $equipmentData) : APIResponse
 {
-    if (IsLoggedIn())
-    {
-        if ($_SESSION["account"]["Id"] == $equipmentData['equipment-account-id'])
-        {
-    
-            // Assuming you have a $conn variable that represents your database connection
-            $stmt = mysqli_prepare($GLOBALS["conn"], 
-                "INSERT INTO account_equipment 
-                (account_id, avatar_loot_id, player_card_border_loot_id, banner_loot_id, background_loot_id, charm_loot_id, companion_loot_id) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE 
-                avatar_loot_id = VALUES(avatar_loot_id),
-                player_card_border_loot_id = VALUES(player_card_border_loot_id),
-                banner_loot_id = VALUES(banner_loot_id),
-                background_loot_id = VALUES(background_loot_id),
-                charm_loot_id = VALUES(charm_loot_id),
-                companion_loot_id = VALUES(companion_loot_id)");
-    
-            // Bind the variables to the SQL statement
-            mysqli_stmt_bind_param($stmt, 
-                "iiiiiii", 
-                $equipmentData['equipment-account-id'], 
-                $equipmentData['equipment-avatar'], 
-                $equipmentData['equipment-pc-card'], 
-                $equipmentData['equipment-banner'], 
-                $equipmentData['equipment-background'], 
-                $equipmentData['equipment-charm'], 
-                $equipmentData['equipment-pet']);
-    
-            // Execute the prepared statement
-            if (mysqli_stmt_execute($stmt)) {
-                return (new APIResponse(true, "Data upserted successfully", null));
-            } else {
-                return (new APIResponse(false, "An error occurred.", null));
-            }
-        }
-        else{
-            
-            return (new APIResponse(false, "You cannot update someone elses inventory", null));
-        }
-
-    }
-    else{
-        
+    if (!IsLoggedIn()) {
         return (new APIResponse(false, "You must be logged in to update your inventory.", null));
     }
+
+    if ($_SESSION["account"]["Id"] != $equipmentData['equipment-account-id']) {
+        return (new APIResponse(false, "You cannot update someone elses inventory", null));
+    }
+
+    $conn = $GLOBALS["conn"];
+    assert($conn instanceof mysqli);
+
+    // Assuming you have a $conn variable that represents your database connection
+    $stmt = $conn->prepare(
+        "INSERT INTO account_equipment
+        (account_id, avatar_loot_id, player_card_border_loot_id, banner_loot_id, background_loot_id, charm_loot_id, companion_loot_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+        avatar_loot_id = VALUES(avatar_loot_id),
+        player_card_border_loot_id = VALUES(player_card_border_loot_id),
+        banner_loot_id = VALUES(banner_loot_id),
+        background_loot_id = VALUES(background_loot_id),
+        charm_loot_id = VALUES(charm_loot_id),
+        companion_loot_id = VALUES(companion_loot_id)");
+
+    if (false === $stmt) {
+        error_log($conn->error);
+        return new APIResponse(false,
+            "Error prevented equipment from being saved",
+            ["Error in UpsertAccountEquipment(...) when preparing SQL query. (mysqli_prepare)"]);
+    }
+
+    // Bind the variables to the SQL statement
+    $success = $stmt->bind_param(
+        "iiiiiii",
+        $equipmentData['equipment-account-id'],
+        $equipmentData['equipment-avatar'],
+        $equipmentData['equipment-pc-card'],
+        $equipmentData['equipment-banner'],
+        $equipmentData['equipment-background'],
+        $equipmentData['equipment-charm'],
+        $equipmentData['equipment-pet']);
+
+    if (false === $success) {
+        error_log($stmt->error);
+        $stmt->close();
+        return new APIResponse(false,
+            "Error prevented equipment from being saved",
+            ["Error in UpsertAccountEquipment(...) binding SQL query parameters. (mysqli_stmt_bind_param)"]);
+    }
+
+
+    // Execute the prepared statement
+    $success = $stmt->execute();
+    if (false === $success) {
+        error_log($stmt->error);
+        $stmt->close();
+        return new APIResponse(false,
+            "Error prevented equipment from being saved",
+            ["Error in UpsertAccountEquipment(...) when executing SQL query. (mysqli_stmt_execute)"]);
+    }
+
+    $stmt->close();
+    return (new APIResponse(true, "Data upserted successfully", null));
 }
 
 ?>
