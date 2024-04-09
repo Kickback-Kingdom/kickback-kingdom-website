@@ -132,6 +132,9 @@ switch ($feedCardType) {
         break;
 
     case 'QUEST-PARTICIPANT':
+        $feedCardCTA = "View Quest";
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardTypeText = "PARTICIPATION";
         $feedCardCreatedByShowOnlyDate = true;
         $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." ".$feedCard["event_name"];
         if ($feedCard["event_verb"] == "BAILED ON")
@@ -146,6 +149,9 @@ switch ($feedCardType) {
 
         break;
     case 'GAME-RECORD':
+        $feedCardHideCTA = true;
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardTypeText = "RANKED MATCH";
         $feedCardCreatedByShowOnlyDate = true;
         $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." a ranked match of ".$feedCard["event_name"];
         $feedCardDesc = '<strong>Team:</strong> '.$feedCard["event_team"]. " <strong>Character:</strong> ".$feedCard["event_character"]. " <strong>Random Character:</strong> ".($feedCard["event_character_was_random"] ? "Yes":"No");
@@ -163,6 +169,9 @@ switch ($feedCardType) {
         break;
 
     case 'SPENT-PRESTIGE-TOKEN':
+        $feedCardHideCTA = true;
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardTypeText = $feedCard["event_verb"];
         $feedCardCreatedByShowOnlyDate = true;
         $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." ".$feedCard["event_name"];
         $tempAccount = [];
@@ -181,6 +190,9 @@ switch ($feedCardType) {
         break;
 
     case 'RECEIVED-PRESTIGE':
+        $feedCardHideCTA = true;
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardTypeText = $feedCard["event_verb"];
         $feedCardCreatedByShowOnlyDate = true;
         $feedCardTitle = $feedCard["event_name"].' '.$feedCard["event_verb"]." ".$profile["Username"];
         
@@ -200,20 +212,33 @@ switch ($feedCardType) {
         break;
 
     case 'QUEST-HOSTED':
+        $feedCardCTA = "View Quest";
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
 
+        $feedCardTypeText = $feedCard["event_verb"];
         $feedCardCreatedByShowOnlyDate = true;
         $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." ".$feedCard["event_name"];
         $feedCardDesc = GetHostedQuestFlavorText($profile["Username"],$feedCard["event_name"],$feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
         break;
 
     case 'BADGE':
+        $feedCardHideCTA = true;
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardTypeText = "NEW BADGE";
         $feedCardCreatedByShowOnlyDate = true;
+        if ($feedCard["event_verb"] == "NOMINATED")
+        {
+            $feedCard["event_verb"] = "was NOMINATED for";
+        }
         $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." the ".$feedCard["event_name"]." badge!";
         $feedCardDesc = GetEarnedBadgeFlavorText($profile["Username"],$feedCard["event_name"],$feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
         break;
 
     case 'TOURNAMENT':
 
+        $feedCardCTA = "View Tournament";
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardTypeText = $feedCard["event_verb"]." TOURNAMENT";
         $feedCardCreatedByShowOnlyDate = true;
         $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." in the ".$feedCard["event_name"]." quest!";
         if ($feedCard["event_verb"] == "WON")
@@ -229,6 +254,9 @@ switch ($feedCardType) {
 
     case 'WROTE-BLOG-POST':
 //GetWroteBlogPostFlavorText
+        $feedCardHideCTA = true;
+        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardTypeText = "NEW POST";
         $feedCardCreatedByShowOnlyDate = true;
         $feedCardTitle = $profile["Username"].' just '.$feedCard["event_verb"]." \"".$feedCard["event_name"]."\"";
         $feedCardDesc = GetWroteBlogPostFlavorText($profile["Username"],$feedCard["event_name"],$feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
