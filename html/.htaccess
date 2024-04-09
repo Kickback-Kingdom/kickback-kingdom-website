@@ -39,3 +39,11 @@ RewriteRule ^(.*)$ /quest-line.php?locator=%1 [L]
 # Redirect /beta/quest-line/ URLs to /beta/quest-line.php
 RewriteCond %{REQUEST_URI} ^/beta/quest-line/([^/]+)$
 RewriteRule ^(.*)$ /beta/quest-line.php?locator=%1 [L]
+
+# Redirect /g/ URLs to game.php
+RewriteCond %{REQUEST_URI} ^/g/([^/]+)$
+RewriteRule ^(.*)$ /game.php?locator=%1 [L]
+
+# Redirect /beta/g/ URLs to /beta/game.php
+RewriteCond %{REQUEST_URI} ^/beta/g/([^/]+)$
+RewriteRule ^(.*)$ /beta/game.php?locator=%1 [L]
