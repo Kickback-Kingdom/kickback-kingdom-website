@@ -133,6 +133,7 @@ $reviewFeed = $reviewFeedResp->Data;
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary"  data-bs-dismiss="modal" >Cancel</button>
                 <form method="POST">
+                    <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
                     <input type="hidden" name="purchase_id" value="<?php echo $merchantGuildTasksToProcess["purchase_id"]; ?>"/>
                     <input type="submit" name="process-purchase" class="btn bg-ranked-1" id="processButton" value="Process">
                 </form>
@@ -168,6 +169,7 @@ $reviewFeed = $reviewFeedResp->Data;
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary"  data-bs-dismiss="modal" >Cancel</button>
                 <form method="POST">
+                    <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
                     <input type="hidden" name="statement-date" value="<?php echo $merchantGuildTasksToProcess["statement_date"]; ?>"/>
                     <input type="submit" name="process-statements" class="btn bg-ranked-1"  value="Process">
                 </form>
