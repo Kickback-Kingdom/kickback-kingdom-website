@@ -17,7 +17,12 @@ KKDB_USER_NAME="${KKDB_USER_NAME:-root}"
 KKDB_DATABASE_NAME="${KKDB_DATABASE_NAME:-kickbackdb}"
 
 if [ -f "$KKDB_EXPORT_PATH" ]; then
-    KKDB_TIMESTAMP=$(date '+%Y-%m-%d.%H.%M.%S');
+    # Try to get last-modified timestamp off of existing file.
+    KKDB_TIMESTAMP=$(date -r "$KKDB_EXPORT_PATH" '+%Y-%m-%d.%H.%M.%S');
+    if [ "0" -ne "$?" ] || [ "19" -ne "${#KKDB_TIMESTAMP}" ]; then
+        # If that didn't work, then use current time instead.
+        KKDB_TIMESTAMP=$(date '+%Y-%m-%d.%H.%M.%S');
+    fi
     echo "!!! Existing database file '$KKDB_EXPORT_PATH' detected !!!"
     echo "... Moving it to '$KKDB_EXPORT_PATH.$KKDB_TIMESTAMP' before proceeding with export."
     mv "$KKDB_EXPORT_PATH" "$KKDB_EXPORT_PATH.$KKDB_TIMESTAMP"
