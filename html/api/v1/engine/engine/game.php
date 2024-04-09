@@ -5,7 +5,7 @@ function GetAllGames()
     // We don't need the mysqli_real_escape_string line as we're not injecting any external values into the SQL query
     
     // Define SQL query to select all records from the game table
-    $sql = "SELECT * FROM game order by Name";
+    $sql = "SELECT * FROM v_game_info order by Name";
 
     // Execute the SQL query
     $result = mysqli_query($GLOBALS["conn"], $sql);
