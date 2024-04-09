@@ -50,7 +50,7 @@ else
     explanation=""
     case "$retcode" in
         "1") explanation=" == EX_USAGE: 'mysqldump' was called with an invalid combination of arguments, or was asked to do something unsupported.";;
-        "2") explanation=" == EX_MYSQLERR: This error code seems to mostly be used for server-side errors (including, notably, an incorrect password!), but can happen due to 'malloc' failing, too.";;
+        "2") explanation=" == EX_MYSQLERR: This error code can indicate MANY things: incorrect password, server-side errors, malloc failing, mysql server isn't running, and so on.";;
         "3") explanation=" == EX_CONSCHECK: Seems to stand for \"consistency checks\"; perhaps some consistency check failed?";;
         "4") explanation=" == EX_EOM: Returned when _alloc calls fail, possibly stands for \"End Of Memory\".";;
         "5") explanation=" == EX_EOF: Usually this stands for \"End Of File\". Not sure which file, though. Sorry.";;
