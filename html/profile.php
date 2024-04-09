@@ -76,6 +76,8 @@ $unusedTickets = $unusedTicketsResp->Data;
 $accountInventoryResp = GetAccountInventory($profile["Id"]);
 $accountInventory = $accountInventoryResp->Data;
 
+$accountActivityResp = GetAccountActivity($profile["Id"]);
+$accountActivity = $accountActivityResp->Data;
 
 $itemInfos = [];
 foreach ($accountInventory as $accountInventoryItem) {
@@ -804,12 +806,20 @@ $activeTabPage = 'active show';
                             <div class="tab-pane fade" id="nav-activity" role="tabpanel" aria-labelledby="nav-activity-tab" tabindex="0">
                                 <div class="display-6 tab-pane-title">Activity</div> 
                                
-    <?php 
-    
-    require("php-components/coming-soon.php"); 
-    
-    
-    ?>
+                                    <?php 
+                                    
+                                    foreach ($accountActivity as $activity) {
+                                    
+
+                                        $feedCard = $activity;
+                                        $feedCard["text"] = json_encode($activity);
+                                        require("php-components/feed-card.php");
+                                    ?>
+
+                                    <?php
+                                    }
+                                    
+                                    ?>
 
                             </div>
                             
