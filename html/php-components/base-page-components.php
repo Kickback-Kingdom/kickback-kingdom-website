@@ -606,7 +606,7 @@ $mediaDirs = $mediaDirsResp->Data;
                 <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities<i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/business-plan.php"><i class="nav-icon fa-regular fa-file-lines"></i> Business Plan <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
@@ -737,7 +737,7 @@ $mediaDirs = $mediaDirsResp->Data;
                         <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/forums.php"><i class="nav-icon fa-solid fa-pen-to-square"></i> Forums</a></li>
                         <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges</a></li>
                         <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs</a></li>
-                        <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games</a></li>
+                        <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities</a></li>
                         <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/guild-halls.php"><i class="nav-icon fa-solid fa-landmark"></i> Guild Halls</a></li>
                         <!--<li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/adventurers-guild.php"><i class="nav-icon fa-solid fa-person-hiking"></i> Adventurers Guild</a></li>

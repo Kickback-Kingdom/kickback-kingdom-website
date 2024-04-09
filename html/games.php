@@ -36,7 +36,7 @@ $games = $gamesResp->Data;
                 <?php 
                 
                 
-                $activePageName = "Games";
+                $activePageName = "Games & Activities";
                 require("php-components/base-page-breadcrumbs.php"); 
                 
                 ?>
