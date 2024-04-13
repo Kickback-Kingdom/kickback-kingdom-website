@@ -417,7 +417,12 @@
         <!-- jQuery first, then Popper.js, then Bootstrap JS -->
         <script src="assets/vendors/jquery/jquery-3.7.0.min.js"></script>
         <script src="assets/vendors/bootstrap/bootstrap.bundle.min.js"></script>
-        <script src="assets/js/formula.js"></script>
+        <?php
+    $jsVersion = time(); // Get current time as a Unix timestamp in PHP
+?>
+
+<script src="assets/js/formula.js?v=<?= $jsVersion ?>"></script>
+
         <script>
 
         
