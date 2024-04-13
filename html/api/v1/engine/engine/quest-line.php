@@ -432,12 +432,12 @@ function RejectQuestLineReview($data) {
     // Retrieve the quest line ID from the provided data
     $questLineId = $data["quest-line-id"];
     
-    if (!IsAdmin()) {
+    /*if (!IsAdmin()) {
         return new APIResponse(false, "Rejection denied. Insufficient permissions to edit this quest line.", null);
-    }
+    }*/
 
     // Prepare the SQL statement to mark the quest line as being reviewed
-    $stmt = $db->prepare("UPDATE quest_line SET published = 0, being_reviewed = 0 WHERE Id = ?");
+    $stmt = $db->prepare("UPDATE quest_line SET published = 0, being_reviewed = 0 WHERE Id = ? and (being_reviewed = 1 or published = 1)");
     if (!$stmt) {
         // Handle preparation errors
         return new APIResponse(false, "Failed to prepare the review rejection statement.", null);

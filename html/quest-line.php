@@ -271,7 +271,7 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                                                 <div class="col-12">
                                                     <div class="form-group">
                                                         <label for="edit-quest-options-summary" class="form-label">Summary:</label>
-                                                        <textarea class="form-control" id="edit-quest-line-options-summary" name="edit-quest-line-options-summary" rows="5"><?php echo $thisQuestLine["desc"]; ?></textarea>
+                                                        <textarea class="form-control" id="edit-quest-line-options-summary" name="edit-quest-line-options-summary" rows="5" maxlength="512"><?php echo $thisQuestLine["desc"]; ?></textarea>
                                                     </div>
                                                 </div>
                                             </div>
