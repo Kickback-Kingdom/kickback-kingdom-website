@@ -270,12 +270,12 @@ function RejectQuestReviewById($questId)
      // Access the global database connection
      $db = $GLOBALS['conn'];
      
-     if (!IsAdmin()) {
+     /*if (!IsAdmin()) {
          return new APIResponse(false, "Rejection denied. Insufficient permissions to edit this quest.", null);
-     }
+     }*/
  
      // Prepare the SQL statement to mark the quest as being reviewed
-     $stmt = $db->prepare("UPDATE quest SET published = 0, being_reviewed = 0 WHERE Id = ?");
+     $stmt = $db->prepare("UPDATE quest SET published = 0, being_reviewed = 0 WHERE Id = ? and (being_reviewed = 1 or published = 1)");
      if (!$stmt) {
          // Handle preparation errors
          return new APIResponse(false, "Failed to prepare the review rejection statement.", null);
@@ -757,7 +757,7 @@ function RemoveStandardParticipationRewards($questId) {
     $quest = $questResp->Data;
     if (!CanEditQuest($quest))
     {
-        return new APIResponse(false, "You do not have permissions to edit this quest.", null);
+        return new APIResponse(false, "You do not have permissions to remove standard participation rewards from this quest.", null);
     }
 
     $removeRewardResp = RejectQuestReviewById($questId);
@@ -793,7 +793,7 @@ function AddStandardParticipationRewards($questId) {
     $quest = $questResp->Data;
     if (!CanEditQuest($quest))
     {
-        return new APIResponse(false, "You do not have permissions to edit this quest.", null);
+        return new APIResponse(false, "You do not have permissions to add standard participation rewards to this quest.", null);
     }
     
     $addRewardResp = RejectQuestReviewById($questId);
