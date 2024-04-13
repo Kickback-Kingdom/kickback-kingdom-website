@@ -491,10 +491,20 @@ if (IsAdmin())
 
         if ($tokenResponse->Success) {
             $statement_date = $_POST["statement-date"];
-            ProcessMonthlyStatements($statement_date);
-            $showPopUpSuccess = true;
-            $PopUpMessage = "Go check the db";
-            $PopUpTitle = "Statement Processed Successfully";
+            $processResp = ProcessMonthlyStatements($statement_date);
+            if ($processResp->Success)
+            {
+                $showPopUpSuccess = true;
+                $PopUpMessage = $processResp->Message;
+                $PopUpTitle = "Statement Processed Successfully";
+
+            }
+            else{
+                
+            $showPopUpError = true;
+            $PopUpMessage = $processResp->Message;
+            $PopUpTitle = "Purchase Processed Failed";
+            }
         }
         else 
         {

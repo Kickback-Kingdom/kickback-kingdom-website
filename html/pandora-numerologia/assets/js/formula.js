@@ -282,6 +282,10 @@ function GetResults()
     result["calculations"]["personalDates"]["month"] = personalMonthVal;
     result["calculations"]["personalDates"]["year"] = personalYearVal;
 
+    result["calculations"]["personalDates"]["day_sum_array"] = [day,month,personalYearVal];
+    result["calculations"]["personalDates"]["month_sum_array"] = [month,personalYearVal];
+    result["calculations"]["personalDates"]["year_sum_array"] = [dobDaySum,dobMonthSum,myYearSum];
+
     console.log("Pináculos/Fases da vida (Phase of Life)");
 
     var phase1 = 36 - lifeLessonSoulNumber;
@@ -347,6 +351,9 @@ function PopuplateResults(result)
     PopulateLifeLesson(result);
     PopulatePowerfulNumber(result);
     PopulateLifeChallenges(result);
+    PopulatePersonalYear(result);
+    PopulatePersonalMonth(result);
+    PopulatePersonalDay(result);
     PopulatePhasesOfLife(result);
     PopulateResultsDisplayInputs()
 }
@@ -358,6 +365,65 @@ function PopulateResultsDisplayInputs() {
     $("#result_display_address").html(GetHouseNumber());
     $("#result_display_prof_name").html(GetProfessionalName());
 }
+
+
+function PopulatePersonalYear(result) {
+
+    
+    var html = `<li class="list-group-item d-flex justify-content-between align-items-start">
+    <div class="ms-2 me-auto" style="width: -webkit-fill-available;">
+      <div class="fw-bold">Ano: `+result.calculations.personalDates.year+`</div>
+        <ul class="list-group">
+            <li class="list-group-item"><strong>Números</strong> `+JSON.stringify(result.calculations.personalDates.year_sum_array)+`<span class="badge bg-secondary rounded-pill float-end">`+result.calculations.personalDates.year+`</li>
+        </ul>
+    </div>
+   </li>`;
+   
+    html += "<h4 class='p-2 text-bg-primary'>Ano Pessoal = "+result.calculations.personalDates.year+"</h4>";
+   
+    $("#resultsAnoPessoal").html(html);
+    $("#finalResultAnoPessoal").html(result.calculations.personalDates.year);
+   }
+
+   
+
+function PopulatePersonalMonth(result) {
+
+    
+    var html = `<li class="list-group-item d-flex justify-content-between align-items-start">
+    <div class="ms-2 me-auto" style="width: -webkit-fill-available;">
+      <div class="fw-bold">Mês: `+result.calculations.personalDates.month+`</div>
+        <ul class="list-group">
+            <li class="list-group-item"><strong>Números</strong> `+JSON.stringify(result.calculations.personalDates.month_sum_array)+`<span class="badge bg-secondary rounded-pill float-end">`+result.calculations.personalDates.month+`</li>
+        </ul>
+    </div>
+   </li>`;
+   
+    html += "<h4 class='p-2 text-bg-primary'>Ano Pessoal = "+result.calculations.personalDates.month+"</h4>";
+   
+    $("#resultsMesPessoal").html(html);
+    $("#finalResultMesPessoal").html(result.calculations.personalDates.month);
+   }
+   
+
+function PopulatePersonalDay(result) {
+
+    
+    var html = `<li class="list-group-item d-flex justify-content-between align-items-start">
+    <div class="ms-2 me-auto" style="width: -webkit-fill-available;">
+      <div class="fw-bold">Dia: `+result.calculations.personalDates.day+`</div>
+        <ul class="list-group">
+            <li class="list-group-item"><strong>Números</strong> `+JSON.stringify(result.calculations.personalDates.day_sum_array)+`<span class="badge bg-secondary rounded-pill float-end">`+result.calculations.personalDates.day+`</li>
+        </ul>
+    </div>
+   </li>`;
+   
+    html += "<h4 class='p-2 text-bg-primary'>Ano Pessoal = "+result.calculations.personalDates.day+"</h4>";
+   
+    $("#resultsDiaPessoal").html(html);
+    $("#finalResultDiaPessoal").html(result.calculations.personalDates.day);
+   }
+
 function PopulateLifeLesson(result) {
 
     

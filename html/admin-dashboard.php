@@ -24,20 +24,17 @@ foreach ($merchantGuildTasks as $merchantGuildTask) {
     }
 }
 
-if ($merchantGuildTasksToProcess["TaskType"] == 0)
+if ($merchantGuildTasksToProcess != null)
 {
-    if ($merchantGuildTasksToProcess != null)
-        $currentStatementTiedToTask = BuildStatement($merchantGuildTasksToProcess['account_id'], $merchantGuildTasksToProcess['execution_date'], false);
+    if ($merchantGuildTasksToProcess["TaskType"] == 0)
+    {
+            $currentStatementTiedToTask = BuildStatement($merchantGuildTasksToProcess['account_id'], $merchantGuildTasksToProcess['execution_date'], false);
 
 
 
-    $preProcessData = PreProcessPurchase($merchantGuildTasksToProcess, $currentStatementTiedToTask);
+        $preProcessData = PreProcessPurchase($merchantGuildTasksToProcess, $currentStatementTiedToTask);
+    }
 }
-else
-{
-
-}
-
 
 $reviewFeedResp = GetNeedsReviewedFeed();
 $reviewFeed = $reviewFeedResp->Data;
@@ -62,6 +59,7 @@ $reviewFeed = $reviewFeedResp->Data;
     <style>
         
         </style>
+        <?php if (isset($preProcessData)) { ?>
 <!--taskProcessingModal MODAL-->
 <div class="modal fade" id="taskProcessingModal"  tabindex="-1"  aria-labelledby="taskProcessingModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -141,7 +139,7 @@ $reviewFeed = $reviewFeedResp->Data;
         </div>
     </div>
 </div>
-
+<?php } ?>
 
 <!--statementProcessingModal-->
 <div class="modal fade" id="statementProcessingModal"  tabindex="-1"  aria-labelledby="statementProcessingModalLabel" aria-hidden="true">
@@ -180,6 +178,23 @@ $reviewFeed = $reviewFeedResp->Data;
 
     <!--MAIN CONTENT-->
     <main class="container pt-3 bg-body" style="margin-bottom: 56px;">
+    
+    <?php if ($hasError || $hasSuccess) {?>
+        <div class="row">
+            <div class="col-12">
+                <?php if ($hasError) {?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Oh snap!</strong> <?php echo $errorMessage; ?>
+                </div>
+                <?php } ?>
+                <?php if ($hasSuccess) {?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <strong>Congrats!</strong> <?php echo $successMessage; ?>
+                </div>
+                <?php } ?>
+            </div>
+        </div>
+        <?php } ?>
         <div class="row">
             <div class="col-12 col-xl-9">
                 
@@ -298,7 +313,6 @@ $reviewFeed = $reviewFeedResp->Data;
         </div>
         <?php require("php-components/base-page-footer.php"); ?>
     </main>
-
     
     <?php require("php-components/base-page-javascript.php"); ?>
     <script>

@@ -53,52 +53,74 @@ function GiveNewFullSharesAfterInterest($statement)
         }
     }
 }
-
-
 function ProcessMonthlyStatements($statement_date) {
+    if (!isset($statement_date) || empty($statement_date)) {
+        return new APIResponse(false, "Invalid statement date provided.", null);
+    }
+    
     // Connect to your database
     $conn = $GLOBALS["conn"];
     mysqli_begin_transaction($conn);
-    
+
+    $all_success = true;
+
     // Query to fetch account IDs based on your criterion
     $sql = "SELECT DISTINCT AccountId FROM share_purchase WHERE PurchaseDate < ?";
-    
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, 's', $statement_date);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    
-    while ($row = mysqli_fetch_assoc($result)) {
-        $accountId = $row['AccountId'];
-        
-        // Create a savepoint for this account
-        $savepoint = "SAVEPOINT_for_account_$accountId";
-        if (!mysqli_query($conn, "SAVEPOINT $savepoint")) {
-            // Handle savepoint error
-        }
 
-        try {
-            $statementData = BuildStatement($accountId, $statement_date);
-            GiveNewFullSharesAfterInterest($statementData);
-            SaveMerchantShareStatement($statementData);
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) {
+        error_log("MySQL prepare failed: " . mysqli_error($conn));
+        mysqli_rollback($conn);
+        return new APIResponse(false, "Database prepare statement failed.", null);
+    }
+
+    if (!mysqli_stmt_bind_param($stmt, 's', $statement_date) || !mysqli_stmt_execute($stmt)) {
+        error_log("Failed to bind parameters or execute statement: " . mysqli_error($conn));
+        mysqli_stmt_close($stmt);
+        mysqli_rollback($conn);
+        return new APIResponse(false, "Failed to bind parameters or execute statement.", null);
+    }
+
+    $result = mysqli_stmt_get_result($stmt);
+    try {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $accountId = $row['AccountId'];
             
-            // If successful, release the savepoint
-            if (!mysqli_query($conn, "RELEASE SAVEPOINT $savepoint")) {
-                // Handle release error
+            error_log("start processing monthly statement and interest for $accountId");
+            try {
+                error_log("Building statement...");
+                $statementData = BuildStatement($accountId, $statement_date);
+                error_log("Giving New shares...");
+                GiveNewFullSharesAfterInterest($statementData);
+                error_log("Saving statement...");
+                SaveMerchantShareStatement($statementData);
+            } catch (Exception $e) {
+                $all_success = false;
+                error_log("Caught exception while processing statement for account $accountId: " . $e->getMessage());
+                break; // Exit the loop if an exception occurs
             }
-        } catch (Exception $e) {
-            // If there was an error, roll back to the savepoint
-            mysqli_query($conn, "ROLLBACK TO $savepoint");
-            // Consider logging the error or taking other action here
+            
+            error_log("finished processing monthly statement and interest for $accountId");
+        }
+    } finally {
+        mysqli_stmt_close($stmt);
+        if ($result) {
+            mysqli_free_result($result);
         }
     }
-    
-    mysqli_stmt_close($stmt);   // Close the statement
-    mysqli_free_result($result); // Free the result set
 
-    // Commit the main transaction at the end
-    mysqli_commit($conn);
+    if ($all_success) {
+            
+        error_log("finished processing monthly statement and interest for everyone");
+        mysqli_commit($conn);
+        return new APIResponse(true, "Monthly statements processed successfully", null);
+    } else {
+        error_log("faild to process monthly statement and interest for everyone. rolling back...");
+        mysqli_rollback($conn);
+        return new APIResponse(false, "Errors occurred during processing; all changes were rolled back.", null);
+    }
 }
+
 
 function ProcessMerchantSharePurchase($purchaseID, $shareAmount) {
     // Use the mysqli connection from the global scope
