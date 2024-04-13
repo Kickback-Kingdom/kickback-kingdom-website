@@ -220,6 +220,47 @@
                                     </div>
                                 </div>
                             </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseAnoPessoal" aria-expanded="false" aria-controls="panelsStayOpen-collapseAnoPessoal">
+                                    Ano Pessoal<span id="finalResultAnoPessoal" class="badge bg-primary position-absolute rounded-pill" style="right: 48px;">*</span>
+                                    </button>
+                                </h2>
+                                <div id="panelsStayOpen-collapseAnoPessoal" class="accordion-collapse collapse">
+                                    <div class="accordion-body"id="resultsAnoPessoal">
+                      
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseMesPessoal" aria-expanded="false" aria-controls="panelsStayOpen-collapseMesPessoal">
+                                    Mês Pessoal<span id="finalResultMesPessoal" class="badge bg-primary position-absolute rounded-pill" style="right: 48px;">*</span>
+                                    </button>
+                                </h2>
+                                <div id="panelsStayOpen-collapseMesPessoal" class="accordion-collapse collapse">
+                                    <div class="accordion-body"id="resultsMesPessoal">
+                      
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseEight" aria-expanded="false" aria-controls="panelsStayOpen-collapseEight">
+                                    Dia Pessoal<span id="finalResultDiaPessoal" class="badge bg-primary position-absolute rounded-pill" style="right: 48px;">*</span>
+                                    </button>
+                                </h2>
+                                <div id="panelsStayOpen-collapseEight" class="accordion-collapse collapse">
+                                    <div class="accordion-body"id="resultsDiaPessoal">
+                      
+                                    </div>
+                                </div>
+                            </div>
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
                                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseFive" aria-expanded="false" aria-controls="panelsStayOpen-collapseFive">
