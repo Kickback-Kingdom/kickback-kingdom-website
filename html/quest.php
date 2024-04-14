@@ -729,8 +729,33 @@ if ($thisQuest["raffle_id"] != null)
                                                 <div class="col-12">
                                                     <div class="form-group">
                                                         <label for="edit-quest-options-summary" class="form-label">Summary:</label>
-                                                        <textarea class="form-control" id="edit-quest-options-summary" name="edit-quest-options-summary" rows="5"><?php echo $thisQuest["summary"]; ?></textarea>
+                                                        <textarea class="form-control" id="edit-quest-options-summary" name="edit-quest-options-summary" rows="5"  maxlength="512" oninput="updateCharCountQuestDesc()"><?php echo $thisQuest["summary"]; ?></textarea>
                                                     </div>
+                                                    <div class="float-end form-text text-success" id="charCount-quest">400 characters remaining</div>
+                                                    <script>
+                                                    function updateCharCountQuestDesc() {
+                                                        var messageInput = document.getElementById('edit-quest-options-summary');
+                                                        var charCountElement = document.getElementById('charCount-quest');
+                                                        var charLength = messageInput.value.length;
+                                                        var minRequiredChars = 200;
+                                                        var maxAllowedChars = 512;
+
+                                                        if(charLength < minRequiredChars) {
+                                                            charCountElement.textContent = 'You need at least ' + minRequiredChars + ' characters. ' + (minRequiredChars - charLength) + ' more to go.';
+                                                            charCountElement.classList.add('text-danger');
+                                                            charCountElement.classList.remove('text-success');
+                                                        } else if(charLength > maxAllowedChars) {
+                                                            charCountElement.textContent = 'Character limit exceeded by ' + (charLength - maxAllowedChars) + '.';
+                                                            charCountElement.classList.add('text-danger');
+                                                            charCountElement.classList.remove('text-success');
+                                                        } else {
+                                                            charCountElement.textContent = (maxAllowedChars - charLength) + ' characters remaining.';
+                                                            charCountElement.classList.add('text-success');
+                                                            charCountElement.classList.remove('text-danger');
+                                                        }
+                                                    }
+                                                    updateCharCountQuestDesc(); // Call the function on page load to set initial state
+                                                    </script>
                                                 </div>
                                             </div>
                                             
