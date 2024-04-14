@@ -271,8 +271,33 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                                                 <div class="col-12">
                                                     <div class="form-group">
                                                         <label for="edit-quest-options-summary" class="form-label">Summary:</label>
-                                                        <textarea class="form-control" id="edit-quest-line-options-summary" name="edit-quest-line-options-summary" rows="5" maxlength="512"><?php echo $thisQuestLine["desc"]; ?></textarea>
+                                                        <textarea class="form-control" id="edit-quest-line-options-summary" name="edit-quest-line-options-summary" rows="5" maxlength="512" oninput="updateCharCountQuestLineDesc()"><?php echo $thisQuestLine["desc"]; ?></textarea>
                                                     </div>
+                                                    <div class="float-end form-text text-success" id="charCount-questLine">400 characters remaining</div>
+                                                    <script>
+                                                    function updateCharCountQuestLineDesc() {
+                                                        var messageInput = document.getElementById('edit-quest-line-options-summary');
+                                                        var charCountElement = document.getElementById('charCount-questLine');
+                                                        var charLength = messageInput.value.length;
+                                                        var minRequiredChars = 200;
+                                                        var maxAllowedChars = 512;
+
+                                                        if(charLength < minRequiredChars) {
+                                                            charCountElement.textContent = 'You need at least ' + minRequiredChars + ' characters. ' + (minRequiredChars - charLength) + ' more to go.';
+                                                            charCountElement.classList.add('text-danger');
+                                                            charCountElement.classList.remove('text-success');
+                                                        } else if(charLength > maxAllowedChars) {
+                                                            charCountElement.textContent = 'Character limit exceeded by ' + (charLength - maxAllowedChars) + '.';
+                                                            charCountElement.classList.add('text-danger');
+                                                            charCountElement.classList.remove('text-success');
+                                                        } else {
+                                                            charCountElement.textContent = (maxAllowedChars - charLength) + ' characters remaining.';
+                                                            charCountElement.classList.add('text-success');
+                                                            charCountElement.classList.remove('text-danger');
+                                                        }
+                                                    }
+                                                    updateCharCountQuestLineDesc();
+                                                    </script>
                                                 </div>
                                             </div>
 
