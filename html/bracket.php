@@ -114,7 +114,7 @@ class Team {
     public $DisplayName;
 }
 
-class Match {
+class BracketMatch {
     //public $TeamA;
     //public $TeamB;
     public $Teams;
@@ -248,7 +248,7 @@ function BuildMatchArray($bracketData, $teams){
         if ($match == null)
         {
             
-            $match = new Match();
+            $match = new BracketMatch();
             $match->BracketNum = $bracketNum;
             $match->RoundNum = $roundNum;
             $match->MatchNum = $matchNum;
