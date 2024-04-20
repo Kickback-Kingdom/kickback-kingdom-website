@@ -53,7 +53,7 @@ foreach ($matches as $match) {
 
     // Initialize data structures for teams
     $teams = [];
-    $teamNames = []; // Add this line to initialize the teamNames array
+    $teamNames = [];
     foreach ($records as $record) {
         $accountId = $record['account_id'];
         $teamName = $record['team_name'];
@@ -142,8 +142,6 @@ foreach ($matches as $match) {
 
 }
 
-// Rest of your script...
-// You could put any other logic you need here.
 
 // Print final ratings
 foreach ($ratings as $game_id => $game_ratings) {
