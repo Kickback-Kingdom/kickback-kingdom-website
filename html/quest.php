@@ -1461,7 +1461,13 @@ if ($thisQuest["raffle_id"] != null)
         <div class="row justify-content-center">
             <?php foreach ($playersByTeam as $teamName => $teamMembers) { ?>
                 <!-- Skip the champions team -->
-                <?php if (!in_array($teamMembers[0], $champions)) { ?>
+                <?php 
+                $isChampion = false;
+                if ($champions != null)
+                {
+                    $isChampion = in_array($teamMembers[0], $champions);
+                }
+                if (!$isChampion) { ?>
                     <div class="col-lg-8 mb-4">
                         <div class="card shadow">
                             <!-- Optionally include a team image if available -->
