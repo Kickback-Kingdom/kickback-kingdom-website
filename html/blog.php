@@ -20,7 +20,9 @@ else{
 }
 
 $isBlogManager = IsManagerForBlog($blog["Id"]);
-$isBlogWriter = IsWriterForBlog($blog["Id"])
+$isBlogWriter = IsWriterForBlog($blog["Id"]);
+
+$thisBlog = $blog;
 ?>
 
 <!DOCTYPE html>

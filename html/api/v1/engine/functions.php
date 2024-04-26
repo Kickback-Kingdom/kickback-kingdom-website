@@ -1,6 +1,7 @@
 <?php
 
 require ("engine/utility.php");
+require ("engine/analytic.php");
 require ("engine/math.php");
 require ("engine/quest.php");
 require ("engine/quest-line.php");

@@ -14,6 +14,8 @@ $profile = GetAccountByUsername($_GET['u']);
 
 $profile = $profile->Data;
 
+$thisProfile = $profile;
+
 if (!isset($hasError))
     $hasError = false;
 if (!isset($hasSuccess))

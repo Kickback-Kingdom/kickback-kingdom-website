@@ -1442,5 +1442,37 @@ function GetWroteBlogPostFlavorText($username, $blogPostTitle, $seedString = nul
     return $flavorTexts[$index];
 }
 
+// Get a system-based salt using server IP and process ID
+function GetSystemSalt() {
+    $localIP = gethostbyname(gethostname());
+    $processId = getmypid();
+    return crc32($localIP . $processId);
+}
+
+// Get high-resolution time in nanoseconds
+function GetHighResTime() {
+    $time = hrtime(true); // Return as a number of nanoseconds
+    return $time;
+}
+
+// Generate a random integer based on a seed
+function GetSeededRandomInt($seed) {
+    mt_srand($seed);
+    return mt_rand();
+}
+
+// Combine system salt and high-resolution time to generate a unique crand
+function GenerateCRand() {
+    $salt = GetSystemSalt();
+    $time = GetHighResTime();
+    $seed = $time + $salt;
+    return GetSeededRandomInt($seed);
+}
+
+function EnsureSessionStarted() {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+}
 
 ?>

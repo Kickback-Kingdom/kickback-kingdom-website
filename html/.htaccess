@@ -2,48 +2,48 @@ RewriteEngine On
 
 # Redirect /q/ URLs to quest.php
 RewriteCond %{REQUEST_URI} ^/q/([^/]+)$
-RewriteRule ^(.*)$ /quest.php?locator=%1 [L]
+RewriteRule ^(.*)$ /quest.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 
 # Redirect /beta/q/ URLs to /beta/quest.php
 RewriteCond %{REQUEST_URI} ^/beta/q/([^/]+)$
-RewriteRule ^(.*)$ /beta/quest.php?locator=%1 [L]
+RewriteRule ^(.*)$ /beta/quest.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 
 # Redirect /u/ URLs to profile.php
 RewriteCond %{REQUEST_URI} ^/u/([^/]+)$
-RewriteRule ^(.*)$ /profile.php?u=%1 [L]
+RewriteRule ^(.*)$ /profile.php?u=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 
 # Redirect /beta/u/ URLs to /beta/profile.php
 RewriteCond %{REQUEST_URI} ^/beta/u/([^/]+)$
-RewriteRule ^(.*)$ /beta/profile.php?u=%1 [L]
+RewriteRule ^(.*)$ /beta/profile.php?u=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 
 # Redirect /blog/ URLs to blog.php
 RewriteCond %{REQUEST_URI} ^/blog/([^/]+)$
-RewriteRule ^(.*)$ /blog.php?locator=%1 [L]
+RewriteRule ^(.*)$ /blog.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 
 # Redirect /beta/blog/ URLs to /beta/blog.php
 RewriteCond %{REQUEST_URI} ^/beta/blog/([^/]+)$
-RewriteRule ^(.*)$ /beta/blog.php?locator=%1 [L]
+RewriteRule ^(.*)$ /beta/blog.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 
 # Redirect /blog/blogLocator/postLocator URLs to /blogpost.php
 RewriteCond %{REQUEST_URI} ^/blog/([^/]+)/([^/]+)$
-RewriteRule ^(.*)$ /blogpost.php?blogLocator=%1&postLocator=%2 [L]
+RewriteRule ^(.*)$ /blogpost.php?blogLocator=%1&postLocator=%2 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 
 # Redirect /beta/blog/blogLocator/postLocator URLs to /beta/blogpost.php
 RewriteCond %{REQUEST_URI} ^/beta/blog/([^/]+)/([^/]+)$
-RewriteRule ^(.*)$ /beta/blogpost.php?blogLocator=%1&postLocator=%2 [L]
+RewriteRule ^(.*)$ /beta/blogpost.php?blogLocator=%1&postLocator=%2 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 
 # Redirect /quest-line/ URLs to quest-line.php
 RewriteCond %{REQUEST_URI} ^/quest-line/([^/]+)$
-RewriteRule ^(.*)$ /quest-line.php?locator=%1 [L]
+RewriteRule ^(.*)$ /quest-line.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 
 # Redirect /beta/quest-line/ URLs to /beta/quest-line.php
 RewriteCond %{REQUEST_URI} ^/beta/quest-line/([^/]+)$
-RewriteRule ^(.*)$ /beta/quest-line.php?locator=%1 [L]
+RewriteRule ^(.*)$ /beta/quest-line.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 
 # Redirect /g/ URLs to game.php
 RewriteCond %{REQUEST_URI} ^/g/([^/]+)$
-RewriteRule ^(.*)$ /game.php?locator=%1 [L]
+RewriteRule ^(.*)$ /game.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 
 # Redirect /beta/g/ URLs to /beta/game.php
 RewriteCond %{REQUEST_URI} ^/beta/g/([^/]+)$
-RewriteRule ^(.*)$ /beta/game.php?locator=%1 [L]
+RewriteRule ^(.*)$ /beta/game.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
