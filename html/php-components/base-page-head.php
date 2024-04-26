@@ -1,4 +1,8 @@
 <?php 
+
+$pageVisitId = GetCurrentPage();
+
+
 if (!isset($pageTitle))
 {
     $pageTitle = "Kickback Kingdom";
@@ -11,6 +15,7 @@ if (isset($thisQuest))
     $pageTitle = $thisQuest["name"];
     $pageImage = "https://kickback-kingdom.com/assets/media/".$thisQuest["imagePath_icon"];
     $pageDesc = 'Hosted on Kickback Kingdom';
+    $pageVisitId = '/q/'.$thisQuest['Id'];
 }
 
 if (isset($thisQuestLine))
@@ -18,20 +23,48 @@ if (isset($thisQuestLine))
     $pageTitle = $thisQuestLine["name"];
     $pageImage = "https://kickback-kingdom.com/assets/media/".$thisQuestLine["imagePath_icon"];
     $pageDesc = 'Hosted on Kickback Kingdom';
+    $pageVisitId = '/quest-line/'.$thisQuestLine['Id'];
 }
 
-if (isset($profile))
+if (isset($thisProfile))
 {
-    $pageTitle = $profile["Username"];
-    $pageImage = "https://kickback-kingdom.com/assets/media/".$profile["avatar_media"];
-    $pageDesc = GetAccountTitle($profile)." in Kickback Kingdom";
+    $pageTitle = $thisProfile["Username"];
+    $pageImage = "https://kickback-kingdom.com/assets/media/".$thisProfile["avatar_media"];
+    $pageDesc = GetAccountTitle($thisProfile)." in Kickback Kingdom";
+    $pageVisitId = '/u/'.$thisProfile["Id"];
 }
 
-if (isset($blogPost))
+if (isset($thisBlogs))
 {
-    $pageTitle = $blogPost["Title"];
-    $pageImage = "https://kickback-kingdom.com/assets/media/".$blogPost["Image_Path"];
-    $pageDesc = 'Written by '.$blogPost["Author_Username"];
+    $pageTitle = 'Kickback Kingdom Blogs';
+    $pageImage = "https://kickback-kingdom.com/assets/media/context/loading.gif";
+    $pageDesc = 'Read articles written by the community';
+    $pageVisitId = 'blogs';
+}
+
+if (isset($thisBlog))
+{
+    $pageTitle = $thisBlog["name"];
+    $pageImage = "https://kickback-kingdom.com/assets/media/".$thisBlog["imagePath"];
+    $pageDesc = $thisBlog["desc"];
+    $pageVisitId = '/blog/'.$thisBlog["Id"];
+}
+
+if (isset($thisBlogPost))
+{
+    $pageTitle = $thisBlogPost["Title"];
+    $pageImage = "https://kickback-kingdom.com/assets/media/".$thisBlogPost["Image_Path"];
+    $pageDesc = 'Written by '.$thisBlogPost["Author_Username"];
+    $pageVisitId = '/blog-post/'.$thisBlogPost["Id"];
+}
+
+
+RecordPageVisit($pageVisitId);
+$pageVisitResp = GetPageVisits($pageVisitId);
+$thisPageVisits = 0;
+if ($pageVisitResp->Success)
+{
+    $thisPageVisits = $pageVisitResp->Data;
 }
 ?>
 <head>
@@ -97,6 +130,18 @@ if (isset($blogPost))
 
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
   
-
+    
+    <?php if (isset($_GET['borderless'])) { ?>
+    <style>
+        body {
+            margin: 0 !important;
+            background-image: none !important;
+        }
+        main {
+            width: 100vw !important;
+            max-width: 100vw !important;
+        }
+    </style>
+    <?php } ?>
 
 </head>

@@ -12,7 +12,7 @@ if (!isset($activePageName))
         <h5 class="card-title mb-0">
             <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item active" aria-current="page"><?php echo $activePageName; ?></li>
+                    <li class="breadcrumb-item active" aria-current="page" style="width: 100%;"><?php echo $activePageName; ?><span class="float-end"><?= $thisPageVisits; ?> <i class="fa-eye fa-regular" aria-hidden="true"></i></span</li>
                 </ol>
             </nav>
         </h5>

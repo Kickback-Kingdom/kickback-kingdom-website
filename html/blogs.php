@@ -8,6 +8,8 @@ $blogResp = GetBlogsFeed();
 
 $blogs = $blogResp->Data;
 
+
+$thisBlogs = $blogs;
 ?>
 
 <!DOCTYPE html>

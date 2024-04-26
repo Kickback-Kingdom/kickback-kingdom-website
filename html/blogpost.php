@@ -48,6 +48,8 @@ $isWriterForBlogPost = IsWriterForBlogPost($blogPost);
 $thisPostDate = date_create($blogPost["PostDate"]);           
 $thisPostDateBasic = date_format($thisPostDate,"M j, Y");
 $thisPostDateDetailed = date_format($thisPostDate,"M j, Y H:i:s");
+
+$thisBlogPost = $blogPost;
 ?>
 
 <!DOCTYPE html>
