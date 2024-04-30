@@ -103,7 +103,13 @@ function PublishBlogPost($postId) {
         return (new APIResponse(false, "You do not have permission to edit this blog post.", null));
     }
 
-    $pageContent = GetContentDataById($currentBlogPost["Content_id"],"BLOG-POST", $currentBlogPost["Bloglocator"]."/".$currentBlogPost["Postlocator"]);
+    $pageContentResp = GetContentDataById($currentBlogPost["Content_id"],"BLOG-POST", $currentBlogPost["Bloglocator"]."/".$currentBlogPost["Postlocator"]);
+    if (!$pageContentResp->Success)
+    {
+        return $pageContentResp;
+    }
+
+    $pageContent = $pageContentResp->Data;
 
     if (!BlogPostIsValidForPublish($currentBlogPost, $pageContent))
     {

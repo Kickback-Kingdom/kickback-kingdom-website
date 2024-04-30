@@ -139,6 +139,7 @@ $thisBlogPost = $blogPost;
                                         $feedCard["published"] = true;
                                         $feedCard["account_1_username"] = $blogPost["Author_Username"];
                                         $feedCard["text"] = $blogPost["Desc"];
+                                        $feedCard["locator"] = $blogPost["Postlocator"];
                                         require("php-components/feed-card.php");
                                     ?>
                                 </div>
