@@ -48,7 +48,7 @@ $mediaDirs = $mediaDirsResp->Data;
         <?php 
         
         $selectUserFormId = "modal-";
-        require("php-components/select-user.php"); 
+        require(\Kickback\SCRIPT_ROOT . "/php-components/select-user.php"); 
         
         ?>
         
@@ -71,7 +71,7 @@ $mediaDirs = $mediaDirsResp->Data;
 
       </div>
       <div class="modal-body">
-        <?php require("php-components/select-media.php"); ?>
+        <?php require(\Kickback\SCRIPT_ROOT . "/php-components/select-media.php"); ?>
       </div> 
       <div class="modal-footer">
         <?php if(IsArtist()) { ?><button type="button" class="btn btn-primary" onclick="OpenMediaUploadModal()">Upload Media</button><?php } ?>

@@ -179,6 +179,7 @@ $thisBlogPost = $blogPost;
                         </div>
                         <div class="modal-footer">
                             <form method="POST">
+                                <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
                                 <input type="hidden" name="blog-post-id" value="<?php echo $blogPost["Id"]; ?>" />
                                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
                                 <input type="submit" name="submit-blog-post-publish" class="btn bg-ranked-1" onclick="" <?php if(!BlogPostIsValidForPublish($blogPost,$pageContent)) { ?>disabled<?php } ?> value="Publish Blog Post" />
@@ -189,6 +190,7 @@ $thisBlogPost = $blogPost;
                 </div>
 
                 <form method="POST">
+                    <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
                     <input type="hidden" value="<?php echo $blogPost["Id"]; ?>" name="blogPostId" />
                     <div class="modal modal-lg fade" id="modalEditBlogPostOptions" tabindex="-1" aria-labelledby="modalEditBlogPostOptionsLabel" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">

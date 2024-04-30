@@ -5,6 +5,11 @@
 $currentPage = basename($_SERVER['SCRIPT_NAME']);
 $adCarouselActivePage = "active";
 $hadFirstPage = false;
+
+if (!isset($_GET['borderless']))
+{
+    
+
 ?>
 
 <div id="topCarouselAd" class="carousel slide" style="margin-top: 56px;"  data-bs-ride="carousel">
@@ -141,3 +146,5 @@ $hadFirstPage = false;
         <span class="visually-hidden">Next</span>
     </button>
 </div>
+
+<?php } ?>

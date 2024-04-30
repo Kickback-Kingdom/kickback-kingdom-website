@@ -54,7 +54,7 @@ function IsWriterForBlogPost($blogPost)
 {
     if (IsLoggedIn())
     {
-        return IsManagerForBlog($blogPost["Blog_id"]) || $_SESSION["account"]["Id"] == $blogPost["Author_id"];
+        return (IsManagerForBlog($blogPost["Blog_id"]) || $_SESSION["account"]["Id"] == $blogPost["Author_id"]) && !isset($_GET['borderless']);
 
     }
     else
