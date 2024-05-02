@@ -88,19 +88,20 @@ $analyticsJSON = json_encode($analyticsMonthly);
                 </div>
 
                 
-                <div class="row mb-3 align-items-center"> <!-- align-items-center to vertically center content -->
-                    <div class="col-md-4">
+                <div class="row mb-3">
+                    <div class="col-md-5">
                         <label for="startDate">Start Date:</label>
-                        <input type="date" id="startDate" name="startDate" class="form-control">
+                        <input type="month" id="startDate" name="startDate" class="form-control">
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-5">
                         <label for="endDate">End Date:</label>
-                        <input type="date" id="endDate" name="endDate" class="form-control">
+                        <input type="month" id="endDate" name="endDate" class="form-control">
                     </div>
-                    <div class="col-md-4 d-flex justify-content-end"> <!-- Use d-flex and justify-content-end to align the button to the end -->
+                    <div class="col-md-2">
                         <button class="btn btn-primary" onclick="updateCharts()">Update Graphs</button>
                     </div>
                 </div>
+
 
                 <div class="row">
                     <div class="col-12">
@@ -200,23 +201,17 @@ $analyticsJSON = json_encode($analyticsMonthly);
 
         document.addEventListener('DOMContentLoaded', function() {
             if (analyticsData.length > 0) {
-                // Extract the date strings and convert them to Date objects
-                const dates = analyticsData.map(data => new Date(data.month));
-                
-                // Find the earliest date
-                const minDate = new Date(Math.min.apply(null, dates));
-                // Format the earliest date as a value for the input[type="date"]
-                const minDateValue = minDate.toISOString().substring(0, 10);
-                
-                // Get today's date
-                const today = new Date();
-                const todayValue = today.toISOString().substring(0, 10);
+                // Extract the month strings and find the minimum and maximum
+                const months = analyticsData.map(data => data.month); // Assuming 'month' is already in 'YYYY-MM' format
+                const minMonth = months.reduce((a, b) => a < b ? a : b); // Find the earliest month
+                const maxMonth = months.reduce((a, b) => a > b ? a : b); // Optionally find the latest month, useful if data may not include the current month
 
-                // Set the values of the date inputs
-                document.getElementById('startDate').value = minDateValue;
-                document.getElementById('endDate').value = todayValue;
+                // Set the values of the month inputs
+                document.getElementById('startDate').value = minMonth;
+                document.getElementById('endDate').value = new Date().toISOString().substring(0, 7); // Current year and month
             }
         });
+
 
 
         const analyticsData = <?= $analyticsJSON; ?>;
