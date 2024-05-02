@@ -44,6 +44,7 @@ $analyticsJSON = json_encode($analyticsMonthly);
                 
                 ?>
 
+
                 <div class="row">
                     <div class="col-12">
                         <div class="card mb-3">
@@ -71,15 +72,11 @@ $analyticsJSON = json_encode($analyticsMonthly);
                                         ?>
                                             <tr class="<?= $rowClass; ?>">
                                                 <td><?= htmlspecialchars($data['month']); ?></td>
-                                                <td><?= htmlspecialchars($data['new_accounts']); ?></td>
-                                                <td><?= htmlspecialchars($data['total_accounts']); ?></td>
-                                                <td class="<?= $growthClass; ?>">
-                                                    <?= htmlspecialchars(number_format($data['growth_percentage'], 1, '.', '')); ?>%
-                                                </td>
-                                                <td><?= htmlspecialchars($data['active_accounts']); ?></td>
-                                                <td class="<?= $retentionClass; ?>">
-                                                    <?= htmlspecialchars(number_format($data['retention_rate'], 1, '.', '')); ?>%
-                                                </td>
+                                                <td class="<?= $growthClass; ?>"><?= htmlspecialchars($data['new_accounts']); ?></td>
+                                                <td class="<?= $growthClass; ?>"><?= htmlspecialchars($data['total_accounts']); ?></td>
+                                                <td class="<?= $growthClass; ?>"><?= htmlspecialchars(number_format($data['growth_percentage'], 1, '.', '')); ?>%</td>
+                                                <td class="<?= $retentionClass; ?>"><?= htmlspecialchars($data['active_accounts']); ?></td>
+                                                <td class="<?= $retentionClass; ?>"><?= htmlspecialchars(number_format($data['retention_rate'], 1, '.', '')); ?>%</td>
                                             </tr>
                                         <?php endforeach; ?>
 
@@ -87,6 +84,21 @@ $analyticsJSON = json_encode($analyticsMonthly);
                                 </table>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                
+                <div class="row mb-3 align-items-center"> <!-- align-items-center to vertically center content -->
+                    <div class="col-md-4">
+                        <label for="startDate">Start Date:</label>
+                        <input type="date" id="startDate" name="startDate" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="endDate">End Date:</label>
+                        <input type="date" id="endDate" name="endDate" class="form-control">
+                    </div>
+                    <div class="col-md-4 d-flex justify-content-end"> <!-- Use d-flex and justify-content-end to align the button to the end -->
+                        <button class="btn btn-primary" onclick="updateCharts()">Update Graphs</button>
                     </div>
                 </div>
 
@@ -145,6 +157,19 @@ $analyticsJSON = json_encode($analyticsMonthly);
                                     </div>
                                 </div>
                             </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseFive" aria-expanded="false" aria-controls="panelsStayOpen-collapseFive">
+                                        Monthly Active Accounts
+                                    </button>
+                                </h2>
+                                <div id="panelsStayOpen-collapseFive" class="accordion-collapse collapse">
+                                    <div class="accordion-body">
+                                        
+                                        <canvas id="activeAccountsChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -161,23 +186,98 @@ $analyticsJSON = json_encode($analyticsMonthly);
     <?php require("php-components/base-page-javascript.php"); ?>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
     <script>
+        function updateCharts() {
+            var startDate = document.getElementById('startDate').value;
+            var endDate = document.getElementById('endDate').value;
+
+        }
+
         $(document).ready( function () {
             $('#datatable-analtyics').DataTable({
                 "order": [[0, 'desc']]  // Sort by the 5th column (0-indexed) in ascending order
             });
         } );
 
+        document.addEventListener('DOMContentLoaded', function() {
+            if (analyticsData.length > 0) {
+                // Extract the date strings and convert them to Date objects
+                const dates = analyticsData.map(data => new Date(data.month));
+                
+                // Find the earliest date
+                const minDate = new Date(Math.min.apply(null, dates));
+                // Format the earliest date as a value for the input[type="date"]
+                const minDateValue = minDate.toISOString().substring(0, 10);
+                
+                // Get today's date
+                const today = new Date();
+                const todayValue = today.toISOString().substring(0, 10);
+
+                // Set the values of the date inputs
+                document.getElementById('startDate').value = minDateValue;
+                document.getElementById('endDate').value = todayValue;
+            }
+        });
+
+
         const analyticsData = <?= $analyticsJSON; ?>;
-        
+        let fullData = analyticsData;
+
+        function filterData(startDate, endDate) {
+            return fullData.filter(item => {
+                const itemDate = new Date(item.month); // Assuming 'month' is in a format that can be parsed by Date, e.g., "2021-03"
+                return itemDate >= new Date(startDate) && itemDate <= new Date(endDate);
+            });
+        }
+
+        function updateCharts() {
+            var startDate = document.getElementById('startDate').value;
+            var endDate = document.getElementById('endDate').value;
+
+            // Filter the data
+            let filteredData = filterData(startDate, endDate);
+
+            // Now map the filtered data
+            const labels = filteredData.map(data => data.month);
+            const totalAccounts = filteredData.map(data => parseInt(data.total_accounts));
+            const newAccounts = filteredData.map(data => parseInt(data.new_accounts));
+            const growthPercentages = filteredData.map(data => parseFloat(data.growth_percentage).toFixed(1));
+            const retentionRates = filteredData.map(data => parseFloat(data.retention_rate).toFixed(1));
+            const activeAccounts = filteredData.map(data => parseInt(data.active_accounts));
+
+            // Update the charts
+            updateChartData(labels, totalAccounts, newAccounts, growthPercentages, retentionRates, activeAccounts);
+        }
+
+        function updateChartData(labels, totalAccounts, newAccounts, growthPercentages, retentionRates, activeAccounts) {
+            totalAccountsChart.data.labels = labels;
+            totalAccountsChart.data.datasets[0].data = totalAccounts;
+            totalAccountsChart.update();
+
+            newAccountsChart.data.labels = labels;
+            newAccountsChart.data.datasets[0].data = newAccounts;
+            newAccountsChart.update();
+
+            growthPercentageChart.data.labels = labels;
+            growthPercentageChart.data.datasets[0].data = growthPercentages;
+            growthPercentageChart.update();
+
+            retentionRateChart.data.labels = labels;
+            retentionRateChart.data.datasets[0].data = retentionRates;
+            retentionRateChart.update();
+
+            activeAccountsChart.data.labels = labels;
+            activeAccountsChart.data.datasets[0].data = activeAccounts;
+            activeAccountsChart.update();
+        }
+
+
         const labels = analyticsData.map(data => data.month);
         const totalAccounts = analyticsData.map(data => parseInt(data.total_accounts));
         const newAccounts = analyticsData.map(data => parseInt(data.new_accounts));
-        // Mapping growth percentages and rounding to the nearest tenth
         const growthPercentages = analyticsData.map(data => parseFloat(data.growth_percentage).toFixed(1));
-
-        // Mapping retention rates and rounding to the nearest tenth
         const retentionRates = analyticsData.map(data => parseFloat(data.retention_rate).toFixed(1));
-
+        const activeAccounts = analyticsData.map(data => parseInt(data.active_accounts));
+        
         const totalAccountsChart = new Chart('totalAccountsChart', {
             type: 'line',
             data: {
@@ -258,6 +358,28 @@ $analyticsJSON = json_encode($analyticsMonthly);
                 }
             }
         });
+
+
+        const activeAccountsChart = new Chart('activeAccountsChart', {
+            type: 'line', // Line chart type
+            data: {
+                labels: labels, // Use the same labels array as other charts
+                datasets: [{
+                    label: 'Active Accounts',
+                    data: activeAccounts, // Data array for active accounts
+                    borderColor: 'rgb(255, 159, 64)', // Color of the line
+                    tension: 0.1 // Smooths the line
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true // Ensures the y-axis starts at 0
+                    }
+                }
+            }
+        });
+
     </script>
 
 </body>
