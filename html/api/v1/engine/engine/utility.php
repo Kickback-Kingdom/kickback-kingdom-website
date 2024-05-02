@@ -1469,6 +1469,10 @@ function GenerateCRand() {
     return GetSeededRandomInt($seed);
 }
 
+function GetCTime() {
+    return date('Y-m-d H:i:s.u');
+}
+
 function EnsureSessionStarted() {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         session_start();

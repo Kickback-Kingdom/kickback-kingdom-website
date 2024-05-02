@@ -323,5 +323,37 @@ function GetPageVisits($pageId) {
     }
 }
 
+function GetMonthlyGrowthStats() {
+    global $conn;
+
+    $sql = "SELECT month, new_accounts, total_accounts, growth_percentage, active_accounts, retention_rate FROM kickbackdb.v_analytic_accounts_growth_retention_monthly;";
+    $stmt = $conn->prepare($sql);
+
+    if (!$stmt) {
+        // Return an APIResponse indicating failure if the statement couldn't be prepared
+        return new APIResponse(false, "Error preparing statement: " . $conn->error, null);
+    }
+
+    // Execute the prepared statement
+    if (!$stmt->execute()) {
+        // Return an APIResponse indicating failure if the statement couldn't be executed
+        return new APIResponse(false, "Error executing statement: " . $stmt->error, null);
+    }
+
+    // Fetch results into an associative array
+    $result = $stmt->get_result();
+    $rows = [];
+    while ($row = $result->fetch_assoc()) {
+        $rows[] = $row;
+    }
+
+    // Clean up statement
+    $stmt->close();
+
+    // Return an APIResponse with the fetched data
+    return new APIResponse(true, "Monthly growth stats", $rows);
+}
+
+
 
 ?>
