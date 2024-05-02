@@ -88,20 +88,19 @@ $analyticsJSON = json_encode($analyticsMonthly);
                 </div>
 
                 
-                <div class="row mb-3">
-                    <div class="col-md-5">
+                <div class="row mb-3 align-items-center">
+                    <div class="col-md-4">
                         <label for="startDate">Start Date:</label>
                         <input type="month" id="startDate" name="startDate" class="form-control">
                     </div>
-                    <div class="col-md-5">
+                    <div class="col-md-4">
                         <label for="endDate">End Date:</label>
                         <input type="month" id="endDate" name="endDate" class="form-control">
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-4 d-flex justify-content-end">
                         <button class="btn btn-primary" onclick="updateCharts()">Update Graphs</button>
                     </div>
                 </div>
-
 
                 <div class="row">
                     <div class="col-12">
