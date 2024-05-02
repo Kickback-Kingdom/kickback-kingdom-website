@@ -618,6 +618,9 @@ $mediaDirs = $mediaDirsResp->Data;
                 <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/castles.php"><i class="nav-icon fa-brands fa-fort-awesome"></i> Castles <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
+                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/analytics.php"><i class="nav-icon fa-solid fa-chart-line"></i> Analytics <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/guild-halls.php"><i class="nav-icon fa-solid fa-signs-post"></i> Guild Halls <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
@@ -761,6 +764,9 @@ $mediaDirs = $mediaDirsResp->Data;
                         </li>
                         <li>
                             <a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/castles.php"><i class="nav-icon fa-brands fa-fort-awesome"></i> Castles</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/analytics.php"><i class="nav-icon fa-solid fa-chart-line"></i> Analytics</a>
                         </li>
                     </ul>
                 </li>
