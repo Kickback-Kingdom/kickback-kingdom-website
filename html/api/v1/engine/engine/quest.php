@@ -953,24 +953,51 @@ function GetQuestApplicants($questId)
     return (new APIResponse(true, "Quest Applicants",  $rows ));
 }
 
-function ApplyOrRegisterForQuest($account_id, $quest_id)
+function AccountHasRegisteredOrAppliedForQuest($account_id, $quest_id)
 {
-    $account_id = mysqli_real_escape_string($GLOBALS["conn"], $account_id);
-    $quest_id = mysqli_real_escape_string($GLOBALS["conn"], $quest_id);
-    $sql = "INSERT INTO quest_applicants (account_id, accepted, quest_id, participated) VALUES ('$account_id', '0', '$quest_id', '0')";
-    $result = mysqli_query($GLOBALS["conn"],$sql);
-    if ($result === TRUE) {
-
-        $account = GetAccountById($account_id)->Data;
-        $quest = GetQuestById($quest_id)->Data;
-        DiscordWebHook(GetRandomGreeting().', '.$account['Username'].' just signed up for the '.$quest['name'].' quest.');
-        return (new APIResponse(true, "Registered for quest successfully",$login));
-    } 
-    else 
-    {
-        return (new APIResponse(false, "Failed to register for quest with error: ".GetSQLError(), null));
+    $conn = $GLOBALS["conn"];
+    
+    // Prepare the SQL statement for checking existing entry
+    $stmt = mysqli_prepare($conn, "SELECT 1 FROM quest_applicants WHERE account_id = ? AND quest_id = ?");
+    mysqli_stmt_bind_param($stmt, 'ii', $account_id, $quest_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $exists = mysqli_num_rows($result) > 0;
+    mysqli_stmt_close($stmt);
+    
+    if ($exists) {
+        return (new APIResponse(false, "Account has already registered or applied for the quest.", null));
+    } else {
+        return (new APIResponse(true, "Account has not registered or applied for the quest.", null));
     }
 }
+
+function ApplyOrRegisterForQuest($account_id, $quest_id)
+{
+    $conn = $GLOBALS["conn"];
+
+    // Check if the account has already registered or applied for the quest
+    $checkResponse = AccountHasRegisteredOrAppliedForQuest($account_id, $quest_id);
+    if (!$checkResponse->Success) {
+        return $checkResponse; // Return the response from the check function
+    }
+
+    // Prepare the SQL statement for inserting a new entry
+    $stmt = mysqli_prepare($conn, "INSERT INTO quest_applicants (account_id, accepted, quest_id, participated) VALUES (?, '0', ?, '0')");
+    mysqli_stmt_bind_param($stmt, 'ii', $account_id, $quest_id);
+    if (mysqli_stmt_execute($stmt)) {
+        $account = GetAccountById($account_id)->Data;
+        $quest = GetQuestById($quest_id)->Data;
+        DiscordWebHook(GetRandomGreeting() . ', ' . $account['Username'] . ' just signed up for the ' . $quest['name'] . ' quest.');
+        mysqli_stmt_close($stmt);
+        return (new APIResponse(true, "Registered for quest successfully", null));
+    } else {
+        $error = mysqli_stmt_error($stmt);
+        mysqli_stmt_close($stmt);
+        return (new APIResponse(false, "Failed to register for quest with error: " . $error, null));
+    }
+}
+
 
 function GetPlayStyleJSON()
 {
