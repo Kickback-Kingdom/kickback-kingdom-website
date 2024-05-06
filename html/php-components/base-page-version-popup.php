@@ -24,7 +24,7 @@
   </div>
 </div>
 <script>
-    var shouldShowVersionPopup = <?= ((!isset($_COOKIE['popupShownVersion']) || $_COOKIE['popupShownVersion'] != $_globalVersionCurrent) && !isset($changelogVersion))?"true":"false"; ?>;
+    var shouldShowVersionPopup = <?= ((!isset($_COOKIE['popupShownVersion']) || $_COOKIE['popupShownVersion'] != $_globalVersionCurrent) && !isset($changelogVersion) && !$_globalDoNotShowNewVersionPopup)?"true":"false"; ?>;
     
     function ShowVersionPopUp() {
         $("#versionModal").modal('show');

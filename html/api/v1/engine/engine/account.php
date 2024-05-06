@@ -270,7 +270,7 @@ function GetAccountNotifications($account_id)
     $num_rows = mysqli_num_rows($result);
     if ($num_rows === 0)
     {
-        return (new APIResponse(false, "Couldn't find notifications for Id", null));
+        return (new APIResponse(true, "Couldn't find notifications for Id", []));
     }
     else
     {

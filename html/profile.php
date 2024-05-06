@@ -95,7 +95,7 @@ foreach ($accountInventory as $accountInventoryItem) {
             $kk_crypt_key_writ_id = \Kickback\Config\ServiceCredentials::get("crypt_key_quest_id");
             $crypt = new IDCrypt($kk_crypt_key_writ_id);
             $nextWritOfPassageId = urlencode($crypt->encrypt($itemInfo["next_loot_id"]));
-            $nextWritOfPassageURL = 'https://kickback-kingdom.com/register.php?redirect='.urlencode($urlPrefixBeta.'/blog/Kickback-Kingdom/introduction').'&wi='.$nextWritOfPassageId;
+            $nextWritOfPassageURL = 'https://kickback-kingdom.com/register.php?wi='.$nextWritOfPassageId;//'https://kickback-kingdom.com/register.php?redirect='.urlencode($urlPrefixBeta.'/blog/Kickback-Kingdom/introduction').'&wi='.$nextWritOfPassageId;
         }
         else
         {

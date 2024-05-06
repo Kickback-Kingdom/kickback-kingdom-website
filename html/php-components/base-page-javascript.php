@@ -14,7 +14,7 @@
         var play_styles = <?php echo GetPlayStyleJSON(); ?>;
         $(document).ready(function () {
 
-            if (shouldShowVersionPopup)
+            if (shouldShowVersionPopup && true == <?= ($activeAccountInfo->delayUpdateAfterChests?"false":"true"); ?>)
             {
                 ShowVersionPopUp();
             }
@@ -222,6 +222,10 @@
 
             } else {
                 StopConfetti();
+                if (shouldShowVersionPopup && true == <?= ($activeAccountInfo->delayUpdateAfterChests?"true":"false"); ?>)
+                {
+                    ShowVersionPopUp();
+                }
             }
         }
         <?php

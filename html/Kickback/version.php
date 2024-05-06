@@ -8,5 +8,6 @@ $_globalVersionInfo = [
 $_globalVersionNumbers = array_keys($_globalVersionInfo);
 $_globalVersionCurrent = $_globalVersionNumbers[0];
 
+$_globalDoNotShowNewVersionPopup = false;
 
 ?>

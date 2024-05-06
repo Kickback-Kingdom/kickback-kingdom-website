@@ -28,11 +28,14 @@ function GetLoggedInAccountInformation()
         $chestsJSON = "[]";
         $notificationsJSON = "[]";
         $notifications = [];
+        $chests = [];
     }
 
     $info->chestsJSON = $chestsJSON;
+    $info->chests = $chests;
     $info->notifications = $notifications;
     $info->notificationsJSON = $notificationsJSON;
+    $info->delayUpdateAfterChests = count($chests) > 0;
     return $info;
 }
 

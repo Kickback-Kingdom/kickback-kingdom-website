@@ -4,6 +4,7 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
+$_globalDoNotShowNewVersionPopup = true;
 
 $hasError = false;
 $resp = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/account/logout.php");

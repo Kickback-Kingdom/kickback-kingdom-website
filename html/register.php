@@ -4,6 +4,8 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
+$_globalDoNotShowNewVersionPopup = true;
+
 $hasError = false;
 $errorMessage = '';
 $firstName = '';
@@ -50,7 +52,7 @@ if (isset($_POST["submit"]))
     $hasError = !$resp->Success;
     if (!$hasError)
     {
-        $url = 'index.php';
+        $url = $urlPrefixBeta.'/blog/Kickback-Kingdom/introduction';
 
         if (isset($_GET["redirect"]))
         {
