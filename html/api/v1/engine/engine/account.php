@@ -140,7 +140,6 @@ function Logout() : APIResponse
         return (new APIResponse(false, "Failed to log out with error: ".GetSQLError(), null));
     }
 
-    $GLOBALS["account"] = null;
     $_SESSION["sessionToken"] = null;
     $_SESSION["account"] = null;
     return (new APIResponse(true, "Logged out successfully",null));

@@ -1,4 +1,6 @@
 <?php
+//web version declaration
+require_once('version.php');
 
 // An important special (and tricky) property of this file:
 //

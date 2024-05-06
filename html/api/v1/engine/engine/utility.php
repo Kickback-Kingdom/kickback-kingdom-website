@@ -1479,4 +1479,14 @@ function EnsureSessionStarted() {
     }
 }
 
+function WritOfPassageProclamation() {
+    // Compose a concise medieval-style proclamation
+    $proclamation = "I pledge my honor to sponsor a new entrant into our great kingdom. My word shall be their bond, my honor their shield.";
+
+    // Return or output the proclamation
+    return $proclamation;
+}
+
+
+
 ?>

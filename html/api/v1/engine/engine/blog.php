@@ -52,6 +52,10 @@ function BlogPostIsValidForPublish($blogPost, $pageContent)
 
 function IsWriterForBlogPost($blogPost)
 {
+    if ($blogPost == null)
+    {
+        return false;
+    }
     if (IsLoggedIn())
     {
         return (IsManagerForBlog($blogPost["Blog_id"]) || $_SESSION["account"]["Id"] == $blogPost["Author_id"]) && !isset($_GET['borderless']);

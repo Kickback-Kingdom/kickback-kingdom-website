@@ -35,12 +35,10 @@ $session = GetLoginSession($serviceKey, $sessionToken);
 
 if (!$session->Success)
 {
-    $GLOBALS['account'] = null;
     $_SESSION['account'] = null;
 }
 else{
     
-    $GLOBALS['account'] = $session->Data;
     $_SESSION['account'] = $session->Data;
 }
 

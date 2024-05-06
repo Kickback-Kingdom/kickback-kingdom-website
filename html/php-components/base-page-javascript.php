@@ -6,11 +6,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/run_prettify.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+    <script src="<?php echo $urlPrefixBeta; ?>/assets/vendors/qrcode/qrcode.min.js"></script>
+    <script src="<?php echo $urlPrefixBeta; ?>/assets/js/qrcode.js"></script>
 
     <!--<script src="assets/owl-carousel/owl.carousel.js"></script>-->
     <script>
         var play_styles = <?php echo GetPlayStyleJSON(); ?>;
         $(document).ready(function () {
+
+            if (shouldShowVersionPopup)
+            {
+                ShowVersionPopUp();
+            }
 
             $('.parallax-mouse-capture').on('mousemove', function(e) {
                 var xPos = e.pageX - $(this).offset().left;
@@ -336,17 +343,129 @@
         {
             var item = GetItemInformationById(itemId);
             console.log(item);
-            $("#inventoryItemImage").attr("src", "/assets/media/"+item.image);
+            var primaryImage = $("#inventoryItemImage");
+            var secondaryImage = $("#inventoryItemImageSecondary");
+            primaryImage.css("display", "block");
+            secondaryImage.css("display", "none");
+            primaryImage.attr("src", "/assets/media/"+item.image);
+
             $("#inventoryItemDescription").text(item.desc);
             $("#inventoryItemTitle").text(item.name);
             $("#inventoryItemArtist").text(item.artist);
             $("#inventoryItemArtist").attr("href", "<?php echo $urlPrefixBeta; ?>/u/"+item.artist);
             $("#inventoryItemDate").text(item.date_created);
             $("#inventoryItemModal").modal("show");
+            $("#inventoryItemImageContainer").attr("onclick","FlipInventoryItem("+itemId+");");
+            $("#inventoryItemCopyContainer").addClass("d-none");
+            $("#inventoryItemFooter").addClass("d-none");
+
+            SetupItemInvetoryModal(item);
+
+            primaryImage.addClass("animate__jackInTheBox");
+
+            primaryImage.on('animationend', function() {
+                primaryImage.removeClass("animate__jackInTheBox");
+
+                // Reset event handler
+                primaryImage.off('animationend');
+            });
+
             setTimeout(function() {
-            $('[data-bs-toggle="tooltip"]').tooltip('hide');
+                $('[data-bs-toggle="tooltip"]').tooltip('hide');
             }, 10);
         }
+
+        function SetupItemInvetoryModal(item)
+        {
+            if (item.Id == "14" && myNextWritOfPassageURL != '')
+            {
+                $("#inventoryItemCopyInput").val(myNextWritOfPassageURL);
+                $("#inventoryItemCopyContainer").removeClass("d-none");
+                $("#inventoryItemFooter").removeClass('d-none');
+            }
+
+            
+            if (item.useable) {
+                $("#inventoryItemUseButton").removeClass('d-none');
+                $("#inventoryItemFooter").removeClass('d-none');
+                $("#inventoryItemUseButton").attr("onclick", "UseInventoryItem("+itemId+");");
+            } else {
+                $("#inventoryItemUseButton").addClass('d-none');
+                $("#inventoryItemUseButton").attr("onclick", "");
+            }
+        }
+
+        function HandleItemInventoryFlip(item, secondaryImage)
+        {
+                if (item.Id == "14")
+                {
+                    var imgData = GenerateQRCodeImageData(myNextWritOfPassageURL, function(imageData) {
+                        secondaryImage.attr("src", imageData);
+                    });
+
+                }
+
+        }
+
+        function CopyContainerToClipboard()
+        {
+            var input = document.getElementById('inventoryItemCopyInput');
+    
+            // Select the content of the input
+            input.select();
+            input.setSelectionRange(0, 99999); // For mobile devices
+            
+            // Copy the selected text to clipboard
+            navigator.clipboard.writeText(input.value)
+                .then(() => {
+                    console.log('Text copied to clipboard');
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                });
+        }
+
+        function UseInventoryItem(itemId) {
+            FlipInventoryItem(itemId);
+        }
+
+        function FlipInventoryItem(itemId) {
+            var item = GetItemInformationById(itemId);
+            var primaryImage = $("#inventoryItemImage");
+            var secondaryImage = $("#inventoryItemImageSecondary");
+
+            // Determine which image is currently visible
+            var flipFrom = primaryImage.is(':visible') ? primaryImage : secondaryImage;
+            var flipTo = primaryImage.is(':visible') ? secondaryImage : primaryImage;
+
+            // Set the secondary image if it's about to be shown
+            if (!primaryImage.is(':visible')) {
+                flipTo.attr("src", "/assets/media/" + item.image); 
+            } else {
+                flipTo.attr("src", "/assets/media/" + item.image_back); 
+
+                HandleItemInventoryFlip(item, secondaryImage);
+            }
+
+            // Start the flip out animation
+            flipFrom.addClass("animate__flipOutY");
+            flipFrom.on('animationend', function() {
+                flipFrom.removeClass("animate__flipOutY").css("display", "none");
+                flipTo.css("display", "block").addClass("animate__flipInY2");
+
+                // Reset event handler to prevent memory leak and multiple triggers
+                flipFrom.off('animationend');
+            });
+
+            flipTo.on('animationend', function() {
+                flipTo.removeClass("animate__flipInY2");
+
+                // Reset event handler
+                flipTo.off('animationend');
+            });
+        }
+
+        
 
         function GetItemInformationById(id)
         {
@@ -539,6 +658,7 @@ window.onload = function() {
 
 <?php 
 
+require_once('base-page-version-popup.php');
 require("base-page-loading-overlay-javascript.php"); 
 require("base-page-javascript-account-search.php"); 
 

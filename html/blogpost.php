@@ -5,7 +5,8 @@ $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession
 require("php-components/base-page-pull-active-account-info.php");
 
 $foundBlogPost = false;
-
+$blog = null;
+$blogPost = null;
 
 if (isset($_GET['blogLocator'])) {
     
@@ -45,11 +46,37 @@ if (isset($_GET['blogLocator'])) {
 
 $isWriterForBlogPost = IsWriterForBlogPost($blogPost);
 
-$thisPostDate = date_create($blogPost["PostDate"]);           
+$blogTitle = "Couldn't find the blog post.";
+$authorUsername = "KickbackKingdom";
+if ($blogPost != null)
+{
+    $blogTitle = $blogPost["Title"];
+    $thisPostDate = date_create($blogPost["PostDate"]);  
+    $authorUsername = $blogPost["Author_Username"];
+}
+else{
+    $thisPostDate = new DateTime();
+}    
 $thisPostDateBasic = date_format($thisPostDate,"M j, Y");
 $thisPostDateDetailed = date_format($thisPostDate,"M j, Y H:i:s");
 
 $thisBlogPost = $blogPost;
+
+
+if ($_GET['blogLocator'] == "Kickback-Kingdom")
+{
+    //this is the blog that contains update posts
+    $postLocator = $_GET['postLocator'];
+
+    $changelogVersion = array_search($postLocator, $GLOBALS['versionInfo']);
+    if ($changelogVersion === false) {
+        // Handle the case where no matching version is found
+        unset($changelogVersion);
+    }
+}
+
+
+
 ?>
 
 <!DOCTYPE html>
@@ -71,7 +98,7 @@ $thisBlogPost = $blogPost;
     
 
     <!--MAIN CONTENT-->
-    <main class="container pt-3 bg-body" style="margin-bottom: 56px;">
+    <main class="container pt-3 bg-body">
         <div class="row">
             <div class="col-12 col-xl-9">
                 
@@ -86,10 +113,10 @@ $thisBlogPost = $blogPost;
                         <div class="row">
                 
         
-                            <div class="col-12  pb-3"><h1 class="text-center"><?php echo $blogPost["Title"];?></h1>
+                            <div class="col-12  pb-3"><h1 class="text-center"><?php echo $blogTitle;?></h1>
                                 <p class="card-text text-center">
                                     <small class="text-body-secondary">Written by 
-                                        <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $blogPost["Author_Username"]; ?>" class="username"><?php echo $blogPost["Author_Username"]; ?></a> on 
+                                        <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $authorUsername; ?>" class="username"><?php echo $authorUsername; ?></a> on 
                                         <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo $thisPostDateDetailed; ?>"><?php echo $thisPostDateBasic; ?></span>
                                     </small>
                                 </p>
@@ -137,7 +164,7 @@ $thisBlogPost = $blogPost;
                                         $feedCard["title"] = $blogPost["Title"];
                                         $feedCard["image"] = $blogPost["Image_Path"];
                                         $feedCard["published"] = true;
-                                        $feedCard["account_1_username"] = $blogPost["Author_Username"];
+                                        $feedCard["account_1_username"] = $authorUsername;
                                         $feedCard["text"] = $blogPost["Desc"];
                                         $feedCard["locator"] = $blogPost["Postlocator"];
                                         require("php-components/feed-card.php");
@@ -295,7 +322,7 @@ $thisBlogPost = $blogPost;
         <h5 class="text-center text-white">Blog Navigation</h5>
         <a class="btn bg-ranked-1 float-end" href="#page_top"><i class="fa-solid fa-arrow-up"></i></a>
     </div>
-            <?php if ($blogPost["Next_Locator"] != null || $blogPost["Prev_Locator"] != null) { ?>
+            <?php if (($blogPost != null && $blogPost["Next_Locator"] != null) || ($blogPost != null && $blogPost["Prev_Locator"] != null)) { ?>
     <div class="card-body">
         <div class="row">
                     
@@ -358,6 +385,7 @@ $nextPostDateDetailed = date_format($nextPostDate,"M j, Y H:i:s");
         </div>
         <div id="page_bottom">
         </div>
+        <?php require("php-components/base-page-footer.php"); ?>
     </main>
 
     
