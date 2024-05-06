@@ -1,12 +1,12 @@
 <?php
 
-$GLOBALS['versionInfo'] = [
+$_globalVersionInfo = [
     "0.0.1" => "0-0-1-update-writ-of-passage"
 ];
 
 // Automatically sets the latest version based on the array
-$GLOBALS['versionNumbers'] = array_keys($GLOBALS['versionInfo']);
-$GLOBALS['currentVersion'] = $GLOBALS['versionNumbers'][0];
+$_globalVersionNumbers = array_keys($_globalVersionInfo);
+$_globalVersionCurrent = $_globalVersionNumbers[0];
 
 
 ?>

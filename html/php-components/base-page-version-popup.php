@@ -11,7 +11,7 @@
       </div>
       <div class="modal-body">
         <select class="form-select" id="versionSelect" onchange="showChangelog()" aria-label="Select version">
-                <?php foreach ($GLOBALS['versionInfo'] as $version => $path): ?>
+                <?php foreach ($_globalVersionInfo as $version => $path): ?>
                     <option value="<?= htmlspecialchars($path) ?>"><?= htmlspecialchars($version) ?></option>
                 <?php endforeach; ?>
         </select>
@@ -24,13 +24,13 @@
   </div>
 </div>
 <script>
-    var shouldShowVersionPopup = <?= ((!isset($_COOKIE['popupShownVersion']) || $_COOKIE['popupShownVersion'] != $GLOBALS['currentVersion']) && !isset($changelogVersion))?"true":"false"; ?>;
+    var shouldShowVersionPopup = <?= ((!isset($_COOKIE['popupShownVersion']) || $_COOKIE['popupShownVersion'] != $_globalVersionCurrent) && !isset($changelogVersion))?"true":"false"; ?>;
     
     function ShowVersionPopUp() {
         $("#versionModal").modal('show');
 
-        document.getElementById('changelogIframe').src = "<?= $urlPrefixBeta."/blogpost.php?borderless&blogLocator=Kickback-Kingdom&postLocator=".$GLOBALS['versionInfo'][$GLOBALS['currentVersion']];?>";
-        //document.cookie = "popupShownVersion=<?= $GLOBALS['currentVersion'] ?>; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+        document.getElementById('changelogIframe').src = "<?= $urlPrefixBeta."/blogpost.php?borderless&blogLocator=Kickback-Kingdom&postLocator=".$_globalVersionInfo[$_globalVersionCurrent];?>";
+        document.cookie = "popupShownVersion=<?= $_globalVersionCurrent ?>; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
         shouldShowVersionPopup = false;
     }
 

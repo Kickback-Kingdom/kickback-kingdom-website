@@ -68,7 +68,7 @@ if ($_GET['blogLocator'] == "Kickback-Kingdom")
     //this is the blog that contains update posts
     $postLocator = $_GET['postLocator'];
 
-    $changelogVersion = array_search($postLocator, $GLOBALS['versionInfo']);
+    $changelogVersion = array_search($postLocator, $_globalVersionInfo);
     if ($changelogVersion === false) {
         // Handle the case where no matching version is found
         unset($changelogVersion);
