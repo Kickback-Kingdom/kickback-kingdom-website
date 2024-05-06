@@ -320,6 +320,78 @@ $mediaDirs = $mediaDirsResp->Data;
     </div>
 </form>
 
+<!--SHOPPING CART-->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasMenuRightShoppingCart" aria-labelledby="offcanvasMenuRightShoppingCartLabel">
+    <div class="offcanvas-header bg-primary">
+        <h5 class="offcanvas-title text-white" id="offcanvasMenuRightShoppingCartLabel">Shopping Cart</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+            aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <!-- Shopping Cart Items -->
+        <div class="shopping-cart-items">
+
+            <?php
+            // Placeholder for your cart items array
+            if (IsAdmin())
+            {
+                $cart_items = [
+                    ['id' => 1, 'name' => 'Epic Sword', 'quantity' => 1, 'price' => '120 Coins', 'icon_url' => '/assets/media/items/21.png'],
+                    ['id' => 2, 'name' => 'Mystic Potion', 'quantity' => 2, 'price' => '60 Coins', 'icon_url' => '/assets/media/items/21.png']
+                    // ... more items ...
+                ];
+                $cart_items = [];
+            }
+            else 
+            {
+                $cart_items = [];
+            }
+            if(empty($cart_items)) {
+                echo "<p class='text-muted'>Your cart is empty.</p>";
+            } else {
+                foreach($cart_items as $item) {
+                    echo "
+            <div class='cart-item d-flex justify-content-between align-items-center mb-3'>
+                <div class='item-icon me-2'>
+                    <img class='img img-thumbnail' src='{$item['icon_url']}' alt='{$item['name']}'>
+                </div>
+        
+                <div class='item-details d-flex align-items-center flex-grow-1'>
+                    <div class='me-3'>
+                        <div class='item-title fw-bold fs-5'>{$item['name']}</div>
+                        <div class='item-quantity d-flex align-items-center'>
+                            <button class='quantity-decrease btn btn-outline-secondary btn-sm'>-</button>
+                            <input type='number' value='{$item['quantity']}' class='form-control quantity-input mx-2 form-control-sm' min='1'>
+                            <button class='quantity-increase btn btn-outline-secondary btn-sm'>+</button>
+                        </div>
+                    </div>
+                    <div class='item-price ms-auto me-3'>
+                        <span>{$item['price']}</span>
+                    </div>
+                </div>
+                <div class='item-actions'>
+                    <button class='btn btn-danger btn-sm'><i class='fa-regular fa-trash-can'></i></button>
+                </div>
+            </div>";
+                }
+            }
+        ?>
+        </div>
+
+        <!-- Shopping Cart Total -->
+    </div>
+    <div class="offcanvas-footer p-3 border-top">
+        <!-- Shopping Cart Totals Summary -->
+        <div class="shopping-cart-summary mb-3 p-2 border-bottom">
+            <p class="summary-line">Subtotal: <span class="subtotal-amount">0 </span></p>
+            <p class="summary-line">Discount Applied: <span class="discount-amount">0 </span></p>
+            <p class="summary-line fw-bold total-line">Total: <span class="final-total-amount">0 </span></p>
+        </div>
+        <!-- Proceed to Checkout Button -->
+        <a class="btn btn-primary w-100" href="<?php echo $urlPrefixBeta; ?>/checkout.php">Proceed to Checkout</a>
+    </div>
+
+</div>
 
 <!--NOTIFICATIONS-->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasMenuRight" aria-labelledby="offcanvasMenuRightLabel">
@@ -458,17 +530,6 @@ $mediaDirs = $mediaDirsResp->Data;
 
 
         ?>
-        <!--<div class="toast show mb-1" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header">
-                <img src="..." class="rounded me-2" alt="...">
-                <strong class="me-auto">Bootstrap</strong>
-                <small>11 mins ago</small>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-            <div class="toast-body">
-                Hello, world! This is a toast message.
-            </div>
-        </div>-->
         
     </div>
 </div>
@@ -477,30 +538,47 @@ $mediaDirs = $mediaDirsResp->Data;
 
 <!--ITEM MODAL-->
 <div class="modal fade" id="inventoryItemModal" tabindex="-1" aria-labelledby="inventoryItemModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="inventoryItemTitle">Item Title</h5>        
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-
-      </div>
-      <div class="modal-body">
-        <div class="row">
-          <div class="col-12 col-md-6">
-            <img id="inventoryItemImage" src="" class="img-fluid" alt="Item Image">
-            <p class="float-end" style="font-size: .8em;">Artwork by <a class="username" id="inventoryItemArtist" href="#">Artist: Artist Name</a></p>
-          </div>
-          <div class="col-12 col-md-6">
-            
-            <h6>Date Created</h6>
-            <p id="inventoryItemDate">Release Date: Date</p>
-                <h6>Description</h6>
-              <p id="inventoryItemDescription">Item Description</p>
-          </div>
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inventoryItemTitle">Item Title</h5>        
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <div style="position: relative;" id="inventoryItemImageContainer">
+                            <img id="inventoryItemImage" src="" class="img-fluid animate__animated" alt="Item Image" style="width: 100%;">
+                            <img id="inventoryItemImageSecondary" src="" class="img-fluid animate__animated" alt="Item Image" style="width: 100%; display: none;">
+                        </div>
+                        <p class="float-end" style="font-size: .8em;">Artwork by <a class="username" id="inventoryItemArtist" href="#">Artist: Artist Name</a></p>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        
+                        <h6>Date Created</h6>
+                        <p id="inventoryItemDate">Release Date: Date</p>
+                            <h6>Description</h6>
+                        <p id="inventoryItemDescription">Item Description</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" id="inventoryItemFooter">
+                <div class="row g-3 flex-fill">
+                    <!-- Input group column -->
+                    <div class="col-sm-8" id="inventoryItemCopyContainer">
+                        <div class="input-group mb-3">
+                            <input type="text" id="inventoryItemCopyInput" class="form-control" aria-describedby="inventoryItemCopyButton">
+                            <button class="btn btn-primary" type="button" id="inventoryItemCopyButton" onclick="CopyContainerToClipboard()">Copy</button>
+                        </div>
+                    </div>
+                    <!-- Use button column -->
+                    <div class="col-sm-4">
+                        <button type="button" id="inventoryItemUseButton" class="btn bg-ranked-1 float-end" onclick="UseInventoryItem()">Use</button>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </div>
 
 
@@ -580,6 +658,8 @@ $mediaDirs = $mediaDirsResp->Data;
                 height="100%"></iframe>
     </div>
 </div>
+
+<?php if (!isset($_GET['borderless'])) { ?>
 
 <!--MOBILE NAVIGATION-->
 <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasMenu" aria-labelledby="offcanvasMenuLabel">
@@ -787,28 +867,35 @@ $mediaDirs = $mediaDirsResp->Data;
                         <i class="fa-solid fa-calendar-days"></i>
                     </a>
                 </li>
-                <?php 
-                if (IsLoggedIn())
-                {
-                    ?>
-                <li class="nav-item">
-                    <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas"
-                        data-bs-target="#offcanvasMenuRight" aria-controls="offcanvasMenuRight"
-                        aria-label="Toggle navigation">
+                <?php if (IsLoggedIn()) { ?>
+                    <li class="nav-item">
+                        <button class="btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas"
+                            data-bs-target="#offcanvasMenuRightShoppingCart" aria-controls="offcanvasMenuRightShoppingCart"
+                            aria-label="Toggle navigation">
+                            <i class="fa-solid fa-cart-shopping"></i>
+                            <?php if (IsAdmin()) { ?>
+                            <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill">
+                                99+
+                                <span class="visually-hidden">unread messages</span>
+                            </span>
+                            <?php } ?>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas"
+                            data-bs-target="#offcanvasMenuRight" aria-controls="offcanvasMenuRight"
+                            aria-label="Toggle navigation" style="background-color: transparent !important; border-color: transparent;">
                         <i class="fa-solid fa-bell"></i>
-                        <span
-                            class="bg-secondary border border-light p-1 position-absolute rounded-circle top-50 translate-middle">
-                            <span class="visually-hidden">New alerts</span>
-                        </span>
-                    </button>
-                </li>
-                <?php 
+                            <span class="badge bg-secondary position-absolute top-0 start-100 translate-middle rounded-pill">
+                                <?php echo count($activeAccountInfo->notifications); ?>
+                                <span class="visually-hidden">unread messages</span>
+                            </span>
+                        </button>
+                    </li>
 
-                }
-
-                ?>
+                <?php } ?>
                 <li class="nav-item dropdown">
-                    <a class="btn dropdown-toggle btn-primary" type="button" style="height: 38px;" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="btn dropdown-toggle btn-primary" type="button" style="height: 38px;background-color: transparent !important;border-color: transparent;" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" >
                         <?php
 
                             if (IsLoggedIn())
@@ -904,3 +991,4 @@ $mediaDirs = $mediaDirsResp->Data;
         </div>
     </div>
 </nav>
+<?php } ?>
