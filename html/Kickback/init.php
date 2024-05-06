@@ -1,6 +1,5 @@
 <?php
 //web version declaration
-require_once('version.php');
 
 // An important special (and tricky) property of this file:
 //
@@ -45,4 +44,5 @@ if ( file_exists($kk_composer_autoloader_path) ) {
 }
 unset($kk_composer_autoloader_path);
 
+require_once('version.php');
 ?>
