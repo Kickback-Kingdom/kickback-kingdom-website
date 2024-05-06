@@ -4,6 +4,8 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
+$_globalDoNotShowNewVersionPopup = true;
+
 $hasError = false;
 $errorMessage = '';
 $firstName = '';
@@ -50,7 +52,7 @@ if (isset($_POST["submit"]))
     $hasError = !$resp->Success;
     if (!$hasError)
     {
-        $url = 'index.php';
+        $url = $urlPrefixBeta.'/blog/Kickback-Kingdom/introduction';
 
         if (isset($_GET["redirect"]))
         {
@@ -68,11 +70,27 @@ if (isset($_POST["submit"]))
 $showGuard = false;
 $writProvided =  false;
 $guardImg = 'halt';
-
+$quest = null;
+$writOfPassageOwner = null;
 if (isset($_GET['wi']))
 {
     $writ_of_passage_id = ($_GET['wi']);
     $writProvided = true;
+    $kk_crypt_key_quest_id = \Kickback\Config\ServiceCredentials::get("crypt_key_quest_id");
+    require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/engine.php");
+    $crypt = new IDCrypt($kk_crypt_key_quest_id);
+    $writ_of_passage_id_decrypted = $crypt->decrypt($writ_of_passage_id);
+    $writResp = GetWritOfPassageById($writ_of_passage_id_decrypted);
+    if ($writResp->Success)
+    {
+        $writOfPassageOwner = $writResp->Data;
+    }
+    else{
+        $showGuard = true;
+        $hasError = true;
+        $errorMessage = "Something isn't right, I remember this writ of passage being used before. Please return with a new one.";
+        $guardImg = 'halt-writ';
+    }
 }
 
 if (isset($_GET['wq']))
@@ -88,23 +106,6 @@ if (isset($_GET['wq']))
     if ($questResp->Success)
     {
         $quest = $questResp->Data;
-        /*$writResp = GetWritOfPassageByAccountId($quest['host_id']);
-        if ($writResp->Success)
-        {
-            $writ = $writResp->Data;
-            $writId = $writ['next_item_id'];
-            $encrypted = $crypt->encrypt($writId);
-            //$decrypted = $crypt->decrypt($encrypted); // 123
-            $writ_of_passage = $encrypted;
-        }
-        else
-        {
-            $hasError = true;
-            //$errorMessage = json_encode($writResp);
-            $errorMessage = $writResp->Message;
-            $guardImg = 'halt-writ';
-            $showGuard = true;
-        }*/
     }
     else
     {
@@ -150,7 +151,7 @@ if ($showGuard)
                     <img class="img-fluid mx-auto" src="/assets/images/logo-kk.png" style="width:50%;" />
                 </div>
                 <div class="modal-body">
-                    <img src="/assets/media/context/halt.jpeg" class="img-fluid"/>
+                    <img src="/assets/media/context/<?= $guardImg; ?>.jpeg" class="img-fluid"/>
                     <p style="padding: 32px;font-size: 1.3em;text-align: left;">Halt! <?php echo $errorMessage; ?></p>
                     <small class="float-end" style="font-size: 1em;"> - Gate Gaurd</small>
                 </div>
@@ -191,11 +192,17 @@ else
                     <?php } ?>
                     <div class="row">
                         <div class="col-12 col-lg-4">
-                                    <img src="/assets/media/<?php echo htmlspecialchars($quest['imagePath']);?>"  class="img-fluid img-thumbnail">
-                                    <h6><?php echo $quest['name']; ?></h6>
-                                    <small class="text-body-secondary float-end">Hosted by <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode(htmlspecialchars($quest["host_name"])); ?>" class="username"><?php echo htmlspecialchars($quest["host_name"]); ?></a>
-                                    <?php if ($quest['host_name_2'] != null) { ?> and <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode(htmlspecialchars($quest['host_name_2'])); ?>" class="username"><?php echo htmlspecialchars($quest['host_name_2']);?></a><?php } ?>
-                                    </small>
+                            <?php if ($quest != null) { ?>
+                            <img src="/assets/media/<?php echo htmlspecialchars($quest['imagePath']);?>"  class="img-fluid img-thumbnail">
+                            <h6><?php echo $quest['name']; ?></h6>
+                            <small class="text-body-secondary float-end">Hosted by <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode(htmlspecialchars($quest["host_name"])); ?>" class="username"><?php echo htmlspecialchars($quest["host_name"]); ?></a>
+                            <?php if ($quest['host_name_2'] != null) { ?> and <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode(htmlspecialchars($quest['host_name_2'])); ?>" class="username"><?php echo htmlspecialchars($quest['host_name_2']);?></a><?php } ?>
+                            </small>
+                            <?php } ?>
+                            <?php if ($writOfPassageOwner != null) { ?>
+                            <img src="/assets/media/<?php echo GetAccountProfilePicture($writOfPassageOwner);?>"  class="img-fluid img-thumbnail">
+                            <p style="margin-top: 8px; margin-left: 8px; margin-right: 8px;"><em><?php echo WritOfPassageProclamation($writOfPassageOwner['Username']); ?></em><figcaption class="blockquote-footer text-end"><a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode(htmlspecialchars($writOfPassageOwner["Username"])); ?>" class="username"><?php echo htmlspecialchars($writOfPassageOwner["Username"]); ?></a></figcaption></p>
+                            <?php } ?>
                         </div>
                         <div class="col-12 col-lg-8">
                             <div class="row">

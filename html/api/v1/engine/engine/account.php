@@ -140,7 +140,6 @@ function Logout() : APIResponse
         return (new APIResponse(false, "Failed to log out with error: ".GetSQLError(), null));
     }
 
-    $GLOBALS["account"] = null;
     $_SESSION["sessionToken"] = null;
     $_SESSION["account"] = null;
     return (new APIResponse(true, "Logged out successfully",null));
@@ -271,7 +270,7 @@ function GetAccountNotifications($account_id)
     $num_rows = mysqli_num_rows($result);
     if ($num_rows === 0)
     {
-        return (new APIResponse(false, "Couldn't find notifications for Id", null));
+        return (new APIResponse(true, "Couldn't find notifications for Id", []));
     }
     else
     {

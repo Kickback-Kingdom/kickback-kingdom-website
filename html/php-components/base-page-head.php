@@ -121,9 +121,18 @@ if ($pageVisitResp->Success)
     <?php
         $cssFile = $urlPrefixBeta.'/assets/css/kickback-kingdom.css';
         $cssVersion = filemtime($_SERVER['DOCUMENT_ROOT'].$cssFile);
+
+        echo '<link rel="stylesheet" type="text/css" href="'.$cssFile.'?v='.$cssVersion.'">';
     ?>
 
-    <link rel="stylesheet" type="text/css" href="<?= $cssFile.'?v='.$cssVersion ?>">
+    <?php
+        $cssFile = $urlPrefixBeta.'/assets/css/animate.css';
+        $cssVersion = filemtime($_SERVER['DOCUMENT_ROOT'].$cssFile);
+
+        echo '<link rel="stylesheet" type="text/css" href="'.$cssFile.'?v='.$cssVersion.'">';
+    ?>
+
+    
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.css" rel="stylesheet" />

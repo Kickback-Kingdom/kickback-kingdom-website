@@ -1,5 +1,5 @@
 :root {
-    --bs-primary: #7851a9;
+    --bs-primary: #7851a9;/*#7851a9;*/
     --bs-secondary: #FFD218;
 }       
 
@@ -987,3 +987,49 @@ animation: confetti-fast 1.25s linear 1 forwards;
     height: 100%;
 }
 
+
+
+.shopping-cart-items {
+
+}
+
+.shopping-cart-items .cart-item {
+    display: flex;
+    justify-content: space-between; /* This will space out the item details and item actions */
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.shopping-cart-items .cart-item .item-icon {
+
+}
+.shopping-cart-items .cart-item .item-icon img {
+    width: 90px; /* Adjust the width as needed */
+    height: auto; /* Adjust the height as needed */
+    object-fit: cover; /* This will cover the area of the img tag without stretching the image */
+    border-radius: 0.25rem; /* Optional: adds rounded corners to the image */
+}
+
+.shopping-cart-items .cart-item .item-details {
+
+    flex-grow: 1; /* Allow item details to fill the space */
+    margin-left: 1rem; /* Add some spacing between the icon and the details */
+}
+
+.shopping-cart-items .cart-item .item-details .item-name {
+
+}
+
+.shopping-cart-items .cart-item .item-details .item-quantity {
+
+}
+
+.shopping-cart-items .cart-item .item-details .item-price {
+
+}
+
+
+.shopping-cart-items .cart-item .item-actions {
+    flex-shrink: 0; /* Prevent the actions from shrinking */
+    margin-left: 1rem; /* Add some spacing between the details and the actions */
+}

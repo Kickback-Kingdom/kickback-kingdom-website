@@ -80,7 +80,7 @@ if ($thisQuest["raffle_id"] != null)
     if (IsLoggedIn())
     {
 
-        $unusedTicketsResp = GetTotalUnusedRaffleTickets($GLOBALS['account']['Id']);
+        $unusedTicketsResp = GetTotalUnusedRaffleTickets($_SESSION['account']['Id']);
         $unusedTickets = $unusedTicketsResp->Data;
     }
 }
@@ -97,7 +97,7 @@ if (isset($_POST["submit-raffle"]))
         {
             $ticketsSubmitted = 0;
             for ($x = 0; $x < $ticketsToSubmit; $x++) {
-                $raffleResp = SubmitRaffleTicket($GLOBALS['account']['Id'], $thisQuest["raffle_id"]);
+                $raffleResp = SubmitRaffleTicket($_SESSION['account']['Id'], $thisQuest["raffle_id"]);
                 if ($raffleResp->Success)
                 {
                     $ticketsSubmitted++;
@@ -107,7 +107,7 @@ if (isset($_POST["submit-raffle"]))
             if ($thisQuest["published"]==1)
             {
 
-                DiscordWebHook(GetRandomGreeting().', '.$GLOBALS['account']['Username'].' just submitted a raffle ticket to the '.$thisQuest['name'].' quest.');
+                DiscordWebHook(GetRandomGreeting().', '.$_SESSION['account']['Username'].' just submitted a raffle ticket to the '.$thisQuest['name'].' quest.');
             }
 
             $hasSuccess = true;
@@ -129,7 +129,7 @@ if (isset($_POST["submit-raffle"]))
 
 if (isset($_POST['submit-apply']))
 {
-    $applyResp = ApplyOrRegisterForQuest($GLOBALS['account']['Id'],$thisQuest["Id"]);
+    $applyResp = ApplyOrRegisterForQuest($_SESSION['account']['Id'],$thisQuest["Id"]);
     if ($applyResp->Success)
     {
         $hasSuccess = true;

@@ -1,5 +1,6 @@
 <?php
 
+require_once(\Kickback\SCRIPT_ROOT . "/Kickback/version.php");
 
 $urlPrefixBeta = "";
 if ( array_key_exists("KICKBACK_IS_BETA",$_SERVER) && $_SERVER["KICKBACK_IS_BETA"] ) {
@@ -27,11 +28,14 @@ function GetLoggedInAccountInformation()
         $chestsJSON = "[]";
         $notificationsJSON = "[]";
         $notifications = [];
+        $chests = [];
     }
 
     $info->chestsJSON = $chestsJSON;
+    $info->chests = $chests;
     $info->notifications = $notifications;
     $info->notificationsJSON = $notificationsJSON;
+    $info->delayUpdateAfterChests = count($chests) > 0;
     return $info;
 }
 

@@ -88,6 +88,11 @@ function ConvertIntoItemInformation($item)
         $itemInfo["image"] = $item["BigImgPath"];
     }
 
+    $itemInfo["image_back"] = $itemInfo["image"];
+
+    $itemInfo["redeemable"] = isset($item["redeemable"]) ? (bool)$item["redeemable"] : false;
+    $itemInfo["useable"] = isset($item["useable"]) ? (bool)$item["useable"] : false;
+
     return $itemInfo;
 }
 
@@ -121,5 +126,40 @@ function GetItemInformation($item_id) {
          
          return (new APIResponse(true, "Item information.",  ConvertIntoItemInformation($row) ));
      }
+}
+
+function GetWritOfPassageById($loot_id)
+{
+
+    $stmt = mysqli_prepare($GLOBALS["conn"], 'SELECT ai.* FROM loot l 
+    left join account a on a.passage_id = l.id
+    left join v_account_info ai on ai.id = l.account_id
+    where l.id = ? and l.item_id = 14 and a.id is null');
+    
+    // Bind the input parameter to the prepared statement
+    mysqli_stmt_bind_param($stmt, 'i', $loot_id);
+
+    // Execute the SQL statement
+    mysqli_stmt_execute($stmt);
+
+    // Get the result of the SQL query
+    $result = mysqli_stmt_get_result($stmt);
+
+    // Check if any rows were returned
+    if (mysqli_num_rows($result) > 0) {
+        $ownerInfo = mysqli_fetch_assoc($result);
+
+        // Free the statement
+        mysqli_stmt_close($stmt);
+
+        // Return the owner information if found
+        return new APIResponse(true, "Owner information found.", $ownerInfo);
+    } else {
+        // Free the statement
+        mysqli_stmt_close($stmt);
+
+        // If no owner is found, the Writ of Passage may not be assigned or doesn't exist
+        return new APIResponse(false, "No owner found for the Writ of Passage or it has not been assigned yet or has already been used.", null);
+    }
 }
 ?>

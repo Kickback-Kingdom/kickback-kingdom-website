@@ -1,4 +1,5 @@
 <?php
+//web version declaration
 
 // An important special (and tricky) property of this file:
 //

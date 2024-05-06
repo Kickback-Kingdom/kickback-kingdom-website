@@ -82,9 +82,31 @@ $accountActivityResp = GetAccountActivity($profile["Id"]);
 $accountActivity = $accountActivityResp->Data;
 
 $itemInfos = [];
+
+$nextWritOfPassageId = null;
+$nextWritOfPassageURL = null;
 foreach ($accountInventory as $accountInventoryItem) {
-    array_push($itemInfos, ConvertIntoItemInformation($accountInventoryItem));
+    $itemInfo = ConvertIntoItemInformation($accountInventoryItem);
+
+    // Check if the ID of the item is 14
+    if ($itemInfo["Id"] == 14) {
+        if ($isMyProfile)
+        {
+            $kk_crypt_key_writ_id = \Kickback\Config\ServiceCredentials::get("crypt_key_quest_id");
+            $crypt = new IDCrypt($kk_crypt_key_writ_id);
+            $nextWritOfPassageId = urlencode($crypt->encrypt($itemInfo["next_loot_id"]));
+            $nextWritOfPassageURL = 'https://kickback-kingdom.com/register.php?wi='.$nextWritOfPassageId;//'https://kickback-kingdom.com/register.php?redirect='.urlencode($urlPrefixBeta.'/blog/Kickback-Kingdom/introduction').'&wi='.$nextWritOfPassageId;
+        }
+        else
+        {
+            $itemInfo["useable"] = false;
+        }
+        
+    }
+    array_push($itemInfos, $itemInfo);
 }
+
+
 $itemInformationJSON = json_encode($itemInfos);
 
 $activeTab = 'active';
@@ -635,9 +657,8 @@ $activeTabPage = 'active show';
                 
                 <?php 
                 
-                
                 $activePageName = $profile["Username"];
-                require("php-components/base-page-breadcrumbs.php"); 
+                require("php-components/base-page-breadcrumbs.php");
                 
                 ?>
                 <div class="row">
@@ -843,12 +864,13 @@ $activeTabPage = 'active show';
             
             <?php require("php-components/base-page-discord.php"); ?>
         </div>
+        <?php require("php-components/base-page-footer.php"); ?>
     </main>
 
     
     <?php require("php-components/base-page-javascript.php"); ?>
     <script>
-        
+        var myNextWritOfPassageURL = "<?= $nextWritOfPassageURL; ?>";
         function openReviewModal() {
             document.getElementById("reviewModal").style.display = "block";
         }
