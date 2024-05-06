@@ -44,5 +44,5 @@ if ( file_exists($kk_composer_autoloader_path) ) {
 }
 unset($kk_composer_autoloader_path);
 
-require_once('version.php');
+require_once(\Kickback\SCRIPT_ROOT . "/Kickback/version.php");
 ?>
