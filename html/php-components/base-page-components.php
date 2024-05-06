@@ -388,7 +388,7 @@ $mediaDirs = $mediaDirsResp->Data;
             <p class="summary-line fw-bold total-line">Total: <span class="final-total-amount">0 </span></p>
         </div>
         <!-- Proceed to Checkout Button -->
-        <a class="btn btn-primary w-100" href="<?php echo $urlPrefixBeta; ?>/checkout.php">Proceed to Checkout</a>
+        <a class="btn btn-primary w-100 disabled" href="<?php echo $urlPrefixBeta; ?>/checkout.php" disabled>Proceed to Checkout</a>
     </div>
 
 </div>

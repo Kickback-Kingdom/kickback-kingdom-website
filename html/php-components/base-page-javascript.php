@@ -388,7 +388,7 @@
             if (item.useable) {
                 $("#inventoryItemUseButton").removeClass('d-none');
                 $("#inventoryItemFooter").removeClass('d-none');
-                $("#inventoryItemUseButton").attr("onclick", "UseInventoryItem("+itemId+");");
+                $("#inventoryItemUseButton").attr("onclick", "UseInventoryItem("+item.Id+");");
             } else {
                 $("#inventoryItemUseButton").addClass('d-none');
                 $("#inventoryItemUseButton").attr("onclick", "");
