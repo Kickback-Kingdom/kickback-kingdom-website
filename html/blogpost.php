@@ -119,7 +119,7 @@ if ($_GET['blogLocator'] == "Kickback-Kingdom")
                                 <p class="card-text text-center">
                                     <small class="text-body-secondary">Written by 
                                         <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $authorUsername; ?>" class="username"><?php echo $authorUsername; ?></a> on 
-                                        <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo $thisPostDateDetailed; ?>"><?php echo $thisPostDateBasic; ?></span>
+                                        <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo $thisPostDateDetailed; ?>"><?php echo $thisPostDateBasic; ?></span> and viewed <?= $thisPageVisits; ?> times
                                     </small>
                                 </p>
                         
@@ -318,69 +318,71 @@ if ($_GET['blogLocator'] == "Kickback-Kingdom")
                     </div>
                 </div>
                 
-<div class="card mb-3 mt-3">
-    <div class="card-header bg-primary d-flex flex-wrap justify-content-between align-items-center">
-        <a class="btn bg-ranked-1" href="#"><i class="fa-solid fa-arrow-left"></i><i class="fa-solid fa-blog"></i></a>
-        <h5 class="text-center text-white">Blog Navigation</h5>
-        <a class="btn bg-ranked-1 float-end" href="#page_top"><i class="fa-solid fa-arrow-up"></i></a>
-    </div>
-            <?php if (($blogPost != null && $blogPost["Next_Locator"] != null) || ($blogPost != null && $blogPost["Prev_Locator"] != null)) { ?>
-    <div class="card-body">
-        <div class="row">
-                    
-            <div class="col-6">
-                
-                <?php if ($blogPost["Prev_Locator"] != null) { 
-$prevPostDate = date_create($blogPost["Prev_PostDate"]);           
-$prevPostDateBasic = date_format($prevPostDate,"M j, Y");
-$prevPostDateDetailed = date_format($prevPostDate,"M j, Y H:i:s");
-?>
-                <div class="card" >
-                    <img src="/assets/media/<?php echo $blogPost["Prev_Image_Path"];?>" class="card-img-top" >
+                <?php if (!isset($_GET['borderless'])) { ?>
+                <div class="card mb-3 mt-3">
+                    <div class="card-header bg-primary d-flex flex-wrap justify-content-between align-items-center">
+                        <a class="btn bg-ranked-1" href="#"><i class="fa-solid fa-arrow-left"></i><i class="fa-solid fa-blog"></i></a>
+                        <h5 class="text-center text-white">Blog Navigation</h5>
+                        <a class="btn bg-ranked-1 float-end" href="#page_top"><i class="fa-solid fa-arrow-up"></i></a>
+                    </div>
+                    <?php if (($blogPost != null && $blogPost["Next_Locator"] != null) || ($blogPost != null && $blogPost["Prev_Locator"] != null)) { ?>
                     <div class="card-body">
-                        <h5 class="card-title"><?php echo $blogPost["Prev_Title"];?></h5>
-                        <small class="text-body-secondary">Written by 
-                            <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $blogPost["Prev_Author"]; ?>" class="username"><?php echo $blogPost["Prev_Author"]; ?></a> on 
-                            <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo $prevPostDateDetailed; ?> UTC"><?php echo $prevPostDateBasic; ?></span>
-                        </small>
-                    </div>
-                    <div class="card-footer">
-                        <a href="<?php echo $blogPost["Prev_Locator"]; ?>" class="btn btn-primary"><i class="fa-solid fa-angles-left"></i> Previous Post</a>
-                    </div>
-                </div>
-                <?php } ?>
-            </div>
-            <div class="col-6">
-                
-                <?php if ($blogPost["Next_Locator"] != null) { 
-                    
-$nextPostDate = date_create($blogPost["Next_PostDate"]);           
-$nextPostDateBasic = date_format($nextPostDate,"M j, Y");
-$nextPostDateDetailed = date_format($nextPostDate,"M j, Y H:i:s");
+                        <div class="row">
+                                    
+                            <div class="col-6">
+                                
+                                <?php if ($blogPost["Prev_Locator"] != null) { 
+                                    $prevPostDate = date_create($blogPost["Prev_PostDate"]);           
+                                    $prevPostDateBasic = date_format($prevPostDate,"M j, Y");
+                                    $prevPostDateDetailed = date_format($prevPostDate,"M j, Y H:i:s");
+                                    ?>
+                                <div class="card" >
+                                    <img src="/assets/media/<?php echo $blogPost["Prev_Image_Path"];?>" class="card-img-top" >
+                                    <div class="card-body">
+                                        <h5 class="card-title"><?php echo $blogPost["Prev_Title"];?></h5>
+                                        <small class="text-body-secondary">Written by 
+                                            <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $blogPost["Prev_Author"]; ?>" class="username"><?php echo $blogPost["Prev_Author"]; ?></a> on 
+                                            <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo $prevPostDateDetailed; ?> UTC"><?php echo $prevPostDateBasic; ?></span>
+                                        </small>
+                                    </div>
+                                    <div class="card-footer">
+                                        <a href="<?php echo $blogPost["Prev_Locator"]; ?>" class="btn btn-primary"><i class="fa-solid fa-angles-left"></i> Previous Post</a>
+                                    </div>
+                                </div>
+                                <?php } ?>
+                            </div>
+                            <div class="col-6">
+                                
+                                <?php if ($blogPost["Next_Locator"] != null) { 
+                                    
+                                $nextPostDate = date_create($blogPost["Next_PostDate"]);           
+                                $nextPostDateBasic = date_format($nextPostDate,"M j, Y");
+                                $nextPostDateDetailed = date_format($nextPostDate,"M j, Y H:i:s");
 
-                    ?>
-                <div class="card float-end" >
-                    
-                    <img src="/assets/media/<?php echo $blogPost["Next_Image_Path"];?>" class="card-img-top">
-                    <div class="card-body">
-                        <h5 class="card-title"><?php echo $blogPost["Next_Title"];?></h5>
-                        <small class="text-body-secondary">Written by 
-                            <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $blogPost["Next_Author"]; ?>" class="username"><?php echo $blogPost["Next_Author"]; ?></a> on 
-                            <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo $nextPostDateDetailed; ?> UTC"><?php echo $nextPostDateBasic; ?></span>
-                        </small>
+                                ?>
+                                <div class="card float-end" >
+                                    
+                                    <img src="/assets/media/<?php echo $blogPost["Next_Image_Path"];?>" class="card-img-top">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><?php echo $blogPost["Next_Title"];?></h5>
+                                        <small class="text-body-secondary">Written by 
+                                            <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $blogPost["Next_Author"]; ?>" class="username"><?php echo $blogPost["Next_Author"]; ?></a> on 
+                                            <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo $nextPostDateDetailed; ?> UTC"><?php echo $nextPostDateBasic; ?></span>
+                                        </small>
+                                    </div>
+                                    <div class="card-footer">
+                                        <a href="<?php echo $blogPost["Next_Locator"]; ?>" class="btn btn-primary float-end">Next Post <i class="fa-solid fa-angles-right"></i></a>
+                                    </div>
+                                </div>
+                                <?php } ?>
+                            </div>
+                            
+                            
+                        </div>
                     </div>
-                    <div class="card-footer">
-                        <a href="<?php echo $blogPost["Next_Locator"]; ?>" class="btn btn-primary float-end">Next Post <i class="fa-solid fa-angles-right"></i></a>
-                    </div>
+                    <?php } ?>
                 </div>
                 <?php } ?>
-            </div>
-            
-            
-        </div>
-    </div>
-            <?php } ?>
-</div>
             </div>
             
             <?php require("php-components/base-page-discord.php"); ?>
