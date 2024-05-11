@@ -178,6 +178,10 @@ final class ServiceCredentials implements \ArrayAccess
         // Kickback Kingdom auth info; used to establish sessions with backend API
         $error_count += (int)!$this->credential_string_exists       ("kk_service_key");
 
+
+        //ipinfo_api_key used for analytics
+        $error_count += (int)!$this->credential_string_exists       ("ipinfo_api_key");
+
         return ($error_count > 0);
     }
 
