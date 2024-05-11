@@ -8,7 +8,7 @@ class APIResponse {
     public string  $Message;
     public mixed   $Data;
 
-    function __construct(bool $success, string $message, mixed $data)
+    function __construct(bool $success, string $message, mixed $data = null)
     {
         $this->Success = $success;
         $this->Message = $message;
