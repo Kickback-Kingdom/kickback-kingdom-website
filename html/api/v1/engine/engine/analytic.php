@@ -182,19 +182,11 @@ function GetCurrentGeoLocation() {
     return new APIResponse(true, "GeoLocation data fetched and cached successfully", (object)$geoData);
 }
 
-function GetCurrentAccountId()
-{
-    if (IsLoggedIn())
-    {
-        return $_SESSION['account']['Id'];
-    }
-    return null;
-}
 
 function InsertAnalytic($group, $action, $result, $description, $details) {
     global $conn;
 
-    $ctime = date('Y-m-d H:i:s.u');  // Current time with microseconds
+    $ctime = GetCTime();
 
     $ip_address = GetCurrentUserIP();
     $session_id = GetCurrentSessionId();

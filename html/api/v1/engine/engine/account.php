@@ -33,6 +33,15 @@ function LoginToService($accountId, $serviceKey)
     return false;
 }
 
+function GetCurrentAccountId()
+{
+    if (IsLoggedIn())
+    {
+        return $_SESSION['account']['Id'];
+    }
+    return null;
+}
+
 function IsLoggedIn() : bool
 {
     if (!array_key_exists("sessionToken", $_SESSION)
