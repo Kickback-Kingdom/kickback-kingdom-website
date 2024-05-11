@@ -6,6 +6,6 @@ require_once("dbconnect.php");
 require_once("functions.php");
 require_once("obj.php");
 
-GenerateFormToken();
+Kickback\Utilities\FormToken::generateFormToken();
 
 ?>

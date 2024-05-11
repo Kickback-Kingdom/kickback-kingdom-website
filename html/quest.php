@@ -87,7 +87,7 @@ if ($thisQuest["raffle_id"] != null)
 
 if (isset($_POST["submit-raffle"]))
 {
-    $tokenResponse = UseFormToken();
+    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
 
     if ($tokenResponse->Success) {
 

@@ -369,30 +369,6 @@ function getRandomQuote() {
     return $quotes[$randomIndex];
 }
 
-function GenerateFormToken() {
-    if (session_status() == PHP_SESSION_NONE) {
-        session_start();
-    }
-
-    if (!isset($_SESSION['form_token'])) {
-        $_SESSION['form_token'] = bin2hex(random_bytes(32));
-    }
-}
-
-function UseFormToken() {
-    if (session_status() == PHP_SESSION_NONE) {
-        session_start();
-    }
-
-    if (isset($_POST['form_token']) && isset($_SESSION['form_token']) && $_SESSION['form_token'] === $_POST['form_token']) {
-        // Regenerate a new token
-        $_SESSION['form_token'] = bin2hex(random_bytes(32));
-        return new APIResponse(true, "Token valid.", null);
-    } else {
-        return new APIResponse(false, "Invalid or expired form submission token.", null);
-    }
-}
-
 function GetNewcomerIntroduction($username) {
     $introductions = [
         "Esteemed members of the royal court, I am honored to present $username, a distinguished guest from distant lands, who comes bearing tales of far-off cultures and seeks the gracious hospitality of Kickback Kingdom.",
