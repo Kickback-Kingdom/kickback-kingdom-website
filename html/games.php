@@ -4,7 +4,7 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-$gamesResp = GetAllGames();
+$gamesResp = Kickback\Controllers\GameController::GetGames();
 
 $games = $gamesResp->Data;
 ?>
@@ -44,15 +44,14 @@ $games = $gamesResp->Data;
                 <?php
                 foreach ($games as $game)
                 { 
-                    //$news = $homeFeed[$i];
                 ?>
                     
                     <div class="card" style="width: 18rem; margin-bottom:10px;">
-                        <img src="/assets/media/<?php echo $game["icon_path"]; ?>" class="card-img-top" alt="<?php echo $game["Name"]; ?>">
+                        <img src="<?= $game->icon->GetFullPath(); ?>" class="card-img-top" alt="<?= $game->name; ?>">
                         <div class="card-body">
-                            <h5 class="card-title"><?php echo $game["Name"]; ?></h5>
-                            <p class="card-text"><?php echo $game["Desc"]; ?></p>
-                            <a href="<?php echo $urlPrefixBeta; ?>/g/<?php echo $game["Name"]; ?>" class="btn btn-primary">View Game</a>
+                            <h5 class="card-title"><?= $game->name; ?></h5>
+                            <p class="card-text"><?= $game->description; ?></p>
+                            <a href="<?php echo $urlPrefixBeta; ?><?= $game->GetURL(); ?>" class="btn btn-primary">View Game</a>
                         </div>
                     </div>
                 <?php
