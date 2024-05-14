@@ -3,9 +3,8 @@ declare(strict_types=1);
 
 namespace Kickback\Models;
 
-class Media
+class Media extends RecordId
 {
-    public int   $id;
     public string $serviceKey;
 
     
