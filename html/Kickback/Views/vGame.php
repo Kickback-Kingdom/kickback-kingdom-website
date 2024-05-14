@@ -5,9 +5,8 @@ namespace Kickback\Views;
 
 use Kickback\Views\vMedia;
 
-class vGame
+class vGame extends vRecordId
 {
-    public int   $id;
     public string $name;
     public string $description;
     public int $minRankedMatches;
@@ -17,6 +16,11 @@ class vGame
     public vMedia $icon;
     public vMedia $banner;
     public vMedia $bannerMobile;
+
+    function __construct(int $crand, string $ctime = '')
+    {
+        parent::__construct($crand, $ctime);
+    }
 
     public function GetURL()
     {

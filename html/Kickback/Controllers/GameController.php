@@ -11,7 +11,7 @@ use Kickback\Services\Database;
 
 class GameController
 {
-    public static function GetGames($rankedOnly = false, $searchTerm = '', $page = 0, $pageSize = 0): Response {
+    public static function getGames($rankedOnly = false, $searchTerm = '', $page = 0, $pageSize = 0): Response {
         $conn = Database::getConnection();
     
         $sql = "SELECT Id, `Name`, `Desc`, MinRankedMatches, ShortName, CanRank, media_icon_id, media_banner_id, media_banner_mobile_id, icon_path, banner_path, banner_mobile_path 
@@ -84,32 +84,38 @@ class GameController
     
     private static function row_to_vGame($row) : vGame
     {
-        $icon = new vMedia();
-        $icon->mediaPath = $row['icon_path'];
-
-        $banner = new vMedia();
-        $banner->mediaPath = $row['banner_path'];
-
-        $bannerMobile = new vMedia();
-        $bannerMobile->mediaPath = $row['banner_mobile_path'];
-
-        $game = new vGame();
-        $game->id = $row['Id'];
+        $game = new vGame($row['Id']);
         $game->name = $row['Name'];
         $game->description = $row['Desc'];
         $game->minRankedMatches = $row['MinRankedMatches'];
         $game->shortName = $row['ShortName'];
         $game->canRank = $row['CanRank'] == 1;
 
-        $game->icon = $icon;
-        $game->banner = $banner;
-        $game->bannerMobile = $bannerMobile;
+        if ($row['media_icon_id'] != null)
+        {
+            $icon = new vMedia($row['media_icon_id']);
+            $icon->mediaPath = $row['icon_path'];
+            $game->icon = $icon;
+        }
 
+        if ($row['media_banner_id'] != null)
+        {
+            $banner = new vMedia($row['media_banner_id']);
+            $banner->mediaPath = $row['banner_path'];
+            $game->banner = $banner;
+        }
+
+        if ($row['media_banner_mobile_id'] != null)
+        {
+            $bannerMobile = new vMedia($row['media_banner_mobile_id']);
+            $bannerMobile->mediaPath = $row['banner_mobile_path'];
+            $game->bannerMobile = $bannerMobile;
+        }
 
         return $game;
     }
 
-    private static function Insert(Lobby $lobby, $password) : Response {
+    private static function insert(Game $game) : Response {
 
         return new Response(false, 'GameController::Insert not implemented');
 

@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace Kickback\Models;
 
 class Response {
-    public bool $Success;
-    public string $Message;
-    public mixed $Data;
+    public bool $success;
+    public string $message;
+    public mixed $data;
 
     function __construct(bool $success, string $message, mixed $data = null)
     {
-        $this->Success = $success;
-        $this->Message = $message;
-        $this->Data = $data;
+        $this->success = $success;
+        $this->message = $message;
+        $this->data = $data;
     }
     
     function Return() : void

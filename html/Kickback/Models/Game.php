@@ -3,19 +3,16 @@ declare(strict_types=1);
 
 namespace Kickback\Models;
 
-class Game
+class Game extends RecordId
 {
-    public int   $id;
     public string $name;
     public string $desc;
     public int $minRankedMatches;
     public string $shortName;
     public bool $canRank;
-    public int $mediaIconId;
-    public int $mediaBannerId;
-    public int $mediaBannerMobileId;
-
-    
+    public RecordId $mediaIconId;
+    public RecordId $mediaBannerId;
+    public RecordId $mediaBannerMobileId;
 }
 
 
