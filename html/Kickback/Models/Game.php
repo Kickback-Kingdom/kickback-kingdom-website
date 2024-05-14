@@ -10,9 +10,9 @@ class Game extends RecordId
     public int $minRankedMatches;
     public string $shortName;
     public bool $canRank;
-    public RecordId $mediaIconId;
-    public RecordId $mediaBannerId;
-    public RecordId $mediaBannerMobileId;
+    public ForeignRecordId $mediaIconId;
+    public ForeignRecordId $mediaBannerId;
+    public ForeignRecordId $mediaBannerMobileId;
 }
 
 
