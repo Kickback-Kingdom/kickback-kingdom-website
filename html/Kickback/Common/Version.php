@@ -43,37 +43,6 @@ final class Version
         return $ver;
     }
 
-/*
-    public const MAJOR        = self::LAST_HISTORY_ENTRY[self::COL_MAJOR];
-    public const MINOR        = self::LAST_HISTORY_ENTRY[self::COL_MINOR];
-    public const PATCH        = self::LAST_HISTORY_ENTRY[self::COL_PATCH];
-    public const PRERELEASE   = self::LAST_HISTORY_ENTRY[self::COL_PRERELEASE];
-    public const BUILD        = self::LAST_HISTORY_ENTRY[self::COL_BUILD];
-    public const CONTENT_NAME = self::LAST_HISTORY_ENTRY[self::COL_CONTENT_NAME];
-
-    // TODO: How to get PHPStan to stop complaining about constant expressions
-    // in ternary expressions being always true or always false?
-
-    public const NUMBER =
-        strval(self::MAJOR) . '.' . strval(self::MINOR) . '.' . strval(self::PATCH) .
-        ((0 === strlen(self::PRERELEASE)) ? ('-' . self::PRERELEASE) : "") . // @phpstan-ignore identical.alwaysTrue
-        ((0 === strlen(self::BUILD))      ? ('+' . self::BUILD) : ""); // @phpstan-ignore identical.alwaysTrue
-
-    // TODO: Change this to use normal separators instead of ALL hyphens?
-    // Dots are valid and non-special characters in both URLs and filesystem paths.
-    // (The plus-sign at the beginning of the build-metadata part might be annoying in some contexts,
-    // like inside HTML query strings (but not paths! those are fine!),
-    // and require escaping in most shells, but are otherwise still valid.)
-    // Ideally this would just be (self::NUMBER . '-' . self::CONTENT_NAME).
-    public const URL_PATH_COMPONENT =
-        strval(self::MAJOR) . '-' . strval(self::MINOR) . '-' . strval(self::PATCH) .
-        ((0 === strlen(self::PRERELEASE))   ? ('-' . self::PRERELEASE) : "") . // @phpstan-ignore identical.alwaysTrue
-        ((0 === strlen(self::BUILD))        ? ('-' . self::BUILD) : "") . // @phpstan-ignore identical.alwaysTrue
-        ((0 === strlen(self::CONTENT_NAME)) ? ('-' . self::CONTENT_NAME) : ""); // @phpstan-ignore identical.alwaysFalse
-
-    public const FILE_PATH_COMPONENT = self::URL_PATH_COMPONENT;
-*/
-
     // We use `SplFixedArray` to enforce integer-valued indices.
     /** @var ?\SplFixedArray<Version> */
     private static ?\SplFixedArray $history_ = null;
@@ -232,14 +201,3 @@ final class Version
     public static bool $client_is_viewing_blogpost_for_current_version_update = false;
 }
 ?>
-<!--
-$_globalVersionInfo = [
-    "0.0.1" => "0-0-1-update-writ-of-passage"
-];
-
-// Automatically sets the latest version based on the array
-$_globalVersionNumbers = array_keys($_globalVersionInfo);
-$_globalVersionCurrent = $_globalVersionNumbers[0];
-
-$_globalDoNotShowNewVersionPopup = false;
--->
