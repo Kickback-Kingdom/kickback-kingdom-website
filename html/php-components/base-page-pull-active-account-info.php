@@ -1,13 +1,12 @@
 <?php
 
-require_once(\Kickback\SCRIPT_ROOT . "/Kickback/version.php");
-
 $urlPrefixBeta = "";
 if ( array_key_exists("KICKBACK_IS_BETA",$_SERVER) && $_SERVER["KICKBACK_IS_BETA"] ) {
     $urlPrefixBeta = "/beta";
 }
 $GLOBALS["urlPrefixBeta"] = $urlPrefixBeta;
 
+use \Kickback\Common\Version;
 
 function GetLoggedInAccountInformation()
 {
@@ -56,7 +55,7 @@ $chestsJSON = $activeAccountInfo->chestsJSON;
 
 if (!IsLoggedIn())
 {
-    $_globalDoNotShowNewVersionPopup = true;
+    Version::$show_version_popup = false;
 }
 
 require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-form-handler.php"); 

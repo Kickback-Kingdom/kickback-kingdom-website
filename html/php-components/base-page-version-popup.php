@@ -1,5 +1,7 @@
 
-
+<?php
+use \Kickback\Common\Version;
+?>
 
 <!-- VERSION CHANGELOG MODAL /blogpost.php?blogLocator=Kickback-Kingdom&postLocator=introduction&borderless -->
 <div class="modal fade" id="versionModal" tabindex="-1" aria-labelledby="versionModalLabel" aria-hidden="true">
@@ -11,8 +13,8 @@
       </div>
       <div class="modal-body">
         <select class="form-select" id="versionSelect" onchange="showChangelog()" aria-label="Select version">
-                <?php foreach ($_globalVersionInfo as $version => $path): ?>
-                    <option value="<?= htmlspecialchars($path) ?>"><?= htmlspecialchars($version) ?></option>
+                <?php foreach (Version::history() as $version): ?>
+                    <option value="<?= htmlspecialchars($version->blogpost_locator()) ?>"><?= htmlspecialchars($version->number()) ?></option>
                 <?php endforeach; ?>
         </select>
         <iframe id="changelogIframe" style="width:100%; height:70vh; margin-top:20px;" frameborder="0" src=""></iframe>
@@ -24,13 +26,13 @@
   </div>
 </div>
 <script>
-    var shouldShowVersionPopup = <?= ((!isset($_COOKIE['popupShownVersion']) || $_COOKIE['popupShownVersion'] != $_globalVersionCurrent) && !isset($changelogVersion) && !$_globalDoNotShowNewVersionPopup)?"true":"false"; ?>;
+    var shouldShowVersionPopup = <?= ((!isset($_COOKIE['popupShownVersion']) || $_COOKIE['popupShownVersion'] != Version::current()->number()) && !Version::$client_is_viewing_blogpost_for_current_version_update && Version::$show_version_popup)?"true":"false"; ?>;
     
     function ShowVersionPopUp() {
         $("#versionModal").modal('show');
 
-        document.getElementById('changelogIframe').src = "<?= $urlPrefixBeta."/blogpost.php?borderless&blogLocator=Kickback-Kingdom&postLocator=".$_globalVersionInfo[$_globalVersionCurrent];?>";
-        document.cookie = "popupShownVersion=<?= $_globalVersionCurrent ?>; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+        document.getElementById('changelogIframe').src = "<?= $urlPrefixBeta."/blogpost.php?borderless&blogLocator=Kickback-Kingdom&postLocator=".Version::current()->blogpost_locator();?>";
+        document.cookie = "popupShownVersion=<?= Version::current()->number() ?>; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
         shouldShowVersionPopup = false;
     }
 

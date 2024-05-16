@@ -1,6 +1,8 @@
 <?php
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
+use \Kickback\Common\Version;
+
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
@@ -68,14 +70,10 @@ if ($_GET['blogLocator'] == "Kickback-Kingdom")
     //this is the blog that contains update posts
     $postLocator = $_GET['postLocator'];
 
-    $changelogVersion = array_search($postLocator, $_globalVersionInfo);
-    if ($changelogVersion === false) {
-        // Handle the case where no matching version is found
-        unset($changelogVersion);
+    if ( array_key_exists($postLocator, Version::history_by_blogpost_locator()) ) {
+        Version::$client_is_viewing_blogpost_for_current_version_update = true;
     }
 }
-
-
 
 ?>
 
