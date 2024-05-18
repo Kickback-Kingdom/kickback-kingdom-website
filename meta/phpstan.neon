@@ -1,0 +1,22 @@
+includes:
+    - ../html/vendor/composer/phpstan/phpstan-strict-rules/rules.neon
+parameters:
+    level: 9
+    parallel:
+        processTimeout: 3600.0
+    paths:
+        - ../html
+    bootstrapFiles:
+        - ../html/Kickback/InitializationScripts/init_for_phpstan.php
+    excludePaths:
+        analyse:
+            - ../html/vendor
+            - ../html/phpmyadmin
+        analyseAndScan:
+            - ../html/scratch-pad
+    ignoreErrors:
+        -
+            identifier: ternary.shortNotAllowed
+    checkAlwaysTrueStrictComparison: false
+    dynamicConstantNames:
+        - Kickback\InitializationScripts\AUTOLOAD_DO_DEBUG_ECHO
