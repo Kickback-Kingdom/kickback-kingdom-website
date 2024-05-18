@@ -40,34 +40,4 @@ if (!defined('Kickback\InitializationScripts\PARENT_PROCESS_TYPE')) {
 // (It defines SCRIPT_ROOT and then calls the `common_init.php` in the correct SCRIPT_ROOT.)
 require_once("change_root.php");
 
-/*
-....
-
-// File that declares \Kickback\SCRIPT_ROOT.
-// Do this first, so that we can use it to locate the correct script files.
-require_once("script_root.php");
-
-// Define some simple debug output and tracing mechanims that can be used
-// in the autoloader, and (only!) in any other axiomatic initialization mechanisms.
-require_once(\Kickback\SCRIPT_ROOT . "/Kickback/debug.php");
-
-// Initialize+register the autoloader for \Kickback namespace classes,
-// and for any classes that are manually managed with the project
-// (ex: things in (\Kickback\SCRIPT_ROOT . "/vendor"))
-require_once(\Kickback\SCRIPT_ROOT . "/Kickback/autoload_classes.php");
-
-// Initialize+register composer's autoloader.
-// We use `include_once` instead of `require_once` so that the site
-// doesn't break if the admin hasn't made composer install anything yet.
-// This is admissible because, as of this writing, any composer modules
-// are optional dependencies, and most site functionality can work without them.
-// Also seems to be important to wrap it in a "file_exists" if-statement
-// because `include_once` can still generate HTML code (for displaying
-// the warning) that may pollute the page (as seen by the user).
-$kk_composer_autoloader_path = \Kickback\SCRIPT_ROOT . "/vendor/composer/autoload.php";
-if ( file_exists($kk_composer_autoloader_path) ) {
-    include_once($kk_composer_autoloader_path);
-}
-unset($kk_composer_autoloader_path);
-*/
 ?>
