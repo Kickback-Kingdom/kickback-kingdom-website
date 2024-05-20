@@ -7,13 +7,11 @@ class vRecordId
 {
     public string $ctime;
     public int $crand;
-    public bool $usesLegacyId = false;
     
-    function __construct(int $crand, string $ctime = '')
+    function __construct(string $ctime = '', int $crand = -1)
     {
         $this->ctime = $ctime;
         $this->crand = $crand;
-        $this->usesLegacyId = empty($ctime);
     }
 }
 

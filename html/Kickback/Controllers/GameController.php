@@ -84,7 +84,7 @@ class GameController
     
     private static function row_to_vGame($row) : vGame
     {
-        $game = new vGame($row['Id']);
+        $game = new vGame('', $row['Id']);
         $game->name = $row['Name'];
         $game->description = $row['Desc'];
         $game->minRankedMatches = $row['MinRankedMatches'];
@@ -93,21 +93,21 @@ class GameController
 
         if ($row['media_icon_id'] != null)
         {
-            $icon = new vMedia($row['media_icon_id']);
+            $icon = new vMedia('', $row['media_icon_id']);
             $icon->mediaPath = $row['icon_path'];
             $game->icon = $icon;
         }
 
         if ($row['media_banner_id'] != null)
         {
-            $banner = new vMedia($row['media_banner_id']);
+            $banner = new vMedia('', $row['media_banner_id']);
             $banner->mediaPath = $row['banner_path'];
             $game->banner = $banner;
         }
 
         if ($row['media_banner_mobile_id'] != null)
         {
-            $bannerMobile = new vMedia($row['media_banner_mobile_id']);
+            $bannerMobile = new vMedia('', $row['media_banner_mobile_id']);
             $bannerMobile->mediaPath = $row['banner_mobile_path'];
             $game->bannerMobile = $bannerMobile;
         }

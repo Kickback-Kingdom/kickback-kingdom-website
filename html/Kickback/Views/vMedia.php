@@ -13,14 +13,20 @@ class vMedia extends vRecordId
     public string $directory;
     public string $mediaPath;
 
-    function __construct(int $crand, string $ctime = '')
+    function __construct(string $ctime = '', int $crand = -1)
     {
-        parent::__construct($crand, $ctime);
+        parent::__construct($ctime, $crand);
     }
 
-    public function GetFullPath()
+    public function getFullPath()
     {
         return "/assets/media/".$this->mediaPath;
+    }
+
+    public function setFullPath(string $fullPath)
+    {
+        $this->mediaPath = str_replace("/assets/media/", '', $fullPath);
+
     }
     
 }

@@ -17,9 +17,9 @@ class vGame extends vRecordId
     public vMedia $banner;
     public vMedia $bannerMobile;
 
-    function __construct(int $crand, string $ctime = '')
+    function __construct(string $ctime = '', int $crand = -1)
     {
-        parent::__construct($crand, $ctime);
+        parent::__construct($ctime, $crand);
     }
 
     public function GetURL()
