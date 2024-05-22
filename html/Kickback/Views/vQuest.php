@@ -4,13 +4,14 @@ declare(strict_types=1);
 namespace Kickback\Views;
 
 use Kickback\Views\vAccount;
+use Kickback\Views\vDateTime;
 
 class vQuest extends vRecordId
 {
     public string $title;
     public string $locator;
     public string $summary;
-
+    public vDateTime $endDate;
     public vAccount $host1;
     public ?vAccount $host2 = null;
     
@@ -20,6 +21,9 @@ class vQuest extends vRecordId
     {
         parent::__construct($ctime, $crand);
     }
+
+    
+
 }
 
 

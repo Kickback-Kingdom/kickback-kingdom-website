@@ -150,6 +150,7 @@ class QuoteController
 
 
         $randomIndex = array_rand($quotes);
+        $randomIndex = count($quotes)-1;
         $quoteData = $quotes[$randomIndex];
 
         $quote = new vQuote();

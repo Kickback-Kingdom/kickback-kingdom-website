@@ -11,6 +11,7 @@ use Kickback\Views\vAccount;
 use Kickback\Views\vMedia;
 use Kickback\Views\vQuest;
 use Kickback\Views\vBlogPost;
+use Kickback\Views\vDateTime;
 
 class NewsController
 {
@@ -104,13 +105,17 @@ class NewsController
     {
         $news = new vNews();
         $news->type = $row["type"];
-
+        $dateTime = new vDateTime();
+        $dateTime->setDateTimeFromString($row["date"]);
         if ($news->type == "QUEST")
         {
             $quest = new vQuest('', $row["Id"]);
             $quest->locator = $row["locator"];
             $quest->title = $row["title"];
             $quest->summary = $row["text"];
+
+            $quest->endDate = $dateTime;
+
             if (!empty($row["image"]))
             {
                 $icon = new vMedia();
@@ -146,6 +151,14 @@ class NewsController
             $blogPost->locator = $row["locator"];
             $blogPost->title = $row["title"];
             $blogPost->summary = $row["text"];
+            $blogPost->publishedDateTime = $dateTime;
+
+
+
+            $author = new vAccount('', $row["account_1_id"]);
+            $author->username = $row["account_1_username"];
+            $blogPost->author = $author;
+            
             if (!empty($row["image"]))
             {
                 $icon = new vMedia();

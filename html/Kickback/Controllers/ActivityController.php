@@ -9,6 +9,7 @@ use Kickback\Views\vActivity;
 use Kickback\Views\vRecordId;
 use Kickback\Views\vAccount;
 use Kickback\Views\vMedia;
+use Kickback\Views\vDateTime;
 
 class ActivityController
 {
@@ -44,7 +45,11 @@ class ActivityController
         $activity->team = $row["event_team"];
         $activity->character = $row["event_character"];
         $activity->characterWasRandom = $row["event_character_was_random"];
-        $activity->SetDateTime($row["event_date"]);
+
+        $eventDate = new vDateTime();
+        $eventDate->setDateTimeFromString($row["event_date"]);
+
+        $activity->dateTime = $eventDate;
 
         if ($row['event_icon_id'] != null)
         {

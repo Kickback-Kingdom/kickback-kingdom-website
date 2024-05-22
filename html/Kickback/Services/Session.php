@@ -191,6 +191,15 @@ class Session {
         return false;
     }
     
+    public static function isQuestGiver() : bool {
+        if (self::isLoggedIn())
+        {
+            return self::getCurrentAccount()->isQuestGiver;
+        }
+
+        return false;
+    }
+    
     public static function setSessionData($key, $value) {
         $_SESSION[$key] = $value;
     }

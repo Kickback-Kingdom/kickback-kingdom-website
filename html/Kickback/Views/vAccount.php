@@ -64,7 +64,7 @@ class vAccount extends vRecordId
 
     private static function getAccountDefaultProfilePicture(vRecordId $recordId) : string 
     {
-        return getDefaultProfilePicture($recordId->crand);
+        return self::getDefaultProfilePicture($recordId->crand);
     }
 
     public static function getDefaultProfilePicture(int $i) : string
@@ -75,10 +75,10 @@ class vAccount extends vRecordId
         $hash_number = hexdec(substr($hash, 0, 8));
         $random_number = $hash_number % $total + 1;
         $image_id = $random_number;
-        return "profiles/young-".$image_id.".jpg";
+        return "/assets/media/profiles/young-".$image_id.".jpg";
     }
 
-    public function getAccountButton() : string {
+    public function getAccountElement() : string {
         return '<a href="'.$this->getURL().'" class="username">'.$this->username.'</a>';
     }
 }

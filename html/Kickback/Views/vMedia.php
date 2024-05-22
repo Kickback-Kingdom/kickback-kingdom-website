@@ -2,13 +2,14 @@
 declare(strict_types=1);
 
 namespace Kickback\Views;
+use Kickback\Views\vDateTime;
 
 class vMedia extends vRecordId
 {
     public string $name;
     public string $desc;
     public vRecordId $authorId;
-    public string $dateCreated;
+    public vDateTime $dateCreated;
     public string $extension;
     public string $directory;
     public string $mediaPath;

@@ -6,7 +6,7 @@ namespace Kickback\Views;
 use Kickback\Views\vRecordId;
 use Kickback\Views\vMedia;
 use Kickback\Views\vAccount;
-use DateTime;
+use Kickback\Views\vDateTime;
 
 class vActivity
 {
@@ -18,16 +18,9 @@ class vActivity
     public ?string $team;
     public ?string $character;
     public ?bool $charaterWasRandom;
-    public DateTime $dateTime;
-    public string $dateTimeString;
+    public vDateTime $dateTime;
     public ?vMedia $icon = null;
     public ?string $url = null;
-
-    public function SetDateTime(string $dateTimeString)
-    {
-        $this->dateTimeString = $dateTimeString;
-        $this->dateTime = date_create($dateTimeString);
-    }
 
     public function getMedia() : vMedia
     {

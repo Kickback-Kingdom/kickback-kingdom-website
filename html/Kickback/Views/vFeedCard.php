@@ -9,7 +9,7 @@ use Kickback\Views\vQuest;
 use Kickback\Views\vQuote;
 use Kickback\Views\vBlogPost;
 use Kickback\Views\vActivity;
-use DateTime;
+use Kickback\Views\vDateTime;
 
 class vFeedCard
 {
@@ -22,7 +22,7 @@ class vFeedCard
     public ?vActivity $activity = null;
     public ?string $url = null;
     public string $title;
-    public DateTime $dateTime;
+    public vDateTime $dateTime;
     public bool $expired = false;
     public int $style = 0;
     public bool $published = false;
@@ -31,8 +31,6 @@ class vFeedCard
     //RENDERING TEXT
     public string $createdByPrefix = "Hosted";
     public string $cta = "Learn More";
-    public string $dateTimeFormattedBasic = "DATE ERROR";
-    public string $dateTimeFormattedDetailed = "DATE ERROR";
 
     //RENDERING OPTIONS
     public bool $hideCTA = false;
@@ -50,23 +48,6 @@ class vFeedCard
     public string $cssClassTextColSize = "col col-12 col-md-8 col-lg-9";
     public string $cssClassRight = "";
 
-    public function SetDateTime(DateTime $dateTime) {
-        $this->dateTime = $dateTime;
-        $this->dateTimeFormattedBasic = date_format($this->dateTime,"M j, Y");
-        $this->dateTimeFormattedDetailed = date_format($this->dateTime,"M j, Y H:i:s");
-    }
-    public function SetDateTimeFromString(string $dateTimeString)
-    {
-
-        $this->dateTime = date_create($dateTimeString);
-
-        $this->SetDateTime($this->dateTime);
-    }
-
-    public function Validate()
-    {
-    }
-
     public function getURL()
     {
         return "/".$this->url;
@@ -79,7 +60,7 @@ class vFeedCard
         $totalAccounts = count($accounts);
     
         foreach ($accounts as $index => $account) {
-            $html .= $account->getAccountButton();
+            $html .= $account->getAccountElement();
             if ($index < $totalAccounts - 1) {
                 $html .= ' and ';
             }

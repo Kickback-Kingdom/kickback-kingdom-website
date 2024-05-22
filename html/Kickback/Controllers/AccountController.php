@@ -65,8 +65,8 @@ class AccountController
         }
     }
 
-    public static function getAccountInventory(vRecordId $recordId) : Response
-    {
+    public static function getAccountInventory(vRecordId $recordId) : Response {
+        
         $conn = Database::getConnection();
         
         $sql = "SELECT * FROM kickbackdb.v_account_inventory_desc WHERE account_id = ?";
@@ -90,8 +90,8 @@ class AccountController
         return new Response(true, "Account Inventory", $rows);
     }
 
-    public static function getAccountByUsername(string $username) : Response
-    {
+    public static function getAccountByUsername(string $username) : Response {
+
         $conn = Database::getConnection();
         // Prepare SQL statement
         $stmt = mysqli_prepare($conn, "SELECT * FROM v_account_info WHERE Username = ?");
@@ -125,8 +125,8 @@ class AccountController
         }
     }
     
-    public static function getAccountByEmail(string $email)
-    {
+    public static function getAccountByEmail(string $email) : Response {
+
         $conn = Database::getConnection();
         // Prepare SQL statement
         $stmt = mysqli_prepare($conn, "SELECT * FROM v_account_info WHERE Email = ?");
