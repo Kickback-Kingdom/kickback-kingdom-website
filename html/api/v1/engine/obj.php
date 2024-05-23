@@ -1,6 +1,5 @@
 <?php
 
-require("account.php");
 
 class APIResponse {
 
