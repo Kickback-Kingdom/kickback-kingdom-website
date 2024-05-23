@@ -209,6 +209,12 @@ body {
     background-color: var(--bs-secondary) !important;
     color:#7d7d7d;
 }
+/* tertiary Color */
+.btn-tertiary, 
+.bg-tertiary {
+    background-color: var(--bs-tertiary) !important;
+    color:#ffffff;
+}
 /*.bg-primary button.btn {
     color: white;
 }*/
