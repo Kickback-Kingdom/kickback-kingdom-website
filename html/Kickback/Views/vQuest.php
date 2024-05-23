@@ -14,6 +14,7 @@ class vQuest extends vRecordId
     public vDateTime $endDate;
     public vAccount $host1;
     public ?vAccount $host2 = null;
+    public bool $published;
     
     public ?vMedia $icon;
 
@@ -22,8 +23,9 @@ class vQuest extends vRecordId
         parent::__construct($ctime, $crand);
     }
 
-    
-
+    public function getURL() {
+        return '/q/'.$this->locator;
+    }
 }
 
 

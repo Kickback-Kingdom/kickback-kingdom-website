@@ -50,7 +50,7 @@ class vFeedCard
 
     public function getURL()
     {
-        return "/".$this->url;
+        return $this->url;
     }
 
     public function getAccountLinks() : string {

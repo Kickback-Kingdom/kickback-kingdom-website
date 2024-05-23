@@ -10,6 +10,8 @@ use Kickback\Views\vNews;
 use Kickback\Views\vQuote;
 use Kickback\Views\vDateTime;
 
+use DateTime;
+
 class FeedCardController
 {
 
@@ -49,10 +51,19 @@ class FeedCardController
             $feedCard->description = $news->quest->summary;
             $feedCard->quest = $news->quest;
             $feedCard->hasRewards = true;
-            
+            $feedCard->hasTags = true;
+            $feedCard->cssClassCard = "quest-card";
+            $feedCard->cssClassRight = "quest-card-right";
+            $feedCard->style = $news->quest->style;
             $feedCard->dateTime = $news->quest->endDate;
 
             $feedCard->createdByPrefix = "Hosted";
+            $feedCard->url = $news->quest->getURL();
+            
+            $now = new DateTime(); // Current date and time
+            $feedCard->expired = ($feedCard->dateTime->value < $now);
+
+            $feedCard->published = $news->quest->published;
         }
 
         if ($news->blogPost != null)
@@ -63,6 +74,13 @@ class FeedCardController
             $feedCard->blogPost = $news->blogPost;
             $feedCard->dateTime = $news->blogPost->publishedDateTime;
             $feedCard->createdByPrefix = "Written";
+
+            $feedCard->url = $news->blogPost->getURL();
+            $feedCard->published = $news->blogPost->published;
+        }
+
+        if ($feedCard->published == false) {
+            $feedCard->title = "[DRAFT] ".$feedCard->title." [DRAFT]"; 
         }
 
         return $feedCard;
@@ -76,7 +94,7 @@ class FeedCardController
         $feedCard->typeText = $activity->type;
         $feedCard->dateTime = $activity->dateTime;
         $feedCard->icon = $activity->getMedia();
-        $feedCard->url = $activity->url;
+        $feedCard->url = '/'.$activity->url;
         switch ($feedCard->type) {
             case 'QUEST-PARTICIPANT':
                 $feedCard->cta = "View Quest";

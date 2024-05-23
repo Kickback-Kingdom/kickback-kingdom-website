@@ -140,7 +140,7 @@ class QuoteController
 
             // Hammurabi
             [
-                "text" => "The first duty of government is to protect the powerless from the powerful.",
+                "text" => "Then Anu and Bel called by name me, Hammurabi, the exalted prince, who feared God, to bring about the rule of righteousness in the land, to destroy the wicked and the evil-doers; so that the strong should not harm the weak.",
                 "image" => "avatar/297.png",
                 "author" => "Hammurabi",
                 "date" => "1772 BC"

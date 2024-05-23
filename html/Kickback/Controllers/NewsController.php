@@ -113,8 +113,9 @@ class NewsController
             $quest->locator = $row["locator"];
             $quest->title = $row["title"];
             $quest->summary = $row["text"];
-
+            $quest->published = (bool) $row["published"];
             $quest->endDate = $dateTime;
+            $quest->style = (int) $row["style"];
 
             if (!empty($row["image"]))
             {
@@ -148,17 +149,18 @@ class NewsController
         if ($news->type == "BLOG-POST")
         {
             $blogPost = new vBlogPost('', $row["Id"]);
-            $blogPost->locator = $row["locator"];
+            //$blogPost->locator = $row["locator"];
             $blogPost->title = $row["title"];
             $blogPost->summary = $row["text"];
             $blogPost->publishedDateTime = $dateTime;
-
+            $blogPost->setLocator($row["locator"]);
+            $blogPost->published = (bool) $row["published"];
 
 
             $author = new vAccount('', $row["account_1_id"]);
             $author->username = $row["account_1_username"];
             $blogPost->author = $author;
-            
+
             if (!empty($row["image"]))
             {
                 $icon = new vMedia();
