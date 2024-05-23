@@ -10,7 +10,6 @@ require ("engine/account.php");
 require ("engine/bracket.php");
 require ("engine/ranked.php");
 require ("engine/content.php");
-require ("engine/feed.php");
 require ("engine/game.php");
 require ("engine/loot.php");
 require ("engine/discord.php");
