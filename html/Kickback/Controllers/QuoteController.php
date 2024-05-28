@@ -159,7 +159,7 @@ class QuoteController
         $quote->date = $quoteData["date"];
 
         $media = new vMedia();
-        $media->mediaPath = $quoteData["image"];
+        $media->setMediaPath($quoteData["image"]);
         $quote->icon = $media;
         return $quote;
     }

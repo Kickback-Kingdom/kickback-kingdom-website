@@ -41,7 +41,7 @@ class PrestigeController
         if ($row['account_from_avatar_media'] != null)
         {
             $avatar = new vMedia();
-            $avatar->mediaPath = $row['account_from_avatar_media'];
+            $avatar->setMediaPath($row['account_from_avatar_media']);
             $account->avatar = $avatar;
         }
 

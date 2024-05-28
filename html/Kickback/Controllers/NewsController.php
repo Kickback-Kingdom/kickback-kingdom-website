@@ -120,7 +120,7 @@ class NewsController
             if (!empty($row["image"]))
             {
                 $icon = new vMedia();
-                $icon->mediaPath = $row["image"];
+                $icon->setMediaPath($row["image"]);
 
                 $quest->icon = $icon;
             }
@@ -164,7 +164,7 @@ class NewsController
             if (!empty($row["image"]))
             {
                 $icon = new vMedia();
-                $icon->mediaPath = $row["image"];
+                $icon->setMediaPath($row["image"]);
 
                 $blogPost->icon = $icon;
             }

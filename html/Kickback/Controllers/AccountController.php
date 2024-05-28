@@ -9,6 +9,7 @@ use Kickback\Views\vRecordId;
 use Kickback\Views\vMedia;
 use Kickback\Models\Response;
 use Kickback\Services\Database;
+use Kickback\Controllers\LootController;
 
 class AccountController
 {
@@ -161,8 +162,27 @@ class AccountController
     }
 
     public static function getAccountChests(vRecordId $recordId) : Response {
-        
-        return new Response(false, 'AccountController::getAccountChests not implemented');
+        $conn = Database::getConnection();
+        // Prepare the SQL statement
+        $stmt = mysqli_prepare($conn, "SELECT loot.Id, loot.rarity, CONCAT(b.Directory,'/',b.Id,'.',b.extension) as ItemImg FROM kickbackdb.v_loot_item as loot left join Media b on b.Id = loot.media_id_large where loot.account_id = ? and loot.opened = 0");
+
+        // Bind the parameter to the placeholder in the SQL statement
+        mysqli_stmt_bind_param($stmt, "i", $recordId->crand); // "i" signifies that the parameter is an integer
+
+        // Execute the prepared statement
+        mysqli_stmt_execute($stmt);
+
+        // Store the result of the query
+        $result = mysqli_stmt_get_result($stmt);
+
+        $num_rows = mysqli_num_rows($result);
+        $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+        // Free the result & close the statement
+        mysqli_free_result($result);
+        mysqli_stmt_close($stmt);
+
+        return (new Response(true, "Account Chests",  $rows ));
     }
 
     public static function getAccountBySession(string $serviceKey, string $sessionToken) : Response {
@@ -214,6 +234,259 @@ class AccountController
         }
     }
     
+    public static function searchForAccount(string $searchTerm, int $page, int $itemsPerPage) : Response {
+        $conn = Database::getConnection();
+        //assert($conn instanceof mysqli);
+
+        // Add the wildcards to the searchTerm itself and convert to lowercase
+        $searchTerm = "%" . strtolower($searchTerm) . "%";
+
+        $offset = ($page - 1) * $itemsPerPage;
+
+        // Prepare the count statement
+        $countQuery = "SELECT COUNT(*) as total FROM v_account_info WHERE (LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?)  AND Banned = 0";
+        $stmtCount = $conn->prepare($countQuery);
+        if (false === $stmtCount) {
+            error_log($conn->error);
+            return new Response(false,
+                "Couldn't find account due to error(s).",
+                ["Error in SearchForAccount(...) when preparing SQL query. (mysqli_prepare)"]);
+        }
+
+        $success = $stmtCount->bind_param('ssss', $searchTerm, $searchTerm, $searchTerm, $searchTerm);
+        if (false === $success) {
+            error_log($stmtCount->error);
+            $stmtCount->close();
+            return new Response(false,
+                "Couldn't find account due to error(s).",
+                ["Error in SearchForAccount(...) binding SQL query parameters. (mysqli_stmt_bind_param)"]);
+        }
+
+        // Execute the count statement
+        $success = $stmtCount->execute();
+        if (false === $success) {
+            error_log($stmtCount->error);
+            $stmtCount->close();
+            return new Response(false,
+                "Couldn't find account due to error(s).",
+                ["Error in SearchForAccount(...) when executing SQL query. (mysqli_stmt_execute)"]);
+        }
+
+        $resultCount = $stmtCount->get_result();
+        if (false === $resultCount) {
+            error_log($stmtCount->error);
+            $stmtCount->close();
+            return new Response(false,
+                "Couldn't find account due to error(s).",
+                ["Error in SearchForAccount(...) when retrieving SQL query results. (mysqli_stmt_get_result)"]);
+        }
+
+        $countRow = $resultCount->fetch_assoc();
+        if (!isset($countRow)) {
+            error_log($stmtCount->error);
+            $stmtCount->close();
+            return new Response(false,
+                "Couldn't find account due to error(s).",
+                ["Error in SearchForAccount(...) when fetching next row from SQL query results. (mysqli_fetch_assoc)"]);
+        }
+
+        $count = $countRow["total"];
+        $stmtCount->close();
+
+        // Prepare the main search statement
+        $query = "SELECT *,
+            (
+                (CASE WHEN LOWER(username) LIKE ? THEN 4 ELSE 0 END) +
+                (CASE WHEN LOWER(firstname) LIKE ? THEN 3 ELSE 0 END) +
+                (CASE WHEN LOWER(lastname) LIKE ? THEN 2 ELSE 0 END) +
+                (CASE WHEN LOWER(email) LIKE ? THEN 1 ELSE 0 END)
+            ) AS relevancy_score
+            FROM v_account_info
+            WHERE (LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?) AND Banned = 0
+            ORDER BY relevancy_score DESC, level DESC, exp_current DESC, Username
+            LIMIT ? OFFSET ?";
+        $stmt = $conn->prepare($query);
+        if (false === $stmt) {
+            error_log($conn->error);
+            return new Response(false,
+                "Couldn't find account due to error(s).",
+                ["Error in SearchForAccount(...) when preparing SQL query. (mysqli_prepare)"]);
+        }
+
+        $success = $stmt->bind_param('ssssssssii', $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $itemsPerPage, $offset);
+        if (false === $success) {
+            error_log($stmt->error);
+            $stmt->close();
+            return new Response(false,
+                "Couldn't find account due to error(s).",
+                ["Error in SearchForAccount(...) binding SQL query parameters. (mysqli_stmt_bind_param)"]);
+        }
+
+        // Execute the main search statement
+        $success = $stmt->execute();
+        if (false === $success) {
+            error_log($stmt->error);
+            $stmt->close();
+            return new Response(false,
+                "Couldn't find account due to error(s).",
+                ["Error in SearchForAccount(...) when executing SQL query. (mysqli_stmt_execute)"]);
+        }
+
+        $result = $stmt->get_result();
+        if (false === $result) {
+            error_log($stmt->error);
+            $stmt->close();
+            return new Response(false,
+                "Couldn't find account due to error(s).",
+                ["Error in SearchForAccount(...) when retrieving SQL query results. (mysqli_stmt_get_result)"]);
+        }
+
+        $accountItems = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        $newAccountItems = [];
+        foreach($accountItems as $accountRow) {
+            // Remove unwanted fields
+
+            $account = self::row_to_vAccount($accountRow);
+
+            unset($accountRow['pass_reset']);
+            unset($accountRow['relevancy_score']);
+
+            $badgesResp = LootController::getBadgesByAccount($account);
+            $account->badge_display = $badgesResp->data;
+
+            $playerRankResp = self::getAccountGameRanks($account);
+            $account->game_ranks = $playerRankResp->data;
+            $account->isGoldCardHolder = in_array(1, array_column($playerRankResp->data, 'rank'));
+            $newAccountItems[] = $account;
+        }
+
+
+        return (new Response(true, "Accounts", [
+            'total' => $count,
+            'accountItems' => $newAccountItems
+        ]));
+    }
+
+    private static function getAccountTitle(vAccount $account) : string {
+        $level = $account->level;
+        $prestige = $account->prestige;
+        // Define the list of titles for evil and good prestige
+        $evil_prestige_titles = [
+            "Barbaric",
+            "Trolling",
+            "Savage",
+            "Drunken",
+            "Ruthless",
+            "Cruel",
+            "Vicious",
+            "Wicked",
+            "Nefarious",
+            "Corrupt",
+            "Diabolical",
+            "Tyrannical",
+            "Evil"
+        ];
+    
+        $good_prestige_titles = [
+            "Unrecognized",
+            "Recognized",
+            "Kind",
+            "Respected",
+            "Benevolent",
+            "Honorable",
+            "Virtuous",
+            "Noble",
+            "Distinguished",
+            "Esteemed",
+            "Renowned",
+            "Wise",
+            "Glorious",
+            "Just",
+            "Magnificent",
+            "Gracious",
+            "Compassionate",
+            "Eminent",
+            "Altruistic",
+            "Heroic",
+            "Prestigious",
+            "Illustrious",
+            "Exemplary",
+            "Saintly",
+            "Legendary"
+        ];
+    
+        // Define the list of titles for levels
+        $level_titles = [
+            "Noob",
+            "Adventurer",
+            "Squire",
+            "Knight",
+            "Elder",
+            "Hero",
+            "Baron",
+            "Viscount",
+            "Count",
+            "Marquis",
+            "Duke",
+            "Prince",
+            "King",
+            "Emperor",
+            "Legend",
+            "Archon",
+            "Overlord",
+            "Immortal",
+            "Omnipotent",
+            "Eternal",
+            "Infinite",
+            "Titan",
+            "Deity",
+            "Demigod",
+            "God"
+        ];
+    
+        // Clamp the level and prestige values
+        $level = max(0, min($level, 50));
+        $prestige = max(-count($evil_prestige_titles), min($prestige, count($good_prestige_titles)));
+    
+        // Determine the prestige title based on whether the prestige is negative or non-negative
+        if ($prestige < 0) {
+            $prestige_title = $evil_prestige_titles[abs($prestige) - 1];
+        } else {
+            $prestige_title = $good_prestige_titles[$prestige];
+        }
+    
+        $level_title = $level_titles[intdiv($level, 2)];
+    
+        return $prestige_title . " " . $level_title;
+    }
+
+    private static function getAccountGameRanks(vRecordId $account) : Response {
+        $conn = Database::getConnection();
+        
+        // Prepare the SQL statement
+        $stmt = $conn->prepare("SELECT * FROM v_game_elo_rank_info WHERE account_id = ? LIMIT 5");
+        
+        // Bind the parameters
+        $stmt->bind_param("i", $account->crand);
+        
+        // Execute the statement
+        $stmt->execute();
+        
+        // Get the result
+        $result = $stmt->get_result();
+        
+        // Fetch all rows
+        $rows = $result->fetch_all(MYSQLI_ASSOC);
+        
+        // Close the statement
+        $stmt->close();
+        
+        return new Response(true, "Quest Badges", $rows);
+    }
+    
+
     private static function row_to_vAccount($row) : vAccount {
         $account = new vAccount('', $row["Id"]);
 
@@ -246,44 +519,46 @@ class AccountController
         if ($row['avatar_media'] != null)
         {
             $avatar = new vMedia();
-            $avatar->mediaPath = $row['avatar_media'];
+            $avatar->setMediaPath($row['avatar_media']);
             $account->avatar = $avatar;
         }
 
         if ($row['player_card_border_media'] != null)
         {
             $playerCardBorder = new vMedia();
-            $playerCardBorder->mediaPath = $row['player_card_border_media'];
+            $playerCardBorder->setMediaPath($row['player_card_border_media']);
             $account->playerCardBorder = $playerCardBorder;
         }
 
         if ($row['banner_media'] != null)
         {
             $banner = new vMedia();
-            $banner->mediaPath = $row['banner_media'];
+            $banner->setMediaPath($row['banner_media']);
             $account->banner = $banner;
         }
 
         if ($row['background_media'] != null)
         {
             $background = new vMedia();
-            $background->mediaPath = $row['background_media'];
+            $background->setMediaPath($row['background_media']);
             $account->background = $background;
         }
 
         if ($row['charm_media'] != null)
         {
             $charm = new vMedia();
-            $charm->mediaPath = $row['charm_media'];
+            $charm->setMediaPath($row['charm_media']);
             $account->charm = $charm;
         }
 
         if ($row['companion_media'] != null)
         {
             $companion = new vMedia();
-            $companion->mediaPath = $row['companion_media'];
+            $companion->setMediaPath($row['companion_media']);
             $account->companion = $companion;
         }
+
+        $account->title = self::getAccountTitle($account);
 
         return $account;
     }

@@ -54,7 +54,7 @@ class ActivityController
         if ($row['event_icon_id'] != null)
         {
             $icon = new vMedia('', $row["event_icon_id"]);
-            $icon->mediaPath = $row['event_icon_path'];
+            $icon->setMediaPath($row['event_icon_path']);
             $activity->icon = $icon;
         }
 

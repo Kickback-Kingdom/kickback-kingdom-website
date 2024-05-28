@@ -21,6 +21,8 @@ class vAccount extends vRecordId
     public int $expCurrent;
     public int $expGoal;
 
+    public string $title;
+
     public bool $isAdmin;
     public bool $isMerchant;
     public bool $isAdventurer;
@@ -30,6 +32,8 @@ class vAccount extends vRecordId
     public bool $isArtist;
     public bool $isQuestGiver;
 
+    public bool $isGoldCardHolder;
+
     public ?vMedia $avatar = null;
     public ?vMedia $playerCardBorder = null;
     public ?vMedia $banner = null;
@@ -37,10 +41,14 @@ class vAccount extends vRecordId
     public ?vMedia $charm = null;
     public ?vMedia $companion = null;
     
+    public array $badge_display = [];
+    public array $game_ranks = [];
     
     function __construct(string $ctime = '', int $crand = -1)
     {
         parent::__construct($ctime, $crand);
+
+        $this->setDefaultProfilePicture();
     }
 
     public function getURL() : string
@@ -50,15 +58,14 @@ class vAccount extends vRecordId
 
     public function getProfilePictureURL() : string
     {
+        return $this->avatar->getFullPath();
+    }
 
-        if ($this->avatar != null)
-        {
-            return $this->avatar->getFullPath();
-        }
-        else
-        {
-            return self::getAccountDefaultProfilePicture($this);
-        }
+    private function setDefaultProfilePicture()
+    {
+        $avatarMedia = new vMedia();
+        $avatarMedia->setMediaPath(self::getDefaultProfilePicture($this->crand));
+        $this->avatar = $avatarMedia;
     }
 
 
@@ -67,7 +74,7 @@ class vAccount extends vRecordId
         return self::getDefaultProfilePicture($recordId->crand);
     }
 
-    public static function getDefaultProfilePicture(int $i) : string
+    private static function getDefaultProfilePicture(int $i) : string
     {
 
         $total = 34;
@@ -75,7 +82,7 @@ class vAccount extends vRecordId
         $hash_number = hexdec(substr($hash, 0, 8));
         $random_number = $hash_number % $total + 1;
         $image_id = $random_number;
-        return "/assets/media/profiles/young-".$image_id.".jpg";
+        return "profiles/young-".$image_id.".jpg";
     }
 
     public function getAccountElement() : string {
