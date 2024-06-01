@@ -19,18 +19,11 @@ class vActivity
     public ?string $character;
     public ?bool $charaterWasRandom;
     public vDateTime $dateTime;
-    public ?vMedia $icon = null;
+    public vMedia $icon;
     public ?string $url = null;
 
     public function getMedia() : vMedia
     {
-        if ($this->icon == null)
-        {
-            $media = new vMedia();
-            $media->setFullPath(vAccount::getDefaultProfilePicture($this->nameId));
-            return $media;
-        }
-
         return $this->icon;
     }
 }

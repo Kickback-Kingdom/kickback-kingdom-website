@@ -12,12 +12,17 @@ class vDateTime
     public string $formattedBasic = "DATE ERROR";
     public string $formattedDetailed = "DATE ERROR";
     
+    public function isExpired() : bool {
+        return ($this->value < (New DateTime()));
+    }
+
     public function setDateTime(DateTime $dateTime) {
         $this->value = $dateTime;
         $this->formattedBasic = date_format($this->value,"M j, Y");
         $this->formattedDetailed = date_format($this->value,"M j, Y H:i:s");
         $this->valueString = date_format($this->value, "Y-m-d H:i:s");
     }
+
     public function setDateTimeFromString(string $dateTimeString)
     {
         $this->setDateTime(date_create($dateTimeString));

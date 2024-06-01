@@ -57,6 +57,12 @@ class ActivityController
             $icon->setMediaPath($row['event_icon_path']);
             $activity->icon = $icon;
         }
+        else
+        {
+
+            $otherAccount = new vAccount('',$activity->nameId);
+            $activity->icon = $otherAccount->avatar;
+        }
 
         $activity->url = $row["event_url"];
 
