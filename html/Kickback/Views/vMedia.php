@@ -8,7 +8,7 @@ class vMedia extends vRecordId
 {
     public string $name;
     public string $desc;
-    public vRecordId $authorId;
+    public vAccount $author;
     public vDateTime $dateCreated;
     public string $extension;
     public string $directory;

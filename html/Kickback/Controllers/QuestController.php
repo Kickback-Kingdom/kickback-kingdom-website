@@ -11,6 +11,8 @@ use Kickback\Views\vRecordId;
 use Kickback\Views\vDateTime;
 use Kickback\Views\vMedia;
 use Kickback\Views\vAccount;
+use Kickback\Views\vContent;
+use Kickback\Views\vItem;
 
 
 class QuestController
@@ -178,6 +180,8 @@ class QuestController
         $quest->title = $row["name"];
         $quest->locator = $row["locator"];
         $quest->published = (bool)$row["published"];
+        $quest->beingReviewed = (bool)$row["being_reviewed"];
+        $quest->summary = $row["summary"];
         if ($row["tournament_id"] != null)
         {
             $quest->tournamet = new vTournament('', $row["tournament_id"]);
@@ -217,6 +221,11 @@ class QuestController
             $quest->raffle = new vRaffle('', $row["raffle_id"]);
         }
 
+        if ($row["content_id"] != null)
+        {
+            $quest->content = new vContent('', $row["content_id"]);
+        }
+
         $host1 = new vAccount('', $row["host_id"]);
         $host1->username = $row["host_name"];
 
@@ -231,7 +240,43 @@ class QuestController
     {
         $questReward = new vQuestReward();
 
+        $questReward->questId = new vRecordId('',$row["quest_id"]);
 
+        $questReward->category = $row["category"];
+
+        $item = new vItem('',$row["Id"]);
+        $item->type = (int)$row["type"];
+        $item->rarity = (int)$row["rarity"];
+        $item->description = $row["desc"];
+        $item->name = $row["name"];
+
+        $questReward->item = $item;
+
+        if ($row["BigImgPath"] != null)
+        {
+            $bigImg = new vMedia();
+            $bigImg->setMediaPath($row["BigImgPath"]);
+            
+            $author = new vAccount();
+            $author->username = $row["artist"];
+            $bigImg->author = $author;
+            $item->iconBig = $bigImg;
+        }
+
+
+
+
+        if ($row["SmallImgPath"] != null)
+        {
+            $smallImg = new vMedia();
+            $smallImg->setMediaPath($row["SmallImgPath"]);
+            
+            $author = new vAccount();
+            $author->username = $row["artist"];
+            $smallImg->author = $author;
+
+            $item->iconSmall = $smallImg;
+        }
 
         return $questReward;
     }

@@ -6,15 +6,16 @@ namespace Kickback\Views;
 use Kickback\Views\vAccount;
 use Kickback\Views\vDateTime;
 
-class vQuestReward extends vRecordId
+class vQuestReward
 {
+    public vRecordId $questId;
     public string $category;
     public vItem $item;
 
-    function __construct(string $ctime = '', int $crand = -1)
+    /*function __construct(string $ctime = '', int $crand = -1)
     {
         parent::__construct($ctime, $crand);
-    }
+    }*/
 
 }
 

@@ -1,3 +1,6 @@
+<?php
+use Kickback\Controllers\QuestController;
+?>
 <div class="card mb-3 feed-card <?= $_vFeedCard->cssClassCard; ?>">
     <div class="row g-0">
         <div class="<?= $_vFeedCard->cssClassImageColSize; ?>" style="margin:auto;position: relative;">
@@ -45,7 +48,7 @@
                     if ($_vFeedCard->hasRewards)
                     {
 
-                        $questRewardsResp = GetQuestRewardsByQuestId($_vFeedCard->quest->crand);
+                        $questRewardsResp = QuestController::getQuestRewardsByQuestId($_vFeedCard->quest);
                         $questRewards = $questRewardsResp->data;
                         
                         $displayedItemIds = [];
@@ -56,17 +59,17 @@
 
                                 
                                 // If the item_id is in the displayedItemIds array, skip this iteration
-                                if (in_array($questReward['Id'], $displayedItemIds)) {
+                                if (in_array($questReward->item->crand, $displayedItemIds)) {
                                     continue;
                                 }
                                 
                                 // Add the item_id to the displayedItemIds array
-                                $displayedItemIds[] = $questReward['Id'];
+                                $displayedItemIds[] = $questReward->item->crand;
                             ?>
 
                         <span tabindex="0" data-bs-toggle="popover" data-bs-custom-class="custom-popover" data-bs-trigger="focus"  data-bs-placement="top"
-                            data-bs-title="<?= htmlspecialchars($questReward['name']); ?>" data-bs-content="<?= htmlspecialchars($questReward['desc']); ?>">
-                            <img src="/assets/media/<?= htmlspecialchars($questReward['SmallImgPath']); ?>" class="loot-badge" />
+                            data-bs-title="<?= htmlspecialchars($questReward->item->name); ?>" data-bs-content="<?= htmlspecialchars($questReward->item->description); ?>">
+                            <img src="<?= $questReward->item->iconSmall->getFullPath(); ?>" class="loot-badge" />
                         </span>
 
                         <?php

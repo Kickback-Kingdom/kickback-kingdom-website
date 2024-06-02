@@ -6,6 +6,7 @@ namespace Kickback\Views;
 use Kickback\Views\vAccount;
 use Kickback\Views\vDateTime;
 use Kickback\Views\vTournament;
+use Kickback\Views\vContent;
 use Kickback\Services\Session;
 
 class vQuest extends vRecordId
@@ -21,7 +22,7 @@ class vQuest extends vRecordId
     public bool $requiresApplication;
 
     public ?vTournament $tournament = null;
-    public ?vRecordId $contentId = null;
+    public ?vContent $content = null;
     public ?vRaffle $raffle = null;
     public ?vQuestLine $questLine = null;
 
@@ -62,12 +63,11 @@ class vQuest extends vRecordId
         return ($this->questLine != null);
     }
 
-    public function canEditQuest()
-    {
+    public function canEditQuest() : bool {
         return $this->isQuestHost() || Session::isAdmin();
     }
 
-    public function isQuestHost() {
+    public function isQuestHost() : bool {
         if (Session::isLoggedIn())
         {
             return (Session::getCurrentAccount()->crand == $this->host1->crand || ($this->host2 != null && Session::getCurrentAccount()->crand == $this->host2->crand));
@@ -75,6 +75,10 @@ class vQuest extends vRecordId
         else{
             return false;
         }
+    }
+
+    public function hasContent() : bool {
+        return ($this->content != null);
     }
 }
 

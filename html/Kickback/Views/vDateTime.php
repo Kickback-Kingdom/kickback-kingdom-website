@@ -28,8 +28,8 @@ class vDateTime
         $this->setDateTime(date_create($dateTimeString));
     }
 
-    public function getDateTimeElement() {
-        return '<span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="'.$this->formattedDetailed.' UTC">'.$this->formattedBasic.'</span>';
+    public function getDateTimeElement($id = null) {
+        return '<span class="date" '.($id == null?'':' id="'.$id.'" ').' data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="'.$this->formattedDetailed.' UTC">'.$this->formattedBasic.'</span>';
     }
 }
 
