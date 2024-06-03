@@ -17,7 +17,7 @@ class vActivity
     public string $name;
     public ?string $team;
     public ?string $character;
-    public ?bool $charaterWasRandom;
+    public ?bool $characterWasRandom;
     public vDateTime $dateTime;
     public vMedia $icon;
     public ?string $url = null;

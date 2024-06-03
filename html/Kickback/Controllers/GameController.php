@@ -82,8 +82,7 @@ class GameController
         return new Response(true, "Retrieved games successfully", $games);
     }
     
-    private static function row_to_vGame($row) : vGame
-    {
+    private static function row_to_vGame($row) : vGame {
         $game = new vGame('', $row['Id']);
         $game->name = $row['Name'];
         $game->description = $row['Desc'];
@@ -116,9 +115,7 @@ class GameController
     }
 
     private static function insert(Game $game) : Response {
-
         return new Response(false, 'GameController::Insert not implemented');
-
     }
 }
 ?>

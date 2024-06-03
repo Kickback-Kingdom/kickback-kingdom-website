@@ -181,7 +181,7 @@ class vQuest extends vRecordId
         }
     }
 
-    function checkSpecificParticipationRewardsExistById() {
+    public function checkSpecificParticipationRewardsExistById() {
         // Define the specific reward Ids to check for
         $specificRewardIds = [3, 4, 15];
         
@@ -204,6 +204,10 @@ class vQuest extends vRecordId
     
         // If all specific reward Ids are found, return true
         return true;
+    }
+
+    public function getPageContent() : array {
+        return $this->content->pageContent;
     }
 
 }

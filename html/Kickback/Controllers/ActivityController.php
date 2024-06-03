@@ -44,7 +44,7 @@ class ActivityController
         $activity->name = $row["event_name"];
         $activity->team = $row["event_team"];
         $activity->character = $row["event_character"];
-        $activity->characterWasRandom = $row["event_character_was_random"];
+        $activity->characterWasRandom = is_null($row["event_character_was_random"]) ? null : $row["event_character_was_random"] == 1 ;
 
         $eventDate = new vDateTime();
         $eventDate->setDateTimeFromString($row["event_date"]);

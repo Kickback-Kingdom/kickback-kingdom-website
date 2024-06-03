@@ -18,6 +18,7 @@ use Kickback\Views\vQuestLine;
 use Kickback\Models\PlayStyle;
 use Kickback\Models\ItemType;
 use Kickback\Models\ItemRarity;
+use Kickback\Views\vTournament;
 
 class QuestController
 {
@@ -187,8 +188,8 @@ class QuestController
 
         if ($row["tournament_id"] != null)
         {
-            $quest->tournamet = new vTournament('', $row["tournament_id"]);
-            $quest->tournamet->hasBracket = $row["hasBracket"];
+            $quest->tournament = new vTournament('', $row["tournament_id"]);
+            $quest->tournament->hasBracket = $row["hasBracket"]==1;
         }
 
         if ($row["end_date"] != null)
@@ -293,7 +294,7 @@ class QuestController
 
         return $questReward;
     }
-    
+
     private static function row_to_vQuestApplicant($row) : vQuestApplicant {
         $questReward = new vQuestApplicant();
 

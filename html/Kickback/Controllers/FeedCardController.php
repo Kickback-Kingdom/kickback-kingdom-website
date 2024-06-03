@@ -16,11 +16,9 @@ use DateTime;
 
 class FeedCardController
 {
-
     public static function vQuote_to_vFeedCard(vQuote $quote) : vFeedCard {
         $feedCard = new vFeedCard();
 
-        
         $feedCard->type = "QUOTE";
         $feedCard->typeText = "QUOTE";
         $feedCard->description = $quote->text;
