@@ -12,6 +12,7 @@ use Kickback\Views\vReviewStatus;
 use Kickback\Views\vQuestLine;
 use Kickback\Models\PlayStyle;
 use Kickback\Controllers\QuestLineController;
+use Kickback\Controllers\QuestController;
 
 class vQuest extends vRecordId
 {
@@ -85,7 +86,7 @@ class vQuest extends vRecordId
     }
 
     public function hasContent() : bool {
-        return ($this->content != null);
+        return $this->content->hasPageContent();
     }
 
     public function getHost2Id() : string {
@@ -158,6 +159,52 @@ class vQuest extends vRecordId
         }
     }
 
+    public function populateContent() : void {
+        if ($this->hasContent())
+        {
+            $this->content->populateContent("QUEST", $this->locator);
+        }
+    }
+
+    public function populateRewards() : void {
+        $questRewardsResp = QuestController::getQuestRewardsByQuestId($this);
+        if ($questRewardsResp->success)
+        {
+            $questRewards = $questRewardsResp->data;
+            $this->rewards = [];
+            foreach ($questRewards as $questReward) {
+                $this->rewards[$questReward->category][] = $questReward;
+            }
+        }
+        else {
+            throw new \Exception($questRewardsResp->message);
+        }
+    }
+
+    function checkSpecificParticipationRewardsExistById() {
+        // Define the specific reward Ids to check for
+        $specificRewardIds = [3, 4, 15];
+        
+        // Check if 'Participation' category exists
+        if (!isset($this->rewards['Participation'])) {
+            return false;
+        }
+    
+        // Extract Ids of the rewards in the Participation category
+        $participationRewardIds = array_map(function($reward) {
+            return $reward['Id'];
+        }, $this->rewards['Participation']);
+    
+        // Check for the existence of each specific reward Id
+        foreach ($specificRewardIds as $specificRewardId) {
+            if (!in_array($specificRewardId, $participationRewardIds)) {
+                return false;
+            }
+        }
+    
+        // If all specific reward Ids are found, return true
+        return true;
+    }
 
 }
 

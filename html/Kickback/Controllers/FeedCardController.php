@@ -26,7 +26,7 @@ class FeedCardController
         $feedCard->description = $quote->text;
         $feedCard->icon = $quote->icon;
         $feedCard->dateTime = new vDateTime();
-        $feedCard->dateTime->dateTimeFormattedBasic = $quote->date;
+        $feedCard->dateTime->formattedBasic = $quote->date;
         $feedCard->quoteStyleText = true;
         $feedCard->quote = $quote;
         $feedCard->createdByPrefix = "Said";
@@ -109,7 +109,7 @@ class FeedCardController
             $feedCard->reviewStatus = $news->blogPost->reviewStatus;
         }
 
-        if ($feedCard->published == false) {
+        if ($feedCard->reviewStatus->published == false) {
             $feedCard->title = "[DRAFT] ".$feedCard->title." [DRAFT]"; 
         }
 

@@ -7,6 +7,8 @@ use Kickback\Views\vRecordId;
 use Kickback\Views\vMedia;
 use Kickback\Views\vQuest;
 use Kickback\Views\vAccount;
+use Kickback\Models\ItemType;
+use Kickback\Models\ItemRarity;
 
 class vItem extends vRecordId
 {
@@ -15,6 +17,8 @@ class vItem extends vRecordId
     public vMedia $iconSmall;
     public vMedia $iconBig;
     public ?vAccount $nominatedBy = null;
+    public ItemType $type;
+    public ItemRarity $rarity;
 
     function __construct(string $ctime = '', int $crand = -1)
     {

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Kickback\Views;
 
+use Kickback\Controllers\ContentController;
 
 class vContent extends vRecordId
 {
@@ -16,6 +17,21 @@ class vContent extends vRecordId
 
     public function isValid() : bool {
         return ($this->pageContent != null && count($this->pageContent["data"]) > 0);
+    }
+
+    public function hasPageContent() : bool {
+        return $this->crand > -1;
+    }
+
+    public function populateContent(string $container_type,string $container_id) : void {
+        $contentResp = ContentController::getContentDataById($this,$container_type,$container_id);
+        if ($contentResp->success)
+        {
+            $this->pageContent = $contentResp->data;
+        }
+        else{
+            throw new \Exception($contentResp->message);
+        }
     }
 
 }

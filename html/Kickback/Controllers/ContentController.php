@@ -10,7 +10,7 @@ use Kickback\Services\Database;
 class ContentController {
 
     
-    public static function getContentDataById(vRecordId $contentId, $container_type, $container_id) {
+    public static function getContentDataById(vRecordId $contentId, string $container_type, string $container_id) {
         
         $conn = Database::getConnection();
         

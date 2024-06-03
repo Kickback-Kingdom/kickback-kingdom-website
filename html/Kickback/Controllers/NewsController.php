@@ -12,6 +12,8 @@ use Kickback\Views\vMedia;
 use Kickback\Views\vQuest;
 use Kickback\Views\vBlogPost;
 use Kickback\Views\vDateTime;
+use Kickback\Views\vReviewStatus;
+use Kickback\Models\PlayStyle;
 
 class NewsController
 {
@@ -115,7 +117,7 @@ class NewsController
             $quest->summary = $row["text"];
             $quest->reviewStatus = new vReviewStatus((bool) $row["published"]);
             $quest->endDate = $dateTime;
-            $quest->style = (int) $row["style"];
+            $quest->playStyle = PlayStyle::from((int)$row["style"]);
 
             if (!empty($row["image"]))
             {

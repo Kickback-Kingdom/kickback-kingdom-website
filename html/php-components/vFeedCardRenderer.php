@@ -4,7 +4,7 @@ use Kickback\Controllers\QuestController;
 <div class="card mb-3 feed-card <?= $_vFeedCard->cssClassCard; ?>">
     <div class="row g-0">
         <div class="<?= $_vFeedCard->cssClassImageColSize; ?>" style="margin:auto;position: relative;">
-            <?php if (!$_vFeedCard->hideType) { ?><span class="feed-stamp feed-stamp-quest <?= ($_vFeedCard->expired?"bg-tertiary":"bg-secondary bg-ranked-1"); ?>"><?= $_vFeedCard->typeText; ?></span><?php } ?>
+            <?php if (!$_vFeedCard->hideType) { ?><span class="feed-stamp feed-stamp-quest <?= ($_vFeedCard->dateTime->isExpired()?"bg-tertiary":"bg-secondary bg-ranked-1"); ?>"><?= $_vFeedCard->typeText; ?></span><?php } ?>
             <img src="<?= $_vFeedCard->icon->getFullPath();?>"  class="img-fluid img-thumbnail"/>
         </div>
         <div class="<?= $_vFeedCard->cssClassTextColSize; ?> <?= $_vFeedCard->cssClassRight; ?>" >
@@ -30,7 +30,7 @@ use Kickback\Controllers\QuestController;
                         <p><?= $_vFeedCard->description; ?></p>
                     </blockquote>
                     <figcaption class="blockquote-footer">
-                        <?= $_vFeedCard->quote->author; ?> <cite title="Source Date"> ~<?= $_vFeedCard->dateTime->dateTimeFormattedBasic; ?></cite>
+                        <?= $_vFeedCard->quote->author; ?> <cite title="Source Date"> ~<?= $_vFeedCard->dateTime->formattedBasic; ?></cite>
                     </figcaption>
                 </figure>
 
@@ -78,14 +78,14 @@ use Kickback\Controllers\QuestController;
                 ?>
                 <p class="feed-tags">
                 <?php if ($_vFeedCard->hasTags) { ?>
-                    <span class="quest-tag quest-tag-<?= htmlspecialchars(strtolower(PlayStyleToName($_vFeedCard->style))); ?>" tabindex="0" data-bs-toggle="popover" data-bs-custom-class="custom-popover" 
-                        data-bs-trigger="focus" data-bs-placement="right" data-bs-title="<?= htmlspecialchars(PlayStyleToName($_vFeedCard->style)); ?>"
-                        data-bs-content="<?= htmlspecialchars(PlayStyleToDesc($_vFeedCard->style)); ?>"><?= htmlspecialchars(PlayStyleToName($_vFeedCard->style)); ?></span>
+                    <span class="quest-tag quest-tag-<?= htmlspecialchars(strtolower(PlayStyleToName($_vFeedCard->quest->playStyle))); ?>" tabindex="0" data-bs-toggle="popover" data-bs-custom-class="custom-popover" 
+                        data-bs-trigger="focus" data-bs-placement="right" data-bs-title="<?= htmlspecialchars(PlayStyleToName($_vFeedCard->quest->playStyle)); ?>"
+                        data-bs-content="<?= htmlspecialchars(PlayStyleToDesc($_vFeedCard->quest->playStyle)); ?>"><?= htmlspecialchars(PlayStyleToName($_vFeedCard->quest->playStyle)); ?></span>
                         
                 <?php } 
                 
                 if (!$_vFeedCard->hideCTA) { ?>
-                    <a class="btn btn-sm float-end <?= ($_vFeedCard->expired?"text-white bg-tertiary":"bg-ranked-1"); ?>" href="<?= $_vFeedCard->getURL();?>"><?= $_vFeedCard->cta; ?> <i
+                    <a class="btn btn-sm float-end <?= ($_vFeedCard->dateTime->isExpired()?"text-white bg-tertiary":"bg-ranked-1"); ?>" href="<?= $_vFeedCard->getURL();?>"><?= $_vFeedCard->cta; ?> <i
                             class="fa-solid fa-angle-right"></i></a><?php } ?>
                 </p>
             </div>
