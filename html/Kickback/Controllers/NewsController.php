@@ -113,7 +113,7 @@ class NewsController
             $quest->locator = $row["locator"];
             $quest->title = $row["title"];
             $quest->summary = $row["text"];
-            $quest->published = (bool) $row["published"];
+            $quest->reviewStatus = new vReviewStatus((bool) $row["published"]);
             $quest->endDate = $dateTime;
             $quest->style = (int) $row["style"];
 
@@ -154,7 +154,7 @@ class NewsController
             $blogPost->summary = $row["text"];
             $blogPost->publishedDateTime = $dateTime;
             $blogPost->setLocator($row["locator"]);
-            $blogPost->published = (bool) $row["published"];
+            $blogPost->reviewStatus = new vReviewStatus((bool) $row["published"]);
 
 
             $author = new vAccount('', $row["account_1_id"]);

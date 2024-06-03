@@ -13,7 +13,9 @@ use Kickback\Views\vMedia;
 use Kickback\Views\vAccount;
 use Kickback\Views\vContent;
 use Kickback\Views\vItem;
-
+use Kickback\Views\vReviewStatus;
+use Kickback\Views\vQuestLine;
+use Kickback\Models\PlayStyle;
 
 class QuestController
 {
@@ -74,11 +76,12 @@ class QuestController
     {
         $conn = Database::getConnection();
         $offset = ($page - 1) * $itemsPerPage;
-
-        $sql = "SELECT f.* FROM kickbackdb.v_feed f
+        $sql = "SELECT * FROM v_quest_info where quest_line_id = ? LIMIT ? OFFSET ?";
+        
+        /*$sql = "SELECT f.* FROM kickbackdb.v_feed f
                 LEFT JOIN quest q ON f.Id = q.Id 
                 WHERE f.published = 1 AND q.quest_line_id = ? AND f.type = 'QUEST'
-                LIMIT ? OFFSET ?";
+                LIMIT ? OFFSET ?";*/
 
         $stmt = $conn->prepare($sql);
         if ($stmt === false) {
@@ -178,10 +181,16 @@ class QuestController
         $quest = new vQuest();
 
         $quest->title = $row["name"];
+
         $quest->locator = $row["locator"];
-        $quest->published = (bool)$row["published"];
-        $quest->beingReviewed = (bool)$row["being_reviewed"];
+        
+        $quest->reviewStatus = new vReviewStatus((bool)$row["published"], (bool)$row["being_reviewed"]);
+
+
         $quest->summary = $row["summary"];
+
+
+
         if ($row["tournament_id"] != null)
         {
             $quest->tournamet = new vTournament('', $row["tournament_id"]);
@@ -225,6 +234,15 @@ class QuestController
         {
             $quest->content = new vContent('', $row["content_id"]);
         }
+        else{
+            $quest->content = new vContent();
+            $quest->content->htmlContent = $row["desc"];
+        }
+
+        if ($row["quest_line_id"] != null)
+        {
+            $quest->questLine = new vQuestLine('',$row["quest_line_id"]);
+        }
 
         $host1 = new vAccount('', $row["host_id"]);
         $host1->username = $row["host_name"];
@@ -232,6 +250,8 @@ class QuestController
         $quest->host1 = $host1;
 
         $quest->requiresApplication = (bool)$row["req_apply"];
+
+        $quest->playStyle = PlayStyle::from($row["play_style"]);
 
         return $quest;
     }

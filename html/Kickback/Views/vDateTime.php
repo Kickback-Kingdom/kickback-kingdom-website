@@ -11,7 +11,8 @@ class vDateTime
     public DateTime $value;
     public string $formattedBasic = "DATE ERROR";
     public string $formattedDetailed = "DATE ERROR";
-    
+    public string $formattedYmd = "DATE ERROR";
+    public string $formattedHi = "DATE ERROR";
     public function isExpired() : bool {
         return ($this->value < (New DateTime()));
     }
@@ -20,6 +21,8 @@ class vDateTime
         $this->value = $dateTime;
         $this->formattedBasic = date_format($this->value,"M j, Y");
         $this->formattedDetailed = date_format($this->value,"M j, Y H:i:s");
+        $this->formattedYmd = date_format($this->value,"Y-m-d");
+        $this->formattedHi = date_format($this->value,"H:i");
         $this->valueString = date_format($this->value, "Y-m-d H:i:s");
     }
 

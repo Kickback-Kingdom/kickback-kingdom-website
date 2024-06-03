@@ -9,6 +9,8 @@ use Kickback\Views\vFeedCard;
 use Kickback\Views\vNews;
 use Kickback\Views\vQuote;
 use Kickback\Views\vDateTime;
+use Kickback\Views\vQuest;
+use Kickback\Views\vQuestLine;
 
 use DateTime;
 
@@ -39,33 +41,61 @@ class FeedCardController
         return $feedCard;
     }
 
-    public static function vNews_to_vFeedCard(vNews $news) : vFeedCard {
+    public static function vQuest_to_vFeedCard(vQuest $quest) : vFeedCard {
         $feedCard = new vFeedCard();
-        $feedCard->type = $news->type;
-        $feedCard->typeText = $news->type;
+        $feedCard->type = "QUEST";
+        $feedCard->typeText = "QUEST";
+        
+        $feedCard->icon = $quest->icon;
+        $feedCard->title = $quest->title;
+        $feedCard->description = $quest->summary;
+        $feedCard->quest = $quest;
+        $feedCard->hasRewards = true;
+        $feedCard->hasTags = true;
+        $feedCard->cssClassCard = "quest-card";
+        $feedCard->cssClassRight = "quest-card-right";
+        $feedCard->dateTime = $quest->endDate;
+
+        $feedCard->createdByPrefix = "Hosted";
+        $feedCard->cta = "View Quest";
+        $feedCard->url = $quest->getURL();
+        
+
+        $feedCard->reviewStatus = $quest->reviewStatus;
+
+        return $feedCard;
+    }
+
+    public static function vQuestLine_to_vFeedCard(vQuestLine $questLine) : vFeedCard {
+        $feedCard = new vFeedCard();
+        $feedCard->type = "QUEST-LINE";
+        $feedCard->typeText = "QUEST LINE";
+        $feedCard->cta = "View Quest Line";
+        $feedCard->createdByPrefix = "Created";
+        $feedCard->url = $questLine->getURL();
+        $feedCard->dateTime = $questLine->dateCreated;
+        $feedCard->icon = $questLine->icon;
+        $feedCard->title = $questLine->title;
+        $feedCard->description = $questLine->summary;
+        $feedCard->reviewStatus = $questLine->reviewStatus;
+        $feedCard->questLine = $questLine;
+
+
+
+        return $feedCard;
+    }
+
+    public static function vNews_to_vFeedCard(vNews $news) : vFeedCard {
+        
 
         if ($news->quest != null)
         {
-            $feedCard->icon = $news->quest->icon;
-            $feedCard->title = $news->quest->title;
-            $feedCard->description = $news->quest->summary;
-            $feedCard->quest = $news->quest;
-            $feedCard->hasRewards = true;
-            $feedCard->hasTags = true;
-            $feedCard->cssClassCard = "quest-card";
-            $feedCard->cssClassRight = "quest-card-right";
-            $feedCard->style = $news->quest->style;
-            $feedCard->dateTime = $news->quest->endDate;
-
-            $feedCard->createdByPrefix = "Hosted";
-            $feedCard->url = $news->quest->getURL();
-            
-            $now = new DateTime(); // Current date and time
-            $feedCard->expired = ($feedCard->dateTime->value < $now);
-
-            $feedCard->published = $news->quest->published;
+            return self::vQuest_to_vFeedCard($news->quest);
         }
 
+        $feedCard = new vFeedCard();
+        $feedCard->type = $news->type;
+        $feedCard->typeText = $news->type;
         if ($news->blogPost != null)
         {
             $feedCard->icon = $news->blogPost->icon;
@@ -76,7 +106,7 @@ class FeedCardController
             $feedCard->createdByPrefix = "Written";
 
             $feedCard->url = $news->blogPost->getURL();
-            $feedCard->published = $news->blogPost->published;
+            $feedCard->reviewStatus = $news->blogPost->reviewStatus;
         }
 
         if ($feedCard->published == false) {

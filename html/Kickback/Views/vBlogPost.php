@@ -7,6 +7,7 @@ use Kickback\Views\vAccount;
 use Kickback\Views\vMedia;
 use Kickback\Views\vRecordId;
 use Kickback\Views\vDateTime;
+use Kickback\Views\vReviewStatus;
 
 class vBlogPost extends vRecordId
 {
@@ -16,7 +17,7 @@ class vBlogPost extends vRecordId
     public string $summary;
     public vDateTime $publishedDateTime;
     public vAccount $author;
-    public bool $published;
+    public vReviewStatus $reviewStatus;
     
     public ?vMedia $icon = null;
 

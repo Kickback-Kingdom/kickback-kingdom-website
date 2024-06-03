@@ -6,10 +6,13 @@ namespace Kickback\Views;
 use Kickback\Views\vRecordId;
 use Kickback\Views\vMedia;
 use Kickback\Views\vQuest;
+use Kickback\Views\vQuestLine;
 use Kickback\Views\vQuote;
 use Kickback\Views\vBlogPost;
 use Kickback\Views\vActivity;
 use Kickback\Views\vDateTime;
+use Kickback\Views\vReviewStatus;
+use Kickback\Models\PlayStyle;
 
 class vFeedCard
 {
@@ -18,14 +21,13 @@ class vFeedCard
     public vMedia $icon;
     public ?vQuest $quest = null;
     public ?vQuote $quote = null;
+    public ?vQuestLine $questLine = null;
     public ?vBlogPost $blogPost = null;
     public ?vActivity $activity = null;
     public ?string $url = null;
     public string $title;
     public vDateTime $dateTime;
-    public bool $expired = false;
-    public int $style = 0;
-    public bool $published = false;
+    public vREviewStatus $reviewStatus;
     public string $description;
 
     //RENDERING TEXT
