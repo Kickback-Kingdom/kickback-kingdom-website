@@ -38,6 +38,10 @@ class FormToken {
             return new Response(false, "Invalid or expired form submission token.");
         }
     }
+
+    public static function getFormToken() : string {
+        return $_SESSION["form_token"];
+    }
 }
 
 ?>
