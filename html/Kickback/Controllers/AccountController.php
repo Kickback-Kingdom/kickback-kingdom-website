@@ -18,6 +18,9 @@ class AccountController
         $conn = Database::getConnection();
         // Prepare the SQL statement
         $stmt = mysqli_prepare($conn, "SELECT * FROM v_account_info WHERE Id = ?");
+        if ($stmt === false) {
+            return new Response(false, "failed to prepare sql statement", null);
+        }
 
         // Bind the parameter to the placeholder in the SQL statement
         mysqli_stmt_bind_param($stmt, "i", $recordId->crand);
@@ -27,6 +30,10 @@ class AccountController
 
         // Store the result of the query
         $result = mysqli_stmt_get_result($stmt);
+
+        if ($result === false) {
+            return new Response(false, "Failed to get query result", null);
+        }
 
         $num_rows = mysqli_num_rows($result);
         if ($num_rows === 0)
@@ -487,7 +494,7 @@ class AccountController
     }
     
 
-    private static function row_to_vAccount($row) : vAccount {
+    public static function row_to_vAccount($row) : vAccount {
         $account = new vAccount('', $row["Id"]);
 
         // Assign string and integer properties

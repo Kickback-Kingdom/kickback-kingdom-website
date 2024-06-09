@@ -5,6 +5,7 @@ namespace Kickback\Controllers;
 
 use Kickback\Models\Response;
 use Kickback\Services\Database;
+use Kickback\Services\Session;
 use Kickback\Views\vQuest;
 use Kickback\Views\vQuestReward;
 use Kickback\Views\vRecordId;
@@ -19,10 +20,11 @@ use Kickback\Models\PlayStyle;
 use Kickback\Models\ItemType;
 use Kickback\Models\ItemRarity;
 use Kickback\Views\vTournament;
+use Kickback\Views\vQuestApplicant;
+use Kickback\Controllers\AccountController;
 
 class QuestController
 {
-    
     public static function getQuestById(vRecordId $recordId): Response {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_quest_info WHERE Id = ?";
@@ -71,6 +73,81 @@ class QuestController
         }
 
         return new Response(false, "Couldn't find a quest with that locator", null);
+    }
+
+    function GetAvailableQuests() : Response {
+        $id = mysqli_real_escape_string($GLOBALS["conn"], $id);
+        $sql = "SELECT * FROM kickbackdb.v_quest_info  WHERE end_date > CURRENT_TIMESTAMP and published = 1 order by end_date asc";
+
+        
+        $result = mysqli_query($GLOBALS["conn"],$sql);
+
+        $num_rows = mysqli_num_rows($result);
+        $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        
+        return (new Response(true, "Available Quests",  $rows ));
+    }
+        
+    function GetArchivedQuests() : Response {
+        $id = mysqli_real_escape_string($GLOBALS["conn"], $id);
+        $sql = "SELECT * FROM kickbackdb.v_quest_info  WHERE end_date <= CURRENT_TIMESTAMP and published = 1 and finished = 1 order by end_date desc";
+
+        
+        $result = mysqli_query($GLOBALS["conn"],$sql);
+
+        $num_rows = mysqli_num_rows($result);
+        $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        
+        return (new Response(true, "Available Quests",  $rows ));
+    }
+
+    function GetTBAQuests() : Response {
+        if (Session::isLoggedIn())
+        {
+            if (Session::isAdmin())
+            {
+                // Prepare the SQL statement
+                $sql = "SELECT * FROM kickbackdb.v_quest_info WHERE published = 0 order by end_date desc";
+                $stmt = mysqli_prepare($GLOBALS["conn"], $sql);
+                if(!$stmt) {
+                    // Handle error, maybe return an API response indicating the error
+                    return new Response(false, "Database error", []);
+                }
+        
+                //mysqli_stmt_bind_param($stmt, "ii", Kickback\Services\Session::getCurrentAccount()->crand, Kickback\Services\Session::getCurrentAccount()->crand);
+
+            }
+            else
+            {
+                // Prepare the SQL statement
+                $sql = "SELECT * FROM kickbackdb.v_quest_info WHERE published = 0 and (host_id = ? or host_id_2 = ?) order by end_date desc";
+                $stmt = mysqli_prepare($GLOBALS["conn"], $sql);
+                if(!$stmt) {
+                    // Handle error, maybe return an API response indicating the error
+                    return new Response(false, "Database error", []);
+                }
+        
+                mysqli_stmt_bind_param($stmt, "ii", Session::getCurrentAccount()->crand, Session::getCurrentAccount()->crand);
+
+            }
+
+            // Execute the statement
+            if(mysqli_stmt_execute($stmt))
+            {
+                $result = mysqli_stmt_get_result($stmt);
+                $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+                return new Response(true, "TBA Quests", $rows);
+            }
+            else 
+            {
+                // Handle execution error, maybe return an API response indicating the error
+                return new Response(false, "Query execution error", []);
+            }
+        }
+        else
+        {
+            return new Response(true, "TBA Quests", []);
+        }
     }
 
     public static function getQuestsByQuestLineId(vRecordId $questLineId, int $page = 1, int $itemsPerPage = 10): Response {
@@ -148,16 +225,56 @@ class QuestController
         return new Response(false, "Couldn't find rewards for that quest id", null);
     }
 
-    public static function getQuestApplicants(vRecordId $questId): Response {
+    public static function getQuestApplicants(vQuest $quest): Response {
         $conn = Database::getConnection();
-        $sql = "SELECT * FROM kickbackdb.v_quest_applicants_account WHERE quest_id = ? ORDER BY seed ASC, exp DESC, prestige DESC";
+        //$sql = "SELECT * FROM kickbackdb.v_quest_applicants_account WHERE quest_id = ? ORDER BY seed ASC, exp DESC, prestige DESC";
+        $sql = "select 
+        `account`.*,
+        `quest_applicants`.`accepted` AS `accepted`, 
+        `quest_applicants`.`participated` AS `participated`, 
+        `quest_applicants`.`quest_id` AS `quest_id`, 
+        `quest_applicants`.`seed_score` AS `seed_score`, 
+        case when `quest_applicants`.`participated` = 1 
+        or `quest_applicants`.`seed_score` > 0 then rank() over (
+          partition by `quest_applicants`.`quest_id` 
+          order by 
+            `quest_applicants`.`seed_score` desc, 
+            `account`.`exp` desc, 
+            `account`.`Id` desc
+        ) else NULL end AS `seed`, 
+        `v_game_rank`.`rank` AS `rank`
+      from 
+        (
+          (
+            (
+              (
+                `quest_applicants` 
+                join `v_account_info` `account` on(
+                  `quest_applicants`.`account_id` = `account`.`Id`
+                )
+              ) 
+              left join `quest` on(
+                `quest_applicants`.`quest_id` = `quest`.`Id`
+              )
+            ) 
+            left join `tournament` on(
+              `quest`.`tournament_id` = `tournament`.`Id`
+            )
+          ) 
+          left join `v_game_elo_rank_info` `v_game_rank` on(
+            `v_game_rank`.`account_id` = `account`.`Id` 
+            and `v_game_rank`.`game_id` = `tournament`.`game_id`
+          )
+        )
+      where quest_applicants.quest_id = ?
+      ORDER BY seed ASC, exp DESC, prestige DESC";
 
         $stmt = $conn->prepare($sql);
         if ($stmt === false) {
             return new Response(false, "Failed to prepare statement", null);
         }
 
-        $stmt->bind_param('i', $questId->crand);
+        $stmt->bind_param('i', $quest->crand);
         $stmt->execute();
         $result = $stmt->get_result();
 
@@ -173,7 +290,7 @@ class QuestController
     }
 
     private static function row_to_vQuest($row) : vQuest {
-        $quest = new vQuest();
+        $quest = new vQuest('',$row["Id"]);
 
         $quest->title = $row["name"];
 
@@ -182,14 +299,14 @@ class QuestController
         $quest->reviewStatus = new vReviewStatus((bool)$row["published"], (bool)$row["being_reviewed"]);
 
 
-        $quest->summary = $row["summary"];
+        $quest->summary = is_null($row["summary"]) ? "":$row["summary"];
 
 
 
         if ($row["tournament_id"] != null)
         {
             $quest->tournament = new vTournament('', $row["tournament_id"]);
-            $quest->tournament->hasBracket = $row["hasBracket"]==1;
+            $quest->tournament->hasBracket = (bool)$row["hasBracket"]==1;
         }
 
         if ($row["end_date"] != null)
@@ -277,9 +394,6 @@ class QuestController
             $item->iconBig = $bigImg;
         }
 
-
-
-
         if ($row["SmallImgPath"] != null)
         {
             $smallImg = new vMedia();
@@ -296,11 +410,13 @@ class QuestController
     }
 
     private static function row_to_vQuestApplicant($row) : vQuestApplicant {
-        $questReward = new vQuestApplicant();
+        $questApplicant = new vQuestApplicant();
 
+        $questApplicant->account = AccountController::row_to_vAccount($row);
 
-
-        return $questReward;
+        $questApplicant->seed = $row["seed"];
+        $questApplicant->rank = $row["rank"];
+        return $questApplicant;
     }
 }
 ?>

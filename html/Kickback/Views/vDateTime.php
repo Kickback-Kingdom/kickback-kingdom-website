@@ -34,6 +34,13 @@ class vDateTime
     public function getDateTimeElement($id = null) {
         return '<span class="date" '.($id == null?'':' id="'.$id.'" ').' data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="'.$this->formattedDetailed.' UTC">'.$this->formattedBasic.'</span>';
     }
+
+    
+    function __construct(?string $dateString = null)
+    {
+        if (isset($dateString) && $dateString != null && $dateString != "")
+            $this->setDateTimeFromString($dateString);
+    }
 }
 
 ?>

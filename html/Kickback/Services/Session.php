@@ -213,5 +213,10 @@ class Session {
             unset($_SESSION[$key]);
         }
     }
+    
+    public static function getCurrentSessionId() {
+        EnsureSessionStarted();
+        return session_id() ?: null; // Use null coalescing operator to handle non-existent session IDs.
+    }
 }
 ?>

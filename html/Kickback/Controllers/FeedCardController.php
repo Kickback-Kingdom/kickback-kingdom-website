@@ -6,11 +6,12 @@ namespace Kickback\Controllers;
 use Kickback\Services\Database;
 use Kickback\Views\vActivity;
 use Kickback\Views\vFeedCard;
-use Kickback\Views\vNews;
+use Kickback\Views\vFeedRecord;
 use Kickback\Views\vQuote;
 use Kickback\Views\vDateTime;
 use Kickback\Views\vQuest;
 use Kickback\Views\vQuestLine;
+use Kickback\Views\vBlogPost;
 
 use DateTime;
 
@@ -83,7 +84,28 @@ class FeedCardController
         return $feedCard;
     }
 
-    public static function vNews_to_vFeedCard(vNews $news) : vFeedCard {
+    public static function vBlogPost_to_vFeedCard(vBlogPost $blogPost) : vFeedCard {
+
+        $feedCard = new vFeedCard();
+        $feedCard->type = "BLOG-POST";
+        $feedCard->typeText = "BLOG POST";
+        if ($blogPost != null)
+        {
+            $feedCard->icon = $blogPost->icon;
+            $feedCard->title = $blogPost->title;
+            $feedCard->description = $blogPost->summary;
+            $feedCard->blogPost = $blogPost;
+            $feedCard->dateTime = $blogPost->publishedDateTime;
+            $feedCard->createdByPrefix = "Written";
+
+            $feedCard->url = $blogPost->getURL();
+            $feedCard->reviewStatus = $blogPost->reviewStatus;
+        }
+
+        return $feedCard;
+    }
+
+    public static function vFeedRecord_to_vFeedCard(vFeedRecord $news) : vFeedCard {
         
 
         if ($news->quest != null)
@@ -91,27 +113,18 @@ class FeedCardController
             return self::vQuest_to_vFeedCard($news->quest);
         }
 
-        $feedCard = new vFeedCard();
-        $feedCard->type = $news->type;
-        $feedCard->typeText = $news->type;
+        if ($news->questLine != null)
+        {
+            return self::vQuestLine_to_vFeedCard($news->questLine);
+        }
+
         if ($news->blogPost != null)
         {
-            $feedCard->icon = $news->blogPost->icon;
-            $feedCard->title = $news->blogPost->title;
-            $feedCard->description = $news->blogPost->summary;
-            $feedCard->blogPost = $news->blogPost;
-            $feedCard->dateTime = $news->blogPost->publishedDateTime;
-            $feedCard->createdByPrefix = "Written";
-
-            $feedCard->url = $news->blogPost->getURL();
-            $feedCard->reviewStatus = $news->blogPost->reviewStatus;
+            return self::vBlogPost_to_vFeedCard($news->blogPost);
         }
 
-        if ($feedCard->reviewStatus->published == false) {
-            $feedCard->title = "[DRAFT] ".$feedCard->title." [DRAFT]"; 
-        }
 
-        return $feedCard;
+        throw new \Exception("No card conversion for this feed record found.");
     }
 
     public static function vActivity_to_vFeedCard(vActivity $activity) : vFeedCard

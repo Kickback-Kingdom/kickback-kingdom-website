@@ -26,7 +26,7 @@ class vFeedCard
     public ?vActivity $activity = null;
     public ?string $url = null;
     public string $title;
-    public vDateTime $dateTime;
+    public ?vDateTime $dateTime = null;
     public vREviewStatus $reviewStatus;
     public string $description;
 
@@ -42,7 +42,6 @@ class vFeedCard
     public bool $hasCreatedBy = true;
     public bool $hasTags = false;
     public bool $hasRewards = false;
-    public bool $hideDateTime = false;
 
     //HTML CSS
     public string $cssClassCard = "";
@@ -100,9 +99,12 @@ class vFeedCard
 
         return $accounts;
     }
-    public function getAccountCount()
-    {
+    public function getAccountCount() : int {
         return count(getAccounts());
+    }
+    
+    public function hasDateTime() : bool {
+        return ($this->dateTime != null);
     }
 }
 

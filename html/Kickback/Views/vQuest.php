@@ -13,13 +13,14 @@ use Kickback\Views\vQuestLine;
 use Kickback\Models\PlayStyle;
 use Kickback\Controllers\QuestLineController;
 use Kickback\Controllers\QuestController;
+use Kickback\Models\Response;
 
 class vQuest extends vRecordId
 {
     public string $title;
     public string $locator;
     public string $summary;
-    public ?vDateTime $endDate;
+    public ?vDateTime $endDate = null;
     public vAccount $host1;
     public ?vAccount $host2 = null;
     public vReviewStatus $reviewStatus;
@@ -71,11 +72,11 @@ class vQuest extends vRecordId
         return ($this->questLine != null);
     }
 
-    public function canEditQuest() : bool {
-        return $this->isQuestHost() || Session::isAdmin();
+    public function canEdit() : bool {
+        return $this->isHost() || Session::isAdmin();
     }
 
-    public function isQuestHost() : bool {
+    public function isHost() : bool {
         if (Session::isLoggedIn())
         {
             return (Session::getCurrentAccount()->crand == $this->host1->crand || ($this->host2 != null && Session::getCurrentAccount()->crand == $this->host2->crand));
@@ -85,7 +86,7 @@ class vQuest extends vRecordId
         }
     }
 
-    public function hasContent() : bool {
+    public function hasPageContent() : bool {
         return $this->content->hasPageContent();
     }
 
@@ -117,7 +118,7 @@ class vQuest extends vRecordId
     }
     
     public function pageContentIsValid() : bool {
-        return ($this->hasContent() && ($this->content->isValid()));
+        return ($this->hasPageContent() && ($this->content->isValid()));
     }
 
     public function locatorIsValid() : bool {
@@ -140,7 +141,11 @@ class vQuest extends vRecordId
     }
 
     public function rewardsAreValid() : bool {
-        return $this->rewards != null && (count($this->rewards) > 0);
+        return $this->rewards != null && $this->hasRewards();
+    }
+
+    public function hasRewards() : bool {
+        return (count($this->rewards) > 0);
     }
 
     public function isValidForPublish() : bool {
@@ -152,7 +157,13 @@ class vQuest extends vRecordId
         {
             $resp = QuestLineController::getQuestLineById($this->questLine);
             if ($resp->success)
+            {
                 $this->questLine = $resp->data;
+                if ($this->questLine->reviewStatus->published)
+                {
+                    $this->questLine->populateQuests();
+                }
+            }
             else
                 throw new \Exception($resp->message);
                 
@@ -160,7 +171,7 @@ class vQuest extends vRecordId
     }
 
     public function populateContent() : void {
-        if ($this->hasContent())
+        if ($this->hasPageContent())
         {
             $this->content->populateContent("QUEST", $this->locator);
         }
@@ -178,6 +189,13 @@ class vQuest extends vRecordId
         }
         else {
             throw new \Exception($questRewardsResp->message);
+        }
+    }
+
+    public function populateTournament() : void {
+        if ($this->isTournament())
+        {
+            $this->tournament->populate();
         }
     }
 
@@ -208,6 +226,18 @@ class vQuest extends vRecordId
 
     public function getPageContent() : array {
         return $this->content->pageContent;
+    }
+
+    public function getQuestApplicants() : Response {
+        return QuestController::getQuestApplicants($this);
+    }
+
+    public function populateEverything() : void {
+        
+        $this->populateContent();
+        $this->populateRewards();
+        $this->populateTournament();
+        $this->populateQuestLine();
     }
 
 }
