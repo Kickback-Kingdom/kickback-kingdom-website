@@ -1,8 +1,8 @@
 :root {
-    --bs-primary: #7851a9;/*#7851a9;*/
+    --bs-primary: #7851a9;
     --bs-secondary: #FFD218;
     --bs-tertiary: #66023c;
-}       
+}
 
 a {
     color: var(--bs-tertiary);
