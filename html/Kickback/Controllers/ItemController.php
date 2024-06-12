@@ -14,9 +14,33 @@ class ItemController
 
     private static function row_to_vItem($row) : vItem
     {
-        $badge = new vItem();
+        $item = new vItem();
+        $item->name = $row["name"];
+        $item->description = $row["desc"];
 
-        return $badge;
+        if ($row["nominated_by_id"] != null)
+        {
+            $nominatedBy = new vAccount('', $row["nominated_by_id"]);
+            $nominatedBy->username = $row["nominated_by"];
+            $item->nominatedBy = $nominatedBy;
+        }
+
+        if ($row["BigImgPath"] != null)
+        {
+            $bigImg = new vMedia();
+            $bigImg->setMediaPath($row["BigImgPath"]);
+            $item->iconBig = $bigImg;
+        }
+        if ($row["SmallImgPath"] != null)
+        {
+            
+            $smallImg = new vMedia();
+            $smallImg->setMediaPath($row["SmallImgPath"]);
+            $item->iconSmall = $smallImg;
+        }
+
+
+        return $item;
     }
 
 }

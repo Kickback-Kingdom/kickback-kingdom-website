@@ -11,6 +11,7 @@ use Kickback\Views\vRecordId;
 use Kickback\Views\vAccount;
 use Kickback\Views\vMedia;
 use Kickback\Views\vQuest;
+use Kickback\Views\vBlog;
 use Kickback\Views\vBlogPost;
 use Kickback\Views\vDateTime;
 use Kickback\Views\vReviewStatus;
@@ -176,6 +177,22 @@ class FeedController
 
         return new Response(true, "news feed",  $newsList);
     }
+    
+    public static function getBlogsFeed(int $page = 1,int $itemsPerPage = 10) : Response {
+        $conn = Database::getConnection();
+        $offset = ($page - 1) * $itemsPerPage;
+        $sql = "SELECT * FROM kickbackdb.v_feed WHERE type = 'BLOG'";
+    
+        
+        $result = mysqli_query($conn,$sql);
+    
+        $num_rows = mysqli_num_rows($result);
+        $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        
+        $newsList = array_map([self::class, 'row_to_vFeedRecord'], $rows);
+
+        return (new Response(true, "blogs feed",  $newsList ));
+    }
 
     public static function getNewsFeed(int $page = 1, int $itemsPerPage = 10) : Response {
         $conn = Database::getConnection();
@@ -320,6 +337,36 @@ class FeedController
             }
 
             $news->blogPost = $blogPost;
+        }
+
+        if ($news->type == "BLOG")
+        {
+            $blog = new vBlog('', (int)$row["Id"]);
+
+            $blog->title = $row["title"];
+            $blog->description = $row["text"];
+            $blog->locator = $row["locator"];
+
+            if (isset($dateTime))
+                $blog->lastPostDate = $dateTime;
+
+            if ($row["account_1_id"] != null)
+            {
+                $author = new vAccount('', (int)$row["account_1_id"]);
+                $author->username = $row["account_1_username"];
+                $blog->lastWriter = $author;
+            }
+
+
+            if (!empty($row["image"]))
+            {
+                $icon = new vMedia();
+                $icon->setMediaPath($row["image"]);
+
+                $blog->icon = $icon;
+            }
+
+            $news->blog = $blog;
         }
 
         return $news;

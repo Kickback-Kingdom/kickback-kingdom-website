@@ -22,6 +22,7 @@ class vFeedCard
     public ?vQuest $quest = null;
     public ?vQuote $quote = null;
     public ?vQuestLine $questLine = null;
+    public ?vBlog $blog = null;
     public ?vBlogPost $blogPost = null;
     public ?vActivity $activity = null;
     public ?string $url = null;
@@ -97,6 +98,11 @@ class vFeedCard
             $accounts[] = $this->activity->account;
         }
 
+        if ($this->blog != null && $this->blog->lastWriter != null)
+        {
+            $accounts[] = $this->blog->lastWriter;
+        }
+
         return $accounts;
     }
     public function getAccountCount() : int {
@@ -105,6 +111,10 @@ class vFeedCard
     
     public function hasDateTime() : bool {
         return ($this->dateTime != null);
+    }
+
+    public function useGoldTrim() : bool {
+        return !(($this->hasDateTime() && $this->dateTime->isExpired()) || !$this->hasDateTime());
     }
 }
 

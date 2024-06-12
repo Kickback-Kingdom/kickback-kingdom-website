@@ -11,6 +11,7 @@ use Kickback\Views\vReviewStatus;
 use Kickback\Views\vMedia;
 use Kickback\Services\Database;
 use Kickback\Models\Response;
+use Kickback\Services\Session;
 
 class QuestLineController {
     
@@ -35,6 +36,41 @@ class QuestLineController {
         }
     }
 
+    public static function getMyQuestLines(?vAccount $account = null, bool $publishedOnly = true)
+    {
+        if ($account == null)
+        {
+            $account = Session::getCurrentAccount();
+        }
+        $conn = Database::getConnection();
+        if ($publishedOnly)
+        {
+            $sql = "SELECT * FROM v_quest_line_info WHERE created_by_id = ? and published = 1";
+        }
+        else
+        {
+            $sql = "SELECT * FROM v_quest_line_info WHERE created_by_id = ?";
+        }
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $account->crand);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    
+    
+        $num_rows = mysqli_num_rows($result);
+        $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        
+        $questLines = [];
+        foreach($rows as $row) {
+            // Remove unwanted fields
+
+            $questLine = self::row_to_vQuestLine($row);
+
+            $questLines[] = $questLine;
+        }
+
+        return (new Response(true, "My Quest Lines",  $questLines ));
+    }
     
     private static function row_to_vQuestLine($row) : vQuestLine
     {

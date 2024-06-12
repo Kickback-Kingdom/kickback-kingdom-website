@@ -11,6 +11,7 @@ use Kickback\Views\vQuote;
 use Kickback\Views\vDateTime;
 use Kickback\Views\vQuest;
 use Kickback\Views\vQuestLine;
+use Kickback\Views\vBlog;
 use Kickback\Views\vBlogPost;
 
 use DateTime;
@@ -89,17 +90,39 @@ class FeedCardController
         $feedCard = new vFeedCard();
         $feedCard->type = "BLOG-POST";
         $feedCard->typeText = "BLOG POST";
-        if ($blogPost != null)
-        {
-            $feedCard->icon = $blogPost->icon;
-            $feedCard->title = $blogPost->title;
-            $feedCard->description = $blogPost->summary;
-            $feedCard->blogPost = $blogPost;
-            $feedCard->dateTime = $blogPost->publishedDateTime;
-            $feedCard->createdByPrefix = "Written";
+        
+        $feedCard->icon = $blogPost->icon;
+        $feedCard->title = $blogPost->title;
+        $feedCard->description = $blogPost->summary;
+        $feedCard->blogPost = $blogPost;
+        $feedCard->dateTime = $blogPost->publishedDateTime;
+        $feedCard->createdByPrefix = "Written";
 
-            $feedCard->url = $blogPost->getURL();
-            $feedCard->reviewStatus = $blogPost->reviewStatus;
+        $feedCard->url = $blogPost->getURL();
+        $feedCard->reviewStatus = $blogPost->reviewStatus;
+
+        return $feedCard;
+    }
+
+    public static function vBlog_to_vFeedCard(vBlog $blog) : vFeedCard {
+        
+        $feedCard = new vFeedCard();
+        $feedCard->type = "BLOG";
+        $feedCard->typeText = "BLOG";
+
+
+        $feedCard->icon = $blog->icon;
+        $feedCard->title = $blog->title;
+        $feedCard->description = $blog->description;
+        $feedCard->blog = $blog;
+        $feedCard->dateTime = $blog->lastPostDate;
+        $feedCard->createdByPrefix = "Last written";
+
+        $feedCard->url = $blog->getURL();
+
+        if ($blog->lastWriter == null)
+        {
+            $feedCard->hasCreatedBy = false;
         }
 
         return $feedCard;
@@ -121,6 +144,11 @@ class FeedCardController
         if ($news->blogPost != null)
         {
             return self::vBlogPost_to_vFeedCard($news->blogPost);
+        }
+
+        if ($news->blog != null)
+        {
+            return self::vBlog_to_vFeedCard($news->blog);
         }
 
 

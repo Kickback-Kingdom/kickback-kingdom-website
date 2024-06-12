@@ -16,6 +16,7 @@ class vFeedRecord
     public ?vQuest $quest = null;
     public ?vQuestLine $questLine = null;
     public ?vBlogPost $blogPost = null;
+    public ?vBlog $blog = null;
 
 }
 

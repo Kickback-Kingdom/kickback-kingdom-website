@@ -46,6 +46,48 @@ class QuoteController
                 "author" => "Alexander The Great",
                 "date" => "334 BC"
             ],
+            [
+                "text" => "I had rather excel others in the knowledge of what is excellent, than in the extent of my power and dominion.",
+                "image" => "quotes/people/119.png",
+                "author" => "Alexander The Great",
+                "date" => "334 BC"
+            ],
+            [
+                "text" => "Through every generation of the human race there has been a constant war, a war with fear. Those who have the courage to conquer it are made free and those who are conquered by it are made to suffer until they have the courage to defeat it, or death takes them.",
+                "image" => "quotes/people/119.png",
+                "author" => "Alexander The Great",
+                "date" => "334 BC"
+            ],
+            [
+                "text" => "Whatever possession we gain by our sword cannot be sure or lasting, but the love gained by kindness and moderation is certain and durable.",
+                "image" => "quotes/people/119.png",
+                "author" => "Alexander The Great",
+                "date" => "334 BC"
+            ],
+            [
+                "text" => "Remember, upon the conduct of each depends the fate of all. In the end, when it's over, all that matters is what you've done.",
+                "image" => "quotes/people/119.png",
+                "author" => "Alexander The Great",
+                "date" => "334 BC"
+            ],
+            [
+                "text" => "How should a man be capable of grooming his own horse, or of furbishing his own spear and helmet, if he allows himself to become unaccustomed to tending even his own person, which is his most treasured belonging?",
+                "image" => "quotes/people/119.png",
+                "author" => "Alexander The Great",
+                "date" => "334 BC"
+            ],
+            [
+                "text" => "For my own part, I would rather excel in the knowledge of the highest secrets of philosophy than in arms. Who does not desire such a victory by which we shall join places in our kingdom so far divided by nature and for which we shall set up trophies in another conquered world?",
+                "image" => "quotes/people/119.png",
+                "author" => "Alexander The Great",
+                "date" => "334 BC"
+            ],
+            [
+                "text" => "No man can point to my riches, only the things I hold in trust for you all.",
+                "image" => "quotes/people/119.png",
+                "author" => "Alexander The Great",
+                "date" => "334 BC"
+            ],
 
             // Karl Marx
             [

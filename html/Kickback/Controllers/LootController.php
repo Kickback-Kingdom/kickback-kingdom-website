@@ -61,16 +61,6 @@ class LootController
 
         $loot->ownerId = $ownerId;
 
-        $item = new vItem();
-        $item->name = $row["name"];
-        $item->description = $row["desc"];
-
-        if ($row["nominated_by_id"] != null)
-        {
-            $nominatedBy = new vAccount('', $row["nominated_by_id"]);
-            $nominatedBy->username = $row["nominated_by"];
-            $item->nominatedBy = $nominatedBy;
-        }
 
         if ($row["quest_id"] != null)
         {
@@ -81,25 +71,11 @@ class LootController
             $loot->quest = $quest;
         }
 
-        if ($row["BigImgPath"] != null)
-        {
-            $bigImg = new vMedia();
-            $bigImg->setMediaPath($row["BigImgPath"]);
-            $item->iconBig = $bigImg;
-        }
-        if ($row["SmallImgPath"] != null)
-        {
-            
-            $smallImg = new vMedia();
-            $smallImg->setMediaPath($row["SmallImgPath"]);
-            $item->iconSmall = $smallImg;
-        }
-
         $dateObtained = new vDateTime();
         $dateObtained->setDateTimeFromString($row["dateObtained"]);
         $loot->dateObtained = $dateObtained;
 
-        $loot->item = $item;
+        $loot->item = ItemController::row_to_vItem($row);
 
         return $loot;
     }

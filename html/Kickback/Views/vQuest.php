@@ -210,7 +210,7 @@ class vQuest extends vRecordId
     
         // Extract Ids of the rewards in the Participation category
         $participationRewardIds = array_map(function($reward) {
-            return $reward['Id'];
+            return $reward->item->crand;
         }, $this->rewards['Participation']);
     
         // Check for the existence of each specific reward Id

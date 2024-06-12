@@ -41,8 +41,8 @@ class vAccount extends vRecordId
     public ?vMedia $charm = null;
     public ?vMedia $companion = null;
     
-    public array $badge_display = [];
-    public array $game_ranks = [];
+    public ?array $badge_display = null;
+    public ?array $game_ranks = null;
     
     function __construct(string $ctime = '', int $crand = -1)
     {

@@ -19,6 +19,7 @@ class vItem extends vRecordId
     public ?vAccount $nominatedBy = null;
     public ItemType $type;
     public ItemRarity $rarity;
+    public vDateTime $dateCreated;
 
     function __construct(string $ctime = '', int $crand = -1)
     {

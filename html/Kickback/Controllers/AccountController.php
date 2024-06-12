@@ -11,6 +11,8 @@ use Kickback\Models\Response;
 use Kickback\Services\Database;
 use Kickback\Controllers\LootController;
 
+use Kickback\Views\vRaffle;
+
 class AccountController
 {
     public static function getAccountById(vRecordId $recordId) : Response {
@@ -165,6 +167,52 @@ class AccountController
             mysqli_stmt_close($stmt);
             
             return (new Response(true, $account->username."'s information.",  $account));
+        }
+    }
+    
+    public static function getAccountByRaffleWinner(vRaffle $raffle): Response {
+        $conn = Database::getConnection();
+        //$sql = "SELECT * FROM kickbackdb.v_raffle_winners WHERE raffle_id = ?";
+        $sql = "SELECT 
+        `account`.*
+        FROM
+        (((`raffle`
+        LEFT JOIN `raffle_submissions` ON (`raffle`.`winner_submission_id` = `raffle_submissions`.`Id`))
+        LEFT JOIN `v_loot_item` `loot` ON (`raffle_submissions`.`loot_id` = `loot`.`Id`))
+        LEFT JOIN v_account_info as `account` ON (`loot`.`account_id` = `account`.`Id`))
+        WHERE raffle.Id = ?";
+
+        // Prepare the SQL statement
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare statement: " . $conn->error, null);
+        }
+
+        // Bind the parameter
+        $stmt->bind_param('i', $raffle->crand);
+
+        // Execute the statement
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute statement: " . $stmt->error, null);
+        }
+
+        // Get the result
+        $result = $stmt->get_result();
+        if ($result === false) {
+            return new Response(false, "Failed to get result: " . $stmt->error, null);
+        }
+
+        // Fetch the row
+        $row = $result->fetch_assoc();
+
+        // Free the result and close the statement
+        $result->free();
+        $stmt->close();
+
+        if ($row) {
+            return new Response(true, "Raffle Ticket Winner", self::row_to_vAccount($row, true));
+        } else {
+            return new Response(true, "No winner found for the raffle", null);
         }
     }
 
@@ -355,17 +403,8 @@ class AccountController
         foreach($accountItems as $accountRow) {
             // Remove unwanted fields
 
-            $account = self::row_to_vAccount($accountRow);
+            $account = self::row_to_vAccount($accountRow, true);
 
-            unset($accountRow['pass_reset']);
-            unset($accountRow['relevancy_score']);
-
-            $badgesResp = LootController::getBadgesByAccount($account);
-            $account->badge_display = $badgesResp->data;
-
-            $playerRankResp = self::getAccountGameRanks($account);
-            $account->game_ranks = $playerRankResp->data;
-            $account->isGoldCardHolder = in_array(1, array_column($playerRankResp->data, 'rank'));
             $newAccountItems[] = $account;
         }
 
@@ -494,7 +533,7 @@ class AccountController
     }
     
 
-    public static function row_to_vAccount($row) : vAccount {
+    public static function row_to_vAccount(array $row, bool $populateChildData = false) : vAccount {
         $account = new vAccount('', $row["Id"]);
 
         // Assign string and integer properties
@@ -566,6 +605,17 @@ class AccountController
         }
 
         $account->title = self::getAccountTitle($account);
+
+
+        if ($populateChildData) {
+            $badgesResp = LootController::getBadgesByAccount($account);
+            $account->badge_display = $badgesResp->data;
+
+            $playerRankResp = self::getAccountGameRanks($account);
+            $account->game_ranks = $playerRankResp->data;
+            $account->isGoldCardHolder = in_array(1, array_column($playerRankResp->data, 'rank'));
+            
+        }
 
         return $account;
     }

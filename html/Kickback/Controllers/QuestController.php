@@ -21,6 +21,7 @@ use Kickback\Models\ItemType;
 use Kickback\Models\ItemRarity;
 use Kickback\Views\vTournament;
 use Kickback\Views\vQuestApplicant;
+use Kickback\Views\vRaffle;
 use Kickback\Controllers\AccountController;
 
 class QuestController
@@ -288,6 +289,145 @@ class QuestController
 
         return new Response(false, "Couldn't find applicants for that quest id", null);
     }
+
+    
+    public static function checkIfTimeForRaffleWinner(vQuest $quest) : void {
+
+        // Get current date
+        $current_date = new \DateTime();
+        $current_date->modify('+10 seconds');
+        // Check if the date from the DB has passed
+        if ($quest->endDate->value <= $current_date) {
+            self::chooseRaffleWinner($quest->raffle);
+        }
+    }
+    
+    public static function getSubmittedRaffleTickets(vRaffle $raffle): Response {
+        $conn = Database::getConnection();
+        $sql = "SELECT Id FROM kickbackdb.raffle_submissions WHERE raffle_id = ?";
+        
+        // Prepare the SQL statement
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare statement: " . $conn->error, null);
+        }
+
+        // Bind the parameter
+        $stmt->bind_param('i', $raffle->crand);
+
+        // Execute the statement
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute statement: " . $stmt->error, null);
+        }
+
+        // Get the result
+        $result = $stmt->get_result();
+        if ($result === false) {
+            return new Response(false, "Failed to get result: " . $stmt->error, null);
+        }
+
+        // Fetch all the rows
+        $rows = $result->fetch_all(MYSQLI_ASSOC);
+
+        // Free the result and close the statement
+        $result->free();
+        $stmt->close();
+
+        return new Response(true, "Raffle Ticket Submissions", $rows);
+    }
+
+    public static function chooseRaffleWinner(vRaffle $raffle) : Response {
+        // Get submitted raffle tickets
+        $submittedTicketsResp = self::getSubmittedRaffleTickets($raffle);
+        if (!$submittedTicketsResp->success) {
+            return new Response(false, "Failed to get submitted tickets", null);
+        }
+        
+        $submittedTickets = $submittedTicketsResp->data;
+        $totalTickets = count($submittedTickets);
+
+        if ($totalTickets > 0) {
+            $winnerIndex = random_int(0, $totalTickets - 1);
+            $winnerTicketSubmissionId = $submittedTickets[$winnerIndex]["Id"];
+
+            // Update raffle to set the winner
+            $conn = Database::getConnection();
+            $sql = "UPDATE raffle SET winner_submission_id = ? WHERE Id = ? AND winner_submission_id IS NULL";
+            
+            $stmt = $conn->prepare($sql);
+            if ($stmt === false) {
+                return new Response(false, "Failed to prepare statement: " . $conn->error, null);
+            }
+
+            $stmt->bind_param('ii', $winnerTicketSubmissionId, $raffle->crand);
+
+            if (!$stmt->execute()) {
+                return new Response(false, "Failed to execute statement: " . $stmt->error, null);
+            }
+
+            $affectedRows = $stmt->affected_rows;
+            $stmt->close();
+
+            if ($affectedRows > 0) {
+                $raffleQuestResp = self::getQuestByRaffleId($raffle);
+                if (!$raffleQuestResp->success) {
+                    return new Response(false, "Failed to get raffle quest", null);
+                }
+                
+                $raffleQuest = $raffleQuestResp->data;
+                
+                $raffleWinnerResp = self::getRaffleWinner($raffle);
+                if (!$raffleWinnerResp->success) {
+                    return new Response(false, "Failed to get raffle winner", null);
+                }
+
+                $raffleWinner = $raffleWinnerResp->data;
+                $msg = self::getRaffleWinnerAnnouncement($raffleQuest["name"], $raffleWinner[0]["Username"]);
+                self::discordWebHook($msg);
+
+                return new Response(true, "Selected Raffle Winner!", null);
+            } else {
+                return new Response(false, "No rows affected, raffle winner not set", null);
+            }
+        } else {
+            return new Response(true, "No raffle tickets were entered!", null);
+        }
+    }
+
+    public static function getRaffleParticipants(vRaffle $raffle): Response {
+        $conn = Database::getConnection();
+        $sql = "SELECT * FROM v_raffle_participants WHERE raffle_id = ?";
+
+        // Prepare the SQL statement
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare statement: " . $conn->error, null);
+        }
+
+        // Bind the parameter
+        $stmt->bind_param('i', $raffle->crand);
+
+        // Execute the statement
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute statement: " . $stmt->error, null);
+        }
+
+        // Get the result
+        $result = $stmt->get_result();
+        if ($result === false) {
+            return new Response(false, "Failed to get result: " . $stmt->error, null);
+        }
+
+        // Fetch all the rows
+        $rows = $result->fetch_all(MYSQLI_ASSOC);
+
+        // Free the result and close the statement
+        $result->free();
+        $stmt->close();
+
+        return new Response(true, "Raffle Participants", $rows);
+    }
+
 
     private static function row_to_vQuest($row) : vQuest {
         $quest = new vQuest('',$row["Id"]);
