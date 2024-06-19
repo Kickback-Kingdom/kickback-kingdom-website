@@ -29,32 +29,39 @@ class QuestController
     public static function getQuestById(vRecordId $recordId): Response {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_quest_info WHERE Id = ?";
-
+    
         // Prepare the SQL statement
         $stmt = $conn->prepare($sql);
         if ($stmt === false) {
             return new Response(false, "Failed to prepare statement", null);
         }
-
+    
         // Bind the parameter
         $stmt->bind_param('i', $recordId->crand);
-
+    
         // Execute the statement
-        $stmt->execute();
-
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute statement: " . $stmt->error, null);
+        }
+    
         // Get the result
         $result = $stmt->get_result();
-        $quests = [];
         if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $quests[] = self::row_to_vQuest($row);
-            }
-            return new Response(true, "Quest Information.", $quests);
+            $row = $result->fetch_assoc();
+            $quest = self::row_to_vQuest($row);
+    
+            // Close the statement
+            $stmt->close();
+    
+            return new Response(true, "Quest Information.", $quest);
         }
-
+    
+        // Close the statement
+        $stmt->close();
+    
         return new Response(false, "We couldn't find a quest with that id", null);
     }
-
+    
     public static function getQuestByLocator(string $locator): Response {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_quest_info WHERE locator = ?";
@@ -76,7 +83,7 @@ class QuestController
         return new Response(false, "Couldn't find a quest with that locator", null);
     }
 
-    function GetAvailableQuests() : Response {
+    function getAvailableQuests() : Response {
         $id = mysqli_real_escape_string($GLOBALS["conn"], $id);
         $sql = "SELECT * FROM kickbackdb.v_quest_info  WHERE end_date > CURRENT_TIMESTAMP and published = 1 order by end_date asc";
 
@@ -89,7 +96,7 @@ class QuestController
         return (new Response(true, "Available Quests",  $rows ));
     }
         
-    function GetArchivedQuests() : Response {
+    function getArchivedQuests() : Response {
         $id = mysqli_real_escape_string($GLOBALS["conn"], $id);
         $sql = "SELECT * FROM kickbackdb.v_quest_info  WHERE end_date <= CURRENT_TIMESTAMP and published = 1 and finished = 1 order by end_date desc";
 
@@ -102,7 +109,7 @@ class QuestController
         return (new Response(true, "Available Quests",  $rows ));
     }
 
-    function GetTBAQuests() : Response {
+    function getTBAQuests() : Response {
         if (Session::isLoggedIn())
         {
             if (Session::isAdmin())
@@ -290,6 +297,38 @@ class QuestController
         return new Response(false, "Couldn't find applicants for that quest id", null);
     }
 
+    public static function getTotalUnusedRaffleTickets(vAccount $account) : Response {
+        $conn = Database::getConnection();
+
+        // Prepare the SQL query with a placeholder for the account_id
+        $sql = "SELECT count(*) FROM kickbackdb.v_raffle_tickets WHERE raffle_id IS NULL AND account_id = ?";
+
+        // Prepare the statement
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare statement: " . $conn->error, 0);
+        }
+
+        // Bind the parameter
+        $accountId = $account->crand;
+        $stmt->bind_param('i', $accountId);
+
+        // Execute the statement
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute statement: " . $stmt->error, 0);
+        }
+
+        // Get the result
+        $result = $stmt->get_result();
+        $row = $result->fetch_row();
+        $unused = $row[0] ?? 0;
+
+        // Close the statement
+        $stmt->close();
+
+        return new Response(true, "Unused raffle tickets", $unused);
+    }
+
     
     public static function checkIfTimeForRaffleWinner(vQuest $quest) : void {
 
@@ -428,6 +467,206 @@ class QuestController
         return new Response(true, "Raffle Participants", $rows);
     }
 
+    public static function removeStandardParticipationRewards(vRecordId $questId) : Response {
+        $questResp = self::getQuestById($questId);
+        $quest = $questResp->data;
+        if (!$quest->canEdit())
+        {
+            return new Response(false, "You do not have permissions to remove standard participation rewards from this quest.", null);
+        }
+
+        $removeRewardResp = self::rejectQuestReviewById($questId);
+        if (!$removeRewardResp->success)
+        {
+            return $removeRewardResp;
+        }
+
+
+        $conn = Database::getConnection();
+        
+        // SQL to delete specific standard participation rewards for the given questId
+        $sql = "DELETE FROM quest_reward WHERE quest_id = ? AND item_id IN (3, 4, 15)";
+
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, 'i', $questId->crand);
+        $result = mysqli_stmt_execute($stmt);
+
+        if ($result) {
+            // Successful deletion
+            mysqli_stmt_close($stmt);
+            return new Response(true, "Successfully removed standard participation rewards for quest", null);
+        } else {
+            // Deletion failed, capture error
+            $error = mysqli_error($conn);
+            mysqli_stmt_close($stmt);
+            return new Response(false, "Failed to remove standard participation rewards for quest. Error: $error", null);
+        }
+    }
+        
+    public static function setupStandardParticipationRewards(vRecordId $questId) : Response {
+        $resp = self::removeStandardParticipationRewards($questId);
+
+        if ($resp->success)
+        {
+            return self::addStandardParticipationRewards($questId);
+        }
+        else
+        {
+            return $resp;
+        }
+
+    }
+
+    public static function addStandardParticipationRewards($questId) : Response {
+        $questResp = self::getQuestById($questId);
+        $quest = $questResp->data;
+        if (!$quest->canEdit())
+        {
+            return new Response(false, "You do not have permissions to add standard participation rewards to this quest.", null);
+        }
+        
+        $addRewardResp = self::rejectQuestReviewById($questId);
+        if (!$addRewardResp->success)
+        {
+            return $addRewardResp;
+        }
+
+
+        $conn = Database::getConnection();
+        // Predefined standard reward IDs
+        $standardRewardIds = [3, 4, 15];
+        $success = true;
+        $errorMessages = [];
+
+        foreach ($standardRewardIds as $rewardId) {
+            $sql = "INSERT INTO quest_reward (quest_id, item_id, category, participation) VALUES (?, ?, 'Participation',1)";
+            
+            $stmt = mysqli_prepare($conn, $sql);
+            if (!$stmt) {
+                $success = false;
+                $errorMessages[] = "Failed to prepare statement: " . mysqli_error($conn);
+                break; // Optionally remove this break to attempt inserting all rewards even if one fails
+            }
+
+            mysqli_stmt_bind_param($stmt, 'ii', $questId->crand, $rewardId);
+            $result = mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+
+            if (!$result) {
+                $success = false;
+                $errorMessages[] = "Failed to insert reward ID $rewardId for quest ID $questId: " . mysqli_error($conn);
+                // Optionally break here to stop at the first error, or remove to try inserting all rewards
+                break;
+            }
+        }
+
+        if ($success) {
+            return new Response(true, "Successfully added standard participation rewards for quest", null);
+        } else {
+            // Join all error messages into a single string if there are multiple
+            $errorMessage = implode(" | ", $errorMessages);
+            return new Response(false, "Error adding standard participation rewards: $errorMessage", null);
+        }
+    }
+
+    public static function rejectQuestReviewById(vRecordId $questId)
+    {
+        $conn = Database::getConnection();
+         // Prepare the SQL statement to mark the quest as being reviewed
+         $stmt = $conn->prepare("UPDATE quest SET published = 0, being_reviewed = 0 WHERE Id = ? and (being_reviewed = 1 or published = 1)");
+         if (!$stmt) {
+             // Handle preparation errors
+             return new Response(false, "Failed to prepare the review rejection statement.", null);
+         }
+     
+         // Bind the quest ID to the statement
+         $stmt->bind_param('i', $questId->crand);
+     
+         // Execute the update statement
+         if (!$stmt->execute()) {
+             // Handle execution errors
+             $stmt->close();
+             return new Response(false, "Quest review rejection failed due to an execution error.", null);
+         }
+     
+         // Close the prepared statement
+         $stmt->close();
+     
+         // Successfully updated the quest status to being reviewed
+         return new Response(true, "Quest publish rejected.", null);
+    }
+
+    public static function updateQuestOptions($data) : Response {
+        
+        $conn = Database::getConnection();
+
+        $questId = $data["edit-quest-id"];
+        $questName = $data["edit-quest-options-title"];
+        $questLocator = $data["edit-quest-options-locator"];
+        $questHostId2 = $data["edit-quest-options-host-2-id"];
+        $questSummary = $data["edit-quest-options-summary"];
+        $hasADate = isset($data["edit-quest-options-has-a-date"]);
+        $dateTime = $data["edit-quest-options-datetime"];
+        $playStyle = $data["edit-quest-options-style"];
+        $questLineId = $data["edit-quest-options-questline"];
+        $questLineIdValue = empty($questLineId) ? NULL : $questLineId;
+
+        $questResp = self::getQuestById($questId);
+
+        if (!$questResp->success)
+        {
+            return (new Response(false, "Error updating quest. Could not find quest by Id.", null));
+        }
+        $quest = $questResp->data;
+
+        if (StringStartsWith($questLocator, 'new-quest-'))
+        {
+            if ($questLocator != 'new-quest-'.$quest["host_id"])
+            {
+                return (new Response(false, "Cannot change the quest locator to ".$questLocator, null));
+            }
+        }
+
+        if (!$quest->canEdit())
+        {
+            return (new Response(false, "Error updating quest. You do not have permission to edit this quest.", null));
+        }
+
+        // Prepare the update statement
+        $query = "UPDATE quest SET name = ?, locator = ?, host_id_2 = ?, summary = ?, end_date = ?, play_style = ?, quest_line_id = ?, `published` = 0, `being_reviewed` = 0 WHERE Id = ?";
+        $stmt = mysqli_prepare($conn, $query);
+
+        // Determine the value for host_id_2 and end_date
+        $host_id_2 = empty($questHostId2) ? NULL : $questHostId2;
+        $end_date = $hasADate && !empty($dateTime) ? $dateTime : NULL;
+        
+        //$date = $data["edit-quest-options-datetime-date"];
+        //$time = $data["edit-quest-options-datetime-time"];
+        //$end_date = $hasADate && !empty($date) && !empty($time) ? $date . ' ' . $time . ":00": NULL;
+
+        // Bind the parameters
+        mysqli_stmt_bind_param($stmt, 'ssissiii', $questName, $questLocator, $host_id_2, $questSummary, $end_date, $playStyle, $questLineIdValue, $questId);
+
+
+        // Execute the statement
+        $success = mysqli_stmt_execute($stmt);
+
+        // Close the statement
+        mysqli_stmt_close($stmt);
+
+        if($success) {
+            $locatorChanged = $quest["locator"] != $questLocator;
+            
+            // Construct a data object to return more explicit information
+            $responseData = (object)[
+                'locator' => $questLocator, // Always return the current locator
+                'locatorChanged' => $locatorChanged // Explicitly indicate if the locator was changed
+            ];
+            return (new Response(true, "Quest options updated successfully!", $responseData));
+        } else {
+            return (new Response(false, "Error updating quest options with unknown error.", null));
+        }
+    }
 
     private static function row_to_vQuest($row) : vQuest {
         $quest = new vQuest('',$row["Id"]);
@@ -451,9 +690,7 @@ class QuestController
 
         if ($row["end_date"] != null)
         {
-            $date = new vDateTime();
-            $date->setDateTimeFromString($row["end_date"]);
-            $quest->endDate = $date;
+            $quest->endDate = new vDateTime($row["end_date"]);
         }
 
         if ($row["image_id"] != null)
@@ -462,6 +699,9 @@ class QuestController
             $banner->setMediaPath($row["imagePath"]);
             $quest->banner = $banner;
         }
+        else{
+            $quest->banner = vMedia::defaultBanner();
+        }
 
         if ($row["image_id_icon"] != null)
         {
@@ -469,12 +709,18 @@ class QuestController
             $icon->setMediaPath($row["imagePath_icon"]);
             $quest->icon = $icon;
         }
+        else{
+            $quest->icon = vMedia::defaultIcon();
+        }
 
         if ($row["image_id_mobile"] != null)
         {
             $bannerMobile = new vMedia('',$row["image_id_mobile"]);
             $bannerMobile->setMediaPath($row["imagePath_mobile"]);
             $quest->bannerMobile = $bannerMobile;
+        }
+        else{
+            $quest->bannerMobile = vMedia::defaultBannerMobile();
         }
 
         if ($row["raffle_id"] != null)
@@ -557,6 +803,51 @@ class QuestController
         $questApplicant->seed = $row["seed"];
         $questApplicant->rank = $row["rank"];
         return $questApplicant;
+    }
+
+    public static function insertNewQuest() : Response {
+        if (Session::isQuestGiver())
+        {
+            
+            $questName = "New Quest";
+            $questLocator = "new-quest-".Session::getCurrentAccount()->crand;
+
+            $questResp = self::getQuestByLocator($questLocator);
+            if (!$questResp->success)
+            {
+                $questModel = new Quest();
+                $insertResp = self::insert($questModel);
+                $quest = $insertResp->data;
+            }
+            else
+            {
+                $quest = $questResp->data;
+            }
+            if (!$quest->hasPageContent())
+            {
+                $newContentId = InsertNewContent();
+                
+                UpdateQuestContent($questResp->data["Id"],$newContentId);
+
+                $questResp = GetQuestByLocator($questLocator);
+            }
+
+            return (new Response(true, "New quest created.", $questResp->data));
+        }
+        else{
+            return (new Response(false, "You do not have permissions to post a new quest.", null));
+        }
+    }
+
+    public static function insert(Quest $quest) : Response {
+
+        $stmt = $conn->prepare("INSERT INTO quest (name, locator, host_id) values (?,?,?)");
+        mysqli_stmt_bind_param($stmt, 'ssi', $questName, $questLocator, Kickback\Services\Session::getCurrentAccount()->crand);
+        mysqli_stmt_execute($stmt);
+        $newId = mysqli_insert_id($conn);
+        $questResp = GetQuestByLocator($questLocator);
+        $rewardResp = SetupStandardParticipationRewards($newId);
+
     }
 }
 ?>

@@ -5,6 +5,8 @@ namespace Kickback\Views;
 
 use Kickback\Views\vMedia;
 use Kickback\Views\vItem;
+use Kickback\Services\Session;
+use Kickback\Controllers\BlogController;
 
 class vBlog extends vRecordId
 {
@@ -25,6 +27,28 @@ class vBlog extends vRecordId
 
     public function getURL() : string {
         return '/blog/'.$this->locator;
+    }
+
+    public function isManager() : bool {
+        if (Session::isLoggedIn())
+        {
+            return BlogController::accountIsManager(Session::getCurrentAccount(), $this)->data;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public function isWriter() : bool {
+        if (Session::isLoggedIn())
+        {
+            return BlogController::accountIsWriter(Session::getCurrentAccount(), $this)->data;
+        }
+        else
+        {
+            return false;
+        }
     }
 }
 

@@ -8,6 +8,7 @@ use Kickback\Views\vDateTime;
 use Kickback\Views\vReviewStatus;
 use Kickback\Views\vRecordId;
 use Kickback\Controllers\QuestController;
+use Kickback\Services\Session;
 
 class vQuestLine extends vRecordId
 {
@@ -41,6 +42,89 @@ class vQuestLine extends vRecordId
             $this->quests = $resp->data;
         else
             throw new \Exception($resp->message);
+    }
+
+
+    public function populateContent() : void {
+        if ($this->hasPageContent())
+        {
+            $this->content->populateContent("QUEST-LINE", $this->locator);
+        }
+    }
+
+    public function populateEverything() : void {
+        $this->populateQuests();
+        $this->populateContent();
+    }
+    
+    public function nameIsValid() {
+        $valid = StringIsValid($this->title, 10);
+        if ($valid) 
+        {
+            if (strtolower($this->title) == "new quest")
+                $valid = false;
+        }
+
+        return $valid;
+    }
+
+    public function summaryIsValid() : bool {
+        $valid = StringIsValid($this->summary, 200);
+
+        return $valid;
+    }
+    
+    public function hasPageContent() : bool {
+        return $this->content->hasPageContent();
+    }
+
+    public function pageContentIsValid() : bool {
+        return ($this->hasPageContent() && ($this->content->isValid()));
+    }
+
+    public function getPageContent() : array {
+        return $this->content->pageContent;
+    }
+
+    public function locatorIsValid() : bool {
+        $valid = StringIsValid($this->locator, 5);
+        if ($valid) 
+        {
+            if (strpos(strtolower($this->locator), 'new-quest-') === 0) {
+                $valid = false;
+            }
+        }
+
+        return $valid;
+    }
+
+    public function imagesAreValid() : bool {
+        return self::imageIsValid($this->icon) && self::imageIsValid($this->banner) && self::imageIsValid($this->bannerMobile);
+    }
+
+    private static function imageIsValid($media) : bool {
+        return isset($media) && !is_null($media);
+    }
+
+    public function isValidForPublish() : bool {
+        return $this->nameIsValid() && $this->summaryIsValid() && $this->locatorIsValid() && $this->pageContentIsValid() && $this->imagesAreValid();
+    }
+
+    public function canEdit()
+    {
+        return $this->isCreator() || Session::isAdmin();
+    }
+
+    public function isCreator()
+    {
+        if (Session::isLoggedIn())
+        {
+            return (Session::getCurrentAccount()->crand == $this->createdBy->crand );
+        }
+        else{
+            return false;
+        }
+        
     }
 }
 

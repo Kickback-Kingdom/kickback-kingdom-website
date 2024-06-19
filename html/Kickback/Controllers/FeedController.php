@@ -236,6 +236,45 @@ class FeedController
         return new Response(true, "news feed",  $newsList);
     }
 
+    
+    public static function getBlogFeed(string $blogLocator, int $page = 1, int $itemsPerPage = 10) : Response {
+        // Prepare the SQL query with placeholders
+        $conn = Database::getConnection();
+        $offset = ($page - 1) * $itemsPerPage;
+        $sql = "SELECT * FROM kickbackdb.v_feed WHERE type = 'BLOG-POST' and `locator` LIKE ?";
+
+        // Prepare the statement
+        $stmt = mysqli_prepare($conn, $sql);
+
+        // Check if the statement was prepared successfully
+        if (!$stmt) {
+            die("Failed to prepare statement: " . mysqli_error($conn));
+        }
+
+        // Bind the parameters
+        $param = $blogLocator . "/%";
+        mysqli_stmt_bind_param($stmt, "s", $param); // 's' denotes that the parameter is a string
+
+        // Execute the statement
+        if (!mysqli_stmt_execute($stmt)) {
+            die("Failed to execute statement: " . mysqli_stmt_error($stmt));
+        }
+
+        // Get the result
+        $result = mysqli_stmt_get_result($stmt);
+
+        // Fetch all the rows
+        $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+        // Free the result
+        mysqli_free_result($result);
+
+        // Close the statement
+        mysqli_stmt_close($stmt);
+
+        return (new Response(true, "blog feed", $rows));
+    }
+
     private static function row_to_vFeedRecord(array $row) : vFeedRecord {
         $news = new vFeedRecord();
         $news->type = $row["type"];
@@ -262,7 +301,7 @@ class FeedController
                 $questLine->icon = $icon;
             }
             else{
-                $questLine->icon = vMedia::defaultImage();
+                $questLine->icon = vMedia::defaultIcon();
             }
 
             $news->questLine = $questLine;
@@ -289,7 +328,7 @@ class FeedController
                 $quest->icon = $icon;
             }
             else{
-                $quest->icon = vMedia::defaultImage();
+                $quest->icon = vMedia::defaultIcon();
             }
 
             $host1 = new vAccount('', $row["account_1_id"]);
@@ -341,7 +380,7 @@ class FeedController
 
         if ($news->type == "BLOG")
         {
-            $blog = new vBlog('', (int)$row["Id"]);
+            $blog = new vBlog('',(int) $row["Id"]);
 
             $blog->title = $row["title"];
             $blog->description = $row["text"];
@@ -352,7 +391,7 @@ class FeedController
 
             if ($row["account_1_id"] != null)
             {
-                $author = new vAccount('', (int)$row["account_1_id"]);
+                $author = new vAccount('',(int) $row["account_1_id"]);
                 $author->username = $row["account_1_username"];
                 $blog->lastWriter = $author;
             }

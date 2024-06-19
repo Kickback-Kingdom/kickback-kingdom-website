@@ -35,6 +35,27 @@ class QuestLineController {
             return (new Response(false, "We couldn't find a quest line with that id.", null));
         }
     }
+    
+    public static function getQuestLineByLocator(string $locator) : Response {
+        
+        $conn = Database::getConnection();
+        $stmt = $conn->prepare("SELECT * FROM v_quest_line_info WHERE locator = ?");
+        $stmt->bind_param("s", $locator);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0)
+        {
+            $row = $result->fetch_assoc();
+            $stmt->close();
+            return (new Response(true, "Quest Line Information.", self::row_to_vQuestLine($row)));
+        }
+        else
+        {
+            $stmt->close();
+            return (new Response(false, "Couldn't find a quest line with that locator.", null));
+        }
+    }
 
     public static function getMyQuestLines(?vAccount $account = null, bool $publishedOnly = true)
     {

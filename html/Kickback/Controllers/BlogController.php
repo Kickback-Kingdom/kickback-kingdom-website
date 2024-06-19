@@ -13,7 +13,6 @@ use Kickback\Views\vDateTime;
 
 class BlogController 
 {
-    
     public static function getBlogByLocator(string $locator) : Response {
         $sql = "SELECT * FROM v_blog_info WHERE locator = ? LIMIT 1";
 
@@ -47,8 +46,6 @@ class BlogController
         return (new Response(true, "Blog retrieved successfully.", self::row_to_vBlog($row)));
     }
 
-    
-    
     public static function getAllBlogs() : Response {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_blog_info ORDER BY Id DESC";  // Adjust ordering as needed
@@ -62,9 +59,67 @@ class BlogController
 
         return (new Response(true, "Available Blogs",  $newsList));
     }
+    
+    public static function accountIsWriter(vAccount $account, vBlog $blog) : Response {
+        $conn = Database::getConnection();
+
+        $stmt = mysqli_prepare($conn, "SELECT IsManager, IsWriter FROM v_blog_permissions WHERE account_id = ? AND blog_id = ?");
+        mysqli_stmt_bind_param($stmt, "ii", $account_id, $blog_id); 
+        mysqli_stmt_execute($stmt);
+
+        $result = mysqli_stmt_get_result($stmt);
+        
+        $row = mysqli_fetch_assoc($result);
+        $num_rows = mysqli_num_rows($result);
+        
+        if ($num_rows === 0)
+        {
+            return (new Response(false, "Account or Blog not found.", false));
+        }
+        else
+        {
+            if($row['IsManager'] == 1 || $row['IsWriter'] == 1) 
+            {
+                return (new Response(true, "The account is a writer for the blog.", true));
+            } 
+            else 
+            {
+                return (new Response(false, "The account is not a writer for the blog.", false));
+            }
+        }
+    }
+
+    public static function accountIsManager(vAccount $account, vBlog $blog) : Response {
+        
+        $conn = Database::getConnection();
+        $stmt = mysqli_prepare($conn, "SELECT IsManager FROM v_blog_permissions WHERE account_id = ? AND blog_id = ?");
+        mysqli_stmt_bind_param($stmt, "ii", $account_id, $blog_id); 
+        mysqli_stmt_execute($stmt);
+
+        $result = mysqli_stmt_get_result($stmt);
+        
+        $row = mysqli_fetch_assoc($result);
+        $num_rows = mysqli_num_rows($result);
+        
+        if ($num_rows === 0)
+        {
+            return (new Response(false, "Account or Blog not found.", false));
+        }
+        else
+        {
+            if($row['IsManager'] == 1) 
+            {
+                return (new Response(true, "The account is a manager for the blog.", true));
+            } 
+            else 
+            {
+                return (new Response(false, "The account is not a manager for the blog.", false));
+            }
+        }
+    }
 
     private static function row_to_vBlog(array $row) : vBlog {
-        $blog = new vBlog('', (int)$row["Id"]);
+        $blog = new vBlog('', $row["Id"]);
 
         $blog->title = $row["name"];
         $blog->description = $row["desc"];
@@ -79,7 +134,7 @@ class BlogController
             $blog->icon = $icon;
         }
         else{
-            $blog->icon = vMedia::defaultImage();
+            $blog->icon = vMedia::defaultIcon();
         }
 
         if ($row["manager_item_id"] != null)

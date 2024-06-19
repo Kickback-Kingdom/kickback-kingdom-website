@@ -180,7 +180,7 @@ class AccountController
         LEFT JOIN `raffle_submissions` ON (`raffle`.`winner_submission_id` = `raffle_submissions`.`Id`))
         LEFT JOIN `v_loot_item` `loot` ON (`raffle_submissions`.`loot_id` = `loot`.`Id`))
         LEFT JOIN v_account_info as `account` ON (`loot`.`account_id` = `account`.`Id`))
-        WHERE raffle.Id = ?";
+        WHERE raffle.Id = ? and account.Id is not null";
 
         // Prepare the SQL statement
         $stmt = $conn->prepare($sql);
@@ -534,6 +534,7 @@ class AccountController
     
 
     public static function row_to_vAccount(array $row, bool $populateChildData = false) : vAccount {
+        
         $account = new vAccount('', $row["Id"]);
 
         // Assign string and integer properties

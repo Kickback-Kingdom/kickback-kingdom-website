@@ -4,7 +4,7 @@ use Kickback\Controllers\QuestController;
 <div class="card mb-3 feed-card <?= $_vFeedCard->cssClassCard; ?>">
     <div class="row g-0">
         <div class="<?= $_vFeedCard->cssClassImageColSize; ?>" style="margin:auto;position: relative;">
-            <?php if (!$_vFeedCard->hideType) { ?><span class="feed-stamp feed-stamp-quest <?= ($_vFeedCard->hasDateTime() && $_vFeedCard->dateTime->isExpired()?"bg-tertiary":"bg-secondary bg-ranked-1"); ?>"><?= $_vFeedCard->typeText; ?></span><?php } ?>
+            <?php if (!$_vFeedCard->hideType) { ?><span class="feed-stamp feed-stamp-quest <?= (!$_vFeedCard->useGoldTrim()?"bg-tertiary":"bg-secondary bg-ranked-1"); ?>"><?= $_vFeedCard->typeText; ?></span><?php } ?>
             <img src="<?= $_vFeedCard->icon->getFullPath();?>"  class="img-fluid img-thumbnail"/>
         </div>
         <div class="<?= $_vFeedCard->cssClassTextColSize; ?> <?= $_vFeedCard->cssClassRight; ?>" >
@@ -85,7 +85,7 @@ use Kickback\Controllers\QuestController;
                 <?php } 
                 
                 if (!$_vFeedCard->hideCTA) { ?>
-                    <a class="btn btn-sm float-end <?= ($_vFeedCard->hasDateTime() && $_vFeedCard->dateTime->isExpired()?"text-white bg-tertiary":"bg-ranked-1"); ?>" href="<?= $_vFeedCard->getURL();?>"><?= $_vFeedCard->cta; ?> <i
+                    <a class="btn btn-sm float-end <?= (!$_vFeedCard->useGoldTrim()?"text-white bg-tertiary":"bg-ranked-1"); ?>" href="<?= $_vFeedCard->getURL();?>"><?= $_vFeedCard->cta; ?> <i
                             class="fa-solid fa-angle-right"></i></a><?php } ?>
                 </p>
             </div>

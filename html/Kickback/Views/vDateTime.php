@@ -41,6 +41,24 @@ class vDateTime
         if (isset($dateString) && $dateString != null && $dateString != "")
             $this->setDateTimeFromString($dateString);
     }
+
+    public static function getValueString(?vDateTime $dateTime) : string {
+        if ($dateTime == null)
+            return "";
+        return $dateTime->valueString;
+    }
+
+    public static function getFormattedYmd(?vDateTime $dateTime) : string {
+        if ($dateTime == null)
+            return "";
+        return $dateTime->formattedYmd; 
+    }
+
+    public static function getFormattedHi(?vDateTime $dateTime) : string {
+        if ($dateTime == null)
+            return "";
+        return $dateTime->formattedHi; 
+    }
 }
 
 ?>

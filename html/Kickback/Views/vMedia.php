@@ -14,6 +14,7 @@ class vMedia extends vRecordId
     public string $directory;
     private string $mediaPath;
     public string $url;
+    private bool $_valid = true;
 
     function __construct(string $ctime = '', int $crand = -1)
     {
@@ -38,10 +39,27 @@ class vMedia extends vRecordId
         $this->url = $this->getFullPath();
     }
     
-    public static function defaultImage() : vMedia {
+    public static function defaultIcon() : vMedia {
         $media = new vMedia('',221);
         $media->setMediaPath('items/221.png');
+        $media->_valid = false;
         return $media;
+    }
+    public static function defaultBanner() : vMedia {
+        $media = new vMedia('',221);
+        $media->setMediaPath('items/221.png');
+        $media->_valid = false;
+        return $media;
+    }
+    public static function defaultBannerMobile() : vMedia {
+        $media = new vMedia('',221);
+        $media->setMediaPath('items/221.png');
+        $media->_valid = false;
+        return $media;
+    }
+
+    public function isValid() : bool {
+        return $this->_valid;
     }
 }
 

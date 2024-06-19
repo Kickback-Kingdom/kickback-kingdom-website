@@ -8,11 +8,12 @@ use Kickback\Views\vMedia;
 use Kickback\Views\vRecordId;
 use Kickback\Models\Response;
 use Kickback\Services\Database;
+use Kickback\Views\vAccount;
 
 class ItemController
 {
 
-    private static function row_to_vItem($row) : vItem
+    public static function row_to_vItem($row) : vItem
     {
         $item = new vItem();
         $item->name = $row["name"];

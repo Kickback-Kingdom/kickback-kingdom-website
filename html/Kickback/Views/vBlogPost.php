@@ -8,6 +8,8 @@ use Kickback\Views\vMedia;
 use Kickback\Views\vRecordId;
 use Kickback\Views\vDateTime;
 use Kickback\Views\vReviewStatus;
+use Kickback\Services\Session;
+
 
 class vBlogPost extends vRecordId
 {
@@ -19,7 +21,14 @@ class vBlogPost extends vRecordId
     public vAccount $author;
     public vReviewStatus $reviewStatus;
     
-    public ?vMedia $icon = null;
+    public vContent $content;
+    public vMedia $icon;
+
+
+    public vBlog $blog;
+
+    public ?vBlogPost $prevBlogPost = null;
+    public ?vBlogPost $nextBlogPost = null;
 
     function __construct(string $ctime = '', int $crand = -1)
     {
@@ -38,6 +47,74 @@ class vBlogPost extends vRecordId
 
     public function getURL() : string {
         return '/blog/'.$this->blogLocator.'/'.$this->postLocator;
+    }
+
+    public function isWriter() : bool {
+        if (Session::isLoggedIn())
+        {
+            return ($this->blog->isManager() || Session::getCurrentAccount()->crand == $this->author->crand) && !isset($_GET['borderless']);
+        }
+        else
+        {
+            return false;
+        }
+    }
+        
+    public function titleIsValid()
+    {
+        $valid = StringIsValid($this->title, 10);
+        if ($valid) 
+        {
+            if (strtolower($this->title) == "new blog post")
+                $valid = false;
+        }
+
+        return $valid;
+    }
+
+    public function summaryIsValid() {
+        $valid = StringIsValid($this->summary, 200);
+
+        return $valid;
+    }
+
+    public function locatorIsValid()
+    {
+        $valid = StringIsValid($this->postLocator, 5);
+        if ($valid) 
+        {
+            if (strpos(strtolower($this->postLocator), 'new-post-') === 0) {
+                $valid = false;
+            }
+        }
+
+        return $valid;
+    }
+
+    public function iconIsValid()
+    {
+        return $this->icon->isValid();
+    }
+
+    public function isValidForPublish()
+    {
+        return $this->titleIsValid() && $this->summaryIsValid() && $this->locatorIsValid() && $this->pageContentIsValid() && $this->iconIsValid();
+    }
+
+    
+    public function pageContentIsValid() : bool {
+        return ($this->hasPageContent() && ($this->content->isValid()));
+    }
+
+    public function populateContent() : void {
+        if ($this->hasPageContent())
+        {
+            $this->content->populateContent("BLOG-POST", $this->blogLocator."/".$this->postLocator);
+        }
+    }
+    
+    public function hasPageContent() : bool {
+        return $this->content->hasPageContent();
     }
 }
 
