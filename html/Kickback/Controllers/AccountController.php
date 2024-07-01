@@ -77,27 +77,7 @@ class AccountController
 
     public static function getAccountInventory(vRecordId $recordId) : Response {
         
-        $conn = Database::getConnection();
-        
-        $sql = "SELECT * FROM kickbackdb.v_account_inventory_desc WHERE account_id = ?";
-        $stmt = mysqli_prepare($conn, $sql);
-        
-        if ($stmt === false) {
-            return new Response(false, mysqli_error($conn), null);
-        }
-        
-        mysqli_stmt_bind_param($stmt, "i", $recordId->crand);
-        mysqli_stmt_execute($stmt);
-        
-        $result = mysqli_stmt_get_result($stmt);
-        
-        if ($result === false) {
-            return new Response(false, mysqli_stmt_error($stmt), null);
-        }
-        
-        $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
-        
-        return new Response(true, "Account Inventory", $rows);
+        return LootController::getLootByAccountId($recordId);
     }
 
     public static function getAccountByUsername(string $username) : Response {
@@ -532,6 +512,68 @@ class AccountController
         return new Response(true, "Quest Badges", $rows);
     }
     
+    public static function prepareAccountPasswordResetCode(vRecordId $account_id) : Response {
+        $conn = Database::getConnection();
+        $code = random_int(1000000, 9999999);
+        
+        // Prepare the SQL statement
+        $sql = "UPDATE account SET pass_reset = ? WHERE Id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        
+        if ($stmt) {
+            // Bind parameters
+            mysqli_stmt_bind_param($stmt, 'ii', $code, $account_id->crand);
+            
+            // Execute the statement
+            $result = mysqli_stmt_execute($stmt);
+            
+            // Close the statement
+            mysqli_stmt_close($stmt);
+            
+            if ($result) {
+                return (new Response(true, "Generated Password Reset Code", $code));
+            } else {
+                return (new Response(false, "Failed to generate Password Reset Code! " . mysqli_error($conn), null));
+            }
+        } else {
+            return (new Response(false, "Failed to prepare SQL statement! " . mysqli_error($conn), null));
+        }
+    }
+
+
+    public static function getAccountByWritOfPassageLootId(vRecordId $loot_id) : Response {
+        $conn = Database::getConnection();
+        $stmt = mysqli_prepare($conn, 'SELECT ai.* FROM loot l 
+        left join account a on a.passage_id = l.id
+        left join v_account_info ai on ai.id = l.account_id
+        where l.id = ? and l.item_id = 14 and a.id is null');
+        
+        // Bind the input parameter to the prepared statement
+        mysqli_stmt_bind_param($stmt, 'i', $loot_id->crand);
+    
+        // Execute the SQL statement
+        mysqli_stmt_execute($stmt);
+    
+        // Get the result of the SQL query
+        $result = mysqli_stmt_get_result($stmt);
+    
+        // Check if any rows were returned
+        if (mysqli_num_rows($result) > 0) {
+            $ownerInfo = mysqli_fetch_assoc($result);
+    
+            // Free the statement
+            mysqli_stmt_close($stmt);
+    
+            // Return the owner information if found
+            return new Response(true, "Owner information found.", self::row_to_vAccount($ownerInfo));
+        } else {
+            // Free the statement
+            mysqli_stmt_close($stmt);
+    
+            // If no owner is found, the Writ of Passage may not be assigned or doesn't exist
+            return new Response(false, "No owner found for the Writ of Passage or it has not been assigned yet or has already been used.", null);
+        }
+    }
 
     public static function row_to_vAccount(array $row, bool $populateChildData = false) : vAccount {
         

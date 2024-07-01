@@ -224,7 +224,7 @@ class vQuest extends vRecordId
         return true;
     }
 
-    public function getPageContent() : array {
+    public function getPageContent() : vPageContent {
         return $this->content->pageContent;
     }
 
@@ -239,7 +239,6 @@ class vQuest extends vRecordId
         $this->populateTournament();
         $this->populateQuestLine();
     }
-
 }
 
 

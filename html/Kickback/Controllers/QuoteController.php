@@ -128,7 +128,7 @@ class QuoteController
 
             //Alibaba
             [
-                "text" => "Anything can be solved with a little patience and understading",
+                "text" => "Anything can be solved with a little patience and understanding",
                 "image" => "quotes/people/122.png",
                 "author" => "Alexander Atlas",
                 "date" => "2020s AD",

@@ -569,8 +569,7 @@ class QuestController
         }
     }
 
-    public static function rejectQuestReviewById(vRecordId $questId)
-    {
+    public static function rejectQuestReviewById(vRecordId $questId) : Response {
         $conn = Database::getConnection();
          // Prepare the SQL statement to mark the quest as being reviewed
          $stmt = $conn->prepare("UPDATE quest SET published = 0, being_reviewed = 0 WHERE Id = ? and (being_reviewed = 1 or published = 1)");
@@ -600,7 +599,7 @@ class QuestController
         
         $conn = Database::getConnection();
 
-        $questId = $data["edit-quest-id"];
+        $questId = new vRecordId('', (int)$data["edit-quest-id"]);
         $questName = $data["edit-quest-options-title"];
         $questLocator = $data["edit-quest-options-locator"];
         $questHostId2 = $data["edit-quest-options-host-2-id"];
@@ -621,7 +620,7 @@ class QuestController
 
         if (StringStartsWith($questLocator, 'new-quest-'))
         {
-            if ($questLocator != 'new-quest-'.$quest["host_id"])
+            if ($questLocator != 'new-quest-'.$quest->host1->crand)
             {
                 return (new Response(false, "Cannot change the quest locator to ".$questLocator, null));
             }
@@ -645,7 +644,7 @@ class QuestController
         //$end_date = $hasADate && !empty($date) && !empty($time) ? $date . ' ' . $time . ":00": NULL;
 
         // Bind the parameters
-        mysqli_stmt_bind_param($stmt, 'ssissiii', $questName, $questLocator, $host_id_2, $questSummary, $end_date, $playStyle, $questLineIdValue, $questId);
+        mysqli_stmt_bind_param($stmt, 'ssissiii', $questName, $questLocator, $host_id_2, $questSummary, $end_date, $playStyle, $questLineIdValue, $questId->crand);
 
 
         // Execute the statement
@@ -655,7 +654,7 @@ class QuestController
         mysqli_stmt_close($stmt);
 
         if($success) {
-            $locatorChanged = $quest["locator"] != $questLocator;
+            $locatorChanged = $quest->locator != $questLocator;
             
             // Construct a data object to return more explicit information
             $responseData = (object)[
@@ -667,8 +666,174 @@ class QuestController
             return (new Response(false, "Error updating quest options with unknown error.", null));
         }
     }
+    
+    public static function updateQuestImages(vRecordId $questId,vRecordId  $desktop_banner_id,vRecordId  $mobile_banner_id,vRecordId  $icon_id) : Response {
 
-    private static function row_to_vQuest($row) : vQuest {
+        $conn = Database::getConnection();
+
+        $questResp = self::getQuestById($questId);
+
+        if (!$questResp->success)
+        {
+            return (new Response(false, "Error updating quest. Could not find quest by Id.", null));
+        }
+        $quest = $questResp->data;
+
+        if (!$quest->canEdit())
+        {
+            return (new Response(false, "Error updating quest. You do not have permission to edit this quest.", null));
+        }
+
+        // Prepare the update statement
+        $query = "UPDATE quest SET image_id_icon=?, image_id=?, image_id_mobile=?, `published` = 0, `being_reviewed` = 0 WHERE Id=?";
+        $stmt = mysqli_prepare($conn, $query);
+
+        // Bind the parameters
+        mysqli_stmt_bind_param($stmt, 'iiii', $icon_id->crand, $desktop_banner_id->crand, $mobile_banner_id->crand,  $questId->crand);
+
+        // Execute the statement
+        $success = mysqli_stmt_execute($stmt);
+
+        // Close the statement
+        mysqli_stmt_close($stmt);
+
+        // Check if the update was successful
+        if($success) {
+            return (new Response(true, "Quest images updated successfully!", null));
+        } else {
+            return (new Response(false, "Error updating quest images with unknown error.", null));
+        }
+    }
+    
+    public static function submitQuestForReview(vRecordId $questId) : Response { 
+
+        $conn = Database::getConnection();
+
+        
+        $questResp = self::getQuestById($questId); 
+        if (!$questResp->success) {
+            return new Response(false, "Quest submission failed. Quest not found.", null);
+        }
+
+        $quest = $questResp->data;
+        if (!$quest->canEdit()) {
+            return new Response(false, "Submission denied. Insufficient permissions to edit this quest.", null);
+        }
+
+        
+        $stmt = $conn->prepare("UPDATE quest SET published = 0, being_reviewed = 1 WHERE Id = ?"); // Corrected table name
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare the review submission statement.", null);
+        }
+
+        $stmt->bind_param('i', $questId->crand); 
+
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return new Response(false, "Quest review submission failed due to an execution error.", null);
+        }
+
+        $stmt->close();
+
+        return new Response(true, "Quest successfully submitted for review. This may take a few days to be reviewed. Thank you for your patience.", null);
+    }
+
+    public static function approveQuestReviewById(vRecordId $questId) : Response {
+        
+        $conn = Database::getConnection();
+        
+        if (!Session::isAdmin()) {
+            return new Response(false, "Approval denied. Insufficient permissions to edit this quest.", null);
+        }
+
+        $stmt = $conn->prepare("UPDATE quest SET published = 1, being_reviewed = 0 WHERE Id = ?");
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare the review approval statement.", null);
+        }
+
+        $stmt->bind_param('i', $questId->crand);
+
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return new Response(false, "Quest review approval failed due to an execution error.", null);
+        }
+
+        $stmt->close();
+
+        return new Response(true, "Quest successfully approved and published.", null);
+    }
+
+        
+    public static function updateQuestContent(vRecordId $questId, vRecordId $contentId) : Response {
+        $conn = Database::getConnection();
+        $stmt = $conn->prepare("UPDATE quest SET content_id = ? WHERE Id = ?");
+        mysqli_stmt_bind_param($stmt, 'ii', $contentId->crand, $questId->crand);
+        mysqli_stmt_execute($stmt);
+
+        return (new Response(true, "Quest content updated.", null));
+    }
+
+    public static function submitRaffleTicket(vRecordId $account_id, vRecordId $raffle_id) : Response {
+        
+        $conn = Database::getConnection();
+        $loot_id = GetUnusedAccountRaffleTicket($account_id)->data;
+        $raffle_id = mysqli_real_escape_string($conn, $raffle_id);
+
+        $sql = "INSERT INTO raffle_submissions (raffle_id, loot_id) VALUES ($raffle_id,$loot_id);";
+        $result = mysqli_query($conn,$sql);
+        if ($result === TRUE) {
+
+            return (new Response(true, "Submitted Raffle Ticket!",null));
+        } 
+        else 
+        {
+            return (new Response(false, "Failed to submit raffle ticket with error: ".GetSQLError(), null));
+        }
+
+    }
+
+    public static function accountHasRegisteredOrAppliedForQuest(vRecordId $account_id, vRecordId $quest_id) : Response {
+        $conn = Database::getConnection();
+        // Prepare the SQL statement for checking existing entry
+        $stmt = mysqli_prepare($conn, "SELECT 1 FROM quest_applicants WHERE account_id = ? AND quest_id = ?");
+        mysqli_stmt_bind_param($stmt, 'ii', $account_id->crand, $quest_id->crand);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $exists = mysqli_num_rows($result) > 0;
+        mysqli_stmt_close($stmt);
+        
+        if ($exists) {
+            return (new Response(false, "Account has already registered or applied for the quest.", null));
+        } else {
+            return (new Response(true, "Account has not registered or applied for the quest.", null));
+        }
+    }
+
+    public static function applyOrRegisterForQuest(vRecordId $account_id, vRecordId $quest_id) : Response {
+        $conn = Database::getConnection();
+        // Check if the account has already registered or applied for the quest
+        $checkResponse = self::accountHasRegisteredOrAppliedForQuest($account_id, $quest_id);
+        if (!$checkResponse->success) {
+            return $checkResponse; // Return the response from the check function
+        }
+
+        // Prepare the SQL statement for inserting a new entry
+        $stmt = mysqli_prepare($conn, "INSERT INTO quest_applicants (account_id, accepted, quest_id, participated) VALUES (?, '0', ?, '0')");
+        mysqli_stmt_bind_param($stmt, 'ii', $account_id->crand, $quest_id->crand);
+        if (mysqli_stmt_execute($stmt)) {
+            $account = AccountController::getAccountById($account_id)->data;
+            $quest = self::getQuestById($quest_id)->data;
+            DiscordWebHook(GetRandomGreeting() . ', ' . $account['Username'] . ' just signed up for the ' . $quest['name'] . ' quest.');
+            mysqli_stmt_close($stmt);
+            return (new Response(true, "Registered for quest successfully", null));
+        } else {
+            $error = mysqli_stmt_error($stmt);
+            mysqli_stmt_close($stmt);
+            return (new Response(false, "Failed to register for quest with error: " . $error, null));
+        }
+    }
+
+    private static function row_to_vQuest(array $row) : vQuest {
         $quest = new vQuest('',$row["Id"]);
 
         $quest->title = $row["name"];
@@ -754,7 +919,7 @@ class QuestController
         return $quest;
     }
 
-    private static function row_to_vQuestReward($row) : vQuestReward {
+    private static function row_to_vQuestReward(array $row) : vQuestReward {
         $questReward = new vQuestReward();
 
         $questReward->questId = new vRecordId('',$row["quest_id"]);
@@ -795,7 +960,7 @@ class QuestController
         return $questReward;
     }
 
-    private static function row_to_vQuestApplicant($row) : vQuestApplicant {
+    private static function row_to_vQuestApplicant(array $row) : vQuestApplicant {
         $questApplicant = new vQuestApplicant();
 
         $questApplicant->account = AccountController::row_to_vAccount($row);

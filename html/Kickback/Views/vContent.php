@@ -4,11 +4,13 @@ declare(strict_types=1);
 namespace Kickback\Views;
 
 use Kickback\Controllers\ContentController;
+use Kickback\Views\vRecordId;
+use Kickback\Views\vPageContent;
 
 class vContent extends vRecordId
 {
     public string $htmlContent;
-    public ?array $pageContent = null;
+    public ?vPageContent $pageContent = null;
 
     function __construct(string $ctime = '', int $crand = -1)
     {
@@ -16,7 +18,7 @@ class vContent extends vRecordId
     }
 
     public function isValid() : bool {
-        return ($this->pageContent != null && count($this->pageContent["data"]) > 0);
+        return ($this->pageContent != null && count($this->pageContent->data) > 0);
     }
 
     public function hasPageContent() : bool {
