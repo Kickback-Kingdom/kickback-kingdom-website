@@ -46,12 +46,61 @@ class ItemController
         }
     }
 
-    public static function row_to_vItem($row) : vItem
-    {
+    public static function usePrestigeToken(vRecordId $fromAccountId, vRecordId $toAccountId, bool $commend, string $desc) : Response {
+        if ($fromAccountId == null) {
+            return new Response(false, "Failed to use prestige token because you provided a null fromAccountId.", $fromAccountId);
+        }
+        if ($toAccountId == null) {
+            return new Response(false, "Failed to use prestige token because you provided a null toAccountId.", $toAccountId);
+        }
+        if ($fromAccountId->crand == $toAccountId->crand) {
+            return new Response(false, "You cannot leave a review on yourself.", $toAccountId);
+        }
+        if ($commend === null) {
+            return new Response(false, "Failed to use prestige token because you provided a null rating.", $commend);
+        }
+        if ($desc == null) {
+            return new Response(false, "Failed to use prestige token because you provided a null review.", $desc);
+        }
+    
+        $conn = Database::getConnection();
+        // Get unused prestige token
+        $prestigeTokenResp = AccountController::getPrestigeTokens($fromAccountId);
+        $prestigeTokenInfo = $prestigeTokenResp->data;
+    
+        if ($prestigeTokenInfo["remaining"] > 0) {
+            $lootId = $prestigeTokenInfo["next_token"];
+    
+            $sql = "INSERT INTO prestige (account_id_from, account_id_to, commend, loot_id, `Desc`) VALUES (?, ?, ?, ?, ?)";
+            $stmt = $conn->prepare($sql);
+    
+            if ($stmt === false) {
+                return new Response(false, "Failed to prepare statement", $prestigeTokenResp);
+            }
+    
+            $stmt->bind_param("iiiis", $fromAccountId->crand, $toAccountId->crand, $commend, $lootId, $desc);
+            $result = $stmt->execute();
+    
+            if ($result) {
+                return new Response(true, "Successfully used a prestige token", null);
+            } else {
+                return new Response(false, "Failed to leave review with error: " . $stmt->error, $prestigeTokenResp);
+            }
+        } else {
+            return new Response(false, "Failed to use prestige token because you have none.", $prestigeTokenResp);
+        }
+    }
+    
+
+    public static function row_to_vItem($row) : vItem {
         $item = new vItem();
         $item->name = $row["name"];
         $item->description = $row["desc"];
-        
+
+        if (array_key_exists("item_id",$row) && $row["item_id"] != null)
+        {
+            $item->crand = $row["item_id"];
+        }
 
         if (array_key_exists("nominated_by_id",$row) && $row["nominated_by_id"] != null)
         {

@@ -14,6 +14,4 @@ class vItemStack
     public vRecordId $nextLootId;
 }
 
-
-
 ?>

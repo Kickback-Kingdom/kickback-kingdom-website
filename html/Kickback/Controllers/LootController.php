@@ -78,27 +78,27 @@ class LootController
         return new Response(true, "Account Inventory", $newsList);
     }
 
-    public static function GivePrestigeToken(vRecordId $account_id) : Response {
+    public static function givePrestigeToken(vRecordId $account_id) : Response {
         return GiveLoot($account_id, 3);
     }
 
-    public static function GiveBadge(vRecordId $account_id,  $item_id) : Response {
+    public static function giveBadge(vRecordId $account_id,  $item_id) : Response {
         return GiveLoot($account_id, $item_id);
     }
 
-    public static function GiveRaffleTicket(vRecordId $account_id) : Response {
+    public static function giveRaffleTicket(vRecordId $account_id) : Response {
         return GiveLoot($account_id, 4);
     }
 
-    public static function GiveWritOfPassage(vRecordId $account_id) : Response {
+    public static function giveWritOfPassage(vRecordId $account_id) : Response {
         return GiveLoot($account_id, 14);
     }
 
-    public static function GiveMerchantGuildShare(vRecordId $account_id, $date) : Response {
+    public static function giveMerchantGuildShare(vRecordId $account_id, $date) : Response {
         return GiveLoot($account_id, 16, $date);
     }
 
-    public static function GiveLoot(vRecordId $account_id,vRecordId $item_id, $dateObtained = null) : Response {
+    public static function giveLoot(vRecordId $account_id,vRecordId $item_id, $dateObtained = null) : Response {
         $conn = Database::getConnection();
 
         // Checking if dateObtained is null
@@ -130,6 +130,27 @@ class LootController
         }
     }
 
+    public static function closeChest(vRecordId $chestId, vRecordId $accountId) : Response {
+        $conn = Database::getConnection();
+    
+        $sql = "UPDATE loot SET opened = 1 WHERE Id = ? AND account_id = ?";
+        $stmt = $conn->prepare($sql);
+    
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare statement", null);
+        }
+    
+        $stmt->bind_param("ii", $chestId->crand, $accountId->crand);
+        $result = $stmt->execute();
+    
+        if ($result) {
+            return new Response(true, "Chest closed successfully", null);
+        } else {
+            return new Response(false, "Failed to close chest with error: " . $stmt->error, null);
+        }
+    }
+    
+
     private static function row_to_vLoot($row) : vLoot {
         $loot = new vLoot();
 
@@ -137,8 +158,6 @@ class LootController
 
         $loot->ownerId = $ownerId;
 
-        //if (array_key_exists("quest_id", $row))
-        //{
         if ($row["quest_id"] != null)
         {
             $quest = new vQuest('', $row["quest_id"]);
@@ -147,7 +166,6 @@ class LootController
 
             $loot->quest = $quest;
         }
-    //}
 
         $dateObtained = new vDateTime();
         $dateObtained->setDateTimeFromString($row["dateObtained"]);
@@ -161,7 +179,8 @@ class LootController
     private static function row_to_vItemStack($row) : vItemStack {
         $lootStack = new vItemStack();
         $lootStack->item = ItemController::row_to_vItem($row);
-        $lootStack->amount = (int) $row["amount"];
+        $lootStack->amount = (int)$row["amount"];
+        $lootStack->nextLootId = new vRecordId('', $row["next_loot_id"]);
         return $lootStack;
     }
 

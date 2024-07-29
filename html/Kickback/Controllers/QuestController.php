@@ -823,7 +823,7 @@ class QuestController
         if (mysqli_stmt_execute($stmt)) {
             $account = AccountController::getAccountById($account_id)->data;
             $quest = self::getQuestById($quest_id)->data;
-            DiscordWebHook(GetRandomGreeting() . ', ' . $account['Username'] . ' just signed up for the ' . $quest['name'] . ' quest.');
+            DiscordWebHook(GetRandomGreeting() . ', ' . $account->username . ' just signed up for the ' . $quest->title . ' quest.');
             mysqli_stmt_close($stmt);
             return (new Response(true, "Registered for quest successfully", null));
         } else {
@@ -968,6 +968,46 @@ class QuestController
         $questApplicant->seed = $row["seed"];
         $questApplicant->rank = $row["rank"];
         return $questApplicant;
+    }
+
+    
+    public static function submitFeedbackAndCollectRewards(vRecordId $account_id, vRecordId $quest_id, int $host_rating, int $quest_rating, string $feedback) : Response
+    {
+        $conn = Database::getConnection();
+        assert($conn instanceof mysqli);
+        
+        // Prepare the SQL statement
+        $stmt = $conn->prepare("CALL SubmitFeedbackAndCollectRewards(?, ?, ?, ?, ?)");
+        if (false === $stmt) {
+            error_log($conn->error);
+            return new Response(false,
+                "Error occurred while collecting rewards",
+                ["Error in SubmitFeedbackAndCollectRewards(...) when preparing SQL query. (mysqli_prepare)"]);
+        }
+
+        // Bind the parameters to the SQL statement
+        $success = $stmt->bind_param('iiiss', $account_id->crand, $quest_id->crand, $host_rating, $quest_rating, $feedback);
+        if (false === $success) {
+            error_log($stmt->error);
+            $stmt->close();
+            return new Response(false,
+                "Error occurred while collecting rewards",
+                ["Error in SubmitFeedbackAndCollectRewards(...) binding SQL query parameters. (mysqli_stmt_bind_param)"]);
+        }
+
+        // Execute the SQL statement
+        $success = $stmt->execute();
+        if (false === $success) {
+            error_log($stmt->error);
+            $stmt->close();
+            return new Response(false,
+                "Error occurred while collecting rewards",
+                ["Error in SubmitFeedbackAndCollectRewards(...) when executing SQL query. (mysqli_stmt_execute)"]);
+        }
+
+        // Success
+        $stmt->close();
+        return (new Response(true, "Feedback submitted and rewards converted successfully", null));
     }
 
     public static function insertNewQuest() : Response {

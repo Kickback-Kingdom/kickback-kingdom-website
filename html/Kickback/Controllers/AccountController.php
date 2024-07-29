@@ -9,6 +9,7 @@ use Kickback\Views\vRecordId;
 use Kickback\Views\vMedia;
 use Kickback\Models\Response;
 use Kickback\Services\Database;
+use Kickback\Services\Session;
 use Kickback\Controllers\LootController;
 
 use Kickback\Views\vRaffle;
@@ -574,6 +575,163 @@ class AccountController
             return new Response(false, "No owner found for the Writ of Passage or it has not been assigned yet or has already been used.", null);
         }
     }
+    
+    public static function getUnusedAccountRaffleTicket(vRecordId $account_id) : Response {
+        $conn = Database::getConnection();
+    
+        $sql = "SELECT loot_id FROM kickbackdb.v_raffle_tickets WHERE raffle_id IS NULL AND account_id = ? LIMIT 1";
+        $stmt = $conn->prepare($sql);
+    
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare statement", null);
+        }
+    
+        $stmt->bind_param("i", $account_id->crand);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    
+        $row = $result->fetch_row();
+        $loot_id = $row[0] ?? -1;
+        return new Response(true, "Unused raffle ticket id", $loot_id);
+    }
+    
+
+    public static function getPrestigeTokens(vRecordId $accountId) : Response {
+        $conn = Database::getConnection();
+    
+        $sql = "SELECT * FROM v_account_prestige_tokens_full WHERE account_Id = ?";
+        $stmt = $conn->prepare($sql);
+        
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare statement");
+        }
+    
+        $stmt->bind_param("i", $accountId->crand);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $num_rows = $result->num_rows;
+        if ($num_rows > 0) {
+            $row = $result->fetch_assoc();
+            if ($row != null) {
+                return new Response(true, "Account Prestige tokens", $row);
+            }
+        }
+        
+        return new Response(false, "We couldn't find an account with that id", $accountId);
+    }
+    
+    public static function getWritOfPassageByAccountId(vRecordId $account_id) : Response {
+        $conn = Database::getConnection();
+    
+        $sql = "SELECT * FROM kickbackdb.v_account_writs_of_passage WHERE account_id = ?";
+        $stmt = $conn->prepare($sql);
+    
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare statement", null);
+        }
+    
+        $stmt->bind_param("i", $account_id->crand);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    
+        $num_rows = $result->num_rows;
+        if ($num_rows === 0) {
+            return new Response(false, "Couldn't find a valid writ of passage", null);
+        } else {
+            $row = $result->fetch_assoc();
+            return new Response(true, "Writs of Passage", $row);
+        }
+    }
+    
+    
+    public static function updateAccountPassword(vRecordId $account_id, int $pass_reset, string $newPassword) : Response {
+        $conn = Database::getConnection();
+    
+        $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+    
+        $sql = "UPDATE account SET Password = ? WHERE Id = ? AND pass_reset = ?";
+        $stmt = $conn->prepare($sql);
+    
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare statement", null);
+        }
+    
+        $stmt->bind_param("sii", $passwordHash, $account_id->crand, $pass_reset);
+        $result = $stmt->execute();
+    
+        if ($result) {
+            return new Response(true, "Password changed successfully", null);
+        } else {
+            return new Response(false, "Failed to change password! " . $stmt->error, null);
+        }
+    }
+    
+    
+    public static function upsertAccountEquipment(array $equipmentData) : Response {
+        if (!Session::isLoggedIn()) {
+            return (new Response(false, "You must be logged in to update your inventory.", null));
+        }
+
+        if (Session::getCurrentAccount()->crand != $equipmentData['equipment-account-id']) {
+            return (new Response(false, "You cannot update someone elses inventory", null));
+        }
+        $conn = Database::getConnection();
+        //assert($conn instanceof mysqli);
+
+        // Assuming you have a $conn variable that represents your database connection
+        $stmt = $conn->prepare(
+            "INSERT INTO account_equipment
+            (account_id, avatar_loot_id, player_card_border_loot_id, banner_loot_id, background_loot_id, charm_loot_id, companion_loot_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+            avatar_loot_id = VALUES(avatar_loot_id),
+            player_card_border_loot_id = VALUES(player_card_border_loot_id),
+            banner_loot_id = VALUES(banner_loot_id),
+            background_loot_id = VALUES(background_loot_id),
+            charm_loot_id = VALUES(charm_loot_id),
+            companion_loot_id = VALUES(companion_loot_id)");
+
+        if (false === $stmt) {
+            error_log($conn->error);
+            return new Response(false,
+                "Error prevented equipment from being saved",
+                ["Error in UpsertAccountEquipment(...) when preparing SQL query. (mysqli_prepare)"]);
+        }
+
+        // Bind the variables to the SQL statement
+        $success = $stmt->bind_param(
+            "iiiiiii",
+            $equipmentData['equipment-account-id'],
+            $equipmentData['equipment-avatar'],
+            $equipmentData['equipment-pc-card'],
+            $equipmentData['equipment-banner'],
+            $equipmentData['equipment-background'],
+            $equipmentData['equipment-charm'],
+            $equipmentData['equipment-pet']);
+
+        if (false === $success) {
+            error_log($stmt->error);
+            $stmt->close();
+            return new Response(false,
+                "Error prevented equipment from being saved",
+                ["Error in UpsertAccountEquipment(...) binding SQL query parameters. (mysqli_stmt_bind_param)"]);
+        }
+
+
+        // Execute the prepared statement
+        $success = $stmt->execute();
+        if (false === $success) {
+            error_log($stmt->error);
+            $stmt->close();
+            return new Response(false,
+                "Error prevented equipment from being saved",
+                ["Error in UpsertAccountEquipment(...) when executing SQL query. (mysqli_stmt_execute)"]);
+        }
+
+        $stmt->close();
+        return (new Response(true, "Data upserted successfully", null));
+    }
 
     public static function row_to_vAccount(array $row, bool $populateChildData = false) : vAccount {
         
@@ -663,6 +821,153 @@ class AccountController
         return $account;
     }
 
+    public static function RegisterAccount(string $firstName,string $lastName,string $password,string $confirm_password,string $username,string $email,bool $i_agree,string $passage_quest,string $passage_id) : Response {
+        $firstName = mysqli_real_escape_string($GLOBALS["conn"], $firstName);
+        $lastName = mysqli_real_escape_string($GLOBALS["conn"], $lastName);
+        $password = mysqli_real_escape_string($GLOBALS["conn"], $password);
+        $confirm_password = mysqli_real_escape_string($GLOBALS["conn"], $confirm_password);
+        $password = mysqli_real_escape_string($GLOBALS["conn"], $password);
+        $username = mysqli_real_escape_string($GLOBALS["conn"], $username);
+        $passage_quest = mysqli_real_escape_string($GLOBALS["conn"], $passage_quest);
+        //$passage_id = mysqli_real_escape_string($GLOBALS["conn"], $passage_id);
+        $email = mysqli_real_escape_string($GLOBALS["conn"], $email);
+        if (!$i_agree)
+        {
+            return (new Response(false, "Please agree to the terms of service", null));
+        }
+    
+        if ($password != $confirm_password)
+        {
+            return (new Response(false, "Password does not match.", null));
+        }
+    
+        if (strlen($password) < 8)
+        {   
+            return (new Response(false, "Password is too short.", null));
+        }
+    
+        if (strlen($firstName) < 2)
+        {   
+            return (new Response(false, "First Name is too short.", null));
+        }
+    
+        if (strlen($lastName) < 2)
+        {
+            return (new Response(false, "Last Name is too short.", null));
+        }
+    
+        if (strlen($username) < 5)
+        {   
+            return (new Response(false, "Username is too short.", null));
+        }
+        
+        if (strlen($username) > 15)
+        {   
+            return (new Response(false, "Username is too long.", null));
+        }
+    
+        if (strlen($email) < 5)
+        {
+            return (new Response(false, "Email is too short.", null));
+        }
+    
+    
+        $kk_crypt_key_quest_id = ServiceCredentials::get("crypt_key_quest_id");
+        $crypt = new IDCrypt($kk_crypt_key_quest_id);
+        if (ContainsData($passage_id,"passage_id")->success)
+        {
+    
+            $writ_item_id = $crypt->decrypt($passage_id);
+        }
+        else
+        {
+            if (ContainsData($passage_quest,"passage_quest")->success)
+            {
+                
+                $writ_quest_id = $crypt->decrypt($passage_quest);
+                $questResp = GetQuestById($writ_quest_id);
+                if ($questResp->success)
+                {
+                    $quest = $questResp->data;
+                    $writResp = GetWritOfPassageByAccountId($quest['host_id']);
+                    if ($writResp->success)
+                    {
+                        $writ = $writResp->data;
+                        $writ_item_id = $writ['next_item_id'];
+                    }
+                    else
+                    {
+                        return (new Response(false, "The host of the quest you are joining ran out of Writs of Passage. Please contact ".$quest['host_name'].'.', null));
+                    }
+                }
+                else
+                {
+                    return (new Response(false, "We couldn't find the quest associated with your Writ of Passage.",$passage_quest."|".$writ_quest_id));
+                }
+            }
+            else
+            {
+                return (new Response(false, "Please provide a Writ of Passage.", null));
+            }
+        }
+        
+        if (!ContainsData($writ_item_id,"writ_item_id")->success)
+        {
+            return (new Response(false, "The host of the quest you are joining ran out of Writs of Passage. Please contact ".$quest['host_name'].'.', null));
+        }
+    
+    
+        $userResp = GetAccountByUsername($username);
+    
+        
+        if ($userResp->success)
+        {
+            return (new Response(false, "Your desired username already exists.", null));
+        }
+    
+        $emailResp = GetAccountByEmail($email);
+    
+        if ($emailResp->success)
+        {
+            return (new Response(false, "Account already exists. Please register with a different email.", null));
+        }
+    
+    
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+        $sql = "INSERT INTO account (Email, Password, FirstName, LastName, Username, passage_id) VALUES ('$email', '$passwordHash', '$firstName', '$lastName','$username','$writ_item_id')";
+        $result = mysqli_query($GLOBALS["conn"],$sql);
+        if ($result === TRUE) {
+    
+            $kk_service_key = ServiceCredentials::get("kk_service_key");
+            $loginResp = Session::Login($kk_service_key,$email,$password);
+            $login = $loginResp->data;
+    
+            /*$timestamp = strtotime("2023-06-01");
+            
+            // Compare the timestamp to the current time
+            if ($timestamp < time()) {
+                echo "The end time has passed.";
+    
+                //GiveBadge();
+            } else {
+                echo "The end time has not passed.";
+                
+    
+                //GiveBadge($login["Id"],1);
+                //GiveRaffleTicket($login["Id"]);
+            }*/
+    
+            GiveWritOfPassage($login["Id"]);
+    
+            DiscordWebHook(GetNewcomerIntroduction($username));
+    
+            return (new Response(true, "Account created successfully",$login));
+        } 
+        else 
+        {
+            return (new Response(false, "Failed to register account with error: ".GetSQLError(), null));
+        }
+    }
     private static function insert(Account $account) : Response {
 
         return new Response(false, 'AccountController::insert not implemented');
