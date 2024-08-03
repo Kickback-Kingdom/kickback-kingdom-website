@@ -59,6 +59,40 @@ class vDateTime
             return "";
         return $dateTime->formattedHi; 
     }
+    
+    public function timeElapsedString($full = false) {
+        $now = new DateTime;
+        $diff = $now->diff($this->value);
+
+        $days = $diff->d;
+        $weeks = floor($days / 7);
+        $days -= $weeks * 7;
+
+
+        $string = array(
+            'y' => 'year',
+            'm' => 'month',
+            'w' => 'week',
+            'd' => 'day',
+            'h' => 'hour',
+            'i' => 'minute',
+            's' => 'second',
+        );
+        foreach ($string as $k => &$v) {
+            if ($k == 'w' && $weeks > 0) {
+                $v = $weeks . ' ' . $v . ($weeks > 1 ? 's' : '');
+            } elseif ($k == 'd' && $days > 0) {
+                $v = $days . ' ' . $v . ($days > 1 ? 's' : '');
+            } elseif ($k != 'w' && $k != 'd' && $diff->$k) {
+                $v = $diff->$k . ' ' . $v . ($diff->$k > 1 ? 's' : '');
+            } else {
+                unset($string[$k]);
+            }
+        }
+
+        if (!$full) $string = array_slice($string, 0, 1);
+        return $string ? implode(', ', $string) . ' ago' : 'just now';
+    }
 }
 
 ?>

@@ -64,7 +64,7 @@ class BlogController
         $conn = Database::getConnection();
 
         $stmt = mysqli_prepare($conn, "SELECT IsManager, IsWriter FROM v_blog_permissions WHERE account_id = ? AND blog_id = ?");
-        mysqli_stmt_bind_param($stmt, "ii", $account_id, $blog_id); 
+        mysqli_stmt_bind_param($stmt, "ii", $account->crand, $blog->crand); 
         mysqli_stmt_execute($stmt);
 
         $result = mysqli_stmt_get_result($stmt);
@@ -93,7 +93,7 @@ class BlogController
         
         $conn = Database::getConnection();
         $stmt = mysqli_prepare($conn, "SELECT IsManager FROM v_blog_permissions WHERE account_id = ? AND blog_id = ?");
-        mysqli_stmt_bind_param($stmt, "ii", $account_id, $blog_id); 
+        mysqli_stmt_bind_param($stmt, "ii", $account->crand, $blog->crand); 
         mysqli_stmt_execute($stmt);
 
         $result = mysqli_stmt_get_result($stmt);

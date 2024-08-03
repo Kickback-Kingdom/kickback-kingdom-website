@@ -1,0 +1,96 @@
+<?php
+declare(strict_types=1);
+
+namespace Kickback\Controllers;
+
+use Kickback\Views\vRecordId;
+use Kickback\Views\vNotification;
+use Kickback\Views\vDateTime;
+use Kickback\Views\vQuest;
+use Kickback\Services\Database;
+use Kickback\Models\Response;
+use Kickback\Models\NotificationType;
+use Kickback\Views\vPrestigeReview;
+use Kickback\Views\vAccount;
+use Kickback\Views\vQuestReview;
+use Kickback\Views\vMedia;
+use Kickback\Models\PlayStyle;
+
+class NotificationController
+{
+    
+    public static function getNotificationsByAccount(vRecordId $accountId) : Response {
+        
+        $conn = Database::getConnection();
+        $stmt = mysqli_prepare($conn, "SELECT * FROM v_notifications WHERE account_id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $accountId->crand);
+        mysqli_stmt_execute($stmt);
+    
+        $result = mysqli_stmt_get_result($stmt);
+        
+        $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $num_rows = mysqli_num_rows($result);
+        if ($num_rows === 0)
+        {
+            return (new Response(true, "Couldn't find notifications for Id", []));
+        }
+        else
+        {
+            $newsList = array_map([self::class, 'row_to_vNotification'], $rows);
+            return (new Response(true, "Account notifications",  $newsList ));
+        }
+    }
+
+    public static function row_to_vNotification(array $row) : vNotification {
+        
+        $not = new vNotification();
+        $not->type = NotificationType::from($row["Type"]);
+        $not->date = new vDateTime($row["date"]);
+        if ($row["quest_id"] != null )
+        {
+            $quest = new vQuest('', $row["quest_id"]);
+            $quest->title = $row["name"];
+            $quest->locator = $row["locator"];
+            $quest->icon = new vMedia();
+            $quest->icon->setMediaPath($row["image"]);
+            $quest->summary = $row["text"];
+            $quest->playStyle = PlayStyle::from($row["style"]);
+
+            $quest->host1 = new vAccount('', $row["host_id"]);
+            $quest->host1->username = $row["host_name"];
+
+            if ($row["host_id_2"] != null)
+            {
+                $quest->host2 = new vAccount('', $row["host_id_2"]);
+                $quest->host2->username = $row["host_name_2"];
+            }
+
+
+            $not->quest = $quest;
+        }
+        
+        if ($not->type == NotificationType::PRESTIGE)
+        {
+            $prestigeReview = new vPrestigeReview('', $row["Id"]);
+            $prestigeReview->message = $row["text"];
+            $prestigeReview->commend = ($row["style"] == "1");
+            $prestigeReview->fromAccount = new vAccount('', $row["from_id"]);
+            $prestigeReview->fromAccount->username = $row["locator"];
+
+            $not->prestigeReview = $prestigeReview;
+        }
+        if ($not->type == NotificationType::QUEST_REVIEWED)
+        {
+            $questReview = new vQuestReview('', $row["Id"]);
+            $questReview->fromAccount = new vAccount('', $row["from_id"]);
+            $questReview->fromAccount->username = $row["from_name"];
+
+
+            $not->questReview = $questReview;
+        }
+
+
+        return $not;
+    }
+}
+?>

@@ -7,6 +7,7 @@ use Kickback\Config\ServiceCredentials;
 use Kickback\Models\Response;
 use Kickback\Views\vSessionInformation;
 use Kickback\Controllers\AccountController;
+use Kickback\Controllers\NotificationController;
 use Kickback\Views\vAccount;
 
 class Session {
@@ -167,7 +168,7 @@ class Session {
                 $chestsResp = AccountController::getAccountChests($account);
                 $info->chests = $chestsResp->data;
                 
-                $info->notifications = AccountController::getAccountNotifications($account)->data;
+                $info->notifications = NotificationController::getNotificationsByAccount($account)->data;
     
                 $info->chestsJSON = json_encode($info->chests);
                 $info->notificationsJSON = json_encode($info->notifications);

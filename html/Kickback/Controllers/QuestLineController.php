@@ -103,7 +103,15 @@ class QuestLineController {
         $questLine->dateCreated->setDateTimeFromString($row["date_created"]);
         $questLine->locator = $row["locator"];
 
-        $questLine->content = new vContent('', $row["content_id"]);
+
+        if ($row["content_id"] != null)
+        {
+            $questLine->content = new vContent('', $row["content_id"]);
+        }
+        else{
+            $questLine->content = new vContent();
+            $questLine->content->htmlContent = $row["desc"];
+        }
 
         $questLine->createdBy = new vAccount('', $row["created_by_id"]);
         $questLine->createdBy->username = $row["created_by_username"];

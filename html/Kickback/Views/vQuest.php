@@ -25,7 +25,6 @@ class vQuest extends vRecordId
     public ?vAccount $host2 = null;
     public vReviewStatus $reviewStatus;
     public PlayStyle $playStyle; 
-
     public bool $requiresApplication;
 
     public ?vTournament $tournament = null;

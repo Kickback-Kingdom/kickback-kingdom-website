@@ -107,8 +107,8 @@ class TournamentController
         $gameMatch->round = (int)$row["round"];
         $gameMatch->match = (int)$row["match"];
         $gameMatch->set = (int)$row["set"];
-        $gameMatch->description = $row["desc"];
-        $gameMatch->characterHint = $row["character"];
+        $gameMatch->description = $gameMatch->description = $row["desc"] ?? "";
+        $gameMatch->characterHint = $gameMatch->description = $row["character"] ?? "";
         $bracketInfo->gameMatch = $gameMatch;
 
         return $bracketInfo;

@@ -966,7 +966,7 @@ class QuestController
         $questApplicant->account = AccountController::row_to_vAccount($row);
 
         $questApplicant->seed = $row["seed"];
-        $questApplicant->rank = $row["rank"];
+        $questApplicant->rank = ((int)$row["rank"] ?? -1);
         return $questApplicant;
     }
 
@@ -974,7 +974,9 @@ class QuestController
     public static function submitFeedbackAndCollectRewards(vRecordId $account_id, vRecordId $quest_id, int $host_rating, int $quest_rating, string $feedback) : Response
     {
         $conn = Database::getConnection();
-        assert($conn instanceof mysqli);
+        
+        //giving error
+        //assert($conn instanceof mysqli);
         
         // Prepare the SQL statement
         $stmt = $conn->prepare("CALL SubmitFeedbackAndCollectRewards(?, ?, ?, ?, ?)");

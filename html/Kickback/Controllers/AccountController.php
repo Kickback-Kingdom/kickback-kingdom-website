@@ -55,26 +55,6 @@ class AccountController
         }
     }
 
-    public static function getAccountNotifications(vRecordId $recordId) : Response {
-        
-        $conn = Database::getConnection();
-        $stmt = mysqli_prepare($conn, "SELECT * FROM v_notifications WHERE account_id = ?");
-        mysqli_stmt_bind_param($stmt, "i", $recordId->crand);
-        mysqli_stmt_execute($stmt);
-    
-        $result = mysqli_stmt_get_result($stmt);
-        
-        $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
-        $num_rows = mysqli_num_rows($result);
-        if ($num_rows === 0)
-        {
-            return (new Response(true, "Couldn't find notifications for Id", []));
-        }
-        else
-        {
-            return (new Response(true, "Account notifications",  $rows ));
-        }
-    }
 
     public static function getAccountInventory(vRecordId $recordId) : Response {
         
