@@ -1,10 +1,16 @@
+<?php if (isset($_vPageContent)) { ?>
 <script>
-    var pageContent = <?php echo json_encode($pageContent["data"]); ?>;
+    <?php if (!isset($_vPageContentEditMode))
+    {
+        $_vPageContentEditMode = false;
+    }?>
+    var pageContent = <?php echo json_encode($_vPageContent->data); ?>;
+
 
     UpdatePageContent(pageContent);
 
 
-    <?php if ($pageContentEditMode) { ?>
+    <?php if ($_vPageContentEditMode) { ?>
 
         function SaveSubtitleModal(contentIndex)
         {
@@ -347,7 +353,7 @@
         var typeText = $("#content-new-element-select option:selected").text();
         
         var element = {
-            content_id: <?php echo $pageContent["Id"]; ?>,
+            content_id: <?= $_vPageContent->crand; ?>,
             content_detail_id: null,
             content_type: typeValue,
             content_type_name: typeText,
@@ -434,7 +440,7 @@
                     contentElement.updated = true;
                 }
                 contentElement.element_order = orderIndex;
-            <?php if ($pageContentEditMode) { ?>
+            <?php if ($_vPageContentEditMode) { ?>
 
                 var editButton = "";
                 if (ContentHasEdit(index))
@@ -473,7 +479,7 @@
             html += renderContentElement(contentElement, index);
             orderIndex ++;
             }
-            <?php if ($pageContentEditMode) { ?>
+            <?php if ($_vPageContentEditMode) { ?>
                 html += `</div></div>`;
         <?php } ?>
         });
@@ -646,3 +652,9 @@
     }
 
 </script>
+<?php
+
+unset($_vPageContent);
+
+}
+?>

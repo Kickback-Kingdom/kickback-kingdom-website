@@ -5,25 +5,25 @@ if (isset($_POST["submit-blog-post-publish"]))
 {
     $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
     
-    if ($tokenResponse->Success) {
+    if ($tokenResponse->success) {
         $blog_post_id = $_POST["blog-post-id"];
 
         $response = PublishBlogPost($blog_post_id);
 
         // Handle the response
-        if ($response->Success) {
+        if ($response->success) {
             $showPopUpSuccess = true;
             $PopUpTitle = "Updated Blog Post";
             $PopUpMessage= "Your blog post has been published successfully.";
         } else {
             $showPopUpError = true;
             $PopUpTitle = "Error";
-            $PopUpMessage = $response->Message." -> ".json_encode($response->Data);
+            $PopUpMessage = $response->message." -> ".json_encode($response->data);
         }
     }
     else {
         $hasError = true;
-        $errorMessage = $tokenResponse->Message;
+        $errorMessage = $tokenResponse->message;
     }
 }
 
@@ -43,16 +43,16 @@ if (isset($_POST["submitBlogOptions"])) {
     $response = UpdateBlogPost($postIdToUpdate, $title, $locator, $desc, $imageId);
 
     // Handle the response
-    if ($response->Success) {
+    if ($response->success) {
         $showPopUpSuccess = true;
         $PopUpTitle = "Updated Blog Post";
         $PopUpMessage= "Your changes have been saved successfully.";
-        $newURL = $urlPrefixBeta.$response->Data;
+        $newURL = $urlPrefixBeta.$response->data;
         header('Location: '.$newURL);
     } else {
         $showPopUpError = true;
         $PopUpTitle = "Error";
-        $PopUpMessage = $response->Message." -> ".json_encode($response->Data);
+        $PopUpMessage = $response->message." -> ".json_encode($response->data);
     }
 }
 

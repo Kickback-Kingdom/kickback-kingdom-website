@@ -802,9 +802,9 @@ class QuestController
         mysqli_stmt_close($stmt);
         
         if ($exists) {
-            return (new Response(false, "Account has already registered or applied for the quest.", null));
+            return (new Response(true, "Account has already registered or applied for the quest.", null));
         } else {
-            return (new Response(true, "Account has not registered or applied for the quest.", null));
+            return (new Response(false, "Account has not registered or applied for the quest.", null));
         }
     }
 
@@ -812,7 +812,7 @@ class QuestController
         $conn = Database::getConnection();
         // Check if the account has already registered or applied for the quest
         $checkResponse = self::accountHasRegisteredOrAppliedForQuest($account_id, $quest_id);
-        if (!$checkResponse->success) {
+        if ($checkResponse->success) {
             return $checkResponse; // Return the response from the check function
         }
 
@@ -822,7 +822,7 @@ class QuestController
         if (mysqli_stmt_execute($stmt)) {
             $account = AccountController::getAccountById($account_id)->data;
             $quest = self::getQuestById($quest_id)->data;
-            DiscordWebHook(GetRandomGreeting() . ', ' . $account->username . ' just signed up for the ' . $quest->title . ' quest.');
+            DiscordWebHook(FlavorTextController::GetRandomGreeting() . ', ' . $account->username . ' just signed up for the ' . $quest->title . ' quest.');
             mysqli_stmt_close($stmt);
             return (new Response(true, "Registered for quest successfully", null));
         } else {

@@ -18,7 +18,7 @@ if (isset($_POST["submit"]))
 {
     $_POST["serviceKey"] = \Kickback\Config\ServiceCredentials::get("kk_service_key");
     $resp = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/account/login.php");
-    $hasError = !$resp->Success;
+    $hasError = !$resp->success;
     if (!$hasError)
     {
         
@@ -47,7 +47,7 @@ if (isset($_POST["submit"]))
                 <div class="modal-body">
                 <?php if ($hasError) {?>
 					<div class="alert alert-danger alert-dismissible fade show" role="alert">
-										<strong>Oh snap!</strong> <?php echo $resp->Message; ?>
+										<strong>Oh snap!</strong> <?php echo $resp->message; ?>
 									</div>
 									<?php } ?>
                     <div class="mb-3">

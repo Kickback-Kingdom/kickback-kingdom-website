@@ -4,11 +4,11 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-use Kickback\Controllers\NewsController;
+use Kickback\Controllers\FeedController;
 use Kickback\Controllers\FeedCardController;
 use Kickback\Controllers\QuoteController;
 
-$homeFeedResp = NewsController::getNewsFeed(1, 20);
+$homeFeedResp = FeedController::getNewsFeed(1, 20);
 $homeFeed = $homeFeedResp->data;
 ?>
 
@@ -56,7 +56,7 @@ $homeFeed = $homeFeedResp->data;
                 for ($i=0; $i < count($homeFeed); $i++)
                 {
                     $news = $homeFeed[$i];                    
-                    $_vFeedCard = FeedCardController::vNews_to_vFeedCard($news);
+                    $_vFeedCard = FeedCardController::vFeedRecord_to_vFeedCard($news);
                     require("php-components/vFeedCardRenderer.php");
                 }
                 ?>

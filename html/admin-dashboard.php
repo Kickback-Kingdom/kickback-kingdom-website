@@ -4,7 +4,9 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-if (!IsAdmin())
+use Kickback\Controllers\FeedController;
+
+if (!Kickback\Services\Session::isAdmin())
 {
     header('Location: index.php');
     exit();
@@ -36,8 +38,8 @@ if ($merchantGuildTasksToProcess != null)
     }
 }
 
-$reviewFeedResp = GetNeedsReviewedFeed();
-$reviewFeed = $reviewFeedResp->Data;
+$reviewFeedResp = FeedController::getNeedsReviewedFeed();
+$reviewFeed = $reviewFeedResp->data;
 ?>
 
 <!DOCTYPE html>
@@ -224,7 +226,8 @@ $reviewFeed = $reviewFeedResp->Data;
                                     { 
                                         $feedCard = $reviewFeed[$i];
                                         
-                                        require ("php-components/feed-card.php");
+                                        $_vFeedCard = FeedCardController::vFeedRecord_to_vFeedCard($feedCard);
+                                        require("php-components/vFeedCardRenderer.php");
                                     }
                                 ?>
                             </div>

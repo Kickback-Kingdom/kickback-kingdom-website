@@ -4,9 +4,12 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-$blogResp = GetBlogsFeed();
+use Kickback\Controllers\FeedController;
+use Kickback\Controllers\FeedCardController;
 
-$blogs = $blogResp->Data;
+$blogResp = FeedController::getBlogsFeed();
+
+$blogs = $blogResp->data;
 
 
 $thisBlogs = $blogs;
@@ -46,12 +49,10 @@ $thisBlogs = $blogs;
                 for ($i=0; $i < count($blogs); $i++) 
                 { 
                     $blog = $blogs[$i];
-                    $blog["type"] = "BLOG";
-                    $feedCard = $blog;
-                    require ("php-components/feed-card.php");
-                ?>
-                
-                <?php
+                    $blog->type = "BLOG";
+                    $_vFeedCard = FeedCardController::vFeedRecord_to_vFeedCard($blog);
+                    require("php-components/vFeedCardRenderer.php");
+                                    
                 }
                 ?>
 

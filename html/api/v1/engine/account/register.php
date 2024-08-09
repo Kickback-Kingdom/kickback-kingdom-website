@@ -2,13 +2,15 @@
 
 require_once(__DIR__."/../../engine/engine.php");
 
+use Kickback\Controllers\AccountController;
+
 OnlyPOST();
 
 
 
 $containsFieldsResp = POSTContainsFields("firstName","lastName","pwd","pwd_confirm","i_agree_to_the_terms","username","email","passage_quest","passage_id");
 
-if (!$containsFieldsResp->Success)
+if (!$containsFieldsResp->success)
 return $containsFieldsResp;
 
 $firstName = Validate($_POST["firstName"]);
@@ -25,6 +27,6 @@ $passage_id = Validate($_POST["passage_id"]);
 //$refUsername = Validate($_POST["refUsername"]);
 $email = Validate($_POST["email"]);
 
-return RegisterAccount($firstName, $lastName, $pwd, $pwd_confirm, $username, $email, $i_agree_to_the_terms, $passage_quest, $passage_id);
+return AccountController::RegisterAccount($firstName, $lastName, $pwd, $pwd_confirm, $username, $email, $i_agree_to_the_terms, $passage_quest, $passage_id);
 
 ?>

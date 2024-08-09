@@ -1,16 +1,29 @@
 <?php 
 
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
+
+use Kickback\Controllers\ContentController;
+use Kickback\Services\Session;
+
+if (!isset($_vPageContentEditMode))
+{
+    $_vPageContentEditMode = false;
+}
+if (!isset($_vPageContent))
+{
+  throw new \Exception("No page content for content viewer!");
+}
 
 $contentTypesResp = null;
-$_contentViewerEditorTitle = (isset($contentViewerEditorTitle) ? $contentViewerEditorTitle : "Welcome back, ".$_SESSION["account"]["Username"].". What would you like to do?");
-$_canEditContent = (isset($canEditContent) && $canEditContent == true);
-$pageContentEditMode = (isset($_POST["edit-content"]) && $_canEditContent);
-if ($_canEditContent)
+$_vContentViewerEditorTitle = (Session::isLoggedIn() ? (isset($_vContentViewerEditorTitle) ? $_vContentViewerEditorTitle : "Welcome back, ".Session::getCurrentAccount()->username.". What would you like to do?") : "");
+$_vCanEditContent = (isset($_vCanEditContent) && $_vCanEditContent == true);
+$_vPageContentEditMode = (isset($_POST["edit-content"]) && $_vCanEditContent);
+if ($_vCanEditContent)
 {
 
-    if ($pageContentEditMode) {
-        $contentTypesResp = GetContentTypes();
-        $contentTypes = $contentTypesResp->Data;
+    if ($_vPageContentEditMode) {
+        $contentTypesResp = ContentController::getContentTypes();
+        $contentTypes = $contentTypesResp->data;
 ?>
 
 <!-- EDIT CODE MODAL -->
@@ -357,24 +370,24 @@ if ($_canEditContent)
 <div class="card mb-3">
     
     <div class="card-header bg-ranked-1">
-        <h5 class="mb-0"><?php echo $_contentViewerEditorTitle; ?></h5>
+        <h5 class="mb-0"><?php echo $_vContentViewerEditorTitle; ?></h5>
     </div>
     <div class="card-body">
-        <?php if ($pageContentEditMode) { ?>
+        <?php if ($_vPageContentEditMode) { ?>
 
             <form method="POST">
                 <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
 
-                <input type="hidden" name="edit-content-container-type" value="<?php echo $pageContent["container_type"]; ?>"/>
-                <input type="hidden" name="edit-content-container-id" value="<?php echo $pageContent["container_id"]; ?>"/>
-                <input type="hidden" name="edit-content-content-data" id="edit-content-content-data" value="<?php echo $pageContent["content_data"]; ?>"/>
+                <input type="hidden" name="edit-content-container-type" value="<?= $_vPageContent->containerType; ?>"/>
+                <input type="hidden" name="edit-content-container-id" value="<?= $_vPageContent->containerId; ?>"/>
+                <input type="hidden" name="edit-content-content-data" id="edit-content-content-data" value=""/>
                 <a class="btn btn-primary" href="" >Cancel</a>
                 <input type="submit" class="btn btn-primary" name="save-content" value="Save"/>
             </form>
         <?php } else { ?>
             <form method="POST">
-                <input type="hidden" name="edit-content-container-type" value="<?php echo $pageContent["container_type"]; ?>"/>
-                <input type="hidden" name="edit-content-container-id" value="<?php echo $pageContent["container_id"]; ?>"/>
+                <input type="hidden" name="edit-content-container-type" value="<?= $_vPageContent->containerType; ?>"/>
+                <input type="hidden" name="edit-content-container-id" value="<?= $_vPageContent->containerId; ?>"/>
                 <input type="submit" class="btn btn-primary" name="edit-content" value="Edit Content"/>
             </form>
         <?php } ?>
@@ -392,10 +405,10 @@ if ($_canEditContent)
     </div>
     <?php 
 
-if ($_canEditContent)
+if ($_vCanEditContent)
 {
 
-    if ($pageContentEditMode) {
+    if ($_vPageContentEditMode) {
 ?>
 
     <div class="col-12">
@@ -411,3 +424,9 @@ if ($_canEditContent)
 }
 ?>
 </div>
+<?php
+
+//unset($_vPageContent);
+//unset($_vCanEditContent);
+
+?>

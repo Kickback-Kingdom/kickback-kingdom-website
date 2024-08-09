@@ -21,7 +21,7 @@ $result = mysqli_query($GLOBALS["conn"],$sql);
 $num_rows = mysqli_num_rows($result);
 if ($num_rows === 0)
 {
-    return (new APIResponse(false, "Email or Password are incorrect", null));
+    return (new Kickback\Models\Response(false, "Email or Password are incorrect", null));
 }
 else
 {
@@ -43,21 +43,21 @@ else
             {
 
                 $row = mysqli_fetch_assoc($result);
-                return (new APIResponse(false, "Welcome to Kickback Kingdom!", $row));
+                return (new Kickback\Models\Response(false, "Welcome to Kickback Kingdom!", $row));
             }
             else{
 
-                return (new APIResponse(false, "Failed to login", null));
+                return (new Kickback\Models\Response(false, "Failed to login", null));
             }
         }
         else
         {
-            return (new APIResponse(false, "Failed to login", null));
+            return (new Kickback\Models\Response(false, "Failed to login", null));
         }
     }
     else
     {
-        return (new APIResponse(false, "Email or Password are incorrect2", array($pwd, $row["Password"])));
+        return (new Kickback\Models\Response(false, "Email or Password are incorrect2", array($pwd, $row["Password"])));
     }
 
 }

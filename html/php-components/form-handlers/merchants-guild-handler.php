@@ -1,80 +1,83 @@
 <?php
-
-if (IsAdmin())
+if (Kickback\Services\Session::isLoggedIn())
 {
-    
-    if (isset($_POST["process-purchase"]))
-    {
-        $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
-    
-        if ($tokenResponse->Success) {
-
-        $pid = $_POST["purchase_id"];
-        $purchaseToProcess = PullMerchantGuildPurchaseInformation($pid);
-        $currentStatementTiedToPTP = BuildStatement($purchaseToProcess['account_id'], $purchaseToProcess['execution_date'], false);
-        $preProcessData = PreProcessPurchase($purchaseToProcess, $currentStatementTiedToPTP);
-
-
-        $sharesToBeGiven = $preProcessData["shareCertificatesToBeGivien"];
-
-        //for each share to be given
-        //$giveLootResp = GiveMerchantGuildShare($purchaseToProcess['account_id'],$purchaseToProcess['execution_date']);
-        $processResp = ProcessMerchantSharePurchase($pid, $sharesToBeGiven);
-
-        if ($processResp->Success)
-        {
-
-            $showPopUpSuccess = true;
-            $PopUpMessage = $processResp->Message;
-            $PopUpTitle = "Purchase Processed Successfully";
-        }
-        else{
-            $showPopUpError = true;
-            $PopUpMessage = $processResp->Message;
-            $PopUpTitle = "Purchase Processed Failed";
-
-        }
-
-
-        unset($purchaseToProcess);
-        unset($currentStatementTiedToPTP);
-        unset($preProcessData);
-        }
-        else 
-        {
-            $hasError = true;
-            $errorMessage = $tokenResponse->Message;
-        }
-    }
-
-    if (isset($_POST["process-statements"]))
+    if (Kickback\Services\Session::isAdmin())
     {
         
-        $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
-
-        if ($tokenResponse->Success) {
-            $statement_date = $_POST["statement-date"];
-            $processResp = ProcessMonthlyStatements($statement_date);
-            if ($processResp->Success)
+        if (isset($_POST["process-purchase"]))
+        {
+            $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+        
+            if ($tokenResponse->success) {
+    
+            $pid = $_POST["purchase_id"];
+            $purchaseToProcess = PullMerchantGuildPurchaseInformation($pid);
+            $currentStatementTiedToPTP = BuildStatement($purchaseToProcess['account_id'], $purchaseToProcess['execution_date'], false);
+            $preProcessData = PreProcessPurchase($purchaseToProcess, $currentStatementTiedToPTP);
+    
+    
+            $sharesToBeGiven = $preProcessData["shareCertificatesToBeGivien"];
+    
+            //for each share to be given
+            //$giveLootResp = GiveMerchantGuildShare($purchaseToProcess['account_id'],$purchaseToProcess['execution_date']);
+            $processResp = ProcessMerchantSharePurchase($pid, $sharesToBeGiven);
+    
+            if ($processResp->success)
             {
+    
                 $showPopUpSuccess = true;
-                $PopUpMessage = $processResp->Message;
-                $PopUpTitle = "Statement Processed Successfully";
-
+                $PopUpMessage = $processResp->message;
+                $PopUpTitle = "Purchase Processed Successfully";
             }
             else{
-                
-            $showPopUpError = true;
-            $PopUpMessage = $processResp->Message;
-            $PopUpTitle = "Purchase Processed Failed";
+                $showPopUpError = true;
+                $PopUpMessage = $processResp->message;
+                $PopUpTitle = "Purchase Processed Failed";
+    
+            }
+    
+    
+            unset($purchaseToProcess);
+            unset($currentStatementTiedToPTP);
+            unset($preProcessData);
+            }
+            else 
+            {
+                $hasError = true;
+                $errorMessage = $tokenResponse->message;
             }
         }
-        else 
+    
+        if (isset($_POST["process-statements"]))
         {
-            $hasError = true;
-            $errorMessage = $tokenResponse->Message;
+            
+            $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    
+            if ($tokenResponse->success) {
+                $statement_date = $_POST["statement-date"];
+                $processResp = ProcessMonthlyStatements($statement_date);
+                if ($processResp->success)
+                {
+                    $showPopUpSuccess = true;
+                    $PopUpMessage = $processResp->message;
+                    $PopUpTitle = "Statement Processed Successfully";
+    
+                }
+                else{
+                    
+                $showPopUpError = true;
+                $PopUpMessage = $processResp->message;
+                $PopUpTitle = "Purchase Processed Failed";
+                }
+            }
+            else 
+            {
+                $hasError = true;
+                $errorMessage = $tokenResponse->message;
+            }
         }
     }
 }
+
 
 ?>

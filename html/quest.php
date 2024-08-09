@@ -4,30 +4,42 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
+use Kickback\Controllers\FeedCardController;
+use Kickback\Controllers\QuestController;
+use Kickback\Controllers\ContentController;
+use Kickback\Controllers\GameController;
+use Kickback\Controllers\TournamentController;
+use Kickback\Controllers\AccountController;
+use Kickback\Controllers\QuestLineController;
+use Kickback\Models\PlayStyle;
+use Kickback\Services\Session;
+use Kickback\Views\vDateTime;
+use Kickback\Utilities\IDCrypt;
+
 $newPost = false;
 if (isset($_GET['id']))
 {
 
     $id = $_GET['id'];
-    $questResp = GetQuestById($id);
+    $questResp = QuestController::getQuestById($id);
 }
 
 if (isset($_GET['locator'])){
         
     $name = $_GET['locator'];
-    $questResp = GetQuestByLocator($name);
+    $questResp = QuestController::getQuestByLocator($name);
 }
 
 if (isset($_GET['new']))
 {
     $name = "New Quest";
     $newPost = true;
-    $questResp = InsertNewQuest();
+    $questResp = QuestController::insertNewQuest();
 }
 
 
 //print_r($questResp);
-if (!$questResp->Success)
+if (!$questResp->success)
 {
     unset($questResp);
 }
@@ -36,52 +48,22 @@ if (!isset($questResp))
     Redirect("adventurers-guild.php");
 }
 
-$thisQuest = $questResp->Data;
-
-
-if ($thisQuest["content_id"] != null)
-{
-    $contentResp = GetContentDataById($thisQuest["content_id"],"QUEST",$thisQuest["locator"]);
-    $pageContent = $contentResp->Data;
-}
-
-
-$questRewardsResp = GetQuestRewardsByQuestId($thisQuest["Id"]);
-if (!$questRewardsResp->Success)
-{
-    $hasError = true;
-    $errorMessage = $questRewardsResp->Message;
-}
-
-$questRewards = $questRewardsResp->Data;
-
-$itemInfos = [];
-foreach ($questRewards as $questRewardsItem) {
-    array_push($itemInfos, ConvertIntoItemInformation($questRewardsItem));
-}
-$itemInformationJSON = json_encode($itemInfos);
-
-$questRewardsByCategory = [];
-foreach ($questRewards as $questReward) {
-    $questRewardsByCategory[$questReward['category']][] = $questReward;
-}
-
-$hasStandardParticipationRewards = CheckSpecificParticipationRewardsExistById($questRewardsByCategory);
-
+$thisQuest = $questResp->data;
+$thisQuest->populateEverything();
 
 $activeTab = 'active';
 $activeTabPage = 'active show';
 $unusedTickets = 0;
-if ($thisQuest["raffle_id"] != null)
+if ($thisQuest->isRaffle())
 {
-    CheckIfTimeForRaffleWinner($thisQuest);
+    QuestController::checkIfTimeForRaffleWinner($thisQuest);
     //$raffleWinnerResp = ChooseRaffleWinner($thisQuest["raffle_id"]);
-    //$raffleWinnerResp->Success)
-    if (IsLoggedIn())
+    //$raffleWinnerResp->success)
+    if (Session::isLoggedIn())
     {
 
-        $unusedTicketsResp = GetTotalUnusedRaffleTickets($_SESSION['account']['Id']);
-        $unusedTickets = $unusedTicketsResp->Data;
+        $unusedTicketsResp = QuestController::getTotalUnusedRaffleTickets(Session::getCurrentAccount());
+        $unusedTickets = $unusedTicketsResp->data;
     }
 }
 
@@ -89,7 +71,7 @@ if (isset($_POST["submit-raffle"]))
 {
     $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
 
-    if ($tokenResponse->Success) {
+    if ($tokenResponse->success) {
 
         $ticketsToSubmit = intval($_POST["tickets"]);
 
@@ -97,8 +79,8 @@ if (isset($_POST["submit-raffle"]))
         {
             $ticketsSubmitted = 0;
             for ($x = 0; $x < $ticketsToSubmit; $x++) {
-                $raffleResp = SubmitRaffleTicket($_SESSION['account']['Id'], $thisQuest["raffle_id"]);
-                if ($raffleResp->Success)
+                $raffleResp = SubmitRaffleTicket(Session::getCurrentAccount()->crand, $thisQuest["raffle_id"]);
+                if ($raffleResp->success)
                 {
                     $ticketsSubmitted++;
                 }
@@ -107,7 +89,7 @@ if (isset($_POST["submit-raffle"]))
             if ($thisQuest["published"]==1)
             {
 
-                DiscordWebHook(GetRandomGreeting().', '.$_SESSION['account']['Username'].' just submitted a raffle ticket to the '.$thisQuest['name'].' quest.');
+                DiscordWebHook(GetRandomGreeting().', '.Session::getCurrentAccount()->username.' just submitted a raffle ticket to the '.$thisQuest['name'].' quest.');
             }
 
             $hasSuccess = true;
@@ -121,7 +103,7 @@ if (isset($_POST["submit-raffle"]))
         }
     } else {
         $hasError = true;
-        $errorMessage = $tokenResponse->Message;
+        $errorMessage = $tokenResponse->message;
     }
     
     
@@ -129,8 +111,8 @@ if (isset($_POST["submit-raffle"]))
 
 if (isset($_POST['submit-apply']))
 {
-    $applyResp = ApplyOrRegisterForQuest($_SESSION['account']['Id'],$thisQuest["Id"]);
-    if ($applyResp->Success)
+    $applyResp = QuestController::applyOrRegisterForQuest(Session::getCurrentAccount(),$thisQuest);
+    if ($applyResp->success)
     {
         $hasSuccess = true;
         $successMessage = "Successfully signed up for quest!";
@@ -139,27 +121,20 @@ if (isset($_POST['submit-apply']))
     {
 
         $hasError = true;
-        $errorMessage = "Failed to sign up for quest!";
+        $errorMessage = $applyResp->message;//"Failed to sign up for quest!";
     }
 }
 
 $kk_crypt_key_quest_id = \Kickback\Config\ServiceCredentials::get("crypt_key_quest_id");
 $crypt = new IDCrypt($kk_crypt_key_quest_id);
-$qId = urlencode($crypt->encrypt($thisQuest["Id"]));
-//$qId = urlencode(encode_id($thisQuest["Id"]));
+$qId = urlencode($crypt->encrypt($thisQuest->crand));
 unset($kk_crypt_key_quest_id);
 
-$redirectURL = $urlPrefixBeta."/login.php?redirect=".urlencode("q/".$thisQuest["locator"]).'&wq='.$qId;
-//echo $redirectURL;
-//echo "<br/>";
-//echo decode_id(urldecode($qId));
+$redirectURL = $urlPrefixBeta."/login.php?redirect=".urlencode("q/".$thisQuest->locator).'&wq='.$qId;
 
-
-$questApplicantsResp = GetQuestApplicants($thisQuest["Id"]);
-$questApplicants = $questApplicantsResp->Data;
 
 $callToAction = "...";
-if ($thisQuest["req_apply"] == 1)
+if ($thisQuest->requiresApplication)
 {
     $callToAction = "Apply For Quest";
 }
@@ -168,87 +143,58 @@ else
     $callToAction = "Register For Quest";
 
 }
-if ($thisQuest["raffle_id"] != null)
+if ($thisQuest->isRaffle())
 {
     $callToAction = "Enter Raffle";
 }
-$thisQuestEndDate = new DateTime($thisQuest["end_date"]);
-$currentDateTime = new DateTime();
 
-$thisQuestHasEndDate = $thisQuest["end_date"] != null;
-$thisQuestPassed = ($thisQuestEndDate < $currentDateTime) && $thisQuestEndDate;
-$thisQuestIsRanked = ($thisQuest["tournament_id"] != null);
+$showRaffleTab = ($thisQuest->isRaffle());
+$showRewardsTab = ($thisQuest->hasRewards());
+$showBracketTab = ($thisQuest->isBracketTournament());
+$showResultsTab = ($thisQuest->isTournament() && $thisQuest->hasExpired());
+$showParticipantsTab = (($thisQuest->hasExpired())||($showRaffleTab));
+$showApplicantsTab = (!$thisQuest->isRaffle());
+$showQuestLineTab = ($thisQuest->hasQuestLine());
+$showQuestParticipantsSearch = false;
+$showRegisterButton = !$thisQuest->hasExpired() && $thisQuest->reviewStatus->published && (!Session::isLoggedIn() || !QuestController::accountHasRegisteredOrAppliedForQuest(Session::getCurrentAccount(),$thisQuest)->success);//
 
-$showRaffleTab = ($thisQuest["raffle_id"] != null);
-$showRewardsTab = (count($questRewards)>0);
-$showBracketTab = ($thisQuest["hasBracket"]==1);
-$showResultsTab = ($thisQuestIsRanked && $thisQuestPassed);
-$showParticipantsTab = (($thisQuestPassed)||($showRaffleTab));
-$showApplicantsTab = ($thisQuest["raffle_id"] == null);
-$showQuestLineTab = ($thisQuest["quest_line_id"] != null);
 
 $games = null;
 $questLines = null;
-$thisQuestsQuestLine = null;
-$thisQuestsQuestLineQuests = null;
-if (CanEditQuest($thisQuest))
+if ($thisQuest->canEdit())
 {
-    $allGamesResp = GetAllGames();
-    $games = $allGamesResp->Data;
+    $allGamesResp = GameController::getGames();
+    $games = $allGamesResp->data;
 
-    $questLinesResp = GetMyQuestLines();
-    $questLines = $questLinesResp->Data;
-}
-if ($showQuestLineTab)
-{
-
-    $questLineResp = GetQuestLineById($thisQuest["quest_line_id"]);
-    $thisQuestsQuestLine = $questLineResp->Data;
-    if ($thisQuestsQuestLine["published"])
-    {
-        $questLineQuestsResp = GetQuestsByQuestLineId($thisQuest["quest_line_id"]);
-        $thisQuestsQuestLineQuests =  $questLineQuestsResp->Data;
-    }
-    else{
-        $thisQuestsQuestLine = null;
-        $showQuestLineTab = false;
-    }
-
+    $questLinesResp = QuestLineController::getMyQuestLines();
+    $questLines = $questLinesResp->data;
 }
 $canEditQuest = true;
-if ($thisQuestPassed && $thisQuest["published"])
+if ($thisQuest->hasExpired() && $thisQuest->reviewStatus->published)
 {
     $canEditQuest = false;
 }
-$playersInRankedMatch = null;
-$champions = null;
-if ($thisQuestIsRanked)
-{
-    $championResp = GetTournamentResults($thisQuest["tournament_id"]);
-    $playersInRankedMatch = $championResp->Data;
 
-    
-    $playersByTeam = [];
-    foreach ($playersInRankedMatch as $playerInRankedMatch) {
-        $playersByTeam[$playerInRankedMatch['team_name']][] = $playerInRankedMatch;
-        if ($playerInRankedMatch["win"] == 1)
-        {
-            $champions[] = $playerInRankedMatch;
-        }
-    }
-}
 
 //$feedCardDateBasic = date_format($feedCardDate,"M j, Y");
 //$feedCardDateDetailed = date_format($feedCardDate,"M j, Y H:i:s");
 
-if ($thisQuest["raffle_id"] != null)
+if ($thisQuest->isRaffle())
 {
     
-    $GetRaffleParticipantsResp = GetRaffleParticipants($thisQuest["raffle_id"]);
-    $raffleParticipants = $GetRaffleParticipantsResp->Data;
+    $GetRaffleParticipantsResp = QuestController::getRaffleParticipants($thisQuest->raffle);
+    $raffleParticipants = $GetRaffleParticipantsResp->data;
 
 }
 
+
+$itemInfos = [];
+foreach ($thisQuest->rewards as $questRewardsCategory) {
+    foreach ($questRewardsCategory as $questReward) {
+        array_push($itemInfos, $questReward->item);
+    }
+}
+$itemInformationJSON = json_encode($itemInfos);
 
 ?>
 
@@ -385,12 +331,12 @@ if ($thisQuest["raffle_id"] != null)
     <!--TOP BANNER-->
     <div class="d-none d-md-block w-100 ratio" style="--bs-aspect-ratio: 26%; margin-top: 56px">
 
-        <img src="/assets/media/<?php echo $thisQuest["imagePath"]; ?>" class="" />
+        <img src="<?= $thisQuest->banner->getFullPath(); ?>" class="" />
 
     </div>
     <div class="d-block d-md-none w-100 ratio" style="margin-top: 56px; --bs-aspect-ratio: 46.3%;">
 
-        <img src="/assets/media/<?php echo $thisQuest["imagePath_mobile"]; ?>" />
+        <img src="<?= $thisQuest->bannerMobile->getFullPath(); ?>" />
 
     </div>
 
@@ -420,7 +366,7 @@ if ($thisQuest["raffle_id"] != null)
                 <?php 
                 
                 
-                $activePageName = $thisQuest['name'];
+                $activePageName = $thisQuest->title;
                 require("php-components/base-page-breadcrumbs.php"); 
                 
                 ?>
@@ -429,9 +375,9 @@ if ($thisQuest["raffle_id"] != null)
                     <div class="col-12">
                         <button id="btn-action" class="btn float-end bg-ranked-1" type="button" data-bs-toggle="modal" data-bs-target="#actionModal" data-bs-original-title="" title="">...</button>
                         <?php 
-                            if (!$thisQuestPassed && $thisQuest["published"] == true)
+                            if ($showRegisterButton)
                             {
-                                if (IsLoggedIn())
+                                if (Kickback\Services\Session::isLoggedIn())
                                 {
                                     ?>
                                     <script>document.getElementById("btn-action").innerText = "<?php echo $callToAction; ?>";</script>
@@ -469,9 +415,9 @@ if ($thisQuest["raffle_id"] != null)
                         ?>
                         
                         <h5 class="quest-hosted-by">Hosted by 
-                            <a class="username" href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $thisQuest['host_name'];?>"><?php echo $thisQuest['host_name'];?></a>
-                            <?php if ($thisQuest['host_name_2'] != null) { ?> and <a class="username" href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $thisQuest['host_name_2']; ?>"><?php echo $thisQuest['host_name_2'];?></a><?php } ?>
-                            <?php if ($thisQuestHasEndDate) { ?>at <span  id="quest_time" class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo date_format(date_create($thisQuest["end_date"]),"M j, Y H:i:s"); ?> UTC"><?php echo date_format(date_create($thisQuest["end_date"]),"M j, Y H:i:s"); ?> UTC</span><?php } else { ?>until completed<?php } ?>
+                            <?= $thisQuest->host1->getAccountElement(); ?>
+                            <?php if ($thisQuest->host2 != null) { ?> and <?= $thisQuest->host2->getAccountElement(); ?><?php } ?>
+                            <?php if ($thisQuest->hasEndDate()) { ?>at <?= $thisQuest->endDate->getDateTimeElement('quest_time'); ?><?php } else { ?>until completed<?php } ?>
                         </h5>
                         
                 
@@ -480,7 +426,7 @@ if ($thisQuest["raffle_id"] != null)
                 <div class="row">
                     <div class="col-12">
                     
-                        <?php if (!$thisQuest["published"]) { ?>
+                        <?php if (!$thisQuest->reviewStatus->published) { ?>
                             <div class="row mt-3">
                                 <div class="col-12">
                                     <div class="card mb-3">
@@ -493,7 +439,7 @@ if ($thisQuest["raffle_id"] != null)
                                 </div>
                             </div>
                         <?php } ?>
-                        <?php if ($thisQuest["being_reviewed"]) { ?>
+                        <?php if ($thisQuest->reviewStatus->beingReviewed) { ?>
                             <div class="row mt-3">
                                 <div class="col-12">
                                     <div class="card mb-3">
@@ -503,7 +449,7 @@ if ($thisQuest["raffle_id"] != null)
                                                 <div class="spinner-border ms-auto" aria-hidden="true"></div>
                                             </div>
                                         </div>
-                                        <?php if (IsAdmin()) { ?>
+                                        <?php if (Kickback\Services\Session::isAdmin()) { ?>
                                         <div class="card-footer">
                                             <button type="button" class="btn btn-success float-end mx-1" onclick="OpenModalApprove()">Approve Quest</button>
                                             <button type="button" class="btn btn-danger float-end" onclick="OpenModalReject()">Reject Quest</button>
@@ -513,22 +459,22 @@ if ($thisQuest["raffle_id"] != null)
                                 </div>
                             </div>
                         <?php } ?>
-                        <?php if (CanEditQuest($thisQuest) && $canEditQuest) { ?>
+                        <?php if ($thisQuest->canEdit() && $canEditQuest) { ?>
                         <div class="row mt-3">
                             <div class="col-12">
                                 <div class="card mb-3">
             
                                     <div class="card-header bg-ranked-1">
-                                        <h5 class="mb-0">Welcome back, Quest Giver <?php echo $_SESSION["account"]["Username"]; ?>. What would you like to do?</h5>
+                                        <h5 class="mb-0">Welcome back, Quest Giver <?php echo Kickback\Services\Session::getCurrentAccount()->username; ?>. What would you like to do?</h5>
                                     </div>
                                     <div class="card-body">
                                         <button type="button" class="btn btn-primary" onclick="OpenModalEditQuestRewards()">Edit Rewards</button>
                                         <button type="button" class="btn btn-primary" onclick="OpenModalEditQuestImages()">Edit Banner & Icon</button>
                                         <button type="button" class="btn btn-primary" onclick="OpenModalEditQuestOptions()">Quest Options</button>
-                                        <?php if (!$thisQuest["being_reviewed"] && !$thisQuest["published"]) { ?><button type="button" class="btn btn-success float-end" onclick="OpenModalPublishQuest()">Publish Quest</button><?php } ?>
+                                        <?php if ($thisQuest->reviewStatus->isDraft()) { ?><button type="button" class="btn btn-success float-end" onclick="OpenModalPublishQuest()">Publish Quest</button><?php } ?>
                                     </div>
                                     
-                                    <?php if ($thisQuest["published"] || $thisQuest["being_reviewed"]) { ?>
+                                    <?php if ($thisQuest->reviewStatus->isPublishedOrInReview()) { ?>
                                         <div class="card-footer">
                                             <h5>Editing this quest will unpublish it and remove it from the review queue.</h5>
                                         </div>
@@ -540,7 +486,7 @@ if ($thisQuest["raffle_id"] != null)
 
                         <form method="POST">
                             <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                            <input type="hidden" value="<?php echo $thisQuest["Id"]; ?>" name="edit-quest-id" />
+                            <input type="hidden" value="<?= $thisQuest->crand; ?>" name="edit-quest-id" />
                             <div class="modal modal-lg fade" id="modalEditQuestRewards" tabindex="-1" aria-labelledby="modalEditQuestRewardsLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
@@ -558,7 +504,7 @@ if ($thisQuest["raffle_id"] != null)
                                                             <div class="row">
                                                                 <div class="col-12">
                                                                     <div class="form-check form-switch">
-                                                                        <input class="form-check-input" type="checkbox" role="switch" id="edit-quest-rewards-has-standard" name="edit-quest-rewards-has-standard" <?php echo $hasStandardParticipationRewards?"checked":""; ?> onchange="">
+                                                                        <input class="form-check-input" type="checkbox" role="switch" id="edit-quest-rewards-has-standard" name="edit-quest-rewards-has-standard" <?= $thisQuest->checkSpecificParticipationRewardsExistById()?"checked":""; ?> onchange="">
                                                                         <label class="form-check-label" for="edit-quest-rewards-has-standard">Quest has standard participation rewards</label>
                                                                     </div>
                                                                 </div>
@@ -575,7 +521,7 @@ if ($thisQuest["raffle_id"] != null)
 
 
                                                         // Now loop through the grouped array
-                                                        foreach ($questRewardsByCategory as $category => $questRewards) {
+                                                        foreach ($thisQuest->rewards as $category => $questRewards) {
                                                     ?>
                                                     <div class="card mb-2">
                                                         <div class="card-header">
@@ -590,8 +536,8 @@ if ($thisQuest["raffle_id"] != null)
 
                                                                     foreach ($questRewards as $questReward) {
                                                                 ?>
-                                                                <div class="inventory-item" onclick="ShowInventoryItemModal(<?php echo htmlspecialchars($questReward['Id']); ?>);"  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo htmlspecialchars($questReward["name"]) ?>">
-                                                                    <img src="/assets/media/<?php echo htmlspecialchars($questReward["BigImgPath"])?>" alt="Item Name 1" />
+                                                                <div class="inventory-item" onclick="ShowInventoryItemModal(<?= htmlspecialchars($questReward->item->crand); ?>);"  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($questReward->item->name) ?>">
+                                                                    <img src="<?= htmlspecialchars($questReward->item->iconSmall->getFullPath())?>" alt="Item Name 1" />
                                                                     <!--<div class="item-count">x1</div>-->
                                                                 </div>
                                                             
@@ -620,10 +566,10 @@ if ($thisQuest["raffle_id"] != null)
                         </form>
                         <form method="POST">
                             <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                            <input type="hidden" value="<?php echo $thisQuest["Id"]; ?>" name="edit-quest-id" />
-                            <input type="hidden" value="<?php echo $thisQuest["image_id"]; ?>" name="edit-quest-images-desktop-banner-id" id="edit-quest-images-desktop-banner-id"/>
-                            <input type="hidden" value="<?php echo $thisQuest["image_id_mobile"]; ?>" name="edit-quest-images-mobile-banner-id" id="edit-quest-images-mobile-banner-id" />
-                            <input type="hidden" value="<?php echo $thisQuest["image_id_icon"]; ?>" name="edit-quest-images-icon-id" id="edit-quest-images-icon-id"/>
+                            <input type="hidden" value="<?= $thisQuest->crand; ?>" name="edit-quest-id" />
+                            <input type="hidden" value="<?= $thisQuest->banner->crand; ?>" name="edit-quest-images-desktop-banner-id" id="edit-quest-images-desktop-banner-id"/>
+                            <input type="hidden" value="<?= $thisQuest->bannerMobile->crand; ?>" name="edit-quest-images-mobile-banner-id" id="edit-quest-images-mobile-banner-id" />
+                            <input type="hidden" value="<?= $thisQuest->icon->crand; ?>" name="edit-quest-images-icon-id" id="edit-quest-images-icon-id"/>
                             <div class="modal modal-lg fade" id="modalEditQuestImages" tabindex="-1" aria-labelledby="modalEditQuestImagesLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
@@ -636,21 +582,21 @@ if ($thisQuest["raffle_id"] != null)
                                             <h3 class="display-6">Desktop Banner<button type="button" class="btn btn-primary float-end" onclick="OpenSelectMediaModal('modalEditQuestImages','edit-quest-images-desktop-banner-img','edit-quest-images-desktop-banner-id')">Select Media</button></h3>
                                             <div class="w-100 ratio" style="--bs-aspect-ratio: 26%;">
 
-                                                <img src="/assets/media/<?php echo $thisQuest["imagePath"]; ?>" class="" id="edit-quest-images-desktop-banner-img"/>
+                                                <img src="<?= $thisQuest->banner->getFullPath(); ?>" class="" id="edit-quest-images-desktop-banner-img"/>
 
                                             </div>
                                             <!--MOBILE TOP BANNER-->
                                             <h3 class="display-6">Mobile Banner<button type="button" class="btn btn-primary float-end" onclick="OpenSelectMediaModal('modalEditQuestImages','edit-quest-images-mobile-banner-img','edit-quest-images-mobile-banner-id')">Select Media</button></h3>
                                             <div class="w-100 ratio" style="--bs-aspect-ratio: 46.3%;">
 
-                                                <img src="/assets/media/<?php echo $thisQuest["imagePath_mobile"]; ?>"  id="edit-quest-images-mobile-banner-img"/>
+                                                <img src="<?= $thisQuest->bannerMobile->getFullPath(); ?>"  id="edit-quest-images-mobile-banner-img"/>
 
                                             </div>
                                             <!--Quest Icon-->
                                             <h3 class="display-6">Quest Icon<button type="button" class="btn btn-primary float-end" onclick="OpenSelectMediaModal('modalEditQuestImages','edit-quest-images-icon-img','edit-quest-images-icon-id')">Select Media</button></h3>
                                             <div class="col-md-6" >
 
-                                                <img class="img-thumbnail" src="/assets/media/<?php echo $thisQuest["imagePath_icon"]; ?>"  id="edit-quest-images-icon-img"/>
+                                                <img class="img-thumbnail" src="<?= $thisQuest->icon->getFullPath(); ?>"  id="edit-quest-images-icon-img"/>
 
                                             </div>
                                         </div>
@@ -664,8 +610,8 @@ if ($thisQuest["raffle_id"] != null)
                         </form>
                         <form method="POST">
                             <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                            <input type="hidden" value="<?php echo $thisQuest["Id"]; ?>" name="edit-quest-id" />
-                            <input type="hidden" value="<?php echo $thisQuest["host_id_2"]; ?>" name="edit-quest-options-host-2-id" id="edit-quest-options-host-2-id"/>
+                            <input type="hidden" value="<?= $thisQuest->crand; ?>" name="edit-quest-id" />
+                            <input type="hidden" value="<?= $thisQuest->getHost2Id(); ?>" name="edit-quest-options-host-2-id" id="edit-quest-options-host-2-id"/>
                             <div class="modal modal-lg fade" id="modalEditQuestOptions" tabindex="-1" aria-labelledby="modalEditQuestOptionsLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
@@ -678,7 +624,7 @@ if ($thisQuest["raffle_id"] != null)
                                                 <div class="col-12">
                                                     <div class="form-group">
                                                         <label for="edit-quest-options-title" class="form-label">Title:</label>
-                                                        <input type="text" id="edit-quest-options-title" name="edit-quest-options-title" class="form-control" value="<?php echo $thisQuest["name"]; ?>">
+                                                        <input type="text" id="edit-quest-options-title" name="edit-quest-options-title" class="form-control" value="<?php echo $thisQuest->title; ?>">
                                                     </div>
                                                 </div>
                                                 
@@ -687,7 +633,7 @@ if ($thisQuest["raffle_id"] != null)
                                                 <label for="edit-quest-options-locator" class="form-label">URL:</label>
                                                 <div class="input-group">
                                                     <span class="input-group-text">https://kickback-kingdom.com/q/</span>
-                                                    <input type="text" id="edit-quest-options-locator" name="edit-quest-options-locator" class="form-control" value="<?php echo $thisQuest["locator"]; ?>">
+                                                    <input type="text" id="edit-quest-options-locator" name="edit-quest-options-locator" class="form-control" value="<?= $thisQuest->locator; ?>">
                                                 </div>
                                             </div>
                                             <div class="row">
@@ -695,7 +641,7 @@ if ($thisQuest["raffle_id"] != null)
                                                     <label for="edit-quest-options-locator" class="form-label">Co-Host:</label>
                                                     <div class="input-group">
                                                         <span class="input-group-text"><i class="fa-solid fa-user-plus"></i></span>
-                                                        <input type="text" disabled class="form-control" value="<?php echo $thisQuest["host_name_2"]; ?>" />
+                                                        <input type="text" disabled class="form-control" value="<?= $thisQuest->getHost2Username(); ?>" />
                                                         <button type="button" class="btn btn-primary" onclick="OpenSelectAccountModal('modalEditQuestOptions')">Select</button>
                                                     </div>
                                                 </div>
@@ -711,9 +657,12 @@ if ($thisQuest["raffle_id"] != null)
                                                                 <optgroup label="Available Quest Lines">  
                                                                 <?php
                                                                     foreach ($questLines as $questLine) {
-                                                                        $questLineValue = $questLine["Id"];
-                                                                        $questLineName = $questLine["name"];
-                                                                        $questLineSelected = ($questLine["Id"] == $thisQuest["quest_line_id"] ? "selected" : "");
+                                                                        $questLineValue = $questLine->crand;
+                                                                        $questLineName = $questLine->title;
+                                                                        if ($thisQuest->hasQuestLine())
+                                                                            $questLineSelected = ($questLine->crand == $thisQuest->questLine->crand ? "selected" : "");
+                                                                        else
+                                                                            $questLineSelected = "";
                                                                         echo "<option value=\"$questLineValue\" $questLineSelected>$questLineName</option>";
                                                                     }
                                                                 ?>
@@ -729,7 +678,7 @@ if ($thisQuest["raffle_id"] != null)
                                                 <div class="col-12">
                                                     <div class="form-group">
                                                         <label for="edit-quest-options-summary" class="form-label">Summary:</label>
-                                                        <textarea class="form-control" id="edit-quest-options-summary" name="edit-quest-options-summary" rows="5"  maxlength="512" oninput="updateCharCountQuestDesc()"><?php echo $thisQuest["summary"]; ?></textarea>
+                                                        <textarea class="form-control" id="edit-quest-options-summary" name="edit-quest-options-summary" rows="5"  maxlength="512" oninput="updateCharCountQuestDesc()"><?= $thisQuest->summary; ?></textarea>
                                                     </div>
                                                     <div class="float-end form-text text-success" id="charCount-quest">400 characters remaining</div>
                                                     <script>
@@ -769,24 +718,24 @@ if ($thisQuest["raffle_id"] != null)
                                                             <div class="row">
                                                                 <div class="col-12">
                                                                     <div class="form-check form-switch">
-                                                                        <input class="form-check-input" type="checkbox" role="switch" id="edit-quest-options-has-a-date" name="edit-quest-options-has-a-date" <?php echo $thisQuest["end_date"] == null?"":"checked"; ?> onchange="OnDateTimeChangedForQuestOptions();">
+                                                                        <input class="form-check-input" type="checkbox" role="switch" id="edit-quest-options-has-a-date" name="edit-quest-options-has-a-date" <?= $thisQuest->hasEndDate()?"checked":""; ?> onchange="OnDateTimeChangedForQuestOptions();">
                                                                         <label class="form-check-label" for="edit-quest-options-has-a-date">Quest has a date</label>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div class="row" id="date-time-row">
-                                                                <input type="hidden" name="edit-quest-options-datetime" id="edit-quest-options-datetime" value="<?php echo $thisQuest["end_date"]; ?>">
+                                                                <input type="hidden" name="edit-quest-options-datetime" id="edit-quest-options-datetime" value="<?= vDateTime::getValueString($thisQuest->endDate); ?>">
 
                                                                 <div class="col-md-6 mb-3">
                                                                     <div class="form-group">
                                                                         <label for="edit-quest-options-datetime-date" class="form-label">Date:</label>
-                                                                        <input type="date" id="edit-quest-options-datetime-date" name="edit-quest-options-datetime-date" value="<?php echo $thisQuestEndDate->format('Y-m-d'); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
+                                                                        <input type="date" id="edit-quest-options-datetime-date" name="edit-quest-options-datetime-date" value="<?= vDateTime::getFormattedYmd($thisQuest->endDate); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 mb-3">
                                                                     <div class="form-group">
                                                                         <label for="edit-quest-options-datetime-time"  class="form-label">Time:</label>
-                                                                        <input type="time" id="edit-quest-options-datetime-time" name="edit-quest-options-datetime-time" value="" data-utc-time="<?php echo $thisQuestEndDate->format('H:i'); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
+                                                                        <input type="time" id="edit-quest-options-datetime-time" name="edit-quest-options-datetime-time" value="" data-utc-time="<?= vDateTime::getFormattedYmd($thisQuest->endDate); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
                                                                     </div>
                                                                 </div>
 
@@ -886,10 +835,10 @@ if ($thisQuest["raffle_id"] != null)
                                                         <label for="edit-quest-options-style"  class="form-label">Quest Style:</label>
                                                         
                                                         <select id="edit-quest-options-style" name="edit-quest-options-style" class="form-select" aria-label="Default select example" onchange="OnQuestStyleChanged()">
-                                                            <option value="0" <?php echo ($thisQuest["play_style"]==0?"selected":""); ?>>Casual</option>
-                                                            <option value="1" <?php echo ($thisQuest["play_style"]==1?"selected":""); ?>>Ranked</option>
-                                                            <option value="2" <?php echo ($thisQuest["play_style"]==2?"selected":""); ?>>Hardcore</option>
-                                                            <option value="3" <?php echo ($thisQuest["play_style"]==3?"selected":""); ?>>Roleplay</option>
+                                                            <option value="0" <?= ($thisQuest->playStyle == PlayStyle::Casual ?"selected":""); ?>>Casual</option>
+                                                            <option value="1" <?= ($thisQuest->playStyle == PlayStyle::Ranked ?"selected":""); ?>>Ranked</option>
+                                                            <option value="2" <?= ($thisQuest->playStyle == PlayStyle::Hardcore ?"selected":""); ?>>Hardcore</option>
+                                                            <option value="3" <?= ($thisQuest->playStyle == PlayStyle::Roleplay ?"selected":""); ?>>Roleplay</option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -898,19 +847,19 @@ if ($thisQuest["raffle_id"] != null)
                                                 <div class="col-12">
                                                     <div class="alert alert-success" id="quest-style-desc-0" role="alert">
                                                         <h4 class="alert-heading">Casual Quest Style</h4>
-                                                        <p><?php echo PlayStyleToDesc(0); ?></p>
+                                                        <p><?= PlayStyle::Casual->getDescription(); ?></p>
                                                     </div>
                                                     <div class="alert alert-primary" id="quest-style-desc-1" role="alert">
                                                         <h4 class="alert-heading">Ranked Quest Style</h4>
-                                                        <p><?php echo PlayStyleToDesc(1); ?></p>
+                                                        <p><?= PlayStyle::Ranked->getDescription(); ?></p>
                                                     </div>
                                                     <div class="alert alert-dark" id="quest-style-desc-2" role="alert">
                                                         <h4 class="alert-heading">Hardcore Quest Style</h4>
-                                                        <p><?php echo PlayStyleToDesc(2); ?></p>
+                                                        <p><?= PlayStyle::Hardcore->getDescription(); ?></p>
                                                     </div>
                                                     <div class="alert alert-warning"  id="quest-style-desc-3" role="alert">
                                                         <h4 class="alert-heading">Roleplay Quest Style</h4>
-                                                        <p><?php echo PlayStyleToDesc(3); ?></p>
+                                                        <p><?= PlayStyle::Roleplay->getDescription(); ?></p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -924,13 +873,13 @@ if ($thisQuest["raffle_id"] != null)
                                                             <div class="row">
                                                                 <div class="col-12">
                                                                     <div class="form-check">
-                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-casual" value="custom" id="edit-quest-options-0-custom" <?php echo ($thisQuest["raffle_id"] == null?"checked":""); ?>>
+                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-casual" value="custom" id="edit-quest-options-0-custom" <?= (!$thisQuest->isRaffle()?"checked":""); ?>>
                                                                         <label class="form-check-label" for="edit-quest-options-0-custom">
                                                                             Custom Event (Must be described in the quest information content)
                                                                         </label>
                                                                     </div>
                                                                     <div class="form-check">
-                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-casual" value="raffle" id="edit-quest-options-0-raffle" <?php echo ($thisQuest["raffle_id"] == null?"":"checked"); ?>>
+                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-casual" value="raffle" id="edit-quest-options-0-raffle" <?= ($thisQuest->isRaffle()?"checked":""); ?>>
                                                                         <label class="form-check-label" for="edit-quest-options-0-raffle" >
                                                                             Raffle Event
                                                                         </label>
@@ -953,13 +902,13 @@ if ($thisQuest["raffle_id"] != null)
                                                             <div class="row">
                                                                 <div class="col-12">
                                                                     <div class="form-check">
-                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-ranked" value="custom" id="edit-quest-options-0-custom" <?php echo ($thisQuest["hasBracket"]==1?"":"checked"); ?> onchange="OnQuestOptionChanged();">
+                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-ranked" value="custom" id="edit-quest-options-0-custom" <?= ($thisQuest->isBracketTournament()?"":"checked"); ?> onchange="OnQuestOptionChanged();">
                                                                         <label class="form-check-label" for="edit-quest-options-0-custom">
                                                                             Custom Ranked Match (Must be explained in the quest information content)
                                                                         </label>
                                                                     </div>
                                                                     <div class="form-check">
-                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-ranked" value="bracket" id="edit-quest-options-0-bracket" <?php echo ($thisQuest["hasBracket"]==1?"checked":""); ?> onchange="OnQuestOptionChanged();">
+                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-ranked" value="bracket" id="edit-quest-options-0-bracket" <?= ($thisQuest->isBracketTournament()?"checked":""); ?> onchange="OnQuestOptionChanged();">
                                                                         <label class="form-check-label" for="edit-quest-options-0-bracket">
                                                                             Bracket Elimination Tournament
                                                                         </label>
@@ -972,8 +921,8 @@ if ($thisQuest["raffle_id"] != null)
                                                                                 <?php 
                                                                                     if ($games !== null) {
                                                                                         foreach($games as $game) {
-                                                                                            if ($game['CanRank'] == 1) { // Only display games that can be ranked
-                                                                                                echo '<option value="' . $game['Id'] . '">' . $game['Name'] . '</option>';
+                                                                                            if ($game->canRank) { // Only display games that can be ranked
+                                                                                                echo '<option value="' . $game->crand . '">' . $game->name . '</option>';
                                                                                             }
                                                                                         }
                                                                                     }
@@ -1056,7 +1005,7 @@ if ($thisQuest["raffle_id"] != null)
 
                         <form method="POST">
                             <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                            <input type="hidden" name="quest-id" value="<?php echo $thisQuest["Id"]; ?>" />
+                            <input type="hidden" name="quest-id" value="<?= $thisQuest->crand; ?>" />
                             <div class="modal modal-xl fade" id="modalQuestPublish" tabindex="-1" aria-labelledby="modalQuestPublishLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
@@ -1075,48 +1024,41 @@ if ($thisQuest["raffle_id"] != null)
                                         <div class="row mb-3">
                                             <div class="col-lg-12 col-xl-9">
                                                 <?php 
-                                                    $feedCard = $thisQuest;
-                                                    $feedCard["type"] = "QUEST";
-                                                    $feedCard["title"] = $thisQuest["name"];
-                                                    $feedCard["image"] = $thisQuest["imagePath_icon"];
-                                                    $feedCard["published"] = true;
-                                                    $feedCard["account_1_username"] = $thisQuest["host_name"];
-                                                    $feedCard["account_2_username"] = $thisQuest["host_name_2"];
-                                                    $feedCard["text"] =  $thisQuest["summary"];
-                                                    require("php-components/feed-card.php");
+                                                $_vFeedCard = FeedCardController::vQuest_to_vFeedCard($thisQuest);
+                                                require("php-components/vFeedCardRenderer.php");
                                                 ?>
                                             </div>
                                             <div class="col-lg-12 col-xl-3">
-                                                <?php if(QuestNameIsValid($feedCard["title"])) { ?>
+                                                <?php if($thisQuest->nameIsValid()) { ?>
                                                     <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Title</p>
                                                 <?php } else { ?>
                                                     <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Title is too short or invalid</p>
                                                 <?php } ?>
 
-                                                <?php if(QuestSummaryIsValid($feedCard["text"])) { ?>
+                                                <?php if($thisQuest->summaryIsValid()) { ?>
                                                     <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Summary</p>
                                                 <?php } else { ?>
                                                     <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Summary is too short</p>
                                                 <?php } ?>
 
-                                                <?php if((is_null($thisQuest["content_id"])) || QuestPageContentIsValid($pageContent["data"])) { ?>
+                                                <?php if($thisQuest->pageContentIsValid()) { ?>
                                                     <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Content</p>
                                                 <?php } else { ?>
                                                     <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Content is too short</p>
                                                 <?php } ?>
 
-                                                <?php if(QuestLocatorIsValid($thisQuest["locator"])) { ?>
+                                                <?php if($thisQuest->locatorIsValid()) { ?>
                                                     <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid URL Locator</p>
                                                 <?php } else { ?>
                                                     <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Please use a valid url locator</p>
                                                 <?php } ?>
 
-                                                <?php if(QuestImagesAreValid($thisQuest)) { ?>
+                                                <?php if($thisQuest->imagesAreValid()) { ?>
                                                     <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Images</p>
                                                 <?php } else { ?>
                                                     <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Please select a valid icon and banners</p>
                                                 <?php } ?>
-                                                <?php if(QuestRewardsAreValid($questRewards)) { ?>
+                                                <?php if($thisQuest->rewardsAreValid()) { ?>
                                                     <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Rewards</p>
                                                 <?php } else { ?>
                                                     <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Please add rewards</p>
@@ -1126,7 +1068,7 @@ if ($thisQuest["raffle_id"] != null)
                                     </div>
                                     <div class="modal-footer">
                                             <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-                                            <input type="submit" name="submit-quest-publish" class="btn bg-ranked-1" onclick="" <?php if(!QuestIsValidForPublish($thisQuest,$pageContent, $questRewards)) { ?>disabled<?php } ?> value="Submit Quest For Review" />
+                                            <input type="submit" name="submit-quest-publish" class="btn bg-ranked-1" onclick="" <?php if(!$thisQuest->isValidForPublish()) { ?>disabled<?php } ?> value="Submit Quest For Review" />
                                         
                                     </div>
                                     </div>
@@ -1134,10 +1076,10 @@ if ($thisQuest["raffle_id"] != null)
                             </div>
                         </form>
                         
-                        <?php if (IsAdmin()) { ?>
+                        <?php if (Kickback\Services\Session::isAdmin()) { ?>
                         <form method="POST">
-                            <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                            <input type="hidden" name="quest-id" value="<?php echo $thisQuest["Id"]; ?>" />
+                            <input type="hidden" name="form_token" value="<?= $_SESSION['form_token']; ?>">
+                            <input type="hidden" name="quest-id" value="<?= $thisQuest->crand; ?>" />
                             <div class="modal modal-xl fade" id="modalQuestApprove" tabindex="-1" aria-labelledby="modalQuestApproveLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
@@ -1149,15 +1091,8 @@ if ($thisQuest["raffle_id"] != null)
                                             <div class="row mb-3">
                                                 <div class="col-12">
                                                 <?php 
-                                                    $feedCard = $thisQuest;
-                                                    $feedCard["type"] = "QUEST";
-                                                    $feedCard["title"] = $thisQuest["name"];
-                                                    $feedCard["image"] = $thisQuest["imagePath_icon"];
-                                                    $feedCard["published"] = true;
-                                                    $feedCard["account_1_username"] = $thisQuest["host_name"];
-                                                    $feedCard["account_2_username"] = $thisQuest["host_name_2"];
-                                                    $feedCard["text"] =  $thisQuest["summary"];
-                                                    require("php-components/feed-card.php");
+                                                    $_vFeedCard = FeedCardController::vQuest_to_vFeedCard($thisQuest);
+                                                    require("php-components/vFeedCardRenderer.php");
                                                 ?>
                                                 </div>
                                                 
@@ -1174,8 +1109,8 @@ if ($thisQuest["raffle_id"] != null)
                         </form>
                         
                         <form method="POST">
-                            <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                            <input type="hidden" name="quest-id" value="<?php echo $thisQuest["Id"]; ?>" />
+                            <input type="hidden" name="form_token" value="<?= $_SESSION['form_token']; ?>">
+                            <input type="hidden" name="quest-id" value="<?= $thisQuest->crand; ?>" />
                             <div class="modal modal-xl fade" id="modalQuestReject" tabindex="-1" aria-labelledby="modalQuestRejectLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
@@ -1187,15 +1122,9 @@ if ($thisQuest["raffle_id"] != null)
                                             <div class="row mb-3">
                                                 <div class="col-12">
                                                 <?php 
-                                                    $feedCard = $thisQuest;
-                                                    $feedCard["type"] = "QUEST";
-                                                    $feedCard["title"] = $thisQuest["name"];
-                                                    $feedCard["image"] = $thisQuest["imagePath_icon"];
-                                                    $feedCard["published"] = true;
-                                                    $feedCard["account_1_username"] = $thisQuest["host_name"];
-                                                    $feedCard["account_2_username"] = $thisQuest["host_name_2"];
-                                                    $feedCard["text"] =  $thisQuest["summary"];
-                                                    require("php-components/feed-card.php");
+                                                    
+                                                    $_vFeedCard = FeedCardController::vQuest_to_vFeedCard($thisQuest);
+                                                    require("php-components/vFeedCardRenderer.php");
                                                 ?>
                                                 </div>
                                                 
@@ -1245,7 +1174,7 @@ if ($thisQuest["raffle_id"] != null)
                             }
 
                             
-                            <?php if (IsAdmin()) { ?>
+                            <?php if (Kickback\Services\Session::isAdmin()) { ?>
                             function OpenModalApprove()
                             {
                                 $("#modalQuestApprove").modal("show");
@@ -1281,13 +1210,13 @@ if ($thisQuest["raffle_id"] != null)
                             <?php if ($showRaffleTab) { ?>
                             <div class="tab-pane fade <?php echo $activeTabPage; $activeTabPage = ''; ?>" id="nav-raffle" role="tabpanel" aria-labelledby="nav-raffle-tab" tabindex="0">
                             <?php 
-                                $raffleWinnerResp = GetRaffleWinner($thisQuest["raffle_id"]);
-                                $raffleWinner = $raffleWinnerResp->Data[0];
+                                $raffleWinnerResp = AccountController::getAccountByRaffleWinner($thisQuest->raffle);
+                                $raffleWinner = $raffleWinnerResp->data;
                             ?>
                             <div class="tab-pane fade show <?php echo $activeTabPage; $activeTabPage = ''; ?>" id="nav-raffle" role="tabpanel" aria-labelledby="nav-raffle-tab" tabindex="0">
                                 <div class="container py-5 text-center">
                                     <!-- Winner Announcement -->
-                                    <?php if ($raffleWinner["account_id"] != null) { ?>
+                                    <?php if ($raffleWinner != null) { ?>
                                         
                                     <script>
                                     setTimeout(() => {
@@ -1305,8 +1234,8 @@ if ($thisQuest["raffle_id"] != null)
                                                 <!-- Player Card HTML here -->
                                                 <div class="d-flex flex-wrap justify-content-evenly align-items-center mt-3" id="winnerPlayerCardContainer">
                                                 <?php 
-                                                    $playerCardAccount = GetAccountById($raffleWinner["account_id"])->Data;
-                                                    require("php-components/player-card.php"); 
+                                                    $_vPlayerCardAccount = $raffleWinner;
+                                                    require("php-components/vPlayerCardRenderer.php"); 
                                                 ?>
                                                 </div>
                                             </div>
@@ -1362,15 +1291,16 @@ if ($thisQuest["raffle_id"] != null)
                             <div class="display-6 tab-pane-title">Quest Information</div>    
                             <?php 
                             
-                            if ($thisQuest["content_id"] == null)
+                            if ($thisQuest->hasPageContent())
                             {
-                                echo $thisQuest['desc']; 
+                                $_vCanEditContent = $thisQuest->canEdit();
+                                $_vContentViewerEditorTitle = "Quest Information Manager";
+                                $_vPageContent = $thisQuest->getPageContent();
+                                require("php-components/content-viewer.php");
                             }
                             else
                             {
-                                $canEditContent = CanEditQuest($thisQuest);
-                                $contentViewerEditorTitle = "Quest Information Manager";
-                                require("php-components/content-viewer.php");
+                                echo $thisQuest->content->htmlContent; 
                             }
                             
                             ?>
@@ -1385,7 +1315,7 @@ if ($thisQuest["raffle_id"] != null)
 
 
                                             // Now loop through the grouped array
-                                            foreach ($questRewardsByCategory as $category => $questRewards) {
+                                            foreach ($thisQuest->rewards as $category => $questRewards) {
                                         ?>
                                         <div class="card mb-2">
                                             <div class="card-header">
@@ -1400,8 +1330,8 @@ if ($thisQuest["raffle_id"] != null)
 
                                                         foreach ($questRewards as $questReward) {
                                                     ?>
-                                                    <div class="inventory-item" onclick="ShowInventoryItemModal(<?php echo htmlspecialchars($questReward['Id']); ?>);"  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo htmlspecialchars($questReward["name"]) ?>">
-                                                        <img src="/assets/media/<?php echo htmlspecialchars($questReward["BigImgPath"])?>" alt="Item Name 1" />
+                                                    <div class="inventory-item" onclick="ShowInventoryItemModal(<?= $questReward->item->crand; ?>);"  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($questReward->item->name) ?>">
+                                                        <img src="<?= $questReward->item->iconSmall->getFullPath(); ?>" alt="<?= htmlspecialchars($questReward->item->name) ?>" />
                                                         <!--<div class="item-count">x1</div>-->
                                                     </div>
                                                 
@@ -1425,23 +1355,23 @@ if ($thisQuest["raffle_id"] != null)
                             <div class="tab-pane fade <?php echo $activeTabPage; $activeTabPage = ''; ?>" id="nav-results" role="tabpanel" aria-labelledby="nav-results-tab" tabindex="0">
                             <!--<div class="display-6 tab-pane-title">Quest Results</div>-->
                             
-<?php if ($champions != null) { ?>
+<?php if ($thisQuest->isTournament() && $thisQuest->tournament->concluded()) { ?>
 <div class="container py-5">
         <h2 class="text-center mb-4">Grand Champion</h2>
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="card shadow bg-ranked-1">
                 <div class="text-center" style="padding: 20px;">
-                    <img src="/assets/media/<?php echo GetAccountProfilePicture($champions[0]); ?>" class="img-thumbnail" alt="<?php echo $champions[0]["Username"]; ?> team logo" style="height: 250px; width: auto; object-fit: cover;">
+                    <img src="<?= $thisQuest->tournament->getChampion()->getProfilePictureURL(); ?>" class="img-thumbnail" alt="<?= $thisQuest->tournament->getChampion()->name; ?> team logo" style="height: 250px; width: auto; object-fit: cover;">
                 </div>
                 <div class="card-body">
-                    <h3 class="card-title text-center" style="font-size: 2rem; font-weight: bold; margin-bottom: 15px;">Team: <?php echo htmlspecialchars($champions[0]["team_name"]); ?></h3>
+                    <h3 class="card-title text-center" style="font-size: 2rem; font-weight: bold; margin-bottom: 15px;">Team: <?= $thisQuest->tournament->getChampion()->name; ?></h3>
                     
                 </div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item"><strong>Team Members:</strong></li>
-                        <?php foreach ($champions as $champion) { ?>
-                    <li class="list-group-item d-flex align-items-center"><img src="/assets/media/<?php echo GetAccountProfilePicture($champion); ?>" class="rounded-circle me-3" alt="<?php echo htmlspecialchars($champion["Username"]); ?> profile picture" style="width: 50px; height: 50px; object-fit: cover;"> <?php echo htmlspecialchars($champion["Username"]); ?></li>
+                        <?php foreach ($thisQuest->tournament->getChampion()->players as $champion) { ?>
+                    <li class="list-group-item d-flex align-items-center"><img src="<?= $champion->getProfilePictureURL(); ?>" class="rounded-circle me-3" alt="<?=  htmlspecialchars($champion->username); ?> profile picture" style="width: 50px; height: 50px; object-fit: cover;"> <?= htmlspecialchars($champion->username); ?></li>
                     
                     
                     <?php } ?>
@@ -1455,32 +1385,27 @@ if ($thisQuest["raffle_id"] != null)
     </div>
 </div>
 <?php } ?>
-<?php if ($playersInRankedMatch != null) { ?>
+<?php if ($thisQuest->isTournament() && $thisQuest->tournament->competitors != null) { ?>
     <div class="container py-5">
         <h2 class="text-center mb-4">Participating Teams</h2>
         <div class="row justify-content-center">
-            <?php foreach ($playersByTeam as $teamName => $teamMembers) { ?>
+            <?php foreach ($thisQuest->tournament->competitors as $teamName => $team) { ?>
                 <!-- Skip the champions team -->
                 <?php 
-                $isChampion = false;
-                if ($champions != null)
-                {
-                    $isChampion = in_array($teamMembers[0], $champions);
-                }
-                if (!$isChampion) { ?>
+                if (!$team->champion) { ?>
                     <div class="col-lg-8 mb-4">
                         <div class="card shadow">
                             <!-- Optionally include a team image if available -->
                             <!-- <img src="path_to_team_image" class="card-img-top img-thumbnail" alt="Team image" style="max-height: 250px; object-fit: cover;"> -->
                             <div class="card-body">
-                                <h4 class="card-title text-center"><img src="/assets/media/<?php echo GetAccountProfilePicture($teamMembers[0]); ?>" class="img-thumbnail" alt="<?php echo htmlspecialchars($teamMembers[0]["Username"]); ?> team logo" style="height: 64px;width: auto;margin-right: 16px;">Team: <?php echo htmlspecialchars($teamName); ?></h4>
+                                <h4 class="card-title text-center"><img src="<?= $team->getProfilePictureURL(); ?>" class="img-thumbnail" alt="<?= htmlspecialchars($teamName); ?> team logo" style="height: 64px;width: auto;margin-right: 16px;">Team: <?php echo htmlspecialchars($teamName); ?></h4>
                             </div>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item"><strong>Team Members:</strong></li>
-                                <?php foreach ($teamMembers as $member) { ?>
+                                <?php foreach ($team->players as $member) { ?>
                                     <li class="list-group-item d-flex align-items-center">
-                                        <img src="/assets/media/<?php echo GetAccountProfilePicture($member); ?>" class="rounded-circle me-3" alt="<?php echo htmlspecialchars($member["Username"]); ?> profile picture" style="width: 50px; height: 50px; object-fit: cover;">
-                                        <?php echo htmlspecialchars($member["Username"]); ?>
+                                        <img src="<?= $member->getProfilePictureURL(); ?>" class="rounded-circle me-3" alt="<?= htmlspecialchars($member->username); ?> profile picture" style="width: 50px; height: 50px; object-fit: cover;">
+                                        <?= htmlspecialchars($member->username); ?>
                                     </li>
                                 <?php } ?>
                             </ul>
@@ -1524,7 +1449,7 @@ if ($thisQuest["raffle_id"] != null)
                                         console.log("Loading iframe");
                                         // Create the iframe element
                                         var iframe = document.createElement('iframe');
-                                        iframe.src = '<?php echo $urlPrefixBeta; ?>/bracket.php?locator=<?php echo $thisQuest["locator"];?>'; // Replace with the desired iframe URL
+                                        iframe.src = '<?php echo $urlPrefixBeta; ?>/bracket.php?locator=<?= $thisQuest->locator;?>'; 
                                         iframe.style = "min-width: 200px; width: 100%; min-height: 700px; height:100%";
                                         iframe.innerText = "Hello world";
                                         iframe.id = "backet-iframe";
@@ -1573,41 +1498,33 @@ if ($thisQuest["raffle_id"] != null)
                             </div>
                             <?php } ?>
                             <?php if ($showParticipantsTab) { ?>
-                            <div class="tab-pane fade <?php echo $activeTabPage; $activeTabPage = ''; ?>" id="nav-participants" role="tabpanel" aria-labelledby="nav-participants-tab" tabindex="0">
+                            <div class="tab-pane fade <?= $activeTabPage; $activeTabPage = ''; ?>" id="nav-participants" role="tabpanel" aria-labelledby="nav-participants-tab" tabindex="0">
                                 <div class="display-6 tab-pane-title">Quest Participants</div>    
                                 <div class="d-flex flex-wrap justify-content-evenly align-items-center">
                                 
                                 <?php 
 
-                                if ($thisQuest["raffle_id"] != null)
+                                if ($thisQuest->isRaffle())
                                 {
                                     
                                     foreach ($raffleParticipants as &$participant) {
                                         
                                         $playerCardAccount = $participant;
-                                        require("php-components/player-card.php"); 
+                                        require("php-components/vPlayerCardRenderer.php"); 
                                     }
                                     
                                 }
                                 else
                                 {
-                                    foreach ($questApplicants as $questApplicant) 
-                                    {
-                                        $drawParticipant = true;
-                                        if ($questApplicant["participated"] == 0)
-                                        {
-                                            $drawParticipant = false;
-                                        }
-                                        if ($drawParticipant == 1)
-                                        {
-                                            $playerCardAccount = $questApplicant;
-                                            require("php-components/player-card.php"); 
-
-                                        }
-                                    }
+                                    
+                                    $selectUserFormId = "quest-participants";
+                                    $selectUsersFormPageSize = 21;
+                                    $showQuestParticipantsSearch = true;
+                                    $selectUsersFilter = json_encode(["IsQuestParticipant" => $thisQuest->crand]);
+                                    require("php-components/select-user.php");
                                 }
-
                                 ?>
+                                
                                 </div>
                             </div>
                             <?php } ?>
@@ -1616,11 +1533,16 @@ if ($thisQuest["raffle_id"] != null)
                                 <div class="display-6 tab-pane-title">Quest Applicants</div>        
                                 <div class="d-flex flex-wrap justify-content-evenly align-items-center">
                                     <?php
-                                        foreach ($questApplicants as $questApplicant) {
+                                        /*foreach ($questApplicants as $questApplicant) {
                                             $playerCardAccount = $questApplicant;
                                             echo "<!--Player Card ".$playerCardAccount["Username"]."-->";
                                             require("php-components/player-card.php"); 
-                                        }
+                                        }*/
+                                        
+                                        $selectUserFormId = "quest-applicants";
+                                        $selectUsersFormPageSize = 21;
+                                        $selectUsersFilter = json_encode(["IsQuestApplicant" => $thisQuest->crand]);
+                                        require("php-components/select-user.php");
                                     ?>
                                 </div>
                             </div>
@@ -1631,25 +1553,19 @@ if ($thisQuest["raffle_id"] != null)
                                 <div class="row mb-3">
                                     <div class="col-12">
                                         <?php 
-                                            $feedCard = $thisQuestsQuestLine;
-                                            $feedCard["type"] = "QUEST-LINE";
-                                            $feedCard["title"] = $thisQuestsQuestLine["name"];
-                                            $feedCard["image"] = $thisQuestsQuestLine["imagePath_icon"];
-                                            $feedCard["published"] = true;
-                                            $feedCard["account_1_username"] = $thisQuestsQuestLine["created_by_username"];
-                                            $feedCard["text"] =  $thisQuestsQuestLine["desc"];
-                                            $feedCard["date"] = $thisQuestsQuestLine["date_created"];
-                                            require("php-components/feed-card.php");
+                                            
+                                            $_vFeedCard = FeedCardController::vQuestLine_to_vFeedCard($thisQuest->questLine);
+                                            require("php-components/vFeedCardRenderer.php");
                                         ?>
                                     </div>
                                 </div>
                                 <div class="display-6 tab-pane-title">Quests</div>
                                 <?php 
-                                    for ($i=0; $i < count($thisQuestsQuestLineQuests); $i++) 
+                                    for ($i=0; $i < count($thisQuest->questLine->quests); $i++) 
                                     { 
-                                        $feedCard = $thisQuestsQuestLineQuests[$i];
-                                        
-                                        require ("php-components/feed-card.php");
+                                        $_q = $thisQuest->questLine->quests[$i];
+                                        $_vFeedCard = FeedCardController::vQuest_to_vFeedCard($_q);
+                                        require("php-components/vFeedCardRenderer.php");
                                     }
                                 ?>
                             </div>
@@ -1667,11 +1583,17 @@ if ($thisQuest["raffle_id"] != null)
 
     <!--Test-->
     <?php require("php-components/base-page-javascript.php"); ?>
-    <?php require("php-components/content-viewer-javascript.php"); ?>
+    <?php 
+    if ($thisQuest->hasPageContent())
+    {
+        $_vPageContent = $thisQuest->getPageContent();
+        require("php-components/content-viewer-javascript.php"); 
+    }
+    ?>
     <!--Test 2-->
     <script>
         
-var questDate = new Date('<?php echo date_format(date_create($thisQuest["end_date"]),"M j, Y H:i:s"); ?> UTC');
+var questDate = new Date('<?= vDateTime::getValueString($thisQuest->endDate); ?> UTC');
 document.getElementById('quest_time').innerText = questDate.toLocaleDateString(undefined, {
     weekday: 'short',
     year: 'numeric',
@@ -1738,6 +1660,14 @@ var countDown = questDate.getTime(),
 }
 
 ?>
+    </script>
+    
+    <script>
+        <?php if ($showQuestParticipantsSearch) { ?>
+            SearchForAccount("quest-participants", 1, null, {"IsQuestParticipant": <?= $thisQuest->crand; ?>});
+        <?php } ?>
+
+        SearchForAccount("quest-applicants", 1, null, {"IsQuestApplicant": <?= $thisQuest->crand; ?>});
     </script>
 </body>
 

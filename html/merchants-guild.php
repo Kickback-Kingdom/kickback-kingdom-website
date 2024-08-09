@@ -7,9 +7,9 @@ require("php-components/base-page-pull-active-account-info.php");
 $totalCombinedShares = 0;
 $totalMembers = 0;
 $minRequiredShares = 20;
-if (IsLoggedIn())
+if (Kickback\Services\Session::isLoggedIn())
 {
-    $accountId = $_SESSION["account"]["Id"];
+    $accountId = Kickback\Services\Session::getCurrentAccount()->crand;
     $targetDate = date("Y-m", strtotime("+1 month")) . "-01";
     $interestDate = date("Y-m", strtotime("-1 month")) . "-01";
     $currentStatement = BuildStatement($accountId, $targetDate);
@@ -518,7 +518,7 @@ $padlockOffset = $descriptionHeight / 2;
 
                             <!-- Access Restricted Title with the Warning Icon -->
                             <h5><i class="fa-solid fa-exclamation-triangle fa-lg me-2 text-muted"></i> Access Restricted</h5>
-                            <?php if (IsLoggedIn()) { ?>
+                            <?php if (Kickback\Services\Session::isLoggedIn()) { ?>
                             <p class="mb-4">You need to own at least <?php echo $minRequiredShares; ?> full merchant shares to gain access to the Merchants' Guild.</p>
 
                             <!-- Display Partial Shares -->
@@ -595,7 +595,7 @@ $padlockOffset = $descriptionHeight / 2;
             });
         } );
     </script>
-
+    
 </body>
 
 </html>

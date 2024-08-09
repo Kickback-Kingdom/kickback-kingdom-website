@@ -1,5 +1,5 @@
 <?php
-
+use Kickback\Controllers\ContentController;
 if (isset($_POST["save-content"])) {
     
     /*$showPopUpSuccess = true;
@@ -7,12 +7,13 @@ if (isset($_POST["save-content"])) {
     $PopUpMessage = json_encode($_POST);*/
     $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
 
-    if ($tokenResponse->Success) {
+    if ($tokenResponse->success) {
+    //if (true) {
 
-        $response = UpdateContentDataByID($_POST);
+        $response = ContentController::updateContentDataByID($_POST);
 
         
-        if ($response->Success)
+        if ($response->success)
         {
             
             $hasSuccess = true;
@@ -20,7 +21,7 @@ if (isset($_POST["save-content"])) {
         }
     } else {
         $hasError = true;
-        $errorMessage = $tokenResponse->Message;
+        $errorMessage = $tokenResponse->message;
     }
 }
 

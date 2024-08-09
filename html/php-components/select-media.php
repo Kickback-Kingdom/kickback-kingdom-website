@@ -36,7 +36,7 @@ let currentSelectMediaPage = 1; // default page
 const itemsPerSelectMediaPage = 6; // or however many you want
 
 
-<?php if(IsArtist()) { ?>
+<?php if(Kickback\Services\Session::getCurrentAccount()->isArtist) { ?>
 let cropper;
 let mediaUploadStep = 1;
 function OpenMediaUploadModal()
@@ -303,7 +303,7 @@ function SearchForMedia()
 function LoadSearchMediaResults(data)
 {
     var response = JSON.parse(data);
-    var results = response.Data.mediaItems;
+    var results = response.data.mediaItems;
     ClearSearchMediaResults(); 
     for (let index = 0; index < results.length; index++) {
         const media = results[index];
@@ -311,7 +311,7 @@ function LoadSearchMediaResults(data)
         AddSearchMediaResult(media);
     }
 
-    generatePaginationSelectMedia(response.Data.total, itemsPerSelectMediaPage, currentSelectMediaPage);
+    generatePaginationSelectMedia(response.data.total, itemsPerSelectMediaPage, currentSelectMediaPage);
 }
 
 function ClearSearchMediaResults()
@@ -358,7 +358,7 @@ function AcceptSelectedMedia()
     if (selectMediaImageElementOutputId != null)
     {
         var preview = document.getElementById(selectMediaImageElementOutputId);
-        preview.src = "/assets/media/"+currentSelectedMediaPath;
+        preview.src = currentSelectedMediaPath;
     }
 
     if (selectMediaImageFormInputId != null)
@@ -368,8 +368,8 @@ function AcceptSelectedMedia()
 }
 
 function AddSearchMediaResult(media) {
-    var html = `<div class="inventory-item" data-bs-toggle="tooltip" id="searchMediaResult-${media.Id}" onclick="SelectMedia(${media.Id},'${media.mediaPath}')" data-bs-placement="bottom" data-bs-title="${media.name}">
-                    <img src="/assets/media/${media.mediaPath}">
+    var html = `<div class="inventory-item" data-bs-toggle="tooltip" id="searchMediaResult-${media.crand}" onclick="SelectMedia(${media.crand},'${media.url}')" data-bs-placement="bottom" data-bs-title="${media.name}">
+                    <img src="${media.url}">
                     <i class="fas fa-check selected-icon"></i>
                 </div>`;
 

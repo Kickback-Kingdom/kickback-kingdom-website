@@ -24,9 +24,9 @@ $errorMessage = "";
 $accountResp = GetAccountById($_GET["i"]);
 $code = $_GET["c"];
 
-if ($accountResp->Success)
+if ($accountResp->success)
 {
-    $account = $accountResp->Data;
+    $account = $accountResp->data;
     if ($account["pass_reset"] != $code)
     {
         $hasError = true;
@@ -39,7 +39,7 @@ if ($accountResp->Success)
         if (isset($_POST["submit"]))
         {
             $resp = UpdateAccountPassword($account["Id"], $code, $_POST["password"]);
-            if ($resp->Success)
+            if ($resp->success)
             {
 
                 header("Location: login.php");
@@ -48,7 +48,7 @@ if ($accountResp->Success)
             {
 
                 $hasError = true;
-                $errorMessage = $resp->Message;
+                $errorMessage = $resp->message;
             }
         }
     }
@@ -57,7 +57,7 @@ if ($accountResp->Success)
 else
 {
     $hasError = true;
-    $errorMessage = $accountResp->Message;
+    $errorMessage = $accountResp->message;
 }
 
 

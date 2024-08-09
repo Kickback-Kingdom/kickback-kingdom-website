@@ -6,7 +6,7 @@ require("php-components/base-page-pull-active-account-info.php");
 
 $certificationsResp = GetAllCertifications();
 
-$certifications = $certificationsResp->Data;
+$certifications = $certificationsResp->data;
 ?>
 
 <!DOCTYPE html>
