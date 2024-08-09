@@ -9,5 +9,6 @@ enum NotificationType: string {
     case PRESTIGE = 'Prestige';
     case QUEST_IN_PROGRESS = 'Quest In Progress';
     case QUEST_REVIEWED = 'Quest Reviewed';
+    case QUEST_FINALIZE = 'Finalize Quest';
 }
 ?>
