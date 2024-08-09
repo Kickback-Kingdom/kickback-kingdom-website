@@ -11,7 +11,8 @@ use Kickback\Models\Response;
 use Kickback\Services\Database;
 use Kickback\Services\Session;
 use Kickback\Controllers\LootController;
-
+use Kickback\Config\ServiceCredentials;
+use Kickback\Utilities\IDCrypt;
 use Kickback\Views\vRaffle;
 
 class AccountController
@@ -54,7 +55,6 @@ class AccountController
             return (new Response(true, $account->username."'s information.",  $account ));
         }
     }
-
 
     public static function getAccountInventory(vRecordId $recordId) : Response {
         
@@ -250,7 +250,7 @@ class AccountController
         }
     }
     
-    public static function searchForAccount(string $searchTerm, int $page, int $itemsPerPage) : Response {
+    public static function searchForAccount(string $searchTerm, int $page, int $itemsPerPage, array $filters = []) : Response {
         $conn = Database::getConnection();
         //assert($conn instanceof mysqli);
 
@@ -259,8 +259,65 @@ class AccountController
 
         $offset = ($page - 1) * $itemsPerPage;
 
+        $joinQuery = "";
+        $questApplicantConditions = [];
+
+
+        // Check for quest applicant or participant filters
+        if (isset($filters['IsQuestApplicant'])) {
+            $joinQuery = " INNER JOIN quest_applicants ON v_account_info.Id = quest_applicants.account_id";
+            $questApplicantConditions[] = "quest_applicants.quest_id = " . (int)$filters['IsQuestApplicant'];
+            unset($filters['IsQuestApplicant']);
+        }
+        if (isset($filters['IsQuestParticipant'])) {
+            if (empty($joinQuery)) {
+                $joinQuery = " INNER JOIN quest_applicants ON v_account_info.Id = quest_applicants.account_id";
+            }
+            $questApplicantConditions[] = "quest_applicants.quest_id = " . (int)$filters['IsQuestParticipant'];
+            $questApplicantConditions[] = "quest_applicants.participated = 1";
+            unset($filters['IsQuestParticipant']);
+        }
+        
+
         // Prepare the count statement
-        $countQuery = "SELECT COUNT(*) as total FROM v_account_info WHERE (LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?)  AND Banned = 0";
+        $countQuery = "SELECT COUNT(*) as total FROM v_account_info" . $joinQuery . "  WHERE (LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?)  AND Banned = 0";
+        
+        // Prepare the base of the main query
+        $query = "SELECT *,
+        (
+            (CASE WHEN LOWER(username) LIKE ? THEN 4 ELSE 0 END) +
+            (CASE WHEN LOWER(firstname) LIKE ? THEN 3 ELSE 0 END) +
+            (CASE WHEN LOWER(lastname) LIKE ? THEN 2 ELSE 0 END) +
+            (CASE WHEN LOWER(email) LIKE ? THEN 1 ELSE 0 END)
+        ) AS relevancy_score
+        FROM v_account_info" . $joinQuery . "
+        WHERE (LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?) AND Banned = 0";
+
+        // Add additional filters
+        $filterConditions = [];
+        $filterParams = [];
+
+        foreach ($filters as $field => $value) {
+            $filterConditions[] = "LOWER($field) = ?";
+            $filterParams[] = strtolower($value);
+        }
+
+        if (count($questApplicantConditions) > 0) {
+            $filterConditions = array_merge($filterConditions, $questApplicantConditions);
+        }
+
+        if (count($filterConditions) > 0) {
+            $filterConditionsString = implode(" AND ", $filterConditions);
+            $countQuery .= " AND " . $filterConditionsString;
+            $query .= " AND " . $filterConditionsString;
+        }
+
+        // Complete the main query
+        $query .= " ORDER BY relevancy_score DESC, level DESC, exp_current DESC, Username
+                    LIMIT ? OFFSET ?";
+        
+        
+        
         $stmtCount = $conn->prepare($countQuery);
         if (false === $stmtCount) {
             error_log($conn->error);
@@ -268,8 +325,9 @@ class AccountController
                 "Couldn't find account due to error(s).",
                 ["Error in SearchForAccount(...) when preparing SQL query. (mysqli_prepare)"]);
         }
-
-        $success = $stmtCount->bind_param('ssss', $searchTerm, $searchTerm, $searchTerm, $searchTerm);
+        $countParams = array_merge([$searchTerm, $searchTerm, $searchTerm, $searchTerm], $filterParams);
+        //$success = $stmtCount->bind_param('ssss', $searchTerm, $searchTerm, $searchTerm, $searchTerm);
+        $success = $stmtCount->bind_param(str_repeat('s', count($countParams)), ...$countParams);
         if (false === $success) {
             error_log($stmtCount->error);
             $stmtCount->close();
@@ -309,18 +367,6 @@ class AccountController
         $count = $countRow["total"];
         $stmtCount->close();
 
-        // Prepare the main search statement
-        $query = "SELECT *,
-            (
-                (CASE WHEN LOWER(username) LIKE ? THEN 4 ELSE 0 END) +
-                (CASE WHEN LOWER(firstname) LIKE ? THEN 3 ELSE 0 END) +
-                (CASE WHEN LOWER(lastname) LIKE ? THEN 2 ELSE 0 END) +
-                (CASE WHEN LOWER(email) LIKE ? THEN 1 ELSE 0 END)
-            ) AS relevancy_score
-            FROM v_account_info
-            WHERE (LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?) AND Banned = 0
-            ORDER BY relevancy_score DESC, level DESC, exp_current DESC, Username
-            LIMIT ? OFFSET ?";
         $stmt = $conn->prepare($query);
         if (false === $stmt) {
             error_log($conn->error);
@@ -329,7 +375,10 @@ class AccountController
                 ["Error in SearchForAccount(...) when preparing SQL query. (mysqli_prepare)"]);
         }
 
-        $success = $stmt->bind_param('ssssssssii', $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $itemsPerPage, $offset);
+
+        $mainParams = array_merge([$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm], $filterParams, [$itemsPerPage, $offset]);
+
+        $success = $stmt->bind_param(str_repeat('s', count($mainParams) - 2) . 'ii', ...$mainParams);
         if (false === $success) {
             error_log($stmt->error);
             $stmt->close();
@@ -521,7 +570,6 @@ class AccountController
         }
     }
 
-
     public static function getAccountByWritOfPassageLootId(vRecordId $loot_id) : Response {
         $conn = Database::getConnection();
         $stmt = mysqli_prepare($conn, 'SELECT ai.* FROM loot l 
@@ -574,7 +622,6 @@ class AccountController
         $loot_id = $row[0] ?? -1;
         return new Response(true, "Unused raffle ticket id", $loot_id);
     }
-    
 
     public static function getPrestigeTokens(vRecordId $accountId) : Response {
         $conn = Database::getConnection();
@@ -624,7 +671,6 @@ class AccountController
         }
     }
     
-    
     public static function updateAccountPassword(vRecordId $account_id, int $pass_reset, string $newPassword) : Response {
         $conn = Database::getConnection();
     
@@ -646,7 +692,6 @@ class AccountController
             return new Response(false, "Failed to change password! " . $stmt->error, null);
         }
     }
-    
     
     public static function upsertAccountEquipment(array $equipmentData) : Response {
         if (!Session::isLoggedIn()) {
@@ -802,15 +847,9 @@ class AccountController
     }
 
     public static function RegisterAccount(string $firstName,string $lastName,string $password,string $confirm_password,string $username,string $email,bool $i_agree,string $passage_quest,string $passage_id) : Response {
-        $firstName = mysqli_real_escape_string($GLOBALS["conn"], $firstName);
-        $lastName = mysqli_real_escape_string($GLOBALS["conn"], $lastName);
-        $password = mysqli_real_escape_string($GLOBALS["conn"], $password);
-        $confirm_password = mysqli_real_escape_string($GLOBALS["conn"], $confirm_password);
-        $password = mysqli_real_escape_string($GLOBALS["conn"], $password);
-        $username = mysqli_real_escape_string($GLOBALS["conn"], $username);
-        $passage_quest = mysqli_real_escape_string($GLOBALS["conn"], $passage_quest);
-        //$passage_id = mysqli_real_escape_string($GLOBALS["conn"], $passage_id);
-        $email = mysqli_real_escape_string($GLOBALS["conn"], $email);
+        
+        $conn = Database::getConnection();
+        
         if (!$i_agree)
         {
             return (new Response(false, "Please agree to the terms of service", null));
@@ -865,11 +904,12 @@ class AccountController
             {
                 
                 $writ_quest_id = $crypt->decrypt($passage_quest);
-                $questResp = GetQuestById($writ_quest_id);
+                $writ_quest_id = new vRecordId('', (int)$writ_quest_id);
+                $questResp = QuestController::getQuestById($writ_quest_id);
                 if ($questResp->success)
                 {
                     $quest = $questResp->data;
-                    $writResp = GetWritOfPassageByAccountId($quest['host_id']);
+                    $writResp = self::getWritOfPassageByAccountId($quest->host1);
                     if ($writResp->success)
                     {
                         $writ = $writResp->data;
@@ -877,7 +917,7 @@ class AccountController
                     }
                     else
                     {
-                        return (new Response(false, "The host of the quest you are joining ran out of Writs of Passage. Please contact ".$quest['host_name'].'.', null));
+                        return (new Response(false, "The host of the quest you are joining ran out of Writs of Passage. Please contact ".$quest->host1->username.'.', null));
                     }
                 }
                 else
@@ -893,11 +933,11 @@ class AccountController
         
         if (!ContainsData($writ_item_id,"writ_item_id")->success)
         {
-            return (new Response(false, "The host of the quest you are joining ran out of Writs of Passage. Please contact ".$quest['host_name'].'.', null));
+            return (new Response(false, "The host of the quest you are joining ran out of Writs of Passage. Please contact ".$quest->host1->username.'.', null));
         }
     
     
-        $userResp = GetAccountByUsername($username);
+        $userResp = self::getAccountByUsername($username);
     
         
         if ($userResp->success)
@@ -905,7 +945,7 @@ class AccountController
             return (new Response(false, "Your desired username already exists.", null));
         }
     
-        $emailResp = GetAccountByEmail($email);
+        $emailResp = self::getAccountByEmail($email);
     
         if ($emailResp->success)
         {
@@ -914,44 +954,48 @@ class AccountController
     
     
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-        $sql = "INSERT INTO account (Email, Password, FirstName, LastName, Username, passage_id) VALUES ('$email', '$passwordHash', '$firstName', '$lastName','$username','$writ_item_id')";
-        $result = mysqli_query($GLOBALS["conn"],$sql);
-        if ($result === TRUE) {
+
+
+        $conn->begin_transaction();
+
+        try {
+            // Use prepared statements to insert the new account
+            $stmt = $conn->prepare("INSERT INTO account (Email, Password, FirstName, LastName, Username, passage_id) VALUES (?, ?, ?, ?, ?, ?)");
+            if (false === $stmt) {
+                throw new Exception("Failed to prepare SQL statement: " . $conn->error);
+            }
+    
+            $stmt->bind_param('ssssss', $email, $passwordHash, $firstName, $lastName, $username, $writ_item_id);
+    
+            if (false === $stmt->execute()) {
+                throw new Exception("Failed to execute SQL statement: " . $stmt->error);
+            }
+    
+            $stmt->close();
     
             $kk_service_key = ServiceCredentials::get("kk_service_key");
-            $loginResp = Session::Login($kk_service_key,$email,$password);
+            $loginResp = Session::Login($kk_service_key, $email, $password);
+            if (!$loginResp->success) {
+                throw new Exception("Failed to log in after registration.");
+            }
+    
             $login = $loginResp->data;
     
-            /*$timestamp = strtotime("2023-06-01");
-            
-            // Compare the timestamp to the current time
-            if ($timestamp < time()) {
-                echo "The end time has passed.";
+            // Additional actions within the transaction
+            LootController::giveWritOfPassage($login);
+            DiscordWebHook(FlavorTextController::getNewcomerIntroduction($username));
     
-                //GiveBadge();
-            } else {
-                echo "The end time has not passed.";
-                
+            // Commit transaction
+            $conn->commit();
     
-                //GiveBadge($login["Id"],1);
-                //GiveRaffleTicket($login["Id"]);
-            }*/
+            return new Response(true, "Account created successfully", $login);
     
-            GiveWritOfPassage($login["Id"]);
-    
-            DiscordWebHook(GetNewcomerIntroduction($username));
-    
-            return (new Response(true, "Account created successfully",$login));
-        } 
-        else 
-        {
-            return (new Response(false, "Failed to register account with error: ".GetSQLError(), null));
+        } catch (Exception $e) {
+            // Rollback transaction on error
+            $conn->rollback();
+            error_log($e->getMessage());
+            return new Response(false, "Failed to register account: " . $e->getMessage(), null);
         }
-    }
-    private static function insert(Account $account) : Response {
-
-        return new Response(false, 'AccountController::insert not implemented');
-
     }
 }
 ?>

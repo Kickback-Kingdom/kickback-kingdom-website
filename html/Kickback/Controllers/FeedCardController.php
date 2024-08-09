@@ -174,10 +174,10 @@ class FeedCardController
                 if ($activity->verb == "BAILED ON")
                 {
 
-                    $feedCard->description = GetBailedFlavorText($activity->account->username, $activity->name, $activity->account->username.$activity->name.$activity->dateTime->valueString);
+                    $feedCard->description = FlavorTextController::getBailedFlavorText($activity->account->username, $activity->name, $activity->account->username.$activity->name.$activity->dateTime->valueString);
                 }
                 else{
-                    $feedCard->description = GetParticipationFlavorText($activity->account->username, $activity->name, $activity->account->username.$activity->name.$activity->dateTime->valueString);
+                    $feedCard->description = FlavorTextController::getParticipationFlavorText($activity->account->username, $activity->name, $activity->account->username.$activity->name.$activity->dateTime->valueString);
 
                 }
 
@@ -193,11 +193,11 @@ class FeedCardController
 
                 if ($activity->verb == "WON")
                 {
-                    $feedCard->description = GetWonMatchFlavorText($activity->account->username, $activity->name, $activity->account->username.$activity->name.$activity->dateTime->valueString);
+                    $feedCard->description = FlavorTextController::getWonMatchFlavorText($activity->account->username, $activity->name, $activity->account->username.$activity->name.$activity->dateTime->valueString);
                 }
                 else{
                     //GetLostMatchFlavorText
-                    $feedCard->description = GetLostMatchFlavorText($activity->account->username, $activity->name, $activity->account->username.$activity->name.$activity->dateTime->valueString);
+                    $feedCard->description = FlavorTextController::getLostMatchFlavorText($activity->account->username, $activity->name, $activity->account->username.$activity->name.$activity->dateTime->valueString);
                 }
 
                 break;
@@ -208,9 +208,9 @@ class FeedCardController
                 $feedCard->title = $activity->account->username . ' ' . $activity->verb . " " . $activity->name;
                 
                 if ($activity->verb == "COMMENDED") {
-                    $feedCard->description = GetCommendedSomeoneFlavorText($activity->account->username, $activity->name, $activity->account->username . $activity->name . $activity->dateTime->valueString);
+                    $feedCard->description = FlavorTextController::getCommendedSomeoneFlavorText($activity->account->username, $activity->name, $activity->account->username . $activity->name . $activity->dateTime->valueString);
                 } else {
-                    $feedCard->description = GetDenouncedSomeoneFlavorText($activity->account->username, $activity->name, $activity->account->username . $activity->name . $activity->dateTime->valueString);
+                    $feedCard->description = FlavorTextController::getDenouncedSomeoneFlavorText($activity->account->username, $activity->name, $activity->account->username . $activity->name . $activity->dateTime->valueString);
                 }
                 break;
 
@@ -221,9 +221,9 @@ class FeedCardController
                 $feedCard->title = $activity->name . ' ' . $activity->verb . " " . $activity->account->username;
                 
                 if ($activity->verb == "COMMENDED") {
-                    $feedCard->description = GetCommendedSomeoneFlavorText($activity->name, $activity->account->username, $activity->name . $activity->account->username . $activity->dateTime->valueString);
+                    $feedCard->description = FlavorTextController::getCommendedSomeoneFlavorText($activity->name, $activity->account->username, $activity->name . $activity->account->username . $activity->dateTime->valueString);
                 } else {
-                    $feedCard->description = GetDenouncedSomeoneFlavorText($activity->name, $activity->account->username, $activity->name . $activity->account->username . $activity->dateTime->valueString);
+                    $feedCard->description = FlavorTextController::getDenouncedSomeoneFlavorText($activity->name, $activity->account->username, $activity->name . $activity->account->username . $activity->dateTime->valueString);
                 }
                 break;
 
@@ -232,7 +232,7 @@ class FeedCardController
                 $feedCard->typeText = $activity->verb;
                 $feedCard->createdByShowOnlyDate = true;
                 $feedCard->title = $activity->account->username . ' ' . $activity->verb . " " . $activity->name;
-                $feedCard->description = GetHostedQuestFlavorText($activity->account->username, $activity->name, $activity->name . $activity->account->username . $activity->dateTime->valueString);
+                $feedCard->description = FlavorTextController::getHostedQuestFlavorText($activity->account->username, $activity->name, $activity->name . $activity->account->username . $activity->dateTime->valueString);
                 break;
 
             case 'BADGE':
@@ -243,7 +243,7 @@ class FeedCardController
                     $activity->verb = "was NOMINATED for";
                 }
                 $feedCard->title = $activity->account->username . ' ' . $activity->verb . " the " . $activity->name . " badge!";
-                $feedCard->description = GetEarnedBadgeFlavorText($activity->account->username, $activity->name, $activity->name . $activity->account->username . $activity->dateTime->valueString);
+                $feedCard->description = FlavorTextController::getEarnedBadgeFlavorText($activity->account->username, $activity->name, $activity->name . $activity->account->username . $activity->dateTime->valueString);
                 break;
 
             case 'TOURNAMENT':
@@ -252,9 +252,9 @@ class FeedCardController
                 $feedCard->createdByShowOnlyDate = true;
                 $feedCard->title = $activity->account->username . ' ' . $activity->verb . " in the " . $activity->name . " quest!";
                 if ($activity->verb == "WON") {
-                    $feedCard->description = GetWinTournamentFlavorText($activity->account->username, $activity->name, $activity->name . $activity->account->username . $activity->dateTime->valueString);
+                    $feedCard->description = FlavorTextController::getWinTournamentFlavorText($activity->account->username, $activity->name, $activity->name . $activity->account->username . $activity->dateTime->valueString);
                 } else {
-                    $feedCard->description = GetLostTournamentFlavorText($activity->account->username, $activity->name, $activity->name . $activity->account->username . $activity->dateTime->valueString);
+                    $feedCard->description = FlavorTextController::getLostTournamentFlavorText($activity->account->username, $activity->name, $activity->name . $activity->account->username . $activity->dateTime->valueString);
                 }
                 break;
 
@@ -263,7 +263,7 @@ class FeedCardController
                 $feedCard->typeText = "NEW POST";
                 $feedCard->createdByShowOnlyDate = true;
                 $feedCard->title = $activity->account->username . ' just ' . $activity->verb . " \"" . $activity->name . "\"";
-                $feedCard->description = GetWroteBlogPostFlavorText($activity->account->username, $activity->name, $activity->name . $activity->account->username . $activity->dateTime->valueString);
+                $feedCard->description = FlavorTextController::getWroteBlogPostFlavorText($activity->account->username, $activity->name, $activity->name . $activity->account->username . $activity->dateTime->valueString);
                 break;
         }
 

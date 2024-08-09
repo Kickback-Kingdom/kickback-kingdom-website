@@ -11,10 +11,9 @@ use Kickback\Controllers\NotificationController;
 use Kickback\Views\vAccount;
 
 class Session {
-    private static $currentAccount = null;
-    public static function getCurrentAccount() :vAccount {
+    private static ?vAccount $currentAccount = null;
+    public static function getCurrentAccount() : ?vAccount {
         if (self::$currentAccount === null) {
-            // Logic to set the current account if it's not already set
             self::$currentAccount = self::fetchCurrentAccount();
         }
         return self::$currentAccount;
@@ -28,7 +27,7 @@ class Session {
         return isset($_SESSION['account_using_delegate_access']);
     }
 
-    private static function fetchCurrentAccount(): vAccount {
+    private static function fetchCurrentAccount(): ?vAccount {
         // Logic to fetch current account from session or database
         if (self::isLoggedIn()) {
             return self::getSessionData('vAccount');
@@ -216,8 +215,15 @@ class Session {
     }
     
     public static function getCurrentSessionId() {
-        EnsureSessionStarted();
+        self::ensureSessionStarted();
         return session_id() ?: null; // Use null coalescing operator to handle non-existent session IDs.
+    }
+
+    
+    public static function ensureSessionStarted() {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
     }
 }
 ?>

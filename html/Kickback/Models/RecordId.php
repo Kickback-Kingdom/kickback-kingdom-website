@@ -2,46 +2,38 @@
 declare(strict_types=1);
 
 namespace Kickback\Models;
-use Kickback\Views;
+use Kickback\Views\vRecordId;
 
 class RecordId extends vRecordId
 {
-    //public string    $ctime;
-    //public int  $crand;
-    
     public function __construct() {
-        $this->ctime = $this->GetCTime();
-        $this->crand = $this->GenerateCRand();
+        $this->ctime = self::getCTime();
+        $this->crand = self::generateCRand();
     }
     
-    // Get the system salt by combining local IP and process ID
-    protected function GetSystemSalt(): int {
+    public static function getSystemSalt(): int {
         $localIP = gethostbyname(gethostname());
         $processId = getmypid();
         return crc32($localIP . $processId);
     }
 
-    // Get high-resolution time in nanoseconds
-    protected function GetHighResTime(): int {
+    public static function getHighResTime(): int {
         return hrtime(true);
     }
 
-    // Generate a random integer based on a seed
-    protected function GetSeededRandomInt(int $seed): int {
+    public static function getSeededRandomInt(int $seed): int {
         mt_srand($seed);
         return mt_rand();
     }
 
-    // Combine system salt and high-resolution time to generate a unique crand
-    public function GenerateCRand(): int {
-        $salt = $this->GetSystemSalt();
-        $time = $this->GetHighResTime();
+    public static function generateCRand(): int {
+        $salt = self::getSystemSalt();
+        $time = self::getHighResTime();
         $seed = $time + $salt;
-        return $this->GetSeededRandomInt($seed);
+        return self::getSeededRandomInt($seed);
     }
 
-    // Get current time with microseconds
-    public function GetCTime(): string {
+    public static function getCTime(): string {
         return date('Y-m-d H:i:s.u');
     }
 }

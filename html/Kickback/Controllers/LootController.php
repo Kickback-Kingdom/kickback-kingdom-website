@@ -91,7 +91,7 @@ class LootController
     }
 
     public static function giveWritOfPassage(vRecordId $account_id) : Response {
-        return GiveLoot($account_id, 14);
+        return self::giveLoot($account_id, new vRecordId('', 14));
     }
 
     public static function giveMerchantGuildShare(vRecordId $account_id, $date) : Response {
@@ -150,7 +150,6 @@ class LootController
         }
     }
     
-
     private static function row_to_vLoot($row) : vLoot {
         $loot = new vLoot();
 

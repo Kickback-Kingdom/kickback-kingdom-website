@@ -329,7 +329,6 @@ class QuestController
         return new Response(true, "Unused raffle tickets", $unused);
     }
 
-    
     public static function checkIfTimeForRaffleWinner(vQuest $quest) : void {
 
         // Get current date
@@ -762,7 +761,6 @@ class QuestController
 
         return new Response(true, "Quest successfully approved and published.", null);
     }
-
         
     public static function updateQuestContent(vRecordId $questId, vRecordId $contentId) : Response {
         $conn = Database::getConnection();
@@ -793,6 +791,7 @@ class QuestController
     }
 
     public static function accountHasRegisteredOrAppliedForQuest(vRecordId $account_id, vRecordId $quest_id) : Response {
+
         $conn = Database::getConnection();
         // Prepare the SQL statement for checking existing entry
         $stmt = mysqli_prepare($conn, "SELECT 1 FROM quest_applicants WHERE account_id = ? AND quest_id = ?");
@@ -970,9 +969,7 @@ class QuestController
         return $questApplicant;
     }
 
-    
-    public static function submitFeedbackAndCollectRewards(vRecordId $account_id, vRecordId $quest_id, int $host_rating, int $quest_rating, string $feedback) : Response
-    {
+    public static function submitFeedbackAndCollectRewards(vRecordId $account_id, vRecordId $quest_id, int $host_rating, int $quest_rating, string $feedback) : Response {
         $conn = Database::getConnection();
         
         //giving error

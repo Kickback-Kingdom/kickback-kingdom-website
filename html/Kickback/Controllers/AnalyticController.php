@@ -6,6 +6,7 @@ namespace Kickback\Controllers;
 use Kickback\Services\Session;
 use Kickback\Services\Database;
 use Kickback\Models\Response;
+use Kickback\Models\RecordId;
 
 class AnalyticController
 {
@@ -138,7 +139,7 @@ class AnalyticController
     }
     
     private static function getCurrentGeoLocation() {
-        EnsureSessionStarted();
+        Session::ensureSessionStarted();
         $ipAddress = self::getCurrentUserIP();
     
         // Check if geolocation data for this IP is already cached in the session
@@ -193,7 +194,7 @@ class AnalyticController
         $conn = Database::getConnection();
         
     
-        $ctime = GetCTime();
+        $ctime = RecordId::getCTime();
     
         $ip_address = self::getCurrentUserIP();
         $session_id = Session::getCurrentSessionId();
@@ -226,7 +227,7 @@ class AnalyticController
         }
     
         while (true) {  // Infinite loop, will break on successful insertion
-            $crand = GenerateCRand();
+            $crand = RecordId::generateCRand();
     
             // Bind parameters
             mysqli_stmt_bind_param($stmt, 'sissssiisssssss',
