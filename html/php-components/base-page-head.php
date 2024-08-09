@@ -1,5 +1,6 @@
 <?php 
 use Kickback\Controllers\AnalyticController;
+use Kickback\Common\Version;
 $pageVisitId = AnalyticController::getCurrentPage();
 
 
@@ -91,7 +92,7 @@ if ($pageVisitResp->success)
     <!-- Android Web App Specific Tags -->
     <?php
         $manifestFile = $urlPrefixBeta.'/manifest.json';
-        $manifestFileVersion = filemtime($_SERVER['DOCUMENT_ROOT'].$manifestFile);
+        $manifestFileVersion = Version::current()->number();
     ?>
 
     <!--<link rel="manifest" href="<?= $manifestFile.'?v='.$manifestFileVersion ?>">-->
@@ -120,14 +121,14 @@ if ($pageVisitResp->success)
 
     <?php
         $cssFile = $urlPrefixBeta.'/assets/css/kickback-kingdom.css';
-        $cssVersion = filemtime($_SERVER['DOCUMENT_ROOT'].$cssFile);
+        $cssVersion = Version::current()->number();
 
         echo '<link rel="stylesheet" type="text/css" href="'.$cssFile.'?v='.$cssVersion.'">';
     ?>
 
     <?php
         $cssFile = $urlPrefixBeta.'/assets/css/animate.css';
-        $cssVersion = filemtime($_SERVER['DOCUMENT_ROOT'].$cssFile);
+        $cssVersion = Version::current()->number();
 
         echo '<link rel="stylesheet" type="text/css" href="'.$cssFile.'?v='.$cssVersion.'">';
     ?>
