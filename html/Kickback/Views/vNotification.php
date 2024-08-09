@@ -65,7 +65,7 @@ class vNotification
                 return '<i class="fa-solid fa-spinner fa-spin"></i> Quest In Progress';
                 break;
             default:
-                return "{".$not->type."}";
+                return "{".$this->type."}";
                 break;
         }
     }
