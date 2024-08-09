@@ -46,29 +46,32 @@ class vNotification
         }
     }
 
-    public function getTitle()
+    public function getTitle() : string
     {
-        switch ($this->type) {
-            case NotificationType::QUEST_REVIEW:
-            case NotificationType::THANKS_FOR_HOSTING:
+        // Access the string value of the enum
+        $type = $this->type->value;
+
+        switch ($type) {
+            case NotificationType::QUEST_REVIEW->value:
+            case NotificationType::THANKS_FOR_HOSTING->value:
                 return '<i class="fa-solid fa-gift"></i> Pending Rewards';
-                break;
-            case NotificationType::PRESTIGE:
+
+            case NotificationType::PRESTIGE->value:
                 return "New Prestige";
-                break;
 
-            case NotificationType::QUEST_REVIEWED:
+            case NotificationType::QUEST_REVIEWED->value:
                 return '<i class="fa-solid fa-star"></i> Quest Reviewed';
-                break;
 
-            case NotificationType::QUEST_IN_PROGRESS:
+            case NotificationType::QUEST_IN_PROGRESS->value:
                 return '<i class="fa-solid fa-spinner fa-spin"></i> Quest In Progress';
-                break;
+
             default:
-                return "{".$this->type."}";
-                break;
+                return "{" . $type . "}";
         }
     }
+
+
+
 
     public function getCTA()
     {
