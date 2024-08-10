@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Kickback\Config;
+namespace Kickback\Backend\Config;
 
 /**
 * @implements \ArrayAccess<string,mixed>

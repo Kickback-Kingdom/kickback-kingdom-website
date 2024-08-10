@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Kickback\Utility;
+namespace Kickback\Common\Exceptions;
 
 /// This interface was taken from a comment written by `ask at nilpo dot com`
 /// (ask@nilpo.com) on the PHP Exceptions documentation page:

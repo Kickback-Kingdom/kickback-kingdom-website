@@ -12,7 +12,7 @@ $containsFieldsResp = POSTContainsFields("directory","searchTerm","page","itemsP
 if (!$containsFieldsResp->success)
     return $containsFieldsResp;
 
-$kk_service_key = \Kickback\Config\ServiceCredentials::get("kk_service_key");
+$kk_service_key = \Kickback\Backend\Config\ServiceCredentials::get("kk_service_key");
 
 $directory = Validate($_POST["directory"]);
 $searchTerm = Validate($_POST["searchTerm"]);

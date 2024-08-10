@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Kickback\Utility;
+namespace Kickback\Common\Exceptions;
 
-//use \Kickback\Utility\IException;
+use Kickback\Common\Exceptions\IException;
 
 
 /** This class was taken from a comment written by `ask at nilpo dot com`

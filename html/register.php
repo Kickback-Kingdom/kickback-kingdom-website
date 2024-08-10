@@ -4,7 +4,9 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-use Kickback\Utilities\IDCrypt;
+use Kickback\Common\Utility\IDCrypt;
+
+use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Controllers\QuestController;
 use Kickback\Views\vRecordId;
 use Kickback\Controllers\AccountController;
@@ -52,7 +54,7 @@ if (isset($_POST["submit"]))
     $errorMessage = $resp->message." (Data: ".$resp->data.")";
   }
   else{
-    $_POST["serviceKey"] = \Kickback\Config\ServiceCredentials::get("kk_service_key");
+    $_POST["serviceKey"] = ServiceCredentials::get("kk_service_key");
     $resp = require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/account/login.php");
     $hasError = !$resp->success;
     if (!$hasError)
@@ -81,7 +83,7 @@ if (isset($_GET['wi']))
 {
     $writ_of_passage_id = ($_GET['wi']);
     $writProvided = true;
-    $kk_crypt_key_quest_id = \Kickback\Config\ServiceCredentials::get("crypt_key_quest_id");
+    $kk_crypt_key_quest_id = ServiceCredentials::get("crypt_key_quest_id");
     require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/engine.php");
     $crypt = new IDCrypt($kk_crypt_key_quest_id);
     $writ_of_passage_id_decrypted = $crypt->decrypt($writ_of_passage_id);
@@ -103,7 +105,7 @@ else
 }
 
 if (isset($_GET['wq'])) {
-    $kk_crypt_key_quest_id = \Kickback\Config\ServiceCredentials::get("crypt_key_quest_id");
+    $kk_crypt_key_quest_id = ServiceCredentials::get("crypt_key_quest_id");
 
     $writ_of_passage_quest = ($_GET['wq']);
     $writProvided = true;

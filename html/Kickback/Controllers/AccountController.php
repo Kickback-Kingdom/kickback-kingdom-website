@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Kickback\Controllers;
 
+use Kickback\Common\Utility\IDCrypt;
+
 use Kickback\Models\Account;
 use Kickback\Views\vAccount;
 use Kickback\Views\vRecordId;
@@ -11,8 +13,7 @@ use Kickback\Models\Response;
 use Kickback\Services\Database;
 use Kickback\Services\Session;
 use Kickback\Controllers\LootController;
-use Kickback\Config\ServiceCredentials;
-use Kickback\Utilities\IDCrypt;
+use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Views\vRaffle;
 
 class AccountController

@@ -3,7 +3,7 @@
 namespace Kickback\Services;
 
 use mysqli;
-use Kickback\Config\ServiceCredentials; 
+use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Models\Response;
 use Kickback\Views\vSessionInformation;
 use Kickback\Controllers\AccountController;

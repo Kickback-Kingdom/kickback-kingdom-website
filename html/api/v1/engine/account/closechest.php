@@ -14,7 +14,7 @@ $containsFieldsResp = POSTContainsFields("chestId","accountId","sessionToken");
 if (!$containsFieldsResp->success)
     return $containsFieldsResp;
 
-$kk_service_key = \Kickback\Config\ServiceCredentials::get("kk_service_key");
+$kk_service_key = \Kickback\Backend\Config\ServiceCredentials::get("kk_service_key");
 
 $chestId = Validate($_POST["chestId"]);
 $accountId = Validate($_POST["accountId"]);

@@ -1,9 +1,19 @@
 <?php
 
-namespace Kickback\Utilities;
+namespace Kickback\Common\Utility;
 
+// TODO: The \Kickback\Models\Response class should probably be moved into some
+//   subnamespace of \Kickback\Common (maybe \Kickback\Common\Models?).
+//   Right now, this looks like a circular dependency:
+//     Backend depending on Common depending on Backend
+//   (Which is very bad.)
+//   But fixing this looks like a difficult refactoring to do from the commandline,
+//   so I might wait for help from others or look for tools to help with that later.
+//   On the upside, this seems to be an illusionary circular dependency right now,
+//   so things should work in the meantime. (But it does make it easier for
+//   other people to make mistakes, and it makes the code harder to understand.)
+//   -- Lily Joan  2024-08-10
 use Kickback\Models\Response;
-use Session;
 
 class FormToken {
     /**

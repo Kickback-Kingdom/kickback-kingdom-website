@@ -4,7 +4,7 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: (__DIR__ . "/../../../..")) . "/Kickb
 
 function DiscordWebHook(mixed $msg) : void
 {
-    $kk_credentials = \Kickback\Config\ServiceCredentials::instance();
+    $kk_credentials = \Kickback\Backend\Config\ServiceCredentials::instance();
 
     // Ex: $webhookURL = "https://discord.com/api/webhooks/<some_number>/<api_key>"
     $webhookURL = $kk_credentials["discord_api_url"] . '/' . $kk_credentials["discord_api_key"];

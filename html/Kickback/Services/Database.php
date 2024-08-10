@@ -3,7 +3,7 @@
 namespace Kickback\Services;
 
 use mysqli;
-use Kickback\Config\ServiceCredentials; 
+use Kickback\Backend\Config\ServiceCredentials;
 
 class Database {
     private static $conn = null;

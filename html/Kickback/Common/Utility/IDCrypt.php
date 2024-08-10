@@ -1,9 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Kickback\Utilities;
-
-
+namespace Kickback\Common\Utility;
 
 class IDCrypt {
     private $key;

@@ -355,7 +355,7 @@ function autoload_try_vendor_folder_impl(string $class_fqn) : int
     // Unfortunately, `scandir` might also have bugs that can create
     // OOM conditions, like in this run of PHPStan:
     // ```
-    // /var/www/localhost/kickback-kingdom-website/html/Kickback/Utilities/FormToken.php
+    // /var/www/localhost/kickback-kingdom-website/html/Kickback/Common/Utility/FormToken.php
     //
     // mmap() failed: [12] Cannot allocate memory
     //

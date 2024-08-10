@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Kickback\UnitTesting;
+namespace Kickback\Common\Unittesting;
 
-use \Kickback\UnitTesting\AssertException;
+use Kickback\Common\Unittesting\AssertException;
 
 class AssertParseException extends AssertException {}
 ?>

@@ -5,7 +5,7 @@ if (isset($_POST["save-content"])) {
     /*$showPopUpSuccess = true;
     $PopUpTitle = "Recieved Data";
     $PopUpMessage = json_encode($_POST);*/
-    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    $tokenResponse = Kickback\Common\Utility\FormToken::useFormToken();
 
     if ($tokenResponse->success) {
     //if (true) {
