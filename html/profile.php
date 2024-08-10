@@ -5,14 +5,22 @@ $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession
 require("php-components/base-page-pull-active-account-info.php");
 
 
+use Kickback\Controllers\AccountController;
+use Kickback\Controllers\PrestigeController;
+use Kickback\Controllers\ActivityController;
+use Kickback\Controllers\FeedCardController;
+use Kickback\Controllers\LootController;
+use Kickback\Controllers\ItemController;
+use Kickback\Models\ItemEquipmentSlot;
+use Kickback\Utilities\IDCrypt;
 
 if (isset($_GET['id']))
-$profile = GetAccountById($_GET['id']);
+$profile = AccountController::getAccountById($_GET['id']);
 
 if (isset($_GET['u']) && !isset($profile))
-$profile = GetAccountByUsername($_GET['u']);
+$profile = AccountController::getAccountByUsername($_GET['u']);
 
-$profile = $profile->Data;
+$profile = $profile->data;
 
 $thisProfile = $profile;
 
@@ -21,9 +29,9 @@ if (!isset($hasError))
 if (!isset($hasSuccess))
     $hasSuccess = false;
 $isMyProfile = false;
-if (IsLoggedIn())
+if (Kickback\Services\Session::isLoggedIn())
 {
-    $isMyProfile = ($profile["Id"] == $_SESSION["account"]["Id"]);
+    $isMyProfile = ($profile->crand == Kickback\Services\Session::getCurrentAccount()->crand);
 
     if ($isMyProfile)
     {
@@ -37,64 +45,69 @@ if (IsLoggedIn())
             
             $rating = $_POST["review-rating"];
             if ($rating == "-1")
-                $commend = 0;
+                $commend = false;
     
             if ($rating == "1")
-                $commend = 1;
+                $commend = true;
     
-            $usePrestigeTokenResp = UsePrestigeToken($_SESSION['account']['Id'],$profile["Id"],$commend,$_POST["review-message"]);
-            if ($usePrestigeTokenResp->Success == false)
+            $usePrestigeTokenResp = ItemController::UsePrestigeToken(Kickback\Services\Session::getCurrentAccount(),$profile,$commend,$_POST["review-message"]);
+            if ($usePrestigeTokenResp->success == false)
             {
                 $hasError = true;
-                $errorMessage = $usePrestigeTokenResp->Message;
+                $errorMessage = $usePrestigeTokenResp->message;
             }
             else
             {
                 $hasSuccess = true;
-                $successMessage= $usePrestigeTokenResp->Message;
+                $successMessage= $usePrestigeTokenResp->message;
             }
         }
     }
 }
 
 
-$badgesResp = GetBadgesByAccountId($profile['Id']);
-$badges = $badgesResp->Data;
+$badgesResp = LootController::getBadgesByAccount($profile);
+$badges = $badgesResp->data;
 
-$prestigeResp = GetAccountPrestige($profile['Id']);
+$prestigeResp = PrestigeController::getPrestigeReviewsByAccountTo($profile);
 
-$prestigeReviews = $prestigeResp->Data;
+if (!$prestigeResp->success)
+{
+    $showPopUpError = true;
+    $PopUpTitle = "Error!";
+    $PopUpMessage = $prestigeResp->message;
+}
 
-$prestigeNet = GetAccountPrestigeValue($prestigeReviews);
+$prestigeReviews = $prestigeResp->data;
 
-/*$remainingPrestigeTokensResp = GetPrestigeTokensRemaining($profile['Id']);
-$remainingPrestigeTokens = $remainingPrestigeTokensResp->Data["PrestigeTokens"];
+$prestigeNet = PrestigeController::getAccountPrestigeValue($prestigeReviews);
+
+/*$remainingPrestigeTokensResp = GetPrestigeTokensRemaining($profile->crand);
+$remainingPrestigeTokens = $remainingPrestigeTokensResp->data["PrestigeTokens"];
 
 
-$unusedTicketsResp = GetTotalUnusedRaffleTickets($profile['Id']);
-$unusedTickets = $unusedTicketsResp->Data;
+$unusedTicketsResp = GetTotalUnusedRaffleTickets($profile->crand);
+$unusedTickets = $unusedTicketsResp->data;
 */
 
-$accountInventoryResp = GetAccountInventory($profile["Id"]);
-$accountInventory = $accountInventoryResp->Data;
+$accountInventoryResp = AccountController::getAccountInventory($profile);
+$accountInventory = $accountInventoryResp->data;
 
-$accountActivityResp = GetAccountActivity($profile["Id"]);
-$accountActivity = $accountActivityResp->Data;
+$accountActivityResp = ActivityController::getActivityByAccount($profile);
+$accountActivity = $accountActivityResp->data;
 
 $itemInfos = [];
 
 $nextWritOfPassageId = null;
 $nextWritOfPassageURL = null;
-foreach ($accountInventory as $accountInventoryItem) {
-    $itemInfo = ConvertIntoItemInformation($accountInventoryItem);
+foreach ($accountInventory as $accountInventoryItemStack) {
 
-    // Check if the ID of the item is 14
-    if ($itemInfo["Id"] == 14) {
+    if ($accountInventoryItemStack->item->isWritOfPassage()) {
         if ($isMyProfile)
         {
             $kk_crypt_key_writ_id = \Kickback\Config\ServiceCredentials::get("crypt_key_quest_id");
             $crypt = new IDCrypt($kk_crypt_key_writ_id);
-            $nextWritOfPassageId = urlencode($crypt->encrypt($itemInfo["next_loot_id"]));
+            $nextWritOfPassageId = urlencode($crypt->encrypt($accountInventoryItemStack->nextLootId->crand));
             $nextWritOfPassageURL = 'https://kickback-kingdom.com/register.php?wi='.$nextWritOfPassageId;//'https://kickback-kingdom.com/register.php?redirect='.urlencode($urlPrefixBeta.'/blog/Kickback-Kingdom/introduction').'&wi='.$nextWritOfPassageId;
         }
         else
@@ -103,12 +116,12 @@ foreach ($accountInventory as $accountInventoryItem) {
         }
         
     }
-    array_push($itemInfos, $itemInfo);
+    array_push($itemInfos, $accountInventoryItemStack->item);
 }
 
 
 $itemInformationJSON = json_encode($itemInfos);
-
+$itemStackInformationJSON = json_encode($accountInventory);
 $activeTab = 'active';
 $activeTabPage = 'active show';
 ?>
@@ -132,11 +145,11 @@ $activeTabPage = 'active show';
         <!--TOP BANNER-->
         <div class="d-none d-md-block w-100 ratio" style="--bs-aspect-ratio: 26%; margin-top: 56px">
             <img src="/assets/images/kk-1.jpg" class="" />
-            <img class="img-fluid img-thumbnail" src="/assets/media/<?php echo GetAccountProfilePicture($profile); ?>" style="width: auto;height: 90%;top: 5%;left: 5%;">
+            <img class="img-fluid img-thumbnail" src="<?= $profile->getProfilePictureURL(); ?>" style="width: auto;height: 90%;top: 5%;left: 5%;">
         </div>
         <div class="d-block d-md-none w-100 ratio" style="margin-top: 56px; --bs-aspect-ratio: 46.3%;">
             <img src="/assets/images/kk-2.jpg" />
-            <img class="img-fluid img-thumbnail" src="/assets/media/<?php echo GetAccountProfilePicture($profile); ?>" style="width: auto;height: 90%;top: 5%;left: 5%;">
+            <img class="img-fluid img-thumbnail" src="<?= $profile->getProfilePictureURL(); ?>" style="width: auto;height: 90%;top: 5%;left: 5%;">
         </div>
     </div>
 
@@ -170,7 +183,7 @@ $activeTabPage = 'active show';
     <!--EQUIPMENT MODAL-->
     <form method="POST">
             
-        <input id="equipment-account-id" type="hidden" name="equipment-account-id" required="" value="<?php echo $profile["Id"]; ?>"/>
+        <input id="equipment-account-id" type="hidden" name="equipment-account-id" required="" value="<?php echo $profile->crand; ?>"/>
         <input id="equipment-avatar" type="hidden" name="equipment-avatar" required=""/>
         <input id="equipment-pc-card" type="hidden" name="equipment-pc-card" required=""/>
         <input id="equipment-banner" type="hidden" name="equipment-banner" required=""/>
@@ -332,13 +345,13 @@ $activeTabPage = 'active show';
                             
                             // Show category title
 
-                            foreach ($accountInventory as $accountInventoryItem) {
-                                if ($accountInventoryItem["equipable"] && $accountInventoryItem["equipment_slot"] == "AVATAR")
+                            foreach ($accountInventory as $accountInventoryItemStack) {
+                                if ($accountInventoryItemStack->item->equipable && $accountInventoryItemStack->item->equipmentSlot == ItemEquipmentSlot::AVATAR)
                                 {
                                 ?>
-                            <div class="inventory-item" onclick="SelectInventoryItemEquipment(<?php echo htmlspecialchars($accountInventoryItem['item_id']); ?>);"  data-bs-toggle="tooltip" data-bs-dismiss="modal" data-bs-placement="bottom" data-bs-title="<?php echo htmlspecialchars($accountInventoryItem["name"])?>">
-                                <img src="/assets/media/<?php echo htmlspecialchars($accountInventoryItem["large_image"]); ?>" alt="Item Name 1">
-                                <div class="item-count">x<?php echo htmlspecialchars($accountInventoryItem["amount"]); ?></div>
+                            <div class="inventory-item" onclick="SelectInventoryItemStackEquipment(<?= $accountInventoryItemStack->item->crand; ?>);"  data-bs-toggle="tooltip" data-bs-dismiss="modal" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($accountInventoryItemStack->item->name)?>">
+                                <img src="<?= $accountInventoryItemStack->item->iconSmall->getFullPath(); ?>" alt="Item <?= $accountInventoryItemStack->item->name; ?>">
+                                <div class="item-count">x<?= $accountInventoryItemStack->amount; ?></div>
                             </div>
                             
                             <?php
@@ -376,14 +389,14 @@ $activeTabPage = 'active show';
                             
                             // Show category title
 
-                            foreach ($accountInventory as $accountInventoryItem) {
-                                if ($accountInventoryItem["equipable"] && $accountInventoryItem["equipment_slot"] == "PET")
+                            foreach ($accountInventory as $accountInventoryItemStack) {
+                                if ($accountInventoryItemStack->item->equipable && $accountInventoryItemStack->item->equipmentSlot == ItemEquipmentSlot::PET)
                                 {
                                 ?>
-                            <div class="inventory-item" onclick="SelectInventoryItemEquipment(<?php echo htmlspecialchars($accountInventoryItem['item_id']); ?>);"  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo htmlspecialchars($accountInventoryItem["name"])?>">
-                                <img src="/assets/media/<?php echo htmlspecialchars($accountInventoryItem["large_image"]); ?>" alt="Item Name 1">
-                                <div class="item-count">x<?php echo htmlspecialchars($accountInventoryItem["amount"]); ?></div>
-                            </div>
+                                <div class="inventory-item" onclick="SelectInventoryItemStackEquipment(<?= $accountInventoryItemStack->item->crand; ?>);"  data-bs-toggle="tooltip" data-bs-dismiss="modal" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($accountInventoryItemStack->item->name)?>">
+                                    <img src="<?= $accountInventoryItemStack->item->iconSmall->getFullPath(); ?>" alt="Item <?= $accountInventoryItemStack->item->name; ?>">
+                                    <div class="item-count">x<?= $accountInventoryItemStack->amount; ?></div>
+                                </div>
                             
                             <?php
                                 }
@@ -420,14 +433,14 @@ $activeTabPage = 'active show';
                             
                             // Show category title
 
-                            foreach ($accountInventory as $accountInventoryItem) {
-                                if ($accountInventoryItem["equipable"] && $accountInventoryItem["equipment_slot"] == "CHARM")
+                            foreach ($accountInventory as $accountInventoryItemStack) {
+                                if ($accountInventoryItemStack->item->equipable && $accountInventoryItemStack->item->equipmentSlot == ItemEquipmentSlot::CHARM)
                                 {
                                 ?>
-                            <div class="inventory-item" onclick="SelectInventoryItemEquipment(<?php echo htmlspecialchars($accountInventoryItem['item_id']); ?>);"  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo htmlspecialchars($accountInventoryItem["name"])?>">
-                                <img src="/assets/media/<?php echo htmlspecialchars($accountInventoryItem["large_image"]); ?>" alt="Item Name 1">
-                                <div class="item-count">x<?php echo htmlspecialchars($accountInventoryItem["amount"]); ?></div>
-                            </div>
+                                <div class="inventory-item" onclick="SelectInventoryItemStackEquipment(<?= $accountInventoryItemStack->item->crand; ?>);"  data-bs-toggle="tooltip" data-bs-dismiss="modal" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($accountInventoryItemStack->item->name)?>">
+                                    <img src="<?= $accountInventoryItemStack->item->iconSmall->getFullPath(); ?>" alt="Item <?= $accountInventoryItemStack->item->name; ?>">
+                                    <div class="item-count">x<?= $accountInventoryItemStack->amount; ?></div>
+                                </div>
                             
                             <?php
                                 }
@@ -464,14 +477,14 @@ $activeTabPage = 'active show';
                             
                             // Show category title
 
-                            foreach ($accountInventory as $accountInventoryItem) {
-                                if ($accountInventoryItem["equipable"] && $accountInventoryItem["equipment_slot"] == "PC_BORDER")
+                            foreach ($accountInventory as $accountInventoryItemStack) {
+                                if ($accountInventoryItemStack->item->equipable && $accountInventoryItemStack->item->equipmentSlot == ItemEquipmentSlot::PC_BORDER)
                                 {
                                 ?>
-                            <div class="inventory-item" onclick="SelectInventoryItemEquipment(<?php echo htmlspecialchars($accountInventoryItem['item_id']); ?>);"  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo htmlspecialchars($accountInventoryItem["name"])?>">
-                                <img src="/assets/media/<?php echo htmlspecialchars($accountInventoryItem["large_image"]); ?>" alt="Item Name 1">
-                                <div class="item-count">x<?php echo htmlspecialchars($accountInventoryItem["amount"]); ?></div>
-                            </div>
+                                <div class="inventory-item" onclick="SelectInventoryItemStackEquipment(<?= $accountInventoryItemStack->item->crand; ?>);"  data-bs-toggle="tooltip" data-bs-dismiss="modal" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($accountInventoryItemStack->item->name)?>">
+                                    <img src="<?= $accountInventoryItemStack->item->iconSmall->getFullPath(); ?>" alt="Item <?= $accountInventoryItemStack->item->name; ?>">
+                                    <div class="item-count">x<?= $accountInventoryItemStack->amount; ?></div>
+                                </div>
                             
                             <?php
                                 }
@@ -508,14 +521,14 @@ $activeTabPage = 'active show';
                             
                             // Show category title
 
-                            foreach ($accountInventory as $accountInventoryItem) {
-                                if ($accountInventoryItem["equipable"] && $accountInventoryItem["equipment_slot"] == "BANNER")
+                            foreach ($accountInventory as $accountInventoryItemStack) {
+                                if ($accountInventoryItemStack->item->equipable && $accountInventoryItemStack->item->equipmentSlot == ItemEquipmentSlot::BANNER)
                                 {
                                 ?>
-                            <div class="inventory-item" onclick="SelectInventoryItemEquipment(<?php echo htmlspecialchars($accountInventoryItem['item_id']); ?>);"  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo htmlspecialchars($accountInventoryItem["name"])?>">
-                                <img src="/assets/media/<?php echo htmlspecialchars($accountInventoryItem["large_image"]); ?>" alt="Item Name 1">
-                                <div class="item-count">x<?php echo htmlspecialchars($accountInventoryItem["amount"]); ?></div>
-                            </div>
+                                <div class="inventory-item" onclick="SelectInventoryItemStackEquipment(<?= $accountInventoryItemStack->item->crand; ?>);"  data-bs-toggle="tooltip" data-bs-dismiss="modal" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($accountInventoryItemStack->item->name)?>">
+                                    <img src="<?= $accountInventoryItemStack->item->iconSmall->getFullPath(); ?>" alt="Item <?= $accountInventoryItemStack->item->name; ?>">
+                                    <div class="item-count">x<?= $accountInventoryItemStack->amount; ?></div>
+                                </div>
                             
                             <?php
                                 }
@@ -552,14 +565,14 @@ $activeTabPage = 'active show';
                             
                             // Show category title
 
-                            foreach ($accountInventory as $accountInventoryItem) {
-                                if ($accountInventoryItem["equipable"] && $accountInventoryItem["equipment_slot"] == "BACKGROUND")
+                            foreach ($accountInventory as $accountInventoryItemStack) {
+                                if ($accountInventoryItemStack->item->equipable && $accountInventoryItemStack->item->equipmentSlot == ItemEquipmentSlot::BACKGROUND)
                                 {
                                 ?>
-                            <div class="inventory-item" onclick="SelectInventoryItemEquipment(<?php echo htmlspecialchars($accountInventoryItem['item_id']); ?>);"  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo htmlspecialchars($accountInventoryItem["name"])?>">
-                                <img src="/assets/media/<?php echo htmlspecialchars($accountInventoryItem["large_image"]); ?>" alt="Item Name 1">
-                                <div class="item-count">x<?php echo htmlspecialchars($accountInventoryItem["amount"]); ?></div>
-                            </div>
+                                <div class="inventory-item" onclick="SelectInventoryItemStackEquipment(<?= $accountInventoryItemStack->item->crand; ?>);"  data-bs-toggle="tooltip" data-bs-dismiss="modal" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($accountInventoryItemStack->item->name)?>">
+                                    <img src="<?= $accountInventoryItemStack->item->iconSmall->getFullPath(); ?>" alt="Item <?= $accountInventoryItemStack->item->name; ?>">
+                                    <div class="item-count">x<?= $accountInventoryItemStack->amount; ?></div>
+                                </div>
                             
                             <?php
                                 }
@@ -601,7 +614,7 @@ $activeTabPage = 'active show';
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="nominateModalLabel">Nominate <?php echo $profile["Username"]; ?></h1>
+                <h1 class="modal-title fs-5" id="nominateModalLabel">Nominate <?php echo $profile->username; ?></h1>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -657,7 +670,7 @@ $activeTabPage = 'active show';
                 
                 <?php 
                 
-                $activePageName = $profile["Username"];
+                $activePageName = $profile->username;
                 require("php-components/base-page-breadcrumbs.php");
                 
                 ?>
@@ -669,7 +682,6 @@ $activeTabPage = 'active show';
                             <button class="nav-link" id="nav-badges-tab" data-bs-toggle="tab" data-bs-target="#nav-badges" type="button" role="tab" aria-controls="nav-badges" aria-selected="true"><i class="fa-solid fa-medal"></i></button>
                             <button class="nav-link" id="nav-inventory-tab" data-bs-toggle="tab" data-bs-target="#nav-inventory" type="button" role="tab" aria-controls="nav-inventory" aria-selected="true"><i class="fa-solid fa-suitcase"></i></button>
                             <button class="nav-link" id="nav-activity-tab" data-bs-toggle="tab" data-bs-target="#nav-activity" type="button" role="tab" aria-controls="nav-activity" aria-selected="true"><i class="fa-solid fa-bolt"></i></button>
-                            <button class="nav-link" id="nav-feed-tab" data-bs-toggle="tab" data-bs-target="#nav-feed" type="button" role="tab" aria-controls="nav-feed" aria-selected="true"><i class="fa-solid fa-newspaper"></i></button>
                             </div>
                         </nav>
                         <div class="tab-content" id="nav-tabContent">
@@ -679,11 +691,12 @@ $activeTabPage = 'active show';
                                 <div class="row">
                                 <?php
                                     for ($i=0; $i < count($prestigeReviews); $i++) { 
+                                        $prestigeReview = $prestigeReviews[$i];
                                         ?>
                                     <div class="col-12 col-lg-6">
-                                        <div class="card mb-2 <?php echo ($prestigeReviews[$i]["commend"]?"border-success":"border-danger"); ?>">
-                                            <div class="card-header <?php echo ($prestigeReviews[$i]["commend"]?"text-bg-success":"text-bg-danger"); ?>">
-                                                <?php echo ($prestigeReviews[$i]["commend"]==1?"<i class='fa-solid fa-crown'></i> Commend":"<i class='fa-solid fa-biohazard'></i> Denounce"); ?>
+                                        <div class="card mb-2 <?php echo ($prestigeReview->commend?"border-success":"border-danger"); ?>">
+                                            <div class="card-header <?php echo ($prestigeReview->commend?"text-bg-success":"text-bg-danger"); ?>">
+                                                <?php echo ($prestigeReview->commend?"<i class='fa-solid fa-crown'></i> Commend":"<i class='fa-solid fa-biohazard'></i> Denounce"); ?>
                                             </div>
                                             
                                             <div class="row g-0">
@@ -692,12 +705,12 @@ $activeTabPage = 'active show';
                                                         <div class="row">
                                                             <div class="col-4">
                                                             
-                                                                <img src="/assets/media/<?php echo GetPrestigeProfilePicture($prestigeReviews[$i]); ?>" class="img-fluid img-thumbnail">
+                                                                <img src="<?= $prestigeReview->fromAccount->avatar->url; ?>" class="img-fluid img-thumbnail">
                                                             </div>
                                                             <div class="col-8">
                                                                 <blockquote class="blockquote mb-0">
-                                                                <p><?php echo $prestigeReviews[$i]["desc"]; ?></p>
-                                                                <footer class="blockquote-footer"><a class="username" href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $prestigeReviews[$i]["Username"]; ?>"><?php echo $prestigeReviews[$i]["Username"]; ?></a></footer>
+                                                                <p><?= $prestigeReview->message; ?></p>
+                                                                <footer class="blockquote-footer"><?= $prestigeReview->fromAccount->getAccountElement();?></footer>
                                                                 </blockquote>
                                                             </div>
                                                         </div>
@@ -707,16 +720,16 @@ $activeTabPage = 'active show';
                                             
                                             <div class="card-footer">
                                             <?php
-                                            if ($prestigeReviews[$i]["quest_id"]!=null)
+                                            if ($prestigeReview->fromQuest != null)
                                             {
                                                 ?>
-                                                <a class="btn btn-primary btn-sm" href="<?php echo $urlPrefixBeta; ?>/q/<?php echo $prestigeReviews[$i]["locator"]; ?>"><?php echo $prestigeReviews[$i]["name"]; ?></a>
+                                                <a class="btn btn-primary btn-sm" href="<?php echo $urlPrefixBeta; ?>/q/<?php echo $prestigeReview->fromQuest->locator; ?>"><?php echo $prestigeReview->fromQuest->title; ?></a>
                                                 <?php 
 
                                             }
 
                                             ?>
-                                                <small class="text-body-secondary float-end"><?php echo date_format(date_create($prestigeReviews[$i]["date"]),"M j, Y"); ?></small>
+                                                <small class="text-body-secondary float-end"><?= $prestigeReview->dateTime->formattedBasic; ?></small>
                                             </div>
                                         </div>
                                     </div>
@@ -732,8 +745,8 @@ $activeTabPage = 'active show';
                                     <div class="col-12">
                                         <?php for ($i=0; $i < count($badges) ; $i++) { 
                                             $badge = $badges[$i];
-                                            $earnedInQuest = ($badge["quest_id"]!=null);
-                                            $nominatedByUser = ($badge["nominated_by_id"]!=null);
+                                            $earnedInQuest = ($badge->quest != null);
+                                            $nominatedByUser = ($badge->item->nominatedBy != null);
                                             $awardedByHorsemen = (!$earnedInQuest && !$nominatedByUser);
                                             $title = "";
                                             if ($earnedInQuest)
@@ -757,18 +770,18 @@ $activeTabPage = 'active show';
                                             </div>
                                             <div class="row g-0">
                                                 <div class="col-12 col-sm-3 col-md-2">
-                                                    <img src="/assets/media/<?php echo $badge['BigImgPath']; ?>" class="img-fluid p-3">
+                                                    <img src="<?= $badge->item->iconSmall->url; ?>" class="img-fluid p-3">
                                                 </div>
                                                 <div class="col-12 col-sm-9 col-md-10">
                                                     <div class="card-body">
-                                                        <h5 class="card-title"><?php echo $badge['name']; ?></h5>
+                                                        <h5 class="card-title"><?= $badge->item->name; ?></h5>
                                                         <blockquote class="blockquote mb-0">
-                                                                <p><?php echo $badge['desc']; ?></p>
+                                                                <p><?php echo $badge->item->description; ?></p>
                                                                 <?php if ($nominatedByUser)
                                                                 {
                                                                     ?>
                                                                 
-                                                                <footer class="blockquote-footer"><a class="username" href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $badge["nominated_by"]; ?>"><?php echo $badge["nominated_by"]; ?></a></footer>
+                                                                <footer class="blockquote-footer"><?= $badge->item->nominatedBy->getAccountElement(); ?></footer>
                                                             <?php 
                                                             
                                                                 }
@@ -780,17 +793,17 @@ $activeTabPage = 'active show';
                                                 </div>
                                             </div>
                                             
-                                            <div class="card-footer <?php echo ($awardedByHorsemen?"bg-ranked-1":""); ?>">
+                                            <div class="card-footer <?= ($awardedByHorsemen?"bg-ranked-1":""); ?>">
                                                         <?php
-                                                        if ($badge["quest_id"]!=null)
+                                                        if ($badge->quest != null)
                                                         {
                                                             ?>
-                                                            <a class="btn btn-primary btn-sm" href="<?php echo $urlPrefixBeta; ?>/q/<?php echo $badge["quest_locator"]; ?>"><?php echo $badge["quest_name"]; ?></a>
+                                                            <a class="btn btn-primary btn-sm" href="<?= $badge->quest->getURL(); ?>"><?= $badge->quest->title; ?></a>
                                                             <?php 
 
                                                         }
                                                         ?>
-                                                        <p class="card-text float-end"><?php echo date_format(date_create($badge["dateObtained"]),"M j, Y"); ?></p>
+                                                        <p class="card-text float-end"><?= $badge->dateObtained->formattedBasic; ?></p>
                                                     </div>
                                         </div>
                                         <?php 
@@ -810,12 +823,12 @@ $activeTabPage = 'active show';
                                                 
                                                 // Show category title
 
-                                                foreach ($accountInventory as $accountInventoryItem) {
+                                                foreach ($accountInventory as $accountInventoryItemStack) {
                                                     ?>
-                                                <div class="inventory-item" onclick="ShowInventoryItemModal(<?php echo htmlspecialchars($accountInventoryItem['item_id']); ?>);"  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo htmlspecialchars($accountInventoryItem["name"])?>">
-                                                    <img src="/assets/media/<?php echo htmlspecialchars($accountInventoryItem["large_image"]); ?>" alt="Item Name 1">
-                                                    <div class="item-count">x<?php echo htmlspecialchars($accountInventoryItem["amount"]); ?></div>
-                                                </div>
+                                                    <div class="inventory-item" onclick="ShowInventoryItemModal(<?= $accountInventoryItemStack->item->crand; ?>);"  data-bs-toggle="tooltip" data-bs-dismiss="modal" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($accountInventoryItemStack->item->name)?>">
+                                                        <img src="<?= $accountInventoryItemStack->item->iconSmall->getFullPath(); ?>" alt="Item <?= $accountInventoryItemStack->item->name; ?>">
+                                                        <div class="item-count">x<?= $accountInventoryItemStack->amount; ?></div>
+                                                    </div>
                                                 
                                                 <?php
                                                 }
@@ -830,13 +843,11 @@ $activeTabPage = 'active show';
                                 <div class="display-6 tab-pane-title">Activity</div> 
                                
                                     <?php 
-                                    
                                     foreach ($accountActivity as $activity) {
                                     
-
-                                        $feedCard = $activity;
-                                        $feedCard["text"] = json_encode($activity);
-                                        require("php-components/feed-card.php");
+                                        
+                                        $_vFeedCard = FeedCardController::vActivity_to_vFeedCard($activity);
+                                        require("php-components/vFeedCardRenderer.php");
                                     ?>
 
                                     <?php
@@ -846,16 +857,6 @@ $activeTabPage = 'active show';
 
                             </div>
                             
-                            <div class="tab-pane fade" id="nav-feed" role="tabpanel" aria-labelledby="nav-feed-tab" tabindex="0">
-                                <div class="display-6 tab-pane-title">Feed</div>
-                                <?php 
-    
-    require("php-components/coming-soon.php"); 
-    
-    
-    ?>
-
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -931,10 +932,22 @@ $activeTabPage = 'active show';
             }
         });
 
-        function SelectInventoryItemEquipment(item_id)
+        function GetItemStackInformationById(id)
         {
-            var item = GetItemInformationById(item_id);
+            for (let index = 0; index < itemStackInformation.length; index++) {
+                var stack = itemStackInformation[index];
+                if (stack.item.crand == id)
+                {
+                    return stack;
+                }
+            }
+            return null;
+        }
 
+        function SelectInventoryItemStackEquipment(item_id)
+        {
+            var stack = GetItemStackInformationById(item_id);
+            var item = stack.item;
             $("#equipmentModal").modal("show");
 
             <?php 
@@ -944,35 +957,35 @@ $activeTabPage = 'active show';
 
             ?>
             
-            if (item.equipment_slot == "AVATAR")
+            if (item.equipmentSlot == "AVATAR")
             {
-                $("#equipment-avatar").val(item.next_loot_id);
-                $("#equipment-preview-avatar").attr("src","/assets/media/"+item.image);
+                $("#equipment-avatar").val(stack.nextLootId.crand);
+                $("#equipment-preview-avatar").attr("src",item.iconSmall.url);
             }
-            if (item.equipment_slot == "PC_CARD")
+            if (item.equipmentSlot == "PC_CARD")
             {
-                $("#equipment-pc-card").val(item.next_loot_id);
-                $("#equipment-preview-pc-card").attr("src","/assets/media/"+item.image);
+                $("#equipment-pc-card").val(stack.nextLootId.crand);
+                $("#equipment-preview-pc-card").attr("src",item.iconSmall.url);
             }
-            if (item.equipment_slot == "BANNER")
+            if (item.equipmentSlot == "BANNER")
             {
-                $("#equipment-banner").val(item.next_loot_id);
-                $("#equipment-preview-banner").attr("src","/assets/media/"+item.image);
+                $("#equipment-banner").val(stack.nextLootId.crand);
+                $("#equipment-preview-banner").attr("src",item.iconSmall.url);
             }
-            if (item.equipment_slot == "BACKGROUND")
+            if (item.equipmentSlot == "BACKGROUND")
             {
-                $("#equipment-background").val(item.next_loot_id);
-                $("#equipment-preview-background").attr("src","/assets/media/"+item.image);
+                $("#equipment-background").val(stack.nextLootId.crand);
+                $("#equipment-preview-background").attr("src",item.iconSmall.url);
             }
-            if (item.equipment_slot == "CHARM")
+            if (item.equipmentSlot == "CHARM")
             {
-                $("#equipment-charm").val(item.next_loot_id);
-                $("#equipment-preview-charm").attr("src","/assets/media/"+item.image);
+                $("#equipment-charm").val(stack.nextLootId.crand);
+                $("#equipment-preview-charm").attr("src",item.iconSmall.url);
             }
-            if (item.equipment_slot == "PET")
+            if (item.equipmentSlot == "PET")
             {
-                $("#equipment-pet").val(item.next_loot_id);
-                $("#equipment-preview-pet").attr("src","/assets/media/"+item.image);
+                $("#equipment-pet").val(stack.nextLootId.crand);
+                $("#equipment-preview-pet").attr("src",item.iconSmall.url);
             }
             
             <?php 

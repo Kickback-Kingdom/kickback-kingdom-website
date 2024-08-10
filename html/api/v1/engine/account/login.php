@@ -5,7 +5,7 @@ OnlyPOST();
 
 $containsFieldsResp = POSTContainsFields("email","pwd","serviceKey");
 
-if (!$containsFieldsResp->Success)
+if (!$containsFieldsResp->success)
 return $containsFieldsResp;
 
 $email = Validate($_POST["email"]);
@@ -13,16 +13,16 @@ $pwd = Validate($_POST["pwd"]);
 $serviceKey = Validate($_POST["serviceKey"]);
 
 $containsDataResp = ContainsData($email, "Email");
-if (!$containsDataResp->Success)
+if (!$containsDataResp->success)
 return $containsDataResp;
 
 $containsDataResp = ContainsData($pwd, "Password");
-if (!$containsDataResp->Success)
+if (!$containsDataResp->success)
 return $containsDataResp;
 
 $containsDataResp = ContainsData($serviceKey, "Service Key");
-if (!$containsDataResp->Success)
+if (!$containsDataResp->success)
 return $containsDataResp;
 
-return Login($serviceKey,$email,$pwd);
+return Kickback\Services\Session::Login($serviceKey,$email,$pwd);
 ?>

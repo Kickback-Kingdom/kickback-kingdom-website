@@ -10,13 +10,28 @@ if (!isset($selectUsersFormPageSize))
     $selectUsersFormPageSize = 6;
 }
 
+if (!isset($selectUsersPageIndex))
+{
+    $selectUsersPageIndex = 1;
+}
+
+if (!isset($selectUsersClickableFunction))
+{
+    $selectUsersClickableFunction = "null";
+}
+
+if (!isset($selectUsersFilter))
+{
+    $selectUsersFilter = "{}";
+}
+
 ?>
 
 <div class="col-lg-6 offset-lg-3">
 <div class="input-group">
 <span class="input-group-text text-bg-primary" ><i class="fa-solid fa-address-card"></i></span>
-  <input type="text" class="form-control" onchange="OnSelectAccountChangeSearchParams('<?php echo $selectUserFormId; ?>')" id="<?php echo $selectUserFormId; ?>selectAccountSearchTerm">
-  <button class="btn btn-primary" type="button" onclick="OnSelectAccountChangeSearchParams('<?php echo $selectUserFormId; ?>')">Search</button>
+  <input type="text" class="form-control" onchange='OnSelectAccountChangeSearchParams("<?= $selectUserFormId; ?>", <?= $selectUsersPageIndex; ?>, <?= $selectUsersClickableFunction; ?>, <?= $selectUsersFilter; ?>)' id="<?php echo $selectUserFormId; ?>selectAccountSearchTerm">
+  <button class="btn btn-primary" type="button" onclick='OnSelectAccountChangeSearchParams("<?= $selectUserFormId; ?>", <?= $selectUsersPageIndex; ?>, <?= $selectUsersClickableFunction; ?>, <?= $selectUsersFilter; ?>)'>Search</button>
 
 </div>
 </div>

@@ -38,6 +38,14 @@ class FormToken {
             return new Response(false, "Invalid or expired form submission token.");
         }
     }
+
+    public static function getFormToken() : string {
+        return $_SESSION["form_token"];
+    }
+
+    public static function registerForm() : string {
+        echo "<input type='hidden' name='form_token' value='".self::getFormToken()."'>";
+    }
 }
 
 ?>

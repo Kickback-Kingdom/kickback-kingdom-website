@@ -1,6 +1,7 @@
 <?php 
-
-$pageVisitId = GetCurrentPage();
+use Kickback\Controllers\AnalyticController;
+use Kickback\Common\Version;
+$pageVisitId = AnalyticController::getCurrentPage();
 
 
 if (!isset($pageTitle))
@@ -12,26 +13,26 @@ if (!isset($pageTitle))
 
 if (isset($thisQuest))
 {
-    $pageTitle = $thisQuest["name"];
-    $pageImage = "https://kickback-kingdom.com/assets/media/".$thisQuest["imagePath_icon"];
+    $pageTitle = $thisQuest->title;
+    $pageImage = "https://kickback-kingdom.com".$thisQuest->icon->getFullPath();
     $pageDesc = 'Hosted on Kickback Kingdom';
-    $pageVisitId = '/q/'.$thisQuest['Id'];
+    $pageVisitId = '/q/'.$thisQuest->crand;
 }
 
 if (isset($thisQuestLine))
 {
-    $pageTitle = $thisQuestLine["name"];
-    $pageImage = "https://kickback-kingdom.com/assets/media/".$thisQuestLine["imagePath_icon"];
+    $pageTitle = $thisQuestLine->title;
+    $pageImage = "https://kickback-kingdom.com".$thisQuestLine->icon->getFullPath();
     $pageDesc = 'Hosted on Kickback Kingdom';
-    $pageVisitId = '/quest-line/'.$thisQuestLine['Id'];
+    $pageVisitId = '/quest-line/'.$thisQuestLine->crand;
 }
 
 if (isset($thisProfile))
 {
-    $pageTitle = $thisProfile["Username"];
-    $pageImage = "https://kickback-kingdom.com/assets/media/".$thisProfile["avatar_media"];
-    $pageDesc = GetAccountTitle($thisProfile)." in Kickback Kingdom";
-    $pageVisitId = '/u/'.$thisProfile["Id"];
+    $pageTitle = $thisProfile->username;
+    $pageImage = "https://kickback-kingdom.com".$thisProfile->getProfilePictureURL();
+    $pageDesc = $thisProfile->title." in Kickback Kingdom";
+    $pageVisitId = '/u/'.$thisProfile->crand;
 }
 
 if (isset($thisBlogs))
@@ -44,27 +45,27 @@ if (isset($thisBlogs))
 
 if (isset($thisBlog))
 {
-    $pageTitle = $thisBlog["name"];
-    $pageImage = "https://kickback-kingdom.com/assets/media/".$thisBlog["imagePath"];
-    $pageDesc = $thisBlog["desc"];
-    $pageVisitId = '/blog/'.$thisBlog["Id"];
+    $pageTitle = $thisBlog->title;
+    $pageImage = "https://kickback-kingdom.com".$thisBlog->icon->getFullPath();
+    $pageDesc = $thisBlog->description;
+    $pageVisitId = '/blog/'.$thisBlog->crand;
 }
 
 if (isset($thisBlogPost))
 {
-    $pageTitle = $thisBlogPost["Title"];
-    $pageImage = "https://kickback-kingdom.com/assets/media/".$thisBlogPost["Image_Path"];
-    $pageDesc = 'Written by '.$thisBlogPost["Author_Username"];
-    $pageVisitId = '/blog-post/'.$thisBlogPost["Id"];
+    $pageTitle = $thisBlogPost->title;
+    $pageImage = "https://kickback-kingdom.com".$thisBlogPost->icon->getFullPath();
+    $pageDesc = 'Written by '.$thisBlogPost->author->username;
+    $pageVisitId = '/blog-post/'.$thisBlogPost->crand;
 }
 
 
-RecordPageVisit($pageVisitId);
-$pageVisitResp = GetPageVisits($pageVisitId);
+AnalyticController::recordPageVisit($pageVisitId);
+$pageVisitResp = AnalyticController::getPageVisits($pageVisitId);
 $thisPageVisits = 0;
-if ($pageVisitResp->Success)
+if ($pageVisitResp->success)
 {
-    $thisPageVisits = $pageVisitResp->Data;
+    $thisPageVisits = $pageVisitResp->data;
 }
 ?>
 <head>
@@ -91,7 +92,7 @@ if ($pageVisitResp->Success)
     <!-- Android Web App Specific Tags -->
     <?php
         $manifestFile = $urlPrefixBeta.'/manifest.json';
-        $manifestFileVersion = filemtime($_SERVER['DOCUMENT_ROOT'].$manifestFile);
+        $manifestFileVersion = Version::current()->number();
     ?>
 
     <!--<link rel="manifest" href="<?= $manifestFile.'?v='.$manifestFileVersion ?>">-->
@@ -120,14 +121,14 @@ if ($pageVisitResp->Success)
 
     <?php
         $cssFile = $urlPrefixBeta.'/assets/css/kickback-kingdom.css';
-        $cssVersion = filemtime($_SERVER['DOCUMENT_ROOT'].$cssFile);
+        $cssVersion = Version::current()->number();
 
         echo '<link rel="stylesheet" type="text/css" href="'.$cssFile.'?v='.$cssVersion.'">';
     ?>
 
     <?php
         $cssFile = $urlPrefixBeta.'/assets/css/animate.css';
-        $cssVersion = filemtime($_SERVER['DOCUMENT_ROOT'].$cssFile);
+        $cssVersion = Version::current()->number();
 
         echo '<link rel="stylesheet" type="text/css" href="'.$cssFile.'?v='.$cssVersion.'">';
     ?>

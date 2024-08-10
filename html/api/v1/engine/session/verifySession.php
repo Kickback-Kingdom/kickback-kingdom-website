@@ -1,11 +1,12 @@
 <?php
 require_once(__DIR__."/../../engine/engine.php");
-
+use Kickback\Services\Session;
+use Kickback\Controllers\AccountController;
 if (IsPOST())
 {
     $containsFieldsResp = POSTContainsFields("sessionToken","serviceKey");
 
-    if (!$containsFieldsResp->Success)
+    if (!$containsFieldsResp->success)
     return $containsFieldsResp;
 
     $sessionToken = Validate($_POST["sessionToken"]);
@@ -15,7 +16,7 @@ elseif(IsGET())
 {
 
     $containsFieldsResp = SESSIONContainsFields("sessionToken","serviceKey");
-    if (!$containsFieldsResp->Success)
+    if (!$containsFieldsResp->success)
     return $containsFieldsResp;
 
     $sessionToken = Validate($_SESSION["sessionToken"]);
@@ -23,52 +24,44 @@ elseif(IsGET())
 }
 
 $containsDataResp = ContainsData($sessionToken, "Session Token");
-if (!$containsDataResp->Success)
+if (!$containsDataResp->success)
 return $containsDataResp;
 
 $containsDataResp = ContainsData($serviceKey, "Service Key");
-if (!$containsDataResp->Success)
+if (!$containsDataResp->success)
 return $containsDataResp;
 
 
-$session = GetLoginSession($serviceKey, $sessionToken);
+$session = AccountController::getAccountBySession($serviceKey, $sessionToken);
 
-if (!$session->Success)
-{
-    $_SESSION['account'] = null;
-}
-else{
-    
-    $_SESSION['account'] = $session->Data;
+
+if (!$session->success) {
+    Session::setSessionData('vAccount', null);
+} else {
+    Session::setSessionData('vAccount', $session->data);
 }
 
 
-if (IsAdmin())
-{
-    if (isset($_GET['delegateAccess'])) 
-    {
+if (Kickback\Services\Session::isAdmin()) {
+    if (isset($_GET['delegateAccess'])) {
         $delegateResp = GetAccountById($_GET['delegateAccess']);
-        if ($delegateResp->Success)
-        {
-            $_SESSION['delegate_account'] = $delegateResp->Data;
-            $_SESSION['account_using_delegate_access'] = $_SESSION['account'];
-            $_SESSION['account'] = $delegateResp->Data;
+        if ($delegateResp->success) {
+            Session::setSessionData('delegate_account', $delegateResp->data);
+            Session::setSessionData('account_using_delegate_access', Session::getSessionData('vAccount'));
+            Session::setSessionData('vAccount', $delegateResp->data);
         }
     }
 }
 
-if (IsDelegatingAccess())
-{
-    $_SESSION['account'] = $_SESSION['delegate_account'];
+
+if (Session::isDelegatingAccess()) {
+    Session::setSessionData('vAccount', Session::getSessionData('delegate_account'));
 }
 
-
-
-if (isset($_GET['exitDelegate']))
-{
-    $_SESSION['account'] = $_SESSION['account_using_delegate_access'];
-    unset($_SESSION['account_using_delegate_access']);
-    unset($_SESSION['delegate_account']);
+if (isset($_GET['exitDelegate'])) {
+    Session::setSessionData('vAccount', Session::getSessionData('account_using_delegate_access'));
+    Session::removeSessionData('account_using_delegate_access');
+    Session::removeSessionData('delegate_account');
 }
 
 return $session;

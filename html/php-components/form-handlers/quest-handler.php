@@ -1,116 +1,118 @@
 <?php
-
+use Kickback\Views\vRecordId;
+use Kickback\Controllers\QuestController;
+use Kickback\Utilities\FormToken;
 
 if (isset($_POST["edit-quest-images-submit"])) 
 {
-    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    $tokenResponse = FormToken::useFormToken();
     
-    if ($tokenResponse->Success) {
-        $questId = $_POST["edit-quest-id"];
-        $desktopId = $_POST["edit-quest-images-desktop-banner-id"];
-        $mobileId = $_POST["edit-quest-images-mobile-banner-id"];
-        $iconId = $_POST["edit-quest-images-icon-id"];
-        $response = UpdateQuestImages($questId, $desktopId, $mobileId, $iconId);
+    if ($tokenResponse->success) {
+        $questId = new vRecordId('', $_POST["edit-quest-id"]);
+        $desktopId =  new vRecordId('', $_POST["edit-quest-images-desktop-banner-id"]);
+        $mobileId =  new vRecordId('', $_POST["edit-quest-images-mobile-banner-id"]);
+        $iconId =  new vRecordId('', $_POST["edit-quest-images-icon-id"]);
+        $response = QuestController::updateQuestImages($questId, $desktopId, $mobileId, $iconId);
 
-        if ($response->Success) {
+        if ($response->success) {
             $showPopUpSuccess = true;
             $PopUpTitle = "Updated Quest";
             $PopUpMessage= "Your quest images have been updated successfully.";
         } else {
             $showPopUpError = true;
             $PopUpTitle = "Error";
-            $PopUpMessage = $response->Message." -> ".json_encode($response->Data);
+            $PopUpMessage = $response->message." -> ".json_encode($response->data);
         }
     }
     else {
         $hasError = true;
-        $errorMessage = $tokenResponse->Message;
+        $errorMessage = $tokenResponse->message;
     }
 }
 
 
 if (isset($_POST["edit-quest-line-images-submit"])) 
 {
-    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    $tokenResponse = FormToken::useFormToken();
     
-    if ($tokenResponse->Success) {
-        $questId = $_POST["edit-quest-line-id"];
-        $desktopId = $_POST["edit-quest-line-images-desktop-banner-id"];
-        $mobileId = $_POST["edit-quest-line-images-mobile-banner-id"];
-        $iconId = $_POST["edit-quest-line-images-icon-id"];
-        $response = UpdateQuestLineImages($questId, $desktopId, $mobileId, $iconId);
+    if ($tokenResponse->success) {
+        $questId = new vRecordId('', $_POST["edit-quest-line-id"]);
+        $desktopId = new vRecordId('', $_POST["edit-quest-line-images-desktop-banner-id"]);
+        $mobileId = new vRecordId('', $_POST["edit-quest-line-images-mobile-banner-id"]);
+        $iconId = new vRecordId('', $_POST["edit-quest-line-images-icon-id"]);
+        $response = QuestLineController::updateQuestLineImages($questId, $desktopId, $mobileId, $iconId);
 
-        if ($response->Success) {
+        if ($response->success) {
             $showPopUpSuccess = true;
             $PopUpTitle = "Updated Quest Line";
             $PopUpMessage= "Your quest line images have been updated successfully.";
         } else {
             $showPopUpError = true;
             $PopUpTitle = "Error";
-            $PopUpMessage = $response->Message." -> ".json_encode($response->Data);
+            $PopUpMessage = $response->message." -> ".json_encode($response->data);
         }
     }
     else {
         $hasError = true;
-        $errorMessage = $tokenResponse->Message;
+        $errorMessage = $tokenResponse->message;
     }
 }
 
 if (isset($_POST["edit-quest-options-submit"]))
 {
 
-    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    $tokenResponse = FormToken::useFormToken();
     
-    if ($tokenResponse->Success) {
-        $response = UpdateQuestOptions($_POST);
-        if ($response->Success) {
+    if ($tokenResponse->success) {
+        $response = QuestController::updateQuestOptions($_POST);
+        if ($response->success) {
             $showPopUpSuccess = true;
             $PopUpTitle = "Updated Quest";
-            $PopUpMessage= "Your quest options have been updated successfully. ".json_encode($_POST). "<br/>". json_encode($response->Data);
+            $PopUpMessage= "Your quest options have been updated successfully. ".json_encode($_POST). "<br/>". json_encode($response->data);
 
             
-            if ($response->Data->locatorChanged)
+            if ($response->data->locatorChanged)
             {
-                Redirect("q/".$response->Data->locator);
+                Redirect("q/".$response->data->locator);
             }
         } else {
             $showPopUpError = true;
             $PopUpTitle = "Error";
-            $PopUpMessage = $response->Message." -> ".json_encode($response->Data);
+            $PopUpMessage = $response->message." -> ".json_encode($response->data);
         }
     }
     else {
         $hasError = true;
-        $errorMessage = $tokenResponse->Message;
+        $errorMessage = $tokenResponse->message;
     }
 }
 
 if (isset($_POST["edit-quest-rewards-submit"]))
 {
     
-    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    $tokenResponse = FormToken::useFormToken();
     
-    if ($tokenResponse->Success) {
-        $quest_id = $_POST["edit-quest-id"];
+    if ($tokenResponse->success) {
+        $quest_id = new vRecordId('', $_POST["edit-quest-id"]);
         $shouldHaveStandardRewards = isset($_POST["edit-quest-rewards-has-standard"]);
         $rewardResp = null;
         if ($shouldHaveStandardRewards) {
-            $rewardResp = SetupStandardParticipationRewards($quest_id);
+            $rewardResp = QuestController::setupStandardParticipationRewards($quest_id);
         }
         else {
-            $rewardResp = RemoveStandardParticipationRewards($quest_id);
+            $rewardResp = QuestController::removeStandardParticipationRewards($quest_id);
 
         }
-        if (!$rewardResp->Success) {
+        if (!$rewardResp->success) {
             $showPopUpError = true;
             $PopUpTitle = "Error";
-            $PopUpMessage = $rewardResp->Message." -> ".json_encode($rewardResp->Data);
+            $PopUpMessage = $rewardResp->message." -> ".json_encode($rewardResp->data);
         }
     }
     else
     {
         $hasError = true;
-        $errorMessage = $tokenResponse->Message;
+        $errorMessage = $tokenResponse->message;
 
     }
 }
@@ -118,28 +120,28 @@ if (isset($_POST["edit-quest-rewards-submit"]))
 if (isset($_POST["edit-quest-line-options-submit"]))
 {
 
-    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    $tokenResponse = FormToken::useFormToken();
     
-    if ($tokenResponse->Success) {
-        $response = UpdateQuestLineOptions($_POST);
-        if ($response->Success) {
+    if ($tokenResponse->success) {
+        $response = QuestLineController::updateQuestLineOptions($_POST);
+        if ($response->success) {
             $showPopUpSuccess = true;
             $PopUpTitle = "Submitted Quest Line";
             $PopUpMessage= "Your quest line details have been updated successfully.";
             
-            if ($response->Data->locatorChanged)
+            if ($response->data->locatorChanged)
             {
-                Redirect("quest-line/".$response->Data->locator);
+                Redirect("quest-line/".$response->data->locator);
             }
         } else {
             $showPopUpError = true;
             $PopUpTitle = "Error";
-            $PopUpMessage = $response->Message." -> ".json_encode($response->Data);
+            $PopUpMessage = $response->message." -> ".json_encode($response->data);
         }
     }
     else {
         $hasError = true;
-        $errorMessage = $tokenResponse->Message;
+        $errorMessage = $tokenResponse->message;
     }
 }
 
@@ -147,93 +149,94 @@ if (isset($_POST["edit-quest-line-options-submit"]))
 if (isset($_POST["submit-quest-publish"]))
 {
     
-    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    $tokenResponse = FormToken::useFormToken();
     
-    if ($tokenResponse->Success) {
-        $response = SubmitQuestForReview($_POST);
-        if ($response->Success) {
+    if ($tokenResponse->success) {
+        $questId = new vRecordId('', (int) $_POST["quest-id"]);
+        $response = QuestController::submitQuestForReview($questId);
+        if ($response->success) {
             $showPopUpSuccess = true;
             $PopUpTitle = "Published Quest";
-            $PopUpMessage= $response->Message;
+            $PopUpMessage= $response->message;
         } else {
             $showPopUpError = true;
             $PopUpTitle = "Error";
-            $PopUpMessage = $response->Message." -> ".json_encode($response->Data);
+            $PopUpMessage = $response->message." -> ".json_encode($response->data);
         }
     }
     else {
         $hasError = true;
-        $errorMessage = $tokenResponse->Message;
+        $errorMessage = $tokenResponse->message;
     }
 }
 
 if (isset($_POST["submit-quest-line-publish"]))
 {
     
-    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    $tokenResponse = FormToken::useFormToken();
     
-    if ($tokenResponse->Success) {
-        $response = SubmitQuestLineForReview($_POST);
-        if ($response->Success) {
+    if ($tokenResponse->success) {
+        $response = QuestLineController::submitQuestLineForReview($_POST);
+        if ($response->success) {
             $showPopUpSuccess = true;
             $PopUpTitle = "Updated Quest Line";
-            $PopUpMessage= $response->Message;
+            $PopUpMessage= $response->message;
         } else {
             $showPopUpError = true;
             $PopUpTitle = "Error";
-            $PopUpMessage = $response->Message." -> ".json_encode($response->Data);
+            $PopUpMessage = $response->message." -> ".json_encode($response->data);
         }
     }
     else {
         $hasError = true;
-        $errorMessage = $tokenResponse->Message;
+        $errorMessage = $tokenResponse->message;
     }
 }
 
 if (isset($_POST["quest-line-approve-submit"]))
 {
     
-    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    $tokenResponse = FormToken::useFormToken();
     
-    if ($tokenResponse->Success) {
-        $response = ApproveQuestLineReview($_POST);
-        if ($response->Success) {
+    if ($tokenResponse->success) {
+        $response = QuestLineController::approveQuestLineReview($_POST);
+        if ($response->success) {
             $showPopUpSuccess = true;
             $PopUpTitle = "Approved Quest Line";
-            $PopUpMessage= $response->Message;
+            $PopUpMessage= $response->message;
         } else {
             $showPopUpError = true;
             $PopUpTitle = "Error";
-            $PopUpMessage = $response->Message." -> ".json_encode($response->Data);
+            $PopUpMessage = $response->message." -> ".json_encode($response->data);
         }
     }
     else {
         $hasError = true;
-        $errorMessage = $tokenResponse->Message;
+        $errorMessage = $tokenResponse->message;
     }
 }
 
 if (isset($_POST["quest-line-reject-submit"]))
 {
     
-    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    $tokenResponse = FormToken::useFormToken();
     
-    if ($tokenResponse->Success) {
+    if ($tokenResponse->success) {
         
-        $response = RejectQuestLineReview($_POST);
-        if ($response->Success) {
+        $response = QuestLineController::rejectQuestLineReview($_POST);
+        if ($response->success) {
             $showPopUpSuccess = true;
             $PopUpTitle = "Rejected Quest Line";
-            $PopUpMessage= $response->Message;
+            $PopUpMessage= $response->message;
         } else {
             $showPopUpError = true;
             $PopUpTitle = "Error";
-            $PopUpMessage = $response->Message." -> ".json_encode($response->Data);
+            $PopUpMessage = $response->message." -> ".json_encode($response->data);
         }
     }
     else {
         $hasError = true;
-        $errorMessage = $tokenResponse->Message;
+        $errorMessage = $tokenResponse->message;
     }
 }
 
@@ -241,47 +244,49 @@ if (isset($_POST["quest-line-reject-submit"]))
 if (isset($_POST["quest-approve-submit"]))
 {
     
-    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    $tokenResponse = FormToken::useFormToken();
     
-    if ($tokenResponse->Success) {
-        $response = ApproveQuestReview($_POST);
-        if ($response->Success) {
+    if ($tokenResponse->success) {
+        $questId = new vRecordId('', (int) $_POST["quest-id"]);
+        $response = QuestController::approveQuestReviewById($questId);
+        if ($response->success) {
             $showPopUpSuccess = true;
             $PopUpTitle = "Approved Quest";
-            $PopUpMessage= $response->Message;
+            $PopUpMessage= $response->message;
         } else {
             $showPopUpError = true;
             $PopUpTitle = "Error";
-            $PopUpMessage = $response->Message." -> ".json_encode($response->Data);
+            $PopUpMessage = $response->message." -> ".json_encode($response->data);
         }
     }
     else {
         $hasError = true;
-        $errorMessage = $tokenResponse->Message;
+        $errorMessage = $tokenResponse->message;
     }
 }
 
 if (isset($_POST["quest-reject-submit"]))
 {
     
-    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    $tokenResponse = FormToken::useFormToken();
     
-    if ($tokenResponse->Success) {
+    if ($tokenResponse->success) {
         
-        $response = RejectQuestReview($_POST);
-        if ($response->Success) {
+        $questId = new vRecordId('', (int) $_POST["quest-id"]);
+        $response = QuestController::rejectQuestReviewById($questId);
+        if ($response->success) {
             $showPopUpSuccess = true;
             $PopUpTitle = "Rejected Quest";
-            $PopUpMessage= $response->Message;
+            $PopUpMessage= $response->message;
         } else {
             $showPopUpError = true;
             $PopUpTitle = "Error";
-            $PopUpMessage = $response->Message." -> ".json_encode($response->Data);
+            $PopUpMessage = $response->message." -> ".json_encode($response->data);
         }
     }
     else {
         $hasError = true;
-        $errorMessage = $tokenResponse->Message;
+        $errorMessage = $tokenResponse->message;
     }
 }
 

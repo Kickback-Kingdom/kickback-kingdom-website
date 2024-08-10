@@ -136,14 +136,14 @@ switch ($feedCardType) {
         $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
         $feedCardTypeText = "PARTICIPATION";
         $feedCardCreatedByShowOnlyDate = true;
-        $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." ".$feedCard["event_name"];
+        $feedCardTitle = $profile->username.' '.$feedCard["event_verb"]." ".$feedCard["event_name"];
         if ($feedCard["event_verb"] == "BAILED ON")
         {
 
-            $feedCardDesc = GetBailedFlavorText($profile["Username"], $feedCard["event_name"], $profile["Username"].$feedCard["event_name"].$feedCard["event_date"]);
+            $feedCardDesc = FlavorTextController::getBailedFlavorText($profile->username, $feedCard["event_name"], $profile->username.$feedCard["event_name"].$feedCard["event_date"]);
         }
         else{
-            $feedCardDesc = GetParticipationFlavorText($profile["Username"], $feedCard["event_name"], $profile["Username"].$feedCard["event_name"].$feedCard["event_date"]);
+            $feedCardDesc = FlavorTextController::getParticipationFlavorText($profile->username, $feedCard["event_name"], $profile->username.$feedCard["event_name"].$feedCard["event_date"]);
 
         }
 
@@ -153,17 +153,17 @@ switch ($feedCardType) {
         $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
         $feedCardTypeText = "RANKED MATCH";
         $feedCardCreatedByShowOnlyDate = true;
-        $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." a ranked match of ".$feedCard["event_name"];
+        $feedCardTitle = $profile->username.' '.$feedCard["event_verb"]." a ranked match of ".$feedCard["event_name"];
         $feedCardDesc = '<strong>Team:</strong> '.$feedCard["event_team"]. " <strong>Character:</strong> ".$feedCard["event_character"]. " <strong>Random Character:</strong> ".($feedCard["event_character_was_random"] ? "Yes":"No");
 
 
         if ($feedCard["event_verb"] == "WON")
         {
-            $feedCardDesc = GetWonMatchFlavorText($profile["Username"], $feedCard["event_name"], $profile["Username"].$feedCard["event_name"].$feedCard["event_date"]);
+            $feedCardDesc = FlavorTextController::getWonMatchFlavorText($profile->username, $feedCard["event_name"], $profile->username.$feedCard["event_name"].$feedCard["event_date"]);
         }
         else{
             //GetLostMatchFlavorText
-            $feedCardDesc = GetLostMatchFlavorText($profile["Username"], $feedCard["event_name"], $profile["Username"].$feedCard["event_name"].$feedCard["event_date"]);
+            $feedCardDesc = FlavorTextController::getLostMatchFlavorText($profile->username, $feedCard["event_name"], $profile->username.$feedCard["event_name"].$feedCard["event_date"]);
         }
 
         break;
@@ -173,7 +173,7 @@ switch ($feedCardType) {
         $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
         $feedCardTypeText = $feedCard["event_verb"];
         $feedCardCreatedByShowOnlyDate = true;
-        $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." ".$feedCard["event_name"];
+        $feedCardTitle = $profile->username.' '.$feedCard["event_verb"]." ".$feedCard["event_name"];
         $tempAccount = [];
         $tempAccount["Id"] = $feedCard["event_name_id"];
         if (!empty($feedCardImagePath))
@@ -181,11 +181,11 @@ switch ($feedCardType) {
         $feedCardImagePath = GetAccountProfilePicture($tempAccount);
         if ($feedCard["event_verb"] == "COMMENDED")
         {
-            $feedCardDesc = GetCommendedSomeoneFlavorText($profile["Username"], $feedCard["event_name"], $profile["Username"].$feedCard["event_name"].$feedCard["event_date"]);
+            $feedCardDesc = FlavorTextController::getCommendedSomeoneFlavorText($profile->username, $feedCard["event_name"], $profile->username.$feedCard["event_name"].$feedCard["event_date"]);
         }
         else{
             
-            $feedCardDesc = GetDenouncedSomeoneFlavorText($profile["Username"], $feedCard["event_name"], $profile["Username"].$feedCard["event_name"].$feedCard["event_date"]);
+            $feedCardDesc = FlavorTextController::getDenouncedSomeoneFlavorText($profile->username, $feedCard["event_name"], $profile->username.$feedCard["event_name"].$feedCard["event_date"]);
         }
         break;
 
@@ -194,7 +194,7 @@ switch ($feedCardType) {
         $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
         $feedCardTypeText = $feedCard["event_verb"];
         $feedCardCreatedByShowOnlyDate = true;
-        $feedCardTitle = $feedCard["event_name"].' '.$feedCard["event_verb"]." ".$profile["Username"];
+        $feedCardTitle = $feedCard["event_name"].' '.$feedCard["event_verb"]." ".$profile->username;
         
         $tempAccount = [];
         $tempAccount["Id"] = $feedCard["event_name_id"];
@@ -203,11 +203,11 @@ switch ($feedCardType) {
         $feedCardImagePath = GetAccountProfilePicture($tempAccount);
         if ($feedCard["event_verb"] == "COMMENDED")
         {
-            $feedCardDesc = GetCommendedSomeoneFlavorText($feedCard["event_name"], $profile["Username"], $feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
+            $feedCardDesc = FlavorTextController::getCommendedSomeoneFlavorText($feedCard["event_name"], $profile->username, $feedCard["event_name"].$profile->username.$feedCard["event_date"]);
         }
         else{
             
-            $feedCardDesc = GetDenouncedSomeoneFlavorText($feedCard["event_name"], $profile["Username"], $feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
+            $feedCardDesc = FlavorTextController::getDenouncedSomeoneFlavorText($feedCard["event_name"], $profile->username, $feedCard["event_name"].$profile->username.$feedCard["event_date"]);
         }
         break;
 
@@ -217,8 +217,8 @@ switch ($feedCardType) {
 
         $feedCardTypeText = $feedCard["event_verb"];
         $feedCardCreatedByShowOnlyDate = true;
-        $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." ".$feedCard["event_name"];
-        $feedCardDesc = GetHostedQuestFlavorText($profile["Username"],$feedCard["event_name"],$feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
+        $feedCardTitle = $profile->username.' '.$feedCard["event_verb"]." ".$feedCard["event_name"];
+        $feedCardDesc = GetHostedQuestFlavorText($profile->username,$feedCard["event_name"],$feedCard["event_name"].$profile->username.$feedCard["event_date"]);
         break;
 
     case 'BADGE':
@@ -230,8 +230,8 @@ switch ($feedCardType) {
         {
             $feedCard["event_verb"] = "was NOMINATED for";
         }
-        $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." the ".$feedCard["event_name"]." badge!";
-        $feedCardDesc = GetEarnedBadgeFlavorText($profile["Username"],$feedCard["event_name"],$feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
+        $feedCardTitle = $profile->username.' '.$feedCard["event_verb"]." the ".$feedCard["event_name"]." badge!";
+        $feedCardDesc = GetEarnedBadgeFlavorText($profile->username,$feedCard["event_name"],$feedCard["event_name"].$profile->username.$feedCard["event_date"]);
         break;
 
     case 'TOURNAMENT':
@@ -240,14 +240,14 @@ switch ($feedCardType) {
         $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
         $feedCardTypeText = $feedCard["event_verb"]." TOURNAMENT";
         $feedCardCreatedByShowOnlyDate = true;
-        $feedCardTitle = $profile["Username"].' '.$feedCard["event_verb"]." in the ".$feedCard["event_name"]." quest!";
+        $feedCardTitle = $profile->username.' '.$feedCard["event_verb"]." in the ".$feedCard["event_name"]." quest!";
         if ($feedCard["event_verb"] == "WON")
         {
-            $feedCardDesc = GetWinTournamentFlavorText($profile["Username"],$feedCard["event_name"],$feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
+            $feedCardDesc = GetWinTournamentFlavorText($profile->username,$feedCard["event_name"],$feedCard["event_name"].$profile->username.$feedCard["event_date"]);
         }
         else
         {
-            $feedCardDesc = GetLostTournamentFlavorText($profile["Username"],$feedCard["event_name"],$feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
+            $feedCardDesc = GetLostTournamentFlavorText($profile->username,$feedCard["event_name"],$feedCard["event_name"].$profile->username.$feedCard["event_date"]);
         }
 
         break;
@@ -258,8 +258,8 @@ switch ($feedCardType) {
         $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
         $feedCardTypeText = "NEW POST";
         $feedCardCreatedByShowOnlyDate = true;
-        $feedCardTitle = $profile["Username"].' just '.$feedCard["event_verb"]." \"".$feedCard["event_name"]."\"";
-        $feedCardDesc = GetWroteBlogPostFlavorText($profile["Username"],$feedCard["event_name"],$feedCard["event_name"].$profile["Username"].$feedCard["event_date"]);
+        $feedCardTitle = $profile->username.' just '.$feedCard["event_verb"]." \"".$feedCard["event_name"]."\"";
+        $feedCardDesc = GetWroteBlogPostFlavorText($profile->username,$feedCard["event_name"],$feedCard["event_name"].$profile->username.$feedCard["event_date"]);
         break;
 }
 
@@ -316,7 +316,7 @@ $feedCardDateDetailed = date_format($feedCardDate,"M j, Y H:i:s");
                     {
 
                     $questRewardsResp = GetQuestRewardsByQuestId($feedCard["Id"]);
-                    $questRewards = $questRewardsResp->Data;
+                    $questRewards = $questRewardsResp->data;
                     
                     $displayedItemIds = [];
 

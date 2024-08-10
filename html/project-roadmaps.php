@@ -698,7 +698,7 @@ $(document).ready(function() {
         }
         
         let checklistHtml = '';
-        <?php if (IsLoggedIn()) { ?>
+        <?php if (Kickback\Services\Session::isLoggedIn()) { ?>
         event.checklist.forEach(function(item) {
             let username = '';
             if (item[1] != null)

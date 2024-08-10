@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+use Kickback\Controllers\AccountController;
 
 if (isset($_POST["submit-equipment"]))
 {
@@ -8,9 +10,9 @@ if (isset($_POST["submit-equipment"]))
     //$PopUpMessage = json_encode($_POST);
 
     
-    $response = UpsertAccountEquipment($_POST);
+    $response = AccountController::upsertAccountEquipment($_POST);
 
-    if ($response->Success)
+    if ($response->success)
     {
         
         $hasSuccess = true;

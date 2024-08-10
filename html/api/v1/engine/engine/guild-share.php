@@ -10,7 +10,7 @@ function SaveMerchantShareStatement($statement) {
 
     // Check if the statement preparation was successful
     if (!$stmt) {
-        return (new APIResponse(false, "Failed to prepare the statement", mysqli_error($conn)));
+        return (new Kickback\Models\Response(false, "Failed to prepare the statement", mysqli_error($conn)));
     }
 
     // Bind the parameters to the SQL statement
@@ -31,14 +31,14 @@ function SaveMerchantShareStatement($statement) {
     if (mysqli_stmt_error($stmt)) {
         // Free the statement
         mysqli_stmt_close($stmt);
-        return (new APIResponse(false, "Error occurred while saving the statement", mysqli_stmt_error($stmt)));
+        return (new Kickback\Models\Response(false, "Error occurred while saving the statement", mysqli_stmt_error($stmt)));
     }
 
     // If everything went smoothly
     else {
         // Free the statement
         mysqli_stmt_close($stmt);
-        return (new APIResponse(true, "Merchant share statement saved successfully", null));
+        return (new Kickback\Models\Response(true, "Merchant share statement saved successfully", null));
     }
 }
 
@@ -55,7 +55,7 @@ function GiveNewFullSharesAfterInterest($statement)
 }
 function ProcessMonthlyStatements($statement_date) {
     if (!isset($statement_date) || empty($statement_date)) {
-        return new APIResponse(false, "Invalid statement date provided.", null);
+        return new Kickback\Models\Response(false, "Invalid statement date provided.", null);
     }
     
     // Connect to your database
@@ -71,14 +71,14 @@ function ProcessMonthlyStatements($statement_date) {
     if (!$stmt) {
         error_log("MySQL prepare failed: " . mysqli_error($conn));
         mysqli_rollback($conn);
-        return new APIResponse(false, "Database prepare statement failed.", null);
+        return new Kickback\Models\Response(false, "Database prepare statement failed.", null);
     }
 
     if (!mysqli_stmt_bind_param($stmt, 's', $statement_date) || !mysqli_stmt_execute($stmt)) {
         error_log("Failed to bind parameters or execute statement: " . mysqli_error($conn));
         mysqli_stmt_close($stmt);
         mysqli_rollback($conn);
-        return new APIResponse(false, "Failed to bind parameters or execute statement.", null);
+        return new Kickback\Models\Response(false, "Failed to bind parameters or execute statement.", null);
     }
 
     $result = mysqli_stmt_get_result($stmt);
@@ -113,11 +113,11 @@ function ProcessMonthlyStatements($statement_date) {
             
         error_log("finished processing monthly statement and interest for everyone");
         mysqli_commit($conn);
-        return new APIResponse(true, "Monthly statements processed successfully", null);
+        return new Kickback\Models\Response(true, "Monthly statements processed successfully", null);
     } else {
         error_log("faild to process monthly statement and interest for everyone. rolling back...");
         mysqli_rollback($conn);
-        return new APIResponse(false, "Errors occurred during processing; all changes were rolled back.", null);
+        return new Kickback\Models\Response(false, "Errors occurred during processing; all changes were rolled back.", null);
     }
 }
 
@@ -131,7 +131,7 @@ function ProcessMerchantSharePurchase($purchaseID, $shareAmount) {
 
     // Check if the statement preparation was successful
     if (!$stmt) {
-        return (new APIResponse(false, "Failed to prepare the statement", mysqli_error($conn)));
+        return (new Kickback\Models\Response(false, "Failed to prepare the statement", mysqli_error($conn)));
     }
 
     // Bind the parameters to the SQL statement
@@ -144,14 +144,14 @@ function ProcessMerchantSharePurchase($purchaseID, $shareAmount) {
     if (mysqli_stmt_error($stmt)) {
         // Free the statement
         mysqli_stmt_close($stmt);
-        return (new APIResponse(false, "Error occurred while processing the share purchase", mysqli_stmt_error($stmt)));
+        return (new Kickback\Models\Response(false, "Error occurred while processing the share purchase", mysqli_stmt_error($stmt)));
     }
 
     // If everything went smoothly
     else {
         // Free the statement
         mysqli_stmt_close($stmt);
-        return (new APIResponse(true, "Merchant share purchase processed successfully", null));
+        return (new Kickback\Models\Response(true, "Merchant share purchase processed successfully", null));
     }
 }
 

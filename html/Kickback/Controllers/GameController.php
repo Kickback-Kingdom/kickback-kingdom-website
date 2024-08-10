@@ -82,9 +82,8 @@ class GameController
         return new Response(true, "Retrieved games successfully", $games);
     }
     
-    private static function row_to_vGame($row) : vGame
-    {
-        $game = new vGame($row['Id']);
+    private static function row_to_vGame($row) : vGame {
+        $game = new vGame('', $row['Id']);
         $game->name = $row['Name'];
         $game->description = $row['Desc'];
         $game->minRankedMatches = $row['MinRankedMatches'];
@@ -93,22 +92,22 @@ class GameController
 
         if ($row['media_icon_id'] != null)
         {
-            $icon = new vMedia($row['media_icon_id']);
-            $icon->mediaPath = $row['icon_path'];
+            $icon = new vMedia('', $row['media_icon_id']);
+            $icon->setMediaPath($row['icon_path']);
             $game->icon = $icon;
         }
 
         if ($row['media_banner_id'] != null)
         {
-            $banner = new vMedia($row['media_banner_id']);
-            $banner->mediaPath = $row['banner_path'];
+            $banner = new vMedia('', $row['media_banner_id']);
+            $banner->setMediaPath($row['banner_path']);
             $game->banner = $banner;
         }
 
         if ($row['media_banner_mobile_id'] != null)
         {
-            $bannerMobile = new vMedia($row['media_banner_mobile_id']);
-            $bannerMobile->mediaPath = $row['banner_mobile_path'];
+            $bannerMobile = new vMedia('', $row['media_banner_mobile_id']);
+            $bannerMobile->setMediaPath($row['banner_mobile_path']);
             $game->bannerMobile = $bannerMobile;
         }
 
@@ -116,9 +115,7 @@ class GameController
     }
 
     private static function insert(Game $game) : Response {
-
         return new Response(false, 'GameController::Insert not implemented');
-
     }
 }
 ?>

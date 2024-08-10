@@ -1,3 +1,6 @@
+<?php
+use Kickback\Models\PlayStyle;
+?>
 <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="<?php echo $urlPrefixBeta; ?>/assets/vendors/jquery/jquery-3.7.0.min.js"></script>
@@ -11,7 +14,7 @@
 
     <!--<script src="assets/owl-carousel/owl.carousel.js"></script>-->
     <script>
-        var play_styles = <?php echo GetPlayStyleJSON(); ?>;
+        var play_styles = <?= PlayStyle::getPlayStyleJSON(); ?>;
         $(document).ready(function () {
 
             if (shouldShowVersionPopup && true == <?= ($activeAccountInfo->delayUpdateAfterChests?"false":"true"); ?>)
@@ -81,7 +84,7 @@
             
             <?php 
 
-            if (IsLoggedIn())
+            if (Kickback\Services\Session::isLoggedIn())
             {
             ?>
             OpenAllChests();
@@ -123,11 +126,11 @@
 
         <?php 
 
-        if (IsLoggedIn())
+        if (Kickback\Services\Session::isLoggedIn())
         {
         ?>
 
-        var chests = <?php echo  $chestsJSON; ?>;
+        var chests = <?php echo  $activeAccountInfo->chestsJSON; ?>;
         var notificationsJSON = <?php echo $activeAccountInfo->notificationsJSON; ?>;
     
         var chestElement = document.getElementById("imgChest");
@@ -172,7 +175,7 @@
 
             const data = {
                 chestId: chests[0]["Id"],
-                accountId: <?php echo $_SESSION["account"]["Id"]; ?>,
+                accountId: <?php echo Kickback\Services\Session::getCurrentAccount()->crand; ?>,
                 sessionToken: "<?php echo $_SESSION["sessionToken"]; ?>"
             };
             chests.shift();
@@ -342,7 +345,8 @@
             return betaEnabled === "true";
         }
 
-        var itemInformation = <?php echo (isset($itemInformationJSON)?$itemInformationJSON:"[]"); ?>;
+        var itemInformation = <?= (isset($itemInformationJSON)?$itemInformationJSON:"[]"); ?>;
+        var itemStackInformation = <?= (isset($itemStackInformationJSON)?$itemStackInformationJSON:"[]"); ?>;
         function ShowInventoryItemModal(itemId) 
         {
             var item = GetItemInformationById(itemId);
@@ -351,12 +355,12 @@
             var secondaryImage = $("#inventoryItemImageSecondary");
             primaryImage.css("display", "block");
             secondaryImage.css("display", "none");
-            primaryImage.attr("src", "/assets/media/"+item.image);
+            primaryImage.attr("src", item.iconBig.url);
 
-            $("#inventoryItemDescription").text(item.desc);
+            $("#inventoryItemDescription").text(item.description);
             $("#inventoryItemTitle").text(item.name);
-            $("#inventoryItemArtist").text(item.artist);
-            $("#inventoryItemArtist").attr("href", "<?php echo $urlPrefixBeta; ?>/u/"+item.artist);
+            $("#inventoryItemArtist").text(item.iconBig.author.username);
+            $("#inventoryItemArtist").attr("href", "<?php echo $urlPrefixBeta; ?>/u/"+item.iconBig.author.username);
             $("#inventoryItemDate").text(item.date_created);
             $("#inventoryItemModal").modal("show");
             $("#inventoryItemImageContainer").attr("onclick","FlipInventoryItem("+itemId+");");
@@ -381,7 +385,7 @@
 
         function SetupItemInvetoryModal(item)
         {
-            if (item.Id == "14" && myNextWritOfPassageURL != '')
+            if (item.crand == "14" && myNextWritOfPassageURL != '')
             {
                 $("#inventoryItemCopyInput").val(myNextWritOfPassageURL);
                 $("#inventoryItemCopyContainer").removeClass("d-none");
@@ -392,7 +396,7 @@
             if (item.useable) {
                 $("#inventoryItemUseButton").removeClass('d-none');
                 $("#inventoryItemFooter").removeClass('d-none');
-                $("#inventoryItemUseButton").attr("onclick", "UseInventoryItem("+item.Id+");");
+                $("#inventoryItemUseButton").attr("onclick", "UseInventoryItem("+item.crand+");");
             } else {
                 $("#inventoryItemUseButton").addClass('d-none');
                 $("#inventoryItemUseButton").attr("onclick", "");
@@ -401,7 +405,7 @@
 
         function HandleItemInventoryFlip(item, secondaryImage)
         {
-                if (item.Id == "14")
+                if (item.crand == "14")
                 {
                     var imgData = GenerateQRCodeImageData(myNextWritOfPassageURL, function(imageData) {
                         secondaryImage.attr("src", imageData);
@@ -444,7 +448,7 @@
 
             // Set the secondary image if it's about to be shown
             if (!primaryImage.is(':visible')) {
-                flipTo.attr("src", "/assets/media/" + item.image); 
+                flipTo.attr("src", item.iconBig.url); 
             } else {
                 flipTo.attr("src", "/assets/media/" + item.image_back); 
 
@@ -475,7 +479,7 @@
         {
             for (let index = 0; index < itemInformation.length; index++) {
                 var item = itemInformation[index];
-                if (item.Id == id)
+                if (item.crand == id)
                 {
                     return item;
                 }
@@ -492,20 +496,26 @@
         {
             var notification = notificationsJSON[id];
 
-            $("#quest-review-quest-image").attr("src", "/assets/media/"+notification.image);
-            $("#quest-review-quest-title-link").attr("href", "<?php echo $urlPrefixBeta; ?>/q/"+notification.locator);
-            $("#quest-review-quest-title").text(notification.name);
-            $("#quest-review-quest-host-1").attr("href", "<?php echo $urlPrefixBeta; ?>/u/"+notification.host_name);
-            $("#quest-review-quest-host-1").text(notification.host_name);
-            $("#quest-review-quest-host-2").attr("href", "<?php echo $urlPrefixBeta; ?>/u/"+notification.host_name_2);
-            $("#quest-review-quest-host-2").text(notification.host_name_2);
-            if (notification.host_name_2 == null)
-                $("#quest-review-quest-host-2-span").attr("class","d-none");
-            else
-                $("#quest-review-quest-host-2-span").attr("class","d-inline");
+            $("#quest-review-quest-image").attr("src", notification.quest.icon.url);
+            $("#quest-review-quest-title-link").attr("href", "/q/"+notification.quest.locator);
+            $("#quest-review-quest-title").text(notification.quest.title);
+            $("#quest-review-quest-host-1").attr("href", "/u/"+notification.quest.host1.username);
+            $("#quest-review-quest-host-1").text(notification.quest.host1.username);
+            if (notification.quest.host2 == null)
+            {
                 
+                $("#quest-review-quest-host-2-span").attr("class","d-none");
+            }
+            else
+            {
 
-            let dateObject = new Date(notification.date);
+                $("#quest-review-quest-host-2").attr("href", "/u/"+notification.quest.host2.username);
+                $("#quest-review-quest-host-2").text(notification.quest.host2.username);
+                $("#quest-review-quest-host-2-span").attr("class","d-inline");
+            }
+            
+            let dateObject = new Date(notification.date.valueString + 'Z');
+
 
             let options = { year: 'numeric', month: 'short', day: 'numeric' };
             let formattedDate = dateObject.toLocaleDateString(undefined, options);
@@ -513,10 +523,10 @@
             $("#quest-review-quest-date").text(formattedDate);
 
 
-            $("#quest-review-play-style").attr("class","quest-tag quest-tag-"+play_styles[notification.style][0].toLowerCase());
-            $("#quest-review-play-style").text(play_styles[notification.style][0]);
-            $("#quest-review-quest-summary").text(notification.text);
-            $("#quest-review-quest-id").attr("value",notification.quest_id);
+            $("#quest-review-play-style").attr("class","quest-tag quest-tag-"+play_styles[notification.quest.playStyle].name.toLowerCase());
+            $("#quest-review-play-style").text(play_styles[notification.quest.playStyle].name);
+            $("#quest-review-quest-summary").text(notification.quest.summary);
+            $("#quest-review-quest-id").attr("value",notification.quest.crand);
             OpenQuestReviewModal();
         }
 
@@ -651,7 +661,7 @@ window.onload = function() {
         timeInput.value = `${localHours}:${localMinutes}`;
     });
 };
-<?php if (IsAdmin()) { ?>
+<?php if (Kickback\Services\Session::isAdmin()) { ?>
     function UseDelegateAccess(accountId)
     {
         window.location.href = "https://www.kickback-kingdom.com<?php echo $urlPrefixBeta; ?>/?delegateAccess="+accountId;

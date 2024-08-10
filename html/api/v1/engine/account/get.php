@@ -8,15 +8,15 @@ $sessionToken = $_GET['sessionToken'];
 $serviceKey = $_GET['serviceKey'];
 
 
-$session = GetLoginSession($serviceKey, $sessionToken);
-if ($session->Success)
+$session = Kickback\Services\Session::GetLoginSession($serviceKey, $sessionToken);
+if ($session->success)
 {
 
     return GetAccountById($id);
 }
 else{
 
-    return (new APIResponse(false, "Please provide a valid session.", null));
+    return (new Kickback\Models\Response(false, "Please provide a valid session.", null));
 }
 
 ?>

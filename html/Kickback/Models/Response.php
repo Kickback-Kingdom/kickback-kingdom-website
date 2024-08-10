@@ -30,5 +30,10 @@ class Response {
     {
         exit($this->ToString());
     }
+    
+    function ThrowIfFailed() : void {
+        if (!$this->success)
+            throw new \Exception($message);
+    }
 }
 ?>

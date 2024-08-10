@@ -2,7 +2,7 @@
 
 $session = require ("verifySession.php");
 
-if (!$session->Success)
+if (!$session->success)
 {
     header("Location: /login.php");
 }
