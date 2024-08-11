@@ -3,7 +3,28 @@ declare(strict_types=1);
 
 namespace Kickback\InitializationScripts;
 
-// Function to set error reporting and custom error handler
+/**
+* Turns error reporting on and registers an error handler and shutdown handler.
+*
+* These handlers ensure that all errors are caught. In addition, it makes all
+* errors print a report that is displayed to either stdout (CLI use) or as
+* an HTML error message to the client (web use). This diverges from PHP's
+* default behavior of printing absolutely nothing in either case, which
+* can be very confusing in the web/HTTP case specifically: it would output
+* the part of the page that was generated before the fatal error occurred, but
+* then silently neglect to send the rest of the page. If the error occurred
+* early enough, it sends no output, which browsers seem to render as a blank page.
+* These scenarios can look like page just hasn't loaded yet, even though it never will.
+*
+* This function will allocate the following resources:
+* * The global error handler, as set by `set_error_handler`
+* * The global shutdown handler, as set by `register_shutdown_function`
+* * The output buffer, as set by `ob_start`
+*
+* @see \set_error_handler
+* @see \register_shutdown_function
+* @see \ob_start
+*/
 function initializeErrorHandling(): void
 {
     error_reporting(E_ALL);
@@ -12,20 +33,46 @@ function initializeErrorHandling(): void
     register_shutdown_function("Kickback\InitializationScripts\\shutdownHandler");
 
     // Start output buffering
+    // This allows us to discard partial output whenever
+    // exceptions interrupt PHP execution.
     ob_start();
 }
 
-// Error handler function
-function fatalErrorHandler($errno, $errstr, $errfile, $errline)
+// TODO: Documentation... what does this function do?
+// PHP should have a default error handler, so why use this one instead?
+// It would seem that this function is used to convert certain types of errors
+// into the \ErrorException, because PHP doesn't make them Exceptions by default.
+// Hopefully this can be confirmed or corrected.
+/**
+* Error handler function
+*
+* The signature of this function is dictated by the `set_error_handler` function's callback definition.
+*
+* @see \set_error_handler
+*/
+function fatalErrorHandler(
+    int      $errno,
+    string   $errstr,
+    ?string  $errfile = null,
+    ?int     $errline = null
+    /* `array $errcontext` is deprecated in PHP 7.2.0 and removed in 8.0.0 */
+) : bool
 {
-    if (!(error_reporting() & $errno)) {
+    if (0 === (error_reporting() & $errno)) {
         return false;
     }
+    // TODO: BUG: Use of class (\Exception) from within init script. (This is dangerous to do in bootstrapping code.)
+    // TODO: We should probably have OOP initialization class(es) that are not part of the bootstrapping process.
+    // TODO: ... because everything in this file probably doesn't need to be done during bootstrap.
     throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
 }
 
-// Shutdown handler function to catch fatal errors
-function shutdownHandler()
+/**
+* Shutdown handler function to catch fatal errors.
+*
+* This is responsible for printing an HTML report for any errors.
+*/
+function shutdownHandler() : void
 {
     $error = error_get_last();
     if ($error !== null) {

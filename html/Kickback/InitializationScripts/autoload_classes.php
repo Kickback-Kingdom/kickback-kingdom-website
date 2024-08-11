@@ -343,6 +343,7 @@ function generic_autoload_function(string $class_fqn, string $namespace_to_try, 
 */
 function autoload_try_vendor_folder_impl(string $class_fqn) : int
 {
+    $this_func_name = __FUNCTION__;
     $vendor_dir_path = \Kickback\SCRIPT_ROOT . "/vendor";
 
     $try_realpath = realpath($vendor_dir_path);
@@ -446,23 +447,38 @@ function autoload_try_vendor_folder_impl(string $class_fqn) : int
         ||  $file_name === "."
         ||  str_starts_with($file_name, ".git")
         ) {
+            autoload_debug_indent_more();
+                autoload_debug_trace(fn() => "Ignoring this directory because it is definitely NOT a namespace path element.");
+            autoload_debug_indent_less();
             continue;
         }
 
-        // Code commented out becase it didn't work:
-        // It was saying that perfectly readable directories weren't readable.
-        // It'd be a nice check to have, if it didn't false-pos.
-        /*
-        // If this fails, the file perms on the host system are probably messed up.
-        if ( !is_readable($file_name) ) {
-            autoload_error("./vendor/$file_name is not readable (full path: '$vendor_dir_path/$file_name')");
+        $file_path = $vendor_dir_path . "/" . $file_name;
+
+        // If this fails... something is quite wrong, because `readdir`
+        //   shouldn't return entries that don't exist.
+        // This check could be useful as a check against the logic within this
+        // function, because programmer errors like using a file's name
+        // instead of its _path_ can make this function fail.
+        // (Incidentally, the above is what prompted this check to exist.)
+        if ( !file_exists($file_path) ) {
+            autoload_error("./vendor/$file_name is does not exist (full path: '$file_path')");
             continue;
         }
-        */
+
+        // If this fails, the file perms on the host system are probably messed up.
+        if ( !is_readable($file_path) ) {
+            autoload_error("./vendor/$file_name is not readable (full path: '$file_path')");
+            continue;
+        }
 
         // Skip anything that's not a directory.
         // Only directories could contain .php classes.
-        if ( !is_dir($file_name) ) {
+        if ( !is_dir($file_path) ) {
+            autoload_debug_indent_more();
+                autoload_debug_trace(fn() => "Ignoring this entry because it isn't a directory.");
+            autoload_debug_indent_less();
+
             // This lacks a call to `autoload_error` because there is no harm
             // in having non-directories inside the `./vendor` directory.
             // We just need to be sure to skip them.
@@ -534,14 +550,14 @@ function autoload_function_impl(string $class_fqn) : int
     // Attempt to load Kickback classes first.
     // These are the highest priority.
     $result = generic_autoload_function($class_fqn, 'Kickback', \Kickback\SCRIPT_ROOT);
-    if ( AUTOLOAD_SUCCESS !== $result ) {
+    if ( AUTOLOAD_INCOMPLETE !== $result ) {
         autoload_debug_trace(fn() => "Kickback namespace issued halt for autoload of class $class_fqn");
         return $result;
     }
 
     // Attempt to load classes from various namespaces in the ./vendor directory.
     $result = autoload_try_vendor_folder($class_fqn);
-    if ( AUTOLOAD_SUCCESS !== $result ) {
+    if ( AUTOLOAD_INCOMPLETE !== $result ) {
         autoload_debug_trace(fn() => "./vendor folder issued halt for autoload of class $class_fqn");
         return $result;
     }
