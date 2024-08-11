@@ -1,6 +1,7 @@
 <?php
 
-use Kickback\Utilities\FormToken;
+use Kickback\Common\Utility\FormToken;
+
 use Kickback\Models\Lobby;
 use Kickback\Controllers\LobbyController;
 

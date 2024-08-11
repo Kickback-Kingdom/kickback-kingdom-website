@@ -5,17 +5,14 @@
 
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
-require_once ($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . '/vendor/PHPMailer/PHPMailer/Exception.php';
-require_once ($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . '/vendor/PHPMailer/PHPMailer/PHPMailer.php';
-require_once ($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . '/vendor/PHPMailer/PHPMailer/SMTP.php';
-
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\SMTP;
+
 use Kickback\Controllers\AccountController;
+
 \Kickback\Common\Version::$show_version_popup = false;
 
 $redirectUrl = 'index.php';
@@ -45,7 +42,7 @@ if (isset($_GET["redirect"]))
               //Create an instance; passing `true` enables exceptions
               $mail = new PHPMailer(true);
               try {
-                  $kk_credentials = \Kickback\Config\ServiceCredentials::instance();
+                  $kk_credentials = \Kickback\Backend\Config\ServiceCredentials::instance();
 
                   $mail->IsSMTP(); // telling the class to use SMTP
                   //$mail->SMTPDebug  = 2;                     // enables SMTP debug information (for testing)
@@ -152,6 +149,8 @@ if (isset($_GET["redirect"]))
           }
           else
           {
+              // TODO: Is this supposed to be \Exception or PHPMailer\PHPMailer\Exception?
+              // Because right now it's PHPMailer\PHPMailer\Exception...
               throw new Exception($codeResp->message);
           }
           

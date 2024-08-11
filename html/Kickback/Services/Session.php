@@ -3,7 +3,7 @@
 namespace Kickback\Services;
 
 use mysqli;
-use Kickback\Config\ServiceCredentials; 
+use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Models\Response;
 use Kickback\Views\vSessionInformation;
 use Kickback\Controllers\AccountController;
@@ -35,19 +35,19 @@ class Session {
         return null;
     }
 
-    private static function setCurrentAccount(vAccount $account) {
+    private static function setCurrentAccount(vAccount $account) : void {
         self::setSessionData("vAccount", $account);
-        $currentAccount = $account;
+        self::$currentAccount = $account;
     }
 
-    private static function clearCurrentAccount() {
+    private static function clearCurrentAccount() : void {
         
         self::setSessionData("vAccount", null);
-        $currentAccount = null;
+        self::$currentAccount = null;
     }
 
     
-    public static function loginToService($accountId, $serviceKey) : bool
+    public static function loginToService(int $accountId, string $serviceKey) : bool
     {
         $conn = Database::getConnection();
         if (session_status() == PHP_SESSION_ACTIVE)
@@ -128,6 +128,7 @@ class Session {
         }
 
         $accountId = $row["Id"];
+        assert(is_string($accountId));
         if (!self::loginToService($accountId, $serviceKey)) {
             return (new Response(false, "Failed to login", null));
         }

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Kickback\Controllers;
 
+use Kickback\Common\Utility\IDCrypt;
+
 use Kickback\Models\Account;
 use Kickback\Views\vAccount;
 use Kickback\Views\vRecordId;
@@ -11,8 +13,7 @@ use Kickback\Models\Response;
 use Kickback\Services\Database;
 use Kickback\Services\Session;
 use Kickback\Controllers\LootController;
-use Kickback\Config\ServiceCredentials;
-use Kickback\Utilities\IDCrypt;
+use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Views\vRaffle;
 
 class AccountController
@@ -668,6 +669,46 @@ class AccountController
         } else {
             $row = $result->fetch_assoc();
             return new Response(true, "Writs of Passage", $row);
+        }
+    }
+
+    public static function verifyPasswordResetCode(vRecordId $account, int $clients_pass_reset_code) : Response {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT pass_reset FROM account WHERE Id = ?";
+        $stmt = $conn->prepare($sql);
+
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare statement", null);
+        }
+
+        $stmt->bind_param("i", $account->crand);
+        $succ = $stmt->execute();
+        if ($succ === false) {
+            return new Response(false, "Failed to get query result", null);
+        }
+
+        $result = $stmt->get_result();
+        $num_rows = $result->num_rows;
+        if ($num_rows === 0) {
+            return new Response(false, "We couldn't find an account with that id", $account->crand);
+        }
+        if ($num_rows > 1) {
+            return new Response(false, "Internal error; ambiguous account ID", $account->crand);
+        }
+
+        $row = $result->fetch_assoc();
+        $db_pass_reset = $row["pass_reset"];
+        assert(is_int($db_pass_reset));
+
+        $stmt->close();
+
+        if ($db_pass_reset !== $clients_pass_reset_code) {
+            // The client's password reset code was invalid.
+            return new Response(false, 'Link is invalid.', null);
+        } else {
+            // The client's password reset code was valid: success!
+            return new Response(true, "", null);
         }
     }
     

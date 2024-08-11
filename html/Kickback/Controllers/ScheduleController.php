@@ -8,7 +8,7 @@ namespace Kickback\Controllers;
 class ScheduleController
 {
 
-    public static function GetCalendarEvents($month, $year)
+    public static function getCalendarEvents($month, $year)
     {
         // Use global connection
         $db = $GLOBALS['conn'];

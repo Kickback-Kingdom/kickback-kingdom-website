@@ -4,6 +4,8 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
+use Kickback\Common\Utility\IDCrypt;
+
 use Kickback\Controllers\FeedCardController;
 use Kickback\Controllers\QuestController;
 use Kickback\Controllers\ContentController;
@@ -14,7 +16,6 @@ use Kickback\Controllers\QuestLineController;
 use Kickback\Models\PlayStyle;
 use Kickback\Services\Session;
 use Kickback\Views\vDateTime;
-use Kickback\Utilities\IDCrypt;
 
 $newPost = false;
 if (isset($_GET['id']))
@@ -69,7 +70,7 @@ if ($thisQuest->isRaffle())
 
 if (isset($_POST["submit-raffle"]))
 {
-    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    $tokenResponse = \Kickback\Common\Utility\FormToken::useFormToken();
 
     if ($tokenResponse->success) {
 
@@ -125,7 +126,7 @@ if (isset($_POST['submit-apply']))
     }
 }
 
-$kk_crypt_key_quest_id = \Kickback\Config\ServiceCredentials::get("crypt_key_quest_id");
+$kk_crypt_key_quest_id = \Kickback\Backend\Config\ServiceCredentials::get("crypt_key_quest_id");
 $crypt = new IDCrypt($kk_crypt_key_quest_id);
 $qId = urlencode($crypt->encrypt($thisQuest->crand));
 unset($kk_crypt_key_quest_id);

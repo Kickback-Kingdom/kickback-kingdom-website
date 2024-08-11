@@ -81,7 +81,7 @@ class MediaController {
         // Get the global database connection and service key
         $db = $GLOBALS["conn"];
     
-        $kk_service_key = \Kickback\Config\ServiceCredentials::get("kk_service_key");
+        $kk_service_key = \Kickback\Backend\Config\ServiceCredentials::get("kk_service_key");
     
         // Retrieve the author's ID from the session
         $author_id = Kickback\Services\Session::getCurrentAccount()->crand;

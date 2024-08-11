@@ -16,7 +16,7 @@ if (isset($_GET["redirect"]))
 }
 if (isset($_POST["submit"]))
 {
-    $_POST["serviceKey"] = \Kickback\Config\ServiceCredentials::get("kk_service_key");
+    $_POST["serviceKey"] = \Kickback\Backend\Config\ServiceCredentials::get("kk_service_key");
     $resp = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/account/login.php");
     $hasError = !$resp->success;
     if (!$hasError)

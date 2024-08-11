@@ -113,7 +113,7 @@ class AnalyticController
     
     private static function fetchGeoData($ipAddress) {
         
-        $ipinfo_api_key = \Kickback\Config\ServiceCredentials::get("ipinfo_api_key");
+        $ipinfo_api_key = \Kickback\Backend\Config\ServiceCredentials::get("ipinfo_api_key");
         $url = "https://ipinfo.io/{$ipAddress}?token={$ipinfo_api_key}";
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);

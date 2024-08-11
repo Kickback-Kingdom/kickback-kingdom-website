@@ -6,8 +6,8 @@ if (Kickback\Services\Session::isLoggedIn())
         
         if (isset($_POST["process-purchase"]))
         {
-            $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
-        
+            $tokenResponse = Kickback\Common\Utility\FormToken::useFormToken();
+
             if ($tokenResponse->success) {
     
             $pid = $_POST["purchase_id"];
@@ -51,8 +51,8 @@ if (Kickback\Services\Session::isLoggedIn())
         if (isset($_POST["process-statements"]))
         {
             
-            $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
-    
+            $tokenResponse = Kickback\Common\Utility\FormToken::useFormToken();
+
             if ($tokenResponse->success) {
                 $statement_date = $_POST["statement-date"];
                 $processResp = ProcessMonthlyStatements($statement_date);

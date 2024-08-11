@@ -10,7 +10,7 @@ $containsFieldsResp = POSTContainsFields("directory","name","desc","imgBase64","
 if (!$containsFieldsResp->success)
     return $containsFieldsResp;
 
-$kk_service_key = \Kickback\Config\ServiceCredentials::get("kk_service_key");
+$kk_service_key = \Kickback\Backend\Config\ServiceCredentials::get("kk_service_key");
 
 $directory = Validate($_POST["directory"]);
 $imgBase64 = Validate($_POST["imgBase64"]);

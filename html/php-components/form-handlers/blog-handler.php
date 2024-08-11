@@ -3,7 +3,7 @@
 
 if (isset($_POST["submit-blog-post-publish"]))
 {
-    $tokenResponse = Kickback\Utilities\FormToken::useFormToken();
+    $tokenResponse = Kickback\Common\Utility\FormToken::useFormToken();
     
     if ($tokenResponse->success) {
         $blog_post_id = $_POST["blog-post-id"];

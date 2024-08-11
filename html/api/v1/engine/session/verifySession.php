@@ -44,7 +44,7 @@ if (!$session->success) {
 
 if (Kickback\Services\Session::isAdmin()) {
     if (isset($_GET['delegateAccess'])) {
-        $delegateResp = GetAccountById($_GET['delegateAccess']);
+        $delegateResp = AccountController::getAccountById($_GET['delegateAccess']);
         if ($delegateResp->success) {
             Session::setSessionData('delegate_account', $delegateResp->data);
             Session::setSessionData('account_using_delegate_access', Session::getSessionData('vAccount'));

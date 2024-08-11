@@ -5,7 +5,7 @@ namespace Kickback\Common;
 
 use \SplFixedArray;
 
-use \Kickback\Utilities\Str;
+use Kickback\Common\Str;
 
 /**
 * Class containing version info and history for the Kickback Kingdom website, backend, and API.

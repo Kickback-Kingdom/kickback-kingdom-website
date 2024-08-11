@@ -4,6 +4,7 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
+use Kickback\Common\Utility\IDCrypt;
 
 use Kickback\Controllers\AccountController;
 use Kickback\Controllers\PrestigeController;
@@ -12,7 +13,6 @@ use Kickback\Controllers\FeedCardController;
 use Kickback\Controllers\LootController;
 use Kickback\Controllers\ItemController;
 use Kickback\Models\ItemEquipmentSlot;
-use Kickback\Utilities\IDCrypt;
 
 if (isset($_GET['id']))
 $profile = AccountController::getAccountById($_GET['id']);
@@ -105,7 +105,7 @@ foreach ($accountInventory as $accountInventoryItemStack) {
     if ($accountInventoryItemStack->item->isWritOfPassage()) {
         if ($isMyProfile)
         {
-            $kk_crypt_key_writ_id = \Kickback\Config\ServiceCredentials::get("crypt_key_quest_id");
+            $kk_crypt_key_writ_id = \Kickback\Backend\Config\ServiceCredentials::get("crypt_key_quest_id");
             $crypt = new IDCrypt($kk_crypt_key_writ_id);
             $nextWritOfPassageId = urlencode($crypt->encrypt($accountInventoryItemStack->nextLootId->crand));
             $nextWritOfPassageURL = 'https://kickback-kingdom.com/register.php?wi='.$nextWritOfPassageId;//'https://kickback-kingdom.com/register.php?redirect='.urlencode($urlPrefixBeta.'/blog/Kickback-Kingdom/introduction').'&wi='.$nextWritOfPassageId;
