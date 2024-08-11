@@ -33,7 +33,7 @@ class Response {
     
     function ThrowIfFailed() : void {
         if (!$this->success)
-            throw new \Exception($message);
+            throw new \Exception($this->message);
     }
 }
 ?>

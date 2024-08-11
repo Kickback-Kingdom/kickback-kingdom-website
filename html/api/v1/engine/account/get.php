@@ -12,7 +12,7 @@ $session = Kickback\Services\Session::GetLoginSession($serviceKey, $sessionToken
 if ($session->success)
 {
 
-    return GetAccountById($id);
+    return AccountController::getAccountById($id);
 }
 else{
 

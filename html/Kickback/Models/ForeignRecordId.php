@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 namespace Kickback\Models;
-use Kickback\Views;
+use Kickback\Views\vRecordId;
 
 class ForeignRecordId extends vRecordId
 {

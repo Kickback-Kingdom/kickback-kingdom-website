@@ -8,6 +8,9 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
+use Kickback\Controllers\AccountController;
+use Kickback\Views\vAccount;
+
 \Kickback\Common\Version::$show_version_popup = false;
 $redirectUrl = 'index.php';
 
@@ -21,16 +24,18 @@ $errorMessage = "";
 
 
 
-$accountResp = GetAccountById($_GET["i"]);
+$accountResp = AccountController::getAccountById(new vAccount('', $_GET["i"]));
 $code = $_GET["c"];
 
 if ($accountResp->success)
 {
     $account = $accountResp->data;
-    if ($account["pass_reset"] != $code)
+    assert($account instanceof vAccount);
+    $resp = AccountController::verifyPasswordResetCode($account, $code);
+    if (!$resp->success)
     {
         $hasError = true;
-        $errorMessage = 'Link is invalid.';
+        $errorMessage = $resp->message;
 
     }
     else
@@ -38,7 +43,7 @@ if ($accountResp->success)
 
         if (isset($_POST["submit"]))
         {
-            $resp = UpdateAccountPassword($account["Id"], $code, $_POST["password"]);
+            $resp = AccountController::updateAccountPassword($account, $code, $_POST["password"]);
             if ($resp->success)
             {
 
