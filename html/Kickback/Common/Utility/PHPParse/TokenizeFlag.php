@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace Kickback\Utility\PHPParse;
+namespace Kickback\Common\Utility\PHPParse;
 
 /**
-* @see \Kickback\Utility\PHPParse\Tree::tokenize_php
+* @see \Kickback\Common\Utility\PHPParse\Tree::tokenize_php
 */
 enum TokenizeFlag : int
 {

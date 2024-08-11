@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace Kickback\Utility\PHPParse;
+namespace Kickback\Common\Utility\PHPParse;
 
-use \Kickback\Utility\PHPParse\NodeType;
+use Kickback\Common\Utility\PHPParse\NodeType;
 
-/** @see \Kickback\Utility\PHPParse\Tree */
+/** @see \Kickback\Common\Utility\PHPParse\Tree */
 final class Node
 {
     public function __construct(

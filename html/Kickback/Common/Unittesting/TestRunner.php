@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace Kickback\UnitTesting;
+namespace Kickback\Common\Unittesting;
 
-use \Kickback\UnitTesting\AssertException;
-use \Kickback\UnitTesting\AssertFailureException;
-use \Kickback\UnitTesting\AssertParseException;
+use Kickback\Common\Unittesting\AssertException;
+use Kickback\Common\Unittesting\AssertFailureException;
+use Kickback\Common\Unittesting\AssertParseException;
 
 /**
 * # Note: PHPTokens can either be a single character (i.e.: ;, ., >, !, etc...),

@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace Kickback\Utility\PHPParse;
+namespace Kickback\Common\Utility\PHPParse;
 
-use \Kickback\Utility\PHPParse\Node;
-use \Kickback\Utility\PHPParse\NodeType;
+use Kickback\Common\Utility\PHPParse\Node;
+use Kickback\Common\Utility\PHPParse\NodeType;
 
-use \Kickback\UnitTesting\TestRunnerCore;
+use Kickback\Common\Unittesting\TestRunnerCore;
 
 /*
 * @phpstan-type PHPTokenChar   string

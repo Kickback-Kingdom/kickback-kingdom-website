@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace Kickback\Utility\PHPParse;
+namespace Kickback\Common\Utility\PHPParse;
 
 /**
-* @see \Kickback\Utility\PHPParse\Tree
-* @see \Kickback\Utility\PHPParse\Node
+* @see \Kickback\Common\Utility\PHPParse\Tree
+* @see \Kickback\Common\Utility\PHPParse\Node
 */
 enum NodeType : int
 {
