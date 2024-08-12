@@ -1,5 +1,5 @@
 <?php 
-use Kickback\Controllers\AnalyticController;
+use Kickback\Backend\Controllers\AnalyticController;
 use Kickback\Common\Version;
 $pageVisitId = AnalyticController::getCurrentPage();
 
@@ -91,7 +91,7 @@ if ($pageVisitResp->success)
     
     <!-- Android Web App Specific Tags -->
     <?php
-        $manifestFile = $urlPrefixBeta.'/manifest.json';
+        $manifestFile = Version::urlBetaPrefix().'/manifest.json';
         $manifestFileVersion = Version::current()->number();
     ?>
 
@@ -110,24 +110,24 @@ if ($pageVisitResp->success)
     <meta name="twitter:image" content="<?php echo $pageImage; ?>">
 
     <!-- Bootstrap CSS -->
-    <link href="<?php echo $urlPrefixBeta; ?>/assets/vendors/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/bootstrap/bootstrap.min.css" rel="stylesheet">
     <!-- Basic stylesheet -->
-    <link rel="stylesheet" href="<?php echo $urlPrefixBeta; ?>/assets/vendors/owl-carousel/owl.carousel.css">
+    <link rel="stylesheet" href="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/owl-carousel/owl.carousel.css">
 
     <!-- Default Theme -->
-    <link rel="stylesheet" href="<?php echo $urlPrefixBeta; ?>/assets/vendors/owl-carousel/owl.theme.css">
-    <link rel="stylesheet" href="<?php echo $urlPrefixBeta; ?>/assets/vendors/animate/animate.min.css"/>
+    <link rel="stylesheet" href="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/owl-carousel/owl.theme.css">
+    <link rel="stylesheet" href="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/animate/animate.min.css"/>
     <script src="https://kit.fontawesome.com/f098b8e570.js" crossorigin="anonymous"></script>
 
     <?php
-        $cssFile = $urlPrefixBeta.'/assets/css/kickback-kingdom.css';
+        $cssFile = Version::urlBetaPrefix().'/assets/css/kickback-kingdom.css';
         $cssVersion = Version::current()->number();
 
         echo '<link rel="stylesheet" type="text/css" href="'.$cssFile.'?v='.$cssVersion.'">';
     ?>
 
     <?php
-        $cssFile = $urlPrefixBeta.'/assets/css/animate.css';
+        $cssFile = Version::urlBetaPrefix().'/assets/css/animate.css';
         $cssVersion = Version::current()->number();
 
         echo '<link rel="stylesheet" type="text/css" href="'.$cssFile.'?v='.$cssVersion.'">';

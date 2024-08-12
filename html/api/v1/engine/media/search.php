@@ -3,8 +3,8 @@
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: (__DIR__ . "/../../../..")) . "/Kickback/init.php");
 
 require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/engine.php");
-use Kickback\Controllers\AccountController;
-use Kickback\Controllers\MediaController;
+use Kickback\Backend\Controllers\AccountController;
+use Kickback\Backend\Controllers\MediaController;
 
 OnlyPOST();
 

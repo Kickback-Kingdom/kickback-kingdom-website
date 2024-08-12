@@ -2,7 +2,7 @@
 
 require_once(__DIR__."/../../engine/engine.php");
 
-use Kickback\Controllers\AccountController;
+use Kickback\Backend\Controllers\AccountController;
 
 OnlyPOST();
 

@@ -1,7 +1,7 @@
 <?php
 require_once(__DIR__."/../../engine/engine.php");
 use Kickback\Services\Session;
-use Kickback\Controllers\AccountController;
+use Kickback\Backend\Controllers\AccountController;
 if (IsPOST())
 {
     $containsFieldsResp = POSTContainsFields("sessionToken","serviceKey");

@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-use Kickback\Controllers\AccountController;
+use Kickback\Backend\Controllers\AccountController;
 
 if (isset($_POST["submit-equipment"]))
 {

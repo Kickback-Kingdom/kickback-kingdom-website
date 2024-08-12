@@ -73,7 +73,7 @@ switch ($feedCardType) {
         $feedCardClassRight = "quest-card-right";
         $feedCardHasCreatedBy = true;
         $feedCardCreatedByPrefix = "Hosted";
-        $feedCardLearnMoreURL = $urlPrefixBeta."/q/".htmlspecialchars($feedCard['locator']);
+        $feedCardLearnMoreURL = Version::urlBetaPrefix()."/q/".htmlspecialchars($feedCard['locator']);
         $feedCardHasTags = true;
         $feedCardHasRewards = true;
         $now = new DateTime(); // Current date and time
@@ -85,7 +85,7 @@ switch ($feedCardType) {
         break;
 
     case 'QUEST-LINE':
-        $feedCardLearnMoreURL = $urlPrefixBeta."/quest-line/".htmlspecialchars($feedCard['locator']);
+        $feedCardLearnMoreURL = Version::urlBetaPrefix()."/quest-line/".htmlspecialchars($feedCard['locator']);
 
         $feedCardTypeText = "QUEST LINE";
         $feedCardCTA = "View Quest Line";
@@ -98,7 +98,7 @@ switch ($feedCardType) {
     case 'BLOG':
         $feedCardHasCreatedBy = true;
         $feedCardCreatedByPrefix = "Last written";
-        $feedCardLearnMoreURL = $urlPrefixBeta."/blog/".htmlspecialchars($feedCard['locator']);
+        $feedCardLearnMoreURL = Version::urlBetaPrefix()."/blog/".htmlspecialchars($feedCard['locator']);
         if ($feedCard["account_1_username"] == null)
         {
             $feedCardHasCreatedBy = false;
@@ -112,7 +112,7 @@ switch ($feedCardType) {
         $feedCardTypeText = "BLOG POST";
         $feedCardHasCreatedBy = true;
         $feedCardCreatedByPrefix = "Written";
-        $feedCardLearnMoreURL = $urlPrefixBeta."/blog/".htmlspecialchars($feedCard['locator']);
+        $feedCardLearnMoreURL = Version::urlBetaPrefix()."/blog/".htmlspecialchars($feedCard['locator']);
 
         $feedCardCTA = "View Post";
         if ($feedCard["published"] == false) {
@@ -133,7 +133,7 @@ switch ($feedCardType) {
 
     case 'QUEST-PARTICIPANT':
         $feedCardCTA = "View Quest";
-        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardLearnMoreURL = Version::urlBetaPrefix().htmlspecialchars($feedCard['event_url']);
         $feedCardTypeText = "PARTICIPATION";
         $feedCardCreatedByShowOnlyDate = true;
         $feedCardTitle = $profile->username.' '.$feedCard["event_verb"]." ".$feedCard["event_name"];
@@ -150,7 +150,7 @@ switch ($feedCardType) {
         break;
     case 'GAME-RECORD':
         $feedCardHideCTA = true;
-        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardLearnMoreURL = Version::urlBetaPrefix().htmlspecialchars($feedCard['event_url']);
         $feedCardTypeText = "RANKED MATCH";
         $feedCardCreatedByShowOnlyDate = true;
         $feedCardTitle = $profile->username.' '.$feedCard["event_verb"]." a ranked match of ".$feedCard["event_name"];
@@ -170,7 +170,7 @@ switch ($feedCardType) {
 
     case 'SPENT-PRESTIGE-TOKEN':
         $feedCardHideCTA = true;
-        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardLearnMoreURL = Version::urlBetaPrefix().htmlspecialchars($feedCard['event_url']);
         $feedCardTypeText = $feedCard["event_verb"];
         $feedCardCreatedByShowOnlyDate = true;
         $feedCardTitle = $profile->username.' '.$feedCard["event_verb"]." ".$feedCard["event_name"];
@@ -191,7 +191,7 @@ switch ($feedCardType) {
 
     case 'RECEIVED-PRESTIGE':
         $feedCardHideCTA = true;
-        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardLearnMoreURL = Version::urlBetaPrefix().htmlspecialchars($feedCard['event_url']);
         $feedCardTypeText = $feedCard["event_verb"];
         $feedCardCreatedByShowOnlyDate = true;
         $feedCardTitle = $feedCard["event_name"].' '.$feedCard["event_verb"]." ".$profile->username;
@@ -213,7 +213,7 @@ switch ($feedCardType) {
 
     case 'QUEST-HOSTED':
         $feedCardCTA = "View Quest";
-        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardLearnMoreURL = Version::urlBetaPrefix().htmlspecialchars($feedCard['event_url']);
 
         $feedCardTypeText = $feedCard["event_verb"];
         $feedCardCreatedByShowOnlyDate = true;
@@ -223,7 +223,7 @@ switch ($feedCardType) {
 
     case 'BADGE':
         $feedCardHideCTA = true;
-        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardLearnMoreURL = Version::urlBetaPrefix().htmlspecialchars($feedCard['event_url']);
         $feedCardTypeText = "NEW BADGE";
         $feedCardCreatedByShowOnlyDate = true;
         if ($feedCard["event_verb"] == "NOMINATED")
@@ -237,7 +237,7 @@ switch ($feedCardType) {
     case 'TOURNAMENT':
 
         $feedCardCTA = "View Tournament";
-        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardLearnMoreURL = Version::urlBetaPrefix().htmlspecialchars($feedCard['event_url']);
         $feedCardTypeText = $feedCard["event_verb"]." TOURNAMENT";
         $feedCardCreatedByShowOnlyDate = true;
         $feedCardTitle = $profile->username.' '.$feedCard["event_verb"]." in the ".$feedCard["event_name"]." quest!";
@@ -255,7 +255,7 @@ switch ($feedCardType) {
     case 'WROTE-BLOG-POST':
 //GetWroteBlogPostFlavorText
         $feedCardHideCTA = true;
-        $feedCardLearnMoreURL = $urlPrefixBeta.htmlspecialchars($feedCard['event_url']);
+        $feedCardLearnMoreURL = Version::urlBetaPrefix().htmlspecialchars($feedCard['event_url']);
         $feedCardTypeText = "NEW POST";
         $feedCardCreatedByShowOnlyDate = true;
         $feedCardTitle = $profile->username.' just '.$feedCard["event_verb"]." \"".$feedCard["event_name"]."\"";
@@ -281,8 +281,8 @@ $feedCardDateDetailed = date_format($feedCardDate,"M j, Y H:i:s");
                 </a>
                 <?php if ($feedCardHasCreatedBy) { ?>
                 <p class="card-text">
-                    <small class="text-body-secondary"><?php if (!$feedCardCreatedByShowOnlyDate) { ?><?php echo $feedCardCreatedByPrefix; ?> by <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode($feedCardHostName); ?>" class="username"><?php echo $feedCardHostName; ?></a>
-                    <?php if ($feedCardHostName2 != null) { ?> and <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode($feedCardHostName2); ?>" class="username"><?php echo $feedCardHostName2;?></a><?php } ?>
+                    <small class="text-body-secondary"><?php if (!$feedCardCreatedByShowOnlyDate) { ?><?php echo $feedCardCreatedByPrefix; ?> by <a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo urlencode($feedCardHostName); ?>" class="username"><?php echo $feedCardHostName; ?></a>
+                    <?php if ($feedCardHostName2 != null) { ?> and <a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo urlencode($feedCardHostName2); ?>" class="username"><?php echo $feedCardHostName2;?></a><?php } ?>
                     <?php } if ($feedCardHasDate) { ?>on <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom"
                         data-bs-title="<?php echo $feedCardDateDetailed; ?> UTC"><?php echo $feedCardDateBasic; ?></span><?php } else { ?>until completed<?php } ?>
                     </small>

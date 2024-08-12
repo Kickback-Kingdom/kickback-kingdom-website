@@ -5,9 +5,9 @@ $session = require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/session/verifySessi
 
 require("php-components/base-page-pull-active-account-info.php");
 
-use Kickback\Controllers\QuestLineController;
-use Kickback\Controllers\QuestController;
-use Kickback\Controllers\FeedCardController;
+use Kickback\Backend\Controllers\QuestLineController;
+use Kickback\Backend\Controllers\QuestController;
+use Kickback\Backend\Controllers\FeedCardController;
 
 if (isset($_GET['id']))
 {

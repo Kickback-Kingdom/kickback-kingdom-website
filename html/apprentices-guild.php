@@ -54,7 +54,7 @@ $certifications = $certificationsResp->data;
                                     <div class="card-body">
                                         <h5 class="card-title"><?php echo $certifications[$i]["name"]; ?></h5>
                                         <p class="card-text"><?php echo $certifications[$i]["summary"]; ?></p>
-                                        <a href="<?php echo $urlPrefixBeta; ?>/apprentices-guild/certifications.php?id=<?php echo $certifications[$i]["Id"]; ?>" class="btn btn-primary">View Details</a>
+                                        <a href="<?php echo Version::urlBetaPrefix(); ?>/apprentices-guild/certifications.php?id=<?php echo $certifications[$i]["Id"]; ?>" class="btn btn-primary">View Details</a>
                                     </div>
                                 </div>
                             </div>

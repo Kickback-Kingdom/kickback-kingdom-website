@@ -1,9 +1,10 @@
 <?php
+declare(strict_types=1);
 
 use Kickback\Common\Utility\FormToken;
 
-use Kickback\Models\Lobby;
-use Kickback\Controllers\LobbyController;
+use Kickback\Backend\Models\Lobby;
+use Kickback\Backend\Controllers\LobbyController;
 
 if (isset($_POST["hostLobbySubmit"])) {
     

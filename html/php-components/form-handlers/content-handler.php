@@ -1,5 +1,5 @@
 <?php
-use Kickback\Controllers\ContentController;
+use Kickback\Backend\Controllers\ContentController;
 if (isset($_POST["save-content"])) {
     
     /*$showPopUpSuccess = true;

@@ -6,16 +6,16 @@ require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Common\Utility\IDCrypt;
 
-use Kickback\Controllers\FeedCardController;
-use Kickback\Controllers\QuestController;
-use Kickback\Controllers\ContentController;
-use Kickback\Controllers\GameController;
-use Kickback\Controllers\TournamentController;
-use Kickback\Controllers\AccountController;
-use Kickback\Controllers\QuestLineController;
-use Kickback\Models\PlayStyle;
+use Kickback\Backend\Controllers\FeedCardController;
+use Kickback\Backend\Controllers\QuestController;
+use Kickback\Backend\Controllers\ContentController;
+use Kickback\Backend\Controllers\GameController;
+use Kickback\Backend\Controllers\TournamentController;
+use Kickback\Backend\Controllers\AccountController;
+use Kickback\Backend\Controllers\QuestLineController;
+use Kickback\Backend\Models\PlayStyle;
 use Kickback\Services\Session;
-use Kickback\Views\vDateTime;
+use Kickback\Backend\Views\vDateTime;
 
 $newPost = false;
 if (isset($_GET['id']))
@@ -131,7 +131,7 @@ $crypt = new IDCrypt($kk_crypt_key_quest_id);
 $qId = urlencode($crypt->encrypt($thisQuest->crand));
 unset($kk_crypt_key_quest_id);
 
-$redirectURL = $urlPrefixBeta."/login.php?redirect=".urlencode("q/".$thisQuest->locator).'&wq='.$qId;
+$redirectURL = Version::urlBetaPrefix()."/login.php?redirect=".urlencode("q/".$thisQuest->locator).'&wq='.$qId;
 
 
 $callToAction = "...";
@@ -671,7 +671,7 @@ $itemInformationJSON = json_encode($itemInfos);
                                                             </select>
                                                         </div>
                                                     </div>
-                                                    <div class="form-text" id="basic-addon4">Need to create a questiline? Click <a href="<?php echo $urlPrefixBeta; ?>/quest-line.php?new">HERE</a></div>
+                                                    <div class="form-text" id="basic-addon4">Need to create a questiline? Click <a href="<?php echo Version::urlBetaPrefix(); ?>/quest-line.php?new">HERE</a></div>
 
                                                 </div>
                                             </div>
@@ -931,7 +931,7 @@ $itemInformationJSON = json_encode($itemInfos);
                                                                                 ?>
                                                                             </select>
                                                                         </div>
-                                                                        <div class="form-text" id="basic-addon4">Want to recommend a new game for Kickback Kingdom? Click <a href="<?php echo $urlPrefixBeta; ?>/games.php?request-new-game=1">HERE</a></div>
+                                                                        <div class="form-text" id="basic-addon4">Want to recommend a new game for Kickback Kingdom? Click <a href="<?php echo Version::urlBetaPrefix(); ?>/games.php?request-new-game=1">HERE</a></div>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -1450,7 +1450,7 @@ $itemInformationJSON = json_encode($itemInfos);
                                         console.log("Loading iframe");
                                         // Create the iframe element
                                         var iframe = document.createElement('iframe');
-                                        iframe.src = '<?php echo $urlPrefixBeta; ?>/bracket.php?locator=<?= $thisQuest->locator;?>'; 
+                                        iframe.src = '<?php echo Version::urlBetaPrefix(); ?>/bracket.php?locator=<?= $thisQuest->locator;?>'; 
                                         iframe.style = "min-width: 200px; width: 100%; min-height: 700px; height:100%";
                                         iframe.innerText = "Hello world";
                                         iframe.id = "backet-iframe";

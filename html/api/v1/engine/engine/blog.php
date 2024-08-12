@@ -12,11 +12,11 @@ function PublishBlogPost($postId) {
     $currentBlogPost = GetBlogPostById($postId)->data; // You would need a function like this
 
 
-    //return new Kickback\Models\Response(false, "testing", $currentBlogPost);
+    //return new Kickback\Backend\Models\Response(false, "testing", $currentBlogPost);
 
     // Check if the user has permissions
     if (!IsWriterForBlogPost($currentBlogPost)) {
-        return (new Kickback\Models\Response(false, "You do not have permission to edit this blog post.", null));
+        return (new Kickback\Backend\Models\Response(false, "You do not have permission to edit this blog post.", null));
     }
 
     $pageContentResp = GetContentDataById($currentBlogPost["Content_id"],"BLOG-POST", $currentBlogPost["Bloglocator"]."/".$currentBlogPost["Postlocator"]);
@@ -29,7 +29,7 @@ function PublishBlogPost($postId) {
 
     if (!BlogPostIsValidForPublish($currentBlogPost, $pageContent))
     {
-        return (new Kickback\Models\Response(false, "Your blog post isn't ready to publish.", null));
+        return (new Kickback\Backend\Models\Response(false, "Your blog post isn't ready to publish.", null));
     }
 
     // Prepare the update statement
@@ -50,9 +50,9 @@ function PublishBlogPost($postId) {
         
         $msg = GetNewBlogPostAnnouncement($currentBlogPost);
         DiscordWebHook($msg);
-        return (new Kickback\Models\Response(true, "Blog post published successfully!", null));
+        return (new Kickback\Backend\Models\Response(true, "Blog post published successfully!", null));
     } else {
-        return (new Kickback\Models\Response(false, "Error updating blog post.", null));
+        return (new Kickback\Backend\Models\Response(false, "Error updating blog post.", null));
     }
 }
 
@@ -63,18 +63,18 @@ function UpdateBlogPost($postId, $title, $locator, $desc, $imageId) {
 
     if (!LocatorIsValidString($locator))
     {
-        return (new Kickback\Models\Response(false, "URL Locator is invalid", null));
+        return (new Kickback\Backend\Models\Response(false, "URL Locator is invalid", null));
     }
 
     // Fetch the current blog post information
     $currentBlogPost = GetBlogPostById($postId)->data; // You would need a function like this
 
 
-    //return new Kickback\Models\Response(false, "testing", $currentBlogPost);
+    //return new Kickback\Backend\Models\Response(false, "testing", $currentBlogPost);
 
     // Check if the user has permissions
     if (!IsWriterForBlogPost($currentBlogPost)) {
-        return (new Kickback\Models\Response(false, "You do not have permission to edit this blog post.", null));
+        return (new Kickback\Backend\Models\Response(false, "You do not have permission to edit this blog post.", null));
     }
 
     // Prepare the update statement
@@ -92,9 +92,9 @@ function UpdateBlogPost($postId, $title, $locator, $desc, $imageId) {
 
     // Check if the update was successful
     if($success) {
-        return (new Kickback\Models\Response(true, "Blog post updated successfully!", "/blog/".$currentBlogPost["Bloglocator"]."/".$locator));
+        return (new Kickback\Backend\Models\Response(true, "Blog post updated successfully!", "/blog/".$currentBlogPost["Bloglocator"]."/".$locator));
     } else {
-        return (new Kickback\Models\Response(false, "Error updating blog post.", null));
+        return (new Kickback\Backend\Models\Response(false, "Error updating blog post.", null));
     }
 }
 
@@ -106,7 +106,7 @@ function GetAllBlogPostsForBlog($blogId) {
     // Prepare the SQL statement using the mysqli connection
     $stmt = mysqli_prepare($GLOBALS["conn"], $sql);
     if (!$stmt) {
-        return (new Kickback\Models\Response(false, "SQL statement preparation failed."));
+        return (new Kickback\Backend\Models\Response(false, "SQL statement preparation failed."));
     }
 
     // Bind the blog ID parameter
@@ -114,7 +114,7 @@ function GetAllBlogPostsForBlog($blogId) {
 
     // Execute the statement
     if (!mysqli_stmt_execute($stmt)) {
-        return (new Kickback\Models\Response(false, "Query execution failed."));
+        return (new Kickback\Backend\Models\Response(false, "Query execution failed."));
     }
 
     // Fetch the results
@@ -124,7 +124,7 @@ function GetAllBlogPostsForBlog($blogId) {
     // Close the statement
     mysqli_stmt_close($stmt);
 
-    return (new Kickback\Models\Response(true, "Blog posts retrieved successfully.", $rows));
+    return (new Kickback\Backend\Models\Response(true, "Blog posts retrieved successfully.", $rows));
 }
 
 function GetBlogPostById($postId) {
@@ -133,7 +133,7 @@ function GetBlogPostById($postId) {
     // Prepare the SQL statement using the mysqli connection
     $stmt = mysqli_prepare($GLOBALS["conn"], $sql);
     if (!$stmt) {
-        return (new Kickback\Models\Response(false, "SQL statement preparation failed.", null));
+        return (new Kickback\Backend\Models\Response(false, "SQL statement preparation failed.", null));
     }
 
     // Bind the ID parameter
@@ -141,7 +141,7 @@ function GetBlogPostById($postId) {
 
     // Execute the statement
     if (!mysqli_stmt_execute($stmt)) {
-        return (new Kickback\Models\Response(false, "Query execution failed.", null));
+        return (new Kickback\Backend\Models\Response(false, "Query execution failed.", null));
     }
 
     // Fetch the results
@@ -153,10 +153,10 @@ function GetBlogPostById($postId) {
 
     // Check if a row was returned
     if (!$row) {
-        return (new Kickback\Models\Response(false, "Blog post not found.", null));
+        return (new Kickback\Backend\Models\Response(false, "Blog post not found.", null));
     }
 
-    return (new Kickback\Models\Response(true, "Blog post retrieved successfully.", $row));
+    return (new Kickback\Backend\Models\Response(true, "Blog post retrieved successfully.", $row));
 }
 
 function InsertNewBlogPost($blog_id, $blog_locator)
@@ -171,7 +171,7 @@ function InsertNewBlogPost($blog_id, $blog_locator)
     $existingPostResp = GetBlogPostByLocators($blog_locator, $postLocator);
     if($existingPostResp->success) {
         // If the post already exists, return it
-        return (new Kickback\Models\Response(true, "Blog post already exists.", $existingPostResp->data));
+        return (new Kickback\Backend\Models\Response(true, "Blog post already exists.", $existingPostResp->data));
     }
     
     // If no existing post, create new one
@@ -192,14 +192,14 @@ function InsertNewBlogPost($blog_id, $blog_locator)
         $postResp = GetBlogPostByLocators($blog_locator, $postLocator);
 
         if($postResp->success) {
-            return (new Kickback\Models\Response(true, "New blog post created.", $postResp->data));
+            return (new Kickback\Backend\Models\Response(true, "New blog post created.", $postResp->data));
         } else {
-            return (new Kickback\Models\Response(false, "Error retrieving the created blog post.", null));
+            return (new Kickback\Backend\Models\Response(false, "Error retrieving the created blog post.", null));
         }
     }
     else
     {
-        return (new Kickback\Models\Response(false, "You do not have permissions to post a new blog post.", null));
+        return (new Kickback\Backend\Models\Response(false, "You do not have permissions to post a new blog post.", null));
     }
 }
 

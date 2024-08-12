@@ -6,10 +6,10 @@ use \Kickback\Common\Version;
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-use Kickback\Controllers\ContentController;
-use Kickback\Controllers\BlogController;
-use Kickback\Controllers\BlogPostController;
-use Kickback\Controllers\FeedCardController;
+use Kickback\Backend\Controllers\ContentController;
+use Kickback\Backend\Controllers\BlogController;
+use Kickback\Backend\Controllers\BlogPostController;
+use Kickback\Backend\Controllers\FeedCardController;
 
 
 if (isset($_GET['blogLocator'])) {

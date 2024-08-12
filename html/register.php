@@ -7,9 +7,9 @@ require("php-components/base-page-pull-active-account-info.php");
 use Kickback\Common\Utility\IDCrypt;
 
 use Kickback\Backend\Config\ServiceCredentials;
-use Kickback\Controllers\QuestController;
-use Kickback\Views\vRecordId;
-use Kickback\Controllers\AccountController;
+use Kickback\Backend\Controllers\QuestController;
+use Kickback\Backend\Views\vRecordId;
+use Kickback\Backend\Controllers\AccountController;
 
 \Kickback\Common\Version::$show_version_popup = false;
 
@@ -59,7 +59,7 @@ if (isset($_POST["submit"]))
     $hasError = !$resp->success;
     if (!$hasError)
     {
-        $url = $urlPrefixBeta.'/blog/Kickback-Kingdom/introduction';
+        $url = Version::urlBetaPrefix().'/blog/Kickback-Kingdom/introduction';
 
         if (isset($_GET["redirect"]))
         {
@@ -169,7 +169,7 @@ if ($showGuard)
                 <?php if (isset($_GET["redirect"])) { ?>
                     <a class="btn btn-secondary" href="<?php echo urldecode($_GET["redirect"]);?>">Go Back</a>
                     <?php } else { ?>
-                    <a type="button" class="btn btn-secondary" href="<?php echo $urlPrefixBeta; ?>/">Back</a>
+                    <a type="button" class="btn btn-secondary" href="<?php echo Version::urlBetaPrefix(); ?>/">Back</a>
                     <?php } ?>
                 </div>
             </div>
@@ -211,7 +211,7 @@ else
                             <?php } ?>
                             <?php if ($writOfPassageOwner != null) { ?>
                             <img src="/assets/media/<?php echo GetAccountProfilePicture($writOfPassageOwner);?>"  class="img-fluid img-thumbnail">
-                            <p style="margin-top: 8px; margin-left: 8px; margin-right: 8px;"><em><?php echo WritOfPassageProclamation($writOfPassageOwner['Username']); ?></em><figcaption class="blockquote-footer text-end"><a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode(htmlspecialchars($writOfPassageOwner["Username"])); ?>" class="username"><?php echo htmlspecialchars($writOfPassageOwner["Username"]); ?></a></figcaption></p>
+                            <p style="margin-top: 8px; margin-left: 8px; margin-right: 8px;"><em><?php echo WritOfPassageProclamation($writOfPassageOwner['Username']); ?></em><figcaption class="blockquote-footer text-end"><a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo urlencode(htmlspecialchars($writOfPassageOwner["Username"])); ?>" class="username"><?php echo htmlspecialchars($writOfPassageOwner["Username"]); ?></a></figcaption></p>
                             <?php } ?>
                         </div>
                         <div class="col-12 col-lg-8">
@@ -246,7 +246,7 @@ else
                                 </div>
                             </div>
                             
-                            <p>Already have account? <a href="<?php echo $urlPrefixBeta; ?>/login.php<?php if (isset($_GET["redirect"])) 
+                            <p>Already have account? <a href="<?php echo Version::urlBetaPrefix(); ?>/login.php<?php if (isset($_GET["redirect"])) 
                             { 
                             echo '?redirect='.urlencode($_GET["redirect"]);
                             if (isset($_GET['wq']))
@@ -259,7 +259,7 @@ else
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <a type="button" class="btn btn-secondary" href="<?php echo $urlPrefixBeta; ?>/">Back</a>
+                    <a type="button" class="btn btn-secondary" href="<?php echo Version::urlBetaPrefix(); ?>/">Back</a>
                     <a href="#" class="btn btn-primary"  data-bs-target="#exampleModalToggle2" data-bs-toggle="modal">Register</a>
                 </div>
             </div>

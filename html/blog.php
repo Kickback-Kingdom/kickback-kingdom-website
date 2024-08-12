@@ -4,8 +4,8 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-use Kickback\Controllers\BlogController;
-use Kickback\Controllers\FeedController;
+use Kickback\Backend\Controllers\BlogController;
+use Kickback\Backend\Controllers\FeedController;
 
 if (isset($_GET['locator'])){
         
@@ -67,7 +67,7 @@ if ($isBlogWriter) {
                             </div>
                             <div class="card-body">
                                 
-                                <a href="<?php echo $urlPrefixBeta; ?>/blogpost.php?blogLocator=<?php echo $_GET['locator']; ?>&new" class="btn btn-primary">Write a New Post</a>
+                                <a href="<?php echo Version::urlBetaPrefix(); ?>/blogpost.php?blogLocator=<?php echo $_GET['locator']; ?>&new" class="btn btn-primary">Write a New Post</a>
                             </div>
                         </div>
                     </div>

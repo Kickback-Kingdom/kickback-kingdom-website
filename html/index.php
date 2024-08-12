@@ -4,9 +4,9 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-use Kickback\Controllers\FeedController;
-use Kickback\Controllers\FeedCardController;
-use Kickback\Controllers\QuoteController;
+use Kickback\Backend\Controllers\FeedController;
+use Kickback\Backend\Controllers\FeedCardController;
+use Kickback\Backend\Controllers\QuoteController;
 
 $homeFeedResp = FeedController::getNewsFeed(1, 20);
 $homeFeed = $homeFeedResp->data;

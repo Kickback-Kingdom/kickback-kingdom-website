@@ -1,8 +1,10 @@
 <?php
+declare(strict_types=1);
+
 use Kickback\Common\Utility\FormToken;
 
-use Kickback\Views\vRecordId;
-use Kickback\Controllers\QuestController;
+use Kickback\Backend\Views\vRecordId;
+use Kickback\Backend\Controllers\QuestController;
 
 if (isset($_POST["edit-quest-images-submit"])) 
 {

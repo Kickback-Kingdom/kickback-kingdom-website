@@ -43,6 +43,20 @@ final class Version
         return $ver;
     }
 
+    public static function isBeta() : bool 
+    {
+        return array_key_exists("KICKBACK_IS_BETA",$_SERVER) && $_SERVER["KICKBACK_IS_BETA"];
+    }
+
+    public static function urlBetaPrefix() : string {
+        if (self::isBeta())
+        {
+            return "/beta";
+        }
+
+        return "";
+    }
+
     // We use `SplFixedArray` to enforce integer-valued indices.
     /** @var ?\SplFixedArray<Version> */
     private static ?\SplFixedArray $history_ = null;

@@ -55,7 +55,7 @@ if (isset($_POST["submit"]))
                         <input type="email" class="form-control" name="email" id="inputEmail">
                     </div>
                     <div class="mb-3">
-                        <label for="inputPwd" class="form-label" style="width:100%;">Password<a class="float-end" href="<?php echo $urlPrefixBeta; ?>/forgot-password.php">Forgot password?</a></label>
+                        <label for="inputPwd" class="form-label" style="width:100%;">Password<a class="float-end" href="<?php echo Version::urlBetaPrefix(); ?>/forgot-password.php">Forgot password?</a></label>
                         <input type="password" class="form-control" name="pwd" id="inputPwd">
                     </div>
                     
@@ -71,7 +71,7 @@ if (isset($_POST["submit"]))
                     </p>
                 </div>
                 <div class="modal-footer">
-                    <a type="button" class="btn btn-secondary" href="<?php echo $urlPrefixBeta."/".$redirectUrl; ?>">Back</a>
+                    <a type="button" class="btn btn-secondary" href="<?php echo Version::urlBetaPrefix()."/".$redirectUrl; ?>">Back</a>
                     <input type="submit" name="submit" class="btn btn-primary" value="Login">
                 </div>
             </div>

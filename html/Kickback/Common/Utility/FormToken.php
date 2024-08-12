@@ -1,8 +1,9 @@
 <?php
+declare(strict_types=1);
 
 namespace Kickback\Common\Utility;
 
-// TODO: The \Kickback\Models\Response class should probably be moved into some
+// TODO: The \Kickback\Backend\Models\Response class should probably be moved into some
 //   subnamespace of \Kickback\Common (maybe \Kickback\Common\Models?).
 //   Right now, this looks like a circular dependency:
 //     Backend depending on Common depending on Backend
@@ -13,7 +14,7 @@ namespace Kickback\Common\Utility;
 //   so things should work in the meantime. (But it does make it easier for
 //   other people to make mistakes, and it makes the code harder to understand.)
 //   -- Lily Joan  2024-08-10
-use Kickback\Models\Response;
+use Kickback\Backend\Models\Response;
 
 class FormToken {
     /**

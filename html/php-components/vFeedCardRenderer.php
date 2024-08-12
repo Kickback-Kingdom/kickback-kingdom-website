@@ -1,5 +1,5 @@
 <?php
-use Kickback\Controllers\QuestController;
+use Kickback\Backend\Controllers\QuestController;
 ?>
 <div class="card mb-3 feed-card <?= $_vFeedCard->cssClassCard; ?>">
     <div class="row g-0">

@@ -12,9 +12,9 @@ function UpdateQuestLineContent($questLineId, $contentId)
 
     // Assuming the APIResponse class is used similarly for success/failure notification
     if(mysqli_stmt_affected_rows($stmt) > 0) {
-        return (new Kickback\Models\Response(true, "Quest line content updated successfully.", null));
+        return (new Kickback\Backend\Models\Response(true, "Quest line content updated successfully.", null));
     } else {
-        return (new Kickback\Models\Response(false, "Failed to update quest line content or no changes made.", null));
+        return (new Kickback\Backend\Models\Response(false, "Failed to update quest line content or no changes made.", null));
     }
 }
 
@@ -35,7 +35,7 @@ function InsertNewQuestLine()
             $stmt = $conn->prepare("INSERT INTO quest_line (name, locator, created_by_id, `desc`) VALUES (?, ?, ?, '')");
             if (!$stmt) {
                 // Prepare failed.
-                return new Kickback\Models\Response(false, "Failed to prepare statement for inserting new quest line.", null);
+                return new Kickback\Backend\Models\Response(false, "Failed to prepare statement for inserting new quest line.", null);
             }
 
             mysqli_stmt_bind_param($stmt, 'ssi', $questLineName, $questLineLocator, Kickback\Services\Session::getCurrentAccount()->crand);
@@ -43,7 +43,7 @@ function InsertNewQuestLine()
             {
                 if (!mysqli_stmt_execute($stmt)) {
                     error_log(mysqli_error($conn)); // Log the error to the PHP error log
-                    return new Kickback\Models\Response(false, "Failed to execute statement for inserting new quest line: " . mysqli_error($conn), null);
+                    return new Kickback\Backend\Models\Response(false, "Failed to execute statement for inserting new quest line: " . mysqli_error($conn), null);
                 }
 
             }
@@ -52,7 +52,7 @@ function InsertNewQuestLine()
 
                 if (!mysqli_stmt_execute($stmt)) {
                     // Execute failed.
-                    return new Kickback\Models\Response(false, "Failed to execute statement for inserting new quest line.", null);
+                    return new Kickback\Backend\Models\Response(false, "Failed to execute statement for inserting new quest line.", null);
                 }
             }
             
@@ -60,14 +60,14 @@ function InsertNewQuestLine()
             $newId = mysqli_insert_id($conn);
             if ($newId == 0) {
                 // Insert failed, no new ID generated.
-                return new Kickback\Models\Response(false, "Insert operation failed or did not generate a new ID.", null);
+                return new Kickback\Backend\Models\Response(false, "Insert operation failed or did not generate a new ID.", null);
             }
 
             // Assuming you will fetch the newly inserted quest line
             $questLineResp = GetQuestLineByLocator($questLineLocator);
             if (!$questLineResp->success)
             {
-                return new Kickback\Models\Response(false, "Failed to find newly inserted quest by locator", $questLineLocator);
+                return new Kickback\Backend\Models\Response(false, "Failed to find newly inserted quest by locator", $questLineLocator);
             }
         }
 
@@ -80,20 +80,20 @@ function InsertNewQuestLine()
             $questLineResp = GetQuestLineByLocator($questLineLocator);
             if (!$questLineResp->success)
             {
-                return new Kickback\Models\Response(false, "Failed to find newly inserted quest by locator after inserting content record", $questLineLocator);
+                return new Kickback\Backend\Models\Response(false, "Failed to find newly inserted quest by locator after inserting content record", $questLineLocator);
             }
         }
 
         if (!$questLineResp->success)
         {
-            return new Kickback\Models\Response(false, "Failed to find newly inserted quest.", $questLineResp);
+            return new Kickback\Backend\Models\Response(false, "Failed to find newly inserted quest.", $questLineResp);
         }
 
-        return new Kickback\Models\Response(true, "New quest line created.", $questLineResp->data);
+        return new Kickback\Backend\Models\Response(true, "New quest line created.", $questLineResp->data);
     }
     else
     {
-        return new Kickback\Models\Response(false, "You do not have permissions to post a new quest line.", null);
+        return new Kickback\Backend\Models\Response(false, "You do not have permissions to post a new quest line.", null);
     }
 }
 
@@ -108,13 +108,13 @@ function UpdateQuestLineImages($questId, $desktop_banner_id, $mobile_banner_id, 
 
     if (!$questResp->success)
     {
-        return (new Kickback\Models\Response(false, "Error updating quest. Could not find quest by Id.", null));
+        return (new Kickback\Backend\Models\Response(false, "Error updating quest. Could not find quest by Id.", null));
     }
     $quest = $questResp->data;
 
     if (!CanEditQuestLine($quest))
     {
-        return (new Kickback\Models\Response(false, "Error updating quest. You do not have permission to edit this quest.", null));
+        return (new Kickback\Backend\Models\Response(false, "Error updating quest. You do not have permission to edit this quest.", null));
     }
 
     // Prepare the update statement
@@ -132,9 +132,9 @@ function UpdateQuestLineImages($questId, $desktop_banner_id, $mobile_banner_id, 
 
     // Check if the update was successful
     if($success) {
-        return (new Kickback\Models\Response(true, "Quest images updated successfully!", null));
+        return (new Kickback\Backend\Models\Response(true, "Quest images updated successfully!", null));
     } else {
-        return (new Kickback\Models\Response(false, "Error updating quest images with unknown error.", null));
+        return (new Kickback\Backend\Models\Response(false, "Error updating quest images with unknown error.", null));
     }
 }
 
@@ -152,20 +152,20 @@ function UpdateQuestLineOptions($data)
     $questLineResp = GetQuestLineById($questLineId);
     if (!$questLineResp->success)
     {
-        return (new Kickback\Models\Response(false, "Error updating quest line. Could not find quest line by Id.", null));
+        return (new Kickback\Backend\Models\Response(false, "Error updating quest line. Could not find quest line by Id.", null));
     }
 
     $questLine = $questLineResp->data;
     if (!CanEditQuestLine($questLine))
     {
-        return (new Kickback\Models\Response(false, "Error updating quest line. You do not have permission to edit this quest line.", null));
+        return (new Kickback\Backend\Models\Response(false, "Error updating quest line. You do not have permission to edit this quest line.", null));
     }
 
     // Prepare the update statement, adjust field names according to your quest_line table
     $stmt = $db->prepare("UPDATE quest_line SET name = ?, locator = ?, `desc` = ?, `published` = 0, `being_reviewed` = 0 WHERE Id = ?");
     if (false === $stmt) {
         // Error handling, e.g., log or throw
-        return (new Kickback\Models\Response(false, "Error preparing the update statement.", null));
+        return (new Kickback\Backend\Models\Response(false, "Error preparing the update statement.", null));
     }
 
     // Bind the parameters
@@ -187,10 +187,10 @@ function UpdateQuestLineOptions($data)
             'locatorChanged' => $locatorChanged // Explicitly indicate if the locator was changed
         ];
     
-        return new Kickback\Models\Response(true, "Quest line options updated successfully!", $responseData);
+        return new Kickback\Backend\Models\Response(true, "Quest line options updated successfully!", $responseData);
     } else {
         // Consider more detailed error handling or logging here
-        return new Kickback\Models\Response(false, "Error updating quest line options with unknown error.", null);
+        return new Kickback\Backend\Models\Response(false, "Error updating quest line options with unknown error.", null);
     }
     
 }
@@ -205,20 +205,20 @@ function SubmitQuestLineForReview($data) {
     // Fetch the quest line details to check its existence and editability
     $questLineResp = GetQuestLineById($questLineId);
     if (!$questLineResp->success) {
-        return new Kickback\Models\Response(false, "Quest line submission failed. Quest line not found.", null);
+        return new Kickback\Backend\Models\Response(false, "Quest line submission failed. Quest line not found.", null);
     }
 
     // Verify editing permissions for the quest line
     $questLine = $questLineResp->data;
     if (!CanEditQuestLine($questLine)) {
-        return new Kickback\Models\Response(false, "Submission denied. Insufficient permissions to edit this quest line.", null);
+        return new Kickback\Backend\Models\Response(false, "Submission denied. Insufficient permissions to edit this quest line.", null);
     }
 
     // Prepare the SQL statement to mark the quest line as being reviewed
     $stmt = $db->prepare("UPDATE quest_line SET published = 0, being_reviewed = 1 WHERE Id = ?");
     if (!$stmt) {
         // Handle preparation errors
-        return new Kickback\Models\Response(false, "Failed to prepare the review submission statement.", null);
+        return new Kickback\Backend\Models\Response(false, "Failed to prepare the review submission statement.", null);
     }
 
     // Bind the quest line ID to the statement
@@ -228,14 +228,14 @@ function SubmitQuestLineForReview($data) {
     if (!$stmt->execute()) {
         // Handle execution errors
         $stmt->close();
-        return new Kickback\Models\Response(false, "Quest line review submission failed due to an execution error.", null);
+        return new Kickback\Backend\Models\Response(false, "Quest line review submission failed due to an execution error.", null);
     }
 
     // Close the prepared statement
     $stmt->close();
 
     // Successfully updated the quest line status to being reviewed
-    return new Kickback\Models\Response(true, "Quest line successfully submitted for review.", null);
+    return new Kickback\Backend\Models\Response(true, "Quest line successfully submitted for review.", null);
 }
 
 
@@ -247,14 +247,14 @@ function ApproveQuestLineReview($data) {
     $questLineId = $data["quest-line-id"];
     
     if (!Kickback\Services\Session::isAdmin()) {
-        return new Kickback\Models\Response(false, "Approval denied. Insufficient permissions to edit this quest line.", null);
+        return new Kickback\Backend\Models\Response(false, "Approval denied. Insufficient permissions to edit this quest line.", null);
     }
 
     // Prepare the SQL statement to mark the quest line as being reviewed
     $stmt = $db->prepare("UPDATE quest_line SET published = 1, being_reviewed = 0 WHERE Id = ?");
     if (!$stmt) {
         // Handle preparation errors
-        return new Kickback\Models\Response(false, "Failed to prepare the review approval statement.", null);
+        return new Kickback\Backend\Models\Response(false, "Failed to prepare the review approval statement.", null);
     }
 
     // Bind the quest line ID to the statement
@@ -264,14 +264,14 @@ function ApproveQuestLineReview($data) {
     if (!$stmt->execute()) {
         // Handle execution errors
         $stmt->close();
-        return new Kickback\Models\Response(false, "Quest line review approval failed due to an execution error.", null);
+        return new Kickback\Backend\Models\Response(false, "Quest line review approval failed due to an execution error.", null);
     }
 
     // Close the prepared statement
     $stmt->close();
 
     // Successfully updated the quest line status to being reviewed
-    return new Kickback\Models\Response(true, "Quest line successfully approved and published.", null);
+    return new Kickback\Backend\Models\Response(true, "Quest line successfully approved and published.", null);
 }
 
 
@@ -283,14 +283,14 @@ function RejectQuestLineReview($data) {
     $questLineId = $data["quest-line-id"];
     
     /*if (!Kickback\Services\Session::isAdmin()) {
-        return new Kickback\Models\Response(false, "Rejection denied. Insufficient permissions to edit this quest line.", null);
+        return new Kickback\Backend\Models\Response(false, "Rejection denied. Insufficient permissions to edit this quest line.", null);
     }*/
 
     // Prepare the SQL statement to mark the quest line as being reviewed
     $stmt = $db->prepare("UPDATE quest_line SET published = 0, being_reviewed = 0 WHERE Id = ? and (being_reviewed = 1 or published = 1)");
     if (!$stmt) {
         // Handle preparation errors
-        return new Kickback\Models\Response(false, "Failed to prepare the review rejection statement.", null);
+        return new Kickback\Backend\Models\Response(false, "Failed to prepare the review rejection statement.", null);
     }
 
     // Bind the quest line ID to the statement
@@ -300,14 +300,14 @@ function RejectQuestLineReview($data) {
     if (!$stmt->execute()) {
         // Handle execution errors
         $stmt->close();
-        return new Kickback\Models\Response(false, "Quest line review rejection failed due to an execution error.", null);
+        return new Kickback\Backend\Models\Response(false, "Quest line review rejection failed due to an execution error.", null);
     }
 
     // Close the prepared statement
     $stmt->close();
 
     // Successfully updated the quest line status to being reviewed
-    return new Kickback\Models\Response(true, "Quest line publish rejected.", null);
+    return new Kickback\Backend\Models\Response(true, "Quest line publish rejected.", null);
 }
 
 

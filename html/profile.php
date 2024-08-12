@@ -6,13 +6,13 @@ require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Common\Utility\IDCrypt;
 
-use Kickback\Controllers\AccountController;
-use Kickback\Controllers\PrestigeController;
-use Kickback\Controllers\ActivityController;
-use Kickback\Controllers\FeedCardController;
-use Kickback\Controllers\LootController;
-use Kickback\Controllers\ItemController;
-use Kickback\Models\ItemEquipmentSlot;
+use Kickback\Backend\Controllers\AccountController;
+use Kickback\Backend\Controllers\PrestigeController;
+use Kickback\Backend\Controllers\ActivityController;
+use Kickback\Backend\Controllers\FeedCardController;
+use Kickback\Backend\Controllers\LootController;
+use Kickback\Backend\Controllers\ItemController;
+use Kickback\Backend\Models\ItemEquipmentSlot;
 
 if (isset($_GET['id']))
 $profile = AccountController::getAccountById($_GET['id']);
@@ -108,7 +108,7 @@ foreach ($accountInventory as $accountInventoryItemStack) {
             $kk_crypt_key_writ_id = \Kickback\Backend\Config\ServiceCredentials::get("crypt_key_quest_id");
             $crypt = new IDCrypt($kk_crypt_key_writ_id);
             $nextWritOfPassageId = urlencode($crypt->encrypt($accountInventoryItemStack->nextLootId->crand));
-            $nextWritOfPassageURL = 'https://kickback-kingdom.com/register.php?wi='.$nextWritOfPassageId;//'https://kickback-kingdom.com/register.php?redirect='.urlencode($urlPrefixBeta.'/blog/Kickback-Kingdom/introduction').'&wi='.$nextWritOfPassageId;
+            $nextWritOfPassageURL = 'https://kickback-kingdom.com/register.php?wi='.$nextWritOfPassageId;//'https://kickback-kingdom.com/register.php?redirect='.urlencode(Version::urlBetaPrefix().'/blog/Kickback-Kingdom/introduction').'&wi='.$nextWritOfPassageId;
         }
         else
         {
@@ -723,7 +723,7 @@ $activeTabPage = 'active show';
                                             if ($prestigeReview->fromQuest != null)
                                             {
                                                 ?>
-                                                <a class="btn btn-primary btn-sm" href="<?php echo $urlPrefixBeta; ?>/q/<?php echo $prestigeReview->fromQuest->locator; ?>"><?php echo $prestigeReview->fromQuest->title; ?></a>
+                                                <a class="btn btn-primary btn-sm" href="<?php echo Version::urlBetaPrefix(); ?>/q/<?php echo $prestigeReview->fromQuest->locator; ?>"><?php echo $prestigeReview->fromQuest->title; ?></a>
                                                 <?php 
 
                                             }

@@ -1,7 +1,7 @@
 <?php 
 declare(strict_types=1);
-use Kickback\Controllers\LootController;
-use Kickback\Controllers\AccountController;
+use Kickback\Backend\Controllers\LootController;
+use Kickback\Backend\Controllers\AccountController;
 
 
 $badgeCode = '';
@@ -67,7 +67,7 @@ for ($i = count($_vPlayerCardAccount->game_ranks); $i < 5; $i++ )
   </div>
 
   <div class="card-header<?php echo ($isRanked1?" ranked-1":"")?>">
-    <h5 class="player-card-name"><a href="<?php echo $urlPrefixBeta; ?>/u/<?= htmlspecialchars($_vPlayerCardAccount->username); ?>" class="link-dark link-underline-opacity-0 <?= ($isRanked1?"link-ranked-1":"")?>"><?= htmlspecialchars($_vPlayerCardAccount->username); ?></a>
+    <h5 class="player-card-name"><a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?= htmlspecialchars($_vPlayerCardAccount->username); ?>" class="link-dark link-underline-opacity-0 <?= ($isRanked1?"link-ranked-1":"")?>"><?= htmlspecialchars($_vPlayerCardAccount->username); ?></a>
     
     <span> Level <?= $_vPlayerCardAccount->level; ?>
       <div class="progress" role="progressbar" aria-label="Animated striped example" aria-valuenow="<?= $_vPlayerCardAccount->expCurrent; ?>" aria-valuemin="0" aria-valuemax="<?= $_vPlayerCardAccount->expGoal; ?>"data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= ($_vPlayerCardAccount->expCurrent*10).'/'.($_vPlayerCardAccount->expGoal*10); ?> EXP">

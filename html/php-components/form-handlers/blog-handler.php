@@ -47,7 +47,7 @@ if (isset($_POST["submitBlogOptions"])) {
         $showPopUpSuccess = true;
         $PopUpTitle = "Updated Blog Post";
         $PopUpMessage= "Your changes have been saved successfully.";
-        $newURL = $urlPrefixBeta.$response->data;
+        $newURL = Version::urlBetaPrefix().$response->data;
         header('Location: '.$newURL);
     } else {
         $showPopUpError = true;

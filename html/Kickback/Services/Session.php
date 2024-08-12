@@ -4,11 +4,11 @@ namespace Kickback\Services;
 
 use mysqli;
 use Kickback\Backend\Config\ServiceCredentials;
-use Kickback\Models\Response;
-use Kickback\Views\vSessionInformation;
-use Kickback\Controllers\AccountController;
-use Kickback\Controllers\NotificationController;
-use Kickback\Views\vAccount;
+use Kickback\Backend\Models\Response;
+use Kickback\Backend\Views\vSessionInformation;
+use Kickback\Backend\Controllers\AccountController;
+use Kickback\Backend\Controllers\NotificationController;
+use Kickback\Backend\Views\vAccount;
 
 class Session {
     private static ?vAccount $currentAccount = null;

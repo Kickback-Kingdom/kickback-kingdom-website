@@ -8,8 +8,8 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-use Kickback\Controllers\AccountController;
-use Kickback\Views\vAccount;
+use Kickback\Backend\Controllers\AccountController;
+use Kickback\Backend\Views\vAccount;
 
 \Kickback\Common\Version::$show_version_popup = false;
 $redirectUrl = 'index.php';
@@ -104,7 +104,7 @@ else
                     
                 </div>
                 <div class="modal-footer">
-                    <a type="button" class="btn btn-secondary" href="<?php echo $urlPrefixBeta."/".$redirectUrl; ?>">Back</a>
+                    <a type="button" class="btn btn-secondary" href="<?php echo Version::urlBetaPrefix()."/".$redirectUrl; ?>">Back</a>
                     <input type="submit" name="submit" class="btn btn-primary" value="Change Password">
                 </div>
             </div>

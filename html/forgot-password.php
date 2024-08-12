@@ -11,7 +11,7 @@ require("php-components/base-page-pull-active-account-info.php");
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-use Kickback\Controllers\AccountController;
+use Kickback\Backend\Controllers\AccountController;
 
 \Kickback\Common\Version::$show_version_popup = false;
 
@@ -111,7 +111,7 @@ if (isset($_GET["redirect"]))
                                                           <p style="color:#455056; font-size:15px;line-height:24px; margin:0; text-align:left">
                                                               A unique link to reset your password has been generated for you. To reset your password, click the following link and follow the instructions.
                                                           </p>
-                                                          <a href="https://kickback-kingdom.com'. $urlPrefixBeta . '/reset-password.php?c='.$code.'&i='.$account->crand.'" style="background:#08B9ED;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:50px;">Reset
+                                                          <a href="https://kickback-kingdom.com'. Version::urlBetaPrefix() . '/reset-password.php?c='.$code.'&i='.$account->crand.'" style="background:#08B9ED;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:50px;">Reset
                                                                                           Password</a>
                                                       </td>
                                                   </tr>
@@ -209,7 +209,7 @@ if (isset($_GET["redirect"]))
                     
                 </div>
                 <div class="modal-footer">
-                    <a type="button" class="btn btn-secondary" href="<?php echo $urlPrefixBeta."/".$redirectUrl; ?>">Back</a>
+                    <a type="button" class="btn btn-secondary" href="<?php echo Version::urlBetaPrefix()."/".$redirectUrl; ?>">Back</a>
                     <input type="submit" name="submit" class="btn btn-primary" value="Send Recovery Email">
                 </div>
             </div>

@@ -4,7 +4,7 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-use Kickback\Controllers\ScheduleController;
+use Kickback\Backend\Controllers\ScheduleController;
 
 $month = date('m');  // current month
 $year = date('Y');   // current year

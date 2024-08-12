@@ -31,14 +31,14 @@ use \Kickback\Common\Version;
     function ShowVersionPopUp() {
         $("#versionModal").modal('show');
 
-        document.getElementById('changelogIframe').src = "<?= $urlPrefixBeta."/blogpost.php?borderless&blogLocator=Kickback-Kingdom&postLocator=".Version::current()->blogpost_locator();?>";
+        document.getElementById('changelogIframe').src = "<?= Version::urlBetaPrefix()."/blogpost.php?borderless&blogLocator=Kickback-Kingdom&postLocator=".Version::current()->blogpost_locator();?>";
         document.cookie = "popupShownVersion=<?= Version::current()->number() ?>; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
         shouldShowVersionPopup = false;
     }
 
     function LoadVersionIframe() {
         var selectedPath = document.getElementById('versionSelect').value;
-            document.getElementById('changelogIframe').src = "<?= $urlPrefixBeta."/blogpost.php?borderless&blogLocator=Kickback-Kingdom&postLocator="; ?>"+selectedPath;
+            document.getElementById('changelogIframe').src = "<?= Version::urlBetaPrefix()."/blogpost.php?borderless&blogLocator=Kickback-Kingdom&postLocator="; ?>"+selectedPath;
     }
 
     // Adjust iframe height dynamically based on its content

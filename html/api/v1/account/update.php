@@ -27,10 +27,10 @@ $affectedRows = mysqli_affected_rows($GLOBALS["conn"]);
 
 if ($affectedRows > 0)
 {
-    return (new Kickback\Models\Response(true, "Account updated successfully",null));
+    return (new Kickback\Backend\Models\Response(true, "Account updated successfully",null));
 }
 else
 {
-    return (new Kickback\Models\Response(false, "Account not found or failed to update with error: ".GetSQLError(),null));
+    return (new Kickback\Backend\Models\Response(false, "Account not found or failed to update with error: ".GetSQLError(),null));
 }
 ?>

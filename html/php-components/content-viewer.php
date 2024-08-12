@@ -2,7 +2,7 @@
 
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
-use Kickback\Controllers\ContentController;
+use Kickback\Backend\Controllers\ContentController;
 use Kickback\Services\Session;
 
 if (!isset($_vPageContentEditMode))

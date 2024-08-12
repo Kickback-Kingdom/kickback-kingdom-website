@@ -16,7 +16,7 @@ if ($session->success)
 }
 else{
 
-    return (new Kickback\Models\Response(false, "Please provide a valid session.", null));
+    return (new Kickback\Backend\Models\Response(false, "Please provide a valid session.", null));
 }
 
 ?>

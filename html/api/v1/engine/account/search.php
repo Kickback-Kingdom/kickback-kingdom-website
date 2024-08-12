@@ -2,7 +2,7 @@
 
 require_once(__DIR__."/../../engine/engine.php");
 
-use Kickback\Controllers\AccountController;
+use Kickback\Backend\Controllers\AccountController;
 
 OnlyPOST();
 
@@ -29,11 +29,11 @@ assert(is_string($page) || is_int($page));
 assert(is_string($itemsPerPage) || is_int($itemsPerPage));
 
 if (is_string($page) && !ctype_digit($page)) {
-    return (new Kickback\Models\Response(false, "'page' parameter must be integer, but was not. Got '$page' instead.", null));
+    return (new Kickback\Backend\Models\Response(false, "'page' parameter must be integer, but was not. Got '$page' instead.", null));
 }
 
 if (is_string($itemsPerPage) && !ctype_digit($itemsPerPage)) {
-    return (new Kickback\Models\Response(false, "'itemsPerPage' parameter must be integer, but was not. Got '$itemsPerPage' instead.", null));
+    return (new Kickback\Backend\Models\Response(false, "'itemsPerPage' parameter must be integer, but was not. Got '$itemsPerPage' instead.", null));
 }
 
 return AccountController::SearchForAccount($searchTerm, intval($page), intval($itemsPerPage), $filters);

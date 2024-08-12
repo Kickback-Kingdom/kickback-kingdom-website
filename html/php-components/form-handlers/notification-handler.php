@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
 
-use Kickback\Controllers\QuestController;
-use Kickback\Views\vRecordId;
+use Kickback\Backend\Controllers\QuestController;
+use Kickback\Backend\Views\vRecordId;
 
 if (isset($_POST["submit-quest-review"])) {
     $hostRating = (int)$_POST["quest-review-host"];

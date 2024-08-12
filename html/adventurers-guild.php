@@ -11,8 +11,8 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-use Kickback\Controllers\FeedCardController;
-use Kickback\Controllers\FeedController;
+use Kickback\Backend\Controllers\FeedCardController;
+use Kickback\Backend\Controllers\FeedController;
 
 $availableQuestsResp = FeedController::getAvailableQuestsFeed();
 $availableQuests = $availableQuestsResp->data;
@@ -71,8 +71,8 @@ $tabPageActive = "active show";
                             </div>
                             <div class="card-body">
                                 
-                                <a href="<?php echo $urlPrefixBeta; ?>/quest.php?new" class="btn btn-primary">Post a New Quest</a>
-                                <a href="<?php echo $urlPrefixBeta; ?>/quest-line.php?new" class="btn btn-primary">Create New Quest Line</a>
+                                <a href="<?php echo Version::urlBetaPrefix(); ?>/quest.php?new" class="btn btn-primary">Post a New Quest</a>
+                                <a href="<?php echo Version::urlBetaPrefix(); ?>/quest-line.php?new" class="btn btn-primary">Create New Quest Line</a>
                             </div>
                         </div>
                     </div>

@@ -4,7 +4,7 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-use Kickback\Controllers\FeedController;
+use Kickback\Backend\Controllers\FeedController;
 
 if (!Kickback\Services\Session::isAdmin())
 {
@@ -254,7 +254,7 @@ $reviewFeed = $reviewFeedResp->data;
                                             if ($merchantGuildTask["TaskType"] == 0) {
                                         ?>
                                             <tr>
-                                                <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="/assets/media/<?php echo GetAccountProfilePicture($merchantGuildTask); ?>"/><a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $merchantGuildTask['Username']; ?>" class="username"><?php echo $merchantGuildTask['Username']; ?></a></td>
+                                                <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="/assets/media/<?php echo GetAccountProfilePicture($merchantGuildTask); ?>"/><a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo $merchantGuildTask['Username']; ?>" class="username"><?php echo $merchantGuildTask['Username']; ?></a></td>
                                                 <td><?php echo $merchantGuildTask['SharesPurchased']; ?></td>
                                                 <td><?php echo $merchantGuildTask['execution_date']; ?></td>
                                                 <td><?php echo $merchantGuildTask['Amount']." ".$merchantGuildTask['Currency']; ?></td>

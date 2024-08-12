@@ -47,10 +47,10 @@ function ContainsData($data, $name)
 {
     if (!isset($data) || empty($data))
     {
-        return new Kickback\Models\Response(false, "'$name' contains no data",null);
+        return new Kickback\Backend\Models\Response(false, "'$name' contains no data",null);
     }
     else{
-        return new Kickback\Models\Response(true, "All data is present",null);
+        return new Kickback\Backend\Models\Response(true, "All data is present",null);
     }
 }
  
@@ -59,13 +59,13 @@ function POSTContainsFields(...$fields)
     foreach($fields as $field){
         if (!isset($_POST[$field]))
         {
-            //$resp = new Kickback\Models\Response(false, "Request body is not formated correctly. Missing data '$field'",null);
+            //$resp = new Kickback\Backend\Models\Response(false, "Request body is not formated correctly. Missing data '$field'",null);
             //exit();
-            return new Kickback\Models\Response(false, "Request body is not formated correctly. Missing data '$field'",null);
+            return new Kickback\Backend\Models\Response(false, "Request body is not formated correctly. Missing data '$field'",null);
         }
     }
 
-    return new Kickback\Models\Response(true, "Request body is formatted correctly",null);
+    return new Kickback\Backend\Models\Response(true, "Request body is formatted correctly",null);
 }
 
 function SESSIONContainsFields(...$fields)
@@ -73,13 +73,13 @@ function SESSIONContainsFields(...$fields)
     foreach($fields as $field){
         if (!isset($_SESSION[$field]))
         {
-            //$resp = new Kickback\Models\Response(false, "Request body is not formated correctly. Missing data '$field'",null);
+            //$resp = new Kickback\Backend\Models\Response(false, "Request body is not formated correctly. Missing data '$field'",null);
             //exit();
-            return new Kickback\Models\Response(false, "Session information not found. Missing data '$field'",null);
+            return new Kickback\Backend\Models\Response(false, "Session information not found. Missing data '$field'",null);
         }
     }
 
-    return new Kickback\Models\Response(true, "Session information was found",null);
+    return new Kickback\Backend\Models\Response(true, "Session information was found",null);
 }
 
 function Validate($data)

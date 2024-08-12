@@ -1,14 +1,9 @@
 <?php
 
-$urlPrefixBeta = "";
-if ( array_key_exists("KICKBACK_IS_BETA",$_SERVER) && $_SERVER["KICKBACK_IS_BETA"] ) {
-    $urlPrefixBeta = "/beta";
-}
-$GLOBALS["urlPrefixBeta"] = $urlPrefixBeta;
-
 use \Kickback\Common\Version;
 use \Kickback\Services\Session;
-use \Kickback\Views\Response;
+use \Kickback\Backend\Views\Response;
+
 
 $showPopUpError = false;
 $showPopUpSuccess = false;
