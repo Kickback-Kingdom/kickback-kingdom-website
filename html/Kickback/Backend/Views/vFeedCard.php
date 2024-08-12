@@ -13,6 +13,7 @@ use Kickback\Backend\Views\vActivity;
 use Kickback\Backend\Views\vDateTime;
 use Kickback\Backend\Views\vReviewStatus;
 use Kickback\Backend\Models\PlayStyle;
+use Kickback\Common\Version;
 
 class vFeedCard
 {
@@ -52,7 +53,7 @@ class vFeedCard
 
     public function getURL()
     {
-        return $this->url;
+        return Version::formatUrl($this->url);
     }
 
     public function getAccountLinks() : string {

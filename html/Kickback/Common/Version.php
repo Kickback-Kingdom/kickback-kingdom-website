@@ -57,6 +57,10 @@ final class Version
         return "";
     }
 
+    public static function formatUrl(string $url) : string {
+        return self::urlBetaPrefix().$url;
+    }
+
     // We use `SplFixedArray` to enforce integer-valued indices.
     /** @var ?\SplFixedArray<Version> */
     private static ?\SplFixedArray $history_ = null;
