@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Kickback\Backend\Views;
 
 use Kickback\Backend\Views\vMedia;
+use Kickback\Common\Version;
 
 class vAccount extends vRecordId
 {
@@ -53,7 +54,7 @@ class vAccount extends vRecordId
 
     public function getURL() : string
     {
-        return "/u/".$this->username;
+        return Version::formatUrl("/u/".$this->username);
     }
 
     public function getProfilePictureURL() : string
