@@ -6,6 +6,7 @@ require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Backend\Controllers\BlogController;
 use Kickback\Backend\Controllers\FeedController;
+use Kickback\Common\Version;
 
 if (isset($_GET['locator'])){
         

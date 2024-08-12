@@ -1,5 +1,6 @@
 <?php 
 
+use Kickback\Common\Version;
 
 $feedCardType = "QUEST";
 $feedCardTypeText = "QUEST";

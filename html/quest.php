@@ -16,6 +16,7 @@ use Kickback\Backend\Controllers\QuestLineController;
 use Kickback\Backend\Models\PlayStyle;
 use Kickback\Services\Session;
 use Kickback\Backend\Views\vDateTime;
+use Kickback\Common\Version;
 
 $newPost = false;
 if (isset($_GET['id']))

@@ -13,6 +13,7 @@ require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Backend\Controllers\FeedCardController;
 use Kickback\Backend\Controllers\FeedController;
+use Kickback\Common\Version;
 
 $availableQuestsResp = FeedController::getAvailableQuestsFeed();
 $availableQuests = $availableQuestsResp->data;

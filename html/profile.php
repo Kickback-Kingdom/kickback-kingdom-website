@@ -13,6 +13,7 @@ use Kickback\Backend\Controllers\FeedCardController;
 use Kickback\Backend\Controllers\LootController;
 use Kickback\Backend\Controllers\ItemController;
 use Kickback\Backend\Models\ItemEquipmentSlot;
+use Kickback\Common\Version;
 
 if (isset($_GET['id']))
 $profile = AccountController::getAccountById($_GET['id']);

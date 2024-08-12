@@ -1,5 +1,6 @@
 <?php
 use Kickback\Backend\Models\PlayStyle;
+use Kickback\Common\Version;
 ?>
 <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
