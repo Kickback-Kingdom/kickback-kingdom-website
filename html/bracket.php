@@ -70,21 +70,21 @@ if ($questApplicants[0]->seed==null)
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, minimum-scale=0.5, user-scalable=yes">
 
 
-        <link href="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/bootstrap/bootstrap.min.css" rel="stylesheet">
-        <link href="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/bracket/jquery.bracket.min.css" rel="stylesheet">
-        <link href="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/animate/animate.min.css" rel="stylesheet" />
+        <link href="<?= Version::urlBetaPrefix(); ?>/assets/vendors/bootstrap/bootstrap.min.css" rel="stylesheet">
+        <link href="<?= Version::urlBetaPrefix(); ?>/assets/vendors/bracket/jquery.bracket.min.css" rel="stylesheet">
+        <link href="<?= Version::urlBetaPrefix(); ?>/assets/vendors/animate/animate.min.css" rel="stylesheet" />
         
     <?php
         $cssFile = Version::urlBetaPrefix().'/assets/css/kickback-kingdom.css';
-        $cssVersion = filemtime($_SERVER['DOCUMENT_ROOT'].$cssFile);
+        $cssVersion = Version::current()->number();
     ?>
 
     <link rel="stylesheet" type="text/css" href="<?= $cssFile.'?v='.$cssVersion ?>">
 
-        <script src="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/jquery/jquery-3.7.0.min.js"></script>
-        <script src="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/bootstrap/bootstrap.bundle.min.js"></script>
-        <script src="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/bracket/jquery.bracket.min.js"></script>
-        <script src="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/fittext/jquery.fittext.js"></script>
+        <script src="<?= Version::urlBetaPrefix(); ?>/assets/vendors/jquery/jquery-3.7.0.min.js"></script>
+        <script src="<?= Version::urlBetaPrefix(); ?>/assets/vendors/bootstrap/bootstrap.bundle.min.js"></script>
+        <script src="<?= Version::urlBetaPrefix(); ?>/assets/vendors/bracket/jquery.bracket.min.js"></script>
+        <script src="<?= Version::urlBetaPrefix(); ?>/assets/vendors/fittext/jquery.fittext.js"></script>
     </head>
     <body class="body-bracket">
         <div class="modal fade" id="matchModal" tabindex="-1" role="dialog" aria-labelledby="matchModal" aria-hidden="true" style="background-color: #5e6e30c7; transition: 1s;">

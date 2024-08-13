@@ -4,14 +4,14 @@ use Kickback\Common\Version;
 ?>
 <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/jquery/jquery-3.7.0.min.js"></script>
+    <script src="<?= Version::urlBetaPrefix(); ?>/assets/vendors/jquery/jquery-3.7.0.min.js"></script>
     <!--<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>-->
-    <script src="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="<?= Version::urlBetaPrefix(); ?>/assets/vendors/bootstrap/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/run_prettify.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
-    <script src="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/qrcode/qrcode.min.js"></script>
-    <script src="<?php echo Version::urlBetaPrefix(); ?>/assets/js/qrcode.js"></script>
+    <script src="<?= Version::urlBetaPrefix(); ?>/assets/vendors/qrcode/qrcode.min.js"></script>
+    <script src="<?= Version::urlBetaPrefix(); ?>/assets/js/qrcode.js"></script>
 
     <!--<script src="assets/owl-carousel/owl.carousel.js"></script>-->
     <script>
