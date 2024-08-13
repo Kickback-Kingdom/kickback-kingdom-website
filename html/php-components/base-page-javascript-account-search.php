@@ -1,4 +1,9 @@
+<?php
+declare(strict_types=1);
 
+use Kickback\Common\Version;
+
+?>
 <script>
 
 var selectAccountModalCallerId = -1;
