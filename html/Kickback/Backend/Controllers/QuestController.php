@@ -242,14 +242,22 @@ class QuestController
         `quest_applicants`.`participated` AS `participated`, 
         `quest_applicants`.`quest_id` AS `quest_id`, 
         `quest_applicants`.`seed_score` AS `seed_score`, 
-        case when `quest_applicants`.`participated` = 1 
-        or `quest_applicants`.`seed_score` > 0 then rank() over (
-          partition by `quest_applicants`.`quest_id` 
-          order by 
-            `quest_applicants`.`seed_score` desc, 
-            `account`.`exp` desc, 
-            `account`.`Id` desc
-        ) else NULL end AS `seed`, 
+        CASE 
+        WHEN `quest_applicants`.`seed_score` > 0 
+        THEN RANK() OVER (
+            PARTITION BY `quest_applicants`.`quest_id` 
+            ORDER BY 
+                `quest_applicants`.`seed_score` DESC, 
+                `account`.`Id` DESC
+        ) 
+        ELSE RANK() OVER (
+            PARTITION BY `quest_applicants`.`quest_id` 
+            ORDER BY 
+                CASE WHEN `v_game_rank`.`rank` IS NULL THEN 1 ELSE 0 END ASC, 
+                `v_game_rank`.`rank` ASC, 
+                `account`.`Id` DESC
+        ) 
+    END AS `seed`, 
         `v_game_rank`.`rank` AS `rank`
       from 
         (

@@ -6,6 +6,7 @@ require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Controllers\TournamentController;
+use Kickback\Common\Version;
 
 $hasError = false;
 $errorMessage = "";
