@@ -47,7 +47,7 @@ function SearchForAccount(formId, pageIndex = 1, clickableFunction = null, filte
         }
     }
 
-    fetch('/api/v1/account/search.php?json', {
+    fetch('<?= Version::formatUrl("/api/v1/account/search.php?json"); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
