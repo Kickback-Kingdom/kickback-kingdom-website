@@ -7,6 +7,10 @@ use Kickback\Common\Database\DatabaseRowIntegerAccess;
 use Kickback\Common\Database\DatabaseRowIterator;
 use Kickback\Common\Database\DatabaseFieldInfo;
 
+// TODO:
+// * Provide class-level documentation with examples.
+// * DatabaseFieldInfo iterator.
+// * DatabaseFieldInfo getter/accessors.
 
 /**
 * @implements \IteratorAggregate<string,mixed>
@@ -211,7 +215,7 @@ class DatabaseRow implements \IteratorAggregate, \ArrayAccess, \Countable, Datab
 	/**
 	* @param   string  $field_name
 	* @return  mixed
-	* @throws  \OutOfBoundsException
+	* @throws  \OutOfBoundsException  If there is no field with the given name in the Database row.
 	*/
 	public function __get(string $field_name) : mixed
 	{
@@ -221,7 +225,7 @@ class DatabaseRow implements \IteratorAggregate, \ArrayAccess, \Countable, Datab
 	/**
 	* @param   string $field_name
 	* @return  void
-	* @throws  \OutOfBoundsException
+	* @throws  \OutOfBoundsException  If there is no field with the given name in the Database row.
 	*/
 	public function __set(string $field_name, mixed $value) : void
 	{
@@ -295,7 +299,8 @@ class DatabaseRow implements \IteratorAggregate, \ArrayAccess, \Countable, Datab
 	* @param   string  $field_name
 	* @param   mixed   $value
 	* @return  void
-	* @throws  \OutOfBoundsException
+	* @throws  \OutOfBoundsException      If there is no field with the given name in the Database row.
+	* @throws  \InvalidArgumentException  If `$value` does not have the same type as the existing value. (e.g. it is the wrong type for this field|column.)
 	*/ // @phpstan-ignore method.childParameterType
 	public final function offsetSet(mixed $field_name, mixed $value): void
 	{
@@ -304,6 +309,13 @@ class DatabaseRow implements \IteratorAggregate, \ArrayAccess, \Countable, Datab
 			throw new \OutOfBoundsException("Attempt to write to non-existant field: `".$field_name."`");
 		}
 		assert(is_int($i));
+		$old_type = gettype($this->field_values[$i]);
+		$new_type = gettype($value);
+		if ($old_type !== $new_type) {
+			throw new \InvalidArgumentException(
+				"Attempted to assign value of incorrect type to field `$field_name`. "
+				."The new value's type is `$new_type`, and the field's type is `$old_type`.");
+		}
 		$this->field_values[$i] = $value;
 	}
 
@@ -316,7 +328,7 @@ class DatabaseRow implements \IteratorAggregate, \ArrayAccess, \Countable, Datab
 	/**
 	* @param   string  $field_name
 	* @return  void
-	* @throws  \OutOfBoundsException
+	* @throws  \OutOfBoundsException  If there is no field with the given name in the Database row.
 	*/
 	public final function offsetUnset(mixed $field_name): void
 	{
@@ -342,27 +354,8 @@ class DatabaseRow implements \IteratorAggregate, \ArrayAccess, \Countable, Datab
 	}
 
 	// =========================================================================
-	// Other methods
+	// DatabaseRowIntegerAccess implementation
 	// -------------------------------------------------------------------------
-
-	/**
-	* @return  array<string,mixed>
-	*/
-	public final function toArray() : array
-	{
-		$result = [];
-		$len = count($this->field_infos);
-		for($i = 0; $i < $len; $i++) {
-			$info = $this->field_infos[$i];
-			if ( !$info->is_valid() ) {
-				continue;
-			}
-			$result[$info->name] = $this->field_values[$i];
-			assert(array_key_exists($info->name, $this->field_indices));
-			assert($this->field_indices[$info->name] === $i);
-		}
-		return $result;
-	}
 
 	public final function max_column_index() : int
 	{
@@ -422,6 +415,29 @@ class DatabaseRow implements \IteratorAggregate, \ArrayAccess, \Countable, Datab
 	{
 		$i = self::enforce_valid_positional_access($pos);
 		return $this->field_infos[$i]->name;
+	}
+
+	// =========================================================================
+	// Other methods
+	// -------------------------------------------------------------------------
+
+	/**
+	* @return  array<string,mixed>
+	*/
+	public final function toArray() : array
+	{
+		$result = [];
+		$len = count($this->field_infos);
+		for($i = 0; $i < $len; $i++) {
+			$info = $this->field_infos[$i];
+			if ( !$info->is_valid() ) {
+				continue;
+			}
+			$result[$info->name] = $this->field_values[$i];
+			assert(array_key_exists($info->name, $this->field_indices));
+			assert($this->field_indices[$info->name] === $i);
+		}
+		return $result;
 	}
 }
 ?>
