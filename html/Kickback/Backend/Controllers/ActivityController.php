@@ -16,7 +16,7 @@ class ActivityController
     public static function getActivityByAccount(vAccount $account) : Response
     {
         $conn = Database::getConnection();
-        $stmt = mysqli_prepare($conn, "SELECT * FROM v_account_activity where account_id = ?");
+        $stmt = mysqli_prepare($conn, "SELECT * FROM v_account_activity where account_id = ? and finished = 1 and published = 1");
         mysqli_stmt_bind_param($stmt, "i", $account->crand);
         mysqli_stmt_execute($stmt);
 
