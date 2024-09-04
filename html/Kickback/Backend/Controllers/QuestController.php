@@ -257,7 +257,7 @@ class QuestController
                 `v_game_rank`.`rank` ASC, 
                 `account`.`Id` DESC
         ) 
-    END AS `seed`, 
+        END AS `seed`, 
         `v_game_rank`.`rank` AS `rank`
       from 
         (
@@ -918,6 +918,15 @@ class QuestController
         $host1->username = $row["host_name"];
 
         $quest->host1 = $host1;
+
+        if ($row["host_id_2"] != null)
+        {
+
+            $host2 = new vAccount('', $row["host_id_2"]);
+            $host2->username = $row["host_name_2"];
+    
+            $quest->host2 = $host2;
+        }
 
         $quest->requiresApplication = (bool)$row["req_apply"];
 
