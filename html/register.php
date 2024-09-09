@@ -10,8 +10,8 @@ use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Controllers\AccountController;
-
-\Kickback\Common\Version::$show_version_popup = false;
+use Kickback\Common\Version;
+Version::$show_version_popup = false;
 
 $hasError = false;
 $errorMessage = '';

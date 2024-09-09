@@ -53,7 +53,7 @@ $games = $gamesResp->data;
                         <div class="card-body">
                             <h5 class="card-title"><?= $game->name; ?></h5>
                             <p class="card-text"><?= $game->description; ?></p>
-                            <a href="<?php echo Version::urlBetaPrefix(); ?><?= $game->GetURL(); ?>" class="btn btn-primary">View Game</a>
+                            <a href="<?php echo Version::urlBetaPrefix(); ?><?= $game->GetURL(); ?>" class="btn btn-primary disabled">View Game</a>
                         </div>
                     </div>
                 <?php

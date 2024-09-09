@@ -12,8 +12,9 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 use Kickback\Backend\Controllers\AccountController;
+use Kickback\Common\Version;
 
-\Kickback\Common\Version::$show_version_popup = false;
+Version::$show_version_popup = false;
 
 $redirectUrl = 'index.php';
 
