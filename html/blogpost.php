@@ -111,7 +111,7 @@ if ($thisBlogPost->blogLocator == "Kickback-Kingdom")
                             </div>
                             <div class="card-body">
                                 <button type="button" class="btn btn-primary" onclick="OpenModalEditBlogPostOptions()">Edit Blog Post Details</button>
-                                <button type="button" class="btn btn-primary" onclick="OpenModalPublishBlogPost()">Publish Blog Post</button>
+                                <?php if ($thisBlogPost->reviewStatus->isDraft()) { ?><button type="button" class="btn btn-primary" onclick="OpenModalPublishBlogPost()">Publish Blog Post</button><?php } ?>
                             </div>
                         </div>
                     </div>
