@@ -114,10 +114,10 @@ class ContentController {
             switch ($type) {
                 case 'BLOG-POST':
                     //$blog = GetBlogByLocator($ids[0]);
-                    $blogPostResp = GetBlogPostByLocators($ids[0],$ids[1]);
+                    $blogPostResp = BlogPostController::getBlogPostByLocators($ids[0],$ids[1]);
                     if ($blogPostResp->success)
                     {
-                        return IsWriterForBlogPost($blogPostResp->data);
+                        return $blogPostResp->data->isWriter();
                     }
                     else
                     {

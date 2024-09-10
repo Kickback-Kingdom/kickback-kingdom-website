@@ -59,6 +59,8 @@ class BlogPostController
         $blogPost->postLocator = $row["Postlocator"];
         $blogPost->blogLocator = $row["Bloglocator"];
 
+        $blogPost->blog = BlogController::getBlogByLocator($blogPost->blogLocator)->data;
+
         $author = new vAccount('', $row["Author_id"]);
         $author->username = $row["Author_Username"];
 
