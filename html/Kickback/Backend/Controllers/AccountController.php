@@ -284,7 +284,7 @@ class AccountController
         $countQuery = "SELECT COUNT(*) as total FROM v_account_info" . $joinQuery . "  WHERE (LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?)  AND Banned = 0";
         
         // Prepare the base of the main query
-        $query = "SELECT *,
+        $query = "SELECT v_account_info.*,
         (
             (CASE WHEN LOWER(username) LIKE ? THEN 4 ELSE 0 END) +
             (CASE WHEN LOWER(firstname) LIKE ? THEN 3 ELSE 0 END) +

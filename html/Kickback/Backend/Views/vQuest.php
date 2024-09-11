@@ -91,7 +91,7 @@ class vQuest extends vRecordId
 
     public function getHost2Id() : int {
         if ($this->host2 == null)
-            return "";
+            return -1;
         return $this->host2->crand;
     }
 
