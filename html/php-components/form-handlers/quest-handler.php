@@ -5,16 +5,18 @@ use Kickback\Common\Utility\FormToken;
 
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Controllers\QuestController;
+use Kickback\Backend\Controllers\QuestLineController;
+use Kickback\Services\Session;
 
 if (isset($_POST["edit-quest-images-submit"])) 
 {
     $tokenResponse = FormToken::useFormToken();
     
     if ($tokenResponse->success) {
-        $questId = new vRecordId('', $_POST["edit-quest-id"]);
-        $desktopId =  new vRecordId('', $_POST["edit-quest-images-desktop-banner-id"]);
-        $mobileId =  new vRecordId('', $_POST["edit-quest-images-mobile-banner-id"]);
-        $iconId =  new vRecordId('', $_POST["edit-quest-images-icon-id"]);
+        $questId = new vRecordId('', (int)$_POST["edit-quest-id"]);
+        $desktopId =  new vRecordId('', (int)$_POST["edit-quest-images-desktop-banner-id"]);
+        $mobileId =  new vRecordId('', (int)$_POST["edit-quest-images-mobile-banner-id"]);
+        $iconId =  new vRecordId('', (int)$_POST["edit-quest-images-icon-id"]);
         $response = QuestController::updateQuestImages($questId, $desktopId, $mobileId, $iconId);
 
         if ($response->success) {
@@ -39,10 +41,10 @@ if (isset($_POST["edit-quest-line-images-submit"]))
     $tokenResponse = FormToken::useFormToken();
     
     if ($tokenResponse->success) {
-        $questId = new vRecordId('', $_POST["edit-quest-line-id"]);
-        $desktopId = new vRecordId('', $_POST["edit-quest-line-images-desktop-banner-id"]);
-        $mobileId = new vRecordId('', $_POST["edit-quest-line-images-mobile-banner-id"]);
-        $iconId = new vRecordId('', $_POST["edit-quest-line-images-icon-id"]);
+        $questId = new vRecordId('', (int)$_POST["edit-quest-line-id"]);
+        $desktopId = new vRecordId('', (int)$_POST["edit-quest-line-images-desktop-banner-id"]);
+        $mobileId = new vRecordId('', (int)$_POST["edit-quest-line-images-mobile-banner-id"]);
+        $iconId = new vRecordId('', (int)$_POST["edit-quest-line-images-icon-id"]);
         $response = QuestLineController::updateQuestLineImages($questId, $desktopId, $mobileId, $iconId);
 
         if ($response->success) {
@@ -76,7 +78,7 @@ if (isset($_POST["edit-quest-options-submit"]))
             
             if ($response->data->locatorChanged)
             {
-                Redirect("q/".$response->data->locator);
+                Session::redirect("q/".$response->data->locator);
             }
         } else {
             $showPopUpError = true;
@@ -96,7 +98,7 @@ if (isset($_POST["edit-quest-rewards-submit"]))
     $tokenResponse = FormToken::useFormToken();
     
     if ($tokenResponse->success) {
-        $quest_id = new vRecordId('', $_POST["edit-quest-id"]);
+        $quest_id = new vRecordId('', (int)$_POST["edit-quest-id"]);
         $shouldHaveStandardRewards = isset($_POST["edit-quest-rewards-has-standard"]);
         $rewardResp = null;
         if ($shouldHaveStandardRewards) {
@@ -134,7 +136,7 @@ if (isset($_POST["edit-quest-line-options-submit"]))
             
             if ($response->data->locatorChanged)
             {
-                Redirect("quest-line/".$response->data->locator);
+                Session::redirect("quest-line/".$response->data->locator);
             }
         } else {
             $showPopUpError = true;

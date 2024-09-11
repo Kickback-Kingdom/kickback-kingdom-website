@@ -18,6 +18,7 @@ use Kickback\Backend\Views\vReviewStatus;
 use Kickback\Backend\Views\vQuestLine;
 use Kickback\Backend\Models\PlayStyle;
 use Kickback\Backend\Models\ItemType;
+use Kickback\Backend\Models\Quest;
 use Kickback\Backend\Models\ItemRarity;
 use Kickback\Backend\Views\vTournament;
 use Kickback\Backend\Views\vQuestApplicant;
@@ -347,7 +348,7 @@ class QuestController
             self::chooseRaffleWinner($quest->raffle);
         }
     }
-    
+
     public static function getSubmittedRaffleTickets(vRaffle $raffle): Response {
         $conn = Database::getConnection();
         $sql = "SELECT Id FROM kickbackdb.raffle_submissions WHERE raffle_id = ?";
@@ -906,7 +907,7 @@ class QuestController
         }
         else{
             $quest->content = new vContent();
-            $quest->content->htmlContent = $row["desc"];
+            $quest->content->htmlContent = $row["desc"] ?? "";
         }
 
         if ($row["quest_line_id"] != null)
@@ -919,7 +920,7 @@ class QuestController
 
         $quest->host1 = $host1;
 
-        if ($row["host_id_2"] != null)
+        if ($row["host_id_2"] != null && $row["host_name_2"] != null)
         {
 
             $host2 = new vAccount('', $row["host_id_2"]);
@@ -1037,6 +1038,8 @@ class QuestController
             if (!$questResp->success)
             {
                 $questModel = new Quest();
+                $questModel->title = $questName;
+                $questModel->locator = $questLocator;
                 $insertResp = self::insert($questModel);
                 $quest = $insertResp->data;
             }
@@ -1046,29 +1049,30 @@ class QuestController
             }
             if (!$quest->hasPageContent())
             {
-                $newContentId = InsertNewContent();
+                $newContentId = ContentController::insertNewContent();
                 
-                UpdateQuestContent($questResp->data["Id"],$newContentId);
+                self::updateQuestContent($questResp->data,new vRecordId('', $newContentId));
 
-                $questResp = GetQuestByLocator($questLocator);
+                $questResp = self::getQuestByLocator($questLocator);
             }
 
             return (new Response(true, "New quest created.", $questResp->data));
         }
-        else{
+        else
+        {
             return (new Response(false, "You do not have permissions to post a new quest.", null));
         }
     }
 
     public static function insert(Quest $quest) : Response {
-
+        $conn = Database::getConnection();
         $stmt = $conn->prepare("INSERT INTO quest (name, locator, host_id) values (?,?,?)");
-        mysqli_stmt_bind_param($stmt, 'ssi', $questName, $questLocator, Kickback\Services\Session::getCurrentAccount()->crand);
+        mysqli_stmt_bind_param($stmt, 'ssi', $quest->title, $quest->locator, Session::getCurrentAccount()->crand);
         mysqli_stmt_execute($stmt);
-        $newId = mysqli_insert_id($conn);
-        $questResp = GetQuestByLocator($questLocator);
-        $rewardResp = SetupStandardParticipationRewards($newId);
-
+        //$newId = mysqli_insert_id($conn);
+        $questResp = self::getQuestByLocator($quest->locator);
+        $rewardResp = SetupStandardParticipationRewards($questResp->data);
+        return self::getQuestByLocator($quest->locator);
     }
 }
 ?>

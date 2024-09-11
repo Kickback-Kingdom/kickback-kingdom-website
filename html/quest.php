@@ -47,7 +47,7 @@ if (!$questResp->success)
 }
 if (!isset($questResp))
 {
-    Redirect("adventurers-guild.php");
+    Session::redirect("adventurers-guild.php");
 }
 
 $thisQuest = $questResp->data;

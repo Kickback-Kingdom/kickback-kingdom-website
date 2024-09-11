@@ -8,6 +8,7 @@ require("php-components/base-page-pull-active-account-info.php");
 use Kickback\Backend\Controllers\QuestLineController;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Controllers\FeedCardController;
+use Kickback\Services\Session;
 
 if (isset($_GET['id']))
 {
@@ -48,7 +49,7 @@ if (!$questLineResp->success)
 }
 if (!isset($questLineResp))
 {
-    Redirect("adventurers-guild.php");
+    Session::redirect("adventurers-guild.php");
 }
 
 $thisQuestLine = $questLineResp->data;

@@ -82,7 +82,7 @@ class vQuestLine extends vRecordId
         return ($this->hasPageContent() && ($this->content->isValid()));
     }
 
-    public function getPageContent() : array {
+    public function getPageContent() : vPageContent {
         return $this->content->pageContent;
     }
 
