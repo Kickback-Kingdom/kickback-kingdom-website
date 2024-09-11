@@ -10,7 +10,7 @@ use Kickback\Backend\Controllers\ContentController;
 use Kickback\Backend\Controllers\BlogController;
 use Kickback\Backend\Controllers\BlogPostController;
 use Kickback\Backend\Controllers\FeedCardController;
-
+use Kickback\Services\Session;
 
 if (isset($_GET['blogLocator'])) {
     
@@ -24,7 +24,8 @@ if (isset($_GET['blogLocator'])) {
         }
         elseif (isset($_GET["new"]))
         {
-            $blogPostResp = BlogPostController::insertNewBlogPost($blog["Id"], $blogLocator);
+            $blog = BlogController::getBlogByLocator($_GET['blogLocator'])->data;
+            $blogPostResp = BlogPostController::insertNewBlogPost($blog, $_GET['blogLocator']);
         }
         
         if ($blogPostResp->success)
@@ -36,6 +37,11 @@ if (isset($_GET['blogLocator'])) {
             $thisBlogPost->blog = $blogResp->data;
         }
     
+}
+
+if (!isset($thisBlogPost) || (isset($thisBlogPost) && $thisBlogPost == null))
+{
+    Session::Redirect("/blog/".$_GET['blogLocator']);
 }
 
 $isWriterForBlogPost = $thisBlogPost->isWriter();

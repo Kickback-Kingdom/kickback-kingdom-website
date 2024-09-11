@@ -72,8 +72,8 @@ $tabPageActive = "active show";
                             </div>
                             <div class="card-body">
                                 
-                                <a href="<?php echo Version::urlBetaPrefix(); ?>/quest.php?new" class="btn btn-primary">Post a New Quest</a>
-                                <a href="<?php echo Version::urlBetaPrefix(); ?>/quest-line.php?new" class="btn btn-primary">Create New Quest Line</a>
+                                <a href="<?= Version::urlBetaPrefix(); ?>/quest.php?new" class="btn btn-primary">Post a New Quest</a>
+                                <a href="<?= Version::urlBetaPrefix(); ?>/quest-line.php?new" class="btn btn-primary">Create New Quest Line</a>
                             </div>
                         </div>
                     </div>
