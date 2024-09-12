@@ -91,7 +91,7 @@ if (isset($_POST["submit-raffle"]))
             if ($thisQuest["published"]==1)
             {
 
-                DiscordWebHook(GetRandomGreeting().', '.Session::getCurrentAccount()->username.' just submitted a raffle ticket to the '.$thisQuest['name'].' quest.');
+                DiscordWebHook(GetRandomGreeting().', '.Session::getCurrentAccount()->username.' just submitted a number of raffle tickets to the '.$thisQuest['name'].' quest.');
             }
 
             $hasSuccess = true;
