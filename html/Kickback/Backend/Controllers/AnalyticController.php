@@ -334,7 +334,7 @@ class AnalyticController
         
         $conn = Database::getConnection();
         
-        $sql = "SELECT month, new_accounts, total_accounts, growth_percentage, active_accounts, retention_rate FROM kickbackdb.v_analytic_accounts_growth_retention_monthly;";
+        $sql = "SELECT month, new_accounts, total_accounts, growth_percentage, active_accounts, retention_rate, website_hits FROM kickbackdb.v_analytic_accounts_growth_retention_monthly;";
         $stmt = $conn->prepare($sql);
     
         if (!$stmt) {
