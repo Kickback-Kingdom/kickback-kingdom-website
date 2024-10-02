@@ -139,7 +139,7 @@ class BlogPostController
         if ($success) {
             // Send the blog post announcement via Discord webhook
             $msg = FlavorTextController::getNewBlogPostAnnouncement($currentBlogPost);
-            SocialMediaController::discordWebHook($msg);
+            SocialMediaController::DiscordWebHook($msg);
 
             return new Response(true, "Blog post published successfully!", null);
         } else {

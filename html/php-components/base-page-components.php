@@ -635,9 +635,9 @@ $mediaDirs = $mediaDirsResp->data;
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/town-square.php"><i class="nav-icon fa-regular fa-address-card"></i> Town Square <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
-            <li class="nav-item">
+            <!--<li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
-            </li>
+            </li>-->
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
@@ -646,12 +646,6 @@ $mediaDirs = $mediaDirsResp->data;
             </li>
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/business-plan.php"><i class="nav-icon fa-regular fa-file-lines"></i> Business Plan <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/project-roadmaps.php"><i class="nav-icon fa-solid fa-road"></i> Project Roadmaps <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/castles.php"><i class="nav-icon fa-brands fa-fort-awesome"></i> Castles <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/analytics.php"><i class="nav-icon fa-solid fa-chart-line"></i> Analytics <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
@@ -773,7 +767,7 @@ $mediaDirs = $mediaDirsResp->data;
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/town-square.php"><i class="nav-icon fa-regular fa-address-card"></i> Town Square</a></li>
-                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges</a></li>
+                        <!--<li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges</a></li>-->
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs</a></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities</a></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/guild-halls.php"><i class="nav-icon fa-solid fa-landmark"></i> Guild Halls</a></li>
@@ -793,12 +787,6 @@ $mediaDirs = $mediaDirsResp->data;
                     <ul class="dropdown-menu">
                         <li>
                             <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/business-plan.php"><i class="nav-icon fa-regular fa-file-lines"></i> Business Plan</a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/project-roadmaps.php"><i class="nav-icon fa-solid fa-road"></i> Project Roadmaps</a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/castles.php"><i class="nav-icon fa-brands fa-fort-awesome"></i> Castles</a>
                         </li>
                         <li>
                             <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/analytics.php"><i class="nav-icon fa-solid fa-chart-line"></i> Analytics</a>

@@ -57,7 +57,11 @@ final class Version
         return "";
     }
 
-    public static function formatUrl(string $url) : string {
+    public static function formatUrl(?string $url) : string {
+        
+        if ($url == null)
+            return "";
+
         return self::urlBetaPrefix().$url;
     }
 

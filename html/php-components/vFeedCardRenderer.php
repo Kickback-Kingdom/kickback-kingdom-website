@@ -9,7 +9,7 @@ use Kickback\Backend\Controllers\QuestController;
         </div>
         <div class="<?= $_vFeedCard->cssClassTextColSize; ?> <?= $_vFeedCard->cssClassRight; ?>" >
             <div class="card-body <?= ($_vFeedCard->quoteStyleText?"card-body-vertical-center":""); ?>">
-                <a class="feed-title" href="<?= $_vFeedCard->url; ?>">
+                <a class="feed-title" href="<?= $_vFeedCard->getURL(); ?>">
                     <h5 class="card-title"><?= $_vFeedCard->getTitle(); ?></h5>
                 </a>
                 <?php if ($_vFeedCard->hasCreatedBy) { ?>

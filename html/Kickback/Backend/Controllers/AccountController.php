@@ -15,6 +15,7 @@ use Kickback\Services\Session;
 use Kickback\Backend\Controllers\LootController;
 use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Backend\Views\vRaffle;
+use Kickback\Backend\Controllers\SocialMediaController;
 
 class AccountController
 {
@@ -1024,7 +1025,7 @@ class AccountController
     
             // Additional actions within the transaction
             LootController::giveWritOfPassage($login);
-            DiscordWebHook(FlavorTextController::getNewcomerIntroduction($username));
+            SocialMediaController::DiscordWebHook(FlavorTextController::getNewcomerIntroduction($username));
     
             // Commit transaction
             $conn->commit();

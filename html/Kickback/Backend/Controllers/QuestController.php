@@ -24,6 +24,7 @@ use Kickback\Backend\Views\vTournament;
 use Kickback\Backend\Views\vQuestApplicant;
 use Kickback\Backend\Views\vRaffle;
 use Kickback\Backend\Controllers\AccountController;
+use Kickback\Backend\Controllers\SocialMediaController;
 
 class QuestController
 {
@@ -429,8 +430,8 @@ class QuestController
                 }
 
                 $raffleWinner = $raffleWinnerResp->data;
-                $msg = self::getRaffleWinnerAnnouncement($raffleQuest["name"], $raffleWinner[0]["Username"]);
-                self::discordWebHook($msg);
+                $msg = FlavorTextController::getRaffleWinnerAnnouncement($raffleQuest["name"], $raffleWinner[0]["Username"]);
+                SocialMediaController::DiscordWebHook($msg);
 
                 return new Response(true, "Selected Raffle Winner!", null);
             } else {
@@ -831,7 +832,7 @@ class QuestController
         if (mysqli_stmt_execute($stmt)) {
             $account = AccountController::getAccountById($account_id)->data;
             $quest = self::getQuestById($quest_id)->data;
-            DiscordWebHook(FlavorTextController::GetRandomGreeting() . ', ' . $account->username . ' just signed up for the ' . $quest->title . ' quest.');
+            SocialMediaController::DiscordWebHook(FlavorTextController::GetRandomGreeting() . ', ' . $account->username . ' just signed up for the ' . $quest->title . ' quest.');
             mysqli_stmt_close($stmt);
             return (new Response(true, "Registered for quest successfully", null));
         } else {
