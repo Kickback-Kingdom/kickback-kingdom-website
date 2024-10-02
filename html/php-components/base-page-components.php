@@ -457,7 +457,7 @@ $mediaDirs = $mediaDirsResp->data;
                                 case NotificationType::THANKS_FOR_HOSTING:
                                     ?>
                                         <form method="POST">
-                                            <input type="hidden" name="quest-notifications-thanks-for-hosting-quest-id" value="<?php echo $not["quest_id"]; ?>"/>
+                                            <input type="hidden" name="quest-notifications-thanks-for-hosting-quest-id" value="<?= $not->quest->crand; ?>"/>
                                             <div class="toast-body">
                                                 <button type="submit" name="submit-notifications-thanks-for-hosting" class="bg-ranked-1 btn btn-sm"><i class="fa-solid fa-gift"></i> Collect Rewards</button>
                                             </div>
