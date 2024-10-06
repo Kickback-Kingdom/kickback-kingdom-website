@@ -362,7 +362,7 @@ function PopulateResultsDisplayInputs() {
 
     $("#result_display_name").html(GetFullName());
     $("#result_display_birth").html(GetDOBLocal());
-    $("#result_display_address").html(GetHouseNumber());
+    $("#result_display_address").html(BreakHouseNumberDown());
     $("#result_display_prof_name").html(GetProfessionalName());
 }
 
@@ -623,9 +623,13 @@ function PopulateResultsNameConsonates(result){
     
 }
 
-function BreakHouseNumberDown()
-{
-
+function BreakHouseNumberDown() {
+    var houseNumber = GetHouseNumber();
+    var houseDigits = GetDigits(houseNumber);
+    var houseSum = SumSoulNumbers(houseDigits);
+    
+    console.log("House Number Sum: " + houseSum);
+    return houseSum;
 }
 
 function SoulNumNeedsRecalculated(num)
