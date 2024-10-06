@@ -110,13 +110,13 @@
                                 <input type="text" class="form-control" id="houseNum" aria-describedby="basic-addon3 basic-addon4">
                             </div>
                         </div>
-                        <div class="mb-3">
+                        <!--<div class="mb-3">
                             <label for="profName" class="form-label">Nome profissional ou nome e sobrenome preferidos</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fa-solid fa-briefcase"></i></span>
                                 <input type="text" class="form-control" id="profName" aria-describedby="basic-addon3 basic-addon4">
                             </div>
-                        </div>
+                        </div>-->
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sair</button>
@@ -282,8 +282,8 @@
                                 <dd class="" id="result_display_birth"></dd>
                                 <dt class="">Número da sua casa ou imóvel</dt>
                                 <dd class="" id="result_display_address"></dd>
-                                <dt class="">Nome profissional ou nome e sobrenome preferidos</dt>
-                                <dd class="" id="result_display_prof_name"></dd>
+                                <!--<dt class="">Nome profissional ou nome e sobrenome preferidos</dt>
+                                <dd class="" id="result_display_prof_name"></dd>-->
 
                             </dl>
                         </div>
