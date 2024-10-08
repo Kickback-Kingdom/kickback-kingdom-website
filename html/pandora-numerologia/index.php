@@ -110,13 +110,13 @@
                                 <input type="text" class="form-control" id="houseNum" aria-describedby="basic-addon3 basic-addon4">
                             </div>
                         </div>
-                        <div class="mb-3">
+                        <!--<div class="mb-3">
                             <label for="profName" class="form-label">Nome profissional ou nome e sobrenome preferidos</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fa-solid fa-briefcase"></i></span>
                                 <input type="text" class="form-control" id="profName" aria-describedby="basic-addon3 basic-addon4">
                             </div>
-                        </div>
+                        </div>-->
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sair</button>
@@ -282,8 +282,8 @@
                                 <dd class="" id="result_display_birth"></dd>
                                 <dt class="">Número da sua casa ou imóvel</dt>
                                 <dd class="" id="result_display_address"></dd>
-                                <dt class="">Nome profissional ou nome e sobrenome preferidos</dt>
-                                <dd class="" id="result_display_prof_name"></dd>
+                                <!--<dt class="">Nome profissional ou nome e sobrenome preferidos</dt>
+                                <dd class="" id="result_display_prof_name"></dd>-->
 
                             </dl>
                         </div>
@@ -381,7 +381,7 @@
                     <div class="row flex-lg-row-reverse align-items-center g-5  px-3">
                         <div class="col-lg-6">
                             <div class="ratio ratio-16x9">
-                                <iframe src="https://www.youtube.com/embed/pcID9XWmevo?rel=0" title="YouTube video" allowfullscreen=""></iframe>
+                                <iframe src="https://www.youtube.com/embed/9917l7AzhHA?rel=0" title="YouTube video" allowfullscreen=""></iframe>
                             </div>
                         </div>
                         <div class="col-lg-6">
@@ -391,7 +391,7 @@
                             <p class="lead" style="text-align: justify;">Experimente agora e descubra o Poder que há em você!</p>
                             <div class="d-grid gap-2 d-md-flex justify-content-md-start">
                                 <button type="button" class="btn btn-primary px-4 me-md-2" data-bs-toggle="modal" data-bs-target="#staticBackdrop"><i class="fa-solid fa-list-ol"></i> Faça o seu mapa aqui</button>
-                                <a class="btn btn-primary px-4 me-md-2" href="https://pay.hotmart.com/N33674569I?off=mqs5l6ia&checkoutMode=10&bid=1700190041512" target="_BLANK"><i class="fa-solid fa-book"></i> Compre o seu E-book aqui!</a>
+                                <a class="btn btn-primary px-4 me-md-2" href="https://a.co/d/7s47cCA" target="_BLANK"><i class="fa-solid fa-book"></i> Compre o seu E-book aqui!</a>
                             </div>
                         </div>
                     </div>
