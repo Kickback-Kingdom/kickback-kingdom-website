@@ -391,7 +391,7 @@
                             <p class="lead" style="text-align: justify;">Experimente agora e descubra o Poder que há em você!</p>
                             <div class="d-grid gap-2 d-md-flex justify-content-md-start">
                                 <button type="button" class="btn btn-primary px-4 me-md-2" data-bs-toggle="modal" data-bs-target="#staticBackdrop"><i class="fa-solid fa-list-ol"></i> Faça o seu mapa aqui</button>
-                                <a class="btn btn-primary px-4 me-md-2" href="https://pay.hotmart.com/N33674569I?off=mqs5l6ia&checkoutMode=10&bid=1700190041512" target="_BLANK"><i class="fa-solid fa-book"></i> Compre o seu E-book aqui!</a>
+                                <a class="btn btn-primary px-4 me-md-2" href="https://a.co/d/7s47cCA" target="_BLANK"><i class="fa-solid fa-book"></i> Compre o seu E-book aqui!</a>
                             </div>
                         </div>
                     </div>
