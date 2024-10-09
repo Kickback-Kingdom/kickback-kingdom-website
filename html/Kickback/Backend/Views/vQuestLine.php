@@ -9,6 +9,7 @@ use Kickback\Backend\Views\vReviewStatus;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Services\Session;
+use Kickback\Common\Version;
 
 class vQuestLine extends vRecordId
 {
@@ -32,7 +33,7 @@ class vQuestLine extends vRecordId
     }
 
     public function getURL() : string {
-        return '/quest-line/'.$this->locator;
+        return Version::formatUrl('/quest-line/'.$this->locator);
     }
     
     public function populateQuests() : void {
