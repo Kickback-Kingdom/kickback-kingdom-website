@@ -317,15 +317,11 @@ use Kickback\Common\Version;
 
         
         function enableBeta() {
-            // Set "betaEnabled" to "true" in sessionStorage
-            sessionStorage.setItem("betaEnabled", "true");
-            window.location.href = "/beta/?beta=1";
+            window.location.href = "/beta/";
         }
 
         function disableBeta() {
-            // Set "betaEnabled" to "false" in sessionStorage
-            sessionStorage.setItem("betaEnabled", "false");
-            window.location.href = "/?beta=0";
+            window.location.href = "/";
         }
 
         function toggleBeta() {
@@ -339,11 +335,7 @@ use Kickback\Common\Version;
         }
 
         function isBetaEnabled() {
-            // Get the value of "betaEnabled" from sessionStorage
-            let betaEnabled = sessionStorage.getItem("betaEnabled");
-
-            // If "betaEnabled" is the string "true", return true. Otherwise, return false.
-            return betaEnabled === "true";
+            return <?= Version::isBeta() ? "true" : "false"?>;
         }
 
         var itemInformation = <?= (isset($itemInformationJSON)?$itemInformationJSON:"[]"); ?>;
