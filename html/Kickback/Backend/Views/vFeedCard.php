@@ -53,7 +53,7 @@ class vFeedCard
 
     public function getURL()
     {
-        return Version::formatUrl($this->url);
+        return $this->url;
     }
 
     public function getAccountLinks() : string {

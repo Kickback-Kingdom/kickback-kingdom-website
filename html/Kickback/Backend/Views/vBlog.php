@@ -7,6 +7,7 @@ use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vItem;
 use Kickback\Services\Session;
 use Kickback\Backend\Controllers\BlogController;
+use Kickback\Common\Version;
 
 class vBlog extends vRecordId
 {
@@ -26,7 +27,7 @@ class vBlog extends vRecordId
     }
 
     public function getURL() : string {
-        return '/blog/'.$this->locator;
+        return Version::formatUrl('/blog/'.$this->locator);
     }
 
     public function isManager() : bool {

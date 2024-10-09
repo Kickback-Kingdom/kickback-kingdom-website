@@ -9,6 +9,7 @@ use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Views\vDateTime;
 use Kickback\Backend\Views\vReviewStatus;
 use Kickback\Services\Session;
+use Kickback\Common\Version;
 
 
 class vBlogPost extends vRecordId
@@ -46,7 +47,7 @@ class vBlogPost extends vRecordId
     }
 
     public function getURL() : string {
-        return '/blog/'.$this->blogLocator.'/'.$this->postLocator;
+        return Version::formatUrl('/blog/'.$this->blogLocator.'/'.$this->postLocator);
     }
 
     public function isWriter() : bool {
