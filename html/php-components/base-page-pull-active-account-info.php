@@ -15,6 +15,7 @@ $hasSuccess = false;
 $successMessage = "";
 $errorMessage = "";
 
+require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-form-handler.php"); 
 
 $activeAccountInfoResp = Session::getSessionInformation();
 if (!$activeAccountInfoResp->success)
@@ -31,6 +32,5 @@ if (!Session::isLoggedIn())
     Version::$show_version_popup = false;
 }
 
-require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-form-handler.php"); 
 
 ?>
