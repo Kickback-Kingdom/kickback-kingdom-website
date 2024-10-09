@@ -14,6 +14,7 @@ use Kickback\Backend\Models\PlayStyle;
 use Kickback\Backend\Controllers\QuestLineController;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Models\Response;
+use Kickback\Common\Version;
 
 class vQuest extends vRecordId
 {
@@ -44,7 +45,7 @@ class vQuest extends vRecordId
     }
 
     public function getURL() : string {
-        return '/q/'.$this->locator;
+        return Version::formatUrl('/q/'.$this->locator);
     }
 
     public function hasEndDate() : bool {
