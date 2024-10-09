@@ -185,8 +185,8 @@ use Kickback\Common\Version;
             for (const [key,value] of Object.entries(data)) {
                 params.append(key, value);
             }
-
-            fetch('/api/v1/chest/close.php?json', {
+            
+            fetch('<?= Version::formatUrl("/api/v1/chest/close.php?json"); ?>', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
