@@ -10,8 +10,9 @@ require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Backend\Controllers\AccountController;
 use Kickback\Backend\Views\vAccount;
+use Kickback\Common\Version;
 
-\Kickback\Common\Version::$show_version_popup = false;
+Version::$show_version_popup = false;
 $redirectUrl = 'index.php';
 
 if (isset($_GET["redirect"]))
