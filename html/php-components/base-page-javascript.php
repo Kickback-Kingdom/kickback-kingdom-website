@@ -106,6 +106,28 @@ use Kickback\Common\Version;
                     echo "ShowPopError(".json_encode($PopUpMessage).",".json_encode($PopUpTitle).");";
                 }
             ?>
+
+            const dateElements = document.querySelectorAll('.date');
+
+            dateElements.forEach(function (element) {
+                const utcDateTime = element.getAttribute('data-datetime-utc');
+                
+                if (utcDateTime) {
+                    // Create a Date object in the browser's local timezone
+                    const localDate = new Date(utcDateTime);
+
+                    // Format the date to a more readable local time
+                    const formattedDate = localDate.toLocaleDateString(undefined, {
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    }) + ' ' + localDate.toLocaleTimeString();
+
+                    // Update the element's inner text with the formatted local date
+                    element.innerText = formattedDate;
+                }
+            });
         });
 
         const myCarouselElement = document.querySelector('#topCarouselAd');

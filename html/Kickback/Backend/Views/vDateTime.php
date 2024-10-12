@@ -32,7 +32,7 @@ class vDateTime
     }
 
     public function getDateTimeElement($id = null) {
-        return '<span class="date" '.($id == null?'':' id="'.$id.'" ').' data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="'.$this->formattedDetailed.' UTC">'.$this->formattedBasic.'</span>';
+        return '<span class="date" '.($id == null?'':' id="'.$id.'" ').' data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="'.$this->formattedDetailed.' UTC" data-datetime-utc="' . $this->valueString . ' UTC">'.$this->formattedBasic.'</span>';
     }
 
     

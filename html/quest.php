@@ -1597,12 +1597,7 @@ $itemInformationJSON = json_encode($itemInfos);
     <script>
         
 var questDate = new Date('<?= vDateTime::getValueString($thisQuest->endDate); ?> UTC');
-document.getElementById('quest_time').innerText = questDate.toLocaleDateString(undefined, {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-}) + ' ' + questDate.toLocaleTimeString();
+
 
 
 <?php 

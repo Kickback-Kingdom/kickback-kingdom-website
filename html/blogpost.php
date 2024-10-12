@@ -98,7 +98,8 @@ if ($thisBlogPost->blogLocator == "Kickback-Kingdom")
                                 <p class="card-text text-center">
                                     <small class="text-body-secondary">Written by 
                                         <?= $thisBlogPost->author->getAccountElement();?> on 
-                                        <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= $thisBlogPost->publishedDateTime->formattedDetailed; ?>"><?= $thisBlogPost->publishedDateTime->formattedBasic; ?></span> and viewed <?= $thisPageVisits; ?> times
+                                        <?= $thisBlogPost->publishedDateTime->getDateTimeElement(); ?> and viewed <?= $thisPageVisits; ?> times
+                                        
                                     </small>
                                 </p>
                         
