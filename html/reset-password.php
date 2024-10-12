@@ -1,7 +1,9 @@
 <?php
+declare(strict_types=1);
 //ini_set('display_errors', 0);
 //ini_set('display_startup_errors', 0);
 //error_reporting(E_ALL);
+
 
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
@@ -105,7 +107,7 @@ else
                     
                 </div>
                 <div class="modal-footer">
-                    <a type="button" class="btn btn-secondary" href="<?php echo Version::urlBetaPrefix()."/".$redirectUrl; ?>">Back</a>
+                    <a type="button" class="btn btn-secondary" href="<?= Version::urlBetaPrefix()."/".$redirectUrl; ?>">Back</a>
                     <input type="submit" name="submit" class="btn btn-primary" value="Change Password">
                 </div>
             </div>
