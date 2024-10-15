@@ -4,7 +4,9 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-$_globalDoNotShowNewVersionPopup = true;
+use Kickback\Common\Version;
+
+Version::$show_version_popup = false;
 
 $hasError = false;
 $resp = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/account/logout.php");
@@ -16,9 +18,9 @@ if (isset($_GET["redirect"]))
 }
 if (isset($_POST["submit"]))
 {
-    $_POST["serviceKey"] = \Kickback\Config\ServiceCredentials::get("kk_service_key");
+    $_POST["serviceKey"] = \Kickback\Backend\Config\ServiceCredentials::get("kk_service_key");
     $resp = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/account/login.php");
-    $hasError = !$resp->Success;
+    $hasError = !$resp->success;
     if (!$hasError)
     {
         
@@ -47,7 +49,7 @@ if (isset($_POST["submit"]))
                 <div class="modal-body">
                 <?php if ($hasError) {?>
 					<div class="alert alert-danger alert-dismissible fade show" role="alert">
-										<strong>Oh snap!</strong> <?php echo $resp->Message; ?>
+										<strong>Oh snap!</strong> <?php echo $resp->message; ?>
 									</div>
 									<?php } ?>
                     <div class="mb-3">
@@ -55,7 +57,7 @@ if (isset($_POST["submit"]))
                         <input type="email" class="form-control" name="email" id="inputEmail">
                     </div>
                     <div class="mb-3">
-                        <label for="inputPwd" class="form-label" style="width:100%;">Password<a class="float-end" href="<?php echo $urlPrefixBeta; ?>/forgot-password.php">Forgot password?</a></label>
+                        <label for="inputPwd" class="form-label" style="width:100%;">Password<a class="float-end" href="<?php echo Version::urlBetaPrefix(); ?>/forgot-password.php">Forgot password?</a></label>
                         <input type="password" class="form-control" name="pwd" id="inputPwd">
                     </div>
                     
@@ -71,7 +73,7 @@ if (isset($_POST["submit"]))
                     </p>
                 </div>
                 <div class="modal-footer">
-                    <a type="button" class="btn btn-secondary" href="<?php echo $urlPrefixBeta."/".$redirectUrl; ?>">Back</a>
+                    <a type="button" class="btn btn-secondary" href="<?php echo Version::urlBetaPrefix()."/".$redirectUrl; ?>">Back</a>
                     <input type="submit" name="submit" class="btn btn-primary" value="Login">
                 </div>
             </div>

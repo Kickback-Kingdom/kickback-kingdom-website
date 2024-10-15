@@ -15,12 +15,31 @@
 !/html/assets/media/**/.gitkeep
 !/html/assets/images/**/.gitkeep
 
-#this is for a directory to test code and various things outside of version control 
+# This is for a directory to test code and various things outside of version control 
 /html/scratch-pad/**
 !/html/scratch-pad/.gitkeep
 
-#ignore visual studio folder
+# Ignore visual studio folder
 /.vs/**
+
+# Ignore backup files
+#
+# These are usually made by text editors or IDEs, but you can use these
+# extensions manually to evict temporary backups from the git tree.
+#
+# Exception: Some of the files in the `meta` folder might be considered
+# to be "backups" in some sense (ex: backups of server config, backup
+# of database schema, etc). These intentional+permanent backups should
+# NOT be ignored, as we _want_ those to be IN the git tree. Conveniently
+# enough, those do not have the below excluded extensions, but instead
+# just use their normal extensions like `.conf` and `.mysql`.
+**.bak
+**.backup
+**~
+
+# Ignore other temporary files created by text editors
+# (We can add more as we encounter them.)
+**.kate-swp
 
 # This exclusion is convenient for anyone that wants to run phpMyAdmin from
 # their local HTTP server while the Kickback Kingdom website is still

@@ -2,9 +2,12 @@
 
 require("base-page-loading-overlay.php"); 
 
+use Kickback\Backend\Controllers\MediaController;
+use Kickback\Backend\Models\NotificationType;
+use Kickback\Common\Version;
 
-$mediaDirsResp = GetMediaDirectories();
-$mediaDirs = $mediaDirsResp->Data;
+$mediaDirsResp = MediaController::getMediaDirectories();
+$mediaDirs = $mediaDirsResp->data;
 ?>
 
 <!--CONFETTI-->
@@ -14,7 +17,7 @@ $mediaDirs = $mediaDirsResp->Data;
     </div>
 </div>
 
-<?php if(IsLoggedIn()) { ?>
+<?php if(Kickback\Services\Session::isLoggedIn()) { ?>
 <!--CHESTS-->
 <div class="modal fade modal-chest " id="modalChest" tabindex="-1" aria-labelledby="modalChestLabel" aria-hidden="true" onclick="ToggleChest();">
     <div class="modal-dialog  modal-dialog-centered">
@@ -74,7 +77,7 @@ $mediaDirs = $mediaDirsResp->Data;
         <?php require(\Kickback\SCRIPT_ROOT . "/php-components/select-media.php"); ?>
       </div> 
       <div class="modal-footer">
-        <?php if(IsArtist()) { ?><button type="button" class="btn btn-primary" onclick="OpenMediaUploadModal()">Upload Media</button><?php } ?>
+        <?php if(Kickback\Services\Session::getCurrentAccount()->isArtist) { ?><button type="button" class="btn btn-primary" onclick="OpenMediaUploadModal()">Upload Media</button><?php } ?>
         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Back</button>
         <button type="button" class="btn bg-ranked-1" onclick="AcceptSelectedMedia()">Select</button>
       </div>
@@ -82,7 +85,7 @@ $mediaDirs = $mediaDirsResp->Data;
   </div>
 </div>
 
-<?php if(IsArtist()) { ?>
+<?php if(Kickback\Services\Session::getCurrentAccount()->isArtist) { ?>
 <!--UPLOAD MEDIA-->
 <div class="modal fade" id="uploadMediaModal" tabindex="-1" aria-labelledby="uploadMediaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -186,7 +189,7 @@ $mediaDirs = $mediaDirsResp->Data;
                                             }
                                         ?>
                                     </select>
-                                    <?php if (IsAdmin()) { ?>
+                                    <?php if (Kickback\Services\Session::isAdmin()) { ?>
                                     <button class="btn btn-primary" type="button" onclick="CreateNewFolderForUpload()">Create New Folder</button>
                                     <script>
                                         function CreateNewFolderForUpload() {
@@ -333,7 +336,7 @@ $mediaDirs = $mediaDirsResp->Data;
 
             <?php
             // Placeholder for your cart items array
-            if (IsAdmin())
+            if (Kickback\Services\Session::isAdmin())
             {
                 $cart_items = [
                     ['id' => 1, 'name' => 'Epic Sword', 'quantity' => 1, 'price' => '120 Coins', 'icon_url' => '/assets/media/items/21.png'],
@@ -388,7 +391,7 @@ $mediaDirs = $mediaDirsResp->Data;
             <p class="summary-line fw-bold total-line">Total: <span class="final-total-amount">0 </span></p>
         </div>
         <!-- Proceed to Checkout Button -->
-        <a class="btn btn-primary w-100 disabled" href="<?php echo $urlPrefixBeta; ?>/checkout.php" disabled>Proceed to Checkout</a>
+        <a class="btn btn-primary w-100 disabled" href="<?php echo Version::urlBetaPrefix(); ?>/checkout.php" disabled>Proceed to Checkout</a>
     </div>
 
 </div>
@@ -403,7 +406,7 @@ $mediaDirs = $mediaDirsResp->Data;
     <div class="offcanvas-body">
         <?php 
         
-            if (IsLoggedIn() && !is_null($activeAccountInfo->notifications))
+            if (Kickback\Services\Session::isLoggedIn() && !is_null($activeAccountInfo->notifications))
             {
                 
                 for ($i=0; $i < count($activeAccountInfo->notifications); $i++) { 
@@ -416,37 +419,19 @@ $mediaDirs = $mediaDirsResp->Data;
                             <strong class="me-auto">
                             <?php
 
-                            switch ($not["Type"]) {
-                                case "Quest Review":
-                                case "Thanks For Hosting":
-                                    echo '<i class="fa-solid fa-gift"></i> Pending Rewards';
-                                    break;
-                                case "Prestige":
-                                    echo "New Prestige";
-                                    break;
-
-                                case "Quest Reviewed":
-                                    echo '<i class="fa-solid fa-star"></i> Quest Reviewed';
-                                    break;
-
-                                case "Quest In Progress":
-                                    echo '<i class="fa-solid fa-spinner fa-spin"></i> Quest In Progress';
-                                    break;
-                                default:
-                                    echo "{".$not["Type"]."}";
-                                    break;
-                            }
+                                echo $not->getTitle();
 
                             ?>    
                             </strong>
-                            <small><?php echo timeElapsedString($not["date"]); ?></small>
+                            <small><?php echo $not->date->timeElapsedString(); ?></small>
                             <?php
 
-                            switch ($not["Type"]) {
-                                case "Quest Review":
-                                case "Quest In Progress":
-                                case "Thanks For Hosting":
-                                case "Quest Reviewed":
+                            switch ($not->type) {
+                                case NotificationType::QUEST_REVIEW:
+                                case NotificationType::QUEST_IN_PROGRESS:
+                                case NotificationType::THANKS_FOR_HOSTING:
+                                case NotificationType::QUEST_REVIEWED:
+                                case NotificationType::PRESTIGE:
                                     break;
 
                                 default:
@@ -458,47 +443,21 @@ $mediaDirs = $mediaDirsResp->Data;
                         </div>
                         <div class="toast-body">
                             <?php
-                                switch ($not["Type"]) {
-                                    case "Quest Review":
-                                        echo "<strong>Thanks for participating</strong> in <a href='".$urlPrefixBeta."/q/".$not["locator"]."'>".$not["name"]."</a>. Please review your experience so we can build better quests for you in the future. Thanks! ".'<i class="fa-regular fa-face-smile-beam"></i>';
-                                        break;
-
-                                    
-                                    case "Thanks For Hosting":
-                                        echo "<strong>Thanks for hosting</strong> <a href='".$urlPrefixBeta."/q/".$not["locator"]."'>".$not["name"]."</a>! Once a few of your participants send in their reviews you will recieve your host reward. In the meantime enjoy your quest rewards. Thanks! ".'<i class="fa-regular fa-face-smile-beam"></i>';
-                                        break;
-
-                                    case "Prestige":
-                                        echo "<a class='username' href='".$urlPrefixBeta."/u/".$not["locator"]."'>".$not["name"]."</a> used a prestige token on you.";
-                                        break;
-
-                                    case "Quest In Progress":
-                                        echo "You are participating in <a href='".$urlPrefixBeta."/q/".$not["locator"]."'>".$not["name"]."</a> which is currently in progress. Please check in often to make sure no one is waiting on you. Thanks! ".'<i class="fa-regular fa-face-smile-beam"></i>';
-                                        break;
-
-                                    
-                                    case "Quest Reviewed":
-                                        echo "<a class='username' href='".$urlPrefixBeta."/u/".$not["from_name"]."'>".$not["from_name"]."</a> just left a review for your quest - <a href='".$urlPrefixBeta."/q/".$not["locator"]."'>".$not["name"]."</a>";
-                                        break;
-
-                                    default:
-                                        echo "Unknown Event Occurred";
-                                        break;
-                                }
+                                echo $not->getText();
                             ?>
 
                         </div>
                         <?php 
-                            switch ($not["Type"]) {
-                                case "Quest Review":
+                            switch ($not->type) {
+                                case NotificationType::QUEST_REVIEW:
                                     ?>
                                         <div class="toast-body"><button class="bg-ranked-1 btn btn-sm" onclick="LoadQuestReviewModal(<?php echo $i ?>);"><i class="fa-solid fa-gift"></i> Collect Rewards</button></div>
                                     <?php
                                     break;
-                                case "Thanks For Hosting":
+                                case NotificationType::THANKS_FOR_HOSTING:
                                     ?>
                                         <form method="POST">
-                                            <input type="hidden" name="quest-notifications-thanks-for-hosting-quest-id" value="<?php echo $not["quest_id"]; ?>"/>
+                                            <input type="hidden" name="quest-notifications-thanks-for-hosting-quest-id" value="<?= $not->quest->crand; ?>"/>
                                             <div class="toast-body">
                                                 <button type="submit" name="submit-notifications-thanks-for-hosting" class="bg-ranked-1 btn btn-sm"><i class="fa-solid fa-gift"></i> Collect Rewards</button>
                                             </div>
@@ -506,12 +465,12 @@ $mediaDirs = $mediaDirsResp->Data;
                                     <?php
                                     break;
                                 
-                                case "Quest Reviewed":
+                                case NotificationType::QUEST_REVIEWED:
                                     ?> 
                                         <!--<div class="toast-body"><a class="bg-ranked-1 btn btn-sm" href="#">View</a></div>-->
                                     <?php
                                     break;
-                                case "Prestige":
+                                case NotificationType::PRESTIGE:
                                     ?> 
                                         <!--<div class="toast-body"><a class="bg-ranked-1 btn btn-sm" href="#">View</a></div>-->
                                     <?php
@@ -526,7 +485,7 @@ $mediaDirs = $mediaDirsResp->Data;
 
                     <?php
                 } // for ($i=0; $i < count($activeAccountInfo->notifications); $i++)
-            } // if (IsLoggedIn() && !is_null($activeAccountInfo->notifications))
+            } // if (Kickback\Services\Session::isLoggedIn() && !is_null($activeAccountInfo->notifications))
 
 
         ?>
@@ -671,50 +630,41 @@ $mediaDirs = $mediaDirsResp->Data;
     <div class="offcanvas-body p-0">
         <ul class="navbar-nav justify-content-end flex-grow-1">
             <li class="nav-item">
-                <a class="nav-link mobile-menu-item active" aria-current="page" href="<?php echo $urlPrefixBeta; ?>/"><i class="nav-icon fa-solid fa-house"></i> Home <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+                <a class="nav-link mobile-menu-item active" aria-current="page" href="<?php echo Version::urlBetaPrefix(); ?>/"><i class="nav-icon fa-solid fa-house"></i> Home <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/town-square.php"><i class="nav-icon fa-regular fa-address-card"></i> Town Square <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/town-square.php"><i class="nav-icon fa-regular fa-address-card"></i> Town Square <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+            </li>
+            <!--<li class="nav-item">
+                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+            </li>-->
+            <li class="nav-item">
+                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/forums.php"><i class="nav-icon fa-solid fa-pen-to-square"></i> Forums <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities<i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/business-plan.php"><i class="nav-icon fa-regular fa-file-lines"></i> Business Plan <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/analytics.php"><i class="nav-icon fa-solid fa-chart-line"></i> Analytics <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities<i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/guild-halls.php"><i class="nav-icon fa-solid fa-signs-post"></i> Guild Halls <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/business-plan.php"><i class="nav-icon fa-regular fa-file-lines"></i> Business Plan <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/project-roadmaps.php"><i class="nav-icon fa-solid fa-road"></i> Project Roadmaps <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/castles.php"><i class="nav-icon fa-brands fa-fort-awesome"></i> Castles <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/analytics.php"><i class="nav-icon fa-solid fa-chart-line"></i> Analytics <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/guild-halls.php"><i class="nav-icon fa-solid fa-signs-post"></i> Guild Halls <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/admin-dashboard.php"><i class="nav-icon fa-solid fa-shield-halved"></i> Admin Dashboard <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/admin-dashboard.php"><i class="nav-icon fa-solid fa-shield-halved"></i> Admin Dashboard <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <?php
 
-            if (IsLoggedIn())
+            if (Kickback\Services\Session::isLoggedIn())
             {
                 ?>
 
 
 <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo $urlPrefixBeta; ?>/login.php"><i class="nav-icon fa-solid fa-right-from-bracket"></i> Logout <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/login.php"><i class="nav-icon fa-solid fa-right-from-bracket"></i> Logout <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
 <?php
             }
@@ -725,7 +675,7 @@ $mediaDirs = $mediaDirsResp->Data;
 </div>
 
 <!--MOBILE CENTER BUTTON-->
-<a class="btn btn-secondary btn-lg rounded-top-pill mobile-bar-btn-center d-block d-md-none" type="button" href="<?php echo $urlPrefixBeta; ?>/challenges.php">
+<a class="btn btn-secondary btn-lg rounded-top-pill mobile-bar-btn-center d-block d-md-none" type="button" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php">
     <i class="fa-solid fa-trophy"></i>
 </a>
 
@@ -736,7 +686,7 @@ $mediaDirs = $mediaDirsResp->Data;
             aria-controls="offcanvasMenu" aria-label="Toggle navigation">
             <i class="fa-solid fa-bars"></i>
         </button>
-        <a class="me-0 me-lg-2 navbar-brand p-0 mobile-navbar-logo" href="<?php echo $urlPrefixBeta; ?>/" aria-label="Bootstrap">
+        <a class="me-0 me-lg-2 navbar-brand p-0 mobile-navbar-logo" href="<?php echo Version::urlBetaPrefix(); ?>/" aria-label="Bootstrap">
             <img class="kk-logo" src="/assets/images/logo-kk.png" />
         </a>
 
@@ -754,11 +704,11 @@ $mediaDirs = $mediaDirsResp->Data;
 <!--MOBILE BOTTOM BAR-->
 <nav class="d-md-none d-sm-block fixed-bottom navbar bg-primary py-0" data-bs-theme="dark">
     <div class="container-fluid">
-        <a class="btn btn-lg btn-primary" type="button" href="<?php echo $urlPrefixBeta; ?>/schedule.php">
-            <i class="fa-solid fa-calendar-days"></i>
+        <a class="btn btn-lg btn-primary" type="button" href="<?php echo Version::urlBetaPrefix(); ?>/">
+            <i class="fa-solid fa-home"></i>
         </a>
 
-        <a class="btn btn-lg btn-primary" type="button" href="<?php echo $urlPrefixBeta; ?>/town-square.php">
+        <a class="btn btn-lg btn-primary" type="button" href="<?php echo Version::urlBetaPrefix(); ?>/town-square.php">
             <i class="fa-solid fa-users"></i>
         </a>
 
@@ -772,12 +722,12 @@ $mediaDirs = $mediaDirsResp->Data;
 
         <?php 
 
-            if (IsLoggedIn())
+            if (Kickback\Services\Session::isLoggedIn())
             {
                 ?>
 
 
-        <a class="btn btn-lg btn-primary" type="button" href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $_SESSION["account"]["Username"]; ?>">
+        <a class="btn btn-lg btn-primary" type="button" href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo Kickback\Services\Session::getCurrentAccount()->username; ?>">
             <i class="fa-solid fa-user"></i>
         </a>
 <?php
@@ -787,7 +737,7 @@ $mediaDirs = $mediaDirsResp->Data;
 ?>
 
 
-<a class="btn btn-lg btn-primary" type="button" href="<?php echo $urlPrefixBeta; ?>/login.php">
+<a class="btn btn-lg btn-primary" type="button" href="<?php echo Version::urlBetaPrefix(); ?>/login.php">
             <i class="fa-solid fa-user"></i>
         </a>
 <?php
@@ -801,7 +751,7 @@ $mediaDirs = $mediaDirsResp->Data;
 <!--DESKTOP NAVBAR-->
 <nav class="container d-md-block d-sm-none d-none fixed-top navbar navbar-expand bg-primary" aria-label="Second navbar example" data-bs-theme="dark">
     <div class="container">
-        <a class="navbar-brand kk-logo-desktop" href="<?php echo $urlPrefixBeta; ?>/">
+        <a class="navbar-brand kk-logo-desktop" href="<?php echo Version::urlBetaPrefix(); ?>/">
             <img class="kk-logo" src="https://kickback-kingdom.com/assets/images/logo-kk.png" /></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample02"
             aria-controls="navbarsExample02" aria-expanded="false" aria-label="Toggle navigation">
@@ -816,18 +766,17 @@ $mediaDirs = $mediaDirsResp->Data;
                         <i class="fa-solid fa-users"></i> Community
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/town-square.php"><i class="nav-icon fa-regular fa-address-card"></i> Town Square</a></li>
-                        <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/forums.php"><i class="nav-icon fa-solid fa-pen-to-square"></i> Forums</a></li>
-                        <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges</a></li>
-                        <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs</a></li>
-                        <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities</a></li>
-                        <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/guild-halls.php"><i class="nav-icon fa-solid fa-landmark"></i> Guild Halls</a></li>
+                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/town-square.php"><i class="nav-icon fa-regular fa-address-card"></i> Town Square</a></li>
+                        <!--<li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges</a></li>-->
+                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs</a></li>
+                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities</a></li>
+                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/guild-halls.php"><i class="nav-icon fa-solid fa-landmark"></i> Guild Halls</a></li>
                         <!--<li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/adventurers-guild.php"><i class="nav-icon fa-solid fa-person-hiking"></i> Adventurers Guild</a></li>
-                        <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/merchants-guild.php"><i class="nav-icon fa-solid fa-sack-dollar"></i> Merchants Guild</a></li>
-                        <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/craftsmen-guild.php"><i class="nav-icon fa-solid fa-hammer"></i> Craftsmen Guild</a></li>
-                        <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/apprentices-guild.php"><i class="nav-icon fa-solid fa-user-graduate"></i> Apprentices Guild</a></li>
-                        <li><a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/stewards-guild.php"><i class="nav-icon fa-solid fa-person-digging"></i> Stewards Guild</a></li>-->
+                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/adventurers-guild.php"><i class="nav-icon fa-solid fa-person-hiking"></i> Adventurers Guild</a></li>
+                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/merchants-guild.php"><i class="nav-icon fa-solid fa-sack-dollar"></i> Merchants Guild</a></li>
+                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/craftsmen-guild.php"><i class="nav-icon fa-solid fa-hammer"></i> Craftsmen Guild</a></li>
+                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/apprentices-guild.php"><i class="nav-icon fa-solid fa-user-graduate"></i> Apprentices Guild</a></li>
+                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/stewards-guild.php"><i class="nav-icon fa-solid fa-person-digging"></i> Stewards Guild</a></li>-->
                     </ul>
                 </li>
                 <li class="nav-item dropdown" data-bs-theme="light">
@@ -837,16 +786,10 @@ $mediaDirs = $mediaDirsResp->Data;
                     </a>
                     <ul class="dropdown-menu">
                         <li>
-                            <a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/business-plan.php"><i class="nav-icon fa-regular fa-file-lines"></i> Business Plan</a>
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/business-plan.php"><i class="nav-icon fa-regular fa-file-lines"></i> Business Plan</a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/project-roadmaps.php"><i class="nav-icon fa-solid fa-road"></i> Project Roadmaps</a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/castles.php"><i class="nav-icon fa-brands fa-fort-awesome"></i> Castles</a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/analytics.php"><i class="nav-icon fa-solid fa-chart-line"></i> Analytics</a>
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/analytics.php"><i class="nav-icon fa-solid fa-chart-line"></i> Analytics</a>
                         </li>
                     </ul>
                 </li>
@@ -862,18 +805,13 @@ $mediaDirs = $mediaDirsResp->Data;
                         <i class="fa-brands fa-discord"></i>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="btn btn-primary" type="button" href="<?php echo $urlPrefixBeta; ?>/schedule.php">
-                        <i class="fa-solid fa-calendar-days"></i>
-                    </a>
-                </li>
-                <?php if (IsLoggedIn()) { ?>
+                <?php if (Kickback\Services\Session::isLoggedIn()) { ?>
                     <li class="nav-item">
                         <button class="btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas"
                             data-bs-target="#offcanvasMenuRightShoppingCart" aria-controls="offcanvasMenuRightShoppingCart"
                             aria-label="Toggle navigation">
                             <i class="fa-solid fa-cart-shopping"></i>
-                            <?php if (IsAdmin()) { ?>
+                            <?php if (Kickback\Services\Session::isAdmin()) { ?>
                             <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill">
                                 99+
                                 <span class="visually-hidden">unread messages</span>
@@ -898,10 +836,10 @@ $mediaDirs = $mediaDirsResp->Data;
                     <a class="btn dropdown-toggle btn-primary" type="button" style="height: 38px;background-color: transparent !important;border-color: transparent;" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" >
                         <?php
 
-                            if (IsLoggedIn())
+                            if (Kickback\Services\Session::isLoggedIn())
                             {
                         ?>
-                        <img class="rounded-circle" style="height: 100%;width: auto;" src="/assets/media/<?php echo GetAccountProfilePicture($_SESSION["account"]); ?>"/>
+                        <img class="rounded-circle" style="height: 100%;width: auto;" src="<?= Kickback\Services\Session::getCurrentAccount()->getProfilePictureURL(); ?>"/>
                         <?php
                             }
                             else
@@ -915,21 +853,21 @@ $mediaDirs = $mediaDirsResp->Data;
                     <ul class="dropdown-menu dropdown-menu-end" data-bs-theme="light">
                         <?php
 
-                            if (IsLoggedIn())
+                            if (Kickback\Services\Session::isLoggedIn())
                             {
                         ?>
 
                         <li>
-                            <a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $_SESSION["account"]["Username"]; ?>">
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo Kickback\Services\Session::getCurrentAccount()->username; ?>">
                                 <i class="nav-icon fa-solid fa-user"></i> Profile
                             </a>
                         </li>
-                        <?php if (IsAdmin()) { ?>
+                        <?php if (Kickback\Services\Session::isAdmin()) { ?>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
                         <li>
-                            <a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/admin-dashboard.php">
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/admin-dashboard.php">
                                 <i class="nav-icon fa-solid fa-shield-halved"></i> Admin Dashboard
                             </a>
                         </li>
@@ -939,12 +877,12 @@ $mediaDirs = $mediaDirsResp->Data;
                             </a>
                         </li>
                         <?php } ?>
-                        <?php if (IsDelegatingAccess()) { ?>
+                        <?php if (Kickback\Services\Session::isDelegatingAccess()) { ?>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
                         <li>
-                            <a class="dropdown-item" href="<?php $urlPrefixBeta; ?>/?exitDelegate=1" onclick="">
+                            <a class="dropdown-item" href="<?php Version::urlBetaPrefix(); ?>/?exitDelegate=1" onclick="">
                                 <i class="nav-icon fa-solid fa-eye-low-vision"></i> Exit Delegate Access
                             </a>
                         </li>
@@ -954,7 +892,7 @@ $mediaDirs = $mediaDirsResp->Data;
                             <hr class="dropdown-divider">
                         </li>
                         <li>
-                            <a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/login.php">
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/login.php">
                                 <i class="nav-icon fa-solid fa-right-from-bracket"></i> Logout
                             </a>
                         </li>
@@ -966,7 +904,7 @@ $mediaDirs = $mediaDirsResp->Data;
                         ?>
 
                         <li>
-                            <a class="dropdown-item" href="<?php echo $urlPrefixBeta; ?>/login.php">
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/login.php">
                                 <i class="nav-icon fa-solid fa-right-from-bracket"></i> Login
                             </a>
                         </li>

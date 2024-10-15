@@ -3,6 +3,7 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
+use Kickback\Common\Version;
 ?>
 
 <!DOCTYPE html>
@@ -38,7 +39,7 @@ require("php-components/base-page-pull-active-account-info.php");
                 ?>
                 <div class="row">
                     <div class="col-12">
-                        <a href="<?php echo $urlPrefixBeta; ?>/adventurers-guild.php">
+                        <a href="<?php echo Version::urlBetaPrefix(); ?>/adventurers-guild.php">
                             <div class="card text-bg-dark card-guild">
                                 <div class="parallax-container overflow-hidden">
                                     <img class="parallax" src="/assets/media/context/adventure.jpg" alt="Image description">
@@ -53,7 +54,7 @@ require("php-components/base-page-pull-active-account-info.php");
                         </a>
                     </div>
                     <div class="col-12 col-lg-6">
-                        <a href="<?php echo $urlPrefixBeta; ?>/merchants-guild.php">
+                        <a href="<?php echo Version::urlBetaPrefix(); ?>/merchants-guild.php">
                             <div class="card text-bg-dark card-guild">
                                 <div class="parallax-container overflow-hidden">
                                     <img class="parallax" src="/assets/media/context/merchant.jpg" alt="Image description">
@@ -68,7 +69,7 @@ require("php-components/base-page-pull-active-account-info.php");
                         </a>
                     </div>
                     <div class="col-12 col-lg-6">
-                        <a href="<?php echo $urlPrefixBeta; ?>/craftsmens-guild.php">
+                        <a href="<?php echo Version::urlBetaPrefix(); ?>/craftsmens-guild.php">
                             <div class="card text-bg-dark card-guild">
                                 <div class="parallax-container overflow-hidden">
                                     <img class="parallax" src="/assets/media/context/craftsmen.jpg" alt="Image description">
@@ -83,7 +84,7 @@ require("php-components/base-page-pull-active-account-info.php");
                         </a>
                     </div>
                     <div class="col-12 col-lg-6">
-                        <a href="<?php echo $urlPrefixBeta; ?>/apprentices-guild.php">
+                        <a href="<?php echo Version::urlBetaPrefix(); ?>/apprentices-guild.php">
                             <div class="card text-bg-dark card-guild">
                                 <div class="parallax-container overflow-hidden">
                                     <img class="parallax" src="/assets/media/context/apprentice.jpg" alt="Image description">
@@ -98,7 +99,7 @@ require("php-components/base-page-pull-active-account-info.php");
                         </a>
                     </div>
                     <div class="col-12 col-lg-6">
-                        <a href="<?php echo $urlPrefixBeta; ?>/stewards-guild.php">
+                        <a href="<?php echo Version::urlBetaPrefix(); ?>/stewards-guild.php">
                             <div class="card text-bg-dark card-guild">
                                 <div class="parallax-container overflow-hidden">
                                     <img class="parallax" src="/assets/media/context/steward.jpg" alt="Image description">

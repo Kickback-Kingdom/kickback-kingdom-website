@@ -12,7 +12,7 @@ if (isset($_GET["id"])) {
 
 }
 else{
-    return new APIResponse(false, "No item id provided", null);
+    return new Kickback\Backend\Models\Response(false, "No item id provided", null);
 }
 
 ?>

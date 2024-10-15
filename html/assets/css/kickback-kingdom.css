@@ -1,7 +1,12 @@
 :root {
-    --bs-primary: #7851a9;/*#7851a9;*/
+    --bs-primary: #7851a9;
     --bs-secondary: #FFD218;
-}       
+    --bs-tertiary: #66023c;
+}
+
+a {
+    color: var(--bs-tertiary);
+}
 
 body {
     background-image: url(/assets/images/kk.jpg) !important;
@@ -108,7 +113,7 @@ body {
 }
 
 .username {
-    background-color: #658182;
+    background-color: var(--bs-tertiary);
     border-radius: 5px;
     color: white;
     padding: 1px 5px;
@@ -118,7 +123,7 @@ body {
 .date {
     /*float: right;
     font-size: .55em;*/
-    background-color: #9ac4e6;
+    background-color: var(--bs-tertiary);
     border-radius: 5px;
     padding: 1px 5px;
     color: white;
@@ -203,6 +208,12 @@ body {
 .bg-secondary {
     background-color: var(--bs-secondary) !important;
     color:#7d7d7d;
+}
+/* tertiary Color */
+.btn-tertiary, 
+.bg-tertiary {
+    background-color: var(--bs-tertiary) !important;
+    color:#ffffff;
 }
 /*.bg-primary button.btn {
     color: white;

@@ -11,20 +11,21 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-$availableQuestsResp = GetAvailableQuestsFeed();
-$availableQuests = $availableQuestsResp->Data;
+use Kickback\Backend\Controllers\FeedCardController;
+use Kickback\Backend\Controllers\FeedController;
+use Kickback\Common\Version;
 
-$archivedQuestsResp = GetArchivedQuestsFeed();
-$archivedQuests = $archivedQuestsResp->Data;
+$availableQuestsResp = FeedController::getAvailableQuestsFeed();
+$availableQuests = $availableQuestsResp->data;
 
-$questGiversResp = GetAllQuestGivers();
-$questGivers = $questGiversResp->Data;
+$archivedQuestsResp = FeedController::getArchivedQuestsFeed(1, 100);
+$archivedQuests = $archivedQuestsResp->data;
 
-$questLinesResp = GetAvailableQuestLinesFeed();
-$questLines = $questLinesResp->Data;
+$questLinesResp = FeedController::getAvailableQuestLinesFeed();
+$questLines = $questLinesResp->data;
 
-$tbaQuestsResp = GetTBAQuestsFeed();
-$tbaQuests = $tbaQuestsResp->Data;
+$tbaQuestsResp = FeedController::getTBAQuestsFeed();
+$tbaQuests = $tbaQuestsResp->data;
 $showTBAQuests = count($tbaQuests)>0;
 $tabActive = "active";
 $tabPageActive = "active show";
@@ -61,18 +62,18 @@ $tabPageActive = "active show";
                 require("php-components/base-page-breadcrumbs.php"); 
                 
                 ?>
-                <?php if (IsQuestGiver()) { ?>
+                <?php if (Kickback\Services\Session::isQuestGiver()) { ?>
                 <div class="row">
                     <div class="col-12">
                         <div class="card mb-3">
     
                             <div class="card-header bg-ranked-1">
-                                <h5 class="mb-0">Welcome back, Quest Giver <?php echo $_SESSION["account"]["Username"]; ?>. What would you like to do?</h5>
+                                <h5 class="mb-0">Welcome back, Quest Giver <?php echo Kickback\Services\Session::getCurrentAccount()->username; ?>. What would you like to do?</h5>
                             </div>
                             <div class="card-body">
                                 
-                                <a href="<?php echo $urlPrefixBeta; ?>/quest.php?new" class="btn btn-primary">Post a New Quest</a>
-                                <a href="<?php echo $urlPrefixBeta; ?>/quest-line.php?new" class="btn btn-primary">Create New Quest Line</a>
+                                <a href="<?= Version::urlBetaPrefix(); ?>/quest.php?new" class="btn btn-primary">Post a New Quest</a>
+                                <a href="<?= Version::urlBetaPrefix(); ?>/quest-line.php?new" class="btn btn-primary">Create New Quest Line</a>
                             </div>
                         </div>
                     </div>
@@ -99,9 +100,8 @@ $tabPageActive = "active show";
 
                                     for ($i=0; $i < count($tbaQuests); $i++) 
                                     { 
-                                        $feedCard = $tbaQuests[$i];
-                                        
-                                        require ("php-components/feed-card.php");
+                                        $_vFeedCard = FeedCardController::vFeedRecord_to_vFeedCard($tbaQuests[$i]);
+                                        require("php-components/vFeedCardRenderer.php");
                                     }
                                 ?>
                             </div>
@@ -112,9 +112,8 @@ $tabPageActive = "active show";
 
                                     for ($i=0; $i < count($availableQuests); $i++) 
                                     { 
-                                        $feedCard = $availableQuests[$i];
-                                        
-                                        require ("php-components/feed-card.php");
+                                        $_vFeedCard = FeedCardController::vFeedRecord_to_vFeedCard($availableQuests[$i]);
+                                        require("php-components/vFeedCardRenderer.php");
                                     }
                                 ?>
                             </div>
@@ -124,9 +123,8 @@ $tabPageActive = "active show";
 
                                     for ($i=0; $i < count($questLines); $i++) 
                                     { 
-                                        $feedCard = $questLines[$i];
-                                        
-                                        require ("php-components/feed-card.php");
+                                        $_vFeedCard = FeedCardController::vFeedRecord_to_vFeedCard($questLines[$i]);
+                                        require("php-components/vFeedCardRenderer.php");
                                     }
                                 ?>
                             </div>
@@ -139,11 +137,10 @@ $tabPageActive = "active show";
                                 <div class="d-flex flex-wrap justify-content-evenly align-items-center">
                                 <?php 
 
-                                foreach ($questGivers as $_account) 
-                                {
-                                    $playerCardAccount = $_account;
-                                    require("php-components/player-card.php"); 
-                                }
+                                    $selectUserFormId = "quest-givers";
+                                    $selectUsersFormPageSize = 21;
+                                    $selectUsersFilter = json_encode(["IsQuestGiver" => 1]);
+                                    require("php-components/select-user.php");
 
                                 ?>
                                 </div>
@@ -154,9 +151,8 @@ $tabPageActive = "active show";
 
                                     for ($i=0; $i < count($archivedQuests); $i++) 
                                     { 
-                                        $feedCard = $archivedQuests[$i];
-                                        
-                                        require ("php-components/feed-card.php");
+                                        $_vFeedCard = FeedCardController::vFeedRecord_to_vFeedCard($archivedQuests[$i]);
+                                        require("php-components/vFeedCardRenderer.php");
                                     }
                                 ?>
                             </div>
@@ -172,7 +168,10 @@ $tabPageActive = "active show";
 
     
     <?php require("php-components/base-page-javascript.php"); ?>
-
-</body>
+        <script>
+                                        
+            SearchForAccount('<?php echo $selectUserFormId; ?>', 1, null, {"IsQuestGiver": 1});
+        </script>
+    </body>
 
 </html>

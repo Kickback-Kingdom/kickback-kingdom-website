@@ -2,12 +2,14 @@
 
 require_once(__DIR__."/../../engine/engine.php");
 
+use Kickback\Backend\Controllers\AccountController;
+
 OnlyPOST();
 
 
 $containsFieldsResp = POSTContainsFields("searchTerm","page","itemsPerPage");//,"sessionToken"
 
-if (!$containsFieldsResp->Success)
+if (!$containsFieldsResp->success)
 return $containsFieldsResp;
 
 $searchTerm = Validate($_POST["searchTerm"]);
@@ -15,17 +17,24 @@ $searchTerm = Validate($_POST["searchTerm"]);
 $page = Validate($_POST["page"]);
 $itemsPerPage = Validate($_POST["itemsPerPage"]);
 
+$filters = [];
+if (isset($_POST['filters']) && is_array($_POST['filters'])) {
+    foreach ($_POST['filters'] as $key => $value) {
+        $filters[$key] = Validate($value);
+    }
+}
+
 assert(is_string($searchTerm));
 assert(is_string($page) || is_int($page));
 assert(is_string($itemsPerPage) || is_int($itemsPerPage));
 
 if (is_string($page) && !ctype_digit($page)) {
-    return (new APIResponse(false, "'page' parameter must be integer, but was not. Got '$page' instead.", null));
+    return (new Kickback\Backend\Models\Response(false, "'page' parameter must be integer, but was not. Got '$page' instead.", null));
 }
 
 if (is_string($itemsPerPage) && !ctype_digit($itemsPerPage)) {
-    return (new APIResponse(false, "'itemsPerPage' parameter must be integer, but was not. Got '$itemsPerPage' instead.", null));
+    return (new Kickback\Backend\Models\Response(false, "'itemsPerPage' parameter must be integer, but was not. Got '$itemsPerPage' instead.", null));
 }
 
-return SearchForAccount($searchTerm, intval($page), intval($itemsPerPage));
+return AccountController::SearchForAccount($searchTerm, intval($page), intval($itemsPerPage), $filters);
 ?>

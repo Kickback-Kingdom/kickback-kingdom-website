@@ -1,81 +1,60 @@
 <?php
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
+use \Kickback\Common\Version;
+
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-$foundBlogPost = false;
-$blog = null;
-$blogPost = null;
+use Kickback\Backend\Controllers\ContentController;
+use Kickback\Backend\Controllers\BlogController;
+use Kickback\Backend\Controllers\BlogPostController;
+use Kickback\Backend\Controllers\FeedCardController;
+use Kickback\Services\Session;
 
 if (isset($_GET['blogLocator'])) {
     
-    $blogLocator = $_GET['blogLocator'];
-    $blogResp = GetBlogByLocator($blogLocator);
-
-    if ($blogResp->Success)
-    {
-        $blog = $blogResp->Data;
 
         if (isset($_GET['postLocator']))
         {
-            $postLocator = $_GET['postLocator'];
         
-            $blogPostResp = GetBlogPostByLocators($blogLocator,$postLocator);
+            $blogPostResp = BlogPostController::getBlogPostByLocators($_GET['blogLocator'],$_GET['postLocator']);
         
             
         }
         elseif (isset($_GET["new"]))
         {
-            $blogPostResp = InsertNewBlogPost($blog["Id"], $blogLocator);
+            $blog = BlogController::getBlogByLocator($_GET['blogLocator'])->data;
+            $blogPostResp = BlogPostController::insertNewBlogPost($blog, $_GET['blogLocator']);
         }
         
-        if ($blogPostResp->Success)
+        if ($blogPostResp->success)
         {
-            $foundBlogPost = true;
-            $blogPost = $blogPostResp->Data;
-            $postLocator = $blogPost["Postlocator"];
-
-            $contentResp = GetContentDataById($blogPost["Content_id"],"BLOG-POST", $blogLocator."/".$postLocator);
-
-            $pageContent = $contentResp->Data;
+            $thisBlogPost = $blogPostResp->data;
+            $thisBlogPost->populateContent();
+            
+            $blogResp = BlogController::getBlogByLocator($_GET['blogLocator']);
+            $thisBlogPost->blog = $blogResp->data;
         }
-    }
     
 }
 
-$isWriterForBlogPost = IsWriterForBlogPost($blogPost);
-
-$blogTitle = "Couldn't find the blog post.";
-$authorUsername = "KickbackKingdom";
-if ($blogPost != null)
+if (!isset($thisBlogPost) || (isset($thisBlogPost) && $thisBlogPost == null))
 {
-    $blogTitle = $blogPost["Title"];
-    $thisPostDate = date_create($blogPost["PostDate"]);  
-    $authorUsername = $blogPost["Author_Username"];
+    Session::Redirect("/blog/".$_GET['blogLocator']);
 }
-else{
-    $thisPostDate = new DateTime();
-}    
-$thisPostDateBasic = date_format($thisPostDate,"M j, Y");
-$thisPostDateDetailed = date_format($thisPostDate,"M j, Y H:i:s");
 
-$thisBlogPost = $blogPost;
+$isWriterForBlogPost = $thisBlogPost->isWriter();
 
 
-if ($_GET['blogLocator'] == "Kickback-Kingdom")
+
+if ($thisBlogPost->blogLocator == "Kickback-Kingdom")
 {
-    //this is the blog that contains update posts
-    $postLocator = $_GET['postLocator'];
 
-    $changelogVersion = array_search($postLocator, $_globalVersionInfo);
-    if ($changelogVersion === false) {
-        // Handle the case where no matching version is found
-        unset($changelogVersion);
+    if ( array_key_exists($thisBlogPost->postLocator, Version::history_by_blogpost_locator()) ) {
+        Version::$client_is_viewing_blogpost_for_current_version_update = true;
     }
 }
-
-
 
 ?>
 
@@ -106,8 +85,8 @@ if ($_GET['blogLocator'] == "Kickback-Kingdom")
                 <div class="card mb-3">
                     <?php if (!isset($_GET['borderless'])) { ?>
                     <div class="card-header bg-primary d-flex flex-wrap justify-content-between align-items-center">
-                        <a class="btn bg-ranked-1" href="<?php echo $urlPrefixBeta."/blog/".$blogPost["Bloglocator"]; ?>"><i class="fa-solid fa-arrow-left"></i><i class="fa-solid fa-blog"></i></a>
-                        <h5 class="text-center text-white"><?php echo $blog["name"]; ?></h5>
+                        <a class="btn bg-ranked-1" href="<?= $thisBlogPost->blog->getURL(); ?>"><i class="fa-solid fa-arrow-left"></i><i class="fa-solid fa-blog"></i></a>
+                        <h5 class="text-center text-white"><?= $thisBlogPost->blog->title; ?></h5>
                         <a class="btn bg-ranked-1 float-end" href="#page_bottom"><i class="fa-solid fa-arrow-down"></i></a>
                     </div>
                     <?php } ?>
@@ -115,11 +94,12 @@ if ($_GET['blogLocator'] == "Kickback-Kingdom")
                         <div class="row">
                 
         
-                            <div class="col-12  pb-3"><h1 class="text-center"><?php echo $blogTitle;?></h1>
+                            <div class="col-12  pb-3"><h1 class="text-center"><?= $thisBlogPost->blog->title;?></h1>
                                 <p class="card-text text-center">
                                     <small class="text-body-secondary">Written by 
-                                        <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $authorUsername; ?>" class="username"><?php echo $authorUsername; ?></a> on 
-                                        <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo $thisPostDateDetailed; ?>"><?php echo $thisPostDateBasic; ?></span> and viewed <?= $thisPageVisits; ?> times
+                                        <?= $thisBlogPost->author->getAccountElement();?> on 
+                                        <?= $thisBlogPost->publishedDateTime->getDateTimeElement(); ?> and viewed <?= $thisPageVisits; ?> times
+                                        
                                     </small>
                                 </p>
                         
@@ -134,11 +114,11 @@ if ($_GET['blogLocator'] == "Kickback-Kingdom")
                         <div class="card mb-3">
     
                             <div class="card-header bg-ranked-1">
-                                <h5 class="mb-0">Welcome back, Scribe <?php echo $_SESSION["account"]["Username"]; ?>. What would you like to do?</h5>
+                                <h5 class="mb-0">Welcome back, Scribe <?php echo Kickback\Services\Session::getCurrentAccount()->username; ?>. What would you like to do?</h5>
                             </div>
                             <div class="card-body">
                                 <button type="button" class="btn btn-primary" onclick="OpenModalEditBlogPostOptions()">Edit Blog Post Details</button>
-                                <button type="button" class="btn btn-primary" onclick="OpenModalPublishBlogPost()">Publish Blog Post</button>
+                                <?php if ($thisBlogPost->reviewStatus->isDraft()) { ?><button type="button" class="btn btn-primary" onclick="OpenModalPublishBlogPost()">Publish Blog Post</button><?php } ?>
                             </div>
                         </div>
                     </div>
@@ -161,43 +141,36 @@ if ($_GET['blogLocator'] == "Kickback-Kingdom")
                             <div class="row mb-3">
                                 <div class="col-lg-12 col-xl-9">
                                     <?php 
-                                        $feedCard = $blogPost;
-                                        $feedCard["type"] = "BLOG-POST";
-                                        $feedCard["title"] = $blogPost["Title"];
-                                        $feedCard["image"] = $blogPost["Image_Path"];
-                                        $feedCard["published"] = true;
-                                        $feedCard["account_1_username"] = $authorUsername;
-                                        $feedCard["text"] = $blogPost["Desc"];
-                                        $feedCard["locator"] = $blogPost["Postlocator"];
-                                        require("php-components/feed-card.php");
+                                        $_vFeedCard = FeedCardController::vBlogPost_to_vFeedCard($thisBlogPost);
+                                        require("php-components/vFeedCardRenderer.php");
                                     ?>
                                 </div>
                                 <div class="col-lg-12 col-xl-3">
-                                    <?php if(BlogPostTitleIsValid($blogPost["Title"])) { ?>
+                                    <?php if ($thisBlogPost->titleIsValid()) { ?>
                                         <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Blog Post Title</p>
                                     <?php } else { ?>
                                         <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Title is too short or invalid</p>
                                     <?php } ?>
 
-                                    <?php if(BlogPostSummaryIsValid($blogPost["Desc"])) { ?>
+                                    <?php if ($thisBlogPost->summaryIsValid()) { ?>
                                         <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Blog Post Summary</p>
                                     <?php } else { ?>
                                         <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Summary is too short</p>
                                     <?php } ?>
 
-                                    <?php if(BlogPostPageContentIsValid($pageContent["data"])) { ?>
+                                    <?php if ($thisBlogPost->pageContentIsValid()) { ?>
                                         <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Blog Post content</p>
                                     <?php } else { ?>
                                         <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Content is too short</p>
                                     <?php } ?>
 
-                                    <?php if(BlogPostLocatorIsValid($blogPost["Postlocator"])) { ?>
+                                    <?php if($thisBlogPost->locatorIsValid()) { ?>
                                         <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid URL Locator</p>
                                     <?php } else { ?>
                                         <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Please use a valid url locator</p>
                                     <?php } ?>
 
-                                    <?php if(BlogPostIconIsValid($blogPost["Image_Id"])) { ?>
+                                    <?php if($thisBlogPost->iconIsValid()) { ?>
                                         <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Blog Post Icon</p>
                                     <?php } else { ?>
                                         <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Please select a Blog Post Icon</p>
@@ -210,9 +183,9 @@ if ($_GET['blogLocator'] == "Kickback-Kingdom")
                         <div class="modal-footer">
                             <form method="POST">
                                 <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                                <input type="hidden" name="blog-post-id" value="<?php echo $blogPost["Id"]; ?>" />
+                                <input type="hidden" name="blog-post-id" value="<?= $thisBlogPost->crand; ?>" />
                                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-                                <input type="submit" name="submit-blog-post-publish" class="btn bg-ranked-1" onclick="" <?php if(!BlogPostIsValidForPublish($blogPost,$pageContent)) { ?>disabled<?php } ?> value="Publish Blog Post" />
+                                <input type="submit" name="submit-blog-post-publish" class="btn bg-ranked-1" onclick="" <?php if(!$thisBlogPost->isValidForPublish()) { ?>disabled<?php } ?> value="Publish Blog Post" />
                             </form>
                         </div>
                         </div>
@@ -221,56 +194,56 @@ if ($_GET['blogLocator'] == "Kickback-Kingdom")
 
                 <form method="POST">
                     <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                    <input type="hidden" value="<?php echo $blogPost["Id"]; ?>" name="blogPostId" />
+                    <input type="hidden" value="<?=  $thisBlogPost->crand; ?>" name="blogPostId" />
                     <div class="modal modal-lg fade" id="modalEditBlogPostOptions" tabindex="-1" aria-labelledby="modalEditBlogPostOptionsLabel" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content">
-                            <div class="modal-header">
-                                <h1 class="modal-title fs-5">Edit Blog Post Options</h1>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="row mb-3">
-                                    <div class="col-12">
-                                        <div class="form-group">
-                                            <label for="blogPostOptionsTitle" class="form-label">Title:</label>
-                                            <input type="text" class="form-control" id="blogPostOptionsTitle" name="blogPostOptionsTitle" value="<?php echo $blogPost["Title"]; ?>">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5">Edit Blog Post Options</h1>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label for="blogPostOptionsTitle" class="form-label">Title:</label>
+                                                <input type="text" class="form-control" id="blogPostOptionsTitle" name="blogPostOptionsTitle" value="<?= $thisBlogPost->title; ?>">
+                                            </div>
                                         </div>
-                                    </div>
-                                    
-                                </div>
-                                <div class="row mb-3">
-                                    <label for="blogPostOptionsLocator" class="form-label">URL</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">/blog/<?php echo $blogLocator; ?>/</span>
-                                        <input type="text" class="form-control" id="blogPostOptionsLocator" name="blogPostOptionsLocator" value="<?php echo $postLocator; ?>">
-                                    </div>
-                                </div>
-                                <div class="row mb-3">
-                                    <div class="col-12">
-                                        <div class="form-group">
-                                            <label for="blogPostOptionsDesc" class="form-label">Summary:</label>
-                                            <textarea class="form-control" rows="5" id="blogPostOptionsDesc" name="blogPostOptionsDesc"><?php echo $blogPost["Desc"]; ?></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row mb-3">
-                                    <div class="col-12">
                                         
-                                        <h3 class="display-6">Post Icon<button type="button" class="btn btn-primary float-end" onclick="OpenSelectMediaModal('modalEditBlogPostOptions','blogPostOptionsIcon','blogPostOptionsIconFormInput');">Select Media</button></h3>
-                                        <div class="col-md-6" >
-
-                                            <input type="hidden" value="<?php echo $blogPost["Image_Id"];?>" id="blogPostOptionsIconFormInput" name="blogPostOptionsIcon" />
-                                            <img class="img-thumbnail" src="/assets/media/<?php echo $blogPost["Image_Path"]; ?>" id="blogPostOptionsIcon" />
-
+                                    </div>
+                                    <div class="row mb-3">
+                                        <label for="blogPostOptionsLocator" class="form-label">URL</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">/blog/<?= $thisBlogPost->blogLocator; ?>/</span>
+                                            <input type="text" class="form-control" id="blogPostOptionsLocator" name="blogPostOptionsLocator" value="<?= $thisBlogPost->postLocator; ?>">
                                         </div>
-                                    </div>      
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label for="blogPostOptionsDesc" class="form-label">Summary:</label>
+                                                <textarea class="form-control" rows="5" id="blogPostOptionsDesc" name="blogPostOptionsDesc"><?= $thisBlogPost->summary; ?></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            
+                                            <h3 class="display-6">Post Icon<button type="button" class="btn btn-primary float-end" onclick="OpenSelectMediaModal('modalEditBlogPostOptions','blogPostOptionsIcon','blogPostOptionsIconFormInput');">Select Media</button></h3>
+                                            <div class="col-md-6" >
+
+                                                <input type="hidden" value="<?= $thisBlogPost->icon->crand;?>" id="blogPostOptionsIconFormInput" name="blogPostOptionsIcon" />
+                                                <img class="img-thumbnail" src="<?= $thisBlogPost->icon->getFullPath(); ?>" id="blogPostOptionsIcon" />
+
+                                            </div>
+                                        </div>      
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-                                <input type="submit" class="btn bg-ranked-1" onclick="" value="Apply changes" name="submitBlogOptions">
-                            </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                                    <input type="submit" class="btn bg-ranked-1" onclick="" value="Apply changes" name="submitBlogOptions">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -294,7 +267,7 @@ if ($_GET['blogLocator'] == "Kickback-Kingdom")
                         <nav>
                             <div class="nav nav-tabs" id="nav-tab" role="tablist">
                                 <button class="nav-link active" id="nav-content-tab" data-bs-toggle="tab" data-bs-target="#nav-content" type="button" role="tab" aria-controls="nav-content" aria-selected="true"><i class="fa-solid fa-newspaper"></i></button>
-                                <button class="nav-link" id="nav-comments-tab" data-bs-toggle="tab" data-bs-target="#nav-comments" type="button" role="tab" aria-controls="nav-comments" aria-selected="true"><i class="fa-regular fa-comments"></i></button>
+                                <!--<button class="nav-link" id="nav-comments-tab" data-bs-toggle="tab" data-bs-target="#nav-comments" type="button" role="tab" aria-controls="nav-comments" aria-selected="true"><i class="fa-regular fa-comments"></i></button>-->
                                 
                             </div>
                         </nav>
@@ -303,9 +276,14 @@ if ($_GET['blogLocator'] == "Kickback-Kingdom")
                                 
                                 <?php 
 
-                                    $canEditContent = $isWriterForBlogPost;
-                                    $contentViewerEditorTitle = "Blog Post Content Manager";
+                                    $_vCanEditContent = $isWriterForBlogPost;
+                                    $_vContentViewerEditorTitle = "Blog Post Content Manager";
+                                    $_vPageContent = $thisBlogPost->getPageContent();
                                     require("php-components/content-viewer.php"); 
+                                    /*$_vCanEditContent = $thisQuest->canEdit();
+                                    $_vContentViewerEditorTitle = "Quest Information Manager";
+                                    $_vPageContent = $thisQuest->getPageContent();
+                                    require("php-components/content-viewer.php");*/
 
                                 ?>
                             </div>
@@ -325,53 +303,43 @@ if ($_GET['blogLocator'] == "Kickback-Kingdom")
                         <h5 class="text-center text-white">Blog Navigation</h5>
                         <a class="btn bg-ranked-1 float-end" href="#page_top"><i class="fa-solid fa-arrow-up"></i></a>
                     </div>
-                    <?php if (($blogPost != null && $blogPost["Next_Locator"] != null) || ($blogPost != null && $blogPost["Prev_Locator"] != null)) { ?>
+                    <?php if (($thisBlogPost->nextBlogPost != null) || ($thisBlogPost->prevBlogPost != null)) { ?>
                     <div class="card-body">
                         <div class="row">
                                     
                             <div class="col-6">
                                 
-                                <?php if ($blogPost["Prev_Locator"] != null) { 
-                                    $prevPostDate = date_create($blogPost["Prev_PostDate"]);           
-                                    $prevPostDateBasic = date_format($prevPostDate,"M j, Y");
-                                    $prevPostDateDetailed = date_format($prevPostDate,"M j, Y H:i:s");
-                                    ?>
+                                <?php if ($thisBlogPost->prevBlogPost != null) { ?>
                                 <div class="card" >
-                                    <img src="/assets/media/<?php echo $blogPost["Prev_Image_Path"];?>" class="card-img-top" >
+                                    <img src="<?= $thisBlogPost->prevBlogPost->icon->getFullPath();?>" class="card-img-top" >
                                     <div class="card-body">
-                                        <h5 class="card-title"><?php echo $blogPost["Prev_Title"];?></h5>
+                                        <h5 class="card-title"><?= $thisBlogPost->prevBlogPost->title;?></h5>
                                         <small class="text-body-secondary">Written by 
-                                            <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $blogPost["Prev_Author"]; ?>" class="username"><?php echo $blogPost["Prev_Author"]; ?></a> on 
-                                            <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo $prevPostDateDetailed; ?> UTC"><?php echo $prevPostDateBasic; ?></span>
+                                            <?= $thisBlogPost->prevBlogPost->author->getAccountElement(); ?> on 
+                                            <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= $thisBlogPost->prevBlogPost->publishedDateTime->formattedDetailed; ?> UTC"><?=  $thisBlogPost->prevBlogPost->publishedDateTime->formattedBasic; ?></span>
                                         </small>
                                     </div>
                                     <div class="card-footer">
-                                        <a href="<?php echo $blogPost["Prev_Locator"]; ?>" class="btn btn-primary"><i class="fa-solid fa-angles-left"></i> Previous Post</a>
+                                        <a href="<?= $thisBlogPost->prevBlogPost->postLocator; ?>" class="btn btn-primary"><i class="fa-solid fa-angles-left"></i> Previous Post</a>
                                     </div>
                                 </div>
                                 <?php } ?>
                             </div>
                             <div class="col-6">
                                 
-                                <?php if ($blogPost["Next_Locator"] != null) { 
-                                    
-                                $nextPostDate = date_create($blogPost["Next_PostDate"]);           
-                                $nextPostDateBasic = date_format($nextPostDate,"M j, Y");
-                                $nextPostDateDetailed = date_format($nextPostDate,"M j, Y H:i:s");
-
-                                ?>
+                                <?php if ($thisBlogPost->nextBlogPost != null) { ?>
                                 <div class="card float-end" >
                                     
-                                    <img src="/assets/media/<?php echo $blogPost["Next_Image_Path"];?>" class="card-img-top">
+                                    <img src="<?= $thisBlogPost->nextBlogPost->icon->getFullPath();?>" class="card-img-top">
                                     <div class="card-body">
-                                        <h5 class="card-title"><?php echo $blogPost["Next_Title"];?></h5>
+                                        <h5 class="card-title"><?= $thisBlogPost->nextBlogPost->title;?></h5>
                                         <small class="text-body-secondary">Written by 
-                                            <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $blogPost["Next_Author"]; ?>" class="username"><?php echo $blogPost["Next_Author"]; ?></a> on 
-                                            <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo $nextPostDateDetailed; ?> UTC"><?php echo $nextPostDateBasic; ?></span>
+                                        <?= $thisBlogPost->nextBlogPost->author->getAccountElement(); ?> on 
+                                            <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= $thisBlogPost->nextBlogPost->publishedDateTime->formattedDetailed; ?> UTC"><?= $thisBlogPost->nextBlogPost->publishedDateTime->formattedBasic; ?></span>
                                         </small>
                                     </div>
                                     <div class="card-footer">
-                                        <a href="<?php echo $blogPost["Next_Locator"]; ?>" class="btn btn-primary float-end">Next Post <i class="fa-solid fa-angles-right"></i></a>
+                                        <a href="<?= $thisBlogPost->nextBlogPost->postLocator; ?>" class="btn btn-primary float-end">Next Post <i class="fa-solid fa-angles-right"></i></a>
                                     </div>
                                 </div>
                                 <?php } ?>

@@ -4,10 +4,11 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
+use Kickback\Backend\Controllers\AnalyticController;
 
-$analyticsMonthlyResp = GetMonthlyGrowthStats();
+$analyticsMonthlyResp = AnalyticController::getMonthlyGrowthStats();
 
-$analyticsMonthly = $analyticsMonthlyResp->Data;
+$analyticsMonthly = $analyticsMonthlyResp->data;
 
 $analyticsJSON = json_encode($analyticsMonthly);
 ?>
@@ -59,6 +60,7 @@ $analyticsJSON = json_encode($analyticsMonthly);
                                         <th scope="col">Growth %</th>
                                         <th scope="col">Active Accounts</th>
                                         <th scope="col">Retention %</th>
+                                        <th scope="col">Website Hits</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -74,9 +76,10 @@ $analyticsJSON = json_encode($analyticsMonthly);
                                                 <td><?= htmlspecialchars($data['month']); ?></td>
                                                 <td class="<?= $growthClass; ?>"><?= htmlspecialchars($data['new_accounts']); ?></td>
                                                 <td class="<?= $growthClass; ?>"><?= htmlspecialchars($data['total_accounts']); ?></td>
-                                                <td class="<?= $growthClass; ?>"><?= htmlspecialchars(number_format($data['growth_percentage'], 1, '.', '')); ?>%</td>
+                                                <td class="<?= $growthClass; ?>"><?= htmlspecialchars(number_format($data['growth_percentage'], 1, '.', ',')); ?>%</td>
                                                 <td class="<?= $retentionClass; ?>"><?= htmlspecialchars($data['active_accounts']); ?></td>
-                                                <td class="<?= $retentionClass; ?>"><?= htmlspecialchars(number_format($data['retention_rate'], 1, '.', '')); ?>%</td>
+                                                <td class="<?= $retentionClass; ?>"><?= htmlspecialchars(number_format($data['retention_rate'], 1, '.', ',')); ?>%</td>
+                                                <td class="<?= $rowClass; ?>"><?= htmlspecialchars(number_format($data['website_hits'], 0, '.', ',')); ?></td>
                                             </tr>
                                         <?php endforeach; ?>
 
@@ -170,6 +173,19 @@ $analyticsJSON = json_encode($analyticsMonthly);
                                     </div>
                                 </div>
                             </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseSix" aria-expanded="false" aria-controls="panelsStayOpen-collapseSix">
+                                        Monthly Website Hits
+                                    </button>
+                                </h2>
+                                <div id="panelsStayOpen-collapseSix" class="accordion-collapse collapse">
+                                    <div class="accordion-body">
+                                        
+                                        <canvas id="websiteHitsChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -237,12 +253,13 @@ $analyticsJSON = json_encode($analyticsMonthly);
             const growthPercentages = filteredData.map(data => parseFloat(data.growth_percentage).toFixed(1));
             const retentionRates = filteredData.map(data => parseFloat(data.retention_rate).toFixed(1));
             const activeAccounts = filteredData.map(data => parseInt(data.active_accounts));
+            const websiteHits = filteredData.map(data => parseInt(data.website_hits));
 
             // Update the charts
-            updateChartData(labels, totalAccounts, newAccounts, growthPercentages, retentionRates, activeAccounts);
+            updateChartData(labels, totalAccounts, newAccounts, growthPercentages, retentionRates, activeAccounts, websiteHits);
         }
 
-        function updateChartData(labels, totalAccounts, newAccounts, growthPercentages, retentionRates, activeAccounts) {
+        function updateChartData(labels, totalAccounts, newAccounts, growthPercentages, retentionRates, activeAccounts, websiteHits) {
             totalAccountsChart.data.labels = labels;
             totalAccountsChart.data.datasets[0].data = totalAccounts;
             totalAccountsChart.update();
@@ -262,6 +279,10 @@ $analyticsJSON = json_encode($analyticsMonthly);
             activeAccountsChart.data.labels = labels;
             activeAccountsChart.data.datasets[0].data = activeAccounts;
             activeAccountsChart.update();
+
+            websiteHitsChart.data.labels = labels;
+            websiteHitsChart.data.datasets[0].data = websiteHits;
+            websiteHitsChart.update();
         }
 
 
@@ -271,6 +292,7 @@ $analyticsJSON = json_encode($analyticsMonthly);
         const growthPercentages = analyticsData.map(data => parseFloat(data.growth_percentage).toFixed(1));
         const retentionRates = analyticsData.map(data => parseFloat(data.retention_rate).toFixed(1));
         const activeAccounts = analyticsData.map(data => parseInt(data.active_accounts));
+        const websiteHits = analyticsData.map(data => parseInt(data.website_hits));
         
         const totalAccountsChart = new Chart('totalAccountsChart', {
             type: 'line',
@@ -361,6 +383,26 @@ $analyticsJSON = json_encode($analyticsMonthly);
                 datasets: [{
                     label: 'Active Accounts',
                     data: activeAccounts, // Data array for active accounts
+                    borderColor: 'rgb(255, 159, 64)', // Color of the line
+                    tension: 0.1 // Smooths the line
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true // Ensures the y-axis starts at 0
+                    }
+                }
+            }
+        });
+
+        const websiteHitsChart = new Chart('websiteHitsChart', {
+            type: 'line', // Line chart type
+            data: {
+                labels: labels, // Use the same labels array as other charts
+                datasets: [{
+                    label: 'Website Hits',
+                    data: websiteHits, // Data array for active accounts
                     borderColor: 'rgb(255, 159, 64)', // Color of the line
                     tension: 0.1 // Smooths the line
                 }]

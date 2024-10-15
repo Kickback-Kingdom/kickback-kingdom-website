@@ -5,12 +5,16 @@ $session = require($_SERVER['DOCUMENT_ROOT']."/api/v1/engine/session/verifySessi
 
 require("php-components/base-page-pull-active-account-info.php");
 
+use Kickback\Backend\Controllers\QuestLineController;
+use Kickback\Backend\Controllers\QuestController;
+use Kickback\Backend\Controllers\FeedCardController;
+use Kickback\Services\Session;
 
 if (isset($_GET['id']))
 {
 
     $id = $_GET['id'];
-    $questLineResp = GetQuestLineById($id);
+    $questLineResp = QuestLineController::getQuestLineById($id);
 
     /*$showPopUpSuccess = true;
     $PopUpTitle = "Loaded quest line by id";
@@ -20,7 +24,7 @@ if (isset($_GET['id']))
 if (isset($_GET['locator'])){
         
     $name = $_GET['locator'];
-    $questLineResp = GetQuestLineByLocator($name);
+    $questLineResp = QuestLineController::getQuestLineByLocator($name);
 
     /*$showPopUpSuccess = true;
     $PopUpTitle = "Loaded quest line by locator";
@@ -31,7 +35,7 @@ if (isset($_GET['new']))
 {
     $name = "New Quest Line";
     $newPost = true;
-    $questLineResp = InsertNewQuestLine();
+    $questLineResp = QuestLineController::insertNewQuestLine();
 
     
     /*$showPopUpSuccess = true;
@@ -39,33 +43,17 @@ if (isset($_GET['new']))
     $PopUpMessage= json_encode($questLineResp);*/
 }
 
-if (!$questLineResp->Success)
+if (!$questLineResp->success)
 {
     unset($questLineResp);
 }
 if (!isset($questLineResp))
 {
-    Redirect("adventurers-guild.php");
+    Session::redirect("adventurers-guild.php");
 }
 
-
-
-$thisQuestLine = $questLineResp->Data;
-
-
-/*$hasSuccess = true;
-$successMessage = json_encode($thisQuestLine);*/
-
-$pageContent = null;
-if ($thisQuestLine["content_id"] != null)
-{
-    $contentResp = GetContentDataById($thisQuestLine["content_id"],"QUEST-LINE",$thisQuestLine["locator"]);
-    $pageContent = $contentResp->Data;
-}
-
-
-$thisQuestLinesQuestsResp = GetQuestsByQuestLineId($thisQuestLine["Id"]);
-$thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
+$thisQuestLine = $questLineResp->data;
+$thisQuestLine->populateEverything();
 ?>
 
 <!DOCTYPE html>
@@ -85,12 +73,12 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
     <!--TOP BANNER-->
     <div class="d-none d-md-block w-100 ratio" style="--bs-aspect-ratio: 26%; margin-top: 56px">
 
-        <img src="/assets/media/<?php echo $thisQuestLine["imagePath"]; ?>" class="" />
+        <img src="<?= $thisQuestLine->icon->getFullPath(); ?>" class="" />
 
     </div>
     <div class="d-block d-md-none w-100 ratio" style="margin-top: 56px; --bs-aspect-ratio: 46.3%;">
 
-        <img src="/assets/media/<?php echo $thisQuestLine["imagePath_mobile"]; ?>" />
+        <img src="<?= $thisQuestLine->bannerMobile->getFullPath(); ?>" />
 
     </div>
 
@@ -120,7 +108,7 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                 <?php 
                 
                 
-                $activePageName = $thisQuestLine["name"];
+                $activePageName = $thisQuestLine->title;
                 require("php-components/base-page-breadcrumbs.php"); 
                 
                 ?>
@@ -130,8 +118,8 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                         
                         
                         <h5 class="quest-hosted-by">Created by 
-                            <a class="username" href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $thisQuestLine['created_by_username'];?>"><?php echo $thisQuestLine['created_by_username'];?></a>
-                            on <span  id="quest_time" class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?php echo date_format(date_create($thisQuestLine["date_created"]),"M j, Y H:i:s"); ?> UTC"><?php echo date_format(date_create($thisQuestLine["date_created"]),"M j, Y H:i:s"); ?> UTC</span>
+                            <?= $thisQuestLine->createdBy->getAccountElement(); ?>
+                            on <span  id="quest_time" class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= $thisQuestLine->dateCreated->formattedDetailed ?> UTC"><?=$thisQuestLine->dateCreated->formattedDetailed ?> UTC</span>
                         </h5>
                         
                 
@@ -140,7 +128,7 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                 <div class="row">
                     <div class="col-12">
                         
-                        <?php if (!$thisQuestLine["published"]) { ?>
+                        <?php if (!$thisQuestLine->reviewStatus->published) { ?>
                             <div class="row mt-3">
                                 <div class="col-12">
                                     <div class="card mb-3">
@@ -153,7 +141,7 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                                 </div>
                             </div>
                         <?php } ?>
-                        <?php if ($thisQuestLine["being_reviewed"]) { ?>
+                        <?php if ($thisQuestLine->reviewStatus->beingReviewed) { ?>
                             <div class="row mt-3">
                                 <div class="col-12">
                                     <div class="card mb-3">
@@ -163,7 +151,7 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                                                 <div class="spinner-border ms-auto" aria-hidden="true"></div>
                                             </div>
                                         </div>
-                                        <?php if (IsAdmin()) { ?>
+                                        <?php if (Kickback\Services\Session::isAdmin()) { ?>
                                         <div class="card-footer">
                                             <button type="button" class="btn btn-success float-end mx-1" onclick="OpenModalApprove()">Approve Quest Line</button>
                                             <button type="button" class="btn btn-danger float-end" onclick="OpenModalReject()">Reject Quest Line</button>
@@ -173,21 +161,21 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                                 </div>
                             </div>
                         <?php } ?>
-                        <?php if (CanEditQuestLine($thisQuestLine)) { ?>
+                        <?php if ($thisQuestLine->canEdit()) { ?>
                         <div class="row mt-3">
                             <div class="col-12">
                                 <div class="card mb-3">
             
                                     <div class="card-header bg-ranked-1">
-                                        <h5 class="mb-0">Welcome back, Quest Giver <?php echo $_SESSION["account"]["Username"]; ?>. What would you like to do?</h5>
+                                        <h5 class="mb-0">Welcome back, Quest Giver <?php echo Kickback\Services\Session::getCurrentAccount()->username; ?>. What would you like to do?</h5>
                                     </div>
                                     <div class="card-body">
                                         <button type="button" class="btn btn-primary" onclick="OpenModalEditQuestImages()">Edit Banner & Icon</button>
                                         <button type="button" class="btn btn-primary" onclick="OpenModalEditQuestOptions()">Quest Line Details</button>
-                                        <?php if (!$thisQuestLine["being_reviewed"] && !$thisQuestLine["published"]) { ?><button type="button" class="btn btn-success float-end" onclick="OpenModalPublishQuest()">Publish Quest Line</button><?php } ?>
+                                        <?php if (!$thisQuestLine->reviewStatus->beingReviewed && !$thisQuestLine->reviewStatus->published) { ?><button type="button" class="btn btn-success float-end" onclick="OpenModalPublishQuest()">Publish Quest Line</button><?php } ?>
                                     </div>
                                     
-                                    <?php if ($thisQuestLine["published"] || $thisQuestLine["being_reviewed"]) { ?>
+                                    <?php if ($thisQuestLine->reviewStatus->published || $thisQuestLine->reviewStatus->beingReviewed) { ?>
                                         <div class="card-footer">
                                             <h5>Editing this quest line will unpublish it and remove it from the review queue.</h5>
                                         </div>
@@ -198,10 +186,10 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
 
                         <form method="POST">
                             <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                            <input type="hidden" value="<?php echo $thisQuestLine["Id"]; ?>" name="edit-quest-line-id" />
-                            <input type="hidden" value="<?php echo $thisQuestLine["image_id"]; ?>" name="edit-quest-line-images-desktop-banner-id" id="edit-quest-line-images-desktop-banner-id"/>
-                            <input type="hidden" value="<?php echo $thisQuestLine["image_id_mobile"]; ?>" name="edit-quest-line-images-mobile-banner-id" id="edit-quest-line-images-mobile-banner-id" />
-                            <input type="hidden" value="<?php echo $thisQuestLine["image_id_icon"]; ?>" name="edit-quest-line-images-icon-id" id="edit-quest-line-images-icon-id"/>
+                            <input type="hidden" value="<?php echo $thisQuestLine->crand; ?>" name="edit-quest-line-id" />
+                            <input type="hidden" value="<?php echo $thisQuestLine->banner->crand; ?>" name="edit-quest-line-images-desktop-banner-id" id="edit-quest-line-images-desktop-banner-id"/>
+                            <input type="hidden" value="<?php echo $thisQuestLine->bannerMobile->crand; ?>" name="edit-quest-line-images-mobile-banner-id" id="edit-quest-line-images-mobile-banner-id" />
+                            <input type="hidden" value="<?php echo $thisQuestLine->icon->crand; ?>" name="edit-quest-line-images-icon-id" id="edit-quest-line-images-icon-id"/>
                             <div class="modal modal-lg fade" id="modalEditQuestImages" tabindex="-1" aria-labelledby="modalEditQuestImagesLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
@@ -214,21 +202,21 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                                             <h3 class="display-6">Desktop Banner<button type="button" class="btn btn-primary float-end" onclick="OpenSelectMediaModal('modalEditQuestImages','edit-quest-line-images-desktop-banner-img','edit-quest-line-images-desktop-banner-id')">Select Media</button></h3>
                                             <div class="w-100 ratio" style="--bs-aspect-ratio: 26%;">
 
-                                                <img src="/assets/media/<?php echo $thisQuestLine["imagePath"]; ?>" class="" id="edit-quest-line-images-desktop-banner-img"/>
+                                                <img src="<?= $thisQuestLine->banner->getFullPath(); ?>" class="" id="edit-quest-line-images-desktop-banner-img"/>
 
                                             </div>
                                             <!--MOBILE TOP BANNER-->
                                             <h3 class="display-6">Mobile Banner<button type="button" class="btn btn-primary float-end" onclick="OpenSelectMediaModal('modalEditQuestImages','edit-quest-line-images-mobile-banner-img','edit-quest-line-images-mobile-banner-id')">Select Media</button></h3>
                                             <div class="w-100 ratio" style="--bs-aspect-ratio: 46.3%;">
 
-                                                <img src="/assets/media/<?php echo $thisQuestLine["imagePath_mobile"]; ?>"  id="edit-quest-line-images-mobile-banner-img"/>
+                                                <img src="<?= $thisQuestLine->bannerMobile->getFullPath(); ?>"  id="edit-quest-line-images-mobile-banner-img"/>
 
                                             </div>
                                             <!--Quest Icon-->
                                             <h3 class="display-6">Icon<button type="button" class="btn btn-primary float-end" onclick="OpenSelectMediaModal('modalEditQuestImages','edit-quest-line-images-icon-img','edit-quest-line-images-icon-id')">Select Media</button></h3>
                                             <div class="col-md-6" >
 
-                                                <img class="img-thumbnail" src="/assets/media/<?php echo $thisQuestLine["imagePath_icon"]; ?>"  id="edit-quest-line-images-icon-img"/>
+                                                <img class="img-thumbnail" src="<?= $thisQuestLine->icon->getFullPath(); ?>"  id="edit-quest-line-images-icon-img"/>
 
                                             </div>
                                         </div>
@@ -241,7 +229,7 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                             </div>
                         </form>
                         <form method="POST">
-                            <input type="hidden" value="<?php echo $thisQuestLine["Id"]; ?>" name="edit-quest-line-id" />
+                            <input type="hidden" value="<?= $thisQuestLine->crand; ?>" name="edit-quest-line-id" />
                             <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
                             <div class="modal modal-lg fade" id="modalEditQuestOptions" tabindex="-1" aria-labelledby="modalEditQuestOptionsLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
@@ -255,7 +243,7 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                                                 <div class="col-12">
                                                     <div class="form-group">
                                                         <label for="edit-quest-options-title" class="form-label">Title:</label>
-                                                        <input type="text" id="edit-quest-line-options-title" name="edit-quest-line-options-title" class="form-control" value="<?php echo $thisQuestLine["name"]; ?>">
+                                                        <input type="text" id="edit-quest-line-options-title" name="edit-quest-line-options-title" class="form-control" value="<?= $thisQuestLine->title; ?>">
                                                     </div>
                                                 </div>
                                                 
@@ -264,14 +252,14 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                                                 <label for="edit-quest-options-locator" class="form-label">URL:</label>
                                                 <div class="input-group">
                                                     <span class="input-group-text">https://kickback-kingdom.com/quest-line/</span>
-                                                    <input type="text" id="edit-quest-line-options-locator" name="edit-quest-line-options-locator" class="form-control" value="<?php echo $thisQuestLine["locator"]; ?>">
+                                                    <input type="text" id="edit-quest-line-options-locator" name="edit-quest-line-options-locator" class="form-control" value="<?= $thisQuestLine->locator; ?>">
                                                 </div>
                                             </div>
                                             <div class="row mb-3">
                                                 <div class="col-12">
                                                     <div class="form-group">
                                                         <label for="edit-quest-options-summary" class="form-label">Summary:</label>
-                                                        <textarea class="form-control" id="edit-quest-line-options-summary" name="edit-quest-line-options-summary" rows="5" maxlength="512" oninput="updateCharCountQuestLineDesc()"><?php echo $thisQuestLine["desc"]; ?></textarea>
+                                                        <textarea class="form-control" id="edit-quest-line-options-summary" name="edit-quest-line-options-summary" rows="5" maxlength="512" oninput="updateCharCountQuestLineDesc()"><?= $thisQuestLine->summary; ?></textarea>
                                                     </div>
                                                     <div class="float-end form-text text-success" id="charCount-questLine">400 characters remaining</div>
                                                     <script>
@@ -311,8 +299,8 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                             </div>
                         </form>
                         <form method="POST">
-                            <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                            <input type="hidden" name="quest-line-id" value="<?php echo $thisQuestLine["Id"]; ?>" />
+                            <input type="hidden" name="form_token" value="<?= $_SESSION['form_token']; ?>">
+                            <input type="hidden" name="quest-line-id" value="<?= $thisQuestLine->crand; ?>" />
                             <div class="modal modal-xl fade" id="modalQuestPublish" tabindex="-1" aria-labelledby="modalQuestPublishLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
@@ -331,43 +319,36 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                                             <div class="row mb-3">
                                                 <div class="col-lg-12 col-xl-9">
                                                     <?php 
-                                                        $feedCard = $thisQuestLine;
-                                                        $feedCard["type"] = "QUEST-LINE";
-                                                        $feedCard["title"] = $thisQuestLine["name"];
-                                                        $feedCard["image"] = $thisQuestLine["imagePath_icon"];
-                                                        $feedCard["published"] = true;
-                                                        $feedCard["account_1_username"] = $thisQuestLine["created_by_username"];
-                                                        $feedCard["text"] =  $thisQuestLine["desc"];
-                                                        $feedCard["date"] = $thisQuestLine["date_created"];
-                                                        require("php-components/feed-card.php");
+                                                        $_vFeedCard = FeedCardController::vQuestLine_to_vFeedCard($thisQuestLine);
+                                                        require("php-components/vFeedCardRenderer.php");
                                                     ?>
                                                 </div>
                                                 <div class="col-lg-12 col-xl-3">
-                                                    <?php if(QuestLineNameIsValid($feedCard["title"])) { ?>
+                                                    <?php if($thisQuestLine->nameIsValid()) { ?>
                                                         <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Title</p>
                                                     <?php } else { ?>
                                                         <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Title is too short or invalid</p>
                                                     <?php } ?>
 
-                                                    <?php if(QuestLineSummaryIsValid($feedCard["text"])) { ?>
+                                                    <?php if($thisQuestLine->summaryIsValid()) { ?>
                                                         <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Summary</p>
                                                     <?php } else { ?>
                                                         <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Summary is too short</p>
                                                     <?php } ?>
 
-                                                    <?php if((is_null($thisQuestLine["content_id"])) || QuestLinePageContentIsValid($pageContent["data"])) { ?>
+                                                    <?php if($thisQuestLine->pageContentIsValid()) { ?>
                                                         <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Content</p>
                                                     <?php } else { ?>
                                                         <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Content is too short</p>
                                                     <?php } ?>
 
-                                                    <?php if(QuestLineLocatorIsValid($thisQuestLine["locator"])) { ?>
+                                                    <?php if($thisQuestLine->locatorIsValid()) { ?>
                                                         <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid URL Locator</p>
                                                     <?php } else { ?>
                                                         <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Please use a valid url locator</p>
                                                     <?php } ?>
 
-                                                    <?php if(QuestLineImagesAreValid($thisQuestLine)) { ?>
+                                                    <?php if($thisQuestLine->imagesAreValid()) { ?>
                                                         <p class="text-success"><i class="fa-solid fa-square-check"></i> Valid Images</p>
                                                     <?php } else { ?>
                                                         <p class="text-danger"><i class="fa-solid fa-square-xmark"></i> Please select a valid icon and banners</p>
@@ -377,7 +358,7 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-                                            <input type="submit" name="submit-quest-line-publish" class="btn bg-ranked-1" onclick="" <?php if(!QuestLineIsValidForPublish($thisQuestLine,$pageContent)) { ?>disabled<?php } ?> value="Submit Quest Line For Review" />
+                                            <input type="submit" name="submit-quest-line-publish" class="btn bg-ranked-1" onclick="" <?php if(!$thisQuestLine->isValidForPublish()) { ?>disabled<?php } ?> value="Submit Quest Line For Review" />
                                             
                                         </div>
                                     </div>
@@ -385,10 +366,10 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                             </div>
                         </form>
                         
-                        <?php if (IsAdmin()) { ?>
+                        <?php if (Kickback\Services\Session::isAdmin()) { ?>
                         <form method="POST">
-                            <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                            <input type="hidden" name="quest-line-id" value="<?php echo $thisQuestLine["Id"]; ?>" />
+                            <input type="hidden" name="form_token" value="<?= $_SESSION['form_token']; ?>">
+                            <input type="hidden" name="quest-line-id" value="<?= $thisQuestLine->crand; ?>" />
                             <div class="modal modal-xl fade" id="modalQuestApprove" tabindex="-1" aria-labelledby="modalQuestApproveLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
@@ -400,15 +381,8 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                                             <div class="row mb-3">
                                                 <div class="col-12">
                                                     <?php 
-                                                        $feedCard = $thisQuestLine;
-                                                        $feedCard["type"] = "QUEST-LINE";
-                                                        $feedCard["title"] = $thisQuestLine["name"];
-                                                        $feedCard["image"] = $thisQuestLine["imagePath_icon"];
-                                                        $feedCard["published"] = true;
-                                                        $feedCard["account_1_username"] = $thisQuestLine["created_by_username"];
-                                                        $feedCard["text"] =  $thisQuestLine["desc"];
-                                                        $feedCard["date"] = $thisQuestLine["date_created"];
-                                                        require("php-components/feed-card.php");
+                                                        $_vFeedCard = FeedCardController::vQuestLine_to_vFeedCard($thisQuestLine);
+                                                        require("php-components/vFeedCardRenderer.php");
                                                     ?>
                                                 </div>
                                                 
@@ -425,8 +399,8 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                         </form>
                         
                         <form method="POST">
-                            <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                            <input type="hidden" name="quest-line-id" value="<?php echo $thisQuestLine["Id"]; ?>" />
+                            <input type="hidden" name="form_token" value="<?= $_SESSION['form_token']; ?>">
+                            <input type="hidden" name="quest-line-id" value="<?= $thisQuestLine->crand; ?>" />
                             <div class="modal modal-xl fade" id="modalQuestReject" tabindex="-1" aria-labelledby="modalQuestRejectLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
@@ -438,15 +412,8 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                                             <div class="row mb-3">
                                                 <div class="col-12">
                                                     <?php 
-                                                        $feedCard = $thisQuestLine;
-                                                        $feedCard["type"] = "QUEST-LINE";
-                                                        $feedCard["title"] = $thisQuestLine["name"];
-                                                        $feedCard["image"] = $thisQuestLine["imagePath_icon"];
-                                                        $feedCard["published"] = true;
-                                                        $feedCard["account_1_username"] = $thisQuestLine["created_by_username"];
-                                                        $feedCard["text"] =  $thisQuestLine["desc"];
-                                                        $feedCard["date"] = $thisQuestLine["date_created"];
-                                                        require("php-components/feed-card.php");
+                                                        $_vFeedCard = FeedCardController::vQuestLine_to_vFeedCard($thisQuestLine);
+                                                        require("php-components/vFeedCardRenderer.php");
                                                     ?>
                                                 </div>
                                                 
@@ -487,7 +454,7 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                                 $("#modalQuestPublish").modal("show");
                             }
 
-                            <?php if (IsAdmin()) { ?>
+                            <?php if (Kickback\Services\Session::isAdmin()) { ?>
                             function OpenModalApprove()
                             {
                                 $("#modalQuestApprove").modal("show");
@@ -518,10 +485,11 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                                 <div class="display-6 tab-pane-title">Quest Line Information</div>    
                                 <?php 
                                 
-                                if ($thisQuestLine["content_id"] != null)
+                                if ($thisQuestLine->hasPageContent())
                                 {
-                                    $canEditContent = CanEditQuestLine($thisQuestLine);
-                                    $contentViewerEditorTitle = "Quest Line Information Manager";
+                                    $_vCanEditContent = $thisQuestLine->canEdit();
+                                    $_vContentViewerEditorTitle = "Quest Line Information Manager";
+                                    $_vPageContent = $thisQuestLine->getPageContent();
                                     require("php-components/content-viewer.php");
                                 }
                                 
@@ -530,11 +498,11 @@ $thisQuestLinesQuests =  $thisQuestLinesQuestsResp->Data;
                             <div class="tab-pane fade" id="nav-quests" role="tabpanel" aria-labelledby="nav-quests-tab" tabindex="0">
                                 <div class="display-6 tab-pane-title">Quests</div>
                                 <?php 
-                                    for ($i=0; $i < count($thisQuestLinesQuests); $i++) 
+                                    for ($i=0; $i < count($thisQuestLine->quests); $i++) 
                                     { 
-                                        $feedCard = $thisQuestLinesQuests[$i];
                                         
-                                        require ("php-components/feed-card.php");
+                                        $_vFeedCard = FeedCardController::vQuest_to_vFeedCard($thisQuestLine->quests[$i]);
+                                        require("php-components/vFeedCardRenderer.php");
                                     }
                                 ?>
                             </div>

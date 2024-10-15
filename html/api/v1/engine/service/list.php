@@ -10,6 +10,6 @@ $array = array();
 while ($row = mysqli_fetch_assoc($result)) {
     array_push($array,$row);
 }
-return (new APIResponse(true, "Here are a list of available services", $array ));
+return (new Kickback\Backend\Models\Response(true, "Here are a list of available services", $array ));
 
 ?>

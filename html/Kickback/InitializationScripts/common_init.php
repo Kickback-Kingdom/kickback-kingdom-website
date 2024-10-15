@@ -62,6 +62,10 @@ require_once("trace.php");
 // (ex: things in (\Kickback\SCRIPT_ROOT . "/vendor"))
 require_once("autoload_classes.php");
 
+//init strict error handling
+require_once("error_handling_init.php");
+
+
 // TODO: Do this from inside a function.
 // We don't need composer's autoloader for PHPStan, because we won't have
 // PHPStan analyse the 3rd party dependencies.

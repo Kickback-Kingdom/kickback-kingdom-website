@@ -7,9 +7,9 @@ require("php-components/base-page-pull-active-account-info.php");
 $totalCombinedShares = 0;
 $totalMembers = 0;
 $minRequiredShares = 20;
-if (IsLoggedIn())
+if (Kickback\Services\Session::isLoggedIn())
 {
-    $accountId = $_SESSION["account"]["Id"];
+    $accountId = Kickback\Services\Session::getCurrentAccount()->crand;
     $targetDate = date("Y-m", strtotime("+1 month")) . "-01";
     $interestDate = date("Y-m", strtotime("-1 month")) . "-01";
     $currentStatement = BuildStatement($accountId, $targetDate);
@@ -330,7 +330,7 @@ $padlockOffset = $descriptionHeight / 2;
                                             <tbody>
                                                 <?php foreach ($shareholders as $shareholder): ?>
                                                     <tr>
-                                                        <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="/assets/media/<?php echo GetAccountProfilePicture($shareholder); ?>"/><a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $shareholder['Username']; ?>" class="username"><?php echo $shareholder['Username']; ?></a></td>
+                                                        <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="/assets/media/<?php echo GetAccountProfilePicture($shareholder); ?>"/><a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo $shareholder['Username']; ?>" class="username"><?php echo $shareholder['Username']; ?></a></td>
                                                         <td><?php echo $shareholder['shares']; ?></td>
                                                         <td><?php echo ($shareholder['shares'] >= $minRequiredShares ? "YES":"NO") ?></td>
                                                         <td><?php echo round(($shareholder['shares']/$totalSharesOwned)*10000)/100; ?>%</td>
@@ -359,7 +359,7 @@ $padlockOffset = $descriptionHeight / 2;
                                     <tbody>
                                         <?php foreach ($purchases as $purchase): ?>
                                             <tr>
-                                                <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="/assets/media/<?php echo GetAccountProfilePicture($purchase); ?>"/><a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo $purchase['Username']; ?>" class="username"><?php echo $purchase['Username']; ?></a></td>
+                                                <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="/assets/media/<?php echo GetAccountProfilePicture($purchase); ?>"/><a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo $purchase['Username']; ?>" class="username"><?php echo $purchase['Username']; ?></a></td>
                                                 <td><?php echo $purchase['SharesPurchased']; ?></td>
                                                 <td><?php echo $purchase['PurchaseDate']; ?></td>
                                                 <td><?php echo $purchase['Amount']." ".$purchase['Currency']; ?></td>
@@ -518,7 +518,7 @@ $padlockOffset = $descriptionHeight / 2;
 
                             <!-- Access Restricted Title with the Warning Icon -->
                             <h5><i class="fa-solid fa-exclamation-triangle fa-lg me-2 text-muted"></i> Access Restricted</h5>
-                            <?php if (IsLoggedIn()) { ?>
+                            <?php if (Kickback\Services\Session::isLoggedIn()) { ?>
                             <p class="mb-4">You need to own at least <?php echo $minRequiredShares; ?> full merchant shares to gain access to the Merchants' Guild.</p>
 
                             <!-- Display Partial Shares -->
@@ -563,7 +563,7 @@ $padlockOffset = $descriptionHeight / 2;
                                 <p class="mb-4">You must be logged in to gain access to the Merchants' Guild.</p>
 
                                 <!-- Login Button -->
-                                <a href="<?php echo $urlPrefixBeta; ?>/login.php?redirect=merchants-guild.php" class="btn btn-primary">Log In</a>
+                                <a href="<?php echo Version::urlBetaPrefix(); ?>/login.php?redirect=merchants-guild.php" class="btn btn-primary">Log In</a>
 
                             <?php } ?>
                         </div>
@@ -595,7 +595,7 @@ $padlockOffset = $descriptionHeight / 2;
             });
         } );
     </script>
-
+    
 </body>
 
 </html>

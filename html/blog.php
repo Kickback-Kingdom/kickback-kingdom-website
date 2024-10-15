@@ -4,25 +4,28 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
+use Kickback\Backend\Controllers\BlogController;
+use Kickback\Backend\Controllers\FeedController;
+use Kickback\Common\Version;
+
 if (isset($_GET['locator'])){
         
     $locator = $_GET['locator'];
-    $blogResp = GetBlogByLocator($locator);
-    $blog = $blogResp->Data;
+    $blogResp = BlogController::getBlogByLocator($locator);
+    $thisBlog = $blogResp->data;
 
     
-    $blogPostsResp = GetBlogFeed($locator);
+    $blogPostsResp = FeedController::getBlogFeed($locator);
 
-    $blogPosts = $blogPostsResp->Data;
+    $blogPosts = $blogPostsResp->data;
 }
 else{
     echo "no locator!";
 }
 
-$isBlogManager = IsManagerForBlog($blog["Id"]);
-$isBlogWriter = IsWriterForBlog($blog["Id"]);
+$isBlogManager = $thisBlog->isManager();
+$isBlogWriter = $thisBlog->isWriter();
 
-$thisBlog = $blog;
 ?>
 
 <!DOCTYPE html>
@@ -52,7 +55,7 @@ $thisBlog = $blog;
                 <?php 
                 
                 
-                $activePageName = $blog["name"];
+                $activePageName = $thisBlog->title;
                 require("php-components/base-page-breadcrumbs.php"); 
 if ($isBlogWriter) {                
                 ?>
@@ -61,11 +64,11 @@ if ($isBlogWriter) {
                         <div class="card mb-3">
     
                             <div class="card-header bg-ranked-1">
-                                <h5 class="mb-0">Welcome back, Scribe <?php echo $_SESSION["account"]["Username"]; ?>. What would you like to do?</h5>
+                                <h5 class="mb-0">Welcome back, Scribe <?php echo Kickback\Services\Session::getCurrentAccount()->username; ?>. What would you like to do?</h5>
                             </div>
                             <div class="card-body">
                                 
-                                <a href="<?php echo $urlPrefixBeta; ?>/blogpost.php?blogLocator=<?php echo $_GET['locator']; ?>&new" class="btn btn-primary">Write a New Post</a>
+                                <a href="<?php echo Version::urlBetaPrefix(); ?>/blogpost.php?blogLocator=<?php echo $_GET['locator']; ?>&new" class="btn btn-primary">Write a New Post</a>
                             </div>
                         </div>
                     </div>
@@ -89,7 +92,7 @@ if ($isBlogWriter) {
                         {
                             if ($isBlogWriter)
                             {
-                                if ($blogPost["account_1_id"] == $_SESSION["account"]["Id"])
+                                if ($blogPost["account_1_id"] == Kickback\Services\Session::getCurrentAccount()->crand)
                                 {
                                     $showBlogPost = true;
                                 }
@@ -113,6 +116,7 @@ if ($isBlogWriter) {
             
             <?php require("php-components/base-page-discord.php"); ?>
         </div>
+        <?php require("php-components/base-page-footer.php"); ?>
     </main>
 
     

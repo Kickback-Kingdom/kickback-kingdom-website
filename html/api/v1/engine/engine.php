@@ -1,11 +1,8 @@
 <?php
 
-session_start();
-
 require_once("dbconnect.php");
 require_once("functions.php");
-require_once("obj.php");
 
-GenerateFormToken();
+Kickback\Common\Utility\FormToken::generateFormToken();
 
 ?>

@@ -221,11 +221,11 @@ var events = [
         title: 'Website - New User Experience',
         description: '',
         checklist: [
-            [false, 1, "Create a way to have a Kickback Kingdom account without being in the adventurers guild."],
-            [false, 1, "test the sign up process"],
+            [true, 1, "Create a way to have a Kickback Kingdom account without being in the adventurers guild."],
+            [true, 1, "test the sign up process"],
             [false, 1, "test the forgot password feature"],
             [false, 1, "require email verification"],
-            [false, 1, "write blog post about new feature"],
+            [true, 1, "write blog post about new feature"],
         ]
     },
     {
@@ -322,7 +322,7 @@ var events = [
         description: '',
         checklist: [
             [false, 1, "Collect a raffle ticket when you use a prestige token"],
-            [false, 1, "use form token to prevent using multiple prestige tokens"],
+            [true, 1, "use form token to prevent using multiple prestige tokens"],
             [false, 1, "write blog post about new feature"],
         ]
     },
@@ -333,8 +333,8 @@ var events = [
         checklist: [
             [false, 1, "Make it cost 50 raffle tickets to create a quest"],
             [false, 1, "Make it so hosts will receive 1 raffle ticket per star rating on host and quest review per participant"],
-            [false, 1, "Allow host to submit quest for review"],
-            [false, 1, "Allow admins to published quests after being reviewed"],
+            [true, 1, "Allow host to submit quest for review"],
+            [true, 1, "Allow admins to published quests after being reviewed"],
             [false, 1, "Allow admins to reject quests with response after being reviewed"],
             [false, 1, "Allow hosts to setup their prizes based on their owned items"],
             [false, 1, "Add comment section to quests"],
@@ -357,7 +357,7 @@ var events = [
         title: 'Website - Data Analyst Dashboard',
         description: '',
         checklist: [
-            [false, 1, "data on user retention rate"],
+            [true, 1, "data on user retention rate"],
             [false, 1, "write blog post about new feature"],
         ]
     },
@@ -698,11 +698,11 @@ $(document).ready(function() {
         }
         
         let checklistHtml = '';
-        <?php if (IsLoggedIn()) { ?>
+        <?php if (Kickback\Services\Session::isLoggedIn()) { ?>
         event.checklist.forEach(function(item) {
             let username = '';
             if (item[1] != null)
-                username = `<a href="<?php echo $urlPrefixBeta; ?>/u/${accounts[item[1]]}" class="username">${accounts[item[1]]}</a>`
+                username = `<a href="<?php echo Version::urlBetaPrefix(); ?>/u/${accounts[item[1]]}" class="username">${accounts[item[1]]}</a>`
                 
             let icon = item[0] ? '<i class="fa-solid fa-square-check"></i>' : '<i class="fa-regular fa-square"></i>'; // Replace with your preferred icons
             checklistHtml += `<div class="checklist-item " ${item[0] ? "style='text-decoration: line-through;'" : ""} >${icon} ${username} ${item[2]}</div>`;

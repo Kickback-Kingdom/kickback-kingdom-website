@@ -4,7 +4,14 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-$_globalDoNotShowNewVersionPopup = true;
+use Kickback\Common\Utility\IDCrypt;
+
+use Kickback\Backend\Config\ServiceCredentials;
+use Kickback\Backend\Controllers\QuestController;
+use Kickback\Backend\Views\vRecordId;
+use Kickback\Backend\Controllers\AccountController;
+use Kickback\Common\Version;
+Version::$show_version_popup = false;
 
 $hasError = false;
 $errorMessage = '';
@@ -41,18 +48,18 @@ if (isset($_POST["submit"]))
 
   //$resp = RegisterAccount($firstName,$lastName ,$password,$password2,$username, $refUsername ,$email,$i_agree);
   $resp = require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/account/register.php");
-  $hasError = !$resp->Success;
+  $hasError = !$resp->success;
   if ($hasError)
   {
-    $errorMessage = $resp->Message." (Data: ".$resp->Data.")";
+    $errorMessage = $resp->message." (Data: ".$resp->data.")";
   }
   else{
-    $_POST["serviceKey"] = \Kickback\Config\ServiceCredentials::get("kk_service_key");
+    $_POST["serviceKey"] = ServiceCredentials::get("kk_service_key");
     $resp = require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/account/login.php");
-    $hasError = !$resp->Success;
+    $hasError = !$resp->success;
     if (!$hasError)
     {
-        $url = $urlPrefixBeta.'/blog/Kickback-Kingdom/introduction';
+        $url = Version::urlBetaPrefix().'/blog/Kickback-Kingdom/introduction';
 
         if (isset($_GET["redirect"]))
         {
@@ -63,7 +70,7 @@ if (isset($_POST["submit"]))
     else
     {
       
-    $errorMessage = $resp->Message;
+    $errorMessage = $resp->message;
     }
   }
 }
@@ -76,14 +83,14 @@ if (isset($_GET['wi']))
 {
     $writ_of_passage_id = ($_GET['wi']);
     $writProvided = true;
-    $kk_crypt_key_quest_id = \Kickback\Config\ServiceCredentials::get("crypt_key_quest_id");
+    $kk_crypt_key_quest_id = ServiceCredentials::get("crypt_key_quest_id");
     require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/engine.php");
     $crypt = new IDCrypt($kk_crypt_key_quest_id);
     $writ_of_passage_id_decrypted = $crypt->decrypt($writ_of_passage_id);
-    $writResp = GetWritOfPassageById($writ_of_passage_id_decrypted);
-    if ($writResp->Success)
+    $writResp = AccountController::getAccountByWritOfPassageLootId($writ_of_passage_id_decrypted);
+    if ($writResp->success)
     {
-        $writOfPassageOwner = $writResp->Data;
+        $writOfPassageOwner = $writResp->data;
     }
     else{
         $showGuard = true;
@@ -92,20 +99,24 @@ if (isset($_GET['wi']))
         $guardImg = 'halt-writ';
     }
 }
-
-if (isset($_GET['wq']))
+else
 {
-    $kk_crypt_key_quest_id = \Kickback\Config\ServiceCredentials::get("crypt_key_quest_id");
+    $writ_of_passage_id = "";
+}
+
+if (isset($_GET['wq'])) {
+    $kk_crypt_key_quest_id = ServiceCredentials::get("crypt_key_quest_id");
 
     $writ_of_passage_quest = ($_GET['wq']);
     $writProvided = true;
     require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/engine.php");
     $crypt = new IDCrypt($kk_crypt_key_quest_id);
     $wq = $crypt->decrypt($writ_of_passage_quest);
-    $questResp = GetQuestById($wq);
-    if ($questResp->Success)
+    $wq = new vRecordId('', (int) $wq);
+    $questResp = QuestController::getQuestById($wq);
+    if ($questResp->success)
     {
-        $quest = $questResp->Data;
+        $quest = $questResp->data;
     }
     else
     {
@@ -117,8 +128,7 @@ if (isset($_GET['wq']))
     }
 }
 
-if (!$writProvided)
-{
+if (!$writProvided) {
 
     $showGuard = true;
     $hasError = true;
@@ -159,7 +169,7 @@ if ($showGuard)
                 <?php if (isset($_GET["redirect"])) { ?>
                     <a class="btn btn-secondary" href="<?php echo urldecode($_GET["redirect"]);?>">Go Back</a>
                     <?php } else { ?>
-                    <a type="button" class="btn btn-secondary" href="<?php echo $urlPrefixBeta; ?>/">Back</a>
+                    <a type="button" class="btn btn-secondary" href="<?php echo Version::urlBetaPrefix(); ?>/">Back</a>
                     <?php } ?>
                 </div>
             </div>
@@ -176,8 +186,8 @@ else
 <form method="POST">
     <div class="modal fade" id="modalRegister" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <input type="hidden" name="passage_quest" value="<?php echo $writ_of_passage_quest; ?>">
-            <input type="hidden" name="passage_id" value="<?php echo $writ_of_passage_id; ?>">
+            <input type="hidden" name="passage_quest" value="<?= $writ_of_passage_quest; ?>">
+            <input type="hidden" name="passage_id" value="<?= $writ_of_passage_id; ?>">
             <input type="hidden" name="i_agree_to_the_terms" value="checked">
                             
             <div class="modal-content">
@@ -193,15 +203,15 @@ else
                     <div class="row">
                         <div class="col-12 col-lg-4">
                             <?php if ($quest != null) { ?>
-                            <img src="/assets/media/<?php echo htmlspecialchars($quest['imagePath']);?>"  class="img-fluid img-thumbnail">
-                            <h6><?php echo $quest['name']; ?></h6>
-                            <small class="text-body-secondary float-end">Hosted by <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode(htmlspecialchars($quest["host_name"])); ?>" class="username"><?php echo htmlspecialchars($quest["host_name"]); ?></a>
-                            <?php if ($quest['host_name_2'] != null) { ?> and <a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode(htmlspecialchars($quest['host_name_2'])); ?>" class="username"><?php echo htmlspecialchars($quest['host_name_2']);?></a><?php } ?>
+                            <img src="<?= $quest->icon->getFullPath() ;?>"  class="img-fluid img-thumbnail">
+                            <h6><?= $quest->title; ?></h6>
+                            <small class="text-body-secondary float-end">Hosted by <?= $quest->host1->getAccountElement();?>
+                            <?php if ($quest->host2 != null) { ?> and <?= $quest->host2->getAccountElement();?><?php } ?>
                             </small>
                             <?php } ?>
                             <?php if ($writOfPassageOwner != null) { ?>
                             <img src="/assets/media/<?php echo GetAccountProfilePicture($writOfPassageOwner);?>"  class="img-fluid img-thumbnail">
-                            <p style="margin-top: 8px; margin-left: 8px; margin-right: 8px;"><em><?php echo WritOfPassageProclamation($writOfPassageOwner['Username']); ?></em><figcaption class="blockquote-footer text-end"><a href="<?php echo $urlPrefixBeta; ?>/u/<?php echo urlencode(htmlspecialchars($writOfPassageOwner["Username"])); ?>" class="username"><?php echo htmlspecialchars($writOfPassageOwner["Username"]); ?></a></figcaption></p>
+                            <p style="margin-top: 8px; margin-left: 8px; margin-right: 8px;"><em><?php echo WritOfPassageProclamation($writOfPassageOwner['Username']); ?></em><figcaption class="blockquote-footer text-end"><a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo urlencode(htmlspecialchars($writOfPassageOwner["Username"])); ?>" class="username"><?php echo htmlspecialchars($writOfPassageOwner["Username"]); ?></a></figcaption></p>
                             <?php } ?>
                         </div>
                         <div class="col-12 col-lg-8">
@@ -236,7 +246,7 @@ else
                                 </div>
                             </div>
                             
-                            <p>Already have account? <a href="<?php echo $urlPrefixBeta; ?>/login.php<?php if (isset($_GET["redirect"])) 
+                            <p>Already have account? <a href="<?php echo Version::urlBetaPrefix(); ?>/login.php<?php if (isset($_GET["redirect"])) 
                             { 
                             echo '?redirect='.urlencode($_GET["redirect"]);
                             if (isset($_GET['wq']))
@@ -249,7 +259,7 @@ else
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <a type="button" class="btn btn-secondary" href="<?php echo $urlPrefixBeta; ?>/">Back</a>
+                    <a type="button" class="btn btn-secondary" href="<?php echo Version::urlBetaPrefix(); ?>/">Back</a>
                     <a href="#" class="btn btn-primary"  data-bs-target="#exampleModalToggle2" data-bs-toggle="modal">Register</a>
                 </div>
             </div>

@@ -1,5 +1,10 @@
 RewriteEngine On
 
+# Redirect HTTP to HTTPS except for localhost
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP_HOST} !^localhost$
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
 # Redirect /q/ URLs to quest.php
 RewriteCond %{REQUEST_URI} ^/q/([^/]+)$
 RewriteRule ^(.*)$ /quest.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]

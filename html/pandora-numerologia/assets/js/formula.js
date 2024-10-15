@@ -367,7 +367,6 @@ function PopulateResultsDisplayInputs() {
     $("#result_display_birth").html(GetDOBLocal());
     $("#result_display_address").html(BreakHouseNumberDown());
     //$("#result_display_prof_name").html(GetProfessionalName());
-
 }
 
 

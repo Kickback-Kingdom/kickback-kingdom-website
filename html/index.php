@@ -4,9 +4,12 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
+use Kickback\Backend\Controllers\FeedController;
+use Kickback\Backend\Controllers\FeedCardController;
+use Kickback\Backend\Controllers\QuoteController;
 
-$homeFeedResp = GetNewsFeed();
-$homeFeed = $homeFeedResp->Data;
+$homeFeedResp = FeedController::getNewsFeed(1, 20);
+$homeFeed = $homeFeedResp->data;
 ?>
 
 <!DOCTYPE html>
@@ -35,15 +38,10 @@ $homeFeed = $homeFeedResp->Data;
 
                 <?php
 
-                $randomQuote = getRandomQuote();
+                $randomQuote = QuoteController::getRandomQuote();
 
-                $feedCard["type"] = "QUOTE";
-                $feedCard["text"] = $randomQuote["text"];
-                $feedCard['image'] = $randomQuote["image"];
-                $feedCard['account_1_username'] = $randomQuote["author"];
-                $feedCard["quoteDate"] = $randomQuote["date"];
-
-                require ("php-components/feed-card.php");
+                $_vFeedCard = FeedCardController::vQuote_to_vFeedCard($randomQuote);
+                require("php-components/vFeedCardRenderer.php");
 
 
                 $activePageName = "Feed";
@@ -57,9 +55,9 @@ $homeFeed = $homeFeedResp->Data;
 
                 for ($i=0; $i < count($homeFeed); $i++)
                 {
-                    $news = $homeFeed[$i];
-                    $feedCard = $news;
-                    require ("php-components/feed-card.php");
+                    $news = $homeFeed[$i];                    
+                    $_vFeedCard = FeedCardController::vFeedRecord_to_vFeedCard($news);
+                    require("php-components/vFeedCardRenderer.php");
                 }
                 ?>
             </div>

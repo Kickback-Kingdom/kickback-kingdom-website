@@ -12,11 +12,13 @@ require_once ($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . '/vendor/PHPMailer/PHPMail
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
-$_globalDoNotShowNewVersionPopup = true;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\SMTP;
 
+use Kickback\Backend\Controllers\AccountController;
+use Kickback\Common\Version;
+
+Version::$show_version_popup = false;
 
 $redirectUrl = 'index.php';
 
@@ -33,19 +35,19 @@ if (isset($_GET["redirect"]))
   if (isset($_POST["submit"]))
   {
       $email = $_POST["email"];
-      $emailResp = GetAccountByEmail($email);
-      if ($emailResp->Success)
+      $emailResp = AccountController::getAccountByEmail($email);
+      if ($emailResp->success)
       {
          try {
-          $account = $emailResp->Data;
-          $codeResp = PrepareAccountPasswordResetCode($account["Id"]);
-          if ($codeResp->Success)
+          $account = $emailResp->data;
+          $codeResp = AccountController::prepareAccountPasswordResetCode($account);
+          if ($codeResp->success)
           {
-              $code = $codeResp->Data;
+              $code = $codeResp->data;
               //Create an instance; passing `true` enables exceptions
               $mail = new PHPMailer(true);
               try {
-                  $kk_credentials = \Kickback\Config\ServiceCredentials::instance();
+                  $kk_credentials = \Kickback\Backend\Config\ServiceCredentials::instance();
 
                   $mail->IsSMTP(); // telling the class to use SMTP
                   //$mail->SMTPDebug  = 2;                     // enables SMTP debug information (for testing)
@@ -61,7 +63,7 @@ if (isset($_GET["redirect"]))
 
                   //Recipients
                   $mail->setFrom($kk_credentials["smtp_from_email"],$kk_credentials["smtp_from_name"]);
-                  $mail->addAddress($email,$account["FirstName"]." ".$account["LastName"]);     //Add a recipient
+                  $mail->addAddress($email,$account->firstName." ".$account->lastName); 
                   $mail->addReplyTo($kk_credentials["smtp_replyto_email"],$kk_credentials["smtp_replyto_name"]);
 
                   unset($kk_credentials);
@@ -114,7 +116,7 @@ if (isset($_GET["redirect"]))
                                                           <p style="color:#455056; font-size:15px;line-height:24px; margin:0; text-align:left">
                                                               A unique link to reset your password has been generated for you. To reset your password, click the following link and follow the instructions.
                                                           </p>
-                                                          <a href="https://kickback-kingdom.com'. $urlPrefixBeta . '/reset-password.php?c='.$code.'&i='.$account["Id"].'" style="background:#08B9ED;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:50px;">Reset
+                                                          <a href="https://kickback-kingdom.com'. Version::urlBetaPrefix() . '/reset-password.php?c='.$code.'&i='.$account->crand.'" style="background:#08B9ED;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:50px;">Reset
                                                                                           Password</a>
                                                       </td>
                                                   </tr>
@@ -136,7 +138,7 @@ if (isset($_GET["redirect"]))
                   </html>';
                   
                   $mail->Body = $html;
-                  $mail->AltBody = 'A unique link to reset your password has been generated for you. To reset your password, click the following link and follow the instructions. https://kickback-kingdom.com/reset-password.php?c='.$code.'&i='.$account["Id"];
+                  $mail->AltBody = 'A unique link to reset your password has been generated for you. To reset your password, click the following link and follow the instructions. https://kickback-kingdom.com/reset-password.php?c='.$code.'&i='.$account->crand;
 
                   $mail->send();
                   $hasError = false;
@@ -152,7 +154,9 @@ if (isset($_GET["redirect"]))
           }
           else
           {
-              throw new Exception($codeResp->Message);
+              // TODO: Is this supposed to be \Exception or PHPMailer\PHPMailer\Exception?
+              // Because right now it's PHPMailer\PHPMailer\Exception...
+              throw new Exception($codeResp->message);
           }
           
           } 
@@ -167,7 +171,7 @@ if (isset($_GET["redirect"]))
       else
       {
           $hasError = true;
-          $errorMessage = $emailResp->Message;
+          $errorMessage = $emailResp->message;
       }
   }
 
@@ -210,7 +214,7 @@ if (isset($_GET["redirect"]))
                     
                 </div>
                 <div class="modal-footer">
-                    <a type="button" class="btn btn-secondary" href="<?php echo $urlPrefixBeta."/".$redirectUrl; ?>">Back</a>
+                    <a type="button" class="btn btn-secondary" href="<?php echo Version::urlBetaPrefix()."/".$redirectUrl; ?>">Back</a>
                     <input type="submit" name="submit" class="btn btn-primary" value="Send Recovery Email">
                 </div>
             </div>

@@ -1,6 +1,6 @@
 <?php 
-$application_information = $thisQuest['application_information'];
-if ($thisQuest["raffle_id"] != null)
+//$application_information = $thisQuest['application_information'];
+if ($thisQuest->isRaffle())
 {
 ?>
 
@@ -8,7 +8,7 @@ if ($thisQuest["raffle_id"] != null)
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
 
-            <form method="post" action="<?php echo $urlPrefixBeta; ?>/q/<?php echo $thisQuest["locator"]; ?>">
+            <form method="post" action="<?php echo Version::urlBetaPrefix(); ?>/q/<?php echo $thisQuest["locator"]; ?>">
                 <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
 
                 <input type="hidden" name="sessionToken"
@@ -68,7 +68,7 @@ $areYouSure = "Are you sure you want to register for this quest?";
 $warning = "You may recieve negative prestige if you register and don't attend!";
 $yesText = "Yes, I want to Register!";
 $img = "register.jpg";
-if ($thisQuest["req_apply"] == 1)
+if ($thisQuest->requiresApplication)
 {
 
     $title = "Quest Application";
@@ -82,7 +82,7 @@ if ($thisQuest["req_apply"] == 1)
 <div class="modal fade" id="actionModal" tabindex="-1" role="dialog" aria-labelledby="actionModal" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered" role="document">
         <div class="modal-content">
-            <form method="post" action="<?php echo $urlPrefixBeta; ?>/q/<?php echo $thisQuest["locator"]; ?>">
+            <form method="post" action="<?= $thisQuest->getURL(); ?>">
                 <input type="hidden" name="sessionToken" value="<?php echo $_SESSION["sessionToken"]; ?>">
                 <input type="hidden" name="serviceKey" value="<?php echo $_SESSION["serviceKey"]; ?>">
                 <div class="modal-header">
