@@ -27,10 +27,11 @@ if (!$activeAccountInfoResp->success)
 
 $activeAccountInfo = $activeAccountInfoResp->data;
 
-if (!Session::isLoggedIn())
+/*if (!Session::isLoggedIn())
 {
     Version::$show_version_popup = false;
-}
+}*/
+Version::$show_version_popup = false;
 
 
 ?>

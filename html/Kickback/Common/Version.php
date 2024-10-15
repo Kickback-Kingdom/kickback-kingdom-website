@@ -30,7 +30,8 @@ final class Version
     * @var array<array{int,int,int,string,string,string}>
     */
     private const HISTORY = [
-        [0,0,1,"","",   "update-writ-of-passage"]
+        [0,0,1,"","",   "update-writ-of-passage"],
+        [0,1,0,"","", "backend-overhaul"]
     ];
 
     //private const LAST_HISTORY_ENTRY_IDX = array_key_last(self::HISTORY);
