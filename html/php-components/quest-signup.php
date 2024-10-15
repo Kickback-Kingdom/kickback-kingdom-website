@@ -12,7 +12,7 @@ if ($thisQuest->isRaffle())
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
 
-            <form method="post" action="<?php echo Version::urlBetaPrefix(); ?>/q/<?php echo $thisQuest["locator"]; ?>">
+            <form method="post" action="<?php echo Version::urlBetaPrefix(); ?>/q/<?php echo $thisQuest->locator; ?>">
                 <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
 
                 <input type="hidden" name="sessionToken"
