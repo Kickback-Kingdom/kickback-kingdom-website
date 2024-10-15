@@ -3,6 +3,10 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-pull-active-account-info.php");
+
+
+use Kickback\Services\Session;
+
 ?>
 
 <!DOCTYPE html>
@@ -41,7 +45,14 @@ require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-pull-active-account-i
                 
                 <div class="row">
                     <div class="col-12">
-                    <div class="display-6 tab-pane-title mt-4">Ranked Lobbies <button class="btn btn-primary float-end" onclick="OpenHostLobbyModal();">Host Lobby</button><a class="btn btn-primary float-end mx-1" href="#" onclick="window.location.reload()"><i class="fa-solid fa-arrow-rotate-right"></i></a></div>
+                        <div class="display-6 tab-pane-title mt-4">Ranked Lobbies 
+                            <?php if (Session::isLoggedIn()) { ?>
+                            <button class="btn btn-primary float-end" onclick="OpenHostLobbyModal();">Host Lobby</button>
+                            <?php } else { ?>
+                                <a class="btn btn-primary float-end mx-1" href="/login.php?redirect=/challenges.php" onclick="">Host Lobby</a>
+                            <?php } ?>
+                            <a class="btn btn-primary float-end mx-1" href="#" onclick="window.location.reload()"><i class="fa-solid fa-arrow-rotate-right"></i></a>
+                        </div>
                         <div class="card mb-3">
                             <div class="card-body">
                                 <table id="datatable-lobbies" class="table display">
@@ -66,6 +77,7 @@ require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-pull-active-account-i
             
             <?php require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-discord.php"); ?>
         </div>
+        <?php require("php-components/base-page-footer.php"); ?>
     </main>
 
     
