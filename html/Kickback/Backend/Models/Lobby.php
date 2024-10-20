@@ -9,7 +9,7 @@ class Lobby extends RecordId
     public string $name;
     public ForeignRecordId $gameId;
 
-    function __construct(Game $game, Account $host, string $name)
+    function __construct(ForeignRecordId $game, ForeignRecordId $host, string $name)
     {
         parent::__construct();
         $this->hostId = $host;

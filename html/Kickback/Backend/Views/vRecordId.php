@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Kickback\Backend\Views;
 
+use Kickback\Backend\Models\ForeignRecordId;
+
 class vRecordId
 {
     public string $ctime;
@@ -12,6 +14,10 @@ class vRecordId
     {
         $this->ctime = $ctime;
         $this->crand = $crand;
+    }
+
+    function getForeignRecordId() : ForeignRecordId {
+        return new ForeignRecordId($this->ctime, $this->crand);
     }
 }
 

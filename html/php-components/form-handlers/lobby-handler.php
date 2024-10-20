@@ -6,6 +6,8 @@ use Kickback\Common\Utility\FormToken;
 use Kickback\Backend\Models\Lobby;
 use Kickback\Backend\Controllers\LobbyController;
 use Kickback\Services\Session;
+use Kickback\Backend\Models\ForeignRecordId;
+use Kickback\Backend\Views\vRecordId;
 
 if (isset($_POST["host-lobby-submit"])) {
     
@@ -16,9 +18,9 @@ if (isset($_POST["host-lobby-submit"])) {
 
         $lobbyName = $_POST["host-lobby-name"];
         $password = $_POST["host-lobby-password"];
-        $gameId = new ForeignRecordId('', $_POST["host-lobby-game"]);
+        $gameId = new ForeignRecordId('', (int)$_POST["host-lobby-game"]);
         
-        $lobby = new Lobby($gameId, Session::getCurrentAccountId(), $lobbyName); 
+        $lobby = new Lobby($gameId, Session::getCurrentAccount()->getForeignRecordId(), $lobbyName); 
         
         
 

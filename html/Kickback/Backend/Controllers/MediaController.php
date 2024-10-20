@@ -8,6 +8,7 @@ use Kickback\Backend\Models\Response;
 use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vDateTime;
+use Kickback\Services\Session;
 
 class MediaController {
     
@@ -77,23 +78,22 @@ class MediaController {
         ]));
     }
 
-    function InsertMediaRecord($directory, $name, $desc, $extension) {
+    public static function InsertMediaRecord($conn, $directory, $name, $desc, $extension) {
         // Get the global database connection and service key
-        $db = $GLOBALS["conn"];
     
         $kk_service_key = \Kickback\Backend\Config\ServiceCredentials::get("kk_service_key");
     
         // Retrieve the author's ID from the session
-        $author_id = Kickback\Services\Session::getCurrentAccount()->crand;
+        $author_id = Session::getCurrentAccount()->crand;
     
         // Prepare the SQL statement
         $query = "INSERT INTO Media (ServiceKey, name, `desc`, author_id, Directory, extension) VALUES (?, ?, ?, ?, ?,?)";
         
-        $stmt = mysqli_prepare($db, $query);
+        $stmt = mysqli_prepare($conn, $query);
         
         if (!$stmt) {
             // Failed to prepare the statement
-            error_log("Failed to prepare statement: " . mysqli_error($db));
+            error_log("Failed to prepare statement: " . mysqli_error($conn));
             return false;
         }
         
@@ -103,7 +103,7 @@ class MediaController {
         // Execute the statement
         if (mysqli_stmt_execute($stmt)) {
             // If the insert was successful, return the ID of the inserted record
-            return mysqli_insert_id($db);
+            return mysqli_insert_id($conn);
         } else {
             // Log any error
             error_log("Failed to execute statement: " . mysqli_stmt_error($stmt));
@@ -111,13 +111,13 @@ class MediaController {
         }
     }
     
-    function isAllowedDirectory($directory) {
-        if (Kickback\Services\Session::isAdmin()) {
+    public static function isAllowedDirectory($directory) {
+        if (Session::isAdmin()) {
             // Admins can upload to any directory
             return true;
         }
     
-        $allowedDirectoriesResponse = GetMediaDirectories();
+        $allowedDirectoriesResponse = self::GetMediaDirectories();
         if (!$allowedDirectoriesResponse->success) {
             return false;
         }
@@ -130,28 +130,28 @@ class MediaController {
         return in_array($directory, $validDirs);
     }
     
-    function UploadMediaImage($directory, $name, $desc, $imageBase64) {
+    public static function UploadMediaImage($directory, $name, $desc, $imageBase64) {
         list($type, $data) = explode(';', $imageBase64);
         list(, $data) = explode(',', $data);
         $decodedImageData = base64_decode($data);
         
         // Check if decoded data is empty
         if (empty($decodedImageData)) {
-            return new Kickback\Backend\Models\Response(false, 'Decoded image data is empty.', null);
+            return new Response(false, 'Decoded image data is empty.', null);
         }
     
         // Check if directory is allowed
-        if (!isAllowedDirectory($directory)) {
-            return new Kickback\Backend\Models\Response(false, 'Invalid directory.', null);
+        if (!self::isAllowedDirectory($directory)) {
+            return new Response(false, 'Invalid directory.', null);
         }
     
         // Determine image MIME type
-        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
         $mime = $finfo->buffer($decodedImageData);
     
         $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
         if (!in_array($mime, $allowedMimeTypes)) {
-            return new Kickback\Backend\Models\Response(false, 'Invalid image type.', $mime);
+            return new Response(false, 'Invalid image type.', $mime);
         }
     
         $extensions = [
@@ -162,28 +162,28 @@ class MediaController {
         $fileExtension = $extensions[$mime];
     
         // Start DB transaction
-        $db = $GLOBALS["conn"];
-        mysqli_begin_transaction($db);
+        $conn = Database::getConnection();
+        mysqli_begin_transaction($conn);
     
         try {
             // Insert media record
-            $api_response = UploadMediaImageTransaction($db, $directory, $name, $desc, $fileExtension, $decodedImageData);
+            $api_response = self::UploadMediaImageTransaction($conn, $directory, $name, $desc, $fileExtension, $decodedImageData);
             // If everything went well, commit the transaction
-            mysqli_commit($db);
+            mysqli_commit($conn);
         return $api_response;
     
         } catch (Exception $e) {
             // An error occurred, roll back the transaction
-            mysqli_rollback($db);
-            return new Kickback\Backend\Models\Response(false, $e->getMessage(), null);
+            mysqli_rollback($conn);
+            return new Response(false, $e->getMessage(), null);
         }
     }
     
-    function UploadMediaImageTransaction($db, $directory, $name, $desc, $fileExtension, $decodedImageData) {
+    public static function UploadMediaImageTransaction($conn, $directory, $name, $desc, $fileExtension, $decodedImageData) {
         // Insert media record
-        $mediaId = InsertMediaRecord($directory, $name, $desc, $fileExtension);
+        $mediaId = self::InsertMediaRecord($conn, $directory, $name, $desc, $fileExtension);
         if (!$mediaId) {
-            throw new Exception('Error saving media record: ' . mysqli_error($db));
+            throw new Exception('Error saving media record: ' . mysqli_error($conn));
         }
     
         // Define the file path
@@ -193,7 +193,7 @@ class MediaController {
         $directoryPath = dirname($filePath);
     
         // If directory doesn't exist and user is an admin, create the directory
-        if (Kickback\Services\Session::isAdmin() && !is_dir($directoryPath)) {
+        if (Session::isAdmin() && !is_dir($directoryPath)) {
             mkdir($directoryPath, 0777, true);
         }
     
@@ -204,7 +204,7 @@ class MediaController {
             throw new Exception('Error saving the image.');
         }
     
-        return new Kickback\Backend\Models\Response(true, 'Image uploaded successfully.', ['mediaId' => $mediaId]);
+        return new Response(true, 'Image uploaded successfully.', ['mediaId' => $mediaId]);
     }
     
     private static function row_to_vMedia(array $row) : vMedia {
