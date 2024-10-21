@@ -214,7 +214,7 @@ else
                             </small>
                             <?php } ?>
                             <?php if ($writOfPassageOwner != null) { ?>
-                            <img src="/assets/media/<?= $writOfPassageOwner->getProfilePictureURL();?>"  class="img-fluid img-thumbnail">
+                            <img src="<?= $writOfPassageOwner->getProfilePictureURL();?>"  class="img-fluid img-thumbnail">
                             <p style="margin-top: 8px; margin-left: 8px; margin-right: 8px;"><em><?=  FlavorTextController::writOfPassageProclamation($writOfPassageOwner->username); ?></em><figcaption class="blockquote-footer text-end"><?= $writOfPassageOwner->getAccountElement(); ?></figcaption></p>
                             <?php } ?>
                         </div>
