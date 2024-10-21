@@ -1072,7 +1072,7 @@ class QuestController
         mysqli_stmt_execute($stmt);
         //$newId = mysqli_insert_id($conn);
         $questResp = self::getQuestByLocator($quest->locator);
-        $rewardResp = SetupStandardParticipationRewards($questResp->data);
+        $rewardResp = self::setupStandardParticipationRewards($questResp->data);
         return self::getQuestByLocator($quest->locator);
     }
 }
