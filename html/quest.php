@@ -750,9 +750,15 @@ $itemInformationJSON = json_encode($itemInfos);
                                                                         const timeInput = document.getElementById('edit-quest-options-datetime-time');
                                                                         const combinedDatetimeInput = document.getElementById('edit-quest-options-datetime');
 
+                                                                        if (!dateInput.value || !timeInput.value)
+                                                                        {
+                                                                            combinedDatetimeInput.value = "";
+                                                                            toggleDateTimeVisibility();
+                                                                            return;
+                                                                        }
                                                                         // Combine date and time to create a local datetime string
-                                                                        const localDateTime = `${dateInput.value}T${timeInput.value}:00`;
-
+                                                                        const localDateTime = `${dateInput.value}T${timeInput.value}:00`; //T:00
+                                                                        
                                                                         // Convert to a Date object
                                                                         const localDateObj = new Date(localDateTime);
 
