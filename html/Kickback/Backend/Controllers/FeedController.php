@@ -337,7 +337,7 @@ class FeedController
             $quest->host1 = $host1;
 
 
-            if ($row["account_2_id"] != null)
+            if ($row["account_2_id"] != null && $row["account_2_username"] != null)
             {
 
                 $host2 = new vAccount('', $row["account_2_id"]);
