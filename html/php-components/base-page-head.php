@@ -59,6 +59,16 @@ if (isset($thisBlogPost))
     $pageVisitId = '/blog-post/'.$thisBlogPost->crand;
 }
 
+if (isset($thisLobby))
+{
+    $pageTitle = $thisLobby->name;
+}
+
+if (isset($thisGame))
+{
+    $pageTitle = $thisGame->name;
+    $pageVisitId = '/g/'.$thisGame->crand;
+}
 
 AnalyticController::recordPageVisit($pageVisitId);
 $pageVisitResp = AnalyticController::getPageVisits($pageVisitId);

@@ -14,7 +14,7 @@ class GameController
     public static function getGames($rankedOnly = false, $searchTerm = '', $page = 0, $pageSize = 0): Response {
         $conn = Database::getConnection();
     
-        $sql = "SELECT Id, `Name`, `Desc`, MinRankedMatches, ShortName, CanRank, media_icon_id, media_banner_id, media_banner_mobile_id, icon_path, banner_path, banner_mobile_path 
+        $sql = "SELECT Id, `Name`, `Desc`, MinRankedMatches, ShortName, CanRank, media_icon_id, media_banner_id, media_banner_mobile_id, icon_path, banner_path, banner_mobile_path, locator
                 FROM kickbackdb.v_game_info";
     
         $conditions = [];
@@ -81,6 +81,47 @@ class GameController
     
         return new Response(true, "Retrieved games successfully", $games);
     }
+
+    public static function getGameByLocator(string $locator)
+    {
+        $conn = Database::getConnection();
+        
+        $sql = "SELECT Id, `Name`, `Desc`, MinRankedMatches, ShortName, CanRank, media_icon_id, media_banner_id, media_banner_mobile_id, icon_path, banner_path, banner_mobile_path, locator 
+                FROM kickbackdb.v_game_info 
+                WHERE `locator` = ?";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare the SQL statement.");
+        }
+
+        if (!$stmt->bind_param('s', $locator)) {
+            return new Response(false, "Failed to bind parameters.");
+        }
+
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute the SQL statement.");
+        }
+
+        $result = $stmt->get_result();
+        if (!$result) {
+            return new Response(false, "Failed to retrieve the result set.");
+        }
+
+        $game = null;
+        if ($row = $result->fetch_assoc()) {
+            $game = self::row_to_vGame($row);
+        }
+
+        $stmt->close();
+
+        if ($game === null) {
+            return new Response(false, "Game not found.");
+        }
+
+        return new Response(true, "Game retrieved successfully", $game);
+    }
+
     
     private static function row_to_vGame($row) : vGame {
         $game = new vGame('', $row['Id']);
@@ -89,6 +130,7 @@ class GameController
         $game->minRankedMatches = $row['MinRankedMatches'];
         $game->shortName = $row['ShortName'];
         $game->canRank = $row['CanRank'] == 1;
+        $game->locator = $row["locator"];
 
         if ($row['media_icon_id'] != null)
         {

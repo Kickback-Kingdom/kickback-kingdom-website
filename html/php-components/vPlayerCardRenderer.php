@@ -2,6 +2,7 @@
 declare(strict_types=1);
 use Kickback\Backend\Controllers\LootController;
 use Kickback\Backend\Controllers\AccountController;
+use Kickback\Common\Version;
 
 
 $badgeCode = '';

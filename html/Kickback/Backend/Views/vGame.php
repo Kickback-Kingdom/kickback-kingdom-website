@@ -12,6 +12,7 @@ class vGame extends vRecordId
     public int $minRankedMatches;
     public string $shortName;
     public bool $canRank;
+    public string $locator;
     
     public vMedia $icon;
     public vMedia $banner;
@@ -24,7 +25,7 @@ class vGame extends vRecordId
 
     public function GetURL()
     {
-        return "/g/".$this->name;
+        return "/g/".$this->locator;
     }
 }
 

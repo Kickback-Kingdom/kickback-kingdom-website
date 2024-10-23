@@ -15,10 +15,86 @@ use Kickback\Services\Session;
 use Kickback\Backend\Controllers\LootController;
 use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Backend\Views\vRaffle;
+use Kickback\Backend\Views\vGameStats;
 use Kickback\Backend\Controllers\SocialMediaController;
 
 class AccountController
 {
+    public static function getAccountsByGame(vRecordId $gameId) : Response {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT a.*, e.elo_rating, e.is_ranked, e.ranked_matches, e.total_wins, e.total_losses, e.win_rate, e.`rank`, e.game_id FROM kickbackdb.v_game_elo_rank_info e
+                inner join v_account_info a on a.Id = e.account_id
+                where e.game_id = ?
+                ORDER BY 
+                    e.is_ranked DESC,
+                    e.rank ASC,
+                    e.elo_rating DESC,
+                    a.exp DESC  ";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare the SQL statement.");
+        }
+
+
+        $stmt->bind_param('i', $gameId->crand); 
+
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute the SQL statement.");
+        }
+
+        $result = $stmt->get_result();
+        if (!$result) {
+            return new Response(false, "Failed to retrieve the result set.");
+        }
+
+        $accounts = [];
+        while ($row = $result->fetch_assoc()) {
+            $accounts[] = self::row_to_vAccount($row, true);
+        }
+
+        $stmt->close();
+
+        return new Response(true, "Accounts", $accounts);
+    }
+
+    public static function getAccountsByGoldCard(vRecordId $gameId) : Response {
+        $conn = Database::getConnection();
+    
+        $sql = "SELECT a.* 
+                FROM kickbackdb.v_game_elo_rank_info e
+                INNER JOIN v_account_info a ON a.Id = e.account_id
+                WHERE e.`rank` = 1 
+                AND e.game_id = ?";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare the SQL statement.");
+        }
+    
+        
+        $stmt->bind_param('i', $gameId->crand); 
+    
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute the SQL statement.");
+        }
+    
+        $result = $stmt->get_result();
+        if (!$result) {
+            return new Response(false, "Failed to retrieve the result set.");
+        }
+    
+        $accounts = [];
+        while ($row = $result->fetch_assoc()) {
+            $accounts[] = self::row_to_vAccount($row, true);
+        }
+    
+        $stmt->close();
+    
+        return new Response(true, "Accounts", $accounts);
+    }
+
     public static function getAccountById(vRecordId $recordId) : Response {
 
         $conn = Database::getConnection();
@@ -828,6 +904,32 @@ class AccountController
         $account->isMasterOrApprentice = (bool) $row["IsMaster"] || (bool) $row["IsApprentice"];
         $account->isArtist = (bool) $row["IsArtist"];
         $account->isQuestGiver = (bool) $row["IsQuestGiver"];
+
+        if (array_key_exists('game_id', $row)) {
+            $gameId = (int)$row['game_id'];
+            
+            // Create a new game stats object
+            $gameStat = new vGameStats('', $row["game_id"]);
+            
+            // Assign additional game statistics from the $row
+            $gameStat->elo = isset($row["elo_rating"]) ? (float)$row["elo_rating"] : null;
+            $gameStat->is_ranked = isset($row["is_ranked"]) ? (bool)$row["is_ranked"] : false;
+            $gameStat->ranked_matches = isset($row["ranked_matches"]) ? (int)$row["ranked_matches"] : 0;
+            $gameStat->total_wins = isset($row["total_wins"]) ? (int)$row["total_wins"] : 0;
+            $gameStat->total_losses = isset($row["total_losses"]) ? (int)$row["total_losses"] : 0;
+            $gameStat->win_rate = isset($row["win_rate"]) ? (float)$row["win_rate"] : 0.0;
+            $gameStat->rank = isset($row["rank"]) ? (int)$row["rank"] : null;
+        
+            // Initialize the game_stats array if not already set
+            if (!isset($account->game_stats)) {
+                $account->game_stats = [];
+            }
+        
+            // Store the game stats in the account object
+            $account->game_stats[$gameId] = $gameStat;
+        }
+        
+        
 
         // Assign vMedia properties if they exist
         if ($row['avatar_media'] != null)
