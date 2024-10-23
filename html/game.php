@@ -134,7 +134,7 @@ if ($accountRankingsResp && $accountRankingsResp->success) {
         
         $(document).ready( function () {
             $('#datatable-ranks').DataTable({
-                "order": [[0, 'asc']],
+                "order": [[2, 'desc']],
                 "pageLength": 100       // Show 100 entries per page by default
             });
         } );
