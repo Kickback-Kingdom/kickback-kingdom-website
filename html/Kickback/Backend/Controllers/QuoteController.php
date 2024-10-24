@@ -196,7 +196,7 @@ class QuoteController
                 "date" => "2000s AD"
             ],
 
-            //Plato quotes/people/435.png
+            //Plato
             [
                 "text" => "The beginning is the most important part of the work.",
                 "image" => "quotes/people/435.png",
@@ -209,6 +209,14 @@ class QuoteController
                 "author" => "Plato",
                 "date" => "340 BC"
             ],
+            
+            //Nelson mandela
+            [
+                "text" => "Education is the most powerful weapon which you can use to change the world.",
+                "image" => "quotes/people/436.png",
+                "author" => "Nelson Mandela",
+                "date" => "1900s AD"
+            ]
         ];
         
 
