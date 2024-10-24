@@ -193,21 +193,21 @@ class QuoteController
                 "text" => "Ideas are worth nothing unless executed. They are just a multiplier. Execution is worth millions.",
                 "image" => "quotes/people/434.png",
                 "author" => "Steve Jobs",
-                "date" => "~2000s AD"
+                "date" => "2000s AD"
             ],
 
             //Plato quotes/people/435.png
             [
                 "text" => "The beginning is the most important part of the work.",
-                "image" => "quotes/people/434.png",
+                "image" => "quotes/people/435.png",
                 "author" => "Plato",
-                "date" => "~340 BC"
+                "date" => "340 BC"
             ],
             [
                 "text" => "The one who learns and learns and doesn't practice is like the one who plows and plows and never plants.",
-                "image" => "quotes/people/434.png",
+                "image" => "quotes/people/435.png",
                 "author" => "Plato",
-                "date" => "~340 BC"
+                "date" => "340 BC"
             ],
         ];
         
