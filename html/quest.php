@@ -1602,7 +1602,7 @@ $itemInformationJSON = json_encode($itemInfos);
     <!--Test 2-->
     <script>
         
-var questDate = new Date('<?= vDateTime::getValueString($thisQuest->endDate); ?> UTC');
+var questDate = new Date('<?= vDateTime::getValueString($thisQuest->endDate); ?>');
 
 
 
