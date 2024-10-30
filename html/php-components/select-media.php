@@ -36,7 +36,7 @@ let currentSelectMediaPage = 1; // default page
 const itemsPerSelectMediaPage = 6; // or however many you want
 
 
-<?php if(Kickback\Services\Session::getCurrentAccount()->isArtist) { ?>
+<?php if(Kickback\Services\Session::getCurrentAccount()->canUploadImages()) { ?>
 let cropper;
 let mediaUploadStep = 1;
 function OpenMediaUploadModal()

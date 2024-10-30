@@ -53,6 +53,10 @@ class vAccount extends vRecordId
         $this->setDefaultProfilePicture();
     }
 
+    public function canUploadImages() : bool {
+        return $this->isArtist || $this->isQuestGiver;
+    }
+
     public function getURL() : string
     {
         return Version::formatUrl("/u/".$this->username);
