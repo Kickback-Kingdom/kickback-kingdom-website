@@ -18,6 +18,7 @@ use Kickback\Services\Session;
 use Kickback\Backend\Views\vDateTime;
 use Kickback\Common\Version;
 use Kickback\Backend\Controllers\SocialMediaController;
+use Kickback\Backend\Controllers\FlavorTextController;
 
 $newPost = false;
 if (isset($_GET['id']))
@@ -82,17 +83,17 @@ if (isset($_POST["submit-raffle"]))
         {
             $ticketsSubmitted = 0;
             for ($x = 0; $x < $ticketsToSubmit; $x++) {
-                $raffleResp = SubmitRaffleTicket(Session::getCurrentAccount()->crand, $thisQuest["raffle_id"]);
+                $raffleResp = QuestController::submitRaffleTicket(Session::getCurrentAccount(), $thisQuest->raffle);
                 if ($raffleResp->success)
                 {
                     $ticketsSubmitted++;
                 }
             }
 
-            if ($thisQuest["published"]==1)
+            if ($thisQuest->reviewStatus->published)
             {
 
-                SocialMediaController::DiscordWebHook(GetRandomGreeting().', '.Session::getCurrentAccount()->username.' just submitted a number of raffle tickets to the '.$thisQuest['name'].' quest.');
+                SocialMediaController::DiscordWebHook(FlavorTextController::getRandomGreeting().', '.Session::getCurrentAccount()->username.' just submitted a number of raffle tickets to the '.$thisQuest->title.' quest.');
             }
 
             $hasSuccess = true;
@@ -1518,7 +1519,7 @@ $itemInformationJSON = json_encode($itemInfos);
                                     
                                     foreach ($raffleParticipants as &$participant) {
                                         
-                                        $playerCardAccount = $participant;
+                                        $_vPlayerCardAccount = $participant;
                                         require("php-components/vPlayerCardRenderer.php"); 
                                     }
                                     

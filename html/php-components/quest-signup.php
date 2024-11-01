@@ -32,7 +32,7 @@ if ($thisQuest->isRaffle())
                             <h6>Available Raffle Tickets: <?php echo $unusedTickets; ?></h6>
                             <fieldset>
                                 <div class="input-group">
-                                        <input class="touchspin" type="number" name="tickets" data-bts-init-val="1" min="1" max="<?php echo $unusedTickets; ?>">
+                                        <input class="touchspin" type="number" name="tickets" data-bts-init-val="1" min="1" max="<?= $unusedTickets; ?>" value="1">
                                         <!--<input class="touchspin" type="text" name="tickets" data-bts-init-val="1" oninput="validateMaxValue(this)">
 
                                         <script>

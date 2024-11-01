@@ -210,7 +210,9 @@ $analyticsJSON = json_encode($analyticsMonthly);
 
         $(document).ready( function () {
             $('#datatable-analtyics').DataTable({
-                "order": [[0, 'desc']]  // Sort by the 5th column (0-indexed) in ascending order
+                "order": [[0, 'desc']],
+                "responsive": true,
+                "scrollX": true,
             });
         } );
 

@@ -582,16 +582,24 @@ $padlockOffset = $descriptionHeight / 2;
     <script>
         $(document).ready( function () {
             $('#datatable-members').DataTable({
-                "order": [[1, 'desc']]  // Sort by the 5th column (0-indexed) in ascending order
+                "order": [[1, 'desc']],
+                "responsive": true,
+                "scrollX": true,
             });
             $('#datatable-purchases').DataTable({
-                "order": [[2, 'desc']]  // Sort by the 5th column (0-indexed) in ascending order
+                "order": [[2, 'desc']],
+                "responsive": true,
+                "scrollX": true,
             });
             $('#datatable-cash-flow-out').DataTable({
-                "order": [[5, 'desc']]  // Sort by the 5th column (0-indexed) in ascending order
+                "order": [[5, 'desc']],
+                "responsive": true,
+                "scrollX": true,
             });
             $('#datatable-cash-flow-in').DataTable({
-                "order": [[2, 'desc']]  // Sort by the 5th column (0-indexed) in ascending order
+                "order": [[2, 'desc']],
+                "responsive": true,
+                "scrollX": true,
             });
         } );
     </script>

@@ -444,7 +444,14 @@ class QuestController
 
     public static function getRaffleParticipants(vRaffle $raffle): Response {
         $conn = Database::getConnection();
-        $sql = "SELECT * FROM v_raffle_participants WHERE raffle_id = ?";
+        $sql = "SELECT `v_account_info`.*,
+                    `v_raffle_tickets`.`raffle_id` AS `raffle_id`
+                FROM
+                    (`v_raffle_tickets`
+                    LEFT JOIN `v_account_info` ON (`v_raffle_tickets`.`account_id` = `v_account_info`.`Id`))
+                WHERE
+                    `v_raffle_tickets`.`raffle_id` = ?
+                GROUP BY `v_raffle_tickets`.`raffle_id` , `v_raffle_tickets`.`account_id`";
 
         // Prepare the SQL statement
         $stmt = $conn->prepare($sql);
@@ -467,13 +474,17 @@ class QuestController
         }
 
         // Fetch all the rows
-        $rows = $result->fetch_all(MYSQLI_ASSOC);
+        //$rows = $result->fetch_all(MYSQLI_ASSOC);
 
+        $accounts = [];
+        while ($row = $result->fetch_assoc()) {
+            $accounts[] = AccountController::row_to_vAccount($row, true);
+        }
         // Free the result and close the statement
         $result->free();
         $stmt->close();
 
-        return new Response(true, "Raffle Participants", $rows);
+        return new Response(true, "Raffle Participants", $accounts);
     }
 
     public static function removeStandardParticipationRewards(vRecordId $questId) : Response {
@@ -714,7 +725,7 @@ class QuestController
         }
     }
     
-    public static function submitQuestForReview(vRecordId $questId) : Response { 
+    public static function submitQAccountControlleruestForReview(vRecordId $questId) : Response { 
 
         $conn = Database::getConnection();
 
@@ -782,23 +793,23 @@ class QuestController
     }
 
     public static function submitRaffleTicket(vRecordId $account_id, vRecordId $raffle_id) : Response {
-        
         $conn = Database::getConnection();
-        $loot_id = GetUnusedAccountRaffleTicket($account_id)->data;
-        $raffle_id = mysqli_real_escape_string($conn, $raffle_id);
-
-        $sql = "INSERT INTO raffle_submissions (raffle_id, loot_id) VALUES ($raffle_id,$loot_id);";
-        $result = mysqli_query($conn,$sql);
-        if ($result === TRUE) {
-
-            return (new Response(true, "Submitted Raffle Ticket!",null));
-        } 
-        else 
-        {
-            return (new Response(false, "Failed to submit raffle ticket with error: ".GetSQLError(), null));
+    
+        // Get the unused account raffle ticket loot ID
+        $loot_id = AccountController::getUnusedAccountRaffleTicket($account_id)->data;
+    
+        // Prepare the statement to insert the raffle ticket
+        $stmt = $conn->prepare("INSERT INTO raffle_submissions (raffle_id, loot_id) VALUES (?, ?)");
+        mysqli_stmt_bind_param($stmt, 'ii', $raffle_id->crand, $loot_id);
+    
+        // Execute the statement
+        if (mysqli_stmt_execute($stmt)) {
+            return (new Response(true, "Submitted Raffle Ticket!", null));
+        } else {
+            return (new Response(false, "Failed to submit raffle ticket with error: " . mysqli_stmt_error($stmt), null));
         }
-
     }
+    
 
     public static function accountHasRegisteredOrAppliedForQuest(vRecordId $account_id, vRecordId $quest_id) : Response {
 

@@ -135,7 +135,9 @@ if ($accountRankingsResp && $accountRankingsResp->success) {
         $(document).ready( function () {
             $('#datatable-ranks').DataTable({
                 "order": [[2, 'desc']],
-                "pageLength": 100       // Show 100 entries per page by default
+                "pageLength": 100,
+                "responsive": true,
+                "scrollX": true,
             });
         } );
 
