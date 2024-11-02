@@ -176,9 +176,9 @@ ${clickableLayer}
         <div class="ribbons-container">
             ${true ? "<div class='ribbon red'></div>" : ""}
             ${playerCardAccount["isMerchant"] == 1 ? "<div class='ribbon blue'></div>" : ""}
-            ${false ? "<div class='ribbon green'></div>" : ""}
+            ${playerCardAccount["isSteward"] == 1  ? "<div class='ribbon green'></div>" : ""}
             ${false ? "<div class='ribbon yellow'></div>" : ""}
-            ${false ? "<div class='ribbon purple'></div>" : ""}
+            ${playerCardAccount["isMasterOrApprentice"] == 1 ? "<div class='ribbon purple'></div>" : ""}
         </div>
 
         <div class="card-header${isRanked1 ? " ranked-1" : ""}">

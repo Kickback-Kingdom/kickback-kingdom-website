@@ -32,7 +32,11 @@ class vAccount extends vRecordId
     public bool $isMasterOrApprentice;
     public bool $isArtist;
     public bool $isQuestGiver;
-
+    public bool $isMagisterOfAdventurers;
+    public bool $isChancellorOfExpansion;
+    public bool $isChancellorOfTechnology;
+    public bool $isStewardOfExpansion;
+    public bool $isStewardOfTechnology;
     public bool $isGoldCardHolder;
 
     public ?vMedia $avatar = null;

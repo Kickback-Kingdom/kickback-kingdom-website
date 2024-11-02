@@ -198,6 +198,21 @@ class Session {
 
         return false;
     }
+
+    public static function isMagisterOfTheAdventurersGuild() : bool {
+
+        if (self::isAdmin())
+        {
+            return true;
+        }
+
+        if (self::isLoggedIn())
+        {
+            return self::getCurrentAccount()->isMagisterOfAdventurers;
+        }
+
+        return false;
+    }
     
     public static function isQuestGiver() : bool {
         if (self::isLoggedIn())

@@ -73,7 +73,7 @@ class vQuest extends vRecordId
     }
 
     public function canEdit() : bool {
-        return $this->isHost() || Session::isAdmin();
+        return $this->isHost() || Session::isMagisterOfTheAdventurersGuild();
     }
 
     public function isHost() : bool {

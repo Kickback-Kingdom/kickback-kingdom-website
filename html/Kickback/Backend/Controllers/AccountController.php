@@ -899,11 +899,18 @@ class AccountController
         $account->isAdmin = (bool) $row["IsAdmin"];
         $account->isMerchant = (bool) $row["IsMerchant"];
         $account->isAdventurer = true;
-        $account->isSteward = false;
         $account->isCraftsmen = false;
         $account->isMasterOrApprentice = (bool) $row["IsMaster"] || (bool) $row["IsApprentice"];
         $account->isArtist = (bool) $row["IsArtist"];
         $account->isQuestGiver = (bool) $row["IsQuestGiver"];
+
+        
+        $account->isSteward = (bool) $row["IsSteward"];
+        $account->isMagisterOfAdventurers = (bool) $row["IsMagisterOfAdventurers"];
+        $account->isChancellorOfExpansion = (bool) $row["IsChancellorOfExpansion"];
+        $account->isChancellorOfTechnology = (bool) $row["IsChancellorOfTechnology"];
+        $account->isStewardOfExpansion = (bool) $row["IsStewardOfExpansion"];
+        $account->isStewardOfTechnology = (bool) $row["IsStewardOfTechnology"];
 
         if (array_key_exists('game_id', $row)) {
             $gameId = (int)$row['game_id'];

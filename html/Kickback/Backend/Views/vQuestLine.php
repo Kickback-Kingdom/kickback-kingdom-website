@@ -113,7 +113,7 @@ class vQuestLine extends vRecordId
 
     public function canEdit()
     {
-        return $this->isCreator() || Session::isAdmin();
+        return $this->isCreator() || Session::isMagisterOfTheAdventurersGuild();
     }
 
     public function isCreator()

@@ -80,7 +80,7 @@ class FeedController
             return new Response(true, "TBA Quests", []);
         }
 
-        if (Session::isAdmin()) {
+        if (Session::isMagisterOfTheAdventurersGuild()) {
             $sql = "SELECT * FROM kickbackdb.v_feed WHERE type = 'QUEST' AND published = 0 ORDER BY date DESC LIMIT ? OFFSET ?";
             $stmt = $conn->prepare($sql);
             if ($stmt === false) {

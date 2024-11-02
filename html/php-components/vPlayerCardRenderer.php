@@ -60,9 +60,13 @@ for ($i = count($_vPlayerCardAccount->game_ranks); $i < 5; $i++ )
     <?php if ($_vPlayerCardAccount->isMerchant) { ?>
       <div class="ribbon blue"></div>
       <?php } ?>
-      <?php if (true == false) { ?>
+      <?php if ($_vPlayerCardAccount->isSteward) { ?>
       <div class="ribbon green"></div>
+      <?php } ?>
+      <?php if (true == false) { ?>
       <div class="ribbon yellow"></div>
+      <?php } ?>
+      <?php if ($_vPlayerCardAccount->isSteward) { ?>
       <div class="ribbon purple"></div>
       <?php } ?>
   </div>

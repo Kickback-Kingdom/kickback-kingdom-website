@@ -114,7 +114,7 @@ class QuestController
     function getTBAQuests() : Response {
         if (Session::isLoggedIn())
         {
-            if (Session::isAdmin())
+            if (Session::isMagisterOfTheAdventurersGuild())
             {
                 // Prepare the SQL statement
                 $sql = "SELECT * FROM kickbackdb.v_quest_info WHERE published = 0 order by end_date desc";
@@ -762,7 +762,7 @@ class QuestController
         
         $conn = Database::getConnection();
         
-        if (!Session::isAdmin()) {
+        if (!Session::isMagisterOfTheAdventurersGuild()) {
             return new Response(false, "Approval denied. Insufficient permissions to edit this quest.", null);
         }
 

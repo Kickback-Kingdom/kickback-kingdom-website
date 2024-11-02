@@ -227,7 +227,7 @@ class QuestLineController {
         $questLineId = $data["quest-line-id"];
 
         // Check if the user has admin privileges
-        if (!Session::isAdmin()) {
+        if (!Session::isMagisterOfTheAdventurersGuild()) {
             return new Response(false, "Approval denied. Insufficient permissions to approve this quest line.", null);
         }
 

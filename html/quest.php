@@ -453,7 +453,7 @@ $itemInformationJSON = json_encode($itemInfos);
                                                 <div class="spinner-border ms-auto" aria-hidden="true"></div>
                                             </div>
                                         </div>
-                                        <?php if (Kickback\Services\Session::isAdmin()) { ?>
+                                        <?php if (Kickback\Services\Session::isMagisterOfTheAdventurersGuild()) { ?>
                                         <div class="card-footer">
                                             <button type="button" class="btn btn-success float-end mx-1" onclick="OpenModalApprove()">Approve Quest</button>
                                             <button type="button" class="btn btn-danger float-end" onclick="OpenModalReject()">Reject Quest</button>
@@ -1086,7 +1086,7 @@ $itemInformationJSON = json_encode($itemInfos);
                             </div>
                         </form>
                         
-                        <?php if (Kickback\Services\Session::isAdmin()) { ?>
+                        <?php if (Kickback\Services\Session::isMagisterOfTheAdventurersGuild()) { ?>
                         <form method="POST">
                             <input type="hidden" name="form_token" value="<?= $_SESSION['form_token']; ?>">
                             <input type="hidden" name="quest-id" value="<?= $thisQuest->crand; ?>" />
@@ -1184,7 +1184,7 @@ $itemInformationJSON = json_encode($itemInfos);
                             }
 
                             
-                            <?php if (Kickback\Services\Session::isAdmin()) { ?>
+                            <?php if (Kickback\Services\Session::isMagisterOfTheAdventurersGuild()) { ?>
                             function OpenModalApprove()
                             {
                                 $("#modalQuestApprove").modal("show");
