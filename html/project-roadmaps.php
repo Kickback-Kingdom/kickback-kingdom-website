@@ -2,22 +2,23 @@
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
-require("php-components/base-page-pull-active-account-info.php");
+require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-pull-active-account-info.php");
+use Kickback\Common\Version;
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 
 
-<?php require("php-components/base-page-head.php"); ?>
+<?php require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-head.php"); ?>
 
 <body class="bg-body-secondary container p-0">
     
     <?php 
     
-    require("php-components/base-page-components.php"); 
+    require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-components.php"); 
     
-    require("php-components/ad-carousel.php"); 
+    require(\Kickback\SCRIPT_ROOT . "/php-components/ad-carousel.php"); 
     
     ?>
 
@@ -68,7 +69,7 @@ require("php-components/base-page-pull-active-account-info.php");
                 
                 
                 $activePageName = "Project Roadmaps";
-                require("php-components/base-page-breadcrumbs.php"); 
+                require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-breadcrumbs.php"); 
                 
                 ?>
                 <h1>Grand Strategy</h1>
@@ -179,13 +180,13 @@ require("php-components/base-page-pull-active-account-info.php");
 
             </div>
             
-            <?php require("php-components/base-page-discord.php"); ?>
+            <?php require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-discord.php"); ?>
         </div>
-        <?php require("php-components/base-page-footer.php"); ?>
+        <?php require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-footer.php"); ?>
     </main>
 
     
-    <?php require("php-components/base-page-javascript.php"); ?>
+    <?php require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-javascript.php"); ?>
     <script>
     // Mocked data, replace this with your AJAX call or data fetch mechanism
     var accounts = {1: "Alibaba", 2: "Fly", 3: "DonFrio"};

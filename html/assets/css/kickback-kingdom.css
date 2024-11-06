@@ -532,6 +532,7 @@ animation: confetti-fast 1.25s linear 1 forwards;
     background-size: 200%;
     color: #b2ab86;
     animation: shine 5s ease-in-out infinite;
+    color: var(--bs-primary) !important;
 }
 
 .card-body.ranked-1 {
@@ -545,6 +546,7 @@ animation: confetti-fast 1.25s linear 1 forwards;
     background-size: 200%;
     color: #b2ab86;
     animation: shine 5s ease-in-out infinite;
+    color: var(--bs-primary) !important;
 }
 
 .bg-progress-ranked-1 {

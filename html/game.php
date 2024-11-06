@@ -86,36 +86,38 @@ if ($accountRankingsResp && $accountRankingsResp->success) {
                         <div class="display-6 tab-pane-title mt-4">Rankings</div>
                         <div class="card mb-3">
                             <div class="card-body">
-                                <table id="datatable-ranks" class="table display">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">Rank</th>
-                                            <th scope="col">Guildsmen</th>
-                                            <th scope="col">ELO</th>
-                                            <th scope="col">Wins</th>
-                                            <th scope="col">Loses</th>
-                                            <th scope="col">Matches</th>
-                                            <th scope="col">W/L Ratio</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        
-                                        <?php 
-                                        foreach ($accountRankings as $account) : 
-                                            $gameStats = $account->game_stats[$thisGame->crand];
-                                            ?>
-                                                <tr >
-                                                <td><?= $gameStats->getRankElement();?></td>
-                                                <td><?= $account->getAccountElement();?></td>
-                                                <td><?= $gameStats->elo;?></td>
-                                                <td><?= $gameStats->total_wins;?></td>
-                                                <td><?= $gameStats->total_losses;?></td>
-                                                <td><?= $gameStats->ranked_matches;?></td>
-                                                <td><?= number_format($gameStats->win_rate * 100, 2); ?>%</td>
-                                                </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
+                                <div class="table-responsive">
+                                    <table id="datatable-ranks" class="dataTable no-footer nowrap table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Rank</th>
+                                                <th scope="col">Guildsmen</th>
+                                                <th scope="col">ELO</th>
+                                                <th scope="col">Wins</th>
+                                                <th scope="col">Loses</th>
+                                                <th scope="col">Matches</th>
+                                                <th scope="col">W/L Ratio</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            
+                                            <?php 
+                                            foreach ($accountRankings as $account) : 
+                                                $gameStats = $account->game_stats[$thisGame->crand];
+                                                ?>
+                                                    <tr >
+                                                    <td><?= $gameStats->getRankElement();?></td>
+                                                    <td><?= $account->getAccountElement();?></td>
+                                                    <td><?= $gameStats->elo;?></td>
+                                                    <td><?= $gameStats->total_wins;?></td>
+                                                    <td><?= $gameStats->total_losses;?></td>
+                                                    <td><?= $gameStats->ranked_matches;?></td>
+                                                    <td><?= number_format($gameStats->win_rate * 100, 2); ?>%</td>
+                                                    </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -136,8 +138,8 @@ if ($accountRankingsResp && $accountRankingsResp->success) {
             $('#datatable-ranks').DataTable({
                 "order": [[2, 'desc']],
                 "pageLength": 100,
-                "responsive": true,
-                "scrollX": true,
+                //"responsive": true,
+                //"scrollX": true,
             });
         } );
 

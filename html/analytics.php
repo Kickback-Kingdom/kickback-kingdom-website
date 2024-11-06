@@ -51,40 +51,42 @@ $analyticsJSON = json_encode($analyticsMonthly);
                         <div class="card mb-3">
                             <h5 class="card-header">Monthly Growth & Retention Analytics</h5>
                             <div class="card-body">
-                                <table id="datatable-analtyics" class="table display">
-                                    <thead>
-                                        <tr>
-                                        <th scope="col">Month</th>
-                                        <th scope="col">New Accounts</th>
-                                        <th scope="col">Total Accounts</th>
-                                        <th scope="col">Growth %</th>
-                                        <th scope="col">Active Accounts</th>
-                                        <th scope="col">Retention %</th>
-                                        <th scope="col">Website Hits</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($analyticsMonthly as $data) : 
-                                            // Determine classes for each condition
-                                            $growthClass = (float) number_format($data['growth_percentage'], 1, '.', '') >= 5.0 ? 'table-success' : 'table-danger';
-                                            $retentionClass = (float) number_format($data['retention_rate'], 1, '.', '') >= 20 ? 'table-success' : 'table-danger';
-
-                                            // Determine the row class based on the cell classes
-                                            $rowClass = ($growthClass === 'table-danger' || $retentionClass === 'table-danger') ? 'table-danger' : 'table-success';
-                                        ?>
-                                            <tr class="<?= $rowClass; ?>">
-                                                <td><?= htmlspecialchars($data['month']); ?></td>
-                                                <td class="<?= $growthClass; ?>"><?= htmlspecialchars($data['new_accounts']); ?></td>
-                                                <td class="<?= $growthClass; ?>"><?= htmlspecialchars($data['total_accounts']); ?></td>
-                                                <td class="<?= $growthClass; ?>"><?= htmlspecialchars(number_format($data['growth_percentage'], 1, '.', ',')); ?>%</td>
-                                                <td class="<?= $retentionClass; ?>"><?= htmlspecialchars($data['active_accounts']); ?></td>
-                                                <td class="<?= $retentionClass; ?>"><?= htmlspecialchars(number_format($data['retention_rate'], 1, '.', ',')); ?>%</td>
-                                                <td class="<?= $rowClass; ?>"><?= htmlspecialchars(number_format($data['website_hits'], 0, '.', ',')); ?></td>
+                                <div class="table-responsive">
+                                    <table id="datatable-analtyics" class="dataTable no-footer nowrap table table-striped">
+                                        <thead>
+                                            <tr>
+                                            <th scope="col">Month</th>
+                                            <th scope="col">New Accounts</th>
+                                            <th scope="col">Total Accounts</th>
+                                            <th scope="col">Growth %</th>
+                                            <th scope="col">Active Accounts</th>
+                                            <th scope="col">Retention %</th>
+                                            <th scope="col">Website Hits</th>
                                             </tr>
-                                        <?php endforeach; ?>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($analyticsMonthly as $data) : 
+                                                // Determine classes for each condition
+                                                $growthClass = (float) number_format($data['growth_percentage'], 1, '.', '') >= 5.0 ? 'table-success' : 'table-danger';
+                                                $retentionClass = (float) number_format($data['retention_rate'], 1, '.', '') >= 20 ? 'table-success' : 'table-danger';
 
-                                    </tbody>
-                                </table>
+                                                // Determine the row class based on the cell classes
+                                                $rowClass = ($growthClass === 'table-danger' || $retentionClass === 'table-danger') ? 'table-danger' : 'table-success';
+                                            ?>
+                                                <tr class="<?= $rowClass; ?>">
+                                                    <td><?= htmlspecialchars($data['month']); ?></td>
+                                                    <td class="<?= $growthClass; ?>"><?= htmlspecialchars($data['new_accounts']); ?></td>
+                                                    <td class="<?= $growthClass; ?>"><?= htmlspecialchars($data['total_accounts']); ?></td>
+                                                    <td class="<?= $growthClass; ?>"><?= htmlspecialchars(number_format($data['growth_percentage'], 1, '.', ',')); ?>%</td>
+                                                    <td class="<?= $retentionClass; ?>"><?= htmlspecialchars($data['active_accounts']); ?></td>
+                                                    <td class="<?= $retentionClass; ?>"><?= htmlspecialchars(number_format($data['retention_rate'], 1, '.', ',')); ?>%</td>
+                                                    <td class="<?= $rowClass; ?>"><?= htmlspecialchars(number_format($data['website_hits'], 0, '.', ',')); ?></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -211,8 +213,8 @@ $analyticsJSON = json_encode($analyticsMonthly);
         $(document).ready( function () {
             $('#datatable-analtyics').DataTable({
                 "order": [[0, 'desc']],
-                "responsive": true,
-                "scrollX": true,
+                //"responsive": true,
+                //"scrollX": true,
             });
         } );
 
