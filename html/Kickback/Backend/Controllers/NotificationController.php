@@ -59,7 +59,7 @@ class NotificationController
             $quest->host1 = new vAccount('', $row["host_id"]);
             $quest->host1->username = $row["host_name"];
 
-            if ($row["host_id_2"] != null)
+            if ($row["host_id_2"] != null && $row["host_id_2"] > 0)
             {
                 $quest->host2 = new vAccount('', $row["host_id_2"]);
                 $quest->host2->username = $row["host_name_2"];
