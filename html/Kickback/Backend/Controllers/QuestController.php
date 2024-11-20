@@ -725,7 +725,7 @@ class QuestController
         }
     }
     
-    public static function submitQAccountControlleruestForReview(vRecordId $questId) : Response { 
+    public static function submitQuestForReview(vRecordId $questId) : Response { 
 
         $conn = Database::getConnection();
 
