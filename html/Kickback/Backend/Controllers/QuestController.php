@@ -1063,7 +1063,7 @@ class QuestController
             {
                 $newContentId = ContentController::insertNewContent();
                 
-                self::updateQuestContent($questResp->data,new vRecordId('', $newContentId));
+                self::updateQuestContent($quest,new vRecordId('', $newContentId));
 
                 $questResp = self::getQuestByLocator($questLocator);
             }
@@ -1084,7 +1084,8 @@ class QuestController
         //$newId = mysqli_insert_id($conn);
         $questResp = self::getQuestByLocator($quest->locator);
         $rewardResp = self::setupStandardParticipationRewards($questResp->data);
-        return self::getQuestByLocator($quest->locator);
+        $questResp = self::getQuestByLocator($quest->locator);
+        return $questResp;
     }
 }
 ?>
