@@ -27,8 +27,8 @@ $errorMessage = "";
 
 
 
-$accountResp = AccountController::getAccountById(new vAccount('', $_GET["i"]));
-$code = $_GET["c"];
+$accountResp = AccountController::getAccountById(new vAccount('', (int)$_GET["i"]));
+$code = (int)$_GET["c"];
 
 if ($accountResp->success)
 {
