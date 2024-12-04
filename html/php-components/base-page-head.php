@@ -166,7 +166,7 @@ if ($pageVisitResp->success)
 
     <style>
         body {
-            background-image: url(/assets/media/seasonal/480.png) !important;
+            background-image: url(/assets/media/seasonal/486.png) !important;
         }
 
     </style>
