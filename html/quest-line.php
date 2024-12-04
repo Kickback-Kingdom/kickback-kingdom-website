@@ -73,7 +73,7 @@ $thisQuestLine->populateEverything();
     <!--TOP BANNER-->
     <div class="d-none d-md-block w-100 ratio" style="--bs-aspect-ratio: 26%; margin-top: 56px">
 
-        <img src="<?= $thisQuestLine->icon->getFullPath(); ?>" class="" />
+        <img src="<?= $thisQuestLine->banner->getFullPath(); ?>" class="" />
 
     </div>
     <div class="d-block d-md-none w-100 ratio" style="margin-top: 56px; --bs-aspect-ratio: 46.3%;">
