@@ -92,8 +92,12 @@ if (!isset($_GET['borderless']))
         <?php } ?>
         <?php if (!$hadFirstPage) { ?>
         <div class="carousel-item <?php echo $adCarouselActivePage; $adCarouselActivePage = ""; ?>" data-bs-interval="7000">
-            <img src="/assets/images/kk-1.jpg" class="d-none d-md-block w-100">
-            <img src="/assets/images/kk-2.jpg" class="d-block d-md-none w-100">
+            
+            <img src="/assets/media/seasonal/481.png" class="d-none d-md-block w-100">
+            <img src="/assets/media/seasonal/482.png" class="d-block d-md-none w-100">
+
+            <!--<img src="/assets/images/kk-1.jpg" class="d-none d-md-block w-100">
+            <img src="/assets/images/kk-2.jpg" class="d-block d-md-none w-100">-->
             <div class="carousel-caption d-block d-md-block text-shadow">
                 <h5>Welcome to Kickback Kingdom</h5>
                 <p>The gaming realm where friendships are formed and scores are settled.</p>

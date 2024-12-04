@@ -164,4 +164,10 @@ if ($pageVisitResp->success)
     </style>
     <?php } ?>
 
+    <style>
+        body {
+            background-image: url(/assets/media/seasonal/480.png) !important;
+        }
+
+    </style>
 </head>
