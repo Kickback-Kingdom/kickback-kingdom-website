@@ -15,16 +15,16 @@ use Kickback\Backend\Controllers\FeedCardController;
 use Kickback\Backend\Controllers\FeedController;
 use Kickback\Common\Version;
 
-$availableQuestsResp = FeedController::getAvailableQuestsFeed();
+$availableQuestsResp = FeedController::getAvailableQuestsFeed(1, 100);
 $availableQuests = $availableQuestsResp->data;
 
 $archivedQuestsResp = FeedController::getArchivedQuestsFeed(1, 100);
 $archivedQuests = $archivedQuestsResp->data;
 
-$questLinesResp = FeedController::getAvailableQuestLinesFeed();
+$questLinesResp = FeedController::getAvailableQuestLinesFeed(1, 100);
 $questLines = $questLinesResp->data;
 
-$tbaQuestsResp = FeedController::getTBAQuestsFeed();
+$tbaQuestsResp = FeedController::getTBAQuestsFeed(1, 100);
 $tbaQuests = $tbaQuestsResp->data;
 $showTBAQuests = count($tbaQuests)>0;
 $tabActive = "active";
