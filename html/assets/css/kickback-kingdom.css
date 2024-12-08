@@ -8,6 +8,11 @@ a {
     color: var(--bs-tertiary);
 }
 
+.player-card-ranks a {
+    text-decoration: none;
+    color: unset;
+}
+
 body {
     background-image: url(/assets/images/kk.jpg) !important;
     background-repeat: no-repeat !important;
