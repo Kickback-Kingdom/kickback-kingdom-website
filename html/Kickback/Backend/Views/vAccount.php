@@ -49,6 +49,7 @@ class vAccount extends vRecordId
     public ?array $badge_display = null;
     public ?array $game_ranks = null;
     public ?array $game_stats = null;
+    public ?array $match_stats = null;
     
     function __construct(string $ctime = '', int $crand = -1)
     {
