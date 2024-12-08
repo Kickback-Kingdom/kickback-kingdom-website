@@ -37,7 +37,15 @@ if ($accountRankingsResp && $accountRankingsResp->success) {
     $accountRankings = [];
 }
 
+$currentWinStreakResp = GameController::getCurrentWinStreak($thisGame);
+$currentWinStreak = $currentWinStreakResp->data;
 
+
+$AllTimeWinStreakResp = GameController::getAllTimeWinStreak($thisGame);
+$AllTimeWinStreak = $AllTimeWinStreakResp->data;
+
+$randomCharacterWinResp = GameController::getBestRandomPlayer($thisGame);
+$randomCharacterWin = $randomCharacterWinResp->data;
 
 $rankedMatches = [];
 
@@ -92,6 +100,101 @@ $gameQuests = $gameQuestsResp->data->items;
                     endforeach;
                     ?>
                 </div>
+                <div class="row mt-4 g-3 mb-4">
+    <!-- Current Highest Win Streak -->
+    <div class="col-md-4">
+        <div class="card border-primary shadow-sm h-100">
+            <div class="card-header text-center bg-primary text-white">
+                <i class="fa-solid fa-fire me-2"></i> Current Highest Win Streak
+            </div>
+            <div class="card-body d-flex flex-column justify-content-center">
+                <?php if (!empty($currentWinStreak)): ?>
+                    <?php foreach ($currentWinStreak as $streak): ?>
+                        <div class="d-flex align-items-center mb-3 p-2 bg-light rounded">
+                            <img src="<?= $streak['account']->getProfilePictureURL() ?>" 
+                                alt="<?= htmlspecialchars($streak['account']->username) ?>" 
+                                class="rounded-circle shadow"
+                                style="height: 50px; width: 50px; object-fit: cover; border: 2px solid #007bff;">
+                            <div class="ms-3 text-start w-100">
+                                <h5 class="mb-1 fw-bold text-primary"><?= $streak['account']->getAccountElement() ?></h5>
+                                <p class="mb-0 text-muted small">
+                                    🔥 On Fire <span class="fw-bold text-primary"><?= $streak['current_streak'] ?> Wins</span>
+                                </p>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p class="text-muted mb-0 text-center">No active win streaks.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- All-Time Highest Win Streak -->
+    <div class="col-md-4">
+        <div class="card border-success shadow-sm h-100">
+            <div class="card-header text-center bg-success text-white">
+                <i class="fa-solid fa-crown me-2"></i> All-Time Highest Win Streak
+            </div>
+            <div class="card-body d-flex flex-column justify-content-center">
+                <?php if (!empty($AllTimeWinStreak)): ?>
+                    <?php foreach ($AllTimeWinStreak as $streak): ?>
+                        <div class="d-flex align-items-center mb-3 p-2 bg-light rounded">
+                            <img src="<?= $streak['account']->getProfilePictureURL() ?>" 
+                                alt="<?= htmlspecialchars($streak['account']->username) ?>" 
+                                class="rounded-circle shadow"
+                                style="height: 50px; width: 50px; object-fit: cover; border: 2px solid #28a745;">
+                            <div class="ms-3 text-start w-100">
+                                <h5 class="mb-1 fw-bold text-success"><?= $streak['account']->getAccountElement() ?></h5>
+                                <p class="mb-0 text-muted small">
+                                    👑 Legend <span class="fw-bold text-success"><?= $streak['max_streak'] ?> Wins</span>
+                                </p>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p class="text-muted mb-0 text-center">No all-time win streaks.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Most Wins With Random -->
+    <div class="col-md-4">
+        <div class="card border-info shadow-sm h-100">
+            <div class="card-header text-center bg-info text-white">
+                <i class="fa-solid fa-dice me-2"></i> Most Wins With Random
+            </div>
+            <div class="card-body d-flex flex-column justify-content-center">
+                <?php if (!empty($randomCharacterWin)): ?>
+                    <?php foreach ($randomCharacterWin as $streak): ?>
+                        <div class="d-flex align-items-center mb-3 p-2 bg-light rounded">
+                            <img src="<?= $streak['account']->getProfilePictureURL() ?>" 
+                                alt="<?= htmlspecialchars($streak['account']->username) ?>" 
+                                class="rounded-circle shadow"
+                                style="height: 50px; width: 50px; object-fit: cover; border: 2px solid #17a2b8;">
+                            <div class="ms-3 text-start w-100">
+                                <h5 class="mb-1 fw-bold text-info"><?= $streak['account']->getAccountElement() ?></h5>
+                                <p class="mb-0 text-muted small">
+                                    🎲 Unpredictable <span class="fw-bold text-info"><?= $streak['total_random_wins'] ?> Set Wins</span>
+                                </p>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p class="text-muted mb-0 text-center">No wins with random picks.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
                 
                 <div class="row">
                     <div class="col-12">

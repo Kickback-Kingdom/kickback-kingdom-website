@@ -6,11 +6,273 @@ namespace Kickback\Backend\Controllers;
 use Kickback\Backend\Models\Game;
 use Kickback\Backend\Views\vGame;
 use Kickback\Backend\Views\vMedia;
+use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Models\Response;
 use Kickback\Services\Database;
 
 class GameController
 {
+    public static function getCurrentWinStreak(vRecordId $gameId): Response {
+        $conn = Database::getConnection();
+    
+        $sql = "
+            WITH RankedGames AS (
+                SELECT
+                    game_id,
+                    account_id,
+                    win,
+                    game_match_id,
+                    Date,
+                    ROW_NUMBER() OVER (PARTITION BY game_id, account_id ORDER BY Date DESC) AS rn_desc
+                FROM v_ranked_matches
+                WHERE game_id = ?
+            ),
+            WinGroups AS (
+                SELECT
+                    game_id,
+                    account_id,
+                    game_match_id,
+                    Date,
+                    rn_desc,
+                    SUM(CASE WHEN win = 1 THEN 0 ELSE 1 END) OVER (PARTITION BY game_id, account_id ORDER BY rn_desc) AS lose_group
+                FROM RankedGames
+            ),
+            Streaks AS (
+                SELECT
+                    game_id,
+                    account_id,
+                    COUNT(*) AS current_streak
+                FROM WinGroups
+                WHERE lose_group = 0 -- Only calculate streaks when lose group is empty
+                GROUP BY game_id, account_id
+            ),
+            MaxStreak AS (
+                SELECT
+                    game_id,
+                    MAX(current_streak) AS max_streak
+                FROM Streaks
+                WHERE game_id = ?
+                GROUP BY game_id
+            )
+            SELECT
+                a.*,
+                s.game_id,
+                s.current_streak
+            FROM Streaks s
+            JOIN MaxStreak m
+            ON s.game_id = m.game_id AND s.current_streak = m.max_streak
+            inner join v_account_info a on a.Id = s.account_id
+            WHERE s.game_id = ? and s.current_streak > 1
+            ORDER BY s.account_id;
+        ";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare the SQL statement.");
+        }
+    
+        if (!$stmt->bind_param('iii', $gameId->crand, $gameId->crand, $gameId->crand)) {
+            return new Response(false, "Failed to bind parameters.");
+        }
+    
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute the SQL statement.");
+        }
+    
+        $result = $stmt->get_result();
+        if (!$result) {
+            return new Response(false, "Failed to retrieve the result set.");
+        }
+    
+        $winStreaks = [];
+        while ($row = $result->fetch_assoc()) {
+            $winStreaks[] = [
+                'game_id' => $row['game_id'],
+                'account' => AccountController::row_to_vAccount($row),
+                'current_streak' => (int)$row['current_streak']
+            ];
+        }
+    
+        $stmt->close();
+    
+        if (empty($winStreaks)) {
+            return new Response(false, "No win streaks found for the given game.");
+        }
+    
+        return new Response(true, "Win streaks retrieved successfully.", $winStreaks);
+    }
+
+    public static function getAllTimeWinStreak(vRecordId $gameId): Response {
+        $conn = Database::getConnection();
+    
+        $sql = "WITH RankedGames AS (
+                    SELECT
+                        `game_id`,
+                        `account_id`,
+                        `win`,
+                        `game_match_id`,
+                        `Date`,
+                        ROW_NUMBER() OVER (PARTITION BY `game_id`, `account_id` ORDER BY `Date` ASC, `game_match_id` ASC) AS rn_asc
+                    FROM `v_ranked_matches`
+                    WHERE `game_id` = ?
+                ),
+                WinGroups AS (
+                    SELECT
+                        `game_id`,
+                        `account_id`,
+                        `game_match_id`,
+                        `Date`,
+                        rn_asc,
+                        win,
+                        SUM(CASE WHEN `win` = 0 THEN 1 ELSE 0 END) OVER (PARTITION BY `game_id`, `account_id` ORDER BY rn_asc) AS lose_group
+                    FROM RankedGames
+                ),
+                AllStreaks AS (
+                    SELECT
+                        `game_id`,
+                        `account_id`,
+                        COUNT(*) AS streak_length
+                    FROM WinGroups
+                    WHERE `win` = 1
+                    GROUP BY `game_id`, `account_id`, lose_group
+                ),
+                MaxStreak AS (
+                    SELECT
+                        `game_id`,
+                        `account_id`,
+                        MAX(streak_length) AS max_streak
+                    FROM AllStreaks
+                    GROUP BY `game_id`, `account_id`
+                ),
+                GameMaxStreak AS (
+                    SELECT
+                        `game_id`,
+                        MAX(max_streak) AS all_time_max_streak
+                    FROM MaxStreak
+                    WHERE `game_id` = ?
+                    GROUP BY `game_id`
+                )
+                SELECT
+                    a.*,
+                    ms.`game_id`,
+                    ms.max_streak
+                FROM MaxStreak ms
+                JOIN GameMaxStreak gm
+                    ON ms.`game_id` = gm.`game_id` AND ms.max_streak = gm.all_time_max_streak
+                INNER JOIN `v_account_info` a
+                    ON a.`Id` = ms.`account_id`
+                WHERE ms.`game_id` = ? and ms.max_streak > 1
+                ORDER BY a.`username`;
+
+        ";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare the SQL statement.");
+        }
+    
+        if (!$stmt->bind_param('iii', $gameId->crand, $gameId->crand, $gameId->crand)) {
+            return new Response(false, "Failed to bind parameters.");
+        }
+    
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute the SQL statement.");
+        }
+    
+        $result = $stmt->get_result();
+        if (!$result) {
+            return new Response(false, "Failed to retrieve the result set.");
+        }
+    
+        $winStreaks = [];
+        while ($row = $result->fetch_assoc()) {
+            $winStreaks[] = [
+                'game_id' => $row['game_id'],
+                'account' => AccountController::row_to_vAccount($row),
+                'max_streak' => (int)$row['max_streak']
+            ];
+        }
+    
+        $stmt->close();
+    
+        if (empty($winStreaks)) {
+            return new Response(false, "No all-time win streaks found for the given game.");
+        }
+    
+        return new Response(true, "All-Time win streaks retrieved successfully.", $winStreaks);
+    }
+
+    public static function getBestRandomPlayer(vRecordId $gameId): Response {
+        $conn = Database::getConnection();
+    
+        $sql = "WITH RandomWins AS (
+                    SELECT
+                        gr.game_id,
+                        gr.account_id,
+                        COUNT(*) AS total_random_wins
+                    FROM game_record gr
+                    WHERE gr.random_character = 1 AND gr.win = 1 and gr.game_id = ?
+                    GROUP BY gr.game_id, gr.account_id
+                ),
+                GameBestRandom AS (
+                    SELECT
+                        game_id,
+                        MAX(total_random_wins) AS max_random_wins
+                    FROM RandomWins
+                    WHERE game_id = ?
+                    GROUP BY game_id
+                )
+                SELECT
+                    a.*,
+                    rw.game_id,
+                    rw.total_random_wins
+                FROM RandomWins rw
+                JOIN GameBestRandom gbr
+                    ON rw.game_id = gbr.game_id AND rw.total_random_wins = gbr.max_random_wins
+                INNER JOIN v_account_info a
+                    ON a.Id = rw.account_id
+                WHERE rw.game_id = ?
+                ORDER BY a.username;
+
+
+        ";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare the SQL statement.");
+        }
+    
+        if (!$stmt->bind_param('iii', $gameId->crand, $gameId->crand, $gameId->crand)) {
+            return new Response(false, "Failed to bind parameters.");
+        }
+    
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute the SQL statement.");
+        }
+    
+        $result = $stmt->get_result();
+        if (!$result) {
+            return new Response(false, "Failed to retrieve the result set.");
+        }
+    
+        $winStreaks = [];
+        while ($row = $result->fetch_assoc()) {
+            $winStreaks[] = [
+                'game_id' => $row['game_id'],
+                'account' => AccountController::row_to_vAccount($row),
+                'total_random_wins' => (int)$row['total_random_wins']
+            ];
+        }
+    
+        $stmt->close();
+    
+        if (empty($winStreaks)) {
+            return new Response(false, "No random wins found for the given game.");
+        }
+    
+        return new Response(true, "Random wins retrieved successfully.", $winStreaks);
+    }
+    
     public static function getGames($rankedOnly = false, $searchTerm = '', $page = 0, $pageSize = 0): Response {
         $conn = Database::getConnection();
     
