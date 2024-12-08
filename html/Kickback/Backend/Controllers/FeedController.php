@@ -17,9 +17,71 @@ use Kickback\Backend\Views\vDateTime;
 use Kickback\Backend\Views\vReviewStatus;
 use Kickback\Backend\Models\PlayStyle;
 use Kickback\Backend\Views\vQuestLine;
+use Kickback\Backend\Views\vPageResult;
 
 class FeedController
 {
+    public static function getQuestsByGameId(vRecordId $gameId, int $page = 1, int $itemsPerPage = 10) : Response {
+        $conn = Database::getConnection();
+        $offset = ($page - 1) * $itemsPerPage;
+    
+        // Query to get the total number of items
+        $totalItemsSql = "SELECT COUNT(*) AS total 
+                          FROM v_feed f 
+                          LEFT JOIN quest q ON f.Id = q.Id 
+                          LEFT JOIN tournament t ON q.tournament_id = t.Id 
+                          WHERE f.type = 'QUEST' AND t.game_id = ?";
+    
+        $totalItemsStmt = $conn->prepare($totalItemsSql);
+        if ($totalItemsStmt === false) {
+            return new Response(false, "Failed to prepare total items statement: " . $conn->error, []);
+        }
+    
+        $gameIdValue = $gameId->crand;
+        $totalItemsStmt->bind_param('i', $gameIdValue);
+    
+        if (!$totalItemsStmt->execute()) {
+            return new Response(false, "Failed to execute total items statement: " . $totalItemsStmt->error, []);
+        }
+    
+        $totalItemsResult = $totalItemsStmt->get_result();
+        $totalItemsRow = $totalItemsResult->fetch_assoc();
+        $totalItems = (int)$totalItemsRow['total'];
+        $totalItemsStmt->close();
+    
+        // Query to get the paginated items
+        $sql = "SELECT f.* 
+                FROM v_feed f 
+                LEFT JOIN quest q ON f.Id = q.Id 
+                LEFT JOIN tournament t ON q.tournament_id = t.Id 
+                WHERE f.type = 'QUEST' AND t.game_id = ? 
+                ORDER BY f.date ASC 
+                LIMIT ? OFFSET ?";
+    
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare statement: " . $conn->error, []);
+        }
+    
+        $stmt->bind_param('iii', $gameIdValue, $itemsPerPage, $offset);
+    
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute statement: " . $stmt->error, []);
+        }
+    
+        $result = $stmt->get_result();
+        $rows = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+    
+        $questsList = array_map([self::class, 'row_to_vFeedRecord'], $rows);
+    
+        // Create the vPageResult object
+        $pageResult = new vPageResult($totalItems, $questsList, $itemsPerPage, $page);
+    
+        return new Response(true, "Quests for Game ID: " . $gameIdValue, $pageResult);
+    }
+    
+
     public static function getAvailableQuestsFeed(int $page = 1, int $itemsPerPage = 10) : Response {
         $conn = Database::getConnection();
         $offset = ($page - 1) * $itemsPerPage;

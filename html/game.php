@@ -6,6 +6,9 @@ require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Backend\Controllers\GameController;
 use Kickback\Backend\Controllers\AccountController;
+use Kickback\Backend\Controllers\ChallengeHistoryController;
+use Kickback\Backend\Controllers\FeedController;
+use Kickback\Backend\Controllers\FeedCardController;
 use Kickback\Common\Version;
 
 $gameLocator =  urldecode($_GET['locator']);
@@ -33,6 +36,28 @@ if ($accountRankingsResp && $accountRankingsResp->success) {
 } else {
     $accountRankings = [];
 }
+
+
+$challengeHistoryResp = ChallengeHistoryController::getMatchHistory($thisGame, 1, 2000);
+
+
+if ($challengeHistoryResp->success) {
+    $pageResult = $challengeHistoryResp->data;
+    $totalPages = $pageResult->totalPages;
+    $currentPage = $pageResult->currentPage;
+    $totalItems = $pageResult->totalItems;
+    $matchItems = $pageResult->items;
+    // Display paginated results
+    $rankedMatches = $matchItems;
+} else {
+    $rankedMatches = [];
+}
+
+
+
+$gameQuestsResp = FeedController::getQuestsByGameId($thisGame, 1, 100);
+$gameQuests = $gameQuestsResp->data->items;
+
 ?>
 
 <!DOCTYPE html>
@@ -80,46 +105,119 @@ if ($accountRankingsResp && $accountRankingsResp->success) {
                     endforeach;
                     ?>
                 </div>
-
+                
                 <div class="row">
                     <div class="col-12">
-                        <div class="display-6 tab-pane-title mt-4">Rankings</div>
-                        <div class="card mb-3">
-                            <div class="card-body">
+                        <nav>
+                            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                                <button class="nav-link active" id="nav-rankings-tab" data-bs-toggle="tab" data-bs-target="#nav-rankings" type="button" role="tab" aria-controls="nav-rankings" aria-selected="true"><i class="fa-solid fa-ranking-star"></i></button>
+                                <button class="nav-link" id="nav-history-tab" data-bs-toggle="tab" data-bs-target="#nav-history" type="button" role="tab" aria-controls="nav-history" aria-selected="false"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                                <button class="nav-link" id="nav-quests-tab" data-bs-toggle="tab" data-bs-target="#nav-quests" type="button" role="tab" aria-controls="nav-quests" aria-selected="false"><i class="fa-regular fa-compass"></i></button>
+                            </div>
+                        </nav>
+                        <div class="tab-content" id="nav-tabContent">
+                            <div class="tab-pane fade show active" id="nav-rankings" role="tabpanel" aria-labelledby="nav-rankings-tab" tabindex="0">
+                                <div class="display-6 tab-pane-title mt-4">Rankings</div>
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table id="datatable-ranks" class="dataTable no-footer nowrap table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">Rank</th>
+                                                        <th scope="col">Guildsmen</th>
+                                                        <th scope="col">ELO</th>
+                                                        <th scope="col">Wins</th>
+                                                        <th scope="col">Loses</th>
+                                                        <th scope="col">Matches</th>
+                                                        <th scope="col">W/L Ratio</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    
+                                                    <?php 
+                                                    foreach ($accountRankings as $account) : 
+                                                        $gameStats = $account->game_stats[$thisGame->crand];
+                                                        ?>
+                                                            <tr >
+                                                            <td><?= $gameStats->getRankElement();?></td>
+                                                            <td><?= $account->getAccountElement();?></td>
+                                                            <td><?= $gameStats->elo;?></td>
+                                                            <td><?= $gameStats->total_wins;?></td>
+                                                            <td><?= $gameStats->total_losses;?></td>
+                                                            <td><?= $gameStats->ranked_matches;?></td>
+                                                            <td><?= number_format($gameStats->win_rate * 100, 2); ?>%</td>
+                                                            </tr>
+                                                    <?php endforeach; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="nav-history" role="tabpanel" aria-labelledby="nav-history-tab" tabindex="0">
                                 <div class="table-responsive">
-                                    <table id="datatable-ranks" class="dataTable no-footer nowrap table table-striped">
+                                    <table id="datatable-history" class="table table-striped">
                                         <thead>
                                             <tr>
-                                                <th scope="col">Rank</th>
-                                                <th scope="col">Guildsmen</th>
-                                                <th scope="col">ELO</th>
-                                                <th scope="col">Wins</th>
-                                                <th scope="col">Loses</th>
-                                                <th scope="col">Matches</th>
-                                                <th scope="col">W/L Ratio</th>
+                                                <th>Match</th>
+                                                <th>Date</th>
+                                                <th>Players</th>
+                                                <th>Details</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            
-                                            <?php 
-                                            foreach ($accountRankings as $account) : 
-                                                $gameStats = $account->game_stats[$thisGame->crand];
-                                                ?>
-                                                    <tr >
-                                                    <td><?= $gameStats->getRankElement();?></td>
-                                                    <td><?= $account->getAccountElement();?></td>
-                                                    <td><?= $gameStats->elo;?></td>
-                                                    <td><?= $gameStats->total_wins;?></td>
-                                                    <td><?= $gameStats->total_losses;?></td>
-                                                    <td><?= $gameStats->ranked_matches;?></td>
-                                                    <td><?= number_format($gameStats->win_rate * 100, 2); ?>%</td>
-                                                    </tr>
+                                            <?php foreach ($rankedMatches as $match): ?>
+                                                <tr data-match-id="<?= htmlspecialchars($match->crand) ?>">
+                                                <td><?= htmlspecialchars($match->crand) ?></td>
+                                                <td><?= $match->dateTime->getDateTimeElement(); ?></td>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <?php foreach ($match->teams as $teamName => $teamPlayers): ?>
+                                                                <?php foreach ($teamPlayers as $index => $player): ?>
+                                                                    <span tabindex="0" 
+                                                                        style="margin-right: <?= ($index === count($teamPlayers) - 1) ? 15 : 2 ?>px;" 
+                                                                        data-bs-toggle="popover" 
+                                                                        data-bs-custom-class="custom-popover" 
+                                                                        data-bs-trigger="focus" 
+                                                                        data-bs-placement="top" 
+                                                                        data-bs-title="<?= htmlspecialchars($player->username) ?>" 
+                                                                        data-bs-content="<?= htmlspecialchars($teamName) ?>">
+                                                                        <img src="<?= htmlspecialchars($player->getProfilePictureURL()) ?>" 
+                                                                            class="loot-badge" 
+                                                                            alt="<?= htmlspecialchars($player->username) ?>">
+                                                                    </span>
+                                                                <?php endforeach; ?>
+                                                            <?php endforeach; ?>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-primary btn-sm toggle-details" 
+                                                                data-match-id="<?= htmlspecialchars($match->crand) ?>">
+                                                            View Details
+                                                        </button>
+                                                    </td>
+                                                </tr>
                                             <?php endforeach; ?>
                                         </tbody>
+
+
+
                                     </table>
                                 </div>
                             </div>
+                            <div class="tab-pane fade" id="nav-quests" role="tabpanel" aria-labelledby="nav-quests-tab" tabindex="0">
+                            <?php 
+
+                            for ($i=0; $i < count($gameQuests); $i++) 
+                            { 
+                                $_vFeedCard = FeedCardController::vFeedRecord_to_vFeedCard($gameQuests[$i]);
+                                require("php-components/vFeedCardRenderer.php");
+                            }
+                            ?>
+                            </div>
                         </div>
+                        
                     </div>
                 </div>
             </div>
@@ -133,7 +231,9 @@ if ($accountRankingsResp && $accountRankingsResp->success) {
     <?php require("php-components/base-page-javascript.php"); ?>
 
     <script>
-        
+        var rankedMatches = <?= json_encode($rankedMatches); ?>        
+
+
         $(document).ready( function () {
             $('#datatable-ranks').DataTable({
                 "order": [[2, 'desc']],
@@ -141,7 +241,73 @@ if ($accountRankingsResp && $accountRankingsResp->success) {
                 //"responsive": true,
                 //"scrollX": true,
             });
-        } );
+
+            var table = $('#datatable-history').DataTable({
+                "order": [[0, 'desc']],
+                "pageLength": 100,
+                //"responsive": true,
+                //"scrollX": true,
+            });
+
+            // Add event listener for opening and closing details
+        $('#datatable-history tbody').on('click', '.toggle-details', function () {
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+            var matchId = tr.data('match-id');
+
+            // Find the match details from the rankedMatches array
+            var match = rankedMatches.find(m => m.crand === matchId);
+
+            if (!match) {
+                row.child('<div class="alert alert-danger">Match not found.</div>').show();
+                return;
+            }
+
+            if (row.child.isShown()) {
+                // Close the row details
+                row.child.hide();
+                tr.removeClass('shown');
+            } else {
+                // Construct details HTML from the match object
+                var detailsHtml = '<table class="table"><thead>' +
+                    '<tr><th>Player</th><th>Team</th><th>Result</th><th>Character</th><th>Random</th><th>ELO Change</th></tr>' +
+                    '</thead><tbody>';
+
+                for (const [teamName, players] of Object.entries(match.teams)) {
+                    players.forEach(player => {
+                        // Determine result and color class
+                        const eloChange = player.match_stats[match.crand].eloChange;
+                        const result = eloChange > 0 ? 'Win' : 'Loss';
+                        const rowClass = eloChange > 0 ? 'table-success' : 'table-danger';
+
+                        // Generate the account element
+                        const profileUrl = `/u/${player.username}`;
+                        const accountElement = `<a href="${profileUrl}" class="username">${player.username}</a>`;
+
+                        detailsHtml += `<tr class="${rowClass}">` +
+                            `<td>
+                                <div class="d-flex align-items-center">
+                                    <img src="${player.avatar.url}" alt="${player.username}" class="" style="width: 40px; height: 40px; margin-right: 10px;">
+                                    ${accountElement}
+                                </div>
+                            </td>` +
+                            `<td>${teamName}</td>` +
+                            `<td>${result}</td>` +
+                            `<td>${player.match_stats[match.crand].character}</td>` +
+                            `<td>${player.match_stats[match.crand].randomCharacter ? 'Yes' : 'No'}</td>` +
+                            `<td>${eloChange}</td>` +
+                            '</tr>';
+                    });
+                }
+
+                detailsHtml += '</tbody></table>';
+
+                // Show the details
+                row.child(detailsHtml).show();
+                tr.addClass('shown');
+            }
+        });
+        });
 
     </script>
 </body>

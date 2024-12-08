@@ -16,6 +16,7 @@ class vGameStats
     public int $total_losses;        // Total losses
     public ?float $win_rate;         // Win rate percentage
     public ?int $rank;               // Player's rank
+    
 
     // Constructor to initialize the game stats object
     function __construct(string $ctime = '', int $crand = -1)
