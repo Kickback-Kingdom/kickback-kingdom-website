@@ -151,9 +151,9 @@ let ranks = 0;
 for (let rank of playerRanks) {
     ranks++;
     if (rank.rank === null) {
-        rankCode += `<div>${rank.name} <span class="badge unranked float-end" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Unranked: ${(rank.minimum_ranked_matches_required - rank.ranked_matches)} matches remaining">${rank.ranked_matches} / ${rank.minimum_ranked_matches_required}</span></div>`;
+        rankCode += `<div><a href="/g/${rank.locator}">${rank.name}</a> <span class="badge unranked float-end" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Unranked: ${(rank.minimum_ranked_matches_required - rank.ranked_matches)} matches remaining">${rank.ranked_matches} / ${rank.minimum_ranked_matches_required}</span></div>`;
     } else {
-        rankCode += `<div>${rank.name} <span class="badge ranked${rank.rank == 1 ? "-1" : ""} float-end" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Ranked #${rank.rank} Kingdom Wide">#${rank.rank}</span></div>`;
+        rankCode += `<div><a href="/g/${rank.locator}">${rank.name}</a> <span class="badge ranked${rank.rank == 1 ? "-1" : ""} float-end" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Ranked #${rank.rank} Kingdom Wide">#${rank.rank}</span></div>`;
     }
 }
 for (var i = ranks; i < 5; i ++ )
@@ -169,7 +169,7 @@ for (var i = ranks; i < 5; i ++ )
 ">X / X</span></div>`;
 
 }
-const clickableLayer = clickableFunction ? `<div class="clickable-layer" onclick="${clickableFunction}(${playerCardAccount.Id})"></div>` : '';
+const clickableLayer = clickableFunction ? `<div class="clickable-layer" onclick="${clickableFunction}(${playerCardAccount.crand})"></div>` : '';
 
 let playerCardHTML = `<div class="card player-card${isRanked1 ? " ranked-1" : ""}">
 ${clickableLayer}
