@@ -38,21 +38,8 @@ if ($accountRankingsResp && $accountRankingsResp->success) {
 }
 
 
-$challengeHistoryResp = ChallengeHistoryController::getMatchHistory($thisGame, 1, 2000);
 
-
-if ($challengeHistoryResp->success) {
-    $pageResult = $challengeHistoryResp->data;
-    $totalPages = $pageResult->totalPages;
-    $currentPage = $pageResult->currentPage;
-    $totalItems = $pageResult->totalItems;
-    $matchItems = $pageResult->items;
-    // Display paginated results
-    $rankedMatches = $matchItems;
-} else {
-    $rankedMatches = [];
-}
-
+$rankedMatches = [];
 
 
 $gameQuestsResp = FeedController::getQuestsByGameId($thisGame, 1, 100);
@@ -228,7 +215,10 @@ $gameQuests = $gameQuestsResp->data->items;
     </main>
 
     
-    <?php require("php-components/base-page-javascript.php"); ?>
+    <?php 
+        require("php-components/base-page-javascript.php"); 
+        require("php-components/base-page-javascript-match-history.php"); 
+    ?>
 
     <script>
         var rankedMatches = <?= json_encode($rankedMatches); ?>        
@@ -243,70 +233,152 @@ $gameQuests = $gameQuestsResp->data->items;
             });
 
             var table = $('#datatable-history').DataTable({
-                "order": [[0, 'desc']],
-                "pageLength": 100,
-                //"responsive": true,
-                //"scrollX": true,
+                processing: true,       // Show loading indicator
+                serverSide: true,       // Enable server-side processing
+        autoWidth: false, // Disable auto width
+        responsive: true, // Ensure responsiveness
+        searching: false, // Disable the search bar
+                ajax: {
+                    url: '<?= Version::formatUrl("/api/v1/match/history.php?json"); ?>', // Your API endpoint
+                    type: 'POST',       // HTTP method
+                    data: function (d) {
+                        // Add custom parameters if needed
+                        d.gameId = <?= $thisGame->crand; ?>;
+                        d.sessionToken = "<?= $_SESSION["sessionToken"] ?? ""; ?>";
+
+                        // Calculate page and pageSize
+                        d.page = Math.floor(d.start / d.length) + 1; // Convert start index to page number
+                        d.itemsPerPage = d.length; // Number of rows per page
+                    },
+                    dataSrc: function (json) {
+                        // Map API response to DataTables format
+                        if (json.success) {
+                            json.recordsTotal = json.data.totalItems; // Total items available
+            json.recordsFiltered = json.data.totalItems; // Total items after filtering (same in this case)
+
+                            var matches = json.data.items.map(item => ({
+                                crand: item.crand,
+                                dateTime: item.dateTime,
+                                players: item.teams,
+                                teams: item.teams,
+                                details: `<button class="btn btn-primary btn-sm toggle-details" data-match-id="${item.crand}">View Details</button>`
+                            }));
+                            return matches;
+                        } else {
+                            return [];
+                        }
+                    }
+                },
+                columns: [
+                            { 
+                                data: 'crand', 
+                                orderable: false,
+                                searchable: false,
+                                render: function (data) {
+                                    return `<td>${data}</td>`;
+                                }
+                            },
+                            { 
+                                data: 'dateTime', 
+                                orderable: false,
+                                searchable: false,
+                                render: function (data) {
+                                    return `<td><span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="${data.formattedDetailed} UTC" data-datetime-utc="${data.valueString}" data-db-value="${data.dbValue}">${data.formattedBasic}</span></td>`;
+                                }
+                            },
+                            { 
+                                data: 'players',
+                                orderable: false,
+                                searchable: false,
+                                render: function (data) {
+                                    let playersHTML = '<div class="d-flex align-items-center">';
+                                    for (const [teamName, players] of Object.entries(data)) {
+                                        players.forEach((player, index) => {
+                                            playersHTML += `
+                                                <span tabindex="0" 
+                                                    style="margin-right: ${index === players.length - 1 ? 15 : 2}px;" 
+                                                    data-bs-toggle="popover" 
+                                                    data-bs-custom-class="custom-popover" 
+                                                    data-bs-trigger="focus" 
+                                                    data-bs-placement="top" 
+                                                    data-bs-title="${player.username}" 
+                                                    data-bs-content="${teamName}">
+                                                    <img src="${player.avatar.url}" 
+                                                        class="loot-badge" 
+                                                        alt="${player.username}">
+                                                </span>
+                                            `;
+                                        });
+                                    }
+                                    playersHTML += '</div>';
+                                    return playersHTML;
+                                }
+                            },
+                            { 
+                                data: 'details', 
+                                orderable: false,
+                                searchable: false,
+                                render: function (data) {
+                                    return `<td>${data}</td>`;
+                                }
+                            }
+                        ],
+                        drawCallback: function () {
+            // Initialize tooltips and popovers after each table redraw
+            $('[data-bs-toggle="tooltip"]').tooltip();
+            $('[data-bs-toggle="popover"]').popover();
+        },
+        pageLength: 10
+                
             });
 
-            // Add event listener for opening and closing details
-        $('#datatable-history tbody').on('click', '.toggle-details', function () {
-            var tr = $(this).closest('tr');
-            var row = table.row(tr);
-            var matchId = tr.data('match-id');
+            $('#datatable-history tbody').on('click', '.toggle-details', function () {
+                var tr = $(this).closest('tr');
+                var row = table.row(tr);
 
-            // Find the match details from the rankedMatches array
-            var match = rankedMatches.find(m => m.crand === matchId);
+                if (row.child.isShown()) {
+                    // Close the row details
+                    row.child.hide();
+                    tr.removeClass('shown');
+                } else {
+                    // Get the data for the row
+                    var rowData = row.data();
 
-            if (!match) {
-                row.child('<div class="alert alert-danger">Match not found.</div>').show();
-                return;
-            }
+                    // Construct details HTML from the row data
+                    var detailsHtml = '<table class="table"><thead>' +
+                        '<tr><th>Player</th><th>Team</th><th>Result</th><th>Character</th><th>Random</th><th>ELO Change</th></tr>' +
+                        '</thead><tbody>';
 
-            if (row.child.isShown()) {
-                // Close the row details
-                row.child.hide();
-                tr.removeClass('shown');
-            } else {
-                // Construct details HTML from the match object
-                var detailsHtml = '<table class="table"><thead>' +
-                    '<tr><th>Player</th><th>Team</th><th>Result</th><th>Character</th><th>Random</th><th>ELO Change</th></tr>' +
-                    '</thead><tbody>';
+                    for (const [teamName, players] of Object.entries(rowData.teams)) {
+                        players.forEach(player => {
+                            const eloChange = player.match_stats[rowData.crand].eloChange;
+                            const result = eloChange > 0 ? 'Win' : 'Loss';
+                            const rowClass = eloChange > 0 ? 'table-success' : 'table-danger';
 
-                for (const [teamName, players] of Object.entries(match.teams)) {
-                    players.forEach(player => {
-                        // Determine result and color class
-                        const eloChange = player.match_stats[match.crand].eloChange;
-                        const result = eloChange > 0 ? 'Win' : 'Loss';
-                        const rowClass = eloChange > 0 ? 'table-success' : 'table-danger';
+                            detailsHtml += `<tr class="${rowClass}">` +
+                                `<td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="${player.avatar.url}" alt="${player.username}" class="me-2" style="width: 40px; height: 40px;">
+                                        <a href="/u/${player.username}" class="username">${player.username}</a>
+                                    </div>
+                                </td>` +
+                                `<td>${teamName}</td>` +
+                                `<td>${result}</td>` +
+                                `<td>${player.match_stats[rowData.crand].character}</td>` +
+                                `<td>${player.match_stats[rowData.crand].randomCharacter ? 'Yes' : 'No'}</td>` +
+                                `<td>${eloChange}</td>` +
+                                '</tr>';
+                        });
+                    }
 
-                        // Generate the account element
-                        const profileUrl = `/u/${player.username}`;
-                        const accountElement = `<a href="${profileUrl}" class="username">${player.username}</a>`;
+                    detailsHtml += '</tbody></table>';
 
-                        detailsHtml += `<tr class="${rowClass}">` +
-                            `<td>
-                                <div class="d-flex align-items-center">
-                                    <img src="${player.avatar.url}" alt="${player.username}" class="" style="width: 40px; height: 40px; margin-right: 10px;">
-                                    ${accountElement}
-                                </div>
-                            </td>` +
-                            `<td>${teamName}</td>` +
-                            `<td>${result}</td>` +
-                            `<td>${player.match_stats[match.crand].character}</td>` +
-                            `<td>${player.match_stats[match.crand].randomCharacter ? 'Yes' : 'No'}</td>` +
-                            `<td>${eloChange}</td>` +
-                            '</tr>';
-                    });
+                    // Show the details
+                    row.child(detailsHtml).show();
+                    tr.addClass('shown');
                 }
+            });
 
-                detailsHtml += '</tbody></table>';
-
-                // Show the details
-                row.child(detailsHtml).show();
-                tr.addClass('shown');
-            }
-        });
         });
 
     </script>
