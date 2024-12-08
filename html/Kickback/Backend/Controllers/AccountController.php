@@ -9,6 +9,7 @@ use Kickback\Backend\Models\Account;
 use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Views\vMedia;
+use Kickback\Backend\Views\vMatchStats;
 use Kickback\Backend\Models\Response;
 use Kickback\Services\Database;
 use Kickback\Services\Session;
@@ -936,7 +937,21 @@ class AccountController
             $account->game_stats[$gameId] = $gameStat;
         }
         
-        
+        if (array_key_exists('game_match_id', $row))
+        {
+            $gameMatchId = (string)$row['game_match_id'];
+            $matchStats = new vMatchStats();
+            $matchStats->eloChange = (int)$row["elo_change"];
+            $matchStats->teamName = (string)$row["team_name"];
+            $matchStats->character = (string)$row["character"];
+            $matchStats->randomCharacter = (bool)$row["random_character"];
+
+            // Initialize the match_stats array if not already set
+            if (!isset($account->match_stats)) {
+                $account->match_stats = [];
+            }
+            $account->match_stats[$gameMatchId] = $matchStats;
+        }
 
         // Assign vMedia properties if they exist
         if ($row['avatar_media'] != null)
