@@ -125,6 +125,15 @@ body {
     text-decoration: none;
 }
 
+.league {
+    background-color: var(--bs-primary);
+    border-radius: 5px;
+    color: white;
+    padding: 1px 5px;
+    text-decoration: none;
+}
+
+
 .date {
     /*float: right;
     font-size: .55em;*/

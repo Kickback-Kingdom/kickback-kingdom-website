@@ -18,6 +18,7 @@ $mediaDirs = $mediaDirsResp->data;
 </div>
 
 <?php if(Kickback\Services\Session::isLoggedIn()) { ?>
+    <?php require(\Kickback\SCRIPT_ROOT . "/php-components/league-viewer.php"); ?>
 <!--CHESTS-->
 <div class="modal fade modal-chest " id="modalChest" tabindex="-1" aria-labelledby="modalChestLabel" aria-hidden="true" onclick="ToggleChest();">
     <div class="modal-dialog  modal-dialog-centered">

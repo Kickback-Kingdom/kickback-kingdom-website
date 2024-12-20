@@ -877,6 +877,109 @@ class AccountController
         return (new Response(true, "Data upserted successfully", null));
     }
 
+    public static function getChangedEloRatings(vRecordId $accountId) : Response {
+        $conn = Database::getConnection();
+    
+        $sql = "
+            SELECT 
+	            account_game_elo.game_id,
+                v_game_info.Name AS gameName,
+                v_game_info.icon_path AS gameIcon,
+                account_game_elo.last_elo_rating_seen AS previousElo,
+                account_game_elo.elo_rating AS currentElo,
+                account_game_elo.is_ranked AS isRanked,
+                account_game_elo.total_matches AS totalMatches,
+                v_game_info.MinRankedMatches AS minRankedMatches
+            FROM 
+                account_game_elo
+            JOIN 
+                v_game_info 
+            ON 
+                account_game_elo.game_id = v_game_info.Id
+            WHERE 
+                account_game_elo.account_id = ?
+                AND account_game_elo.last_elo_rating_seen <> account_game_elo.elo_rating";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare the SQL statement.");
+        }
+    
+        $stmt->bind_param('i', $accountId->crand);
+    
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute the SQL statement.");
+        }
+    
+        $result = $stmt->get_result();
+        if (!$result) {
+            return new Response(false, "Failed to retrieve the result set.");
+        }
+    
+        $changedEloRatings = [];
+        while ($row = $result->fetch_assoc()) {
+            $gameIcon = new vMedia();
+            if ($row['gameIcon']) {
+                $gameIcon->setMediaPath($row['gameIcon']);
+            } else {
+                $gameIcon = vMedia::defaultIcon();
+            }
+
+            
+            $changedEloRatings[] = [
+                'gameId' => $row['game_id'],
+                'gameName' => $row['gameName'],
+                'gameIcon' =>  $gameIcon->getFullPath(),
+                'previousElo' => (int)$row['previousElo'],
+                'currentElo' => (int)$row['currentElo'],
+                'isRanked' => (bool)$row['isRanked'],
+                'totalMatches' => (int)$row['totalMatches'],
+                'minRankedMatches' => (int)$row['minRankedMatches']
+            ];
+        }
+    
+        $stmt->close();
+    
+        return new Response(true, "Changed ELO Ratings", $changedEloRatings);
+    }
+    
+    public static function updateLastEloSeenForGame(vRecordId $accountId, vRecordId $gameId): Response
+    {
+        $conn = Database::getConnection();
+    
+        $sql = "
+            UPDATE account_game_elo
+            SET last_elo_rating_seen = elo_rating
+            WHERE account_id = ? AND game_id = ? AND last_elo_rating_seen <> elo_rating
+        ";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare the SQL statement.");
+        }
+    
+        // Bind the parameters (account ID and game ID)
+        $stmt->bind_param('ii', $accountId->crand, $gameId->crand);
+    
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute the SQL statement.");
+        }
+    
+        $affectedRows = $stmt->affected_rows;
+        $stmt->close();
+    
+        // Check if any row was updated
+        if ($affectedRows > 0) {
+            return new Response(true, "Updated last ELO rating seen for the game.", [
+                'accountId' => $accountId->crand,
+                'gameId' => $gameId->crand,
+                'affectedRows' => $affectedRows
+            ]);
+        } else {
+            return new Response(false, "No update was necessary (ELO already up-to-date).");
+        }
+    }
+    
     public static function row_to_vAccount(array $row, bool $populateChildData = false) : vAccount {
         
         $account = new vAccount('', $row["Id"]);
