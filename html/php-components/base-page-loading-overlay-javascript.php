@@ -4,7 +4,9 @@
 $(window).on('load', function() {
     $('#loading-overlay').fadeOut('slow', function() {
         $('body').addClass('body-finished-loading');  // add class to restore scrolling
-        showNextEloProgress();
+        if (typeof showNextEloProgress === 'function') {
+            showNextEloProgress();
+        }
     });
 });
 

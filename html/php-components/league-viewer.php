@@ -7,6 +7,16 @@ use Kickback\Common\Version;
 
 ?>
 
+
+<?php
+
+$eloChangeResp = AccountController::getChangedEloRatings(Session::getCurrentAccount());
+$eloChanges = $eloChangeResp->success ? json_encode($eloChangeResp->data) : '[]';
+
+
+if ($eloChangeResp->success && !empty($eloChangeResp->data)) {
+?>
+
 <!-- League Viewer Modal -->
 <div class="modal fade" id="leaguesModal" tabindex="-1" aria-labelledby="leaguesModalLabel" aria-hidden="true" onclick="toggleLeagueProgression();">
     <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -26,35 +36,35 @@ use Kickback\Common\Version;
                         <div class="carousel-inner">
                             <!-- Preloaded Slides -->
                             <div class="carousel-item active" data-league="Hatchling">
-                                <img src="/assets/images/leagues/hatchling2.webp" class="d-block w-100 rounded" alt="Hatchling">
+                                <img src="/assets/media/blog/atlas-lore/507.png" class="d-block w-100 rounded" alt="Hatchling">
                             </div>
 
                             <div class="carousel-item" data-league="Wind Rider">
-                                <img src="/assets/images/leagues/wind-rider2.webp" class="d-block w-100 rounded" alt="Wind Rider">
+                                <img src="/assets/media/blog/atlas-lore/505.png" class="d-block w-100 rounded" alt="Wind Rider">
                             </div>
 
                             <div class="carousel-item" data-league="Branch Breaker">
-                                <img src="/assets/images/leagues/branch-breaker2.webp" class="d-block w-100 rounded" alt="Branch Breaker">
+                                <img src="/assets/media/blog/atlas-lore/510.png" class="d-block w-100 rounded" alt="Branch Breaker">
                             </div>
 
                             <div class="carousel-item" data-league="Mountain Peak">
-                                <img src="/assets/images/leagues/mountain-peak.webp" class="d-block w-100 rounded" alt="Mountain Peak">
+                                <img src="/assets/media/blog/atlas-lore/506.png" class="d-block w-100 rounded" alt="Mountain Peak">
                             </div>
 
                             <div class="carousel-item" data-league="Sky Breaker">
-                                <img src="/assets/images/leagues/sky-breaker2.webp" class="d-block w-100 rounded" alt="Sky Breaker">
+                                <img src="/assets/media/blog/atlas-lore/512.png" class="d-block w-100 rounded" alt="Sky Breaker">
                             </div>
 
                             <div class="carousel-item" data-league="Storm Piercer">
-                                <img src="/assets/images/leagues/storm-piercer.webp" class="d-block w-100 rounded" alt="Storm Piercer">
+                                <img src="/assets/media/blog/atlas-lore/513.png" class="d-block w-100 rounded" alt="Storm Piercer">
                             </div>
 
                             <div class="carousel-item" data-league="Twilight">
-                                <img src="/assets/images/leagues/twilight.webp" class="d-block w-100 rounded" alt="Twilight">
+                                <img src="/assets/media/blog/atlas-lore/514.png" class="d-block w-100 rounded" alt="Twilight">
                             </div>
 
                             <div class="carousel-item" data-league="Legends of Kicsi">
-                                <img src="/assets/images/leagues/legends-of-kicsi.webp" class="d-block w-100 rounded" alt="Legends of Kicsi">
+                                <img src="/assets/media/blog/atlas-lore/511.png" class="d-block w-100 rounded" alt="Legends of Kicsi">
                             </div>
 
                         </div>
@@ -128,13 +138,6 @@ use Kickback\Common\Version;
     </div>
 </div>
 
-<?php
-
-$eloChangeResp = AccountController::getChangedEloRatings(Session::getCurrentAccount());
-$eloChanges = $eloChangeResp->success ? json_encode($eloChangeResp->data) : '[]';
-?>
-
-
 
 <script>
     const leagues = [
@@ -179,7 +182,16 @@ $eloChanges = $eloChangeResp->success ? json_encode($eloChangeResp->data) : '[]'
   let eloInterval = null; // Global variable to store the current animation interval
 
 function showNextEloProgress() {
-  if (currentGameIndex >= eloChanges.length) return;
+    if (currentGameIndex >= eloChanges.length) {
+    // Check if OpenAllChests function exists before calling it
+    if (typeof OpenAllChests === "function") {
+        OpenAllChests();
+    } else {
+        console.warn("OpenAllChests function does not exist.");
+    }
+    return;
+}
+
 
   const game = eloChanges[currentGameIndex];
   const modal = new bootstrap.Modal(document.getElementById("leaguesModal"));
@@ -531,3 +543,5 @@ function updateLeagueProgressionCarouselSlide(targetIndex, immediate = false) {
 
 
 </script>
+
+<?php } ?>

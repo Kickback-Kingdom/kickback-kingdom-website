@@ -88,7 +88,10 @@ use Kickback\Common\Version;
             if (Kickback\Services\Session::isLoggedIn())
             {
             ?>
-            OpenAllChests();
+            //OpenAllChests();
+            if (typeof eloChanges === "undefined" || eloChanges.length === 0) {
+                OpenAllChests(); // Call the function directly if eloChanges doesn't exist or is empty
+            } 
             <?php 
 
             }
