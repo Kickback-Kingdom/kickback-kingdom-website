@@ -13,7 +13,7 @@ use Kickback\Common\Version;
         <div class="modal-content">
             <!-- Modal Header -->
             <div class="modal-header bg-dark text-white d-none">
-                <h5 id="gameName2" class="modal-title">League Progression</h5>
+                <h5 id="leaguesModal_gameName2" class="modal-title">League Progression</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
@@ -22,7 +22,7 @@ use Kickback\Common\Version;
                 <!-- Carousel Container with Overlay -->
                 <div class="position-relative bg-dark">
                     <!-- League Carousel -->
-                    <div id="carouselLeagues" class="carousel slide" aria-live="polite">
+                    <div id="leaguesModal_carouselLeagues" class="carousel slide" aria-live="polite">
                         <div class="carousel-inner">
                             <!-- Preloaded Slides -->
                             <div class="carousel-item active" data-league="Hatchling">
@@ -64,7 +64,7 @@ use Kickback\Common\Version;
                     <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center p-4">
                         <!-- Game Icon (Left) -->
                         <div class="col-3 d-lg-block d-md-none d-none me-4">
-                            <img id="gameIcon" src="" class="rounded border border-light shadow img-fluid">
+                            <img id="leaguesModal_gameIcon" src="" class="rounded border border-light shadow img-fluid">
                         </div>
 
                         <!-- Details (Right) -->
@@ -73,26 +73,26 @@ use Kickback\Common\Version;
                             <div class="d-flex align-items-center mb-3">
                                 <!-- Second Image -->
                                 <div class="col-2 d-block d-lg-none me-3">
-                                    <img id="gameIcon2" src="/assets/media/games/second-image.png" class="rounded border border-light shadow img-fluid">
+                                    <img id="leaguesModal_gameIcon2" src="/assets/media/games/second-image.png" class="rounded border border-light shadow img-fluid">
                                 </div>
 
                                 <!-- Game Name and ELO Info -->
                                 <div class="flex-grow-1">
                                     <!-- Game Name -->
-                                    <h2 id="gameName" class="text-white fw-bold mb-1 text-shadow">Game Name</h2>
+                                    <h2 id="leaguesModal_gameName" class="text-white fw-bold mb-1 text-shadow">Game Name</h2>
 
                                     <!-- League Name, Current ELO, and ELO Gained -->
                                     <div class="d-flex justify-content-between align-items-center">
                                         <!-- League Name -->
-                                        <p id="leagueName" class="d-lg-block d-none fs-5 fw-bold mb-0 text-shadow text-white">
+                                        <p id="leaguesModal_leagueName" class="d-lg-block d-none fs-5 fw-bold mb-0 text-shadow text-white">
                                             <i class="fa-solid fa-trophy me-2"></i>
-                                            <span id="leagueTitle">League Name</span>
+                                            <span id="leaguesModal_leagueTitle">League Name</span>
                                         </p>
 
                                         <!-- ELO Info -->
                                         <div class="text-end">
-                                            <span id="eloGained" class="badge bg-success p-2 fs-6 shadow">+20</span>
-                                            <span id="currentElo" class="badge bg-ranked-1 p-2 fs-6 shadow">1520</span>
+                                            <span id="leaguesModal_eloGained" class="badge bg-success p-2 fs-6 shadow">+20</span>
+                                            <span id="leaguesModal_currentElo" class="badge bg-ranked-1 p-2 fs-6 shadow">1520</span>
                                         </div>
                                     </div>
                                 </div>
@@ -100,10 +100,10 @@ use Kickback\Common\Version;
 
                             <!-- Progress Bar -->
                             <div class="progress shadow" style="height: 30px; background-color: rgba(0, 0, 0, 0.5);">
-                                <div id="eloProgressBar" class="progress-bar bg-warning progress-bar-striped progress-bar-animated" style="width: 0%;"></div>
+                                <div id="leaguesModal_eloProgressBar" class="progress-bar bg-warning progress-bar-striped progress-bar-animated" style="width: 0%;"></div>
                             </div>
 
-                            <h2 id="leagueName2" class="d-lg-none d-md-block fw-bold mt-3 text-center text-shadow text-white">Civilization 6</h2>
+                            <h2 id="leaguesModal_leagueName2" class="d-lg-none d-md-block fw-bold mt-3 text-center text-shadow text-white">Civilization 6</h2>
                         </div>
                     </div>
 
@@ -116,7 +116,7 @@ use Kickback\Common\Version;
             <!-- Modal Footer with Lore -->
             <div class="modal-footer bg-dark">
                 <blockquote class="blockquote text-white w-100 text-center" style="margin: auto;">
-                    <p id="loreText" class="mb-0 fs-5" style="line-height: 1.6; font-size: 1.2rem; text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);">
+                    <p id="leaguesModal_loreText" class="mb-0 fs-5" style="line-height: 1.6; font-size: 1.2rem; text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);">
                         <span class="fs-1 fw-bold">&ldquo;</span>
                         Explore the rich history and tales of this league!
                         <span class="fs-1 fw-bold">&rdquo;</span>
@@ -183,7 +183,7 @@ function showNextEloProgress() {
 
   const game = eloChanges[currentGameIndex];
   const modal = new bootstrap.Modal(document.getElementById("leaguesModal"));
-  initializeModal(game);
+  initializeLeagueProgressionModal(game);
   modal.show();
 
   // Clean up when the modal is hidden
@@ -209,15 +209,15 @@ function toggleLeagueProgression() {
     $("#leaguesModal").modal("hide");
 }
 
-function initializeModal(game) {
-    const progressBar = document.getElementById("eloProgressBar");
-    const gameIcon = document.getElementById("gameIcon");
-    const gameIcon2 = document.getElementById("gameIcon2");
-    const gameName = document.getElementById("gameName");
-    const leagueName = document.getElementById("leagueName");
-    const leagueName2 = document.getElementById("leagueName2");
-    const eloGainedElement = document.getElementById("eloGained");
-    const currentEloElement = document.getElementById("currentElo");
+function initializeLeagueProgressionModal(game) {
+    const progressBar = document.getElementById("leaguesModal_eloProgressBar");
+    const gameIcon = document.getElementById("leaguesModal_gameIcon");
+    const gameIcon2 = document.getElementById("leaguesModal_gameIcon2");
+    const gameName = document.getElementById("leaguesModal_gameName");
+    const leagueName = document.getElementById("leaguesModal_leagueName");
+    const leagueName2 = document.getElementById("leaguesModal_leagueName2");
+    const eloGainedElement = document.getElementById("leaguesModal_eloGained");
+    const currentEloElement = document.getElementById("leaguesModal_currentElo");
 
     // Set Game Details
     gameIcon.src = game.gameIcon;
@@ -248,15 +248,15 @@ function initializeModal(game) {
     }
 
     // Teleport to the correct league
-    updateCarouselSlide(currentLeagueIndex, true);
-    updateDetails(currentElo, leagueMin, leagueMax, progressBar, eloGainedElement, leagueName, currentEloElement);
+    updateLeagueProgressionCarouselSlide(currentLeagueIndex, true);
+    updateLeagueDetails(currentElo, leagueMin, leagueMax, progressBar, eloGainedElement, leagueName, currentEloElement);
 
     const delayBeforeAnimation = 1000; // Delay in milliseconds (e.g., 1000ms = 1 second)
     setTimeout(() => {
-        animateProgress();
+        animateLeagueProgress();
     }, delayBeforeAnimation);
 
-    function animateProgress() {
+    function animateLeagueProgress() {
         const totalDuration = Math.abs(eloGained) / eloPerSecond * 1000; // Calculate duration
         const frameRate = 20;
         const totalSteps = totalDuration / frameRate;
@@ -314,7 +314,7 @@ function initializeModal(game) {
                     resetProgressBar(currentLeagueIndex, isLastLeague);
 
 
-                    updateCarouselSlide(currentLeagueIndex);
+                    updateLeagueProgressionCarouselSlide(currentLeagueIndex);
                 }
             }
 
@@ -326,7 +326,7 @@ function initializeModal(game) {
         }, frameRate);
     }
 
-    function updateDetails(currentElo, leagueMin, leagueMax, progressBar, eloGainedElement, leagueName, currentEloElement)
+    function updateLeagueDetails(currentElo, leagueMin, leagueMax, progressBar, eloGainedElement, leagueName, currentEloElement)
     {
             // Update progress bar and league details
             let progress;
@@ -495,15 +495,15 @@ function getRandomPassarokiLeagueLore(leagueIndex) {
 }
 
 
-function updateCarouselSlide(targetIndex, immediate = false) {
-    const carouselElement = document.getElementById("carouselLeagues");
+function updateLeagueProgressionCarouselSlide(targetIndex, immediate = false) {
+    const carouselElement = document.getElementById("leaguesModal_carouselLeagues");
     const carousel = bootstrap.Carousel.getInstance(carouselElement) || new bootstrap.Carousel(carouselElement);
 
     const activeIndex = [...carouselElement.querySelectorAll(".carousel-item")].findIndex(slide => slide.classList.contains("active"));
 
 
     
-    const loreText = document.getElementById("loreText");
+    const loreText = document.getElementById("leaguesModal_loreText");
 
 
     const loreContent = getRandomPassarokiLeagueLore(targetIndex);//passarokiLeagueLore.genericLore[15];//getRandomPassarokiLeagueLore(targetIndex);
