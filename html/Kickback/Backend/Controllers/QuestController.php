@@ -28,6 +28,7 @@ use Kickback\Backend\Controllers\SocialMediaController;
 
 class QuestController
 {
+
     public static function getQuestById(vRecordId $recordId): Response {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_quest_info WHERE Id = ?";
@@ -430,7 +431,7 @@ class QuestController
                 }
 
                 $raffleWinner = $raffleWinnerResp->data;
-                $msg = FlavorTextController::getRaffleWinnerAnnouncement($raffleQuest["name"], $raffleWinner[0]["Username"]);
+                $msg = FlavorTextController::getRaffleWinnerAnnouncement($raffleQuest["name"], $raffleWinner["Username"]);
                 SocialMediaController::DiscordWebHook($msg);
 
                 return new Response(true, "Selected Raffle Winner!", null);
@@ -441,6 +442,44 @@ class QuestController
             return new Response(true, "No raffle tickets were entered!", null);
         }
     }
+
+    public static function getRaffleWinner(vRaffle $raffle): Response {
+        $conn = Database::getConnection();
+    
+        // Prepare the SQL statement
+        $sql = "SELECT raffle_id, account_id, Username FROM kickbackdb.v_raffle_winners WHERE raffle_id = ?";
+    
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare statement: " . $conn->error, null);
+        }
+    
+        // Bind the parameter
+        $stmt->bind_param('i', $raffle->crand);
+    
+        // Execute the statement
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute statement: " . $stmt->error, null);
+        }
+    
+        // Fetch results
+        $result = $stmt->get_result();
+    
+        if ($result === false || $result->num_rows === 0) {
+            $stmt->close();
+            return new Response(false, "No winner found for the given raffle ID", null);
+        }
+    
+        $rows = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+    
+        // Populate the winner property in the raffle object with the first result
+        $winner = $rows[0];
+    
+        // Return winner details
+        return new Response(true, "Raffle Ticket Winner", $winner);
+    }
+    
 
     public static function getRaffleParticipants(vRaffle $raffle): Response {
         $conn = Database::getConnection();
@@ -782,7 +821,7 @@ class QuestController
 
         return new Response(true, "Quest successfully approved and published.", null);
     }
-        
+
     public static function updateQuestContent(vRecordId $questId, vRecordId $contentId) : Response {
         $conn = Database::getConnection();
         $stmt = $conn->prepare("UPDATE quest SET content_id = ? WHERE Id = ?");
@@ -809,7 +848,6 @@ class QuestController
             return (new Response(false, "Failed to submit raffle ticket with error: " . mysqli_stmt_error($stmt), null));
         }
     }
-    
 
     public static function accountHasRegisteredOrAppliedForQuest(vRecordId $account_id, vRecordId $quest_id) : Response {
 
