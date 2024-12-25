@@ -431,7 +431,7 @@ class QuestController
                 }
 
                 $raffleWinner = $raffleWinnerResp->data;
-                $msg = FlavorTextController::getRaffleWinnerAnnouncement($raffleQuest["name"], $raffleWinner["Username"]);
+                $msg = FlavorTextController::getRaffleWinnerAnnouncement($raffleQuest->title, $raffleWinner["Username"]);
                 SocialMediaController::DiscordWebHook($msg);
 
                 return new Response(true, "Selected Raffle Winner!", null);
