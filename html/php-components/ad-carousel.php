@@ -130,7 +130,7 @@ if (!isset($_GET['borderless']))
         <div class="carousel-item <?php echo $adCarouselActivePage; $adCarouselActivePage = ""; ?>" data-bs-interval="45000">
             <div class="embed-responsive">
                 <video autoplay muted loop playsinline style="width: 100%;">
-                    <source src="/assets/videos/lich3.mp4" type="video/mp4">
+                    <source src="/assets/media/videos/lich3.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
             </div>
