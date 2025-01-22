@@ -85,33 +85,74 @@ require("php-components/base-page-pull-active-account-info.php");
                     </div>
                 </section>
 
-
                 <!-- SHOWCASE SECTION FOR CARDS -->
                 <section class="container py-5">
                     <h2 class="text-center mb-4">Unleash the Power of Your Cards</h2>
                     <p class="text-center mb-5">Craft unstoppable decks to conquer the battlefield. Discover a glimpse of the arsenal at your fingertips:</p>
                     <div class="row text-center">
                         <div class="col-md-3">
-                            <img src="\assets\media\lich\cards\The-Awakening\221.png" alt="Card 1" style="width: 100%; height: auto;">
-                            <h5 class="mt-2">Shadow Hunter</h5>
+                            <img src="/assets/images/lich/cards/acid-breath.png" alt="Card 1" class="card-image">
                         </div>
                         <div class="col-md-3">
-                            <img src="\assets\media\lich\cards\The-Awakening\536.png" alt="Card 2" style="width: 100%; height: auto;">
-                            <h5 class="mt-2">Flame Summoner</h5>
+                            <img src="/assets/images/lich/cards/battle-ready.png" alt="Card 2" class="card-image">
                         </div>
                         <div class="col-md-3">
-                            <img src="\assets\media\lich\cards\The-Awakening\561.png" alt="Card 3" style="width: 100%; height: auto;">
-                            <h5 class="mt-2">Arcane Defender</h5>
+                            <img src="/assets/images/lich/cards/capulary-mesh.png" alt="Card 3" class="card-image">
                         </div>
                         <div class="col-md-3">
-                            <img src="\assets\media\lich\cards\The-Awakening\555.png" alt="Card 4" style="width: 100%; height: auto;">
-                            <h5 class="mt-2">Lich Commander</h5>
+                            <img src="/assets/images/lich/cards/maldrith.png" alt="Card 4" class="card-image">
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <img src="/assets/images/lich/cards/crown-of-embers.png" alt="Card 1" class="card-image">
+                        </div>
+                        <div class="col-md-3">
+                            <img src="/assets/images/lich/cards/devon-andrews.png" alt="Card 2" class="card-image">
+                        </div>
+                        <div class="col-md-3">
+                            <img src="/assets/images/lich/cards/eagle.png" alt="Card 3" class="card-image">
+                        </div>
+                        <div class="col-md-3">
+                            <img src="/assets/images/lich/cards/marok.png" alt="Card 4" class="card-image">
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <img src="/assets/images/lich/cards/eric-and-eugene.jpg" alt="Card 1" class="card-image">
+                        </div>
+                        <div class="col-md-3">
+                            <img src="/assets/images/lich/cards/headbutt.png" alt="Card 2" class="card-image">
+                        </div>
+                        <div class="col-md-3">
+                            <img src="/assets/images/lich/cards/erics-hat.jpg" alt="Card 3" class="card-image">
+                        </div>
+                        <div class="col-md-3">
+                            <img src="/assets/images/lich/cards/googs-luck.png" alt="Card 4" class="card-image">
                         </div>
                     </div>
                     <div class="text-center mt-4 d-none">
                         <a href="/lich/card-search/" class="btn btn-primary btn-lg">View All Cards</a>
                     </div>
                 </section>
+
+                <!-- CSS -->
+                <style>
+                    .card-image {
+                        width: 100%;
+                        height: auto;
+                        border-radius: 10px;
+                        transition: transform 0.3s ease, box-shadow 0.3s ease;
+                    }
+
+                    .card-image:hover {
+                        transform: scale(1.7); /* Enlarges the card */
+                        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Adds a subtle shadow effect */
+                        z-index: 10; /* Ensures the card appears above others */
+                        position: relative; /* Prevents layout issues during hover */
+                    }
+                </style>
+
 
                 <!-- GAME BOARD ASSET SHOWCASE -->
                 <section class="container py-5 bg-light">
