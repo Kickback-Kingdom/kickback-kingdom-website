@@ -52,3 +52,44 @@ RewriteRule ^(.*)$ /game.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 # Redirect /beta/g/ URLs to /beta/game.php, handling spaces and special characters
 RewriteCond %{REQUEST_URI} ^/beta/g/([^/]+)$
 RewriteRule ^(.*)$ /beta/game.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
+
+
+# Lich Landing Page
+RewriteCond %{REQUEST_URI} ^/lich/?$
+RewriteRule ^(.*)$ /lich-landing.php [L,E=ORIGINAL_URI:%{REQUEST_URI}]
+
+# Beta Lich Landing Page
+RewriteCond %{REQUEST_URI} ^/beta/lich/?$
+RewriteRule ^(.*)$ /beta/lich-landing.php [L,E=ORIGINAL_URI:%{REQUEST_URI}]
+
+# Lich Set Wiki Page
+RewriteCond %{REQUEST_URI} ^/lich/set/([^/]+)$
+RewriteRule ^(.*)$ /lich-set.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
+
+# Beta Lich Set Wiki Page
+RewriteCond %{REQUEST_URI} ^/beta/lich/set/([^/]+)$
+RewriteRule ^(.*)$ /beta/lich-set.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
+
+# Lich Card Wiki Page
+RewriteCond %{REQUEST_URI} ^/lich/card/([^/]+)$
+RewriteRule ^(.*)$ /lich-card.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
+
+# Beta Lich Card Wiki Page
+RewriteCond %{REQUEST_URI} ^/beta/lich/card/([^/]+)$
+RewriteRule ^(.*)$ /beta/lich-card.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
+
+# Lich Card Edit Page
+RewriteCond %{REQUEST_URI} ^/lich/card/edit/([^/]+)$
+RewriteRule ^(.*)$ /lich-card-edit.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
+
+# Beta Lich Card Edit Page
+RewriteCond %{REQUEST_URI} ^/beta/lich/card/edit/([^/]+)$
+RewriteRule ^(.*)$ /beta/lich-card-edit.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
+
+# Lich Card Search Page
+RewriteCond %{REQUEST_URI} ^/lich/card-search/?$
+RewriteRule ^(.*)$ /lich-card-search.php [L,E=ORIGINAL_URI:%{REQUEST_URI}]
+
+# Beta Lich Card Search Page
+RewriteCond %{REQUEST_URI} ^/beta/lich/card-search/?$
+RewriteRule ^(.*)$ /beta/lich-card-search.php [L,E=ORIGINAL_URI:%{REQUEST_URI}]

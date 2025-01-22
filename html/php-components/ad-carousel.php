@@ -1,5 +1,7 @@
 <!--TOP AD-->
 <?php
+
+use Kickback\Backend\Controllers\QuestController;
 //echo "<!--".basename($_SERVER['SCRIPT_NAME'])."-->";
 
 $currentPage = basename($_SERVER['SCRIPT_NAME']);
@@ -17,6 +19,7 @@ if (!isset($_GET['borderless']))
         <button type="button" data-bs-target="#topCarouselAd" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
         <button type="button" data-bs-target="#topCarouselAd" data-bs-slide-to="1" aria-label="Slide 2"></button>
         <button type="button" data-bs-target="#topCarouselAd" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        <button type="button" data-bs-target="#topCarouselAd" data-bs-slide-to="3" aria-label="Slide 4"></button>
         <!--<button type="button" data-bs-target="#topCarouselAd" data-bs-slide-to="3" aria-label="Slide 4"></button>-->
     </div>
     <div class="carousel-inner">
@@ -92,18 +95,52 @@ if (!isset($_GET['borderless']))
         <?php } ?>
         <?php if (!$hadFirstPage) { ?>
         <div class="carousel-item <?php echo $adCarouselActivePage; $adCarouselActivePage = ""; ?>" data-bs-interval="7000">
-            
+            <?php
+                $kickbackQuestResp = QuestController::getQuestByKickbackUpcoming();
+                if ($kickbackQuestResp->success)
+                {
+                    ?>
+            <img src="<?= $kickbackQuestResp->data->banner->getFullPath(); ?>" class="d-none d-md-block w-100">
+            <img src="<?= $kickbackQuestResp->data->bannerMobile->getFullPath(); ?>" class="d-block d-md-none w-100">
+            <div class="carousel-caption d-block d-md-block text-shadow">
+                <h5><?= $kickbackQuestResp->data->title ?></h5>
+                <a href="<?= $kickbackQuestResp->data->getURL(); ?>" class="bg-ranked-1 btn btn-sm" style="text-shadow: none;">View Quest</a>
+            </div>
+
+            <?php
+                }
+                else
+                {
+
+            ?>
+            <!--
+            Chistmas
             <img src="/assets/media/seasonal/484.png" class="d-none d-md-block w-100">
             <img src="/assets/media/seasonal/485.png" class="d-block d-md-none w-100">
-
-            <!--<img src="/assets/images/kk-1.jpg" class="d-none d-md-block w-100">
-            <img src="/assets/images/kk-2.jpg" class="d-block d-md-none w-100">-->
+            -->
+            <img src="/assets/images/kk-1.jpg" class="d-none d-md-block w-100">
+            <img src="/assets/images/kk-2.jpg" class="d-block d-md-none w-100">
             <div class="carousel-caption d-block d-md-block text-shadow">
                 <h5>Welcome to Kickback Kingdom</h5>
                 <p>The gaming realm where friendships are formed and scores are settled.</p>
             </div>
+            <?php } ?>
         </div>
         <?php } ?>
+        <div class="carousel-item <?php echo $adCarouselActivePage; $adCarouselActivePage = ""; ?>" data-bs-interval="45000">
+            <div class="embed-responsive">
+                <video autoplay muted loop playsinline style="width: 100%;">
+                    <source src="/assets/videos/lich3.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <div class="carousel-caption d-block d-md-block text-shadow">
+                <h1 style="font-size: 2.5rem; font-weight: bold;">L.I.C.H.</h1>
+                <p class="d-none d-md-block" style="font-size: 1.25rem;">A dark force awakens and seeks to add you to its realm.</p>
+                <a href="/lich" class="bg-ranked-1 btn btn-sm" style="text-shadow: none;">Enter the Realm</a>
+            </div>
+        </div>
+
         <div class="carousel-item <?php echo $adCarouselActivePage; $adCarouselActivePage = ""; ?>" data-bs-interval="45000">
             <div class="embed-responsive">
                 <iframe src="https://www.youtube.com/embed/kywr54C369w?modestbranding=1&showinfo=0&rel=0&autoplay=1&mute=1&controls=0&loop=1&playlist=kywr54C369w&start=12" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>

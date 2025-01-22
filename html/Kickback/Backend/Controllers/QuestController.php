@@ -212,6 +212,25 @@ class QuestController
         return new Response(false, "We couldn't find a quest with that raffle id", null);
     }
 
+    
+    public static function getQuestByKickbackUpcoming(): Response {
+        $conn = Database::getConnection();
+        $stmt = $conn->prepare("SELECT * FROM v_quest_info WHERE (host_id = 46 or host_id_2 = 46) and finished = 0 and published = 1 order by end_date LIMIT 1");
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare query", null);
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+
+        if ($row !== null) {
+            return new Response(true, "Quest Information.", self::row_to_vQuest($row));
+        }
+
+        return new Response(false, "We couldn't find a quest with that raffle id", null);
+    }
+
     public static function getQuestRewardsByQuestId(vRecordId $questId) : Response {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_quest_reward_info WHERE quest_id = ?";

@@ -128,6 +128,7 @@ if ($pageVisitResp->success)
     <link rel="stylesheet" href="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/owl-carousel/owl.theme.css">
     <link rel="stylesheet" href="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/animate/animate.min.css"/>
     <script src="https://kit.fontawesome.com/f098b8e570.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
     <?php
         $cssFile = Version::urlBetaPrefix().'/assets/css/kickback-kingdom.css';
@@ -165,9 +166,9 @@ if ($pageVisitResp->success)
     <?php } ?>
 
     <style>
-        body {
+        /*body {
             background-image: url(/assets/media/seasonal/486.png) !important;
-        }
+        }*/
 
     </style>
 </head>
