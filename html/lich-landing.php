@@ -159,7 +159,7 @@ require("php-components/base-page-pull-active-account-info.php");
                     <h2 class="text-center mb-4">Explore the Battlefield</h2>
                     <p class="text-center mb-5">Step onto the dynamic hex grid board where every move shapes your destiny. Sharpen your strategy and claim victory:</p>
                     <div class="text-center">
-                        <img src="/assets/images/lich-table.png" alt="Hex Grid Board" style="max-width: 100%; height: auto; border-radius: 10px;">
+                        <img src="/assets/images/lich/lich-table.png" alt="Hex Grid Board" style="max-width: 100%; height: auto; border-radius: 10px;">
                     </div>
                 </section>
 
