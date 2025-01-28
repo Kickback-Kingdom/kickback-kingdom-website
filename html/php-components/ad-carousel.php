@@ -137,7 +137,7 @@ if (!isset($_GET['borderless']))
             <div class="carousel-caption d-block d-md-block text-shadow">
                 <h1 style="font-size: 2.5rem; font-weight: bold;">L.I.C.H.</h1>
                 <p class="d-none d-md-block" style="font-size: 1.25rem;">A dark force awakens and seeks to add you to its realm.</p>
-                <a href="/lich" class="bg-ranked-1 btn btn-sm" style="text-shadow: none;">Enter the Realm</a>
+                <a href="<?php echo Version::urlBetaPrefix(); ?>/lich" class="bg-ranked-1 btn btn-sm" style="text-shadow: none;">Enter the Realm</a>
             </div>
         </div>
 
