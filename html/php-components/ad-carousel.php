@@ -2,6 +2,7 @@
 <?php
 
 use Kickback\Backend\Controllers\QuestController;
+use Kickback\Common\Version;
 //echo "<!--".basename($_SERVER['SCRIPT_NAME'])."-->";
 
 $currentPage = basename($_SERVER['SCRIPT_NAME']);
