@@ -877,7 +877,7 @@ function saveCard() {
                         upload: true,
                         uploadParams: {
                             directory: `lich/cards/${getFormattedSetForDirectory()}`,
-                            name: `${lichCardData.name}_${lichCardData.ctime}_${lichCardData.crand}`,
+                            name: `${lichCardData.name}`,
                             desc: `Lich card image for ${lichCardData.name}`,
                             sessionToken: "<?php echo $_SESSION['sessionToken']; ?>",
                             crand: lichCardData.cardImage.crand
