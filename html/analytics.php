@@ -193,6 +193,19 @@ $mapDataJSON = json_encode($mapData);
                                     </div>
                                 </div>
                             </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseSeven" aria-expanded="false" aria-controls="panelsStayOpen-collapseSeven">
+                                        Projected Growth
+                                    </button>
+                                </h2>
+                                <div id="panelsStayOpen-collapseSeven" class="accordion-collapse collapse">
+                                    <div class="accordion-body">
+                                        
+                                        <canvas id="projectedGrowthChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -247,13 +260,6 @@ $mapDataJSON = json_encode($mapData);
 
 
     <script>
-
-
-        function updateCharts() {
-            var startDate = document.getElementById('startDate').value;
-            var endDate = document.getElementById('endDate').value;
-
-        }
 
         $(document).ready( function () {
             $('#datatable-analtyics').DataTable({
@@ -387,7 +393,7 @@ $mapDataJSON = json_encode($mapData);
         }
 
         function updateCharts() {
-            var startDate = document.getElementById('startDate').value;
+            const startDate = document.getElementById('startDate').value || analyticsData[0].month;
             var endDate = document.getElementById('endDate').value;
 
             // Filter the data
@@ -402,11 +408,62 @@ $mapDataJSON = json_encode($mapData);
             const activeAccounts = filteredData.map(data => parseInt(data.active_accounts));
             const websiteHits = filteredData.map(data => parseInt(data.website_hits));
 
+
+    // Projection logic
+    const projectionMonths = 12;
+    const minGrowthRate = 5; // Minimum monthly growth rate (percentage)
+
+    // Calculate average growth rate (percentage) based on filtered data
+    let totalGrowthRate = 0;
+    for (let i = 1; i < filteredData.length; i++) {
+        const previous = parseInt(filteredData[i - 1].total_accounts);
+        const current = parseInt(filteredData[i].total_accounts);
+        const growthRate = ((current - previous) / previous) * 100; // Calculate percentage growth
+        totalGrowthRate += growthRate;
+    }
+    const averageGrowthRate = totalGrowthRate / (filteredData.length - 1); // Use filtered data length
+
+    // Generate projection data starting from the selected `startDate`
+    const historicalData = analyticsData.filter(data => data.month >= startDate);
+
+    const projectedDataMin = [];
+    const projectedDataMax = [];
+    let lastTotalAccounts = parseInt(historicalData[historicalData.length - 1].total_accounts);
+
+    // Create projections
+    for (let i = 0; i < projectionMonths; i++) {
+        const minGrowth = Math.round(lastTotalAccounts * (minGrowthRate / 100)); // 5% growth
+        const maxGrowth = Math.round(lastTotalAccounts * (averageGrowthRate / 100)); // Average growth
+
+        lastTotalAccounts += minGrowth; // Update for min growth projection
+
+        const projectionDate = new Date(historicalData[historicalData.length - 1].month);
+        projectionDate.setMonth(projectionDate.getMonth() + i + 1);
+        const projectionMonth = projectionDate.toISOString().substring(0, 7); // Format as 'YYYY-MM'
+
+        projectedDataMin.push(Math.round(lastTotalAccounts)); // Add min projection
+        projectedDataMax.push(Math.round(lastTotalAccounts * (1 + (averageGrowthRate / 100)))); // Add max projection
+    }
+
+    const labelsProjection = historicalData.map(data => data.month).concat(
+        [...Array(projectionMonths).keys()].map(i => {
+            const projectionDate = new Date(historicalData[historicalData.length - 1].month);
+            projectionDate.setMonth(projectionDate.getMonth() + i + 1);
+            return projectionDate.toISOString().substring(0, 7);
+        })
+    );
+    
+
+
+    const userCountsHistorical = historicalData.map(data => parseInt(data.total_accounts));
+    const userCountsMinProjection = projectedDataMin;
+    const userCountsMaxProjection = projectedDataMax;
+
             // Update the charts
-            updateChartData(labels, totalAccounts, newAccounts, growthPercentages, retentionRates, activeAccounts, websiteHits);
+            updateChartData(labels, totalAccounts, newAccounts, growthPercentages, retentionRates, activeAccounts, websiteHits, labelsProjection, userCountsHistorical, userCountsMinProjection, userCountsMaxProjection, averageGrowthRate);
         }
 
-        function updateChartData(labels, totalAccounts, newAccounts, growthPercentages, retentionRates, activeAccounts, websiteHits) {
+        function updateChartData(labels, totalAccounts, newAccounts, growthPercentages, retentionRates, activeAccounts, websiteHits, labelsProjection, userCountsHistorical, userCountsMinProjection, userCountsMaxProjection, averageGrowthRate) {
             totalAccountsChart.data.labels = labels;
             totalAccountsChart.data.datasets[0].data = totalAccounts;
             totalAccountsChart.update();
@@ -430,24 +487,25 @@ $mapDataJSON = json_encode($mapData);
             websiteHitsChart.data.labels = labels;
             websiteHitsChart.data.datasets[0].data = websiteHits;
             websiteHitsChart.update();
+
+            userGrowthProjectionChart.data.labels = labelsProjection;
+            userGrowthProjectionChart.data.datasets[0].data = userCountsHistorical;
+            userGrowthProjectionChart.data.datasets[1].data = [...userCountsHistorical, ...userCountsMinProjection];
+            userGrowthProjectionChart.data.datasets[2].data = [...userCountsHistorical, ...userCountsMaxProjection];
+            userGrowthProjectionChart.data.datasets[2].label = `Max Projection (${averageGrowthRate.toFixed(2)}% Average Growth)`; // Update subtitle  Max Projection (Average Growth)
+
+            userGrowthProjectionChart.update();
+
         }
-
-
-        const labels = analyticsData.map(data => data.month);
-        const totalAccounts = analyticsData.map(data => parseInt(data.total_accounts));
-        const newAccounts = analyticsData.map(data => parseInt(data.new_accounts));
-        const growthPercentages = analyticsData.map(data => parseFloat(data.growth_percentage).toFixed(1));
-        const retentionRates = analyticsData.map(data => parseFloat(data.retention_rate).toFixed(1));
-        const activeAccounts = analyticsData.map(data => parseInt(data.active_accounts));
-        const websiteHits = analyticsData.map(data => parseInt(data.website_hits));
         
+
         const totalAccountsChart = new Chart('totalAccountsChart', {
             type: 'line',
             data: {
-                labels: labels,
+                labels: [],
                 datasets: [{
                     label: 'Total Accounts',
-                    data: totalAccounts,
+                    data: [],
                     borderColor: 'rgb(75, 192, 192)',
                     tension: 0.1
                 }]
@@ -464,10 +522,10 @@ $mapDataJSON = json_encode($mapData);
         const newAccountsChart = new Chart('newAccountsChart', {
             type: 'bar',
             data: {
-                labels: labels,
+                labels: [],
                 datasets: [{
                     label: 'New Accounts',
-                    data: newAccounts,
+                    data: [],
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 1
@@ -485,10 +543,10 @@ $mapDataJSON = json_encode($mapData);
         const growthPercentageChart = new Chart('growthPercentageChart', {
             type: 'line',
             data: {
-                labels: labels,
+                labels: [],
                 datasets: [{
                     label: 'Growth Percentage',
-                    data: growthPercentages,
+                    data: [],
                     borderColor: 'rgb(255, 99, 132)',
                     tension: 0.1
                 }]
@@ -505,10 +563,10 @@ $mapDataJSON = json_encode($mapData);
         const retentionRateChart = new Chart('retentionRateChart', {
             type: 'line',
             data: {
-                labels: labels,
+                labels: [],
                 datasets: [{
                     label: 'Retention Rate',
-                    data: retentionRates,
+                    data: [],
                     borderColor: 'rgb(153, 102, 255)',
                     tension: 0.1
                 }]
@@ -526,10 +584,10 @@ $mapDataJSON = json_encode($mapData);
         const activeAccountsChart = new Chart('activeAccountsChart', {
             type: 'line', // Line chart type
             data: {
-                labels: labels, // Use the same labels array as other charts
+                labels: [], // Use the same labels array as other charts
                 datasets: [{
                     label: 'Active Accounts',
-                    data: activeAccounts, // Data array for active accounts
+                    data: [], // Data array for active accounts
                     borderColor: 'rgb(255, 159, 64)', // Color of the line
                     tension: 0.1 // Smooths the line
                 }]
@@ -546,10 +604,10 @@ $mapDataJSON = json_encode($mapData);
         const websiteHitsChart = new Chart('websiteHitsChart', {
             type: 'line', // Line chart type
             data: {
-                labels: labels, // Use the same labels array as other charts
+                labels: [], // Use the same labels array as other charts
                 datasets: [{
                     label: 'Website Hits',
-                    data: websiteHits, // Data array for active accounts
+                    data: [], // Data array for active accounts
                     borderColor: 'rgb(255, 159, 64)', // Color of the line
                     tension: 0.1 // Smooths the line
                 }]
@@ -562,6 +620,68 @@ $mapDataJSON = json_encode($mapData);
                 }
             }
         });
+        
+        // Create Line Chart
+        const userGrowthProjectionChart = new Chart('projectedGrowthChart', {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Historical Total Accounts',
+                        data: [],
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1,
+                        fill: false,
+                    },
+                    {
+                        label: 'Min Projection (5% Monthly Growth)',
+                        data: [],
+                        borderColor: 'rgb(255, 99, 132)',
+                        borderDash: [5, 5], // Dashed line for the projection
+                        tension: 0.1,
+                        fill: false,
+                    },
+                    {
+                        label: 'Max Projection (Average Growth)',
+                        data: [],
+                        borderColor: 'rgb(54, 162, 235)',
+                        borderDash: [5, 5], // Dashed line for the projection
+                        tension: 0.1,
+                        fill: '-1', // Fill the area between min and max
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    },
+                ],
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Total Accounts',
+                        },
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Month',
+                        },
+                    },
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Projected User Growth (Starting from Selected Month)',
+                    },
+                    subtitle: {
+                        display: true,
+                        text: 'Includes a range from minimum (5%) to average growth rates',
+                    },
+                },
+            },
+        });
+
 
     </script>
 
