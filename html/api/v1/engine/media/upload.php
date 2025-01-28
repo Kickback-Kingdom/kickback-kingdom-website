@@ -21,11 +21,14 @@ $imgBase64 = Validate($_POST["imgBase64"]);
 $name = Validate($_POST["name"]);
 $desc = Validate($_POST["desc"]);
 $sessionToken = Validate($_POST["sessionToken"]);
+$mediaCRAND = "";
+if (isset($_POST["crand"]))
+$mediaCRAND = Validate($_POST["crand"]);
 
 $loginResp = AccountController::getAccountBySession($kk_service_key, $sessionToken);
 if (!$loginResp->success)
 {
     return $loginResp;
 }
-return MediaController::UploadMediaImage($directory, $name, $desc, $imgBase64);
+return MediaController::UploadMediaImage($directory, $name, $desc, $imgBase64, $mediaCRAND);
 ?>

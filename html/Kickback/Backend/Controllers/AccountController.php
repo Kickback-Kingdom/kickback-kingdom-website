@@ -504,7 +504,7 @@ class AccountController
         ]));
     }
 
-    private static function getAccountTitle(vAccount $account) : string {
+    public static function getAccountTitle(vAccount $account) : string {
         $level = $account->level;
         $prestige = $account->prestige;
         // Define the list of titles for evil and good prestige
@@ -1015,6 +1015,7 @@ class AccountController
         $account->isChancellorOfTechnology = (bool) $row["IsChancellorOfTechnology"];
         $account->isStewardOfExpansion = (bool) $row["IsStewardOfExpansion"];
         $account->isStewardOfTechnology = (bool) $row["IsStewardOfTechnology"];
+        $account->isServantOfTheLich = (bool) $row["IsServantOfTheLich"];
 
         if (array_key_exists('game_id', $row)) {
             $gameId = (int)$row['game_id'];

@@ -9,6 +9,7 @@ use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vDateTime;
 use Kickback\Services\Session;
+use Kickback\Common\Version;
 
 class MediaController {
     
@@ -78,7 +79,65 @@ class MediaController {
         ]));
     }
 
-    public static function InsertMediaRecord($conn, $directory, $name, $desc, $extension) {
+    public static function InsertOrUpdateMediaRecord($conn, $directory, $name, $desc, $extension, $crand = -1) {
+        // Get the global database connection and service key
+        $kk_service_key = \Kickback\Backend\Config\ServiceCredentials::get("kk_service_key");
+        
+        // Retrieve the author's ID from the session
+        $author_id = Session::getCurrentAccount()->crand;
+    
+        // Check if we are updating an existing record
+        if ($crand >= 0) {
+            if (!Session::isSteward()) {
+                return false;
+            }
+            // Update existing record
+            $query = "UPDATE Media 
+                      SET ServiceKey = ?, name = ?, `desc` = ?, author_id = ?, Directory = ?, extension = ?
+                      WHERE Id = ?";
+            $stmt = mysqli_prepare($conn, $query);
+    
+            if (!$stmt) {
+                error_log("Failed to prepare update statement: " . mysqli_error($conn));
+                return false;
+            }
+    
+            // Bind parameters
+            mysqli_stmt_bind_param($stmt, 'sssissi', $kk_service_key, $name, $desc, $author_id, $directory, $extension, $crand);
+    
+            // Execute the update
+            if (mysqli_stmt_execute($stmt)) {
+                return $crand; // Return the updated record's ID
+            } else {
+                error_log("Failed to execute update statement: " . mysqli_stmt_error($stmt));
+                return false;
+            }
+        } else {
+            // Insert a new record
+            $query = "INSERT INTO Media (ServiceKey, name, `desc`, author_id, Directory, extension) 
+                      VALUES (?, ?, ?, ?, ?, ?)";
+            $stmt = mysqli_prepare($conn, $query);
+    
+            if (!$stmt) {
+                error_log("Failed to prepare insert statement: " . mysqli_error($conn));
+                return false;
+            }
+    
+            // Bind parameters
+            mysqli_stmt_bind_param($stmt, 'sssiss', $kk_service_key, $name, $desc, $author_id, $directory, $extension);
+    
+            // Execute the insert
+            if (mysqli_stmt_execute($stmt)) {
+                return mysqli_insert_id($conn); // Return the ID of the newly inserted record
+            } else {
+                error_log("Failed to execute insert statement: " . mysqli_stmt_error($stmt));
+                return false;
+            }
+        }
+    }
+
+    
+    public static function InsertMediaRecord($conn, $directory, $name, $desc, $extension, $crand = -1) {
         // Get the global database connection and service key
     
         $kk_service_key = \Kickback\Backend\Config\ServiceCredentials::get("kk_service_key");
@@ -130,14 +189,37 @@ class MediaController {
         return in_array($directory, $validDirs);
     }
     
-    public static function UploadMediaImage($directory, $name, $desc, $imageBase64) {
+    public static function UploadMediaImage($directory, $name, $desc, $imageBase64, $mediaCRAND = "") {
         list($type, $data) = explode(';', $imageBase64);
         list(, $data) = explode(',', $data);
         $decodedImageData = base64_decode($data);
-        
+        $crand = -1;
         // Check if decoded data is empty
         if (empty($decodedImageData)) {
             return new Response(false, 'Decoded image data is empty.', null);
+        }
+
+        try {
+            // Check if $mediaCRAND is set and not empty
+            if (!empty($mediaCRAND)) {
+                
+                $crand = (int)$mediaCRAND;
+                
+                if (!is_numeric($mediaCRAND) || $crand < 0) {
+                    throw new \Exception("Invalid mediaCRAND value: $mediaCRAND");
+                }
+            } else {
+                
+                $crand = -1;
+            }
+
+            if (!vMedia::isValidRecordId(new vRecordId('', $crand)))
+            {
+                $crand = -1;
+            }
+        } catch (\Exception $e) {
+            
+            $crand = -1; // Set a default value
         }
     
         // Check if directory is allowed
@@ -167,28 +249,33 @@ class MediaController {
     
         try {
             // Insert media record
-            $api_response = self::UploadMediaImageTransaction($conn, $directory, $name, $desc, $fileExtension, $decodedImageData);
+            $api_response = self::UploadMediaImageTransaction($conn, $directory, $name, $desc, $fileExtension, $decodedImageData, $crand);
             // If everything went well, commit the transaction
             mysqli_commit($conn);
         return $api_response;
     
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // An error occurred, roll back the transaction
             mysqli_rollback($conn);
             return new Response(false, $e->getMessage(), null);
         }
     }
     
-    public static function UploadMediaImageTransaction($conn, $directory, $name, $desc, $fileExtension, $decodedImageData) {
+    public static function UploadMediaImageTransaction($conn, $directory, $name, $desc, $fileExtension, $decodedImageData, $crand = -1) {
         // Insert media record
-        $mediaId = self::InsertMediaRecord($conn, $directory, $name, $desc, $fileExtension);
+        $mediaId = self::InsertOrUpdateMediaRecord($conn, $directory, $name, $desc, $fileExtension, $crand);
         if (!$mediaId) {
-            throw new Exception('Error saving media record: ' . mysqli_error($conn));
+            throw new \Exception('Error saving media record: ' . mysqli_error($conn));
         }
     
         // Define the file path
         $rootPath = "/var/www/kickback-kingdom-prod/html"; // Root path of your web server
-        $filePath = join(DIRECTORY_SEPARATOR, [$rootPath, 'assets', 'media', $directory, "{$mediaId}.{$fileExtension}"]);
+        if (Version::isLocalhost())
+        {
+            $rootPath = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR);
+        }
+        $localPath = join(DIRECTORY_SEPARATOR, ['assets', 'media', $directory, "{$mediaId}.{$fileExtension}"]);
+        $filePath = join(DIRECTORY_SEPARATOR, [$rootPath, $localPath]);
     
         $directoryPath = dirname($filePath);
     
@@ -201,10 +288,10 @@ class MediaController {
         $fileSaved = file_put_contents($filePath, $decodedImageData);
         $fileFound = file_exists($filePath);
         if (!$fileSaved || !$fileFound) {
-            throw new Exception('Error saving the image.');
+            throw new \Exception('Error saving the image.');
         }
     
-        return new Response(true, 'Image uploaded successfully.', ['mediaId' => $mediaId]);
+        return new Response(true, 'Image uploaded successfully.', ['mediaId' => $mediaId, 'url' => DIRECTORY_SEPARATOR.$localPath]);
     }
     
     private static function row_to_vMedia(array $row) : vMedia {

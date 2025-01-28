@@ -147,6 +147,32 @@ class ContentController {
                         return false;
                     }
                     break;
+                case 'LICH-CARD':
+
+                    $lichCardResp = LichCardController::getLichCardByLocator($ids[0]);
+                    if ($lichCardResp->success)
+                    {
+                        return $lichCardResp->data->canEdit();
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    break;
+
+                        
+                case 'LICH-SET':
+
+                    $lichSetResp = LichCardController::getLichSetByLocator($ids[0]);
+                    if ($lichSetResp->success)
+                    {
+                        return $lichSetResp->data->canEdit();
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    break;
                 default:
                 return false;
             }
@@ -244,7 +270,7 @@ class ContentController {
     }
 
     
-    public static function insertNewContent()
+    public static function insertNewContent() : int
     {
         $conn = Database::getConnection();
         $summary = "New Content";

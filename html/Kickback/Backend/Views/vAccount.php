@@ -5,6 +5,7 @@ namespace Kickback\Backend\Views;
 
 use Kickback\Backend\Views\vMedia;
 use Kickback\Common\Version;
+use Kickback\Backend\Controllers\AccountController;
 
 class vAccount extends vRecordId
 {
@@ -37,6 +38,7 @@ class vAccount extends vRecordId
     public bool $isChancellorOfTechnology;
     public bool $isStewardOfExpansion;
     public bool $isStewardOfTechnology;
+    public bool $isServantOfTheLich;
     public bool $isGoldCardHolder;
 
     public ?vMedia $avatar = null;
@@ -98,6 +100,10 @@ class vAccount extends vRecordId
 
     public function getAccountElement() : string {
         return '<a href="'.$this->getURL().'" class="username">'.$this->username.'</a>';
+    }
+
+    public function getAccountTitle() : string {
+        return AccountController::getAccountTitle($this);
     }
 }
 

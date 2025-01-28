@@ -246,6 +246,7 @@ function UploadImageData() {
 var selectMediaModalCallerId = -1;
 var selectMediaImageElementOutputId = -1;
 var selectMediaImageFormInputId = -1;
+var selectMediaCallbackFunction = null;
 
 function ReopenSelectMediaModal()
 {
@@ -255,10 +256,11 @@ function ReopenSelectMediaModal()
     SearchForMedia();
 }
 
-function OpenSelectMediaModal(prevModal = null, imageElementOutputId = null, imageFormInputId = null)
+function OpenSelectMediaModal(prevModal = null, imageElementOutputId = null, imageFormInputId = null, callbackFunction = null)
 {
     selectMediaImageElementOutputId = imageElementOutputId;
     selectMediaImageFormInputId = imageFormInputId;
+    selectMediaCallbackFunction = callbackFunction;
 
     if (prevModal != null)
     {
@@ -364,6 +366,11 @@ function AcceptSelectedMedia()
     if (selectMediaImageFormInputId != null)
     {
         $("#"+selectMediaImageFormInputId).val(currentSelectedMediaId);
+    }
+
+    // Execute the callback function if provided
+    if (selectMediaCallbackFunction && typeof selectMediaCallbackFunction === "function") {
+        selectMediaCallbackFunction(currentSelectedMediaId, currentSelectedMediaPath);
     }
 }
 

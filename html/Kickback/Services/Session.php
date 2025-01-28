@@ -214,6 +214,36 @@ class Session {
         return false;
     }
     
+    public static function isSteward() : bool {
+
+        if (self::isAdmin())
+        {
+            return true;
+        }
+
+        if (self::isLoggedIn())
+        {
+            return self::getCurrentAccount()->isSteward;
+        }
+
+        return false;
+    }
+
+    public static function isServantOfTheLich() : bool {
+
+        if (self::isAdmin())
+        {
+            return true;
+        }
+
+        if (self::isLoggedIn())
+        {
+            return self::getCurrentAccount()->isServantOfTheLich;
+        }
+
+        return false;
+    }
+    
     public static function isQuestGiver() : bool {
         if (self::isLoggedIn())
         {
@@ -248,5 +278,6 @@ class Session {
             session_start();
         }
     }
+    
 }
 ?>

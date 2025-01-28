@@ -51,6 +51,12 @@ final class Version
     {
         return array_key_exists("KICKBACK_IS_BETA",$_SERVER) && $_SERVER["KICKBACK_IS_BETA"];
     }
+    public static function isLocalhost(): bool {
+        $whitelist = ['127.0.0.1', '::1', 'localhost'];
+        return in_array($_SERVER['REMOTE_ADDR'] ?? '', $whitelist) || 
+               in_array($_SERVER['SERVER_NAME'] ?? '', $whitelist);
+    }
+    
 
     public static function urlBetaPrefix() : string {
         if (self::isBeta())
