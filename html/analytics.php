@@ -11,6 +11,11 @@ $analyticsMonthlyResp = AnalyticController::getMonthlyGrowthStats();
 $analyticsMonthly = $analyticsMonthlyResp->data;
 
 $analyticsJSON = json_encode($analyticsMonthly);
+
+$mapDataResp = AnalyticController::getMapData();
+$mapData = $mapDataResp->data;
+$mapDataJSON = json_encode($mapData);
+
 ?>
 
 <!DOCTYPE html>
@@ -192,6 +197,34 @@ $analyticsJSON = json_encode($analyticsMonthly);
                     </div>
                 </div>
 
+
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <div id="container" style="height:500px;"></div>
+                    </div>
+                </div>
+
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <h5 class="text-center">Guildsmen Distribution by Country</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered" id="countryTable">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Country</th>
+                                        <th>Guildsmen</th>
+                                        <th>Guildsmen %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data will be populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 
             </div>
             
@@ -202,8 +235,20 @@ $analyticsJSON = json_encode($analyticsMonthly);
 
     
     <?php require("php-components/base-page-javascript.php"); ?>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+
+    <script src="https://code.highcharts.com/maps/highmaps.js"></script>
+    <script src="https://code.highcharts.com/maps/modules/data.js"></script>
+    <script src="https://code.highcharts.com/maps/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/mapdata/custom/world-highres.js"></script>
+
+
+
+
     <script>
+
+
         function updateCharts() {
             var startDate = document.getElementById('startDate').value;
             var endDate = document.getElementById('endDate').value;
@@ -220,15 +265,113 @@ $analyticsJSON = json_encode($analyticsMonthly);
 
         document.addEventListener('DOMContentLoaded', function() {
             if (analyticsData.length > 0) {
-                // Extract the month strings and find the minimum and maximum
-                const months = analyticsData.map(data => data.month); // Assuming 'month' is already in 'YYYY-MM' format
-                const minMonth = months.reduce((a, b) => a < b ? a : b); // Find the earliest month
-                const maxMonth = months.reduce((a, b) => a > b ? a : b); // Optionally find the latest month, useful if data may not include the current month
+                // Get today's date and calculate one year ago
+                const today = new Date();
+                const oneYearAgo = new Date();
+                oneYearAgo.setFullYear(today.getFullYear() - 1);
 
-                // Set the values of the month inputs
-                document.getElementById('startDate').value = minMonth;
-                document.getElementById('endDate').value = new Date().toISOString().substring(0, 7); // Current year and month
+                // Format the dates as 'YYYY-MM'
+                const todayFormatted = today.toISOString().substring(0, 7);
+                const oneYearAgoFormatted = oneYearAgo.toISOString().substring(0, 7);
+
+                // Extract the month strings and find the minimum month in the dataset
+                const months = analyticsData.map(data => data.month); // Assuming 'month' is in 'YYYY-MM' format
+                const minMonth = months.reduce((a, b) => a < b ? a : b); // Find the earliest month
+
+                // Set the startDate to one year ago or the minMonth, whichever is later
+                const startDate = oneYearAgoFormatted > minMonth ? oneYearAgoFormatted : minMonth;
+
+                // Set the values of the date inputs
+                document.getElementById('startDate').value = startDate;
+                document.getElementById('endDate').value = todayFormatted; // Current year and month
+
+                updateCharts();
             }
+
+
+            const mapData = <?= $mapDataJSON; ?>; // Map data from PHP
+
+
+             // Load the countries.json file
+    fetch('/assets/js/countries.json')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to load countries.json: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(countriesData => {
+            const countries = countriesData.countries;
+            const totalUserCount = mapData.reduce((sum, [, userCount]) => sum + userCount, 0);
+
+            // Populate Bootstrap table
+            const tableBody = document.querySelector('#countryTable tbody');
+            const sortedData = mapData.sort((a, b) => b[1] - a[1]); // Sort by user count in descending order
+
+            sortedData.forEach((item, index) => {
+                const [countryCode, userCount] = item;
+
+                // Skip countries with no users
+                if (userCount === 0) return;
+
+                const normalizedCountryCode = countryCode.toUpperCase();
+                // Get the country name from the JSON data
+                const countryName = Array.isArray(countries[normalizedCountryCode])
+                    ? countries[normalizedCountryCode][0] // Use the first name if it's an array
+                    : countries[normalizedCountryCode] || normalizedCountryCode;
+
+                const percentage = ((userCount / totalUserCount) * 100).toFixed(2);
+
+                // Create table row
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${countryName}</td>
+                    <td>${userCount}</td>
+                    <td>${percentage}%</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        });
+
+            Highcharts.mapChart('container', {
+                chart: {
+                    map: 'custom/world-highres'
+                },
+                title: {
+                    text: 'Kickback Kingdom Guildsmen Locations'
+                },
+                subtitle: {
+                    text: 'Discover the global reach of Kickback Kingdom'
+                },
+                mapNavigation: {
+                    enabled: true,
+                    buttonOptions: {
+                        verticalAlign: 'bottom'
+                    }
+                },
+                colorAxis: {
+                    min: 0,
+                    stops: [
+                        [0, '#EFEFFF'],
+                        [0.5, '#4444FF'],
+                        [1, '#000022']
+                    ]
+                },
+                series: [{
+                    data: mapData,
+                    name: 'User Count',
+                    states: {
+                        hover: {
+                            color: '#FF9933'
+                        }
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.name}'
+                    }
+                }]
+            });
         });
 
 

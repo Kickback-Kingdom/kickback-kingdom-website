@@ -361,6 +361,51 @@ class AnalyticController
         // Return an APIResponse with the fetched data
         return new Response(true, "Monthly growth stats", $rows);
     }
+
+    public static function getMapData() {
+        $conn = Database::getConnection();
+
+        // Query to aggregate user counts by country
+        $sql = "SELECT 
+    LOWER(a.country) AS code, 
+    COUNT(DISTINCT a.account_id) AS user_count
+FROM analytic a
+JOIN (
+    -- Subquery to find the latest log entry for each user
+    SELECT 
+        account_id, 
+        MAX(CONCAT(ctime, '-', crand)) AS latest_entry
+    FROM analytic
+    WHERE account_id IS NOT NULL AND country IS NOT NULL AND country <> '??'
+    GROUP BY account_id
+) AS latest_logs
+ON a.account_id = latest_logs.account_id 
+   AND CONCAT(a.ctime, '-', a.crand) = latest_logs.latest_entry
+GROUP BY a.country;
+";
+
+        $stmt = $conn->prepare($sql);
+
+        if (!$stmt) {
+            return new Response(false, "Error preparing statement: " . $conn->error, null);
+        }
+
+        if (!$stmt->execute()) {
+            return new Response(false, "Error executing statement: " . $stmt->error, null);
+        }
+
+        $result = $stmt->get_result();
+        $mapData = [];
+        while ($row = $result->fetch_assoc()) {
+            // Add each country's code and value as an array
+            $mapData[] = [$row['code'], (int)$row['user_count']];
+        }
+
+        $stmt->close();
+
+        return new Response(true, "Map data retrieved successfully", $mapData);
+    }
+
     
 }
 
