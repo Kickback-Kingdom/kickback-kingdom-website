@@ -428,22 +428,30 @@ $mapDataJSON = json_encode($mapData);
 
     const projectedDataMin = [];
     const projectedDataMax = [];
-    let lastTotalAccounts = parseInt(historicalData[historicalData.length - 1].total_accounts);
-
+    
     // Create projections
-    for (let i = 0; i < projectionMonths; i++) {
-        const minGrowth = Math.round(lastTotalAccounts * (minGrowthRate / 100)); // 5% growth
-        const maxGrowth = Math.round(lastTotalAccounts * (averageGrowthRate / 100)); // Average growth
+let lastTotalAccountsMin = parseInt(historicalData[historicalData.length - 1].total_accounts); // For min growth
+let lastTotalAccountsMax = parseInt(historicalData[historicalData.length - 1].total_accounts); // For max growth
 
-        lastTotalAccounts += minGrowth; // Update for min growth projection
+for (let i = 0; i < projectionMonths; i++) {
+    // Calculate growth for the current month
+    const minGrowth = (lastTotalAccountsMin * (minGrowthRate / 100)); // 5% growth
+    const maxGrowth = (lastTotalAccountsMax * (averageGrowthRate / 100)); // Average growth
 
-        const projectionDate = new Date(historicalData[historicalData.length - 1].month);
-        projectionDate.setMonth(projectionDate.getMonth() + i + 1);
-        const projectionMonth = projectionDate.toISOString().substring(0, 7); // Format as 'YYYY-MM'
+    // Update separate variables for min and max growth projections
+    lastTotalAccountsMin += minGrowth;
+    lastTotalAccountsMax += maxGrowth;
 
-        projectedDataMin.push(Math.round(lastTotalAccounts)); // Add min projection
-        projectedDataMax.push(Math.round(lastTotalAccounts * (1 + (averageGrowthRate / 100)))); // Add max projection
-    }
+    // Calculate projection month
+    const projectionDate = new Date(historicalData[historicalData.length - 1].month);
+    projectionDate.setMonth(projectionDate.getMonth() + i + 1);
+    const projectionMonth = projectionDate.toISOString().substring(0, 7); // Format as 'YYYY-MM'
+
+    // Add projections
+    projectedDataMin.push(Math.round(lastTotalAccountsMin)); // Add min projection
+    projectedDataMax.push(Math.round(lastTotalAccountsMax)); // Add max projection
+}
+
 
     const labelsProjection = historicalData.map(data => data.month).concat(
         [...Array(projectionMonths).keys()].map(i => {
