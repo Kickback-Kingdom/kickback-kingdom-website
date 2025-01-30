@@ -70,6 +70,20 @@ if (isset($thisGame))
     $pageVisitId = '/g/'.$thisGame->crand;
 }
 
+if (isset($thisLichSet))
+{
+    $pageTitle = $thisLichSet->name;
+    $pageImage = "https://kickback-kingdom.com/assets/media/Castles/RedCap-Studios/518.png";
+    $pageDesc = $thisLichSet->description;
+}
+
+if (isset($thisLichCardData))
+{
+    $pageTitle = $thisLichCardData->name;
+    $pageImage = $thisLichCardData->cardImage->getFullPath();
+    $pageDesc = $thisLichCardData->description;
+}
+
 AnalyticController::recordPageVisit($pageVisitId);
 $pageVisitResp = AnalyticController::getPageVisits($pageVisitId);
 $thisPageVisits = 0;
@@ -85,8 +99,8 @@ if ($pageVisitResp->success)
     <title><?php echo $pageTitle; ?></title>
 
     
-    <meta name="description" content="<?php echo $pageDesc; ?>">
-    <meta name="keywords" content="rank, ranked, gaming, games, publisher, crypto, ada, cardano, kickback, kingdom, twilight racer, end of empires, lich, l.i.c.h., community, casual, roleplay, competitive, <?php $pageTitle; ?>">
+    <meta name="description" content="<?= $pageDesc; ?>">
+    <meta name="keywords" content="rank, ranked, gaming, games, publisher, crypto, ada, cardano, kickback, kingdom, twilight racer, end of empires, lich, l.i.c.h., community, casual, roleplay, competitive, <?= $pageTitle; ?>, atlas, odyssey, <?= $pageDesc; ?>">
     <meta name="author" content="Kickback Kingdom">
     <link rel="icon" href="/assets/media/icons/64.png" type="image/x-icon">
     <link rel="shortcut icon" href="/assets/media/icons/64.png" type="image/x-icon">

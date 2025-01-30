@@ -14,6 +14,7 @@ class vLichSet extends vRecordId
     public string $name;
     public string $locator;
     public vContent $content;
+    public string $description;
 
     function __construct(string $ctime = '', int $crand = -1)
     {

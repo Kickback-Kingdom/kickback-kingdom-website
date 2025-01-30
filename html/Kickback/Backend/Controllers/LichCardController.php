@@ -26,7 +26,9 @@ class LichCardController
                 ls.ctime, 
                 ls.crand, 
                 ls.name, 
-                ls.locator
+                ls.locator,
+                ls.content_id,
+                ls.description
             FROM lich_set ls
             ORDER BY ls.ctime DESC
         ";
@@ -69,7 +71,8 @@ class LichCardController
                 ls.crand, 
                 ls.name, 
                 ls.locator,
-                ls.content_id
+                ls.content_id,
+                ls.description
             FROM lich_set ls
             WHERE ls.locator = ?
         ";
@@ -116,7 +119,8 @@ class LichCardController
                 ls.crand, 
                 ls.name, 
                 ls.locator,
-                ls.content_id
+                ls.content_id,
+                ls.description
             FROM lich_set ls
             WHERE ls.ctime = ? AND ls.crand = ?
         ";
@@ -818,6 +822,7 @@ class LichCardController
         {
             $lichSet->name = $row['name'];
             $lichSet->locator = $row['locator'];
+            $lichSet->description = $row['description'] ?? "";
         }
         return $lichSet;
     }
