@@ -83,20 +83,6 @@ use Kickback\Common\Version;
                 keyboard: false
             })
             
-            <?php 
-
-            if (Kickback\Services\Session::isLoggedIn())
-            {
-            ?>
-            //OpenAllChests();
-            if (typeof eloChanges === "undefined" || eloChanges.length === 0) {
-                OpenAllChests(); // Call the function directly if eloChanges doesn't exist or is empty
-            } 
-            <?php 
-
-            }
-            ?>
-
             <?php
                 if ($showPopUpSuccess)
                 {
@@ -255,6 +241,7 @@ use Kickback\Common\Version;
                 {
                     ShowVersionPopUp();
                 }
+                showNextPopups();
             }
         }
         <?php
@@ -509,7 +496,159 @@ use Kickback\Common\Version;
         {
 
         }
+        
+        function LoadNotificationViewPrestige(id) {
+            var notification = notificationsJSON[id];
+            console.log(notification);
 
+            var titleAnimation = 'backInLeft';
+             
+            var positiveTitles = [
+                "The Kingdom Honors Your Deeds…",
+                "Your Name Echoes in the Halls…",
+                "Legends Speak of Your Valor…",
+                "The Bards Sing of Your Glory…",
+                "Your Prestige Grows Across the Land…",
+                "Your Feats Will Be Remembered…",
+                "Your Name is Etched in History…",
+                "The Realm Rejoices at Your Triumph…",
+                "Songs of Your Honor Fill the Taverns…",
+                "You Have Brought Great Renown…",
+                "A New Chapter of Glory is Written…",
+                "Your Reputation Shines Brighter…",
+                "A Tale of Valor is Told Once More…",
+                "The Banners Fly in Your Honor…",
+                "Knights and Nobles Speak of You…",
+                "The People Whisper of Your Bravery…",
+                "Legends Are Forged by Actions Like These…",
+                "The Heralds Announce Your Greatness…",
+                "A Hero's Name is Spoken Again…",
+                "Your Strength and Wisdom Prevail…",
+                "You Have Secured Your Place in History…",
+                "The Kingdom Stands Behind You…",
+                "Echoes of Your Triumph Resound…",
+                "The Council Recognizes Your Worth…",
+                "Your Leadership is Praised Throughout the Land…"
+            ];
+            
+            var negativeTitles = [
+                "The Kingdom Does Not Forget…",
+                "Your Name Fades from Memory…",
+                "A Mark Stains Your Legacy…",
+                "Whispers of Dishonor Spread…",
+                "Your Reputation is Tarnished…",
+                "The People Speak in Shadows…",
+                "Your Deeds Are Questioned…",
+                "A Dark Cloud Hangs Over Your Name…",
+                "Once Respected, Now Shunned…",
+                "A Warning is Issued in Your Name…",
+                "The Kingdom Watches with Displeasure…",
+                "Your Legacy Begins to Crumble…",
+                "Murmurs of Betrayal Circulate…",
+                "Your Presence No Longer Commands Respect…",
+                "The Walls Whisper of Your Fall…",
+                "The Realm Mourns Its Lost Trust…",
+                "A Blow to Your Honor is Dealt…",
+                "The Bards Tell a Cautionary Tale…",
+                "You Have Been Cast in a Different Light…",
+                "The Court No Longer Speaks of You…",
+                "Once Celebrated, Now Forgotten…",
+                "The Council Watches with Suspicion…",
+                "A Great House Crumbles in Shame…",
+                "The People No Longer Cheer Your Name…",
+                "The Histories Record Your Missteps…"
+            ];
+
+            var prestigeId = notification.prestigeReview.crand;
+            
+            // Function to close modal and mark as viewed
+            function closeModal() {
+                $("#notificationViewPrestigeModal").modal("hide");
+                MarkPrestigeAsViewed(prestigeId, id);
+            }
+
+            function MarkPrestigeAsViewed(prestigeId, index) {
+                const data = {
+                    prestigeId: prestigeId,
+                    accountId: <?php echo Kickback\Services\Session::getCurrentAccount()->crand; ?>,
+                    sessionToken: "<?php echo $_SESSION["sessionToken"]; ?>"
+                };
+
+                console.log(data);
+
+                const params = new URLSearchParams();
+
+                for (const [key, value] of Object.entries(data)) {
+                    params.append(key, value);
+                }
+
+                fetch('<?= Version::formatUrl("/api/v1/prestige/mark_viewed.php?json"); ?>', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: params
+                }).then(response => response.text())
+                    .then(data => {
+                        console.log("Server Response:", data);
+                        
+                        // Remove the notification div
+                        $(".toast").eq(index).fadeOut(300, function () {
+                            $(this).remove();
+                        });
+
+                        // Remove the notification from the JSON array
+                        notificationsJSON.splice(index, 1);
+                    });
+            }
+
+            
+            // Reset animations before showing modal
+            $("#animated-prestige-title").removeClass("animate__"+titleAnimation).css("opacity", "0");
+            $("#animated-prestige-body").removeClass("animate__fadeInUp").css("opacity", "0");
+                    
+            
+            // Show modal
+            $("#notificationViewPrestigeModal").modal('show');
+            
+            
+            // Disable closing by blocking clicks
+            $("#notificationViewPrestigeModal, #animated-prestige-body").off("click");
+                    
+
+            // Enable closing anywhere inside modal after 3 seconds
+            setTimeout(() => {
+                $("#notificationViewPrestigeModal, #animated-prestige-body").on("click", closeModal);
+            }, 3500);
+            // Choose a random title based on commendation status
+            var title = notification.prestigeReview.commend ? 
+                positiveTitles[Math.floor(Math.random() * positiveTitles.length)] : 
+                negativeTitles[Math.floor(Math.random() * negativeTitles.length)];
+            
+            $("#animated-prestige-title").text(title);
+            // Apply animation using Animate.css
+            setTimeout(() => {
+                $("#animated-prestige-title").css("opacity", "1").addClass("animate__animated animate__"+titleAnimation);
+            }, 100);
+            
+            // Delay body animation slightly after title animation
+            setTimeout(() => {
+                $("#animated-prestige-body").css("opacity", "1").addClass("animate__animated animate__fadeInUp");
+            }, 2500);
+            
+            // Populate review content immediately
+            $("#notification-view-prestige-avatar").attr("src", notification.prestigeReview.fromAccount.avatar.url);
+            $("#notification-view-prestige-username").text(notification.prestigeReview.fromAccount.username);
+            $("#notification-view-prestige-date").text(notification.date.formattedBasic);
+            $("#notification-view-prestige-message").text(notification.prestigeReview.message);
+            
+            // Change header background color and title based on commendation
+            if (notification.prestigeReview.commend) {
+                $("#notification-view-prestige-commend").html('<span style="background: #28a745; color: white; padding: 5px 10px; border-radius: 4px;">Commended</span>');
+            } else {
+                $("#notification-view-prestige-commend").html('<span style="background: #dc3545; color: white; padding: 5px 10px; border-radius: 4px;">Denounced</span>');
+            }
+        }
         function LoadQuestReviewModal(id)
         {
             var notification = notificationsJSON[id];

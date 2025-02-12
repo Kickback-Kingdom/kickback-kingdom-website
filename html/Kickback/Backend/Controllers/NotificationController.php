@@ -23,6 +23,7 @@ class NotificationController
         
         $conn = Database::getConnection();
         $stmt = mysqli_prepare($conn, "SELECT * FROM v_notifications WHERE account_id = ?");
+        
         mysqli_stmt_bind_param($stmt, "i", $accountId->crand);
         mysqli_stmt_execute($stmt);
     

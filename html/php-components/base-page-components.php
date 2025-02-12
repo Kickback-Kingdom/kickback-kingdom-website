@@ -17,8 +17,16 @@ $mediaDirs = $mediaDirsResp->data;
     </div>
 </div>
 
+
+
+
+
 <?php if(Kickback\Services\Session::isLoggedIn()) { ?>
+
+
+
     <?php require(\Kickback\SCRIPT_ROOT . "/php-components/league-viewer.php"); ?>
+
 <!--CHESTS-->
 <div class="modal fade modal-chest " id="modalChest" tabindex="-1" aria-labelledby="modalChestLabel" aria-hidden="true" onclick="ToggleChest();">
     <div class="modal-dialog  modal-dialog-centered">
@@ -57,10 +65,10 @@ $mediaDirs = $mediaDirsResp->data;
         ?>
         
       </div> 
-      <div class="modal-footer">
+      <!--<div class="modal-footer">
         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Back</button>
         <button type="button" class="btn bg-ranked-1" onclick="">Select</button>
-      </div>
+      </div>-->
     </div>
   </div>
 </div>
@@ -235,7 +243,34 @@ $mediaDirs = $mediaDirsResp->data;
     </div>
 </div>
 <?php } ?>
-
+<!-- PRESTIGE VIEW MODAL -->
+<form method="POST">
+    <input type="hidden" name="notification-view-prestige-id" id="notification-view-prestige-id" class="rating-value" required>
+    <div class="modal fade" id="notificationViewPrestigeModal" data-bs-keyboard="false" data-bs-backdrop="static" tabindex="-1" aria-labelledby="notificationViewPrestigeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="border-color: transparent;background: transparent;">
+                <div class="modal-header" style="background: transparent; border-bottom: none; text-align: center;">
+                    <h2 id="animated-prestige-title" class="animate__animated" style="color: gold; font-size: 28px; font-weight: bold; text-shadow: 0px 0px 15px gold;">
+                        Your Name Echoes in the Halls…
+                    </h2>
+                </div>
+                <div class="modal-body animate__animated" id="animated-prestige-body" style="background: #1e1e2d; color: white; border-radius: 8px; opacity: 0;">
+                    <div class="card p-3 shadow-sm" style="background: #252537; border: 1px solid gold; border-radius: 12px;">
+                        <div class="d-flex align-items-center mb-3">
+                            <img id="notification-view-prestige-avatar" src="" class="rounded-circle me-3" width="60" height="60" style="border: 2px solid gold;">
+                            <div>
+                                <h6 id="notification-view-prestige-username" class="mb-0 fw-bold" style="color: gold;"></h6>
+                                <small id="notification-view-prestige-date" style="color: gold;"></small>
+                            </div>
+                        </div>
+                        <p id="notification-view-prestige-message" class="fst-italic border-start ps-3" style="color: white;"></p>
+                        <div id="notification-view-prestige-commend" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
 <!--QUEST REVIEW MODAL-->
 <form method="POST">
     
@@ -405,91 +440,7 @@ $mediaDirs = $mediaDirsResp->data;
             aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
-        <?php 
-        
-            if (Kickback\Services\Session::isLoggedIn() && !is_null($activeAccountInfo->notifications))
-            {
-                
-                for ($i=0; $i < count($activeAccountInfo->notifications); $i++) { 
-                    # code...
-                    $not = $activeAccountInfo->notifications[$i];
-
-                    ?>
-                    <div class="toast show mb-1" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="bg-primary text-bg-primary toast-header">
-                            <strong class="me-auto">
-                            <?php
-
-                                echo $not->getTitle();
-
-                            ?>    
-                            </strong>
-                            <small><?php echo $not->date->timeElapsedString(); ?></small>
-                            <?php
-
-                            switch ($not->type) {
-                                case NotificationType::QUEST_REVIEW:
-                                case NotificationType::QUEST_IN_PROGRESS:
-                                case NotificationType::THANKS_FOR_HOSTING:
-                                case NotificationType::QUEST_REVIEWED:
-                                case NotificationType::PRESTIGE:
-                                    break;
-
-                                default:
-                                    echo '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>';
-                                    break;
-                            }
-
-                            ?>
-                        </div>
-                        <div class="toast-body">
-                            <?php
-                                echo $not->getText();
-                            ?>
-
-                        </div>
-                        <?php 
-                            switch ($not->type) {
-                                case NotificationType::QUEST_REVIEW:
-                                    ?>
-                                        <div class="toast-body"><button class="bg-ranked-1 btn btn-sm" onclick="LoadQuestReviewModal(<?php echo $i ?>);"><i class="fa-solid fa-gift"></i> Collect Rewards</button></div>
-                                    <?php
-                                    break;
-                                case NotificationType::THANKS_FOR_HOSTING:
-                                    ?>
-                                        <form method="POST">
-                                            <input type="hidden" name="quest-notifications-thanks-for-hosting-quest-id" value="<?= $not->quest->crand; ?>"/>
-                                            <div class="toast-body">
-                                                <button type="submit" name="submit-notifications-thanks-for-hosting" class="bg-ranked-1 btn btn-sm"><i class="fa-solid fa-gift"></i> Collect Rewards</button>
-                                            </div>
-                                        </form>
-                                    <?php
-                                    break;
-                                
-                                case NotificationType::QUEST_REVIEWED:
-                                    ?> 
-                                        <!--<div class="toast-body"><a class="bg-ranked-1 btn btn-sm" href="#">View</a></div>-->
-                                    <?php
-                                    break;
-                                case NotificationType::PRESTIGE:
-                                    ?> 
-                                        <!--<div class="toast-body"><a class="bg-ranked-1 btn btn-sm" href="#">View</a></div>-->
-                                    <?php
-                                    break;
-                                    
-                                default:
-                                    # code...
-                                    break;
-                            }
-                        ?>
-                    </div>
-
-                    <?php
-                } // for ($i=0; $i < count($activeAccountInfo->notifications); $i++)
-            } // if (Kickback\Services\Session::isLoggedIn() && !is_null($activeAccountInfo->notifications))
-
-
-        ?>
+        <?php require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-components-notifications.php"); ?>
         
     </div>
 </div>

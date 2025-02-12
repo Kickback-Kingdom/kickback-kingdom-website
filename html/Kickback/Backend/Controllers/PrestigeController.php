@@ -71,6 +71,34 @@ class PrestigeController
         return $prestigeNet;
     }
 
+    public static function markPrestigeAsViewed(vRecordId $prestigeId, vRecordId $accountId) : Response {
+        $conn = Database::getConnection();
+    
+        // Ensure prestigeId and accountId are integers
+        $prestigeIdValue = (int) $prestigeId->crand;
+        $accountIdValue = (int) $accountId->crand;
+    
+        // Prepare update statement
+        $stmt = mysqli_prepare($conn, "UPDATE prestige SET viewed = 1 WHERE Id = ? AND account_id_to = ? and viewed = 0");
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare the statement: " . mysqli_error($conn));
+        }
+    
+        mysqli_stmt_bind_param($stmt, "ii", $prestigeIdValue, $accountIdValue);
+    
+        if (mysqli_stmt_execute($stmt)) {
+            // Check if any row was updated
+            if (mysqli_stmt_affected_rows($stmt) > 0) {
+                return new Response(true, "Prestige review marked as viewed.");
+            } else {
+                return new Response(false, "No matching prestige review found or already viewed.");
+            }
+        } else {
+            return new Response(false, "Failed to execute the statement: " . mysqli_stmt_error($stmt));
+        }
+    }
+    
+
     private static function row_to_vPrestigeReview($row) : vPrestigeReview {
 
         $prestigeReview = new vPrestigeReview();

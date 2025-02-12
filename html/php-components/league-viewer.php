@@ -178,22 +178,23 @@ if ($eloChangeResp->success && !empty($eloChangeResp->data)) {
   const eloChanges = <?php echo $eloChanges; ?>;
 
   const eloPerSecond = 30;
-  let currentGameIndex = 0;
+  let currentEloGameIndex = 0;
   let eloInterval = null; // Global variable to store the current animation interval
 
-function showNextEloProgress() {
-    if (currentGameIndex >= eloChanges.length) {
-    // Check if OpenAllChests function exists before calling it
-    if (typeof OpenAllChests === "function") {
-        OpenAllChests();
-    } else {
-        console.warn("OpenAllChests function does not exist.");
-    }
-    return;
+  function showEloIsDone()
+{
+    return eloChanges.length <= 0 || currentEloGameIndex >= eloChanges.length;
 }
 
 
-  const game = eloChanges[currentGameIndex];
+
+function showNextEloProgress() {
+    if (currentEloGameIndex >= eloChanges.length) {
+        showNextPopups();
+    return;
+}
+
+  const game = eloChanges[currentEloGameIndex];
   const modal = new bootstrap.Modal(document.getElementById("leaguesModal"));
   initializeLeagueProgressionModal(game);
   modal.show();
@@ -202,15 +203,15 @@ function showNextEloProgress() {
   document.getElementById("leaguesModal").addEventListener("hidden.bs.modal", () => {
     clearInterval(eloInterval); // Clear any ongoing animation
     eloInterval = null; // Reset interval reference
-    kkAPIUpdateLastELOSeen(currentGameIndex);
-    currentGameIndex++;
+    kkAPIUpdateLastELOSeen(currentEloGameIndex);
+    currentEloGameIndex++;
     showNextEloProgress(); // Show the next game
   }, { once: true });
 }
 
-function kkAPIUpdateLastELOSeen(currentGameIndex)
+function kkAPIUpdateLastELOSeen(currentEloGameIndex)
 {
-    var eloChangeToUpdate = eloChanges[currentGameIndex];
+    var eloChangeToUpdate = eloChanges[currentEloGameIndex];
 
     console.log(eloChangeToUpdate);
 
