@@ -570,9 +570,10 @@ use Kickback\Common\Version;
             function MarkPrestigeAsViewed(prestigeId, index) {
                 const data = {
                     prestigeId: prestigeId,
-                    accountId: <?php echo Kickback\Services\Session::getCurrentAccount()->crand; ?>,
-                    sessionToken: "<?php echo $_SESSION["sessionToken"]; ?>"
+                    accountId: <?php echo Kickback\Services\Session::isLoggedIn() ? Kickback\Services\Session::getCurrentAccount()->crand : 'null'; ?>,
+                    sessionToken: "<?php echo $_SESSION["sessionToken"] ?? ''; ?>"
                 };
+
 
                 console.log(data);
 
