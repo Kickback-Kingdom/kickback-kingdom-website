@@ -299,7 +299,7 @@ class AccountController
 
             // Check if the statement was prepared successfully
             if ($stmt === false) {
-                return (new Response(false, mysqli_error($conn), null));
+                return (new Response(false, "Failed to prepare statement: ".mysqli_error($conn), null));
             }
 
             // Bind parameters to the placeholders
@@ -310,7 +310,7 @@ class AccountController
 
             // Check the result of the query
             if (!$result) {
-                return (new Response(false, mysqli_stmt_error($stmt), null));
+                return (new Response(false, "Failed to get result: ".mysqli_stmt_error($stmt), null));
             }
 
             // Bind result variables
