@@ -95,7 +95,8 @@ if (!isset($thisLichCardData))
                                                     3 => "Reaction",
                                                     4 => "Alteration",
                                                     5 => "Source",
-                                                    6 => "Skill"
+                                                    6 => "Skill",
+                                                    7 => "Summon"
                                                 ];
 
                                                 // Get the card type name dynamically
@@ -162,7 +163,7 @@ if (!isset($thisLichCardData))
 
                                         <tr>
                                             <th scope="row">Description:</th>
-                                            <td><?= htmlspecialchars($thisLichCardData->description); ?></td>
+                                            <td><?= str_replace("\n", "<br>", $thisLichCardData->description); ?></td>
                                         </tr>
                                         <tr>
                                             <th scope="row">Sources:</th>
