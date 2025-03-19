@@ -103,6 +103,7 @@ declare(strict_types=1);
                             <option value="4">Alteration</option>
                             <option value="5">Source</option>
                             <option value="6">Skill</option>
+                            <option value="7">Summon</option>
                         </select>
                     </div>
                 </div>
@@ -479,7 +480,7 @@ const rarityBorders = {
 };
 
 
-const lichCardTypes = {0: "Hero", 1: "Equipment", 2: "Technique", 3:"Reaction", 4:"Alteration", 5:"Source", 6:"Skill"};
+const lichCardTypes = {0: "Hero", 1: "Equipment", 2: "Technique", 3:"Reaction", 4:"Alteration", 5:"Source", 6:"Skill", 7: "Summon"};
 
 const sources = ["arcanic", "abyssal", "thermic", "verdant", "luminate"];
 
@@ -631,7 +632,7 @@ function populateCard(data) {
 
     // Set card description
     const cardDescElement = document.getElementById("lich-card-description");
-    cardDescElement.textContent = data.description;
+    cardDescElement.innerHTML = data.description.replace(/\n/g, "<br>"); // Convert \n to <br>
     cardDescElement.style.fontSize = `${data.descriptionFontSize}em`;
 
     const cardNameElement = document.getElementById("lich-card-name");
