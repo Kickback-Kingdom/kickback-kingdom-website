@@ -218,8 +218,8 @@ $coleAccount = AccountController::getAccountById(new vRecordId('', 164))->data;
 
                         <?php if (Session::IsLoggedIn()): ?>
                             <p class="mb-1"><strong>Server Name:</strong> Kickback Kingdom - Palworld</p>
-                            <p class="mb-1"><strong>IP Address:</strong> <code>launching...</code></p>
-                            <p class="mb-1"><strong>Port:</strong> <code>launching...</code></p>
+                            <p class="mb-1"><strong>IP Address:</strong> <code>209.145.48.193</code></p>
+                            <p class="mb-1"><strong>Port:</strong> <code>28000</code></p>
                         <?php else: ?>
                             <a href="/login.php?redirect=/welcome-alpha-team.php" class="btn btn-outline-light mt-3 px-4 py-2">
                                 Connect to Server
