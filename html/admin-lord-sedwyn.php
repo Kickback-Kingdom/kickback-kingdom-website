@@ -76,7 +76,7 @@ $webhookURL = $kk_credentials["discord_api_url"] . '/' . $kk_credentials["discor
         <div class="row">
             <div class="col-12 col-xl-9">
                 <?php 
-                    $activePageName = "Welcome Alpha Team!";
+                    $activePageName = "I am Lord Sedwyn!";
                     require("php-components/base-page-breadcrumbs.php"); 
                 ?>
                 <?php
@@ -92,21 +92,6 @@ $webhookURL = $kk_credentials["discord_api_url"] . '/' . $kk_credentials["discor
 
                 $randomMessage = $lordSedwynMessages[array_rand($lordSedwynMessages)];
 
-                $ch = curl_init("https://discord.com/api/v10/");
-
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-                curl_setopt($ch, CURLOPT_CAINFO, "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem");
-                
-                $response = curl_exec($ch);
-                
-                if (curl_errno($ch)) {
-                    echo "❌ CURL Error: " . curl_error($ch);
-                } else {
-                    echo "✅ Success! Partial response: " . substr($response, 0, 200);
-                }
-                
-                curl_close($ch);
                 ?>
 
 
@@ -119,24 +104,6 @@ $webhookURL = $kk_credentials["discord_api_url"] . '/' . $kk_credentials["discor
                         <i class="bi bi-megaphone-fill me-1"></i> Send Proclamation
                     </button>
                 </form>
-
-                <div class="card mt-5">
-                    <div class="card-header bg-dark text-white">
-                        Debug Panel: Discord Webhook URL
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text">
-                            <code id="webhook-url"><?= htmlspecialchars($webhookURL) ?></code>
-                            <?php
-echo '<pre>';
-print_r(curl_version());
-echo '</pre>';
-
-                            ?>
-                        </p>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="copyWebhookURL()">Copy to Clipboard</button>
-                    </div>
-                </div>
 
             </div>
 
