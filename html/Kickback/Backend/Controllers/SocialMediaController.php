@@ -39,7 +39,8 @@ class SocialMediaController
             'Content-Type: application/json',
             'Content-Length: ' . strlen($jsonData)
         ));
-    
+        curl_setopt($ch, CURLOPT_CAINFO, "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem");
+
         // Execute the cURL session
         $result = curl_exec($ch);
     
