@@ -55,22 +55,23 @@ $coleAccount = AccountController::getAccountById(new vRecordId('', 164))->data;
                             On behalf of all of us at <strong>Kickback Kingdom</strong>, we want to give a warm and heartfelt welcome to the entire <strong>Alpha Team</strong> community.
                         </p>
                         <!-- Message from a Kingdom Member -->
-                        <div class="d-flex align-items-center bg-body-secondary rounded-3 p-4 mb-5 shadow-sm border">
+                        <div class="d-flex flex-column flex-md-row align-items-start bg-body-secondary rounded-3 p-4 mb-5 shadow-sm border">
                             <!-- Profile Picture -->
-                            <a href="/u/AdmiralBurbeh" class="me-4">
-                                <img src="<?= $coleAccount->getProfilePictureURL(); ?>" alt="AdmiralBurbeh's profile picture" width="80" height="80" class="rounded-circle border border-3 border-success">
+                            <a href="/u/AdmiralBurbeh" class="mb-3 mb-md-0 me-md-4">
+                                <img src="/assets/media/profiles/young-6.jpg" alt="AdmiralBurbeh's profile picture" width="80" height="80" class="rounded-circle border border-3 border-success">
                             </a>
 
                             <!-- Message -->
                             <div>
                                 <p class="mb-2 fs-5 fst-italic">
-                                    "Hello hello, Alpha Team! It's an honor to have you here. Since the old days of liberating entire planets from our enemies, we've stood united with our allies against all odds! Now, join us to liberate Palworld next!"
+                                    "Hello hello, Alpha Team! It's an honor to have you here. Since the old days of liberating entire planets from our enemies, we've stood united with our allies against all odds! Now, join us to liberate&nbsp;Palworld&nbsp;next!"
                                 </p>
                                 <p class="mb-0">
-                                    — <?= $coleAccount->getAccountElement(); ?>
+                                    — <a href="/u/Colethedragon" class="username">Colethedragon</a>
                                 </p>
                             </div>
                         </div>
+
                         <!-- End Message -->
 
                         <!-- Palworld Launch Quest Panel -->
