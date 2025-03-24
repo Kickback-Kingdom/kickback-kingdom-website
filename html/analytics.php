@@ -409,63 +409,63 @@ $mapDataJSON = json_encode($mapData);
             const websiteHits = filteredData.map(data => parseInt(data.website_hits));
 
 
-    // Projection logic
-    const projectionMonths = 12;
-    const minGrowthRate = 5; // Minimum monthly growth rate (percentage)
+            // Projection logic
+            const projectionMonths = 12;
+            const minGrowthRate = 5; // Minimum monthly growth rate (percentage)
 
-    // Calculate average growth rate (percentage) based on filtered data
-    let totalGrowthRate = 0;
-    for (let i = 1; i < filteredData.length; i++) {
-        const previous = parseInt(filteredData[i - 1].total_accounts);
-        const current = parseInt(filteredData[i].total_accounts);
-        const growthRate = ((current - previous) / previous) * 100; // Calculate percentage growth
-        totalGrowthRate += growthRate;
-    }
-    const averageGrowthRate = totalGrowthRate / (filteredData.length - 1); // Use filtered data length
+            // Calculate average growth rate (percentage) based on filtered data
+            let totalGrowthRate = 0;
+            for (let i = 1; i < filteredData.length; i++) {
+                const previous = parseInt(filteredData[i - 1].total_accounts);
+                const current = parseInt(filteredData[i].total_accounts);
+                const growthRate = ((current - previous) / previous) * 100; // Calculate percentage growth
+                totalGrowthRate += growthRate;
+            }
+            const averageGrowthRate = totalGrowthRate / (filteredData.length - 1); // Use filtered data length
 
-    // Generate projection data starting from the selected `startDate`
-    const historicalData = analyticsData.filter(data => data.month >= startDate);
+            // Generate projection data starting from the selected `startDate`
+            const historicalData = analyticsData.filter(data => data.month >= startDate).slice(0, -1);
 
-    const projectedDataMin = [];
-    const projectedDataMax = [];
+            const projectedDataMin = [];
+            const projectedDataMax = [];
     
-    // Create projections
-let lastTotalAccountsMin = parseInt(historicalData[historicalData.length - 1].total_accounts); // For min growth
-let lastTotalAccountsMax = parseInt(historicalData[historicalData.length - 1].total_accounts); // For max growth
+            // Create projections
+            let lastTotalAccountsMin = parseInt(historicalData[historicalData.length - 1].total_accounts); // For min growth
+            let lastTotalAccountsMax = parseInt(historicalData[historicalData.length - 1].total_accounts); // For max growth
 
-for (let i = 0; i < projectionMonths; i++) {
-    // Calculate growth for the current month
-    const minGrowth = (lastTotalAccountsMin * (minGrowthRate / 100)); // 5% growth
-    const maxGrowth = (lastTotalAccountsMax * (averageGrowthRate / 100)); // Average growth
+            for (let i = 0; i < projectionMonths; i++) {
+                // Calculate growth for the current month
+                const minGrowth = Math.ceil(lastTotalAccountsMin * (minGrowthRate / 100)); // 5% growth
+                const maxGrowth = Math.round(lastTotalAccountsMax * (averageGrowthRate / 100)); // Average growth
 
-    // Update separate variables for min and max growth projections
-    lastTotalAccountsMin += minGrowth;
-    lastTotalAccountsMax += maxGrowth;
+                // Update separate variables for min and max growth projections
+                lastTotalAccountsMin += minGrowth;
+                lastTotalAccountsMax += maxGrowth;
 
-    // Calculate projection month
-    const projectionDate = new Date(historicalData[historicalData.length - 1].month);
-    projectionDate.setMonth(projectionDate.getMonth() + i + 1);
-    const projectionMonth = projectionDate.toISOString().substring(0, 7); // Format as 'YYYY-MM'
+                // Calculate projection month
+                const projectionDate = new Date(historicalData[historicalData.length - 1].month);
+                projectionDate.setMonth(projectionDate.getMonth() + i + 1);
+                const projectionMonth = projectionDate.toISOString().substring(0, 7); // Format as 'YYYY-MM'
 
-    // Add projections
-    projectedDataMin.push(Math.round(lastTotalAccountsMin)); // Add min projection
-    projectedDataMax.push(Math.round(lastTotalAccountsMax)); // Add max projection
-}
-
-
-    const labelsProjection = historicalData.map(data => data.month).concat(
-        [...Array(projectionMonths).keys()].map(i => {
-            const projectionDate = new Date(historicalData[historicalData.length - 1].month);
-            projectionDate.setMonth(projectionDate.getMonth() + i + 1);
-            return projectionDate.toISOString().substring(0, 7);
-        })
-    );
-    
+                // Add projections
+                projectedDataMin.push(Math.round(lastTotalAccountsMin)); // Add min projection
+                projectedDataMax.push(Math.round(lastTotalAccountsMax)); // Add max projection
+            }
 
 
-    const userCountsHistorical = historicalData.map(data => parseInt(data.total_accounts));
-    const userCountsMinProjection = projectedDataMin;
-    const userCountsMaxProjection = projectedDataMax;
+            const labelsProjection = historicalData.map(data => data.month).concat(
+                [...Array(projectionMonths).keys()].map(i => {
+                    const projectionDate = new Date(historicalData[historicalData.length - 1].month);
+                    projectionDate.setMonth(projectionDate.getMonth() + i + 1);
+                    return projectionDate.toISOString().substring(0, 7);
+                })
+            );
+            
+
+
+            const userCountsHistorical = historicalData.map(data => parseInt(data.total_accounts));
+            const userCountsMinProjection = projectedDataMin;
+            const userCountsMaxProjection = projectedDataMax;
 
             // Update the charts
             updateChartData(labels, totalAccounts, newAccounts, growthPercentages, retentionRates, activeAccounts, websiteHits, labelsProjection, userCountsHistorical, userCountsMinProjection, userCountsMaxProjection, averageGrowthRate);
