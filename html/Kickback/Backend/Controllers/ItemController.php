@@ -27,6 +27,7 @@ class ItemController
                 rarity,
                 media_id_large,
                 media_id_small,
+                media_id_back,
                 `desc`,
                 `name`,
                 nominated_by_id,
@@ -57,12 +58,19 @@ class ItemController
         $typeValue = (int) $item->type->value; 
         $rarityValue = (int) $item->rarity->value;
 
+        $mediaIdBack = $item->mediaLarge->crand;
+
+        if ($item->mediaBack != null)
+        {
+            $mediaIdBack = $item->mediaBack->crand;
+        }
         $stmt->bind_param(
-            'iiiissiiiiiiiiii',
+            'iiiiissiiiiiiiiii',
             $typeValue,
             $rarityValue,
             $item->mediaLarge->crand,
             $item->mediaSmall->crand,
+            $mediaIdBack,
             $item->desc,
             $item->name,
             $nominatedById,
@@ -258,6 +266,11 @@ class ItemController
             $backImg->setMediaPath($row["back_image"]);
             $item->iconBack = $backImg;
         }
+        else
+        {
+            $item->iconBack = $item->iconBig;
+        }
+
         if (array_key_exists("equipable",$row))
         {
             $item->equipable = $row["equipable"] == 1;

@@ -82,8 +82,7 @@ class LichCardController
         return new Response(true, "Lich PreCon Retrieved", $deck);
     }
 
-    public static function getAllLichSets(): Response
-    {
+    public static function getAllLichSets(): Response {
         $conn = Database::getConnection();
 
         // Query to fetch all Lich sets
@@ -127,8 +126,7 @@ class LichCardController
         return new Response(true, "Lich Sets retrieved successfully.", $lichSets);
     }
 
-    public static function getLichSetByLocator(string $locator): Response
-    {
+    public static function getLichSetByLocator(string $locator): Response {
         $conn = Database::getConnection();
 
         $sql = "
@@ -175,8 +173,7 @@ class LichCardController
         return new Response(true, "Lich Set retrieved successfully.", $lichSet);
     }
 
-    public static function getLichSetByRecordId(vRecordId $recordId): Response
-    {
+    public static function getLichSetByRecordId(vRecordId $recordId): Response {
         $conn = Database::getConnection();
 
         $sql = "
@@ -226,10 +223,7 @@ class LichCardController
         return new Response(true, "Lich Set retrieved successfully.", $lichSet);
     }
 
-
-
-    public static function getAllLichCards(): Response
-    {
+    public static function getAllLichCards(): Response {
         $conn = Database::getConnection();
 
         $sql = "
@@ -297,8 +291,7 @@ class LichCardController
         return new Response(true, "Lich Card retrieved successfully.", $lichCards);
     }
 
-    public static function getAllSubtypes(): Response
-    {
+    public static function getAllSubtypes(): Response {
         $conn = Database::getConnection();
 
         $sql = "SELECT crand, ctime, name FROM lich_card_subtypes ORDER BY name ASC";
@@ -332,8 +325,7 @@ class LichCardController
         return new Response(true, "Subtypes retrieved successfully.", $subtypes);
     }
 
-    public static function saveLichCard(LichCard $model): Response
-    {
+    public static function saveLichCard(LichCard $model): Response {
         $conn = Database::getConnection();
 
         $conn->begin_transaction(); // Start a transaction to ensure consistency.
@@ -535,8 +527,7 @@ class LichCardController
      * @return array An associative array with 'ctime' and 'crand' of the inserted or existing subtype.
      * @throws \Exception If insertion fails due to reasons other than a duplicate crand.
      */
-    private static function insertSubtype(string $name, \mysqli $conn): array
-    {
+    private static function insertSubtype(string $name, \mysqli $conn): array {
         $subTypeCTime = RecordId::getCTime();
         $subTypeCRand = RecordId::generateCRand();
 
@@ -567,9 +558,7 @@ class LichCardController
         }
     }
 
-
-    public static function getLichCardByRecordId(vRecordId $recordId): Response
-    {
+    public static function getLichCardByRecordId(vRecordId $recordId): Response {
         $conn = Database::getConnection();
 
         $sql = "
@@ -645,8 +634,7 @@ class LichCardController
         return new Response(true, "Lich Card retrieved successfully.", $lichCard);
     }
    
-    public static function getLichCardByLocator(string $locator): Response
-    {
+    public static function getLichCardByLocator(string $locator): Response {
         $conn = Database::getConnection();
 
         $sql = "
@@ -722,8 +710,7 @@ class LichCardController
         return new Response(true, "Lich Card retrieved successfully.", $lichCard);
     }
 
-    public static function updateLichCardWikiContent(vRecordId $lichCardId, int $contentId) : Response 
-    {
+    public static function updateLichCardWikiContent(vRecordId $lichCardId, int $contentId) : Response {
         $conn = Database::getConnection();
         $stmt = $conn->prepare("UPDATE lich_card SET content_id = ? WHERE ctime = ? and crand = ?");
         mysqli_stmt_bind_param($stmt, 'isi', $contentId, $lichCardId->ctime, $lichCardId->crand);
@@ -732,8 +719,7 @@ class LichCardController
         return (new Response(true, "Lich Card content updated.", null));
     }
 
-    public static function updateLichSetWikiContent(vRecordId $lichSetId, int $contentId): Response
-    {
+    public static function updateLichSetWikiContent(vRecordId $lichSetId, int $contentId): Response {
         $conn = Database::getConnection();
         
         // Prepare the SQL query to update the content_id in the lich_set table
@@ -756,9 +742,7 @@ class LichCardController
         return new Response(true, "Lich Set content updated successfully.", null);
     }
 
-
-    private static function getCardSubTypes(vRecordId $lichCardId): array
-    {
+    private static function getCardSubTypes(vRecordId $lichCardId): array {
         $conn = Database::getConnection();
 
         $sql = "
@@ -789,9 +773,7 @@ class LichCardController
         return $subTypes;
     }
 
-
-    public static function row_to_vLichCard(array $row, bool $populateSubTypes = false): vLichCard
-    {
+    public static function row_to_vLichCard(array $row, bool $populateSubTypes = false): vLichCard {
         
         $lichCard = new vLichCard($row['ctime'], (int)$row['crand']);
 
@@ -938,7 +920,7 @@ class LichCardController
         $item->rarity = ItemRarity::from($card->rarity);
         $item->mediaLarge = new ForeignRecordId('', $card->cardImage->crand);
         $item->mediaSmall = new ForeignRecordId('', $card->art->crand);
-        $item->mediaBack = new ForeignRecordId('', 1017);
+        $item->mediaBack = new ForeignRecordId('', 1238);
         $item->desc = $card->description;
         $item->name = $card->name;
 
