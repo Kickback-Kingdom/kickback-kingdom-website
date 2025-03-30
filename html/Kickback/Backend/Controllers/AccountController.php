@@ -210,6 +210,35 @@ class AccountController
         }
     }
     
+    public static function getAccountsByChallenge(vRecordId $challengeId) {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT a.* FROM `lobby_challenge_account` lca inner join v_account_info a on lca.account_id = a.Id where lca.ref_challenge_ctime = ? and lca.ref_challenge_crand = ?";
+
+        
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return new Response(false, 'Failed to prepare statement for account retrieval', null);
+        }
+
+        $ctime = $challengeId->ctime;
+        $crand = $challengeId->crand;
+
+        $stmt->bind_param('si', $ctime, $crand);
+        $stmt->execute();
+
+        $result = $stmt->get_result();
+
+        if (!$result) {
+            return new Response(false, "Failed to get challenge accounts: " . $conn->error, []);
+        }
+
+        $rows = $result->fetch_all(MYSQLI_ASSOC);
+        $accounts = array_map([self::class, 'row_to_vAccount'], $rows);
+
+        return new Response(true, "Challenge accounts", $accounts);
+    }
+    
     public static function getAccountByRaffleWinner(vRaffle $raffle): Response {
         $conn = Database::getConnection();
         //$sql = "SELECT * FROM kickbackdb.v_raffle_winners WHERE raffle_id = ?";
@@ -259,7 +288,25 @@ class AccountController
     public static function getAccountChests(vRecordId $recordId) : Response {
         $conn = Database::getConnection();
         // Prepare the SQL statement
-        $stmt = mysqli_prepare($conn, "SELECT loot.Id, loot.rarity, CONCAT(b.Directory,'/',b.Id,'.',b.extension) as ItemImg FROM kickbackdb.v_loot_item as loot left join Media b on b.Id = loot.media_id_large where loot.account_id = ? and loot.opened = 0");
+        $sql = "SELECT 
+                loot.Id, 
+                loot.rarity, 
+                CONCAT(b.Directory, '/', b.Id, '.', b.extension) AS ItemImg,
+
+                COALESCE(
+                    CONCAT(c.Directory, '/', c.Id, '.', c.extension),
+                    CONCAT(b.Directory, '/', b.Id, '.', b.extension)
+                ) AS ItemImgBack
+
+                FROM 
+                kickbackdb.v_loot_item AS loot
+                LEFT JOIN Media b ON b.Id = loot.media_id_large
+                LEFT JOIN Media c ON c.Id = loot.media_id_back
+
+                WHERE 
+                loot.account_id = ? 
+                AND loot.opened = 0;";
+        $stmt = mysqli_prepare($conn, $sql);
 
         // Bind the parameter to the placeholder in the SQL statement
         mysqli_stmt_bind_param($stmt, "i", $recordId->crand); // "i" signifies that the parameter is an integer
@@ -328,180 +375,135 @@ class AccountController
             return (new Response(false, "Error. Check the data for more info.", $th));
         }
     }
-    
-    public static function searchForAccount(string $searchTerm, int $page, int $itemsPerPage, array $filters = []) : Response {
-        $conn = Database::getConnection();
-        //assert($conn instanceof mysqli);
 
-        // Add the wildcards to the searchTerm itself and convert to lowercase
-        $searchTerm = "%" . strtolower($searchTerm) . "%";
-
-        $offset = ($page - 1) * $itemsPerPage;
-
+    private static function buildJoinsAndConditions(array $filters): array {
         $joinQuery = "";
-        $questApplicantConditions = [];
-
-
-        // Check for quest applicant or participant filters
-        if (isset($filters['IsQuestApplicant'])) {
-            $joinQuery = " INNER JOIN quest_applicants ON v_account_info.Id = quest_applicants.account_id";
-            $questApplicantConditions[] = "quest_applicants.quest_id = " . (int)$filters['IsQuestApplicant'];
-            unset($filters['IsQuestApplicant']);
-        }
-        if (isset($filters['IsQuestParticipant'])) {
-            if (empty($joinQuery)) {
-                $joinQuery = " INNER JOIN quest_applicants ON v_account_info.Id = quest_applicants.account_id";
-            }
-            $questApplicantConditions[] = "quest_applicants.quest_id = " . (int)$filters['IsQuestParticipant'];
-            $questApplicantConditions[] = "quest_applicants.participated = 1";
-            unset($filters['IsQuestParticipant']);
-        }
-        
-
-        // Prepare the count statement
-        $countQuery = "SELECT COUNT(*) as total FROM v_account_info" . $joinQuery . "  WHERE (LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?)  AND Banned = 0";
-        
-        // Prepare the base of the main query
-        $query = "SELECT v_account_info.*,
-        (
-            (CASE WHEN LOWER(username) LIKE ? THEN 4 ELSE 0 END) +
-            (CASE WHEN LOWER(firstname) LIKE ? THEN 3 ELSE 0 END) +
-            (CASE WHEN LOWER(lastname) LIKE ? THEN 2 ELSE 0 END) +
-            (CASE WHEN LOWER(email) LIKE ? THEN 1 ELSE 0 END)
-        ) AS relevancy_score
-        FROM v_account_info" . $joinQuery . "
-        WHERE (LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?) AND Banned = 0";
-
-        // Add additional filters
         $filterConditions = [];
         $filterParams = [];
-
-        foreach ($filters as $field => $value) {
-            $filterConditions[] = "LOWER($field) = ?";
-            $filterParams[] = strtolower($value);
+        $paramTypes = "";
+    
+        if (isset($filters['IsQuestApplicant'])) {
+            $joinQuery .= " INNER JOIN quest_applicants ON v_account_info.Id = quest_applicants.account_id";
+            $filterConditions[] = "quest_applicants.quest_id = ?";
+            $filterParams[] = (int)$filters['IsQuestApplicant'];
+            $paramTypes .= "i";
         }
-
-        if (count($questApplicantConditions) > 0) {
-            $filterConditions = array_merge($filterConditions, $questApplicantConditions);
+    
+        if (isset($filters['IsQuestParticipant'])) {
+            if (strpos($joinQuery, "quest_applicants") === false) {
+                $joinQuery .= " INNER JOIN quest_applicants ON v_account_info.Id = quest_applicants.account_id";
+            }
+            $filterConditions[] = "quest_applicants.quest_id = ?";
+            $filterConditions[] = "quest_applicants.participated = 1";
+            $filterParams[] = (int)$filters['IsQuestParticipant'];
+            $paramTypes .= "i";
         }
-
-        if (count($filterConditions) > 0) {
-            $filterConditionsString = implode(" AND ", $filterConditions);
-            $countQuery .= " AND " . $filterConditionsString;
-            $query .= " AND " . $filterConditionsString;
+    
+        if (!empty($filters['IsLobbyParticipantCTime']) && !empty($filters['IsLobbyParticipantCRand'])) {
+            $joinQuery .= " INNER JOIN lobby_challenge_account ON v_account_info.Id = lobby_challenge_account.account_id";
+            $filterConditions[] = "lobby_challenge_account.ref_challenge_ctime = ?";
+            $filterConditions[] = "lobby_challenge_account.ref_challenge_crand = ?";
+            $filterConditions[] = "lobby_challenge_account.`left` = 0";
+            $filterParams[] = $filters['IsLobbyParticipantCTime'];
+            $filterParams[] = (int)$filters['IsLobbyParticipantCRand'];
+            $paramTypes .= "si";
         }
+    
+        return [
+            'joinQuery' => $joinQuery,
+            'conditions' => $filterConditions,
+            'params' => $filterParams,
+            'paramTypes' => $paramTypes,
+        ];
+    }
 
-        // Complete the main query
-        $query .= " ORDER BY relevancy_score DESC, level DESC, exp_current DESC, Username
-                    LIMIT ? OFFSET ?";
-        
-        
-        
-        $stmtCount = $conn->prepare($countQuery);
-        if (false === $stmtCount) {
+    private static function executeCountQuery(string $joinQuery, string $whereClause, array $countParams, string $countTypes): int {
+        $conn = Database::getConnection();
+        $countQuery = "SELECT COUNT(*) AS total FROM v_account_info $joinQuery $whereClause";
+    
+        $stmt = $conn->prepare($countQuery);
+        if (!$stmt) {
             error_log($conn->error);
-            return new Response(false,
-                "Couldn't find account due to error(s).",
-                ["Error in SearchForAccount(...) when preparing SQL query. (mysqli_prepare)"]);
+            throw new \Exception("Failed to prepare count query.");
         }
-        $countParams = array_merge([$searchTerm, $searchTerm, $searchTerm, $searchTerm], $filterParams);
-        //$success = $stmtCount->bind_param('ssss', $searchTerm, $searchTerm, $searchTerm, $searchTerm);
-        $success = $stmtCount->bind_param(str_repeat('s', count($countParams)), ...$countParams);
-        if (false === $success) {
-            error_log($stmtCount->error);
-            $stmtCount->close();
-            return new Response(false,
-                "Couldn't find account due to error(s).",
-                ["Error in SearchForAccount(...) binding SQL query parameters. (mysqli_stmt_bind_param)"]);
-        }
-
-        // Execute the count statement
-        $success = $stmtCount->execute();
-        if (false === $success) {
-            error_log($stmtCount->error);
-            $stmtCount->close();
-            return new Response(false,
-                "Couldn't find account due to error(s).",
-                ["Error in SearchForAccount(...) when executing SQL query. (mysqli_stmt_execute)"]);
-        }
-
-        $resultCount = $stmtCount->get_result();
-        if (false === $resultCount) {
-            error_log($stmtCount->error);
-            $stmtCount->close();
-            return new Response(false,
-                "Couldn't find account due to error(s).",
-                ["Error in SearchForAccount(...) when retrieving SQL query results. (mysqli_stmt_get_result)"]);
-        }
-
-        $countRow = $resultCount->fetch_assoc();
-        if (!isset($countRow)) {
-            error_log($stmtCount->error);
-            $stmtCount->close();
-            return new Response(false,
-                "Couldn't find account due to error(s).",
-                ["Error in SearchForAccount(...) when fetching next row from SQL query results. (mysqli_fetch_assoc)"]);
-        }
-
-        $count = $countRow["total"];
-        $stmtCount->close();
-
-        $stmt = $conn->prepare($query);
-        if (false === $stmt) {
-            error_log($conn->error);
-            return new Response(false,
-                "Couldn't find account due to error(s).",
-                ["Error in SearchForAccount(...) when preparing SQL query. (mysqli_prepare)"]);
-        }
-
-
-        $mainParams = array_merge([$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm], $filterParams, [$itemsPerPage, $offset]);
-
-        $success = $stmt->bind_param(str_repeat('s', count($mainParams) - 2) . 'ii', ...$mainParams);
-        if (false === $success) {
-            error_log($stmt->error);
-            $stmt->close();
-            return new Response(false,
-                "Couldn't find account due to error(s).",
-                ["Error in SearchForAccount(...) binding SQL query parameters. (mysqli_stmt_bind_param)"]);
-        }
-
-        // Execute the main search statement
-        $success = $stmt->execute();
-        if (false === $success) {
-            error_log($stmt->error);
-            $stmt->close();
-            return new Response(false,
-                "Couldn't find account due to error(s).",
-                ["Error in SearchForAccount(...) when executing SQL query. (mysqli_stmt_execute)"]);
-        }
-
+    
+        $stmt->bind_param($countTypes, ...$countParams);
+        $stmt->execute();
         $result = $stmt->get_result();
-        if (false === $result) {
-            error_log($stmt->error);
-            $stmt->close();
-            return new Response(false,
-                "Couldn't find account due to error(s).",
-                ["Error in SearchForAccount(...) when retrieving SQL query results. (mysqli_stmt_get_result)"]);
-        }
+        $count = $result->fetch_assoc()['total'] ?? 0;
+        $stmt->close();
+    
+        return $count;
+    }
 
+    private static function executeMainQuery(string $joinQuery, string $whereClause, array $mainParams, string $mainTypes, int $itemsPerPage, int $offset): array {
+        $conn = Database::getConnection();
+        $mainQuery = "
+            SELECT v_account_info.*, (
+                (CASE WHEN LOWER(username) LIKE ? THEN 4 ELSE 0 END) +
+                (CASE WHEN LOWER(firstname) LIKE ? THEN 3 ELSE 0 END) +
+                (CASE WHEN LOWER(lastname) LIKE ? THEN 2 ELSE 0 END) +
+                (CASE WHEN LOWER(email) LIKE ? THEN 1 ELSE 0 END)
+            ) AS relevancy_score
+            FROM v_account_info
+            $joinQuery
+            $whereClause
+            ORDER BY relevancy_score DESC, level DESC, exp_current DESC, Username
+            LIMIT ? OFFSET ?";
+
+
+        $stmt = $conn->prepare($mainQuery);
+        if (!$stmt) {
+            error_log($conn->error);
+            throw new \Exception("Failed to prepare main query.");
+        }
+    
+        $stmt->bind_param($mainTypes, ...$mainParams);
+        $stmt->execute();
+        $result = $stmt->get_result();
         $accountItems = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
+    
+        return $accountItems;
+    }
+    
+    public static function searchForAccount(string $searchTerm, int $page, int $itemsPerPage, array $filters = []): Response {
+        $searchTerm = "%" . strtolower($searchTerm) . "%";
+        $page = max(1, $page);
+        $itemsPerPage = max(1, $itemsPerPage);
+        $offset = ($page - 1) * $itemsPerPage;
+    
+        $filterConditions = ["(LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?)", "Banned = 0"];
+        $filterParams = [$searchTerm, $searchTerm, $searchTerm, $searchTerm];
+        $paramTypes = "ssss";
+    
+        $joinData = self::buildJoinsAndConditions($filters);
+        $joinQuery = $joinData['joinQuery'];
+        $filterConditions = array_merge($filterConditions, $joinData['conditions']);
 
-        $newAccountItems = [];
-        foreach($accountItems as $accountRow) {
-            // Remove unwanted fields
+        $countParams = array_merge($filterParams, $joinData['params']);
+        $countTypes = $paramTypes . $joinData['paramTypes'];
 
-            $account = self::row_to_vAccount($accountRow, true);
-
-            $newAccountItems[] = $account;
-        }
-
-
-        return (new Response(true, "Accounts", [
+        $whereClause = " WHERE " . implode(" AND ", $filterConditions);
+    
+        $count = self::executeCountQuery($joinQuery, $whereClause, $countParams, $countTypes);
+        
+        $mainParams = array_merge(
+            [$searchTerm, $searchTerm, $searchTerm, $searchTerm],
+            $filterParams,
+            $joinData['params'],
+            [$itemsPerPage, $offset]
+        );
+        $mainTypes = $paramTypes . $paramTypes . $joinData['paramTypes']."ii";
+    
+        $accountItems = self::executeMainQuery($joinQuery, $whereClause, $mainParams, $mainTypes, $itemsPerPage, $offset);
+    
+        $newAccountItems = array_map(fn($row) => self::row_to_vAccount($row, true), $accountItems);
+    
+        return new Response(true, "Accounts found", [
             'total' => $count,
-            'accountItems' => $newAccountItems
-        ]));
+            'accountItems' => $newAccountItems,
+        ]);
     }
 
     public static function getAccountTitle(vAccount $account) : string {
@@ -981,8 +983,19 @@ class AccountController
     }
     
     public static function row_to_vAccount(array $row, bool $populateChildData = false) : vAccount {
-        
-        $account = new vAccount('', $row["Id"]);
+        $id = null;
+        foreach (['Id', 'account_id', 'accountId'] as $key) {
+            if (isset($row[$key])) {
+                $id = (int)$row[$key];
+                break;
+            }
+        }
+
+        if ($id === null) {
+            throw new \Exception("Account ID not found.");
+        }
+
+        $account = new vAccount('', $id);
 
         // Assign string and integer properties
         $account->username = $row["Username"];
@@ -1017,7 +1030,7 @@ class AccountController
         $account->isStewardOfTechnology = (bool) $row["IsStewardOfTechnology"];
         $account->isServantOfTheLich = (bool) $row["IsServantOfTheLich"];
 
-        if (array_key_exists('game_id', $row)) {
+        if (array_key_exists('game_id', $row) && $row["game_id"] != null) {
             $gameId = (int)$row['game_id'];
             
             // Create a new game stats object
