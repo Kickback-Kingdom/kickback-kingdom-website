@@ -93,8 +93,8 @@ if ($pageVisitResp->success)
     $thisPageVisits = $pageVisitResp->data;
 }
 
-$currentTreasureHuntsResp = TreasureHuntController::getCurrentEvents();
-$currentHiddenObjectsResp = TreasureHuntController::getHiddenObjectsOnPage($pageVisitId);
+//$currentTreasureHuntsResp = TreasureHuntController::getCurrentEvents();
+//$currentHiddenObjectsResp = TreasureHuntController::getHiddenObjectsOnPage($pageVisitId);
 
 ?>
 <head>
