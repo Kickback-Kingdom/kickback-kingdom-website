@@ -70,6 +70,10 @@ class vMedia extends vRecordId
     public static function isValidRecordId(vRecordId $media) : bool {
         if ($media->crand == 221)
             return false;
+        if ($media->crand < 0)
+            return false;
+        
+        return true;
     }
 }
 

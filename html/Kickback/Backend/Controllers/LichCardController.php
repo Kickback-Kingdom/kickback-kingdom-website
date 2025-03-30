@@ -325,6 +325,22 @@ class LichCardController
         return new Response(true, "Subtypes retrieved successfully.", $subtypes);
     }
 
+    private static function updateLichCardItemImage(\mysqli $conn, LichCard $model) : Response {
+        $sql = "UPDATE item set media_id_large = ?, media_id_small = ? where id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param(
+                    'iii',
+                    $model->cardImage->crand,
+                    $model->cardImage->crand,
+                    $model->item->crand
+                );
+
+                if (!$stmt->execute()) {
+                    throw new \Exception("Update failed: " . $stmt->error);
+                }
+
+        return new Response(true, "Updated lich card item image");
+    }
     public static function saveLichCard(LichCard $model): Response {
         $conn = Database::getConnection();
 
@@ -509,7 +525,7 @@ class LichCardController
                     $stmt->close();
                 }
             }
-    
+            self::updateLichCardItemImage($conn, $model);
             $conn->commit(); // Commit the transaction
             return new Response(true, "Lich Card saved successfully.", $model);
 

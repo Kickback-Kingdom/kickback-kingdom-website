@@ -8,6 +8,7 @@ use Kickback\Backend\Models\Response;
 use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vDateTime;
+use Kickback\Backend\Views\vRecordId;
 use Kickback\Services\Session;
 use Kickback\Common\Version;
 
@@ -189,7 +190,7 @@ class MediaController {
         return in_array($directory, $validDirs);
     }
     
-    public static function UploadMediaImage($directory, $name, $desc, $imageBase64, $mediaCRAND = "") {
+    public static function UploadMediaImage($directory, $name, $desc, $imageBase64, $mediaCRAND = "") : Response {
         list($type, $data) = explode(';', $imageBase64);
         list(, $data) = explode(',', $data);
         $decodedImageData = base64_decode($data);
@@ -205,7 +206,8 @@ class MediaController {
                 
                 $crand = (int)$mediaCRAND;
                 
-                if (!is_numeric($mediaCRAND) || $crand < 0) {
+                
+                if (!ctype_digit($mediaCRAND) || $crand < 0) { 
                     throw new \Exception("Invalid mediaCRAND value: $mediaCRAND");
                 }
             } else {
@@ -263,6 +265,7 @@ class MediaController {
     
     public static function UploadMediaImageTransaction($conn, $directory, $name, $desc, $fileExtension, $decodedImageData, $crand = -1) {
         // Insert media record
+        
         $mediaId = self::InsertOrUpdateMediaRecord($conn, $directory, $name, $desc, $fileExtension, $crand);
         if (!$mediaId) {
             throw new \Exception('Error saving media record: ' . mysqli_error($conn));

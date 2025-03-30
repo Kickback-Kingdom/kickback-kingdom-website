@@ -111,6 +111,15 @@ class vLichCard extends vRecordId
                             }
                             break;
 
+                        case 'item':
+                            if (is_object($value)) {
+                                $item = new vItem();
+                                $item->ctime = $value->ctime;
+                                $item->crand = $value->crand;
+                                $this->$key = $item;
+                            }
+                            break;
+
                     default:
                         $this->$key = $value;
                         break;
@@ -141,6 +150,7 @@ class vLichCard extends vRecordId
         $model->ctime = $this->ctime;
         $model->crand = $this->crand;
 
+
         $model->locator = $this->locator;
 
         $model->reviewStatus = $this->reviewStatus;
@@ -158,6 +168,11 @@ class vLichCard extends vRecordId
         $model->set = new ForeignRecordId(
             $this->set->ctime,
             $this->set->crand
+        );
+
+        $model->item = new ForeignRecordId(
+            $this->item->ctime,
+            $this->item->crand
         );
 
         return $model;
