@@ -12,7 +12,7 @@ use Kickback\Backend\Models\Response;
 
 OnlyPOST();
 
-$containsFieldsResp = POSTContainsFields("sessionToken", "lootId");
+$containsFieldsResp = POSTContainsFields("lootId");//"sessionToken", 
 if (!$containsFieldsResp->success)
     return $containsFieldsResp;
 

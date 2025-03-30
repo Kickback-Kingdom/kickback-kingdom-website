@@ -150,7 +150,6 @@ use Kickback\Common\Version;
         function LoadContainerLoot(containerLootId, callback = null) {
 
             const data = {
-                sessionToken: "<?= $_SESSION['sessionToken']; ?>",
                 lootId: containerLootId
             };
 
