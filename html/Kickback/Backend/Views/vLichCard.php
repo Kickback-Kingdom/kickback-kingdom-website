@@ -34,6 +34,7 @@ class vLichCard extends vRecordId
 
     public vMedia $art;
     public vMedia $cardImage;
+    public ?vItem $item = null;
 
     function __construct(string $ctime = '', int $crand = -1)
     {
@@ -62,6 +63,7 @@ class vLichCard extends vRecordId
         $this->reviewStatus = new vReviewStatus();
         $this->content = new vContent();
         $this->set = new vLichSet();
+        $this->item = null;
     }
     
     

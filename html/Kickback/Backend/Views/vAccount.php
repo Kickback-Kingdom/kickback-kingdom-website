@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Kickback\Backend\Views;
 
 use Kickback\Backend\Views\vMedia;
+use Kickback\Backend\Views\vRecordId;
 use Kickback\Common\Version;
 use Kickback\Backend\Controllers\AccountController;
 

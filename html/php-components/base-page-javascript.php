@@ -15,6 +15,16 @@ use Kickback\Common\Version;
 
     <!--<script src="assets/owl-carousel/owl.carousel.js"></script>-->
     <script>
+        function arrayRemoveItem(array, itemToRemove) {
+            let index = array.indexOf(itemToRemove);
+
+            let newArr = index !== -1 ? 
+                [...array.slice(0, index), ...array.slice(index + 1)] : fruits;
+            
+            return newArr;
+        }
+
+
         var play_styles = <?= PlayStyle::getPlayStyleJSON(); ?>;
         $(document).ready(function () {
 
@@ -136,6 +146,39 @@ use Kickback\Common\Version;
         const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
 
 
+        
+        function LoadContainerLoot(containerLootId, callback = null) {
+
+            const data = {
+                sessionToken: "<?= $_SESSION['sessionToken']; ?>",
+                lootId: containerLootId
+            };
+
+            const params = new URLSearchParams(data);
+
+            fetch(`/api/v1/lich/get-container-cards.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params,
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && Array.isArray(data.data)) {
+                        if (callback != null)
+                            callback(true, data.data);
+                    } else {
+                        if (callback != null)
+                            callback(false, data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    if (callback != null)
+                        callback(false, err);
+                });
+        }
         <?php 
 
         if (Kickback\Services\Session::isLoggedIn())
@@ -148,18 +191,116 @@ use Kickback\Common\Version;
         var chestElement = document.getElementById("imgChest");
         var imgShineBackground = document.getElementById("imgShineBackground");
         var imgShineForeground = document.getElementById("imgShineForeground");
-        var imgItem = document.getElementById("imgItem");
+        //var imgItem = document.getElementById("imgItem");
+        var imgItemContainer = document.getElementById("imgItemWrapper");
 
+        function GiveLootNickname(lootId, nickname, description, callback = null)
+        {
+            if (nickname == null || nickname.trim() == "")
+            {
+                if (callback != null)
+                    callback(false, "Please provide a nickname.");
+            }
+            
+            const data = {
+                sessionToken: "<?= $_SESSION['sessionToken']; ?>",
+                lootId: lootId,
+                nickname: nickname,
+                description: description
+            };
+
+            const params = new URLSearchParams(data);
+            
+            fetch(`/api/v1/loot/give-nickname.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params,
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        
+                        if (callback != null)
+                        {
+                            callback(true);
+                        }
+                    } else {
+                        if (callback != null)
+                        {
+                            callback(false,data.message);
+                        }
+                    }
+                })
+                .catch(err => {
+                    if (callback != null)
+                    {
+                        callback(false, err);
+                    }
+                });
+        }
+        
+        function TransferLootIntoContainer(lootId, toContainerLootId, callback = null)
+        {
+            const data = {
+                sessionToken: "<?= $_SESSION['sessionToken']; ?>",
+                itemLootId: lootId,
+                toContainerLootId: toContainerLootId
+            };
+
+            const params = new URLSearchParams(data);
+
+            fetch(`/api/v1/container/transfer.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params,
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        
+                        if (callback != null)
+                        {
+                            callback(true);
+                        }
+                    } else {
+                        if (callback != null)
+                        {
+                            callback(false,data.message);
+                        }
+                    }
+                })
+                .catch(err => {
+                    if (callback != null)
+                    {
+                        callback(false, err);
+                    }
+                });
+        }
 
         function OpenChest() {
             //var chestRarityArray = [9,9,9,9,9,9];
             chestElement.src = "/assets/media/chests/Loot_Box_0" + (parseInt(chests[0]["rarity"]) + 1) + "_02_Star.png";
-            $('#imgItem').addClass('chest-item-animate');
+            //$('#imgItem').addClass('chest-item-animate');
+            
+            imgItemContainer.classList.add('animate-flip');
+
             $('#modalChest').addClass('chest-open-animate');
             imgShineForeground.style.visibility = "visible";
             imgShineBackground.style.visibility = "hidden";
             imgShineForeground.src = "/assets/media/chests/" + chests[0]["rarity"] + "_o_s.png";
-            imgItem.style.visibility = "visible";
+            imgItemContainer.style.visibility = "visible";
+
+            
+            // Set front and back images
+            //document.getElementById('imgItemFront').src = "/assets/media/" + chests[0]["ItemImg"];
+            //document.getElementById('imgItemBack').src = "https://kickback-kingdom.com/assets/images/lich/decks/back.jpg";
+
+            // Trigger flip
+            document.getElementById('imgItemWrapper').classList.add('flipped');
         }
 
         function ShowChest() {
@@ -170,13 +311,17 @@ use Kickback\Common\Version;
             //https://kickback-kingdom.com/assets/media/chests/Loot_Box_02_01_Star.png
             //var chestRarityArray = [10,10,10,10,10,10];
             chestElement.src = "/assets/media/chests/Loot_Box_0" + (parseInt(chests[0]["rarity"]) + 1) + "_01_Star.png";
-            $('#imgItem').removeClass('chest-item-animate');
+            //$('#imgItem').removeClass('chest-item-animate');
+            imgItemContainer.classList.remove('animate-flip');
             $('#modalChest').removeClass('chest-open-animate');
             imgShineBackground.style.visibility = "visible";
             imgShineForeground.style.visibility = "hidden";
             imgShineBackground.src = "/assets/media/chests/" + chests[0]["rarity"] + "_c_s.png";
-            imgItem.style.visibility = "hidden";
-            imgItem.src = "/assets/media/" + chests[0]["ItemImg"];
+            imgItemContainer.style.visibility = "hidden";
+            //imgItem.src = "/assets/media/" + chests[0]["ItemImg"];
+
+            document.getElementById('imgItemFront').src = "/assets/media/" + chests[0]["ItemImg"];
+            document.getElementById('imgItemBack').src = "/assets/media/" + chests[0]["ItemImgBack"];
 
             $("#modalChest").modal("show");
         }
@@ -209,7 +354,7 @@ use Kickback\Common\Version;
 
         function ToggleChest() {
             if ($('#modalChest').hasClass('show')) {
-                if (imgItem.style.visibility == "hidden") {
+                if (imgItemContainer.style.visibility == "hidden") {
 
                     OpenChest();
                 } else {
@@ -352,8 +497,10 @@ use Kickback\Common\Version;
 
         var itemInformation = <?= (isset($itemInformationJSON)?$itemInformationJSON:"[]"); ?>;
         var itemStackInformation = <?= (isset($itemStackInformationJSON)?$itemStackInformationJSON:"[]"); ?>;
-        function ShowInventoryItemModal(itemId) 
+        function ShowInventoryItemModal(itemId, lootId) 
         {
+            CloseInventoryItemContainerModal();
+
             var item = GetItemInformationById(itemId);
             console.log(item);
             var primaryImage = $("#inventoryItemImage");
@@ -372,7 +519,7 @@ use Kickback\Common\Version;
             $("#inventoryItemCopyContainer").addClass("d-none");
             $("#inventoryItemFooter").addClass("d-none");
 
-            SetupItemInvetoryModal(item);
+            SetupItemInventoryModal(item, lootId);
 
             primaryImage.addClass("animate__jackInTheBox");
 
@@ -388,7 +535,21 @@ use Kickback\Common\Version;
             }, 10);
         }
 
-        function SetupItemInvetoryModal(item)
+        function CloseInventoryItemModal()
+        {
+            
+            $("#inventoryItemModal").modal("hide");
+        }
+
+        function CloseInventoryItemContainerModal()
+        {
+            
+            $("#inventoryItemContainerModal").modal("hide");
+        }
+
+
+
+        function SetupItemInventoryModal(item, lootId)
         {
             if (item.crand == "14" && myNextWritOfPassageURL != '')
             {
@@ -406,6 +567,37 @@ use Kickback\Common\Version;
                 $("#inventoryItemUseButton").addClass('d-none');
                 $("#inventoryItemUseButton").attr("onclick", "");
             }
+
+            
+            // Show container open section if item is a container
+            if (item.isContainer) {
+                $("#inventoryItemContainerSection").show();
+                $("#inventoryItemOpenContainerButton").attr("onclick", "OpenContainer(" + lootId + ");");
+
+                if (item.itemCategory === 2) {
+                    //$('#containerIcon').attr('class', 'fa-regular fa-cards-blank');
+                    $('#containerExplanation').html(`
+                        This can hold <strong>L.I.C.H. trading cards</strong>. 
+                        You can view the cards inside and use them to <strong>build a deck</strong> for battle.
+                    `);
+                    
+                    $('#inventoryItemEditDeckButton').removeClass('d-none');
+                    $("#inventoryItemEditDeckButton").attr("href", `/lich/deck/edit/${lootId}`);
+
+                } else {
+                    //$('#containerIcon').attr('class', 'fa-duotone fa-regular fa-box-open');
+                    $('#containerExplanation').html(`
+                        This is a <strong>container</strong>. Click below to view its contents.
+                    `);
+                    
+                    $('#inventoryItemEditDeckButton').addClass('d-none');
+                    $("#inventoryItemEditDeckButton").attr("href", "#");
+                }
+
+            } else {
+                $("#inventoryItemContainerSection").hide();
+                $("#inventoryItemOpenContainerButton").attr("onclick", "");
+            }
         }
 
         function HandleItemInventoryFlip(item, secondaryImage)
@@ -419,6 +611,90 @@ use Kickback\Common\Version;
                 }
 
         }
+
+        function PopulateContainer(data) {
+            $('#inventoryItemContainerTitle').text(data.containerName || "Container Contents");
+
+            // The array of items is in data.data
+            if (data.success && Array.isArray(data.data)) {
+
+                if (data.data.length === 0) {
+                    const emptyFlavorTexts = [
+                        "Nothing in here but some cobwebs and dust. Seems this chest hasn't seen use in many moons.",
+                        "The container lies bare—its treasures taken or never placed.",
+                        "Not but air and old wood within.",
+                        "The lid creaks open... and reveals naught.",
+                        "You peer inside. A hollow container, waiting to be filled.",
+                        "No tools, no trinkets—just the echo of emptiness.",
+                        "A fine box, but nothing rests within it... yet."
+                    ];
+                    const randomFlavor = emptyFlavorTexts[Math.floor(Math.random() * emptyFlavorTexts.length)];
+
+
+                    $('#inventoryItemContainerContents')
+                        .html(`
+                            <div class="text-center text-muted my-4">
+                                <i class="fa-solid fa-spider-web fa-2x mb-3"></i>
+                                <p>This container is empty.</p>
+                                <p><em>"${randomFlavor}"</em></p>
+                            </div>
+                        `)
+                        .removeClass('d-none').removeClass("inventory-grid");
+                    $('#inventoryItemContainerLoading').addClass('d-none');
+                    return;
+                }
+
+                data.data.forEach(stack => {
+                    AddItemIfNotExists(stack.item);
+                });
+
+                const containerHTML = data.data.map(stack => `
+                    <div class="inventory-item" onclick="ShowInventoryItemModal(${stack.item.crand}, ${stack.nextLootId.crand});" data-bs-toggle="tooltip" data-bs-placement="bottom" title="${stack.item.name}">
+                        <img src="${stack.item.iconBig.url}" alt="${stack.item.name}">
+                        <div class="item-count">x${stack.amount}</div>
+                    </div>
+                `).join('');
+
+                $('#inventoryItemContainerContents').html(containerHTML).removeClass('d-none').addClass('inventory-grid');
+                $('#inventoryItemContainerLoading').addClass('d-none');
+
+                initializeTooltipsInElement(document.getElementById('inventoryItemContainerContents'));
+            } else {
+                $('#inventoryItemContainerLoading').html(`<p>Failed to load container contents.</p>`);
+            }
+        }
+
+
+        function EditDeck(lootId) {
+            // You can customize this
+            alert("Deck Editor coming soon!");
+            // or navigate: window.location.href = `/lich/deck-builder?id=${selectedDeckId}`;
+        }
+
+        
+        function OpenContainer(lootId) {
+            CloseInventoryItemModal();
+            // Reset modal
+            $('#inventoryItemContainerTitle').text("Loading...");
+            $('#inventoryItemContainerContents').html('').addClass('d-none');
+            $('#inventoryItemContainerLoading').removeClass('d-none');
+
+            // Show modal
+            $('#inventoryItemContainerModal').modal('show');
+
+            // Call the API to fetch container contents
+            fetch(`/api/v1/container/open.php?lootId=${lootId}`)
+                .then(response => response.json())
+                .then(data => {
+                    
+                    PopulateContainer(data);
+                })
+                .catch(err => {
+                    console.error(err);
+                    $('#inventoryItemContainerLoading').html(`<p>Error loading container.</p>`);
+                });
+        }
+
 
         function CopyContainerToClipboard()
         {
@@ -455,7 +731,7 @@ use Kickback\Common\Version;
             if (!primaryImage.is(':visible')) {
                 flipTo.attr("src", item.iconBig.url); 
             } else {
-                flipTo.attr("src", "/assets/media/" + item.image_back); 
+                flipTo.attr("src", item.iconBack.url); 
 
                 HandleItemInventoryFlip(item, secondaryImage);
             }
@@ -478,7 +754,13 @@ use Kickback\Common\Version;
             });
         }
 
-        
+        function AddItemIfNotExists(downloadedItem) {
+            const exists = itemInformation.some(item => item.crand === downloadedItem.crand);
+            if (!exists) {
+                itemInformation.push(downloadedItem);
+            }
+        }
+
 
         function GetItemInformationById(id)
         {

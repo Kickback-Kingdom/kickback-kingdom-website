@@ -82,9 +82,17 @@ RewriteRule ^(.*)$ /beta/lich-card.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_UR
 RewriteCond %{REQUEST_URI} ^/lich/card/edit/([^/]+)$
 RewriteRule ^(.*)$ /lich-card-edit.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 
+# Lich Deck Edit Page
+RewriteCond %{REQUEST_URI} ^/lich/deck/edit/([^/]+)$
+RewriteRule ^(.*)$ /lich-deck-edit.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
+
 # Beta Lich Card Edit Page
 RewriteCond %{REQUEST_URI} ^/beta/lich/card/edit/([^/]+)$
 RewriteRule ^(.*)$ /beta/lich-card-edit.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
+
+# Beta Lich Deck Edit Page
+RewriteCond %{REQUEST_URI} ^/beta/lich/deck/edit/([^/]+)$
+RewriteRule ^(.*)$ /beta/lich-deck-edit.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 
 # Lich Card Search Page
 RewriteCond %{REQUEST_URI} ^/lich/card-search/?$
@@ -93,3 +101,15 @@ RewriteRule ^(.*)$ /lich-card-search.php [L,E=ORIGINAL_URI:%{REQUEST_URI}]
 # Beta Lich Card Search Page
 RewriteCond %{REQUEST_URI} ^/beta/lich/card-search/?$
 RewriteRule ^(.*)$ /beta/lich-card-search.php [L,E=ORIGINAL_URI:%{REQUEST_URI}]
+
+
+
+
+
+# treasure-hunt Wiki Page
+RewriteCond %{REQUEST_URI} ^/treasure-hunt/([^/]+)$
+RewriteRule ^(.*)$ /treasure-hunt.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]
+
+# Beta treasure-hunt Wiki Page
+RewriteCond %{REQUEST_URI} ^/beta/treasure-hunt/([^/]+)$
+RewriteRule ^(.*)$ /beta/treasure-hunt.php?locator=%1 [L,E=ORIGINAL_URI:%{REQUEST_URI}]

@@ -30,5 +30,6 @@ class LichCard extends RecordId
     public ForeignRecordId $set;
     public ForeignRecordId $art;
     public ForeignRecordId $cardImage;
+    public ForeignRecordId $item;
 
 }

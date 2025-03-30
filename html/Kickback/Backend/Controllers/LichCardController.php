@@ -3,19 +3,85 @@ declare(strict_types=1);
 
 namespace Kickback\Backend\Controllers;
 
-use Kickback\Backend\Models\LichCard;
-use Kickback\Backend\Models\Response;
+use Kickback\Services\Database;
+
 use Kickback\Backend\Views\vLichCard;
 use Kickback\Backend\Views\vLichSet;
 use Kickback\Backend\Views\vRecordId;
-use Kickback\Backend\Models\RecordId;
-use Kickback\Services\Database;
 use Kickback\Backend\Views\vReviewStatus;
 use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vContent;
+use Kickback\Backend\Views\vItem;
+
+use Kickback\Backend\Models\LichCard;
+use Kickback\Backend\Models\Response;
+use Kickback\Backend\Models\RecordId;
+use Kickback\Backend\Models\Item;
+use Kickback\Backend\Models\ItemType;
+use Kickback\Backend\Models\ItemRarity;
+use Kickback\Backend\Models\ItemCategory;
+use Kickback\Backend\Models\ForeignRecordId;
 
 class LichCardController
 {
+    public static function getPreConDeckByLootId(vRecordId $deckContainerLootId) : Response {
+
+        $conn = Database::getConnection();
+
+        $sql = "SELECT 
+                lc.*,
+                COUNT(*) AS quantity
+                FROM kickbackdb.loot l
+                INNER JOIN v_lich_card_item_info lc on lc.item_id = l.item_id
+                inner join loot deckbox on deckbox.Id = l.container_loot_id
+                inner join item i on i.id = deckbox.item_id
+
+                WHERE 
+                l.container_loot_id = ? AND l.account_id = 46 and i.item_category = 2
+                GROUP BY l.item_id;";
+
+                
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare the SQL statement for Lich PreCon.");
+        }
+
+        mysqli_stmt_bind_param($stmt, "i", $deckContainerLootId->crand);
+
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute the SQL statement for Lich PreCon.");
+        }
+
+        $result = $stmt->get_result();
+        if (!$result) {
+            return new Response(false, "Failed to retrieve the result set for Lich PreCon.");
+        }
+
+        $deck = [];
+        $cards = [];
+        while ($row = $result->fetch_assoc()) {
+            $cards[] = [
+                'name' => $row['name'],
+                'description' => $row['description'],
+                'types' => json_decode($row['subtypes']),
+                'frontImageURL' => 'https://kickback-kingdom.com/assets/media/'.$row['frontImageURL'],
+                'quantity' => (int)$row['quantity']
+            ];
+        }
+        $deck = [
+            'backImageUrl' => 'https://kickback-kingdom.com/assets/images/lich/decks/back.jpg',
+            'cards' => $cards
+        ];
+
+        $stmt->close();
+
+        if (empty($cards)) {
+            return new Response(false, "No Lich cards found.");
+        }
+
+        return new Response(true, "Lich PreCon Retrieved", $deck);
+    }
+
     public static function getAllLichSets(): Response
     {
         $conn = Database::getConnection();
@@ -186,6 +252,7 @@ class LichCardController
                 lc.content_id,
                 lc.lich_set_ctime,
                 lc.lich_set_crand,
+                lc.item_id as item_id,
                 ls.name as lich_set_name,
                 ls.locator as lich_set_locator,
                 
@@ -525,6 +592,7 @@ class LichCardController
                 lc.content_id,
                 lc.lich_set_ctime,
                 lc.lich_set_crand,
+                lc.item_id as item_id,
                 ls.name as lich_set_name,
                 ls.locator as lich_set_locator,
 
@@ -601,6 +669,7 @@ class LichCardController
                 lc.content_id,
                 lc.lich_set_ctime,
                 lc.lich_set_crand,
+                lc.item_id as item_id,
                 ls.name as lich_set_name,
                 ls.locator as lich_set_locator,
                 
@@ -721,16 +790,16 @@ class LichCardController
     }
 
 
-    private static function row_to_vLichCard(array $row, bool $populateSubTypes = false): vLichCard
+    public static function row_to_vLichCard(array $row, bool $populateSubTypes = false): vLichCard
     {
         
-        $lichCard = new vLichCard($row['ctime'], $row['crand']);
+        $lichCard = new vLichCard($row['ctime'], (int)$row['crand']);
 
         $contentId = isset($row["content_id"]) ? (int)$row["content_id"] : -1;
         $lichCard->content = new vContent('', $contentId);
         
          // Check if content ID is null and handle content insertion if needed
-         if (!$lichCard->hasPageContent()) {
+         if (!$lichCard->hasPageContent() && array_key_exists("content_id", $row)) {
             $newContentId = ContentController::insertNewContent();
             self::updateLichCardWikiContent($lichCard, $newContentId);
 
@@ -768,10 +837,18 @@ class LichCardController
             $lichCard->set->name = $row["lich_set_name"];
             $lichCard->set->locator = $row["lich_set_locator"];
 
-            if ($populateSubTypes)
+            if (array_key_exists("types", $row))
             {
-                $lichCard->subTypes = self::getCardSubTypes($lichCard);
+                $lichCard->subTypes = $row["types"];
             }
+            else
+            {
+                if ($populateSubTypes)
+                {
+                    $lichCard->subTypes = self::getCardSubTypes($lichCard);
+                }
+            }
+
 
 
             // Handle art media
@@ -792,11 +869,90 @@ class LichCardController
                 $lichCard->cardImage = vMedia::defaultIcon();
             }
 
+            if (!empty($row['item_id'])) {
+                $item = new vItem('', $row['item_id']);
+                $lichCard->item = $item;
+            } else {
+                $response = self::linkLichCardToNewItem($lichCard);
+                if ($response->success) {
+                    $item = new vItem('', $response->data->crand);
+                    $lichCard->item = $item;
+                }
+                else{
+                    
+                    throw new \Exception("Failed to insert item for Lich Card: " . $response->message);
+                }
+
+            }
         }
 
         
 
         return $lichCard;
+    }
+
+    public static function linkLichCardToNewItem(vLichCard $card): Response
+    {
+        $conn = Database::getConnection();
+        $conn->begin_transaction();
+
+        try {
+            // 1. Generate item from lich card
+            $item = self::generateItemFromLichCard($card);
+
+            // 2. Insert item
+            $insertItemResponse = ItemController::insertItem($item);
+            if (!$insertItemResponse->success) {
+                throw new \Exception("Failed to insert item for Lich Card: " . $insertItemResponse->message);
+            }
+
+            $itemId = $insertItemResponse->data;
+
+            // 3. Update lich_card.item_id
+            $stmt = $conn->prepare("UPDATE lich_card SET item_id = ? WHERE ctime = ? AND crand = ?");
+            if (!$stmt) {
+                throw new \Exception("Failed to prepare update statement: " . $conn->error);
+            }
+
+            $stmt->bind_param('isi', $itemId->crand, $card->ctime, $card->crand);
+            if (!$stmt->execute()) {
+                throw new \Exception("Failed to update lich_card with item_id: " . $stmt->error);
+            }
+            $stmt->close();
+
+            $conn->commit();
+            return new Response(true, "Successfully linked Lich Card to new Item.",  $itemId);
+
+        } catch (\Exception $e) {
+            $conn->rollback();
+            return new Response(false, "Transaction failed: " . $e->getMessage(), null);
+        }
+    }
+
+
+    public static function generateItemFromLichCard(vLichCard $card): Item
+    {
+        $item = new Item();
+
+        $item->type = ItemType::Standard;
+        $item->rarity = ItemRarity::from($card->rarity);
+        $item->mediaLarge = new ForeignRecordId('', $card->cardImage->crand);
+        $item->mediaSmall = new ForeignRecordId('', $card->art->crand);
+        $item->mediaBack = new ForeignRecordId('', 1017);
+        $item->desc = $card->description;
+        $item->name = $card->name;
+
+        $item->equipable = false;
+        $item->redeemable = false;
+        $item->useable = false;
+
+        $item->isContainer = false;
+        $item->containerSize = 0;
+        $item->containerItemCategory = null;
+
+        $item->itemCategory = ItemCategory::LichCard;
+
+        return $item;
     }
 
     private static function row_to_vLichSet(array $row): vLichSet

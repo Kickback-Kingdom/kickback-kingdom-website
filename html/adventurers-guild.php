@@ -163,7 +163,7 @@ $tabPageActive = "active show";
             
             <?php require("php-components/base-page-discord.php"); ?>
         </div>
-        <?php require(\Kickback\SCRIPT_ROOT ."/php-components/base-page-footer.php"); ?>
+        <?php require("php-components/base-page-footer.php"); ?>
     </main>
 
     

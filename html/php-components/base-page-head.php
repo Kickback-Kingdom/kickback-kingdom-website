@@ -1,5 +1,6 @@
 <?php 
 use Kickback\Backend\Controllers\AnalyticController;
+use Kickback\Backend\Controllers\TreasureHuntController;
 use Kickback\Common\Version;
 $pageVisitId = AnalyticController::getCurrentPage();
 
@@ -91,6 +92,10 @@ if ($pageVisitResp->success)
 {
     $thisPageVisits = $pageVisitResp->data;
 }
+
+$currentTreasureHuntsResp = TreasureHuntController::getCurrentEvents();
+$currentHiddenObjectsResp = TreasureHuntController::getHiddenObjectsOnPage($pageVisitId);
+
 ?>
 <head>
     <meta charset="UTF-8">
@@ -143,6 +148,9 @@ if ($pageVisitResp->success)
     <link rel="stylesheet" href="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/animate/animate.min.css"/>
     <script src="https://kit.fontawesome.com/f098b8e570.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <script src="https://unpkg.com/scrollreveal"></script>
 
     <?php
         $cssFile = Version::urlBetaPrefix().'/assets/css/kickback-kingdom.css';

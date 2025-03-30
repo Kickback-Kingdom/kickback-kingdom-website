@@ -99,9 +99,8 @@ if (!isset($thisLichCardData))
                                                     7 => "Summon"
                                                 ];
 
-                                                // Get the card type name dynamically
-                                                $type = $thisLichCardData->type ?? 0; // Default to 0 if type is not set
-                                                $typeName = $lichCardTypes[$type] ?? "Unknown"; // Fallback to "Unknown" if type is out of bounds
+                                                $type = $thisLichCardData->type ?? 0;
+                                                $typeName = $lichCardTypes[$type] ?? "Unknown";
                                                 echo htmlspecialchars($typeName);
                                                 ?>
                                             </td>

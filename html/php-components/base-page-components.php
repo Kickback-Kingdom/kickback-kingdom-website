@@ -37,7 +37,12 @@ $mediaDirs = $mediaDirsResp->data;
                         <div>
                             <img id="imgShineBackground" class="img-fluid fa-spin" src="" style="    -khtml-user-select: none;    -o-user-select: none;    -moz-user-select: none;    -webkit-user-select: none;    user-select: none;    position: absolute;    left: 0;    right: 0;    top: 0;    bottom: 0;    z-index: -1;    " />
                             <img id="imgChest" class="img-fluid" src="" style="-khtml-user-select: none;    -o-user-select: none;    -moz-user-select: none;    -webkit-user-select: none;    user-select: none;" />
-                            <img id="imgItem" class="img-fluid" src="" style="-khtml-user-select: none;-o-user-select: none;-moz-user-select: none;-webkit-user-select: none;user-select: none;position: absolute;margin: auto;top: 0;bottom: 0;left: 0;right: 0;left: 0;z-index: 1;width: 250px;height: 250px;">
+                            
+                            <div id="imgItemWrapper" class="chest-item chest-item-flip-container">
+                                <img id="imgItemFront" class="img-fluid chest-item-face front" src="" />
+                                <img id="imgItemBack" class="img-fluid chest-item-face back" src="/assets/media/cards/card-back.png" />
+                            </div>
+
                             <img id="imgShineForeground" class="img-fluid fa-spin" src="" style="    -khtml-user-select: none;    -o-user-select: none;    -moz-user-select: none;    -webkit-user-select: none;    user-select: none;    position: absolute;    left: 0;    right: 0;    top: 0;    bottom: 0;    width: 400px;    height: 400px;    margin: auto;" />
                         </div>
                     </div>
@@ -472,6 +477,56 @@ $mediaDirs = $mediaDirsResp->data;
                         <p id="inventoryItemDescription">Item Description</p>
                     </div>
                 </div>
+                <style>
+                    .container-panel {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.container-icon {
+    color: #6f42c1;
+}
+
+.open-container-button {
+    transition: all 0.2s ease-in-out;
+    font-weight: 500;
+}
+
+.open-container-button:hover {
+    background-color: #6f42c1;
+    color: white;
+    border-color: #6f42c1;
+}
+
+
+
+                </style>
+<!-- Container Interaction Section (Hidden by Default) -->
+<div class="row justify-content-center" id="inventoryItemContainerSection" style="display: none;">
+    <div class="col-12 col-md-10">
+        <div class="container-panel text-center p-4 mt-3">
+            <div class="container-icon mb-2">
+                <i class="fa-solid fa-box-archive fa-lg" id="containerIcon"></i>
+            </div>
+            <div class="container-label mb-3" id="containerExplanation">
+                This is a <strong>container item</strong>. Click below to view its contents.
+            </div>
+            <button class="btn btn-outline-secondary btn-sm open-container-button me-2" id="inventoryItemOpenContainerButton">
+                <i class="fa-duotone fa-regular fa-box-open me-1"></i> View Contents
+            </button>
+            <a href="#" class="btn btn-outline-primary btn-sm open-container-button d-none" id="inventoryItemEditDeckButton">
+                <i class="fa-regular fa-cards-blank me-1"></i> Edit Deck
+            </a>
+
+        </div>
+    </div>
+</div>
+
+
+
+
             </div>
             <div class="modal-footer" id="inventoryItemFooter">
                 <div class="row g-3 flex-fill">
@@ -493,65 +548,29 @@ $mediaDirs = $mediaDirsResp->data;
 </div>
 
 
-<!-- ERROR MODAL -->
-<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header text-bg-danger">
-        <h1 class="modal-title fs-5" id="errorModalLabel">Modal title</h1>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p id="errorModalMessage"></p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn bg-ranked-1" data-bs-dismiss="modal">Okay</button>
-      </div>
+<!--ITEM Container MODAL-->
+<div class="modal fade" id="inventoryItemContainerModal" tabindex="-1" aria-labelledby="inventoryItemContainerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content shadow rounded-4">
+            <div class="modal-header bg-dark text-white rounded-top-4">
+                <h5 class="modal-title" id="inventoryItemContainerTitle">Container Contents</h5>        
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-light text-center" style="max-height: 70vh; overflow-y: auto;">
+                <div id="inventoryItemContainerLoading" class="my-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-3">Opening container...</p>
+                </div>
+                <div id="inventoryItemContainerContents" class="inventory-grid d-none">
+                    <!-- Dynamically inserted container items -->
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div> 
-
-<!-- SUCCESS MODAL -->
-<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="successModalLabel">Modal title</h1>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p id="successModalMessage"></p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn bg-ranked-1" data-bs-dismiss="modal">Okay</button>
-      </div>
-    </div>
-  </div>
 </div>
 
-<!--LOADING MODAL-->
-<div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"  aria-labelledby="loadingModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        
-      <div class="d-flex align-items-center flex-fill">
-        <h5 class="modal-title" id="loadingModalLabel">Loading...</h5>        
-        
-        <i class="fa-solid fa-slash fa-spin ms-auto"></i>
-        </div>
-      </div>
-      <div class="modal-body">
-        <div class="progress" id="loadingModalProgress" role="progressbar" aria-label="Animated striped example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
-            <div  id="loadingModalProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 75%"></div>
-        </div>
-      </div> 
-      <div class="modal-footer">
-        Please Wait...
-      </div>
-    </div>
-  </div>
-</div>
+
+
 
 
 
