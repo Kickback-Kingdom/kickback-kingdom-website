@@ -646,7 +646,7 @@ class TreasureHuntController
                 $bannerDateMedia->setMediaPath("{$row['banner_date_directory']}/{$row['banner_date_id']}.{$row['banner_date_extension']}");
                 $event->bannerDate = $bannerDateMedia;
             } else {
-                $event->bannerDate = null;
+                $event->bannerDate = vMedia::defaultBanner();;
             }
 
             // Progress Card Banner
@@ -655,7 +655,7 @@ class TreasureHuntController
                 $bannerProgressMedia->setMediaPath("{$row['banner_progress_directory']}/{$row['banner_progress_id']}.{$row['banner_progress_extension']}");
                 $event->bannerProgress = $bannerProgressMedia;
             } else {
-                $event->bannerProgress = null;
+                $event->bannerProgress = vMedia::defaultBanner();;
             }
         }
 
