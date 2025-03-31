@@ -105,7 +105,6 @@ $currentTreasureHunts = TreasureHuntController::getCurrentEvents()->data;
 $currentHiddenObjects = TreasureHuntController::getHiddenObjectsOnPage($pageVisitId)->data;
 $treasureHuntPossibleItems = TreasureHuntController::getPossibleTreasureItems()->data;
 
-
 ?>
 <head>
     <meta charset="UTF-8">

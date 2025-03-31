@@ -570,7 +570,10 @@ $mediaDirs = $mediaDirsResp->data;
 </div>
 
 
-<?php if (Kickback\Services\Session::isEventOrganizer()) { ?>
+<?php if (Kickback\Services\Session::isEventOrganizer()) { 
+    
+    $currentAndUpComingTreasureHunts = TreasureHuntController::getCurrentEventsAndUpcoming()->data;
+    ?>
 <!--Treasure hunt hide object modal-->
 <div class="modal fade" id="treasureHuntHideObjectModal" tabindex="-1" aria-labelledby="treasureHuntHideObjectModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -584,7 +587,7 @@ $mediaDirs = $mediaDirsResp->data;
                     <div class="mb-3 text-start">
                         <label for="huntSelect" class="form-label fw-semibold">Select Treasure Hunt</label>
                         <select class="form-select" id="huntSelect" name="treasure_hunt_locator" required>
-                            <?php foreach ($currentTreasureHunts as $hunt): ?>
+                            <?php foreach ($currentAndUpComingTreasureHunts as $hunt): ?>
                                 <option value="<?= $hunt->locator ?>">
                                     <?= htmlspecialchars($hunt->name) ?> (<?= $hunt->startDate->formattedBasic ?> – <?= $hunt->endDate->formattedBasic ?>)
                                 </option>
