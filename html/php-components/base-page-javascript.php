@@ -217,7 +217,7 @@ use Kickback\Common\Version;
 
             const params = new URLSearchParams(data);
             
-            fetch(`/api/v1/event/treasure-hunt-found-object.php`, {
+            fetch(`<?= Version::urlBetaPrefix(); ?>/api/v1/event/treasure-hunt-found-object.php`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -260,7 +260,7 @@ use Kickback\Common\Version;
                 const params = new URLSearchParams(data);
 
                 
-                fetch(`/api/v1/event/treasure-hunt-delete-object.php`, {
+                fetch(`<?= Version::urlBetaPrefix(); ?>/api/v1/event/treasure-hunt-delete-object.php`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
@@ -305,7 +305,7 @@ use Kickback\Common\Version;
 
                 const params = new URLSearchParams(data);
 
-                fetch(`/api/v1/event/treasure-hunt-hide-object.php`, {
+                fetch(`<?= Version::urlBetaPrefix(); ?>/api/v1/event/treasure-hunt-hide-object.php`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
@@ -352,7 +352,7 @@ use Kickback\Common\Version;
 
             const params = new URLSearchParams(data);
             
-            fetch(`/api/v1/loot/give-nickname.php`, {
+            fetch(`<?= Version::urlBetaPrefix(); ?>/api/v1/loot/give-nickname.php`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -392,7 +392,7 @@ use Kickback\Common\Version;
 
             const params = new URLSearchParams(data);
 
-            fetch(`/api/v1/container/transfer.php`, {
+            fetch(`<?= Version::urlBetaPrefix(); ?>/api/v1/container/transfer.php`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
