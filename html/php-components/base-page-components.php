@@ -3,6 +3,7 @@
 require("base-page-loading-overlay.php"); 
 
 use Kickback\Backend\Controllers\MediaController;
+use Kickback\Backend\Controllers\TreasureHuntController;
 use Kickback\Backend\Models\NotificationType;
 use Kickback\Common\Version;
 
