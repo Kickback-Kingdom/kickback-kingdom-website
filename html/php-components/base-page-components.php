@@ -716,8 +716,10 @@ $mediaDirs = $mediaDirsResp->data;
         const mediaId = document.getElementById("treasure-object-image-id").value;
         const oneTimeOnly = document.getElementById("oneTimeFind").checked;
         const pageUrl = "<?= $pageVisitId; ?>";
-        const xPercent = 50.0;
-        const yPercent = 50.0;
+        
+        const xPercent = (Math.random() * (80 - 20) + 20).toFixed(2);
+        const yPercent = (Math.random() * (80 - 20) + 20).toFixed(2);
+
 
         TreasureHuntHideObject(huntLocator, itemId, mediaId, oneTimeOnly, pageUrl, xPercent, yPercent, function(success, message) {
             console.log(success);
