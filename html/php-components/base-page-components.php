@@ -570,7 +570,165 @@ $mediaDirs = $mediaDirsResp->data;
 </div>
 
 
+<?php if (Kickback\Services\Session::isEventOrganizer()) { ?>
+<!--Treasure hunt hide object modal-->
+<div class="modal fade" id="treasureHuntHideObjectModal" tabindex="-1" aria-labelledby="treasureHuntHideObjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow rounded-4">
+            <div class="modal-header bg-dark text-white rounded-top-4">
+                <h5 class="modal-title">Hide and Manage Treasure</h5>        
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body bg-light">
+                    <div class="mb-3 text-start">
+                        <label for="huntSelect" class="form-label fw-semibold">Select Treasure Hunt</label>
+                        <select class="form-select" id="huntSelect" name="treasure_hunt_locator" required>
+                            <?php foreach ($currentTreasureHunts as $hunt): ?>
+                                <option value="<?= $hunt->locator ?>">
+                                    <?= htmlspecialchars($hunt->name) ?> (<?= $hunt->startDate->formattedBasic ?> – <?= $hunt->endDate->formattedBasic ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
 
+                    <div class="form-check form-switch text-start mb-3">
+                        <input class="form-check-input" type="checkbox" id="oneTimeFind" name="one_time_find">
+                        <label class="form-check-label" for="oneTimeFind">This is a one-time find only</label>
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label for="objectContents" class="form-label fw-semibold">What's Inside?</label>
+                        <select class="form-select" id="objectContents" name="object_crand" required>
+                            <option value="" disabled selected>Select an item</option>
+                            <?php foreach ($treasureHuntPossibleItems as $item): ?>
+                                <option value="<?= $item->crand ?>">
+                                    <?= htmlspecialchars($item->name) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- Object Image -->
+                    <div class="mb-4 text-start">
+                        <label class="form-label fw-semibold d-block">
+                            Object Image
+                            <button type="button" class="btn btn-sm btn-primary float-end"
+                                onclick="OpenSelectMediaModal('treasureHuntHideObjectModal', 'treasure-object-image-preview', 'treasure-object-image-id')">
+                                <i class="fa-solid fa-image me-1"></i> Select Media
+                            </button>
+                        </label>
+
+                        <!-- Hidden input to store selected media CRAND -->
+                        <input type="hidden" name="object_image_id" id="treasure-object-image-id" value="">
+
+                        <!-- Preview box -->
+                        <div class="text-center border rounded p-2 bg-white">
+                            <img src="/assets/media/items/placeholder.png"
+                                id="treasure-object-image-preview"
+                                class="img-thumbnail"
+                                style="max-height: 150px; object-fit: contain;">
+                        </div>
+
+                        <small class="form-text text-muted mt-1">
+                            Select an image from the media library for the object you're hiding.
+                        </small>
+                    </div>
+
+                    
+                    <!-- Divider -->
+                    <hr class="my-4">
+
+                    <!-- Existing Hidden Objects List -->
+                    <h6 class="fw-bold text-start mb-3"><i class="fa-solid fa-eye-slash me-2 text-secondary"></i>Hidden Objects</h6>
+
+                    <?php if (!empty($currentHiddenObjects)): ?>
+                        <div class="table-responsive small">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Item</th>
+                                        <th>Name</th>
+                                        <th>Found</th>
+                                        <th class="text-end">Delete</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($currentHiddenObjects as $i => $obj): ?>
+                                        <tr>
+                                            <td><?= $i + 1 ?></td>
+                                            <td>
+                                                <img src="<?= $obj->media->url ?>" alt="Object" width="24" height="24" class="rounded me-2" style="object-fit: cover;">
+                                            </td>
+                                            <td>
+                                                <?= htmlspecialchars($obj->item->name) ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($obj->found): ?>
+                                                    <span class="badge bg-success">✔</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-secondary">✘</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="submitTreasureHuntDeleteObject('<?= $obj->ctime; ?>', <?= $obj->crand; ?>)">
+                                                    <i class="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="text-muted small text-center">No hidden objects on this page yet.</div>
+                    <?php endif; ?>
+
+                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn bg-ranked-1" onclick="submitTreasureHuntHideObject();" >Hide Object</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function submitTreasureHuntDeleteObject(ctime, crand) {
+        
+
+        TreasureHuntDeleteObject(ctime, crand, function(success, message) {
+            console.log(success);
+            console.log(message);
+
+            if (success) {
+                
+                window.location.href = window.location.pathname;
+            }
+        });
+    }
+    function submitTreasureHuntHideObject() {
+        const huntLocator = document.getElementById("huntSelect").value;
+        const itemId = document.getElementById("objectContents").value;
+        const mediaId = document.getElementById("treasure-object-image-id").value;
+        const oneTimeOnly = document.getElementById("oneTimeFind").checked;
+        const pageUrl = "<?= $pageVisitId; ?>";
+        const xPercent = 50.0;
+        const yPercent = 50.0;
+
+        TreasureHuntHideObject(huntLocator, itemId, mediaId, oneTimeOnly, pageUrl, xPercent, yPercent, function(success, message) {
+            console.log(success);
+            console.log(message);
+
+            if (success) {
+                
+                window.location.href = window.location.pathname;
+            }
+        });
+    }
+
+    
+</script>
+<?php } ?>
 
 
 
@@ -846,6 +1004,17 @@ $mediaDirs = $mediaDirsResp->data;
                             <a class="dropdown-item" href="#" onclick="OpenSelectAccountModal(null,'UseDelegateAccess')">
                                 <i class="nav-icon fa-solid fa-eye"></i> Delegate Access
                             </a>
+                        </li>
+                        <?php } ?>
+                        <?php if (Kickback\Services\Session::isSteward()) { ?>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#treasureHuntHideObjectModal">
+                                <i class="nav-icon fa-solid fa-treasure-chest"></i> Hide Treasure
+                            </a>
+
                         </li>
                         <?php } ?>
                         <?php if (Kickback\Services\Session::isDelegatingAccess()) { ?>

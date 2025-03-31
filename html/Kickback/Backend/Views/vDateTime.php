@@ -30,6 +30,14 @@ class vDateTime
 
     }
 
+    public static function fromDB(string $dateTimeString)
+    {
+        $dateTime = new vDateTime();
+        $dateTime->setDateTimeFromString($dateTimeString);
+
+        return $dateTime;
+    }
+
     public function setDateTimeFromString(string $dateTimeString)
     {
         $this->dbValue = $dateTimeString;

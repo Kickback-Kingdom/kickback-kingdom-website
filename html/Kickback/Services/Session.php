@@ -229,6 +229,31 @@ class Session {
         return false;
     }
 
+    public static function isMerchant() : bool {
+        
+        if (self::isAdmin())
+        {
+            return true;
+        }
+
+        if (self::isLoggedIn())
+        {
+            return self::getCurrentAccount()->isMerchant;
+        }
+
+        return false;
+    }
+
+    public static function isEventOrganizer() : bool {
+        
+        if (self::isAdmin())
+        {
+            return true;
+        }
+        
+        return self::isSteward();
+    }
+
     public static function isServantOfTheLich() : bool {
 
         if (self::isAdmin())

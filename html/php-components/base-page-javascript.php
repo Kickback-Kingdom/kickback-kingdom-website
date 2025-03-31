@@ -193,6 +193,148 @@ use Kickback\Common\Version;
         //var imgItem = document.getElementById("imgItem");
         var imgItemContainer = document.getElementById("imgItemWrapper");
 
+
+        function submitTreasureHuntFoundObject(ctime, crand, url) {
+                TreasureHuntFoundObject(ctime, crand, function(success, message) {
+                    if (!success) {
+                        ShowPopError(message,"Failed to collect treasure!");
+                    }
+                    else
+                    {
+                        window.location.href = url;
+                    }
+                });
+            }
+            
+        function TreasureHuntFoundObject(ctime, crand, callback = null)
+        {
+
+            const data = {
+                sessionToken: "<?= $_SESSION['sessionToken']; ?>",
+                item_ctime: ctime,
+                item_crand: parseInt(crand),
+            };
+
+            const params = new URLSearchParams(data);
+            
+            fetch(`/api/v1/event/treasure-hunt-found-object.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params,
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        
+                        if (callback != null)
+                        {
+                            callback(true,data.message);
+                        }
+                    } else {
+                        if (callback != null)
+                        {
+                            callback(false,data.message);
+                        }
+                    }
+                })
+                .catch(err => {
+                    if (callback != null)
+                    {
+                        callback(false, err);
+                    }
+                });
+        }
+
+        <?php if (Kickback\Services\Session::isSteward()) { ?>
+            
+            function TreasureHuntDeleteObject(ctime, crand, callback = null) {
+
+                const data = {
+                    sessionToken: "<?= $_SESSION['sessionToken']; ?>",
+                    item_ctime: ctime,
+                    item_crand: parseInt(crand),
+                };
+
+                const params = new URLSearchParams(data);
+
+                
+                fetch(`/api/v1/event/treasure-hunt-delete-object.php`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: params,
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            
+                            if (callback != null)
+                            {
+                                callback(true,data.message);
+                            }
+                        } else {
+                            if (callback != null)
+                            {
+                                callback(false,data.message);
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        if (callback != null)
+                        {
+                            callback(false, err);
+                        }
+                    });
+            }
+
+            function TreasureHuntHideObject(huntLocator, itemId, mediaId, oneTimeOnly, pageUrl, xPercent, yPercent, callback = null) {
+                
+                const data = {
+                    sessionToken: "<?= $_SESSION['sessionToken']; ?>",
+                    hunt_locator: huntLocator,
+                    item_crand: parseInt(itemId),
+                    media_id: parseInt(mediaId),
+                    one_time_only: !!oneTimeOnly,
+                    page_url: pageUrl,
+                    x_percentage: parseFloat(xPercent),
+                    y_percentage: parseFloat(yPercent)
+                };
+
+                const params = new URLSearchParams(data);
+
+                fetch(`/api/v1/event/treasure-hunt-hide-object.php`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: params,
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            
+                            if (callback != null)
+                            {
+                                callback(true,data.message);
+                            }
+                        } else {
+                            if (callback != null)
+                            {
+                                callback(false,data.message);
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        if (callback != null)
+                        {
+                            callback(false, err);
+                        }
+                    });
+            }
+        <?php } ?>
         function GiveLootNickname(lootId, nickname, description, callback = null)
         {
             if (nickname == null || nickname.trim() == "")
@@ -390,9 +532,15 @@ use Kickback\Common\Version;
         }
         <?php
 
-        }
+        } else {
         
         ?>
+
+            function submitTreasureHuntFoundObject(ctime, crand, url) {
+                
+                window.location.href = "/login.php?redirect="+url;
+            }
+        <?php } ?>
 
 
 

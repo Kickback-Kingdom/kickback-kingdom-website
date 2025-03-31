@@ -85,6 +85,14 @@ if (isset($thisLichCardData))
     $pageDesc = $thisLichCardData->description;
 }
 
+if (isset($thisTreasureHuntEvent))
+{
+    $pageTitle = $thisTreasureHuntEvent->name;
+    $pageVisitId = '/treasure-hunt/'.$thisTreasureHuntEvent->ctime.'/'.$thisTreasureHuntEvent->crand;
+    $pageDesc = $thisTreasureHuntEvent->desc;
+    $pageImage = "https://kickback-kingdom.com".$thisTreasureHuntEvent->icon->getFullPath();
+}
+
 AnalyticController::recordPageVisit($pageVisitId);
 $pageVisitResp = AnalyticController::getPageVisits($pageVisitId);
 $thisPageVisits = 0;
@@ -93,8 +101,10 @@ if ($pageVisitResp->success)
     $thisPageVisits = $pageVisitResp->data;
 }
 
-//$currentTreasureHuntsResp = TreasureHuntController::getCurrentEvents();
-//$currentHiddenObjectsResp = TreasureHuntController::getHiddenObjectsOnPage($pageVisitId);
+$currentTreasureHunts = TreasureHuntController::getCurrentEvents()->data;
+$currentHiddenObjects = TreasureHuntController::getHiddenObjectsOnPage($pageVisitId)->data;
+$treasureHuntPossibleItems = TreasureHuntController::getPossibleTreasureItems()->data;
+
 
 ?>
 <head>

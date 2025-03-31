@@ -96,6 +96,16 @@ function Validate($data)
     return $data;
 }
 
+function ValidateCTime($data)
+{
+    if (!isset($data)) {
+        return "";
+    }
+
+    return trim($data);
+}
+
+
 function GetSQLError()
 {
     return $GLOBALS["conn"]->error;

@@ -173,6 +173,19 @@ class ContentController {
                         return false;
                     }
                     break;
+
+                case 'TREASURE-HUNT':
+                    $treasureHuntResp = TreasureHuntController::getEventByLocator($ids[0]);
+                    if ($treasureHuntResp->success)
+                    {
+                        return $treasureHuntResp->data->canEdit();
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    break;
+
                 default:
                 return false;
             }

@@ -17,8 +17,7 @@ use Kickback\Backend\Models\ItemCategory;
 
 class ItemController
 {
-    public static function insertItem(Item $item): Response
-    {
+    public static function insertItem(Item $item): Response {
         $conn = Database::getConnection();
     
         $sql = "
@@ -159,7 +158,7 @@ class ItemController
             // Free the statement
             mysqli_stmt_close($stmt);
             
-            return (new Response(true, "Item information.",  self::row_to_vItem($row) ));
+            return (new Response(true, "Item information.",  self::row_to_vItem($row, $item_id) ));
         }
     }
 
@@ -209,10 +208,15 @@ class ItemController
     }
     
 
-    public static function row_to_vItem($row) : vItem {
+    public static function row_to_vItem($row, ?vRecordId $itemId = null) : vItem {
         $item = new vItem();
         $item->name = $row["name"];
         $item->description = $row["desc"];
+        if ($itemId != null)
+        {
+            $item->ctime = $itemId->ctime;
+            $item->crand = $itemId->crand;
+        }
 
         if (array_key_exists("item_id",$row) && $row["item_id"] != null)
         {

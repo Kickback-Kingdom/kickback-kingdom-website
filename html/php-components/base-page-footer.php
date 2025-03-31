@@ -78,3 +78,90 @@ use \Kickback\Common\Version;
   </ul>
 </footer>
 <?php } ?>
+
+
+<?php if (!empty($currentHiddenObjects)): ?>
+    <div id="treasure-hidden-object-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000;">
+        <?php foreach ($currentHiddenObjects as $obj): ?>
+            <div
+                class="treasure-object"
+                style="
+                    position: absolute;
+                    top: <?= $obj->yPercentage ?>%;
+                    left: <?= $obj->xPercentage ?>%;
+                    pointer-events: auto;
+                    cursor: pointer;
+                    z-index: 1000;
+                "
+                onclick="submitTreasureHuntFoundObject('<?= $obj->ctime ?>', <?= $obj->crand ?>, '<?= $obj->getURL(); ?>')"
+            >
+                <!-- Shine Spinner -->
+                <img 
+                    src="/assets/media/chests/0_o_s.png" 
+                    class="shine-spin" 
+                    alt="Shine"
+                >
+
+                <!-- Main Object -->
+                <img
+                    src="<?= $obj->media->url ?>"
+                    alt="Hidden Treasure"
+                    title="Hidden Treasure"
+                    class="main-object-img"
+                >
+            </div>
+        <?php endforeach; ?>
+    </div>
+    
+    <style>
+@keyframes treasure-rotate-pulse {
+    0%   { transform: rotate(-10deg) scale(1);  }
+    25%  { transform: rotate(0deg) scale(1.05);  }
+    50%  { transform: rotate(10deg) scale(1.1);  }
+    75%  { transform: rotate(0deg) scale(1.05); }
+    100% { transform: rotate(-10deg) scale(1); }
+}
+
+@keyframes spin-slow {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.treasure-object {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    transform: scale(3.5);
+    transform-origin: center;
+}
+
+.treasure-object .main-object-img {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    animation: treasure-rotate-pulse 3.5s ease-in-out infinite;
+    transform-origin: center;
+    z-index: 2;
+}
+
+.treasure-object .shine-spin {
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    width: 88px;
+    height: 88px;
+    z-index: 1;
+    pointer-events: none;
+    user-select: none;
+    animation: spin-slow 6s linear infinite;
+    opacity: 0.6;
+}
+
+.treasure-object:hover .main-object-img {
+    filter: drop-shadow(0 0 5px gold);
+}
+</style>
+
+
+
+<?php endif; ?>
