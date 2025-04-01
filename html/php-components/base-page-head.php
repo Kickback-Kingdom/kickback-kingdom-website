@@ -76,6 +76,7 @@ if (isset($thisLichSet))
     $pageTitle = $thisLichSet->name;
     $pageImage = "https://kickback-kingdom.com/assets/media/Castles/RedCap-Studios/518.png";
     $pageDesc = $thisLichSet->description;
+    $pageVisitId = '/lich-set/'.$thisLichSet->ctime.'/'.$thisLichSet->crand;
 }
 
 if (isset($thisLichCardData))
@@ -83,6 +84,7 @@ if (isset($thisLichCardData))
     $pageTitle = $thisLichCardData->name;
     $pageImage = $thisLichCardData->cardImage->getFullPath();
     $pageDesc = $thisLichCardData->description;
+    $pageVisitId = '/lich-card/'.$thisLichCardData->ctime.'/'.$thisLichCardData->crand;
 }
 
 if (isset($thisTreasureHuntEvent))
