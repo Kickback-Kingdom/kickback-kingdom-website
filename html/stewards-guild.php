@@ -28,7 +28,7 @@ $divisionData = [
         'icon' => 'fa-seedling',
         'desc' => 'Growth and partnerships.',
         'goal' => 'Grow to 200 Guildsmen',
-        'progress' => 75
+        'progress' => 80
     ]
 ];
 
@@ -88,13 +88,13 @@ $stewardsByDivision = [
     ],
     'Expansion Division' => [
         ['name' => 'Tylor', 'role' => 'Chancellor', 'image' => '/assets/media/logo.png', 'goals' => [
-            ['name' => '5% Growth', 'progress' => 100],
-            ['name' => '20% Retention', 'progress' => 100],
+            ['name' => '5% Growth', 'progress' => 0],
+            ['name' => '20% Retention', 'progress' => 35],
             ['name' => 'Maintain Social Media', 'progress' => 100]
         ]],
         ['name' => 'Andy', 'role' => 'Magister of the Adventurers\' Guild', 'image' => '/assets/media/logo.png', 'goals' => [
-            ['name' => '5% Growth', 'progress' => 100],
-            ['name' => '20% Retention', 'progress' => 100],
+            ['name' => '5% Growth', 'progress' => 0],
+            ['name' => '20% Retention', 'progress' => 35],
             ['name' => 'Maintain Game Servers', 'progress' => 100]
         ]],
     ]
