@@ -509,7 +509,7 @@ class TreasureHuntController
         $conn = Database::getConnection();
         $userId = Session::isLoggedIn() ? Session::getCurrentAccount()->crand : null;
 
-        $sql = "SELECT o.ctime, o.crand, o.item_id, o.x_percentage, o.y_percentage, 
+        $sql = "SELECT * FROM (SELECT o.ctime, o.crand, o.item_id, o.x_percentage, o.y_percentage, 
                     o.one_time_only, i.name, i.media_id_small, 
                     CONCAT(m_small.Directory, '/', m_small.Id, '.', m_small.extension) AS small_image,
                     CONCAT(m_small_i.Directory, '/', m_small_i.Id, '.', m_small_i.extension) AS item_image,
@@ -557,7 +557,8 @@ class TreasureHuntController
                     WHERE c.ref_object_ctime = o.ctime 
                     AND c.ref_object_crand = o.crand 
                     AND o.one_time_only = 1
-                )";
+                )) AS sub
+        WHERE sub.foundByMe = 0";
 
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
