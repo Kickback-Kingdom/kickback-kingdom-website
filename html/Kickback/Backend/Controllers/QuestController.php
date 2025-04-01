@@ -1043,6 +1043,8 @@ class QuestController
             $item->iconSmall = $smallImg;
         }
 
+        $item->iconBack = $item->iconBig;
+
         return $questReward;
     }
 
