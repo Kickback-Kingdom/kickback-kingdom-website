@@ -181,14 +181,25 @@ $bannerUrl = $thisTreasureHuntEvent->banner->getFullPath();
 
                         <h6 class="fw-semibold mt-3 mb-1">Hidden Treasure</h6>
 
-                        <?php if (!$obj->found): ?>
+                        <?php if ($isLegendary): ?>
                             <span class="badge <?= $badgeClass ?> mt-1"><?= $badgeText ?></span>
+
+                            <?php if ($obj->found): ?>
+                                <?php if ($obj->foundByMe): ?>
+                                    <small class="text-muted d-block">You found this treasure</small>
+                                <?php else: ?>
+                                    <small class="text-muted d-block">Someone else found this treasure</small>
+                                <?php endif; ?>
+                            <?php endif; ?>
+
                         <?php else: ?>
-                            <?php if ($isLegendary) { ?>
+                            <?php if (!$obj->found): ?>
                                 <span class="badge <?= $badgeClass ?> mt-1"><?= $badgeText ?></span>
-                            <?php } ?>
-                            <small class="text-muted d-block">You found this treasure</small>
+                            <?php else: ?>
+                                <small class="text-muted d-block">You found this treasure</small>
+                            <?php endif; ?>
                         <?php endif; ?>
+
                     </div>
                 </div>
             <?php endforeach; ?>
