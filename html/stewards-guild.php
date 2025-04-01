@@ -35,6 +35,12 @@ $divisionData = [
 $newsItems = [];
 
 $item1 = new stdClass();
+$item1->title = "USA and BRA companies have been filed";
+$item1->date = "April 1, 2025";
+$item1->summary = "Legal companies in both Brazil and the United States have been filed and are being processed. It should be ready to conduct business in ~1 month.";
+$newsItems[] = $item1;
+
+$item1 = new stdClass();
 $item1->title = "New Deal!";
 $item1->date = "March 26, 2025";
 $item1->summary = "We have secured a deal with Rudirock Inc to offer Craftsmen Guild services with a 1k USD a month service charge per guildmember used.";
@@ -55,9 +61,12 @@ $stewardsByDivision = [
             ['name' => 'Emberwood Deliveries for Store Page', 'progress' => 40],
             ['name' => 'Twilight Racer Full Game Loop', 'progress' => 30],
             ['name' => 'Treasure Hunter Full Game Loop', 'progress' => 80],
-            ['name' => 'Legalize Kickback in USA and BRL', 'progress' => 10],
+            ['name' => 'Legalize Kickback in USA and BRL', 'progress' => 90],
+            ['name' => 'Setup Kickback Steam Account', 'progress' => 30],
             ['name' => 'Build Game Server Page', 'progress' => 0],
-            ['name' => 'Build Invasion Events', 'progress' => 0]
+            ['name' => 'Build Invasion Events', 'progress' => 0],
+            ['name' => 'Fix Merchants\' Guild page', 'progress' => 50],
+            ['name' => 'Fix Apprentices\' Guild page', 'progress' => 0]
         ]],
         ['name' => 'Eric', 'role' => 'Horseman', 'image' => '/assets/media/logo.png', 'goals' => [
             ['name' => 'Twilight Racer Commercial', 'progress' => 20],
