@@ -437,6 +437,17 @@ class LichCardController
                         break; // Exit loop if the query was successful
                     }
                 }
+
+
+                $response = self::linkLichCardToNewItem($model);
+                if ($response->success) {
+                    $item = new ForeignRecordId('', $response->data->crand);
+                    $model->item = $item;
+                }
+                else{
+                    
+                    throw new \Exception("Failed to insert item for Lich Card: " . $response->message);
+                }
             }
 
             $stmt->close();
@@ -889,7 +900,7 @@ class LichCardController
         return $lichCard;
     }
 
-    public static function linkLichCardToNewItem(vLichCard $card): Response
+    public static function linkLichCardToNewItem(LichCard $card): Response
     {
         $conn = Database::getConnection();
         $conn->begin_transaction();
@@ -927,8 +938,71 @@ class LichCardController
         }
     }
 
+    public static function linkvLichCardToNewItem(vLichCard $card): Response
+    {
+        $conn = Database::getConnection();
+        $conn->begin_transaction();
 
-    public static function generateItemFromLichCard(vLichCard $card): Item
+        try {
+            // 1. Generate item from lich card
+            $item = self::generateItemFromvLichCard($card);
+
+            // 2. Insert item
+            $insertItemResponse = ItemController::insertItem($item);
+            if (!$insertItemResponse->success) {
+                throw new \Exception("Failed to insert item for Lich Card: " . $insertItemResponse->message);
+            }
+
+            $itemId = $insertItemResponse->data;
+
+            // 3. Update lich_card.item_id
+            $stmt = $conn->prepare("UPDATE lich_card SET item_id = ? WHERE ctime = ? AND crand = ?");
+            if (!$stmt) {
+                throw new \Exception("Failed to prepare update statement: " . $conn->error);
+            }
+
+            $stmt->bind_param('isi', $itemId->crand, $card->ctime, $card->crand);
+            if (!$stmt->execute()) {
+                throw new \Exception("Failed to update lich_card with item_id: " . $stmt->error);
+            }
+            $stmt->close();
+
+            $conn->commit();
+            return new Response(true, "Successfully linked Lich Card to new Item.",  $itemId);
+
+        } catch (\Exception $e) {
+            $conn->rollback();
+            return new Response(false, "Transaction failed: " . $e->getMessage(), null);
+        }
+    }
+
+
+    public static function generateItemFromLichCard(LichCard $card): Item
+    {
+        $item = new Item();
+
+        $item->type = ItemType::Standard;
+        $item->rarity = ItemRarity::from($card->rarity);
+        $item->mediaLarge = new ForeignRecordId('', $card->cardImage->crand);
+        $item->mediaSmall = new ForeignRecordId('', $card->art->crand);
+        $item->mediaBack = new ForeignRecordId('', 1238);
+        $item->desc = $card->description;
+        $item->name = $card->name;
+
+        $item->equipable = false;
+        $item->redeemable = false;
+        $item->useable = false;
+
+        $item->isContainer = false;
+        $item->containerSize = 0;
+        $item->containerItemCategory = null;
+
+        $item->itemCategory = ItemCategory::LichCard;
+
+        return $item;
+    }
+
+    public static function generateItemFromvLichCard(vLichCard $card): Item
     {
         $item = new Item();
 

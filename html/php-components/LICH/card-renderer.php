@@ -862,7 +862,7 @@ function saveCard() {
             // Update card with the returned card ID
             lichCardData.ctime = data.ctime;
             lichCardData.crand = data.crand;
-
+            lichCardData.item = data.item;
             // Proceed to Step 2
             updateStepStatus("step2-status", "In Progress", "success");
             var pixelation = 1;

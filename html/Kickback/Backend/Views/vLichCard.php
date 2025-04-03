@@ -170,10 +170,14 @@ class vLichCard extends vRecordId
             $this->set->crand
         );
 
-        $model->item = new ForeignRecordId(
-            $this->item->ctime,
-            $this->item->crand
-        );
+         if ($this->item != null)
+         { 
+
+            $model->item = new ForeignRecordId(
+                $this->item->ctime,
+                $this->item->crand
+            );
+         }
 
         return $model;
     }

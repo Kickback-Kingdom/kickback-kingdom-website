@@ -73,7 +73,11 @@ $stewardsByDivision = [
             ['name' => 'L.I.C.H. Commercial', 'progress' => 0],
             ['name' => 'Create Atlas Odyssey Assets', 'progress' => 10],
             ['name' => 'Create L.I.C.H. Assets', 'progress' => 5],
-            ['name' => 'Create Kickback Assets', 'progress' => 5]
+            ['name' => 'Create Kickback Assets', 'progress' => 5],
+            ['name' => 'Game Jam Video', 'progress' => 25],
+            ['name' => 'Game Jam Award Video', 'progress' => 0],
+            ['name' => 'Business Cards', 'progress' => 0],
+            ['name' => 'Kickback T-Shirts', 'progress' => 0]
         ]],
     ],
     'Technology Division' => [
@@ -82,8 +86,8 @@ $stewardsByDivision = [
             ['name' => 'Identify other needed optimizations', 'progress' => 0]
         ]],
         ['name' => 'Hans', 'role' => 'Steward', 'image' => '/assets/media/logo.png', 'goals' => [
-            ['name' => 'Kickback Store Page', 'progress' => 75],
-            ['name' => 'Write out 30 canon Heroes for L.I.C.H.', 'progress' => 10]
+            ['name' => 'Kickback Store Page', 'progress' => 80],
+            ['name' => 'Write out 30 canon Heroes for L.I.C.H.', 'progress' => 0]
         ]],
     ],
     'Expansion Division' => [
