@@ -35,7 +35,8 @@ final class Version
         [0,1,1,"","", "elo-ranking-update"],
         [0,1,2,"","", "ranked-match-history"],
         [0,1,3,"","", "league-progression-viewer"],
-        [0,1,4,"","", "league-progression-viewer"]
+        [0,1,4,"","", "league-progression-viewer"],
+        [0,1,5,"","", "league-progression-viewer"]
     ];
 
     //private const LAST_HISTORY_ENTRY_IDX = array_key_last(self::HISTORY);

@@ -24,6 +24,8 @@ body {
     animation-name: bg_entrance_h;
     animation-duration: 300s;
     overflow: hidden;
+
+    overflow: auto; /*disable loading screen*/
 }
 
 .body-finished-loading {

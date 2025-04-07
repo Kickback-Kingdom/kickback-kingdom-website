@@ -54,7 +54,7 @@ function findOldestPrestigeReviewIndex() {
 
     return notificationsJSON.indexOf(reviews[reviews.length - 1]); // Find index in original array
 }
-
+/*
 $('a').click(function(event) {
     var href = $(this).attr('href');
 
@@ -70,7 +70,7 @@ $('a').click(function(event) {
         });
     }
 });
-
+*/
 
 
 </script>
