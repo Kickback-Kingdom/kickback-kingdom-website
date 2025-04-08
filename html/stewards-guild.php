@@ -6,7 +6,26 @@ require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Common\Version;
 use Kickback\Services\Session;
+use Kickback\Backend\Controllers\AnalyticController;
 
+$thisMonthsAnalytics = AnalyticController::getThisMonthsGrowthStats()->data;
+$thisMonthsGrowthPercentage = 0;
+$thisMonthsTotalAccounts = 0;
+$thisMonthsRetentionRate = 0;
+
+if (isset($thisMonthsAnalytics["growth_percentage"]))
+{
+    $thisMonthsGrowthPercentage = (float)$thisMonthsAnalytics["growth_percentage"];
+}
+if (isset($thisMonthsAnalytics["retention_rate"])) {
+    $thisMonthsRetentionRate = (float)$thisMonthsAnalytics["retention_rate"];
+}
+if (isset($thisMonthsAnalytics["total_accounts"])) {
+    $thisMonthsTotalAccounts = (int)$thisMonthsAnalytics["total_accounts"];
+}
+
+$growthProgress = min($thisMonthsGrowthPercentage / 5 * 100, 100);
+$retentionProgress = min($thisMonthsRetentionRate / 20 * 100, 100);
 
 $divisionData = [
     [
@@ -14,7 +33,7 @@ $divisionData = [
         'icon' => 'fa-chess-knight',
         'desc' => 'Leadership and strategic oversight.',
         'goal' => 'Release L.I.C.H., Atlas Odyssey and Craftmens Guild',
-        'progress' => 20
+        'progress' => 25
     ],
     [
         'name' => 'Technology Division',
@@ -28,11 +47,17 @@ $divisionData = [
         'icon' => 'fa-seedling',
         'desc' => 'Growth and partnerships.',
         'goal' => 'Grow to 200 Guildsmen',
-        'progress' => 80
+        'progress' => $thisMonthsTotalAccounts / 200 * 100
     ]
 ];
 
 $newsItems = [];
+
+$item1 = new stdClass();
+$item1->title = "BRA company is legal";
+$item1->date = "April 7, 2025";
+$item1->summary = "Our Brazilian company has been processed and we have recieved our CNPJ.";
+$newsItems[] = $item1;
 
 $item1 = new stdClass();
 $item1->title = "USA and BRA companies have been filed";
@@ -61,12 +86,14 @@ $stewardsByDivision = [
             ['name' => 'Emberwood Deliveries for Store Page', 'progress' => 40],
             ['name' => 'Twilight Racer Full Game Loop', 'progress' => 30],
             ['name' => 'Treasure Hunter Full Game Loop', 'progress' => 80],
-            ['name' => 'Legalize Kickback in USA and BRL', 'progress' => 90],
+            ['name' => 'Legalize Kickback in USA and BRL', 'progress' => 95],
             ['name' => 'Setup Kickback Steam Account', 'progress' => 30],
             ['name' => 'Build Game Server Page', 'progress' => 0],
             ['name' => 'Build Invasion Events', 'progress' => 0],
             ['name' => 'Fix Merchants\' Guild page', 'progress' => 50],
-            ['name' => 'Fix Apprentices\' Guild page', 'progress' => 0]
+            ['name' => 'Fix Apprentices\' Guild page', 'progress' => 0],
+            ['name' => 'Build Craftsmens\' Guild page', 'progress' => 0],
+            ['name' => 'Build Craftsmens\' Guild Website', 'progress' => 0]
         ]],
         ['name' => 'Eric', 'role' => 'Horseman', 'image' => '/assets/media/logo.png', 'goals' => [
             ['name' => 'Twilight Racer Commercial', 'progress' => 20],
@@ -92,13 +119,13 @@ $stewardsByDivision = [
     ],
     'Expansion Division' => [
         ['name' => 'Tylor', 'role' => 'Chancellor', 'image' => '/assets/media/logo.png', 'goals' => [
-            ['name' => '5% Growth', 'progress' => 0],
-            ['name' => '20% Retention', 'progress' => 35],
+            ['name' => '5% Growth', 'progress' => $growthProgress],
+            ['name' => '20% Retention', 'progress' => $retentionProgress],
             ['name' => 'Maintain Social Media', 'progress' => 100]
         ]],
         ['name' => 'Andy', 'role' => 'Magister of the Adventurers\' Guild', 'image' => '/assets/media/logo.png', 'goals' => [
-            ['name' => '5% Growth', 'progress' => 0],
-            ['name' => '20% Retention', 'progress' => 35],
+            ['name' => '5% Growth', 'progress' => $growthProgress],
+            ['name' => '20% Retention', 'progress' => $retentionProgress],
             ['name' => 'Maintain Game Servers', 'progress' => 100]
         ]],
     ]

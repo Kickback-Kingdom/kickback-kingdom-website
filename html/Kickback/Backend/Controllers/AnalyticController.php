@@ -142,14 +142,19 @@ class AnalyticController
         Session::ensureSessionStarted();
         $ipAddress = self::getCurrentUserIP();
     
-        // Check if geolocation data for this IP is already cached in the session
-        if (isset($_SESSION['geoLocation']) && $_SESSION['geoLocation']['ip'] === $ipAddress) {
-            return new Response(true, "Returning cached data", (object)$_SESSION['geoLocation']['data']);
-        }
+    // Check if geolocation data for this IP is already cached in the session
+    if (
+        isset($_SESSION['geoLocation']) && 
+        is_array($_SESSION['geoLocation']) && 
+        isset($_SESSION['geoLocation']['ip']) &&
+        $_SESSION['geoLocation']['ip'] === $ipAddress
+    ) {
+        return new Response(true, "Returning cached data", (object)$_SESSION['geoLocation']['data']);
+    }
     
         // Fetch new data if not cached
         $response = self::fetchGeoData($ipAddress);
-        if (!$response->success) {
+        if (!$response->success || !is_array($response->data)) {
             // Prepare default geolocation data when fetch fails
             $defaultGeoData = (object) [
                 'continent' => '??', 
@@ -329,6 +334,49 @@ class AnalyticController
             return new Response(false, "Error fetching results: " . $stmt->error, null);
         }
     }
+
+    public static function getThisMonthsGrowthStats() {
+        $conn = Database::getConnection();
+    
+        // Get current year-month as a string (e.g. "2025-04")
+        $currentMonth = date('Y-m');
+    
+        $sql = "
+            SELECT 
+                month, 
+                new_accounts, 
+                total_accounts, 
+                growth_percentage, 
+                active_accounts, 
+                retention_rate, 
+                website_hits 
+            FROM 
+                kickbackdb.v_analytic_accounts_growth_retention_monthly 
+            WHERE 
+                month = ?
+            LIMIT 1;
+        ";
+    
+        $stmt = $conn->prepare($sql);
+    
+        if (!$stmt) {
+            return new Response(false, "Error preparing statement: " . $conn->error, null);
+        }
+    
+        $stmt->bind_param("s", $currentMonth);
+    
+        if (!$stmt->execute()) {
+            return new Response(false, "Error executing statement: " . $stmt->error, null);
+        }
+    
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+    
+        $stmt->close();
+    
+        return new Response(true, "This month's growth stats", $row ?: []);
+    }
+    
     
     public static function getMonthlyGrowthStats() {
         
