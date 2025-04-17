@@ -54,6 +54,12 @@ $divisionData = [
 $newsItems = [];
 
 $item1 = new stdClass();
+$item1->title = "Kickback is legal in Florida";
+$item1->date = "April 16, 2025";
+$item1->summary = "Our USA company is now filed and registered in the state of Florida.";
+$newsItems[] = $item1;
+
+$item1 = new stdClass();
 $item1->title = "BRA company is legal";
 $item1->date = "April 7, 2025";
 $item1->summary = "Our Brazilian company has been processed and we have recieved our CNPJ.";
@@ -90,30 +96,33 @@ $stewardsByDivision = [
             ['name' => 'Setup Kickback Steam Account', 'progress' => 30],
             ['name' => 'Build Game Server Page', 'progress' => 0],
             ['name' => 'Build Invasion Events', 'progress' => 0],
-            ['name' => 'Fix Merchants\' Guild page', 'progress' => 50],
+            ['name' => 'Fix Merchants\' Guild page', 'progress' => 80],
+            ['name' => 'Fix Admin page', 'progress' => 0],
             ['name' => 'Fix Apprentices\' Guild page', 'progress' => 0],
             ['name' => 'Build Craftsmens\' Guild page', 'progress' => 0],
-            ['name' => 'Build Craftsmens\' Guild Website', 'progress' => 0]
+            ['name' => 'Build Craftsmens\' Guild Website', 'progress' => 0],
+            ['name' => 'Refactor ELO Logic', 'progress' => 0],
+            ['name' => 'Refactor Merchants Logic', 'progress' => 30]
         ]],
         ['name' => 'Eric', 'role' => 'Horseman', 'image' => '/assets/media/logo.png', 'goals' => [
-            ['name' => 'Twilight Racer Commercial', 'progress' => 20],
+            ['name' => 'Twilight Racer Commercial', 'progress' => 35],
             ['name' => 'L.I.C.H. Commercial', 'progress' => 0],
-            ['name' => 'Create Atlas Odyssey Assets', 'progress' => 10],
+            ['name' => 'Modeling Twilight Racer Antagonist', 'progress' => 5],
             ['name' => 'Create L.I.C.H. Assets', 'progress' => 5],
-            ['name' => 'Create Kickback Assets', 'progress' => 5],
-            ['name' => 'Game Jam Video', 'progress' => 25],
+            ['name' => 'Create Kickback Assets', 'progress' => 10],
+            ['name' => 'Game Jam Video', 'progress' => 20],
             ['name' => 'Game Jam Award Video', 'progress' => 0],
             ['name' => 'Business Cards', 'progress' => 0],
             ['name' => 'Kickback T-Shirts', 'progress' => 0]
         ]],
     ],
     'Technology Division' => [
-        ['name' => 'Lilly', 'role' => 'Chancellor', 'image' => '/assets/media/logo.png', 'goals' => [
-            ['name' => 'Website Load Time Optimizations', 'progress' => 10],
-            ['name' => 'Identify other needed optimizations', 'progress' => 0]
+        ['name' => 'Lily', 'role' => 'Chancellor', 'image' => '/assets/media/logo.png', 'goals' => [
+            ['name' => 'Website Load Time Optimizations', 'progress' => 15],
+            ['name' => 'Database optimizations', 'progress' => 0]
         ]],
         ['name' => 'Hans', 'role' => 'Steward', 'image' => '/assets/media/logo.png', 'goals' => [
-            ['name' => 'Kickback Store Page', 'progress' => 80],
+            ['name' => 'Kickback Store Page', 'progress' => 90],
             ['name' => 'Write out 30 canon Heroes for L.I.C.H.', 'progress' => 0]
         ]],
     ],

@@ -1,5 +1,7 @@
 <p>Welcome to Kickback Kingdom, a social media website for video game enthusiasts. Before using our service, please read these Terms of Service carefully.</p>
 
+<p>Kickback Kingdom is a service operated by <strong>Atlas Holdings International LLC</strong>, a limited liability company organized under the laws of the State of Florida, United States.</p>
+
 <h4>Acceptance of Terms</h4>
 <p>These Terms of Service ("Terms") govern your use of the Kickback Kingdom website, mobile application, and any other related services offered by Kickback Kingdom ("Service"). By using the Service, you agree to these Terms, as well as our Privacy Policy, which is incorporated into these Terms by reference.</p>
 
@@ -96,6 +98,15 @@
 
 <p><strong>(f)</strong> Kickback Kingdom shall not be liable to you or any third party for any termination of your access to the Service.</p>
 
+<h4>Governing Law</h4>
+<p>These Terms shall be governed by and construed in accordance with the laws of the State of Florida, without regard to its conflict of law principles. Any legal action or proceeding arising under these Terms shall be brought exclusively in the courts located in Florida, and the parties hereby irrevocably consent to the jurisdiction thereof.</p>
+
+<h4>Eligibility</h4>
+<p>You must be at least 13 years old to use the Service. By using the Service, you represent and warrant that you meet this requirement. If you are under 18, you must have your parent or legal guardian's permission to use the Service.</p>
+
+<h4>Crypto Wallets & Distributions</h4>
+<p>Kickback Kingdom may facilitate crypto-based rewards or distributions (e.g., in ADA) through on-platform wallets. These distributions are discretionary and may be subject to change. Kickback Kingdom does not guarantee any specific reward amount or delivery schedule. Users are responsible for securing their wallets and complying with local laws regarding crypto transactions.</p>
 
 <h4>Contact Information</h4>
-<p>If you have any questions about these Terms, please contact Kickback Kingdom at kickback.kingdom.help@gmail.com.</p>
+<p>If you have any questions about these Terms, please contact Kickback Kingdom at help@kickback-kingdom.com.</p>
+

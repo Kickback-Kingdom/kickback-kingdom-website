@@ -182,7 +182,7 @@ $treasureHuntPossibleItems = TreasureHuntController::getPossibleTreasureItems()-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.css" rel="stylesheet" />
 
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
+    <link rel="stylesheet" href="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/datatable/jquery.dataTables.css" />
   
     
     <?php if (isset($_GET['borderless'])) { ?>

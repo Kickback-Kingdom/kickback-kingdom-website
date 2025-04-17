@@ -73,6 +73,7 @@ function LoadSearchAccountResults(formId, data, usersPerPage, pageIndex, clickab
     var response = JSON.parse(data);
     var results = response.data.accountItems;
     ClearSearchAccountResults(formId); 
+    $("#" + formId + "selectAccountLoadingSpinner").hide();
     for (let index = 0; index < results.length; index++) {
         const Account = results[index];
         console.log(Account);
@@ -85,6 +86,9 @@ function LoadSearchAccountResults(formId, data, usersPerPage, pageIndex, clickab
 function ClearSearchAccountResults(formId)
 {
     $("#"+formId+"selectAccountSearchResults").html("");
+
+    $("#"+formId+"selectUserPagination").html("");
+    $("#" + formId + "selectAccountLoadingSpinner").show();
 }
 
 
