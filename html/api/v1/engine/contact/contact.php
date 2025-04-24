@@ -1,8 +1,15 @@
 <?php
 // --- CORS HEADERS ---
-$allowed_origin = "https://craftsmens-guild.com";
+$allowed_domains = [
+    'https://craftsmens-guild.com',
+    'https://www.craftsmens-guild.com'
+];
 
-header("Access-Control-Allow-Origin: $allowed_origin");
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowed_domains)) {
+    header("Access-Control-Allow-Origin: $origin");
+}
+
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Max-Age: 86400"); // Cache preflight for 1 day
