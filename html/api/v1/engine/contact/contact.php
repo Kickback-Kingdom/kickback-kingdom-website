@@ -1,4 +1,18 @@
 <?php
+// --- CORS HEADERS ---
+$allowed_origin = "https://craftsmens-guild.com";
+
+header("Access-Control-Allow-Origin: $allowed_origin");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Max-Age: 86400"); // Cache preflight for 1 day
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit();
+}
+
+
 require(__DIR__ . "/../../engine/engine.php");
 
 use PHPMailer\PHPMailer\PHPMailer;
