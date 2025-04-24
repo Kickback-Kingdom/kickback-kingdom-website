@@ -4,6 +4,7 @@ require(__DIR__ . "/../../engine/engine.php");
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+use Kickback\Backend\Models\Response;
 OnlyPOST();
 
 // Sanitize and validate inputs
