@@ -7,30 +7,41 @@ use PHPMailer\PHPMailer\Exception;
 OnlyPOST();
 
 // Sanitize and validate inputs
-$name     = trim(filter_var($_POST['name'] ?? '', FILTER_SANITIZE_STRING));
-$email    = trim(filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL));
-$subject  = trim(filter_var($_POST['subject'] ?? 'General Inquiry', FILTER_SANITIZE_STRING));
-$service  = trim(filter_var($_POST['service'] ?? 'Unspecified', FILTER_SANITIZE_STRING));
-$message  = trim(filter_var($_POST['message'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-$source   = trim(filter_var($_POST['source'] ?? 'Unknown', FILTER_SANITIZE_URL));
+$name    = isset($_POST['name']) ? trim(strip_tags($_POST['name'])) : '';
+$email   = isset($_POST['email']) ? trim(filter_var($_POST['email'], FILTER_SANITIZE_EMAIL)) : '';
+$subject = isset($_POST['subject']) ? trim(strip_tags($_POST['subject'])) : 'General Inquiry';
+$service = isset($_POST['service']) ? trim(strip_tags($_POST['service'])) : 'Unspecified';
+$message = isset($_POST['message']) ? trim($_POST['message']) : '';
+$source  = isset($_POST['source']) ? trim(filter_var($_POST['source'], FILTER_SANITIZE_URL)) : 'Unknown';
 
 // Header injection protection
-$name  = str_replace(["\r", "\n"], '', $name);
-$email = str_replace(["\r", "\n"], '', $email);
+$name    = str_replace(["\r", "\n"], '', $name);
+$email   = str_replace(["\r", "\n"], '', $email);
 $subject = str_replace(["\r", "\n"], '', $subject);
 
-// Validation
-if (!$name || !$email || !$message) {
+// Validation: required fields
+if (empty($name) || empty($email) || empty($message)) {
     return new Response(false, "Missing required fields.");
 }
 
+// Validate email format
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     return new Response(false, "Invalid email address.");
 }
 
-if (strlen($message) > 5000 || strlen($subject) > 255 || strlen($source) > 255) {
-    return new Response(false, "Input too long.");
+// Validate lengths
+if (strlen($message) > 5000) {
+    return new Response(false, "Message is too long (max 5000 characters).");
 }
+if (strlen($subject) > 255 || strlen($source) > 255 || strlen($name) > 255 || strlen($service) > 255) {
+    return new Response(false, "One or more fields exceed allowed length.");
+}
+
+// Optional: Validate name with regex (letters, spaces, dashes, apostrophes)
+if (!preg_match("/^[\p{L} \-']+$/u", $name)) {
+    return new Response(false, "Name contains invalid characters.");
+}
+
 
 // Optional: Add reCAPTCHA check here
 
