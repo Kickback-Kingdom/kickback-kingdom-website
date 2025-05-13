@@ -92,7 +92,7 @@ $stewardsByDivision = [
             ['name' => 'Emberwood Deliveries for Store Page', 'progress' => 40],
             ['name' => 'Twilight Racer Full Game Loop', 'progress' => 30],
             ['name' => 'Treasure Hunter Full Game Loop', 'progress' => 80],
-            ['name' => 'Legalize Kickback in USA and BRL', 'progress' => 95],
+            ['name' => 'Legalize Kickback in USA and BRL', 'progress' => 100],
             ['name' => 'Setup Kickback Steam Account', 'progress' => 30],
             ['name' => 'Build Game Server Page', 'progress' => 0],
             ['name' => 'Build Invasion Events', 'progress' => 0],
@@ -100,7 +100,7 @@ $stewardsByDivision = [
             ['name' => 'Fix Admin page', 'progress' => 0],
             ['name' => 'Fix Apprentices\' Guild page', 'progress' => 0],
             ['name' => 'Build Craftsmens\' Guild page', 'progress' => 0],
-            ['name' => 'Build Craftsmens\' Guild Website', 'progress' => 0],
+            ['name' => 'Build Craftsmens\' Guild Website', 'progress' => 100],
             ['name' => 'Refactor ELO Logic', 'progress' => 0],
             ['name' => 'Refactor Merchants Logic', 'progress' => 95]
         ]],
