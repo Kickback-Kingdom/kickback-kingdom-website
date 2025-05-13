@@ -96,24 +96,15 @@ $stewardsByDivision = [
             ['name' => 'Setup Kickback Steam Account', 'progress' => 30],
             ['name' => 'Build Game Server Page', 'progress' => 0],
             ['name' => 'Build Invasion Events', 'progress' => 0],
-            ['name' => 'Fix Merchants\' Guild page', 'progress' => 80],
+            ['name' => 'Fix Merchants\' Guild page', 'progress' => 90],
             ['name' => 'Fix Admin page', 'progress' => 0],
             ['name' => 'Fix Apprentices\' Guild page', 'progress' => 0],
             ['name' => 'Build Craftsmens\' Guild page', 'progress' => 0],
             ['name' => 'Build Craftsmens\' Guild Website', 'progress' => 0],
             ['name' => 'Refactor ELO Logic', 'progress' => 0],
-            ['name' => 'Refactor Merchants Logic', 'progress' => 30]
+            ['name' => 'Refactor Merchants Logic', 'progress' => 95]
         ]],
         ['name' => 'Eric', 'role' => 'Horseman', 'image' => '/assets/media/logo.png', 'goals' => [
-            ['name' => 'Twilight Racer Commercial', 'progress' => 35],
-            ['name' => 'L.I.C.H. Commercial', 'progress' => 0],
-            ['name' => 'Modeling Twilight Racer Antagonist', 'progress' => 5],
-            ['name' => 'Create L.I.C.H. Assets', 'progress' => 5],
-            ['name' => 'Create Kickback Assets', 'progress' => 10],
-            ['name' => 'Game Jam Video', 'progress' => 20],
-            ['name' => 'Game Jam Award Video', 'progress' => 0],
-            ['name' => 'Business Cards', 'progress' => 0],
-            ['name' => 'Kickback T-Shirts', 'progress' => 0]
         ]],
     ],
     'Technology Division' => [
@@ -122,7 +113,7 @@ $stewardsByDivision = [
             ['name' => 'Database optimizations', 'progress' => 0]
         ]],
         ['name' => 'Hans', 'role' => 'Steward', 'image' => '/assets/media/logo.png', 'goals' => [
-            ['name' => 'Kickback Store Page', 'progress' => 90],
+            ['name' => 'Kickback Store Page', 'progress' => 97],
             ['name' => 'Write out 30 canon Heroes for L.I.C.H.', 'progress' => 0]
         ]],
     ],
