@@ -8,7 +8,7 @@ require("php-components/base-page-pull-active-account-info.php");
 use Kickback\Services\Session;
 use Kickback\Backend\Controllers\SocialMediaController;
 use Kickback\Backend\Config\ServiceCredentials;
-if (!Session::isAdmin())
+if (!Session::isMagisterOfTheAdventurersGuild())
 {
     header('Location: index.php');
     exit();
