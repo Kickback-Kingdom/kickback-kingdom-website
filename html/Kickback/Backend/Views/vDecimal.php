@@ -224,5 +224,12 @@ class vDecimal implements \JsonSerializable
         return new self($rounded, $this->scale);
     }
 
+    public function roundTo(int $decimalPlace): vDecimal
+    {
+        $unitScale = bcpow('10', (string)($this->scale - $decimalPlace), 0);
+        $rounded = (int)(round($this->value / (int)$unitScale)) * (int)$unitScale;
+        return new self($rounded, $this->scale);
+    }
+
 }
 ?>

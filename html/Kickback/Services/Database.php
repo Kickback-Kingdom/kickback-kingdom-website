@@ -2,6 +2,8 @@
 
 namespace Kickback\Services;
 
+use Exception;
+
 use \mysqli;
 use Kickback\Backend\Config\ServiceCredentials;
 
@@ -32,6 +34,104 @@ class Database {
         }
 
         return self::$conn;
+    }
+
+    public static function executeSqlQuery(string $stmt, array $params)
+    {
+        $connection = Database::getConnection();
+
+        $result = mysqli_execute_query($connection, $stmt, $params);
+
+        return $result;
+    }
+
+    public static function changeDatabase(string $databaseName)
+    {
+        Database::getConnection()->select_db($databaseName);
+
+        if(Database::$conn->error)
+        {
+            throw new Exception("Error in changing databases : ".Database::$conn->error);
+        }
+    }
+
+    /*
+    //  this function may only be used when batch inserting in the same table
+    //  the function takes a single insertion statment which is used to insert
+    //  each set of parameters defined in the paramSets variable
+    */
+    public static function executeBatchInsertion(string $stmt, array $paramSets, ?string $databaseName = null)
+    {
+        $conn = self::getConnection();
+
+        //throw new Exception($stmt);
+        //throw new Exception(json_encode($paramSets));
+
+        if($databaseName != null)
+        {
+            Database::changeDatabase($databaseName);
+        }
+
+        mysqli_autocommit($conn, false);
+        $conn->begin_transaction();
+
+        foreach($paramSets as $paramSet)
+        {    
+            self::prepareAndExecuteQuery($stmt, $paramSet);
+        }
+
+        $conn->commit();
+        mysqli_autocommit($conn, true);
+    }
+
+    private static function prepareAndExecuteQuery($stmt, $params)
+    {
+        $conn = self::getConnection();
+
+        $mysqliStmt = mysqli_prepare($conn, $stmt);
+
+        mysqli_stmt_bind_param($mysqliStmt, self::returnMysqliDatatypes($params), ...$params);
+
+        try
+        {
+            mysqli_stmt_execute($mysqliStmt);
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("stmt : '".$stmt."'   params : '".json_encode($params)."'"." with exception : ".$e);
+        }
+        
+    }
+
+    /*
+    //  "b" for blob is excluded as this is for single params for insertion; 
+    //  if larger params are desired, the statment should be manually 
+    //  prepared, binded, and executed.
+    //  A large file bool flag could be added but not without the cost
+    //  of a significant loss of usability and readability.
+    */
+    public static function returnMysqliDatatypes(array $params) : string
+    {
+        $datatypeString = "";
+
+        foreach($params AS $param)
+        {
+            
+            if(is_int($param))
+            {
+                $datatypeString .= "i";
+            }
+            elseif(is_float($param))
+            {
+                $datatypeString .= "d";
+            }
+            else
+            {
+                $datatypeString .= "s";
+            }
+        }
+
+        return $datatypeString;
     }
 
     private static function handleStmtError(mysqli_stmt $stmt, string $message): Response {
