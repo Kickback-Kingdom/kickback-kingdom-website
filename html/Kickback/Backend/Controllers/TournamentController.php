@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Kickback\Backend\Controllers;
 
+use Kickback\Common\Database\Row;
+use Kickback\Common\Database\RowInterface;
+
 use Kickback\Backend\Views\vTournament;
 use Kickback\Backend\Views\vTournamentResult;
 use Kickback\Backend\Models\Response;
@@ -17,7 +20,23 @@ use Kickback\Backend\Views\vDateTime;
 
 class TournamentController
 {
-    public static function getTournamentBracketInfo(vRecordId $tournament_id) : Response {
+
+    /**
+    * @return array<vBracketInfo>
+    */
+    public static function requestTournamentBracketInfos(vRecordId $tournament_id) : array
+    {
+        $tournamentBracketInfoResp = self::requestTournamentBracketInfosResponse($tournament_id);
+        if (!$tournamentBracketInfoResp->success) {
+            throw new \Exception($tournamentBracketInfoResp->message);
+        }
+
+        // @phpstan-ignore-next-line
+        return $tournamentBracketInfoResp->data;
+    }
+
+    public static function requestTournamentBracketInfosResponse(vRecordId $tournament_id) : Response
+    {
         $conn = Database::getConnection();
         $stmt = mysqli_prepare($conn, "SELECT * FROM v_tournament_bracket_info WHERE tournament_id = ?");
         mysqli_stmt_bind_param($stmt, "i", $tournament_id->crand);
@@ -30,12 +49,27 @@ class TournamentController
         $bracketInfo = [];
         foreach ($rows as $row) {
 
-            $bracketInfo[] = self::row_to_vBracketInfo($row);
+            $bracketInfo[] = self::row_to_vBracketInfo(Row::from_array($row));
         }
         return (new Response(true, "Tournament Bracket information.",  $bracketInfo ));
     }
     
-    public static function getTournamentResults(vRecordId $tournament_id) : Response {
+    /**
+    * @return array<vTournamentResult>
+    */
+    public static function requestTournamentResults(vRecordId $tournament_id) : array
+    {
+        $tournamentResultResp = self::requestTournamentResultsResponse($tournament_id);
+        if (!$tournamentResultResp->success) {
+            throw new \Exception($tournamentResultResp->message);
+        }
+
+        // @phpstan-ignore-next-line
+        return $tournamentResultResp->data;
+    }
+
+    public static function requestTournamentResultsResponse(vRecordId $tournament_id) : Response
+    {
         $conn = Database::getConnection();
 
         // Prepare the SQL statement
@@ -88,27 +122,32 @@ class TournamentController
         return new Response(true, "Tournament Results", $tournamentResults);
     }
 
-    private static function row_to_vBracketInfo(array $row) : vBracketInfo {
+    private static function row_to_vBracketInfo(RowInterface $row) : vBracketInfo
+    {
         $bracketInfo = new vBracketInfo();
 
-        $gameRecord = new vGameRecord('',$row["Id"]);
-        $gameRecord->game = new vGame('',$row["game_id"]);
-        $gameRecord->won = (bool)($row["win"] == 1);
-        $gameRecord->teamName = $row["team_name"];
-        $gameRecord->date = new vDateTime($row["Date"]);
+        $gameRecord = new vGameRecord('', $row->int("Id"));
+        $gameRecord->game = new vGame('', $row->int("game_id"));
+        $gameRecord->won = ($row->int("win") == 1);
+        $gameRecord->teamName = $row->string("team_name");
+        $gameRecord->date = new vDateTime($row->string("Date"));
 
         $bracketInfo->gameRecord = $gameRecord;
 
-        $bracketInfo->account = new vAccount('',$row["account_id"]);
-        $bracketInfo->account->username = $row["Username"];
+        $bracketInfo->account = new vAccount('', $row->int("account_id"));
+        $bracketInfo->account->username = $row->string("Username");
 
-        $gameMatch = new vGameMatch('', $row["game_match_id"]);
-        $gameMatch->bracket = (int)$row["bracket"];
-        $gameMatch->round = (int)$row["round"];
-        $gameMatch->match = (int)$row["match"];
-        $gameMatch->set = (int)$row["set"];
-        $gameMatch->description = $gameMatch->description = $row["desc"] ?? "";
-        $gameMatch->characterHint = $gameMatch->description = $row["character"] ?? "";
+        $gameMatch = new vGameMatch('', $row->int("game_match_id"));
+        $gameMatch->bracket = $row->int("bracket");
+        $gameMatch->round = $row->int("round");
+        $gameMatch->match = $row->int("match");
+        $gameMatch->set = $row->int("set");
+
+        // Assertion is here to flag this in PHPStan for later.
+        assert(true, 'This looks wrong. $characterHint is given $row["desc"] instead of $row["character"]');
+        $gameMatch->description   = $gameMatch->description = $row->nstring("desc") ?? "";
+        $gameMatch->characterHint = $gameMatch->description = $row->nstring("character") ?? "";
+
         $bracketInfo->gameMatch = $gameMatch;
 
         return $bracketInfo;

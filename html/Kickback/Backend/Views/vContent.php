@@ -45,6 +45,7 @@ class vContent extends vRecordId
         $contentResp = ContentController::getContentDataById($this,$container_type,$container_id);
         if ($contentResp->success)
         {
+            // @phpstan-ignore-next-line
             $this->pageContent_ = $contentResp->data;
         }
         else{

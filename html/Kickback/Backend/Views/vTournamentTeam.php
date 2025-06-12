@@ -6,7 +6,10 @@ namespace Kickback\Backend\Views;
 class vTournamentTeam
 {
     public string $name;
+
+    /** @var array<vAccount> */
     public array $players;
+
     public ?bool $champion;
     public int $seed;
 

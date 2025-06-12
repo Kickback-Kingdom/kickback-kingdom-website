@@ -1372,15 +1372,15 @@ $itemInformationJSON = json_encode($itemInfos);
         <div class="col-lg-8">
             <div class="card shadow bg-ranked-1">
                 <div class="text-center" style="padding: 20px;">
-                    <img src="<?= $thisQuest->tournament->getChampion()->getProfilePictureURL(); ?>" class="img-thumbnail" alt="<?= $thisQuest->tournament->getChampion()->name; ?> team logo" style="height: 250px; width: auto; object-fit: cover;">
+                    <img src="<?= $thisQuest->tournament->champion()->getProfilePictureURL(); ?>" class="img-thumbnail" alt="<?= $thisQuest->tournament->champion()->name; ?> team logo" style="height: 250px; width: auto; object-fit: cover;">
                 </div>
                 <div class="card-body">
-                    <h3 class="card-title text-center" style="font-size: 2rem; font-weight: bold; margin-bottom: 15px;">Team: <?= $thisQuest->tournament->getChampion()->name; ?></h3>
+                    <h3 class="card-title text-center" style="font-size: 2rem; font-weight: bold; margin-bottom: 15px;">Team: <?= $thisQuest->tournament->champion()->name; ?></h3>
                     
                 </div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item"><strong>Team Members:</strong></li>
-                        <?php foreach ($thisQuest->tournament->getChampion()->players as $champion) { ?>
+                        <?php foreach ($thisQuest->tournament->champion()->players as $champion) { ?>
                     <li class="list-group-item d-flex align-items-center"><img src="<?= $champion->getProfilePictureURL(); ?>" class="rounded-circle me-3" alt="<?=  htmlspecialchars($champion->username); ?> profile picture" style="width: 50px; height: 50px; object-fit: cover;"> <?= htmlspecialchars($champion->username); ?></li>
                     
                     
@@ -1395,11 +1395,11 @@ $itemInformationJSON = json_encode($itemInfos);
     </div>
 </div>
 <?php } ?>
-<?php if ($thisQuest->isTournament() && $thisQuest->tournament->competitors != null) { ?>
+<?php if ($thisQuest->isTournament() && $thisQuest->tournament->competitors() != null) { ?>
     <div class="container py-5">
         <h2 class="text-center mb-4">Participating Teams</h2>
         <div class="row justify-content-center">
-            <?php foreach ($thisQuest->tournament->competitors as $teamName => $team) { ?>
+            <?php foreach ($thisQuest->tournament->competitors() as $teamName => $team) { ?>
                 <!-- Skip the champions team -->
                 <?php 
                 if (!$team->champion) { ?>

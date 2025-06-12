@@ -65,7 +65,7 @@ class vQuest extends vRecordId
     }
 
     public function isBracketTournament() : bool {
-        return ($this->isTournament() && $this->tournament->hasBracket);
+        return ($this->isTournament() && $this->tournament->hasBracket());
     }
 
     public function hasQuestLine() : bool {
@@ -228,8 +228,11 @@ class vQuest extends vRecordId
         return $this->content->pageContent();
     }
 
-    public function getQuestApplicants() : Response {
-        return QuestController::getQuestApplicants($this);
+    /**
+    * @return array<vQuestApplicant>
+    */
+    public function requestQuestApplicants() : array {
+        return QuestController::requestQuestApplicants($this);
     }
 
     public function populateEverything() : void {

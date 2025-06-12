@@ -255,7 +255,22 @@ class QuestController
         return new Response(false, "Couldn't find rewards for that quest id", null);
     }
 
-    public static function getQuestApplicants(vQuest $quest): Response {
+    /**
+    * @return array<vQuestApplicant>
+    */
+    public static function requestQuestApplicants(vQuest $quest): array
+    {
+        $questApplicantsResponse = self::requestQuestApplicantsResponse($quest);
+        if (!$questApplicantsResponse->success) {
+            throw new Exception($questApplicantsResponse->message);
+        }
+
+        // @phpstan-ignore-next-line
+        return $questApplicantsResponse->data;
+    }
+
+    public static function requestQuestApplicantsResponse(vQuest $quest): Response
+    {
         $conn = Database::getConnection();
         //$sql = "SELECT * FROM kickbackdb.v_quest_applicants_account WHERE quest_id = ? ORDER BY seed ASC, exp DESC, prestige DESC";
         $sql = "select 
@@ -927,7 +942,7 @@ class QuestController
         if ($row["tournament_id"] != null)
         {
             $quest->tournament = new vTournament('', $row["tournament_id"]);
-            $quest->tournament->hasBracket = (bool)$row["hasBracket"]==1;
+            $quest->tournament->hasBracket((bool)$row["hasBracket"]==1);
         }
 
         if ($row["end_date"] != null)
