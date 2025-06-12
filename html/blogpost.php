@@ -278,11 +278,11 @@ if ($thisBlogPost->blogLocator == "Kickback-Kingdom")
 
                                     $_vCanEditContent = $isWriterForBlogPost;
                                     $_vContentViewerEditorTitle = "Blog Post Content Manager";
-                                    $_vPageContent = $thisBlogPost->getPageContent();
+                                    $_vPageContent = $thisBlogPost->pageContent();
                                     require("php-components/content-viewer.php"); 
                                     /*$_vCanEditContent = $thisQuest->canEdit();
                                     $_vContentViewerEditorTitle = "Quest Information Manager";
-                                    $_vPageContent = $thisQuest->getPageContent();
+                                    $_vPageContent = $thisQuest->pageContent();
                                     require("php-components/content-viewer.php");*/
 
                                 ?>

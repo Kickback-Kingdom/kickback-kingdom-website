@@ -95,7 +95,7 @@ class vLichCard extends vRecordId
                         case 'content':
                             if (is_object($value)) {
                                 $content = new vContent();
-                                $content->pageContent = $value->pageContent ?? null;
+                                $content->pageContent($value->pageContent ?? null);
                                 $this->$key = $content;
                             }
                             break;
@@ -188,8 +188,8 @@ class vLichCard extends vRecordId
         return $this->content->hasPageContent();
     }
 
-    public function getPageContent() : vPageContent {
-        return $this->content->pageContent;
+    public function pageContent() : vPageContent {
+        return $this->content->pageContent();
     }
 
     public function canEdit() : bool {

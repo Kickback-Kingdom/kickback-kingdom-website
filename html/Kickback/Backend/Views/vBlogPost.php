@@ -117,8 +117,8 @@ class vBlogPost extends vRecordId
     public function hasPageContent() : bool {
         return $this->content->hasPageContent();
     }
-    public function getPageContent() : vPageContent {
-        return $this->content->pageContent;
+    public function pageContent() : vPageContent {
+        return $this->content->pageContent();
     }
 }
 

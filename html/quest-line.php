@@ -489,7 +489,7 @@ $thisQuestLine->populateEverything();
                                 {
                                     $_vCanEditContent = $thisQuestLine->canEdit();
                                     $_vContentViewerEditorTitle = "Quest Line Information Manager";
-                                    $_vPageContent = $thisQuestLine->getPageContent();
+                                    $_vPageContent = $thisQuestLine->pageContent();
                                     require("php-components/content-viewer.php");
                                 }
                                 

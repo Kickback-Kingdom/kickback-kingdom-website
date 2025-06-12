@@ -116,7 +116,7 @@ class BlogPostController
         }
 
         $pageContent = $pageContentResp->data;
-        $currentBlogPost->content->pageContent = $pageContent;
+        $currentBlogPost->content->pageContent($pageContent);
         // Check if the blog post is valid for publishing
         if (!$currentBlogPost->isValidForPublish()) {
             return new Response(false, "Your blog post isn't ready to publish.", null);

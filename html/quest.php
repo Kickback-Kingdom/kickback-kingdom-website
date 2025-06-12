@@ -1305,7 +1305,7 @@ $itemInformationJSON = json_encode($itemInfos);
                             {
                                 $_vCanEditContent = $thisQuest->canEdit();
                                 $_vContentViewerEditorTitle = "Quest Information Manager";
-                                $_vPageContent = $thisQuest->getPageContent();
+                                $_vPageContent = $thisQuest->pageContent();
                                 require("php-components/content-viewer.php");
                             }
                             else
@@ -1596,7 +1596,7 @@ $itemInformationJSON = json_encode($itemInfos);
     <?php 
     if ($thisQuest->hasPageContent())
     {
-        $_vPageContent = $thisQuest->getPageContent();
+        $_vPageContent = $thisQuest->pageContent();
         require("php-components/content-viewer-javascript.php"); 
     }
     ?>

@@ -83,8 +83,8 @@ class vQuestLine extends vRecordId
         return ($this->hasPageContent() && ($this->content->isValid()));
     }
 
-    public function getPageContent() : vPageContent {
-        return $this->content->pageContent;
+    public function pageContent() : vPageContent {
+        return $this->content->pageContent();
     }
 
     public function locatorIsValid() : bool {

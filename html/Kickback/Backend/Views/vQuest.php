@@ -224,8 +224,8 @@ class vQuest extends vRecordId
         return true;
     }
 
-    public function getPageContent() : vPageContent {
-        return $this->content->pageContent;
+    public function pageContent() : vPageContent {
+        return $this->content->pageContent();
     }
 
     public function getQuestApplicants() : Response {
