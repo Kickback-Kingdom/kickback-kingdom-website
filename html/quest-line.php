@@ -14,7 +14,7 @@ if (isset($_GET['id']))
 {
 
     $id = $_GET['id'];
-    $questLineResp = QuestLineController::getQuestLineById($id);
+    $questLineResp = QuestLineController::requestQuestLineResponseById($id);
 
     /*$showPopUpSuccess = true;
     $PopUpTitle = "Loaded quest line by id";
@@ -24,7 +24,7 @@ if (isset($_GET['id']))
 if (isset($_GET['locator'])){
         
     $name = $_GET['locator'];
-    $questLineResp = QuestLineController::getQuestLineByLocator($name);
+    $questLineResp = QuestLineController::requestQuestLineResponseByLocator($name);
 
     /*$showPopUpSuccess = true;
     $PopUpTitle = "Loaded quest line by locator";

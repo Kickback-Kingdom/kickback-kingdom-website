@@ -15,34 +15,47 @@ class vNotification
     public ?vPrestigeReview $prestigeReview;
     public ?vQuestReview $questReview;
 
-    public function getText()
+    public function getText() : string
     {
-        switch ($this->type) {
-            case NotificationType::QUEST_REVIEW:
-                return "<strong>Thanks for participating</strong> in <a href='".$this->quest->getURL()."'>".$this->quest->title."</a>. Please review your experience so we can build better quests for you in the future. Thanks! ".'<i class="fa-regular fa-face-smile-beam"></i>';
-                break;
+        if ( is_null($this->quest) ) {
+            // If it's OK for us to not have Quest info, then this should be fine
+            // still, because it just won't get rendered.
+            $quest_hyperlink = '(Error: Quest not found)';
+        } else {
+            $quest_url   = $this->quest->getURL();
+            $quest_title = $this->quest->title;
+            $quest_hyperlink = "<a href='$quest_url'>$quest_title</a>";
+        }
 
-            
+        switch ($this->type)
+        {
+            case NotificationType::QUEST_REVIEW:
+                return '<strong>Thanks for participating</strong> in '.$quest_hyperlink.'. Please review your experience so we can build better quests for you in the future. Thanks! <i class="fa-regular fa-face-smile-beam"></i>';
+
             case NotificationType::THANKS_FOR_HOSTING:
-                return "<strong>Thanks for hosting</strong> <a href='".$this->quest->getURL()."'>".$this->quest->title."</a>! Once a few of your participants send in their reviews you will recieve your host reward. In the meantime enjoy your quest rewards. Thanks! ".'<i class="fa-regular fa-face-smile-beam"></i>';
-                break;
+                return '<strong>Thanks for hosting</strong> '.$quest_hyperlink.'! Once a few of your participants send in their reviews you will recieve your host reward. In the meantime enjoy your quest rewards. Thanks! <i class="fa-regular fa-face-smile-beam"></i>';
 
             case NotificationType::PRESTIGE:
-                return $this->prestigeReview->fromAccount->getAccountElement()." used a prestige token on you.";
-                break;
+                if ( !is_null($this->prestigeReview) ) {
+                    $person_name = $this->prestigeReview->fromAccount->getAccountElement();
+                } else {
+                    $person_name = '(Error: couldn\'t retrieve account/name)';
+                }
+                return $person_name.' used a prestige token on you.';
 
             case NotificationType::QUEST_IN_PROGRESS:
-                return "You are participating in <a href='".$this->quest->getURL()."'>".$this->quest->title."</a> which is currently in progress. Please check in often to make sure no one is waiting on you. Thanks! ".'<i class="fa-regular fa-face-smile-beam"></i>';
-                break;
+                return 'You are participating in '.$quest_hyperlink.' which is currently in progress. Please check in often to make sure no one is waiting on you. Thanks! <i class="fa-regular fa-face-smile-beam"></i>';
 
-            
             case NotificationType::QUEST_REVIEWED:
-                return $this->questReview->fromAccount->getAccountElement()." just left a review for your quest - <a href='".$this->quest->getURL()."'>".$this->quest->title."</a>";
-                break;
+                if ( !is_null($this->questReview) ) {
+                    $person_name = $this->questReview->fromAccount->getAccountElement();
+                } else {
+                    $person_name = '(Error: couldn\'t retrieve account/name)';
+                }
+                return $person_name.' just left a review for your quest - '.$quest_hyperlink;
 
             default:
                 return "Unknown Event Occurred";
-                break;
         }
     }
 

@@ -48,9 +48,7 @@ use Kickback\Backend\Controllers\QuestController;
                     if ($_vFeedCard->hasRewards)
                     {
 
-                        $questRewardsResp = QuestController::getQuestRewardsByQuestId($_vFeedCard->quest);
-                        $questRewards = $questRewardsResp->data;
-                        
+                        $questRewards = QuestController::requestQuestRewardsByQuestId($_vFeedCard->quest);
                         $displayedItemIds = [];
 
                         for ($j=0; $j < count($questRewards); $j++) { 

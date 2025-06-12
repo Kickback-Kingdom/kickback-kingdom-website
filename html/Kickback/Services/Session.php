@@ -175,7 +175,7 @@ class Session {
                 $chestsResp = AccountController::getAccountChests($account);
                 $info->chests = $chestsResp->data;
                 
-                $info->notifications = NotificationController::getNotificationsByAccount($account)->data;
+                $info->notifications = NotificationController::requestNotificationsByAccount($account);
     
                 $info->chestsJSON = json_encode($info->chests);
                 $info->notificationsJSON = json_encode($info->notifications);

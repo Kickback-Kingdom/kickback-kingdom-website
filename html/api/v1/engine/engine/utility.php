@@ -38,11 +38,6 @@ function IsGET()
     return ($_SERVER["REQUEST_METHOD"] === "GET");
 }
 
-function StringIsValid($var, $minLength) {
-    return !is_null($var) && strlen($var) >= $minLength;
-}
-
-
 function ContainsData($data, $name)
 {
     if (!isset($data) || empty($data))
@@ -132,16 +127,6 @@ function free_mysqli_resources($mysqli) {
 
 function StringStartsWith($str, $startsWith) {
     return (strpos(strtolower($str), strtolower($startsWith)) === 0);
-}
-
-function GetRandomIntFromSeedString($seedString, $maxInt)
-{
-    // Generate a hash from the seed string
-    $hash = md5($seedString);
-    // Convert the hash into an integer via base conversion
-    $hashToInt = base_convert(substr($hash, 0, 8), 16, 10);
-    // Use modulo to ensure the integer falls within the desired range
-    return $hashToInt % $maxInt;
 }
 
 ?>

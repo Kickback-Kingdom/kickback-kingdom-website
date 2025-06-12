@@ -12,7 +12,10 @@ class vChallengeHistory extends vRecordId
     public ForeignRecordId $gameId;
     public ForeignRecordId $tournamentId;
     public int $playerCount;
+
+    /** @var ?array<string,array<vAccount>> */
     public ?array $teams = null;
+
     public vDateTime $dateTime;
 
     

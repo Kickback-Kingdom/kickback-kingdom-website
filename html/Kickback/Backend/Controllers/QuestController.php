@@ -161,7 +161,22 @@ class QuestController
         }
     }
 
-    public static function getQuestsByQuestLineId(vRecordId $questLineId, int $page = 1, int $itemsPerPage = 10): Response {
+    /**
+    * @return array<vQuest>
+    */
+    public static function requestQuestsByQuestLineId(vRecordId $questLineId, int $page = 1, int $itemsPerPage = 10): array
+    {
+        $resp = self::requestQuestsResponseByQuestLineId($questLineId, $page, $itemsPerPage);
+        if ($resp->success) {
+            // @phpstan-ignore-next-line
+            return $resp->data;
+        } else {
+            throw new \Exception($resp->message);
+        }
+    }
+
+    public static function requestQuestsResponseByQuestLineId(vRecordId $questLineId, int $page = 1, int $itemsPerPage = 10): Response
+    {
         $conn = Database::getConnection();
         $offset = ($page - 1) * $itemsPerPage;
         $sql = "SELECT * FROM v_quest_info where quest_line_id = ? LIMIT ? OFFSET ?";
@@ -231,7 +246,22 @@ class QuestController
         return new Response(false, "We couldn't find a quest with that raffle id", null);
     }
 
-    public static function getQuestRewardsByQuestId(vRecordId $questId) : Response {
+    /**
+    * @return array<vQuestReward>
+    */
+    public static function requestQuestRewardsByQuestId(vRecordId $questId) : array
+    {
+        $questRewardsResp = QuestController::requestQuestRewardsResponseByQuestId($questId);
+        if ($questRewardsResp->success) {
+            // @phpstan-ignore-next-line
+            return $questRewardsResp->data;
+        } else {
+            throw new \Exception($questRewardsResp->message);
+        }
+    }
+
+    public static function requestQuestRewardsResponseByQuestId(vRecordId $questId) : Response
+    {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_quest_reward_info WHERE quest_id = ?";
 
@@ -380,7 +410,7 @@ class QuestController
         $current_date = new \DateTime();
         $current_date->modify('+10 seconds');
         // Check if the date from the DB has passed
-        if ($quest->endDate->value <= $current_date) {
+        if ($quest->endDate()->value <= $current_date) {
             self::chooseRaffleWinner($quest->raffle);
         }
     }
@@ -947,7 +977,7 @@ class QuestController
 
         if ($row["end_date"] != null)
         {
-            $quest->endDate = new vDateTime($row["end_date"]);
+            $quest->endDate(new vDateTime($row["end_date"]));
         }
 
         if ($row["image_id"] != null)

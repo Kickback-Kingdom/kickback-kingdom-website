@@ -26,19 +26,18 @@ class vMedia extends vRecordId
         }
     }
 
-    public function getFullPath()
+    public function getFullPath() : string
     {
         return "/assets/media/".$this->mediaPath;
     }
 
-    public function setFullPath(string $fullPath)
+    public function setFullPath(string $fullPath) : void
     {
         $this->url = $fullPath;
         $this->mediaPath = str_replace("/assets/media/", '', $fullPath);
-
     }
 
-    public function setMediaPath(string $path)
+    public function setMediaPath(string $path) : void
     {
         $this->mediaPath = $path;
         $this->url = $this->getFullPath();

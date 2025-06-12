@@ -10,6 +10,7 @@ use Kickback\Backend\Views\vDateTime;
 use Kickback\Backend\Views\vReviewStatus;
 use Kickback\Services\Session;
 use Kickback\Common\Version;
+use Kickback\Common\Str;
 
 
 class vBlogPost extends vRecordId
@@ -63,7 +64,7 @@ class vBlogPost extends vRecordId
         
     public function titleIsValid()
     {
-        $valid = StringIsValid($this->title, 10);
+        $valid = Str::is_longer_than($this->title, 10);
         if ($valid) 
         {
             if (strtolower($this->title) == "new blog post")
@@ -74,14 +75,14 @@ class vBlogPost extends vRecordId
     }
 
     public function summaryIsValid() {
-        $valid = StringIsValid($this->summary, 200);
+        $valid = Str::is_longer_than($this->summary, 200);
 
         return $valid;
     }
 
     public function locatorIsValid()
     {
-        $valid = StringIsValid($this->postLocator, 5);
+        $valid = Str::is_longer_than($this->postLocator, 5);
         if ($valid) 
         {
             if (strpos(strtolower($this->postLocator), 'new-post-') === 0) {

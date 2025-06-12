@@ -11,7 +11,8 @@ use Kickback\Backend\Models\RecordId;
 class AnalyticController
 {
 
-    private static function getCurrentUserIP() {
+    private static function getCurrentUserIP() : string
+    {
         $ipAddress = '';
         if (isset($_SERVER['HTTP_CLIENT_IP'])) {
             // Check ip from share internet
@@ -27,7 +28,8 @@ class AnalyticController
         return $ipAddress;
     }
     
-    private static function getCurrentDevicePlatform() {
+    private static function getCurrentDevicePlatform() : string
+    {
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
         
         // Special Devices
@@ -66,7 +68,8 @@ class AnalyticController
     }
     
     
-    private static function convertCountryCodeToContinent($countryCode) {
+    private static function convertCountryCodeToContinent($countryCode) : string
+    {
         // Define the mapping from country codes to continent codes
         $countryToContinent = [
             "BD" => "AS", "BE" => "EU", "BF" => "AF", "BG" => "EU", "BA" => "EU", "BB" => "NA", "WF" => "OC", "BL" => "NA", 
@@ -111,8 +114,8 @@ class AnalyticController
         }
     }
     
-    private static function fetchGeoData($ipAddress) {
-        
+    private static function fetchGeoData($ipAddress) : Response
+    {
         $ipinfo_api_key = \Kickback\Backend\Config\ServiceCredentials::get("ipinfo_api_key");
         $url = "https://ipinfo.io/{$ipAddress}?token={$ipinfo_api_key}";
         $ch = curl_init();
@@ -138,19 +141,20 @@ class AnalyticController
         return new Response(true, "Data fetched successfully", json_decode($response, true));
     }
     
-    private static function getCurrentGeoLocation() {
+    private static function getCurrentGeoLocation() : Response
+    {
         Session::ensureSessionStarted();
         $ipAddress = self::getCurrentUserIP();
     
-    // Check if geolocation data for this IP is already cached in the session
-    if (
-        isset($_SESSION['geoLocation']) && 
-        is_array($_SESSION['geoLocation']) && 
-        isset($_SESSION['geoLocation']['ip']) &&
-        $_SESSION['geoLocation']['ip'] === $ipAddress
-    ) {
-        return new Response(true, "Returning cached data", (object)$_SESSION['geoLocation']['data']);
-    }
+        // Check if geolocation data for this IP is already cached in the session
+        if (
+            isset($_SESSION['geoLocation']) &&
+            is_array($_SESSION['geoLocation']) &&
+            isset($_SESSION['geoLocation']['ip']) &&
+            $_SESSION['geoLocation']['ip'] === $ipAddress
+        ) {
+            return new Response(true, 'Returning cached data', (object)$_SESSION['geoLocation']['data']);
+        }
     
         // Fetch new data if not cached
         $response = self::fetchGeoData($ipAddress);
@@ -166,7 +170,7 @@ class AnalyticController
                 'ip' => $ipAddress,
                 'data' => $defaultGeoData
             ];
-            return new Response(false, "Failed to fetch geolocation data, defaulting to placeholders", $defaultGeoData);
+            return new Response(false, 'Failed to fetch geolocation data, defaulting to placeholders', $defaultGeoData);
         }
     
         $geoData = $response->data;
@@ -190,15 +194,18 @@ class AnalyticController
             'data' => $geoData
         ];
     
-        return new Response(true, "GeoLocation data fetched and cached successfully", (object)$geoData);
+        return new Response(true, 'GeoLocation data fetched and cached successfully', (object)$geoData);
     }
-    
-    
-    private static function insertAnalytic($group, $action, $result, $description, $details) {
-        
+
+    private static function insertAnalytic(
+        string $group,
+        string $action,
+        string $result,
+        string $description,
+        string $details)
+        : Response
+    {
         $conn = Database::getConnection();
-        
-    
         $ctime = RecordId::getCTime();
     
         $ip_address = self::getCurrentUserIP();
@@ -213,18 +220,23 @@ class AnalyticController
         }
         $geoLocationResponse = self::getCurrentGeoLocation();
         if ($geoLocationResponse->success) {
-            $geoLocation = $geoLocationResponse->data;
+            $geoLocation = (object)$geoLocationResponse->data;
             $continent = $geoLocation->continent;
             $country = $geoLocation->country;
             $city = $geoLocation->city;
             $region = $geoLocation->region;
             // Now you can use these variables with the assurance that they have valid data or "??".
+        } else {
+            $continent = '';
+            $country = '';
+            $city = '';
+            $region = '';
         }
     
         // Prepare the SQL statement
-        $sql = "INSERT INTO analytic (ctime, crand, `group`, `action`, result, ip_address, account_id, session_id, device_platform, continent, country, city, region, description, details) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    
+        $sql = 'INSERT INTO analytic (ctime, crand, `group`, `action`, result, ip_address, account_id, session_id, device_platform, continent, country, city, region, description, details)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
             // Handle error (e.g., log the error, return an API response)
@@ -272,17 +284,16 @@ class AnalyticController
         }
     }
     
-    public static function getCurrentPage() {
-    
+    public static function getCurrentPage() : string
+    {
         $scriptName = $_SERVER['SCRIPT_NAME'];
         $queryString = $_SERVER['QUERY_STRING'];
         $fullUrl = $queryString ? $scriptName . '?' . $queryString : $scriptName;
-    
         return $fullUrl;
     }
     
-    public static function recordPageVisit($url = null) {
-    
+    public static function recordPageVisit(string $url = null) : void
+    {
         $fullUrl = self::getCurrentPage();
         if ($url == null)
         {
@@ -300,11 +311,11 @@ class AnalyticController
         ]);
     
         // Insert the analytic data with the sanitized and correctly assembled URL
-        self::insertAnalytic("Website Interaction", "Page Visit", $pageId, 'A page visit occurred', $details);
+        self::insertAnalytic('Website Interaction', 'Page Visit', $pageId, 'A page visit occurred', $details);
     }
     
-    public static function getPageVisits($pageId) {
-        
+    public static function getPageVisits(string $pageId) : Response
+    {
         $conn = Database::getConnection();
         
         // Prepare the SQL query to count visits for the current URL
@@ -335,7 +346,8 @@ class AnalyticController
         }
     }
 
-    public static function getThisMonthsGrowthStats() {
+    public static function getThisMonthsGrowthStats() : Response
+    {
         $conn = Database::getConnection();
     
         // Get current year-month as a string (e.g. "2025-04")
@@ -378,8 +390,8 @@ class AnalyticController
     }
     
     
-    public static function getMonthlyGrowthStats() {
-        
+    public static function getMonthlyGrowthStats() : Response
+    {
         $conn = Database::getConnection();
         
         $sql = "SELECT month, new_accounts, total_accounts, growth_percentage, active_accounts, retention_rate, website_hits FROM kickbackdb.v_analytic_accounts_growth_retention_monthly;";
@@ -410,7 +422,8 @@ class AnalyticController
         return new Response(true, "Monthly growth stats", $rows);
     }
 
-    public static function getMapData() {
+    public static function getMapData() : Response
+    {
         $conn = Database::getConnection();
 
         // Query to aggregate user counts by country

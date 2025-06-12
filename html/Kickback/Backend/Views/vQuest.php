@@ -14,14 +14,16 @@ use Kickback\Backend\Models\PlayStyle;
 use Kickback\Backend\Controllers\QuestLineController;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Models\Response;
+use Kickback\Common\Exceptions\UnexpectedNullException;
 use Kickback\Common\Version;
+use Kickback\Common\Str;
 
 class vQuest extends vRecordId
 {
     public string $title;
     public string $locator;
     public string $summary;
-    public ?vDateTime $endDate = null;
+    private ?vDateTime $endDate_ = null;
     public vAccount $host1;
     public ?vAccount $host2 = null;
     public vReviewStatus $reviewStatus;
@@ -37,6 +39,7 @@ class vQuest extends vRecordId
     public ?vMedia $banner;
     public ?vMedia $bannerMobile;
 
+    /** @var ?array<string,array<vQuestReward>> */
     public ?array $rewards = null;
 
     function __construct(string $ctime = '', int $crand = -1)
@@ -48,12 +51,34 @@ class vQuest extends vRecordId
         return Version::formatUrl('/q/'.$this->locator);
     }
 
-    public function hasEndDate() : bool {
-        return ($this->endDate != null);
+    public function endDate(vDateTime ...$newValue) : vDateTime
+    {
+        if ( count($newValue) === 1 ) {
+            $this->endDate_ = $newValue[0];
+            return $this->endDate_;
+        }
+
+        if ( is_null($this->endDate_) ) {
+            throw new UnexpectedNullException();
+        } else {
+            return $this->endDate_;
+        }
     }
 
-    public function hasExpired() : bool {
-        return ($this->hasEndDate() && $this->endDate->isExpired());
+    public function nullableEndDate(?vDateTime ...$newValue) : ?vDateTime
+    {
+        if ( count($newValue) === 1 ) {
+            $this->endDate_ = $newValue[0];
+        }
+        return $this->endDate_;
+    }
+
+    public function hasEndDate() : bool {
+        return (!is_null($this->endDate_));
+    }
+
+    public function expired() : bool {
+        return ($this->hasEndDate() && $this->endDate()->expired());
     }
 
     public function isTournament() : bool {
@@ -65,7 +90,7 @@ class vQuest extends vRecordId
     }
 
     public function isBracketTournament() : bool {
-        return ($this->isTournament() && $this->tournament->hasBracket());
+        return (!is_null($this->tournament) && $this->tournament->hasBracket());
     }
 
     public function hasQuestLine() : bool {
@@ -77,9 +102,10 @@ class vQuest extends vRecordId
     }
 
     public function isHost() : bool {
-        if (Session::isLoggedIn())
+        if (Session::isLoggedIn() && !is_null(Session::getCurrentAccount()))
         {
-            return (Session::getCurrentAccount()->crand == $this->host1->crand || ($this->host2 != null && Session::getCurrentAccount()->crand == $this->host2->crand));
+            $account = Session::getCurrentAccount();
+            return ($account->crand == $this->host1->crand || ($this->host2 != null && $account->crand == $this->host2->crand));
         }
         else{
             return false;
@@ -103,7 +129,7 @@ class vQuest extends vRecordId
     }
 
     public function nameIsValid() : bool {
-        $valid = StringIsValid($this->title, 10);
+        $valid = Str::is_longer_than($this->title, 10);
         if ($valid) 
         {
             if (strtolower($this->title) == "new quest")
@@ -113,7 +139,7 @@ class vQuest extends vRecordId
     }
 
     public function summaryIsValid() : bool {
-        $valid = StringIsValid($this->summary, 200);
+        $valid = Str::is_longer_than($this->summary, 200);
         return $valid;
     }
     
@@ -122,7 +148,7 @@ class vQuest extends vRecordId
     }
 
     public function locatorIsValid() : bool {
-        $valid = StringIsValid($this->locator, 5);
+        $valid = Str::is_longer_than($this->locator, 5);
         if ($valid) 
         {
             if (strpos(strtolower($this->locator), 'new-quest-') === 0) {
@@ -136,8 +162,9 @@ class vQuest extends vRecordId
         return self::imageIsValid($this->icon) && self::imageIsValid($this->banner) && self::imageIsValid($this->bannerMobile);
     }
 
-    private static function imageIsValid($media) : bool {
-        return isset($media) && !is_null($media);
+    private static function imageIsValid(?vMedia $media) : bool {
+        return isset($media);
+        // && !is_null($media); <- redundant with `isset`; it makes PHPStan complain because then `is_null($media)` is ALWAYS false.
     }
 
     public function rewardsAreValid() : bool {
@@ -145,28 +172,21 @@ class vQuest extends vRecordId
     }
 
     public function hasRewards() : bool {
-        return (count($this->rewards) > 0);
+        return (!is_null($this->rewards) && count($this->rewards) > 0);
     }
 
     public function isValidForPublish() : bool {
         return $this->nameIsValid() && $this->summaryIsValid() && $this->locatorIsValid() && $this->pageContentIsValid() && $this->imagesAreValid() && $this->rewardsAreValid();
     }
 
-    public function populateQuestLine() : void {
-        if ($this->hasQuestLine())
+    public function populateQuestLine() : void
+    {
+        if (!is_null($this->questLine))
         {
-            $resp = QuestLineController::getQuestLineById($this->questLine);
-            if ($resp->success)
-            {
-                $this->questLine = $resp->data;
-                if ($this->questLine->reviewStatus->published)
-                {
-                    $this->questLine->populateQuests();
-                }
+            $this->questLine = QuestLineController::requestQuestLineById($this->questLine);
+            if ($this->questLine->reviewStatus->published) {
+                $this->questLine->populateQuests();
             }
-            else
-                throw new \Exception($resp->message);
-                
         }
     }
 
@@ -178,28 +198,21 @@ class vQuest extends vRecordId
     }
 
     public function populateRewards() : void {
-        $questRewardsResp = QuestController::getQuestRewardsByQuestId($this);
-        if ($questRewardsResp->success)
-        {
-            $questRewards = $questRewardsResp->data;
-            $this->rewards = [];
-            foreach ($questRewards as $questReward) {
-                $this->rewards[$questReward->category][] = $questReward;
-            }
-        }
-        else {
-            throw new \Exception($questRewardsResp->message);
+        $questRewards = QuestController::requestQuestRewardsByQuestId($this);
+        $this->rewards = [];
+        foreach ($questRewards as $questReward) {
+            $this->rewards[$questReward->category][] = $questReward;
         }
     }
 
     public function populateTournament() : void {
-        if ($this->isTournament())
-        {
+        if (!is_null($this->tournament)) {
             $this->tournament->populate();
         }
     }
 
-    public function checkSpecificParticipationRewardsExistById() {
+    public function checkSpecificParticipationRewardsExistById() : bool
+    {
         // Define the specific reward Ids to check for
         $specificRewardIds = [3, 4, 15];
         
@@ -214,8 +227,9 @@ class vQuest extends vRecordId
         }, $this->rewards['Participation']);
     
         // Check for the existence of each specific reward Id
-        foreach ($specificRewardIds as $specificRewardId) {
-            if (!in_array($specificRewardId, $participationRewardIds)) {
+        foreach ($specificRewardIds as $specificRewardId)
+        {
+            if (!in_array($specificRewardId, $participationRewardIds, true)) {
                 return false;
             }
         }

@@ -377,8 +377,9 @@ class FeedController
             $quest->summary = is_null($row["text"]) ? "" : $row["text"];
             $quest->reviewStatus = new vReviewStatus((bool) $row["published"]);
             
-            if (isset($dateTime))
-                $quest->endDate = $dateTime;
+            if (isset($dateTime)) {
+                $quest->endDate($dateTime);
+            }
 
             $quest->playStyle = PlayStyle::from((int)$row["style"]);
 

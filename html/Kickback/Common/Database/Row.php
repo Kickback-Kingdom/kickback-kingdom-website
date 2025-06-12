@@ -15,6 +15,12 @@ final class Row
     {
         return new RowFromArray($row);
     }
+
+    // Prevent instantiation/construction of the (static/constant) class.
+    /** @return never */
+    private function __construct() {
+        throw new \Exception("Instantiation of static class " . get_class($this) . "is not allowed.");
+    }
 }
 
 ?>

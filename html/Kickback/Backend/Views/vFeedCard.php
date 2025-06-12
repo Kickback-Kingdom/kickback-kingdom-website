@@ -19,7 +19,7 @@ class vFeedCard
 {
     public string $type;
     public string $typeText;
-    public vMedia $icon;
+    public ?vMedia $icon;
     public ?vQuest $quest = null;
     public ?vQuote $quote = null;
     public ?vQuestLine $questLine = null;
@@ -131,7 +131,7 @@ class vFeedCard
     }
 
     public function useGoldTrim() : bool {
-        return !(($this->hasDateTime() && $this->dateTime->isExpired()) || !$this->hasDateTime());
+        return !(($this->hasDateTime() && $this->dateTime->expired()) || !$this->hasDateTime());
     }
 }
 

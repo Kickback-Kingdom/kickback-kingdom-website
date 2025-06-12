@@ -20,6 +20,11 @@ final class Str
         return !isset($x) || (0 === strlen($x));
     }
 
+    public static function is_longer_than(?string $var, int $minLength) : bool
+    {
+        return !is_null($var) && strlen($var) >= $minLength;
+    }
+
     // Prevent instantiation/construction of the (static/constant) class.
     /** @return never */
     private function __construct() {

@@ -54,7 +54,7 @@ class FeedCardController
         $feedCard->hasTags = true;
         $feedCard->cssClassCard = "quest-card";
         $feedCard->cssClassRight = "quest-card-right";
-        $feedCard->dateTime = $quest->endDate;
+        $feedCard->dateTime = $quest->nullableEndDate();
 
         $feedCard->createdByPrefix = "Hosted";
         $feedCard->cta = "View Quest";

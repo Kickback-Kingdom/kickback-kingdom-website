@@ -278,7 +278,7 @@ class AccountController
         $result->free();
         $stmt->close();
 
-        if ($row) {
+        if (!is_null($row)) {
             return new Response(true, "Raffle Ticket Winner", self::row_to_vAccount($row, true));
         } else {
             return new Response(true, "No winner found for the raffle", null);
@@ -288,7 +288,7 @@ class AccountController
     public static function getAccountChests(vRecordId $recordId) : Response {
         $conn = Database::getConnection();
         // Prepare the SQL statement
-        $sql = "SELECT 
+        $sql = "SELECT
                 loot.Id, 
                 loot.rarity, 
                 CONCAT(b.Directory, '/', b.Id, '.', b.extension) AS ItemImg,
@@ -324,14 +324,14 @@ class AccountController
         mysqli_free_result($result);
         mysqli_stmt_close($stmt);
 
-        return (new Response(true, "Account Chests",  $rows ));
+        return (new Response(true, 'Account Chests',  $rows ));
     }
 
     public static function getAccountBySession(string $serviceKey, string $sessionToken) : Response {
         try {
             $conn = Database::getConnection();
             // SQL statement with placeholders
-            $sql = "SELECT account.*, service.Name as 'ServiceName', ? as SessionToken
+            $sql = 'SELECT account.*, service.Name as \'ServiceName\', ? as SessionToken
             FROM v_account_info as account 
             LEFT JOIN service on service.PublicKey = ? 
             LEFT JOIN account_sessions on account_sessions.SessionToken = ? 
@@ -339,25 +339,25 @@ class AccountController
             and account_sessions.account_id = account.Id 
             WHERE account.Banned = 0 
             AND account_sessions.login_time >= (NOW() - INTERVAL 7 DAY) 
-            AND service.PublicKey = ?";
+            AND service.PublicKey = ?';
 
             // Prepare the SQL statement
             $stmt = mysqli_prepare($conn, $sql);
 
             // Check if the statement was prepared successfully
             if ($stmt === false) {
-                return (new Response(false, "Failed to prepare statement: ".mysqli_error($conn), null));
+                return (new Response(false, 'Failed to prepare statement: '.mysqli_error($conn), null));
             }
 
             // Bind parameters to the placeholders
-            mysqli_stmt_bind_param($stmt, "ssss", $sessionToken, $serviceKey, $sessionToken, $serviceKey);
+            mysqli_stmt_bind_param($stmt, 'ssss', $sessionToken, $serviceKey, $sessionToken, $serviceKey);
 
             // Execute the statement
             $result = mysqli_stmt_execute($stmt);
 
             // Check the result of the query
             if (!$result) {
-                return (new Response(false, "Failed to get result: ".mysqli_stmt_error($stmt), null));
+                return (new Response(false, 'Failed to get result: '.mysqli_stmt_error($stmt), null));
             }
 
             // Bind result variables
@@ -365,14 +365,14 @@ class AccountController
 
             // Fetch the result
             if (mysqli_num_rows($res) === 0) {
-                return (new Response(false, "Session Token or Service Key are incorrect", null));
+                return (new Response(false, 'Session Token or Service Key are incorrect', null));
             } else {
                 $row = mysqli_fetch_assoc($res);
                 $account = self::row_to_vAccount($row);
-                return (new Response(true, "Welcome to " . $row["ServiceName"] . "! A Kickback Kingdom original.", $account));
+                return (new Response(true, 'Welcome to ' . $row['ServiceName'] . '! A Kickback Kingdom original.', $account));
             }
         } catch (Throwable $th) {
-            return (new Response(false, "Error. Check the data for more info.", $th));
+            return (new Response(false, 'Error. Check the data for more info.', $th));
         }
     }
 
@@ -417,7 +417,16 @@ class AccountController
         ];
     }
 
-    private static function executeCountQuery(string $joinQuery, string $whereClause, array $countParams, string $countTypes): int {
+    /**
+    * @param array<string|int> $countParams
+    */
+    private static function executeCountQuery(
+        string $joinQuery,
+        string $whereClause,
+        array  $countParams,
+        string $countTypes)
+        : int
+    {
         $conn = Database::getConnection();
         $countQuery = "SELECT COUNT(*) AS total FROM v_account_info $joinQuery $whereClause";
     
@@ -430,15 +439,27 @@ class AccountController
         $stmt->bind_param($countTypes, ...$countParams);
         $stmt->execute();
         $result = $stmt->get_result();
-        $count = $result->fetch_assoc()['total'] ?? 0;
+        $countStr = $result->fetch_assoc()['total'] ?? '0';
+        $count = intval($countStr);
         $stmt->close();
     
         return $count;
     }
 
-    private static function executeMainQuery(string $joinQuery, string $whereClause, array $mainParams, string $mainTypes, int $itemsPerPage, int $offset): array {
+    /**
+    * @param array<string|int> $mainParams
+    */
+    private static function executeMainQuery(
+        string $joinQuery,
+        string $whereClause,
+        array  $mainParams,
+        string $mainTypes,
+        int    $itemsPerPage,
+        int    $offset)
+        : array
+    {
         $conn = Database::getConnection();
-        $mainQuery = "
+        $mainQuery = '
             SELECT v_account_info.*, (
                 (CASE WHEN LOWER(username) LIKE ? THEN 4 ELSE 0 END) +
                 (CASE WHEN LOWER(firstname) LIKE ? THEN 3 ELSE 0 END) +
@@ -449,7 +470,7 @@ class AccountController
             $joinQuery
             $whereClause
             ORDER BY relevancy_score DESC, level DESC, exp_current DESC, Username
-            LIMIT ? OFFSET ?";
+            LIMIT ? OFFSET ?';
 
 
         $stmt = $conn->prepare($mainQuery);
@@ -467,15 +488,16 @@ class AccountController
         return $accountItems;
     }
     
-    public static function searchForAccount(string $searchTerm, int $page, int $itemsPerPage, array $filters = []): Response {
-        $searchTerm = "%" . strtolower($searchTerm) . "%";
+    public static function searchForAccount(string $searchTerm, int $page, int $itemsPerPage, array $filters = []): Response
+    {
+        $searchTerm = '%' . strtolower($searchTerm) . '%';
         $page = max(1, $page);
         $itemsPerPage = max(1, $itemsPerPage);
         $offset = ($page - 1) * $itemsPerPage;
     
-        $filterConditions = ["(LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?)", "Banned = 0"];
+        $filterConditions = ['(LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?)', 'Banned = 0'];
         $filterParams = [$searchTerm, $searchTerm, $searchTerm, $searchTerm];
-        $paramTypes = "ssss";
+        $paramTypes = 'ssss';
     
         $joinData = self::buildJoinsAndConditions($filters);
         $joinQuery = $joinData['joinQuery'];
@@ -484,7 +506,7 @@ class AccountController
         $countParams = array_merge($filterParams, $joinData['params']);
         $countTypes = $paramTypes . $joinData['paramTypes'];
 
-        $whereClause = " WHERE " . implode(" AND ", $filterConditions);
+        $whereClause = ' WHERE ' . implode(' AND ', $filterConditions);
     
         $count = self::executeCountQuery($joinQuery, $whereClause, $countParams, $countTypes);
         
@@ -494,13 +516,13 @@ class AccountController
             $joinData['params'],
             [$itemsPerPage, $offset]
         );
-        $mainTypes = $paramTypes . $paramTypes . $joinData['paramTypes']."ii";
+        $mainTypes = $paramTypes . $paramTypes . $joinData['paramTypes'].'ii';
     
         $accountItems = self::executeMainQuery($joinQuery, $whereClause, $mainParams, $mainTypes, $itemsPerPage, $offset);
     
         $newAccountItems = array_map(fn($row) => self::row_to_vAccount($row, true), $accountItems);
     
-        return new Response(true, "Accounts found", [
+        return new Response(true, 'Accounts found', [
             'total' => $count,
             'accountItems' => $newAccountItems,
         ]);

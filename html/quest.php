@@ -155,12 +155,12 @@ if ($thisQuest->isRaffle())
 $showRaffleTab = ($thisQuest->isRaffle());
 $showRewardsTab = ($thisQuest->hasRewards());
 $showBracketTab = ($thisQuest->isBracketTournament());
-$showResultsTab = ($thisQuest->isTournament() && $thisQuest->hasExpired());
-$showParticipantsTab = (($thisQuest->hasExpired())||($showRaffleTab));
+$showResultsTab = ($thisQuest->isTournament() && $thisQuest->expired());
+$showParticipantsTab = (($thisQuest->expired())||($showRaffleTab));
 $showApplicantsTab = (!$thisQuest->isRaffle());
 $showQuestLineTab = ($thisQuest->hasQuestLine());
 $showQuestParticipantsSearch = false;
-$showRegisterButton = !$thisQuest->hasExpired() && $thisQuest->reviewStatus->published && (!Session::isLoggedIn() || !QuestController::accountHasRegisteredOrAppliedForQuest(Session::getCurrentAccount(),$thisQuest)->success);//
+$showRegisterButton = !$thisQuest->expired() && $thisQuest->reviewStatus->published && (!Session::isLoggedIn() || !QuestController::accountHasRegisteredOrAppliedForQuest(Session::getCurrentAccount(),$thisQuest)->success);//
 
 
 $games = null;
@@ -174,7 +174,7 @@ if ($thisQuest->canEdit())
     $questLines = $questLinesResp->data;
 }
 $canEditQuest = true;
-if ($thisQuest->hasExpired() && $thisQuest->reviewStatus->published)
+if ($thisQuest->expired() && $thisQuest->reviewStatus->published)
 {
     $canEditQuest = false;
 }
@@ -421,7 +421,7 @@ $itemInformationJSON = json_encode($itemInfos);
                         <h5 class="quest-hosted-by">Hosted by 
                             <?= $thisQuest->host1->getAccountElement(); ?>
                             <?php if ($thisQuest->host2 != null) { ?> and <?= $thisQuest->host2->getAccountElement(); ?><?php } ?>
-                            <?php if ($thisQuest->hasEndDate()) { ?>at <?= $thisQuest->endDate->getDateTimeElement('quest_time'); ?><?php } else { ?>until completed<?php } ?>
+                            <?php if ($thisQuest->hasEndDate()) { ?>at <?= $thisQuest->endDate()->getDateTimeElement('quest_time'); ?><?php } else { ?>until completed<?php } ?>
                         </h5>
                         
                 
@@ -663,7 +663,7 @@ $itemInformationJSON = json_encode($itemInfos);
                                                                     foreach ($questLines as $questLine) {
                                                                         $questLineValue = $questLine->crand;
                                                                         $questLineName = $questLine->title;
-                                                                        if ($thisQuest->hasQuestLine())
+                                                                        if (!is_null($thisQuest->questLine))
                                                                             $questLineSelected = ($questLine->crand == $thisQuest->questLine->crand ? "selected" : "");
                                                                         else
                                                                             $questLineSelected = "";
@@ -728,18 +728,18 @@ $itemInformationJSON = json_encode($itemInfos);
                                                                 </div>
                                                             </div>
                                                             <div class="row" id="date-time-row">
-                                                                <input type="hidden" name="edit-quest-options-datetime" id="edit-quest-options-datetime" value="<?= vDateTime::getValueString($thisQuest->endDate); ?>">
+                                                                <input type="hidden" name="edit-quest-options-datetime" id="edit-quest-options-datetime" value="<?= vDateTime::getValueString($thisQuest->endDate()); ?>">
 
                                                                 <div class="col-md-6 mb-3">
                                                                     <div class="form-group">
                                                                         <label for="edit-quest-options-datetime-date" class="form-label">Date:</label>
-                                                                        <input type="date" id="edit-quest-options-datetime-date" name="edit-quest-options-datetime-date" value="<?= vDateTime::getFormattedYmd($thisQuest->endDate); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
+                                                                        <input type="date" id="edit-quest-options-datetime-date" name="edit-quest-options-datetime-date" value="<?= vDateTime::getFormattedYmd($thisQuest->endDate()); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 mb-3">
                                                                     <div class="form-group">
                                                                         <label for="edit-quest-options-datetime-time"  class="form-label">Time:</label>
-                                                                        <input type="time" id="edit-quest-options-datetime-time" name="edit-quest-options-datetime-time" value="" data-utc-time="<?= vDateTime::getFormattedYmd($thisQuest->endDate); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
+                                                                        <input type="time" id="edit-quest-options-datetime-time" name="edit-quest-options-datetime-time" value="" data-utc-time="<?= vDateTime::getFormattedYmd($thisQuest->endDate()); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
                                                                     </div>
                                                                 </div>
 
@@ -1365,7 +1365,7 @@ $itemInformationJSON = json_encode($itemInfos);
                             <div class="tab-pane fade <?php echo $activeTabPage; $activeTabPage = ''; ?>" id="nav-results" role="tabpanel" aria-labelledby="nav-results-tab" tabindex="0">
                             <!--<div class="display-6 tab-pane-title">Quest Results</div>-->
                             
-<?php if ($thisQuest->isTournament() && $thisQuest->tournament->concluded()) { ?>
+<?php if (!is_null($thisQuest->tournament) && $thisQuest->tournament->concluded()) { ?>
 <div class="container py-5">
         <h2 class="text-center mb-4">Grand Champion</h2>
     <div class="row justify-content-center">
@@ -1395,7 +1395,7 @@ $itemInformationJSON = json_encode($itemInfos);
     </div>
 </div>
 <?php } ?>
-<?php if ($thisQuest->isTournament() && $thisQuest->tournament->competitors() != null) { ?>
+<?php if (!is_null($thisQuest->tournament()) && $thisQuest->tournament->competitors() != null) { ?>
     <div class="container py-5">
         <h2 class="text-center mb-4">Participating Teams</h2>
         <div class="row justify-content-center">
@@ -1603,7 +1603,7 @@ $itemInformationJSON = json_encode($itemInfos);
     <!--Test 2-->
     <script>
         
-var questDate = new Date('<?= vDateTime::getValueString($thisQuest->endDate); ?>');
+var questDate = new Date('<?= vDateTime::getValueString($thisQuest->endDate()); ?>');
 
 
 

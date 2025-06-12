@@ -2,6 +2,8 @@
 
 use Kickback\Common\Version;
 
+use Kickback\Backend\Controllers\QuestController;
+
 $feedCardType = "QUEST";
 $feedCardTypeText = "QUEST";
 if (isset($feedCard["type"]))
@@ -316,9 +318,7 @@ $feedCardDateDetailed = date_format($feedCardDate,"M j, Y H:i:s");
                     if ($feedCardHasRewards)
                     {
 
-                    $questRewardsResp = GetQuestRewardsByQuestId($feedCard["Id"]);
-                    $questRewards = $questRewardsResp->data;
-                    
+                    $questRewards = QuestController::requestQuestRewardsByQuestId($feedCard["Id"]);
                     $displayedItemIds = [];
 
                     for ($j=0; $j < count($questRewards); $j++) { 

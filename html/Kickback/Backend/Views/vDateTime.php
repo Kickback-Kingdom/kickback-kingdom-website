@@ -16,7 +16,8 @@ class vDateTime
     public string $formattedHi = "DATE ERROR";
     public string $formattedMonthYear = "DATE ERROR";
     public string $dbValue = "DATE ERROR";
-    public function isExpired() : bool {
+
+    public function expired() : bool {
         return ($this->value < (New DateTime()));
     }
 
