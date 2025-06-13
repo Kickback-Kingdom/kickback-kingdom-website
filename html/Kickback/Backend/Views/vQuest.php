@@ -47,7 +47,7 @@ class vQuest extends vRecordId
         parent::__construct($ctime, $crand);
     }
 
-    public function getURL() : string {
+    public function url() : string {
         return Version::formatUrl('/q/'.$this->locator);
     }
 
@@ -73,26 +73,38 @@ class vQuest extends vRecordId
         return $this->endDate_;
     }
 
+    /**
+    * @phpstan-assert-if-true !null $this->endDate_
+    */
     public function hasEndDate() : bool {
         return (!is_null($this->endDate_));
     }
 
     public function expired() : bool {
-        return ($this->hasEndDate() && $this->endDate()->expired());
+        return ($this->hasEndDate() && $this->endDate_->expired());
     }
 
+    /**
+    * @phpstan-assert-if-true !null $this->tournament
+    */
     public function isTournament() : bool {
         return ($this->tournament != null);
     }
 
+    /**
+    * @phpstan-assert-if-true !null $this->raffle
+    */
     public function isRaffle() : bool {
         return ($this->raffle != null);
     }
 
     public function isBracketTournament() : bool {
-        return (!is_null($this->tournament) && $this->tournament->hasBracket());
+        return ($this->isTournament() && $this->tournament->hasBracket());
     }
 
+    /**
+    * @phpstan-assert-if-true !null $this->questLine
+    */
     public function hasQuestLine() : bool {
         return ($this->questLine != null);
     }
@@ -167,10 +179,16 @@ class vQuest extends vRecordId
         // && !is_null($media); <- redundant with `isset`; it makes PHPStan complain because then `is_null($media)` is ALWAYS false.
     }
 
+    /**
+    * @phpstan-assert-if-true !null $this->rewards
+    */
     public function rewardsAreValid() : bool {
         return $this->rewards != null && $this->hasRewards();
     }
 
+    /**
+    * @phpstan-assert-if-true !null $this->rewards
+    */
     public function hasRewards() : bool {
         return (!is_null($this->rewards) && count($this->rewards) > 0);
     }
@@ -181,7 +199,7 @@ class vQuest extends vRecordId
 
     public function populateQuestLine() : void
     {
-        if (!is_null($this->questLine))
+        if ($this->hasQuestLine())
         {
             $this->questLine = QuestLineController::requestQuestLineById($this->questLine);
             if ($this->questLine->reviewStatus->published) {
@@ -206,7 +224,7 @@ class vQuest extends vRecordId
     }
 
     public function populateTournament() : void {
-        if (!is_null($this->tournament)) {
+        if ($this->isTournament()) {
             $this->tournament->populate();
         }
     }

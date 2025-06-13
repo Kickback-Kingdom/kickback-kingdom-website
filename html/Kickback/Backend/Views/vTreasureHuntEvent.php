@@ -50,7 +50,7 @@ class vTreasureHuntEvent extends vRecordId
         $this->populateContent();
     }
 
-    public function getURL() : string {
+    public function url() : string {
         return "/treasure-hunt/".$this->locator;
     }
 }

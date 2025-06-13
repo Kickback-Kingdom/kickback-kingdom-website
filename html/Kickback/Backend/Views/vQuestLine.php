@@ -36,7 +36,7 @@ class vQuestLine extends vRecordId
         parent::__construct($ctime, $crand);
     }
 
-    public function getURL() : string {
+    public function url() : string {
         return Version::formatUrl('/quest-line/'.$this->locator);
     }
     

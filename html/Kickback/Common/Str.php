@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Kickback\Common;
 
 /**
-* As of this writing, this class just exists to silence the PHPStan error about `empty` being not allowed.
+* This class originally existed to silence the PHPStan error about `empty` being not allowed.
 */
 final class Str
 {

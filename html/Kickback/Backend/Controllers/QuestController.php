@@ -227,8 +227,19 @@ class QuestController
         return new Response(false, "We couldn't find a quest with that raffle id", null);
     }
 
-    
-    public static function getQuestByKickbackUpcoming(): Response {
+    public static function requestQuestByKickbackUpcoming(): vQuest
+    {
+        $resp = self::requestQuestResponseByKickbackUpcoming();
+        if ($resp->success) {
+            // @phpstan-ignore assign.propertyType
+            return $resp->data;
+        } else {
+            throw new \Exception($resp->message);
+        }
+    }
+
+    public static function requestQuestResponseByKickbackUpcoming(): Response
+    {
         $conn = Database::getConnection();
         $stmt = $conn->prepare("SELECT * FROM v_quest_info WHERE (host_id = 46 or host_id_2 = 46) and finished = 0 and published = 1 order by end_date LIMIT 1");
         if ($stmt === false) {

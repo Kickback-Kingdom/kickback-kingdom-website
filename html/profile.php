@@ -146,11 +146,11 @@ $activeTabPage = 'active show';
         <!--TOP BANNER-->
         <div class="d-none d-md-block w-100 ratio" style="--bs-aspect-ratio: 26%; margin-top: 56px">
             <img src="/assets/images/kk-1.jpg" class="" />
-            <img class="img-fluid img-thumbnail" src="<?= $profile->getProfilePictureURL(); ?>" style="width: auto;height: 90%;top: 5%;left: 5%;">
+            <img class="img-fluid img-thumbnail" src="<?= $profile->profilePictureURL(); ?>" style="width: auto;height: 90%;top: 5%;left: 5%;">
         </div>
         <div class="d-block d-md-none w-100 ratio" style="margin-top: 56px; --bs-aspect-ratio: 46.3%;">
             <img src="/assets/images/kk-2.jpg" />
-            <img class="img-fluid img-thumbnail" src="<?= $profile->getProfilePictureURL(); ?>" style="width: auto;height: 90%;top: 5%;left: 5%;">
+            <img class="img-fluid img-thumbnail" src="<?= $profile->profilePictureURL(); ?>" style="width: auto;height: 90%;top: 5%;left: 5%;">
         </div>
     </div>
 
@@ -799,7 +799,7 @@ $activeTabPage = 'active show';
                                                         if ($badge->quest != null)
                                                         {
                                                             ?>
-                                                            <a class="btn btn-primary btn-sm" href="<?= $badge->quest->getURL(); ?>"><?= $badge->quest->title; ?></a>
+                                                            <a class="btn btn-primary btn-sm" href="<?= $badge->quest->url(); ?>"><?= $badge->quest->title; ?></a>
                                                             <?php 
 
                                                         }

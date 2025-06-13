@@ -36,8 +36,8 @@ class vTournamentTeam
         $this->players[] = $account;
     }
 
-    public function getProfilePictureURL() : string {
-        return $this->players[0]->getProfilePictureURL();
+    public function profilePictureURL() : ?string {
+        return $this->players[0]->profilePictureURL();
     }
 }
 ?>

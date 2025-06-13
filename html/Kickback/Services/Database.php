@@ -34,11 +34,12 @@ class Database {
         return self::$conn;
     }
 
-    private static function handleStmtError(mysqli_stmt $stmt, string $message): Response {
-        error_log($stmt->error);
-        $stmt->close();
-        return new Response(false, $message, null);
-    }
+    // Dead code?
+    // private static function handleStmtError(\mysqli_stmt $stmt, string $message): Response {
+    //     error_log($stmt->error);
+    //     $stmt->close();
+    //     return new Response(false, $message, null);
+    // }
     
 }
 ?>

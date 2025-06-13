@@ -573,7 +573,7 @@ $mediaDirs = $mediaDirsResp->data;
 
 <?php if (Kickback\Services\Session::isEventOrganizer()) { 
     
-    $currentAndUpComingTreasureHunts = TreasureHuntController::getCurrentEventsAndUpcoming()->data;
+    $currentAndUpComingTreasureHunts = TreasureHuntController::requestCurrentEventsAndUpcoming();
     ?>
 <!--Treasure hunt hide object modal-->
 <div class="modal fade" id="treasureHuntHideObjectModal" tabindex="-1" aria-labelledby="treasureHuntHideObjectModalLabel" aria-hidden="true">
@@ -974,7 +974,7 @@ $mediaDirs = $mediaDirsResp->data;
                             if (Kickback\Services\Session::isLoggedIn())
                             {
                         ?>
-                        <img class="rounded-circle" style="height: 100%;width: auto;" src="<?= Kickback\Services\Session::getCurrentAccount()->getProfilePictureURL(); ?>"/>
+                        <img class="rounded-circle" style="height: 100%;width: auto;" src="<?= Kickback\Services\Session::getCurrentAccount()->profilePictureURL(); ?>"/>
                         <?php
                             }
                             else

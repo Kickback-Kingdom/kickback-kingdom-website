@@ -59,8 +59,16 @@ class BlogController
 
         return (new Response(true, "Available Blogs",  $newsList));
     }
+
+    public static function accountIsWriter(vAccount $account, vBlog $blog) : bool
+    {
+        $resp = self::accountIsWriterResponse($account, $blog);
+        // @phpstan-ignore assign.propertyType
+        return $resp->data;
+    }
     
-    public static function accountIsWriter(vAccount $account, vBlog $blog) : Response {
+    public static function accountIsWriterResponse(vAccount $account, vBlog $blog) : Response
+    {
         $conn = Database::getConnection();
 
         $stmt = mysqli_prepare($conn, "SELECT IsManager, IsWriter FROM v_blog_permissions WHERE account_id = ? AND blog_id = ?");
@@ -89,18 +97,25 @@ class BlogController
         }
     }
 
-    public static function accountIsManager(vAccount $account, vBlog $blog) : Response {
-        
+    public static function accountIsManager(vAccount $account, vBlog $blog) : bool
+    {
+        $resp = self::accountIsManagerResponse($account, $blog);
+        // @phpstan-ignore assign.propertyType
+        return $resp->data;
+    }
+
+    public static function accountIsManagerResponse(vAccount $account, vBlog $blog) : Response
+    {
         $conn = Database::getConnection();
         $stmt = mysqli_prepare($conn, "SELECT IsManager FROM v_blog_permissions WHERE account_id = ? AND blog_id = ?");
         mysqli_stmt_bind_param($stmt, "ii", $account->crand, $blog->crand); 
         mysqli_stmt_execute($stmt);
 
         $result = mysqli_stmt_get_result($stmt);
-        
+
         $row = mysqli_fetch_assoc($result);
         $num_rows = mysqli_num_rows($result);
-        
+
         if ($num_rows === 0)
         {
             return (new Response(false, "Account or Blog not found.", false));
@@ -110,8 +125,8 @@ class BlogController
             if($row['IsManager'] == 1) 
             {
                 return (new Response(true, "The account is a manager for the blog.", true));
-            } 
-            else 
+            }
+            else
             {
                 return (new Response(false, "The account is not a manager for the blog.", false));
             }

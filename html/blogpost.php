@@ -85,7 +85,7 @@ if ($thisBlogPost->blogLocator == "Kickback-Kingdom")
                 <div class="card mb-3">
                     <?php if (!isset($_GET['borderless'])) { ?>
                     <div class="card-header bg-primary d-flex flex-wrap justify-content-between align-items-center">
-                        <a class="btn bg-ranked-1" href="<?= $thisBlogPost->blog->getURL(); ?>"><i class="fa-solid fa-arrow-left"></i><i class="fa-solid fa-blog"></i></a>
+                        <a class="btn bg-ranked-1" href="<?= $thisBlogPost->blog->url(); ?>"><i class="fa-solid fa-arrow-left"></i><i class="fa-solid fa-blog"></i></a>
                         <h5 class="text-center text-white"><?= $thisBlogPost->blog->title; ?></h5>
                         <a class="btn bg-ranked-1 float-end" href="#page_bottom"><i class="fa-solid fa-arrow-down"></i></a>
                     </div>

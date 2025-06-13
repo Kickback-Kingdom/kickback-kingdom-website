@@ -19,7 +19,7 @@ class QuestLineController {
     {
         $resp = self::requestQuestLineResponseById($questLineId);
         if ($resp->success) {
-            // @phpstan-ignore-next-line
+            // @phpstan-ignore assign.propertyType
             return $resp->data;
         } else {
             throw new \Exception($resp->message);

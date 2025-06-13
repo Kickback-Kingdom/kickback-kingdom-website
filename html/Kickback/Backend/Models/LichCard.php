@@ -23,6 +23,7 @@ class LichCard extends RecordId
     public int $thermic;
     public int $verdant;
     public int $luminate;
+    /** @var array<array{crand: int,  ctime: string,  name: string}> */
     public array $subTypes; 
     public string $locator;
     

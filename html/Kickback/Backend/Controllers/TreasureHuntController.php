@@ -473,7 +473,21 @@ class TreasureHuntController
         return new Response(true, "Active events", $events);
     }
 
-    public static function getCurrentEventsAndUpcoming(): Response
+    /**
+    * @return array<vTreasureHuntEvent>
+    */
+    public static function requestCurrentEventsAndUpcoming(): array
+    {
+        $resp = self::requestCurrentEventsAndUpcomingResponse();
+        if ($resp->success) {
+            // @phpstan-ignore assign.propertyType
+            return $resp->data;
+        } else {
+            throw new \Exception($resp->message);
+        }
+    }
+
+    public static function requestCurrentEventsAndUpcomingResponse(): Response
     {
         $conn = Database::getConnection();
         
@@ -497,8 +511,6 @@ class TreasureHuntController
         $events = array_map([self::class, 'row_to_vTreasureHuntEvent'], $result->fetch_all(MYSQLI_ASSOC));
         return new Response(true, "Current and upcoming events", $events);
     }
-
-
 
     /**
      * Get hidden objects for a given page URL, excluding collected objects.

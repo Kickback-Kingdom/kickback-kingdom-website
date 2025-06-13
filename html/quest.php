@@ -1372,7 +1372,7 @@ $itemInformationJSON = json_encode($itemInfos);
         <div class="col-lg-8">
             <div class="card shadow bg-ranked-1">
                 <div class="text-center" style="padding: 20px;">
-                    <img src="<?= $thisQuest->tournament->champion()->getProfilePictureURL(); ?>" class="img-thumbnail" alt="<?= $thisQuest->tournament->champion()->name; ?> team logo" style="height: 250px; width: auto; object-fit: cover;">
+                    <img src="<?= $thisQuest->tournament->champion()->profilePictureURL(); ?>" class="img-thumbnail" alt="<?= $thisQuest->tournament->champion()->name; ?> team logo" style="height: 250px; width: auto; object-fit: cover;">
                 </div>
                 <div class="card-body">
                     <h3 class="card-title text-center" style="font-size: 2rem; font-weight: bold; margin-bottom: 15px;">Team: <?= $thisQuest->tournament->champion()->name; ?></h3>
@@ -1381,7 +1381,7 @@ $itemInformationJSON = json_encode($itemInfos);
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item"><strong>Team Members:</strong></li>
                         <?php foreach ($thisQuest->tournament->champion()->players as $champion) { ?>
-                    <li class="list-group-item d-flex align-items-center"><img src="<?= $champion->getProfilePictureURL(); ?>" class="rounded-circle me-3" alt="<?=  htmlspecialchars($champion->username); ?> profile picture" style="width: 50px; height: 50px; object-fit: cover;"> <?= htmlspecialchars($champion->username); ?></li>
+                    <li class="list-group-item d-flex align-items-center"><img src="<?= $champion->profilePictureURL(); ?>" class="rounded-circle me-3" alt="<?=  htmlspecialchars($champion->username); ?> profile picture" style="width: 50px; height: 50px; object-fit: cover;"> <?= htmlspecialchars($champion->username); ?></li>
                     
                     
                     <?php } ?>
@@ -1408,13 +1408,13 @@ $itemInformationJSON = json_encode($itemInfos);
                             <!-- Optionally include a team image if available -->
                             <!-- <img src="path_to_team_image" class="card-img-top img-thumbnail" alt="Team image" style="max-height: 250px; object-fit: cover;"> -->
                             <div class="card-body">
-                                <h4 class="card-title text-center"><img src="<?= $team->getProfilePictureURL(); ?>" class="img-thumbnail" alt="<?= htmlspecialchars($teamName); ?> team logo" style="height: 64px;width: auto;margin-right: 16px;">Team: <?php echo htmlspecialchars($teamName); ?></h4>
+                                <h4 class="card-title text-center"><img src="<?= $team->profilePictureURL(); ?>" class="img-thumbnail" alt="<?= htmlspecialchars($teamName); ?> team logo" style="height: 64px;width: auto;margin-right: 16px;">Team: <?php echo htmlspecialchars($teamName); ?></h4>
                             </div>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item"><strong>Team Members:</strong></li>
                                 <?php foreach ($team->players as $member) { ?>
                                     <li class="list-group-item d-flex align-items-center">
-                                        <img src="<?= $member->getProfilePictureURL(); ?>" class="rounded-circle me-3" alt="<?= htmlspecialchars($member->username); ?> profile picture" style="width: 50px; height: 50px; object-fit: cover;">
+                                        <img src="<?= $member->profilePictureURL(); ?>" class="rounded-circle me-3" alt="<?= htmlspecialchars($member->username); ?> profile picture" style="width: 50px; height: 50px; object-fit: cover;">
                                         <?= htmlspecialchars($member->username); ?>
                                     </li>
                                 <?php } ?>

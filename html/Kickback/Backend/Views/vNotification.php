@@ -22,7 +22,7 @@ class vNotification
             // still, because it just won't get rendered.
             $quest_hyperlink = '(Error: Quest not found)';
         } else {
-            $quest_url   = $this->quest->getURL();
+            $quest_url   = $this->quest->url();
             $quest_title = $this->quest->title;
             $quest_hyperlink = "<a href='$quest_url'>$quest_title</a>";
         }
@@ -83,13 +83,10 @@ class vNotification
         }
     }
 
-
-
-
-    public function getCTA()
-    {
-
-    }
+    // public function getCTA()
+    // {
+    //
+    // }
 }
 
 ?>

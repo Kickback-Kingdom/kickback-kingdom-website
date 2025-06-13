@@ -67,13 +67,16 @@ class vTournament extends vRecordId
         $this->populateBrackets();
     }
 
+    /**
+    * @phpstan-assert-if-true !null $this->champion_
+    */
     public function concluded() : bool {
         return !is_null($this->champion_);
     }
 
-    public function hasBracket(?bool $newValue = null) : bool {
-        if ( !is_null($newValue) ) {
-            $this->hasBracket_ = $newValue;
+    public function hasBracket(bool ...$newValue) : bool {
+        if ( count($newValue) === 1 ) {
+            $this->hasBracket_ = $newValue[0];
         }
         return $this->hasBracket_;
     }

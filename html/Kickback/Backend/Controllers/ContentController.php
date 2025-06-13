@@ -65,8 +65,6 @@ class ContentController {
         // Convert the data array to a zero-indexed array
         $data = array_values($data);
 
-        
-
         /*$contentData = array(
             'data' => $data,
             'container_type' => $container_type,
@@ -78,34 +76,30 @@ class ContentController {
         $contentData->data = $data;
         $contentData->containerType = $container_type;
         $contentData->containerId = $container_id;
-        
 
         // Close the statement
         mysqli_stmt_close($stmt);
 
-
         return (new Response(true, "Content retrieved successfully.", $contentData));
     }
 
-    
     public static function getContentTypes() : Response {
         $conn = Database::getConnection();
         $query = "SELECT Id, type_name FROM content_type";
-        
+
         $stmt = mysqli_prepare($conn, $query);
-        
+
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
-        
+
         // Fetch the content types into an associative array
         $contentTypes = mysqli_fetch_all($result, MYSQLI_ASSOC);
-        
+
         mysqli_stmt_close($stmt);
-        
+
         return (new Response(true, "Content Types", $contentTypes));
     }
 
-    
     public static function canUpdateContent($contentData) : bool {
         if (Session::isLoggedIn())
         {
