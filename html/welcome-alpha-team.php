@@ -217,7 +217,7 @@ $coleAccount = AccountController::getAccountById(new vRecordId('', 164))->data;
                     <div class="server-card-content p-4 text-center">
                         <h4 class="fw-bold mb-5">Palworld</h4>
 
-                        <?php if (Session::IsLoggedIn()): ?>
+                        <?php if (Session::isLoggedIn()): ?>
                             <p class="mb-1"><strong>Server Name:</strong> Kickback Kingdom - Palworld</p>
                             <p class="mb-1"><strong>IP Address:</strong> <code>209.145.48.193</code></p>
                             <p class="mb-1"><strong>Port:</strong> <code>28000</code></p>
@@ -236,7 +236,7 @@ $coleAccount = AccountController::getAccountById(new vRecordId('', 164))->data;
                 <div class="server-card bg-conan">
                     <div class="server-card-content p-4 text-center">
                         <h4 class="fw-bold mb-5">Conan Exiles</h4>
-                        <?php if (Session::IsLoggedIn()): ?>
+                        <?php if (Session::isLoggedIn()): ?>
                             <p class="mb-1"><strong>Server Name:</strong> Kickback Exiles</p>
                             <p class="mb-1"><strong>IP Address:</strong> <code>144.126.153.200</code></p>
                             <p class="mb-1"><strong>Port:</strong> <code>30000</code></p>
@@ -254,7 +254,7 @@ $coleAccount = AccountController::getAccountById(new vRecordId('', 164))->data;
                 <div class="server-card bg-minecraft">
                     <div class="server-card-content p-4 text-center">
                         <h4 class="fw-bold mb-5">Minecraft Roleplay</h4>
-                        <?php if (Session::IsLoggedIn()): ?>
+                        <?php if (Session::isLoggedIn()): ?>
                             <p class="mb-1"><strong>Server Name:</strong> Kickback Kingdom</p>
                             <p class="mb-1"><strong>IP Address:</strong> <code>144.126.153.68</code></p>
                             <p class="mb-1"><strong>Port:</strong> <code>26945</code></p>
@@ -272,7 +272,7 @@ $coleAccount = AccountController::getAccountById(new vRecordId('', 164))->data;
                 <div class="server-card bg-arma">
                     <div class="server-card-content p-4 text-center">
                         <h4 class="fw-bold mb-5">Arma 3</h4>
-                        <?php if (Session::IsLoggedIn()): ?>
+                        <?php if (Session::isLoggedIn()): ?>
                             <p class="mb-1"><strong>Server Name:</strong> Kickback Kingdom - Arma Arena</p>
                             <p class="mb-1"><strong>IP Address:</strong> <code>54.159.107.49</code></p>
                             <p class="mb-1"><strong>Port:</strong> <code>2302</code></p>
@@ -290,7 +290,7 @@ $coleAccount = AccountController::getAccountById(new vRecordId('', 164))->data;
                 <div class="server-card bg-barotrauma">
                     <div class="server-card-content p-4 text-center">
                         <h4 class="fw-bold mb-5">Barotrauma</h4>
-                        <?php if (Session::IsLoggedIn()): ?>
+                        <?php if (Session::isLoggedIn()): ?>
                             <p class="mb-1"><strong>Server Name:</strong> KICKBACK KINGDOM - DEDICATED</p>
                             <p class="mb-1"><strong>IP Address:</strong> <code>ec2-54-159-107-49.compute-1.amazonaws.com</code></p>
                         <?php else: ?>

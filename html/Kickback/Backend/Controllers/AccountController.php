@@ -210,7 +210,8 @@ class AccountController
         }
     }
     
-    public static function getAccountsByChallenge(vRecordId $challengeId) {
+    public static function getAccountsByChallenge(vRecordId $challengeId) : Response
+    {
         $conn = Database::getConnection();
 
         $sql = "SELECT a.* FROM `lobby_challenge_account` lca inner join v_account_info a on lca.account_id = a.Id where lca.ref_challenge_ctime = ? and lca.ref_challenge_crand = ?";
@@ -371,7 +372,7 @@ class AccountController
                 $account = self::row_to_vAccount($row);
                 return (new Response(true, 'Welcome to ' . $row['ServiceName'] . '! A Kickback Kingdom original.', $account));
             }
-        } catch (Throwable $th) {
+        } catch (\Throwable $th) {
             return (new Response(false, 'Error. Check the data for more info.', $th));
         }
     }
@@ -1267,13 +1268,13 @@ class AccountController
             // Use prepared statements to insert the new account
             $stmt = $conn->prepare("INSERT INTO account (Email, Password, FirstName, LastName, Username, passage_id) VALUES (?, ?, ?, ?, ?, ?)");
             if (false === $stmt) {
-                throw new Exception("Failed to prepare SQL statement: " . $conn->error);
+                throw new \Exception("Failed to prepare SQL statement: " . $conn->error);
             }
     
             $stmt->bind_param('ssssss', $email, $passwordHash, $firstName, $lastName, $username, $writ_item_id);
     
             if (false === $stmt->execute()) {
-                throw new Exception("Failed to execute SQL statement: " . $stmt->error);
+                throw new \Exception("Failed to execute SQL statement: " . $stmt->error);
             }
     
             $stmt->close();
@@ -1281,7 +1282,7 @@ class AccountController
             $kk_service_key = ServiceCredentials::get("kk_service_key");
             $loginResp = Session::Login($kk_service_key, $email, $password);
             if (!$loginResp->success) {
-                throw new Exception("Failed to log in after registration.");
+                throw new \Exception("Failed to log in after registration.");
             }
     
             $login = $loginResp->data;
@@ -1295,7 +1296,7 @@ class AccountController
     
             return new Response(true, "Account created successfully", $login);
     
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // Rollback transaction on error
             $conn->rollback();
             error_log($e->getMessage());

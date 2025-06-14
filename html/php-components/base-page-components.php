@@ -7,8 +7,7 @@ use Kickback\Backend\Controllers\TreasureHuntController;
 use Kickback\Backend\Models\NotificationType;
 use Kickback\Common\Version;
 
-$mediaDirsResp = MediaController::getMediaDirectories();
-$mediaDirs = $mediaDirsResp->data;
+$mediaDirs = MediaController::requestMediaDirectories();
 ?>
 
 <!--CONFETTI-->
@@ -200,7 +199,7 @@ $mediaDirs = $mediaDirsResp->data;
                                         <?php
 
                                             foreach($mediaDirs as $dir) {
-                                                echo "<option value='{$dir["Directory"]}'>{$dir["Directory"]}</option>";
+                                                echo "<option value='{$dir}'>{$dir}</option>";
                                             }
                                         ?>
                                     </select>

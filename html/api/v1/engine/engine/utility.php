@@ -124,9 +124,4 @@ function free_mysqli_resources($mysqli) {
     }
 }
 
-
-function StringStartsWith($str, $startsWith) {
-    return (strpos(strtolower($str), strtolower($startsWith)) === 0);
-}
-
 ?>

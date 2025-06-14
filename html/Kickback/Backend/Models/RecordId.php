@@ -2,17 +2,25 @@
 declare(strict_types=1);
 
 namespace Kickback\Backend\Models;
+
 use Kickback\Backend\Views\vRecordId;
+use Kickback\Common\Exceptions\UnexpectedNullException;
 
 class RecordId extends vRecordId
 {
     public function __construct() {
-        $this->ctime = self::getCTime();
-        $this->crand = self::generateCRand();
+        $ctime = self::getCTime();
+        $crand = self::generateCRand();
+        parent::__construct($ctime, $crand);
     }
     
     public static function getSystemSalt(): int {
-        $localIP = gethostbyname(gethostname());
+        $hostname = gethostname();
+        if ($hostname === false) {
+            throw new UnexpectedNullException(
+                'gethostname() failed; the local hostname is required for constructing new records');
+        }
+        $localIP = gethostbyname($hostname);
         $processId = getmypid();
         return crc32($localIP . $processId);
     }

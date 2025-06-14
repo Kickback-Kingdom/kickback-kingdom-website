@@ -266,7 +266,7 @@ class ContentController {
                         mysqli_stmt_execute($stmt);
                     }
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 return new Response(false, $e->getMessage(), null);
 
             }

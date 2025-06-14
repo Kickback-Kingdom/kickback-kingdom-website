@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace Kickback\Backend\Controllers;
 
-use Kickback\Services\Database;
-use Kickback\Services\Session;
 use Kickback\Backend\Models\Response;
 use Kickback\Backend\Views\vTreasureHuntEvent;
 use Kickback\Backend\Views\vTreasureHuntObject;
@@ -14,6 +12,8 @@ use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Views\vDateTime;
 use Kickback\Backend\Views\vContent;
 use Kickback\Backend\Models\RecordId;
+use Kickback\Services\Database;
+use Kickback\Services\Session;
 
 class TreasureHuntController
 {
@@ -145,7 +145,7 @@ class TreasureHuntController
             if (!$stmt->execute()) {
                 if ($stmt->errno === 1062) {
                     // Retry on duplicate crand
-                    $model->crand = \Kickback\Backend\Views\vRecordId::generateCRand();
+                    $model->crand = \Kickback\Backend\Models\RecordId::generateCRand();
                     continue;
                 }
     
@@ -162,7 +162,7 @@ class TreasureHuntController
     /**
      * Insert a new Treasure Hunt event.
      */
-    public static function insertNewTreasureHuntEvent(): Response
+    public static function insertNewTreasureHuntEvent() : Response
     {
         if (!Session::isEventOrganizer()) { // Adjust permission check as needed
             return new Response(false, "You do not have permissions to create a Treasure Hunt event.", null);
@@ -171,14 +171,9 @@ class TreasureHuntController
         $eventName = "New Treasure Hunt Event";
         $eventLocator = "new-treasure-hunt-" . Session::getCurrentAccount()->crand;
 
-        // Check if event already exists
-        $eventResp = self::getEventByLocator($eventLocator);
-        if (!$eventResp->success) {
-            $eventModel = new vRecordId();  // Adjust this based on your event model
-            $eventModel->name = $eventName;
-            $eventModel->locator = $eventLocator;
-
-            // Insert event
+        if (!self::requestEventByLocatorInto($eventLocator,$event))
+        {
+            // Event didn't exist; make a new one
             $insertResp = self::createTreasureHuntEvent(
                 $eventName,
                 "A new exciting treasure hunt awaits!",
@@ -186,24 +181,37 @@ class TreasureHuntController
                 date('Y-m-d H:i:s', strtotime('+7 days')) // Ends in 7 days
             );
             $event = $insertResp->data;
-        } else {
-            $event = $eventResp->data;
         }
 
         // Ensure event has associated content
         if (!$event->hasPageContent()) {
             $newContentId = ContentController::insertNewContent();
             self::updateEventContent($event, new vRecordId('', $newContentId));
-            $eventResp = self::getEventByLocator($eventLocator);
+            self::requestEventByLocatorInto($eventLocator,$event);
         }
 
-        return new Response(true, "New Treasure Hunt event created.", $eventResp->data);
+        return new Response(true, "New Treasure Hunt event created.", $event);
     }
 
     /**
-     * Get a Treasure Hunt Event by its locator.
-     */
-    public static function getEventByLocator(string $locator): Response
+    * @phpstan-assert-if-true vTreasureHuntEvent $event
+    */
+    public static function requestEventByLocatorInto(string $locator, ?vTreasureHuntEvent &$event): bool
+    {
+        $resp = self::requestEventResponseByLocator($locator);
+        if ( $resp->success ) {
+            $event = $resp->data;
+            return true;
+        } else {
+            $event = null;
+            return false;
+        }
+    }
+
+    /**
+    * Get a Treasure Hunt Event by its locator.
+    */
+    public static function requestEventResponseByLocator(string $locator): Response
     {
         $conn = Database::getConnection();
 
@@ -308,11 +316,15 @@ class TreasureHuntController
             $stmt->execute();
             $result = $stmt->get_result();
 
-            if (!$result || $result->num_rows === 0) {
+            if ($result === false || $result->num_rows === 0) {
                 throw new \Exception("Treasure hunt object not found.");
             }
 
             $row = $result->fetch_assoc();
+            if (!isset($row)) {
+                throw new \Exception("SQL client fetch_assoc() function failed");
+            }
+
             $itemId = (int)$row["item_id"];
             $oneTimeOnly = (bool)$row["one_time_only"];
             $collectedCount = (int)$row["collected_count"];
@@ -329,7 +341,7 @@ class TreasureHuntController
             $checkStmt->execute();
             $checkResult = $checkStmt->get_result();
 
-            if ($checkResult && $checkResult->num_rows > 0) {
+            if ($checkResult !== false && $checkResult->num_rows > 0) {
                 throw new \Exception("You have already collected this object.");
             }
 
@@ -351,7 +363,7 @@ class TreasureHuntController
 
                 if ($insertStmt->errno === 1062) {
                     continue; // Retry on collision
-                } elseif ($insertStmt->errno) {
+                } elseif (0 < $insertStmt->errno) {
                     throw new \Exception("Insert error: " . $insertStmt->error);
                 }
 
@@ -480,7 +492,7 @@ class TreasureHuntController
     {
         $resp = self::requestCurrentEventsAndUpcomingResponse();
         if ($resp->success) {
-            // @phpstan-ignore assign.propertyType
+            // @phpstan-ignore return.type
             return $resp->data;
         } else {
             throw new \Exception($resp->message);
@@ -613,7 +625,7 @@ class TreasureHuntController
             self::updateEventContent($event, new vRecordId('', $newContentId));
 
             // Re-fetch event to get updated data
-            $eventResp = self::getEventByLocator($event->locator);
+            $eventResp = self::requestEventResponseByLocator($event->locator);
             if (!$eventResp->success) {
                 return new Response(false, "Failed to fetch newly updated event after adding content.", $event);
             }
@@ -627,7 +639,7 @@ class TreasureHuntController
             $event->endDate = new vDateTime($row["end_date"]);
 
             // Assign media icon if available
-            if (!empty($row["icon_id"])) {
+            if (array_key_exists('icon_id', $row) && isset($row['icon_id'])) {
                 $iconMedia = new vMedia();
                 $iconMedia->setMediaPath("{$row['icon_directory']}/{$row['icon_id']}.{$row['icon_extension']}");
                 $event->icon = $iconMedia;
@@ -636,7 +648,7 @@ class TreasureHuntController
             }
 
             // Assign desktop banner if available
-            if (!empty($row["banner_id"])) {
+            if (array_key_exists('banner_id', $row) && isset($row['banner_id'])) {
                 $bannerMedia = new vMedia();
                 $bannerMedia->setMediaPath("{$row['banner_directory']}/{$row['banner_id']}.{$row['banner_extension']}");
                 $event->banner = $bannerMedia;
@@ -645,7 +657,7 @@ class TreasureHuntController
             }
 
             // Assign mobile banner if available
-            if (!empty($row["banner_mobile_id"])) {
+            if (array_key_exists('banner_mobile_id', $row) && isset($row['banner_mobile_id'])) {
                 $mobileBannerMedia = new vMedia();
                 $mobileBannerMedia->setMediaPath("{$row['banner_mobile_directory']}/{$row['banner_mobile_id']}.{$row['banner_mobile_extension']}");
                 $event->bannerMobile = $mobileBannerMedia;
@@ -654,7 +666,7 @@ class TreasureHuntController
             }
 
             // Date Card Banner
-            if (!empty($row["banner_date_id"])) {
+            if (array_key_exists('banner_date_id', $row) && isset($row['banner_date_id'])) {
                 $bannerDateMedia = new vMedia();
                 $bannerDateMedia->setMediaPath("{$row['banner_date_directory']}/{$row['banner_date_id']}.{$row['banner_date_extension']}");
                 $event->bannerDate = $bannerDateMedia;
@@ -663,7 +675,7 @@ class TreasureHuntController
             }
 
             // Progress Card Banner
-            if (!empty($row["banner_progress_id"])) {
+            if (array_key_exists('banner_progress_id', $row) && isset($row['banner_progress_id'])) {
                 $bannerProgressMedia = new vMedia();
                 $bannerProgressMedia->setMediaPath("{$row['banner_progress_directory']}/{$row['banner_progress_id']}.{$row['banner_progress_extension']}");
                 $event->bannerProgress = $bannerProgressMedia;
@@ -672,10 +684,8 @@ class TreasureHuntController
             }
         }
 
-
         return $event;
     }
-
 
     /**
      * Convert DB row to vTreasureHuntObject object with vMedia and found status
@@ -699,12 +709,12 @@ class TreasureHuntController
         $object->oneTimeFind = (bool)$row["one_time_only"];
         $object->locator = $row["locator"];
         // Assign media if available
-        if (!empty($row["small_image"])) {
+        if (array_key_exists('small_image', $row) && isset($row['small_image'])) {
             $media = new vMedia();
             $media->setMediaPath($row["small_image"]);
 
             // Attach author info if available
-            if (!empty($row["media_author_id"])) {
+            if (array_key_exists('media_author_id', $row) && isset($row['media_author_id'])) {
                 $author = new vAccount('', (int)$row["media_author_id"]);
                 $author->username = $row["media_author"];
                 $media->author = $author;

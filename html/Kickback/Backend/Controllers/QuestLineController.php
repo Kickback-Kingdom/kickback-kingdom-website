@@ -19,7 +19,7 @@ class QuestLineController {
     {
         $resp = self::requestQuestLineResponseById($questLineId);
         if ($resp->success) {
-            // @phpstan-ignore assign.propertyType
+            // @phpstan-ignore return.type
             return $resp->data;
         } else {
             throw new \Exception($resp->message);
@@ -79,7 +79,7 @@ class QuestLineController {
         }
     }
 
-    public static function getMyQuestLines(?vAccount $account = null, bool $publishedOnly = true)
+    public static function getMyQuestLines(?vAccount $account = null, bool $publishedOnly = true) : Response
     {
         if ($account == null)
         {

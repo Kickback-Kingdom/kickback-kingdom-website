@@ -46,6 +46,9 @@ class FeedController
     
         $totalItemsResult = $totalItemsStmt->get_result();
         $totalItemsRow = $totalItemsResult->fetch_assoc();
+        if (!isset($totalItemsRow)) {
+            return new Response(false, "Failed retrieve rows from SQL response: " . $conn->error, []);
+        }
         $totalItems = (int)$totalItemsRow['total'];
         $totalItemsStmt->close();
     
@@ -337,13 +340,27 @@ class FeedController
         return (new Response(true, "blog feed", $rows));
     }
 
-    private static function row_to_vFeedRecord(array $row) : vFeedRecord {
+    private static function row_to_vFeedRecord(array $row) : vFeedRecord
+    {
         $news = new vFeedRecord();
         $news->type = $row["type"];
-        if (!is_null($row["date"]))
+        $dateTime = new vDateTime();
+        $dateStr = $row["date"];
+        $haveDate = false;
+        if (isset($dateStr))
         {
-            $dateTime = new vDateTime();
-            $dateTime->setDateTimeFromString($row["date"]);
+            $dateTime->setDateTimeFromString($dateStr);
+            $haveDate = true;
+        }
+        else
+        {
+            // Unix epoch. It should be representable in most systems,
+            // and is also unusualy enough that it suggests an error occurred
+            // (because an error did occur: $questLine->dateCreated is
+            // considered not-nullable, and it's used in webpage code
+            // without being checked for null values).
+            $dateTime->setDateTimeFromString("@0000000000");
+            $haveDate = false;
         }
 
         if ($news->type == "QUEST-LINE")
@@ -377,7 +394,7 @@ class FeedController
             $quest->summary = is_null($row["text"]) ? "" : $row["text"];
             $quest->reviewStatus = new vReviewStatus((bool) $row["published"]);
             
-            if (isset($dateTime)) {
+            if ($haveDate) {
                 $quest->endDate($dateTime);
             }
 
@@ -430,7 +447,7 @@ class FeedController
             $author->username = $row["account_1_username"];
             $blogPost->author = $author;
 
-            if (!empty($row["image"]))
+            if (array_key_exists('image', $row) && isset($row['image']))
             {
                 $icon = new vMedia();
                 $icon->setMediaPath($row["image"]);
@@ -449,7 +466,7 @@ class FeedController
             $blog->description = $row["text"];
             $blog->locator = $row["locator"];
 
-            if (isset($dateTime))
+            if ($haveDate)
                 $blog->lastPostDate = $dateTime;
 
             if ($row["account_1_id"] != null)
@@ -460,7 +477,7 @@ class FeedController
             }
 
 
-            if (!empty($row["image"]))
+            if (array_key_exists('image', $row) && isset($row['image']))
             {
                 $icon = new vMedia();
                 $icon->setMediaPath($row["image"]);
