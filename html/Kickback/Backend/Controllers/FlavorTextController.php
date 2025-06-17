@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Kickback\Backend\Controllers;
 
+use Kickback\Backend\Views\vBlogPost;
 
 class FlavorTextController
 {
@@ -1062,6 +1063,15 @@ class FlavorTextController
     
         // Return or output the proclamation
         return $proclamation;
+    }
+
+    
+    public static function getNewBlogPostAnnouncement(vBlogPost $blogPost) {
+        $blogName = $blogPost->blog->title;
+        $postTitle = $blogPost->title;
+        $postUrl = "https://kickback-kingdom.com/blog/".$blogPost->blogLocator."/".$blogPost->postLocator;
+        $writerUsername = $blogPost->author->username;
+        return "Exciting News from $blogName! 🌟 Our talented writer $writerUsername has just published a new blog post titled '$postTitle'. Dive into this captivating read at $postUrl";
     }
 }
 ?>

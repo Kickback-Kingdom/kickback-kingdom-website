@@ -42,10 +42,10 @@ function GetFullName()
     return removeAccents(document.getElementById("fname").value.trim());
 }
 
-function GetProfessionalName()
+/*function GetProfessionalName()
 {
     return removeAccents(document.getElementById("profName").value.trim());
-}
+}*/
 
 function GetDOB() {
     var dateValue = document.getElementById("dob").value;
@@ -317,7 +317,10 @@ function GetResults()
     console.log("This should be 11+3!!!");
     var professionalName = destinySoulNumber;
     resultSoulNumbers = [];
-    var professionalNames = GetProfessionalName().split(" ");
+    
+    /*result["fullName"]["professionalName"] = GetProfessionalName();
+    result["fullName"]["professionalNames"] = GetProfessionalName().split(" ");
+    var professionalNames = result["fullName"]["professionalNames"];
     for (var i = 0; i < professionalNames.length; i++)
     {
         var name = professionalNames[i];
@@ -328,8 +331,7 @@ function GetResults()
     }
     var professionalName = SumSoulNumbers(resultSoulNumbers);
     console.log("Professional Name = "+JSON.stringify(resultSoulNumbers)+" = " +professionalName);
-    result["calculations"]["professionalName"] = {"numbers": resultSoulNumbers, "result":professionalName};
-
+    result["calculations"]["professionalName"] = {"numbers": resultSoulNumbers, "result":professionalName};*/
 
     return result;
 }
@@ -355,15 +357,16 @@ function PopuplateResults(result)
     PopulatePersonalMonth(result);
     PopulatePersonalDay(result);
     PopulatePhasesOfLife(result);
-    PopulateResultsDisplayInputs()
+    PopulateResultsDisplayInputs();
+
 }
 
 function PopulateResultsDisplayInputs() {
 
     $("#result_display_name").html(GetFullName());
     $("#result_display_birth").html(GetDOBLocal());
-    $("#result_display_address").html(GetHouseNumber());
-    $("#result_display_prof_name").html(GetProfessionalName());
+    $("#result_display_address").html(BreakHouseNumberDown());
+    //$("#result_display_prof_name").html(GetProfessionalName());
 }
 
 
@@ -596,6 +599,35 @@ function PopulateResultsName(result){
     
 }
 
+
+function PopulateResultsNameProf(result){
+    var html = "";
+    var names = Object.keys(result.fullName.professionalNames);
+    for (let index = 0; index < names.length; index++) {
+        var name = names[index];
+        var data = result.fullName.professionalNames[name];
+        console.log(data);
+        var element = `<li class="list-group-item d-flex justify-content-between align-items-start">
+    <div class="ms-2 me-auto" style="width: -webkit-fill-available;">
+      <div class="fw-bold">`+name+`</div>
+        <ul class="list-group">
+            <li class="list-group-item"><strong>Números</strong> `+JSON.stringify(data["vowels"]["numbers"])+`<span class="badge bg-secondary rounded-pill float-end">`+data["vowels"]["sum"]+`</span></li>
+            <!--<li class="list-group-item"><strong>Consonants</strong> `+JSON.stringify(data["consonants"]["numbers"])+`<span class="badge bg-secondary rounded-pill float-end">`+data["consonants"]["sum"]+`</li>
+            <li class="list-group-item"><strong>All</strong> `+JSON.stringify(data["all"]["numbers"])+`<span class="badge bg-secondary rounded-pill float-end">`+data["all"]["sum"]+`</li>-->
+        </ul>
+    </div>
+  </li>`;
+
+        html+=element;
+    }
+
+    html += "<h4 class='p-2 text-bg-primary'>Alma = "+result.fullName.professionalVowels.result+"</h4>";
+
+    $("#resultsNameProf").html(html);
+    $("#finalResultNameProf").html(result.fullName.professionalVowels.result);
+    
+}
+
 function PopulateResultsNameConsonates(result){
     var html = "";
     var names = Object.keys(result.fullName.names);
@@ -623,9 +655,13 @@ function PopulateResultsNameConsonates(result){
     
 }
 
-function BreakHouseNumberDown()
-{
-
+function BreakHouseNumberDown() {
+    var houseNumber = GetHouseNumber();
+    var houseDigits = GetDigits(houseNumber);
+    var houseSum = SumSoulNumbers(houseDigits);
+    
+    console.log("House Number Sum: " + houseSum);
+    return houseSum;
 }
 
 function SoulNumNeedsRecalculated(num)

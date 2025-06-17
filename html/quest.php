@@ -17,6 +17,8 @@ use Kickback\Backend\Models\PlayStyle;
 use Kickback\Services\Session;
 use Kickback\Backend\Views\vDateTime;
 use Kickback\Common\Version;
+use Kickback\Backend\Controllers\SocialMediaController;
+use Kickback\Backend\Controllers\FlavorTextController;
 
 $newPost = false;
 if (isset($_GET['id']))
@@ -47,7 +49,7 @@ if (!$questResp->success)
 }
 if (!isset($questResp))
 {
-    Redirect("adventurers-guild.php");
+    Session::redirect("adventurers-guild.php");
 }
 
 $thisQuest = $questResp->data;
@@ -81,17 +83,17 @@ if (isset($_POST["submit-raffle"]))
         {
             $ticketsSubmitted = 0;
             for ($x = 0; $x < $ticketsToSubmit; $x++) {
-                $raffleResp = SubmitRaffleTicket(Session::getCurrentAccount()->crand, $thisQuest["raffle_id"]);
+                $raffleResp = QuestController::submitRaffleTicket(Session::getCurrentAccount(), $thisQuest->raffle);
                 if ($raffleResp->success)
                 {
                     $ticketsSubmitted++;
                 }
             }
 
-            if ($thisQuest["published"]==1)
+            if ($thisQuest->reviewStatus->published)
             {
 
-                DiscordWebHook(GetRandomGreeting().', '.Session::getCurrentAccount()->username.' just submitted a raffle ticket to the '.$thisQuest['name'].' quest.');
+                SocialMediaController::DiscordWebHook(FlavorTextController::getRandomGreeting().', '.Session::getCurrentAccount()->username.' just submitted a number of raffle tickets to the '.$thisQuest->title.' quest.');
             }
 
             $hasSuccess = true;
@@ -451,7 +453,7 @@ $itemInformationJSON = json_encode($itemInfos);
                                                 <div class="spinner-border ms-auto" aria-hidden="true"></div>
                                             </div>
                                         </div>
-                                        <?php if (Kickback\Services\Session::isAdmin()) { ?>
+                                        <?php if (Kickback\Services\Session::isMagisterOfTheAdventurersGuild()) { ?>
                                         <div class="card-footer">
                                             <button type="button" class="btn btn-success float-end mx-1" onclick="OpenModalApprove()">Approve Quest</button>
                                             <button type="button" class="btn btn-danger float-end" onclick="OpenModalReject()">Reject Quest</button>
@@ -749,9 +751,15 @@ $itemInformationJSON = json_encode($itemInfos);
                                                                         const timeInput = document.getElementById('edit-quest-options-datetime-time');
                                                                         const combinedDatetimeInput = document.getElementById('edit-quest-options-datetime');
 
+                                                                        if (!dateInput.value || !timeInput.value)
+                                                                        {
+                                                                            combinedDatetimeInput.value = "";
+                                                                            toggleDateTimeVisibility();
+                                                                            return;
+                                                                        }
                                                                         // Combine date and time to create a local datetime string
-                                                                        const localDateTime = `${dateInput.value}T${timeInput.value}:00`;
-
+                                                                        const localDateTime = `${dateInput.value}T${timeInput.value}:00`; //T:00
+                                                                        
                                                                         // Convert to a Date object
                                                                         const localDateObj = new Date(localDateTime);
 
@@ -1078,7 +1086,7 @@ $itemInformationJSON = json_encode($itemInfos);
                             </div>
                         </form>
                         
-                        <?php if (Kickback\Services\Session::isAdmin()) { ?>
+                        <?php if (Kickback\Services\Session::isMagisterOfTheAdventurersGuild()) { ?>
                         <form method="POST">
                             <input type="hidden" name="form_token" value="<?= $_SESSION['form_token']; ?>">
                             <input type="hidden" name="quest-id" value="<?= $thisQuest->crand; ?>" />
@@ -1176,7 +1184,7 @@ $itemInformationJSON = json_encode($itemInfos);
                             }
 
                             
-                            <?php if (Kickback\Services\Session::isAdmin()) { ?>
+                            <?php if (Kickback\Services\Session::isMagisterOfTheAdventurersGuild()) { ?>
                             function OpenModalApprove()
                             {
                                 $("#modalQuestApprove").modal("show");
@@ -1511,7 +1519,7 @@ $itemInformationJSON = json_encode($itemInfos);
                                     
                                     foreach ($raffleParticipants as &$participant) {
                                         
-                                        $playerCardAccount = $participant;
+                                        $_vPlayerCardAccount = $participant;
                                         require("php-components/vPlayerCardRenderer.php"); 
                                     }
                                     
@@ -1595,13 +1603,8 @@ $itemInformationJSON = json_encode($itemInfos);
     <!--Test 2-->
     <script>
         
-var questDate = new Date('<?= vDateTime::getValueString($thisQuest->endDate); ?> UTC');
-document.getElementById('quest_time').innerText = questDate.toLocaleDateString(undefined, {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-}) + ' ' + questDate.toLocaleTimeString();
+var questDate = new Date('<?= vDateTime::getValueString($thisQuest->endDate); ?>');
+
 
 
 <?php 

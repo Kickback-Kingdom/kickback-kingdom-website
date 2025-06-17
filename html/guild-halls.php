@@ -53,12 +53,13 @@ use Kickback\Common\Version;
                             </div>
                         </a>
                     </div>
+                    <!--
                     <div class="col-12 col-lg-6">
                         <a href="<?php echo Version::urlBetaPrefix(); ?>/merchants-guild.php">
                             <div class="card text-bg-dark card-guild">
                                 <div class="parallax-container overflow-hidden">
                                     <img class="parallax" src="/assets/media/context/merchant.jpg" alt="Image description">
-                                    <div class="shine"></div> <!-- shine effect here -->
+                                    <div class="shine"></div> 
                                 </div>
                                 <div class="card-img-overlay parallax-mouse-capture">
                                     <h5 class="card-title">Merchants' Guild<i class="fa-solid fa-right-to-bracket float-end"></i></h5>
@@ -68,6 +69,7 @@ use Kickback\Common\Version;
                             </div>
                         </a>
                     </div>
+                    -->
                     <div class="col-12 col-lg-6">
                         <a href="<?php echo Version::urlBetaPrefix(); ?>/craftsmens-guild.php">
                             <div class="card text-bg-dark card-guild">
@@ -83,12 +85,14 @@ use Kickback\Common\Version;
                             </div>
                         </a>
                     </div>
+                    
+                    <!--
                     <div class="col-12 col-lg-6">
                         <a href="<?php echo Version::urlBetaPrefix(); ?>/apprentices-guild.php">
                             <div class="card text-bg-dark card-guild">
                                 <div class="parallax-container overflow-hidden">
                                     <img class="parallax" src="/assets/media/context/apprentice.jpg" alt="Image description">
-                                    <div class="shine"></div> <!-- shine effect here -->
+                                    <div class="shine"></div>
                                 </div>
                                 <div class="card-img-overlay parallax-mouse-capture">
                                     <h5 class="card-title">Apprentices' Guild<i class="fa-solid fa-right-to-bracket float-end"></i></h5>
@@ -98,6 +102,7 @@ use Kickback\Common\Version;
                             </div>
                         </a>
                     </div>
+-->
                     <div class="col-12 col-lg-6">
                         <a href="<?php echo Version::urlBetaPrefix(); ?>/stewards-guild.php">
                             <div class="card text-bg-dark card-guild">
@@ -121,6 +126,7 @@ use Kickback\Common\Version;
             
             <?php require("php-components/base-page-discord.php"); ?>
         </div>
+        <?php require("php-components/base-page-footer.php"); ?>
     </main>
 
     

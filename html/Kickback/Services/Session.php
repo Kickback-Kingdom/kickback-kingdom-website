@@ -9,6 +9,7 @@ use Kickback\Backend\Views\vSessionInformation;
 use Kickback\Backend\Controllers\AccountController;
 use Kickback\Backend\Controllers\NotificationController;
 use Kickback\Backend\Views\vAccount;
+use Kickback\Common\Version;
 
 class Session {
     private static ?vAccount $currentAccount = null;
@@ -47,6 +48,12 @@ class Session {
     }
 
     
+    public static function redirect(string $localPath) : void {
+        $basePath = rtrim(Version::urlBetaPrefix(), '/');
+        header("Location: ".$basePath."/".ltrim($localPath, '/'), true, 302);
+        exit;
+    }
+
     public static function loginToService(int $accountId, string $serviceKey) : bool
     {
         $conn = Database::getConnection();
@@ -191,6 +198,76 @@ class Session {
 
         return false;
     }
+
+    public static function isMagisterOfTheAdventurersGuild() : bool {
+
+        if (self::isAdmin())
+        {
+            return true;
+        }
+
+        if (self::isLoggedIn())
+        {
+            return self::getCurrentAccount()->isMagisterOfAdventurers;
+        }
+
+        return false;
+    }
+    
+    public static function isSteward() : bool {
+
+        if (self::isAdmin())
+        {
+            return true;
+        }
+
+        if (self::isLoggedIn())
+        {
+            return self::getCurrentAccount()->isSteward;
+        }
+
+        return false;
+    }
+
+    public static function isMerchant() : bool {
+        
+        if (self::isAdmin())
+        {
+            return true;
+        }
+
+        if (self::isLoggedIn())
+        {
+            return self::getCurrentAccount()->isMerchant;
+        }
+
+        return false;
+    }
+
+    public static function isEventOrganizer() : bool {
+        
+        if (self::isAdmin())
+        {
+            return true;
+        }
+        
+        return self::isSteward();
+    }
+
+    public static function isServantOfTheLich() : bool {
+
+        if (self::isAdmin())
+        {
+            return true;
+        }
+
+        if (self::isLoggedIn())
+        {
+            return self::getCurrentAccount()->isServantOfTheLich;
+        }
+
+        return false;
+    }
     
     public static function isQuestGiver() : bool {
         if (self::isLoggedIn())
@@ -226,5 +303,6 @@ class Session {
             session_start();
         }
     }
+    
 }
 ?>

@@ -10,7 +10,7 @@ use Kickback\Backend\Controllers\ContentController;
 use Kickback\Backend\Controllers\BlogController;
 use Kickback\Backend\Controllers\BlogPostController;
 use Kickback\Backend\Controllers\FeedCardController;
-
+use Kickback\Services\Session;
 
 if (isset($_GET['blogLocator'])) {
     
@@ -24,7 +24,8 @@ if (isset($_GET['blogLocator'])) {
         }
         elseif (isset($_GET["new"]))
         {
-            $blogPostResp = BlogPostController::insertNewBlogPost($blog["Id"], $blogLocator);
+            $blog = BlogController::getBlogByLocator($_GET['blogLocator'])->data;
+            $blogPostResp = BlogPostController::insertNewBlogPost($blog, $_GET['blogLocator']);
         }
         
         if ($blogPostResp->success)
@@ -36,6 +37,11 @@ if (isset($_GET['blogLocator'])) {
             $thisBlogPost->blog = $blogResp->data;
         }
     
+}
+
+if (!isset($thisBlogPost) || (isset($thisBlogPost) && $thisBlogPost == null))
+{
+    Session::Redirect("/blog/".$_GET['blogLocator']);
 }
 
 $isWriterForBlogPost = $thisBlogPost->isWriter();
@@ -92,7 +98,8 @@ if ($thisBlogPost->blogLocator == "Kickback-Kingdom")
                                 <p class="card-text text-center">
                                     <small class="text-body-secondary">Written by 
                                         <?= $thisBlogPost->author->getAccountElement();?> on 
-                                        <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= $thisBlogPost->publishedDateTime->formattedDetailed; ?>"><?= $thisBlogPost->publishedDateTime->formattedBasic; ?></span> and viewed <?= $thisPageVisits; ?> times
+                                        <?= $thisBlogPost->publishedDateTime->getDateTimeElement(); ?> and viewed <?= $thisPageVisits; ?> times
+                                        
                                     </small>
                                 </p>
                         
@@ -111,7 +118,7 @@ if ($thisBlogPost->blogLocator == "Kickback-Kingdom")
                             </div>
                             <div class="card-body">
                                 <button type="button" class="btn btn-primary" onclick="OpenModalEditBlogPostOptions()">Edit Blog Post Details</button>
-                                <button type="button" class="btn btn-primary" onclick="OpenModalPublishBlogPost()">Publish Blog Post</button>
+                                <?php if ($thisBlogPost->reviewStatus->isDraft()) { ?><button type="button" class="btn btn-primary" onclick="OpenModalPublishBlogPost()">Publish Blog Post</button><?php } ?>
                             </div>
                         </div>
                     </div>
@@ -191,52 +198,52 @@ if ($thisBlogPost->blogLocator == "Kickback-Kingdom")
                     <div class="modal modal-lg fade" id="modalEditBlogPostOptions" tabindex="-1" aria-labelledby="modalEditBlogPostOptionsLabel" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content">
-                            <div class="modal-header">
-                                <h1 class="modal-title fs-5">Edit Blog Post Options</h1>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="row mb-3">
-                                    <div class="col-12">
-                                        <div class="form-group">
-                                            <label for="blogPostOptionsTitle" class="form-label">Title:</label>
-                                            <input type="text" class="form-control" id="blogPostOptionsTitle" name="blogPostOptionsTitle" value="<?= $thisBlogPost->title; ?>">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5">Edit Blog Post Options</h1>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label for="blogPostOptionsTitle" class="form-label">Title:</label>
+                                                <input type="text" class="form-control" id="blogPostOptionsTitle" name="blogPostOptionsTitle" value="<?= $thisBlogPost->title; ?>">
+                                            </div>
                                         </div>
-                                    </div>
-                                    
-                                </div>
-                                <div class="row mb-3">
-                                    <label for="blogPostOptionsLocator" class="form-label">URL</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">/blog/<?= $thisBlogPost->blogLocator; ?>/</span>
-                                        <input type="text" class="form-control" id="blogPostOptionsLocator" name="blogPostOptionsLocator" value="<?= $thisBlogPost->postLocator; ?>">
-                                    </div>
-                                </div>
-                                <div class="row mb-3">
-                                    <div class="col-12">
-                                        <div class="form-group">
-                                            <label for="blogPostOptionsDesc" class="form-label">Summary:</label>
-                                            <textarea class="form-control" rows="5" id="blogPostOptionsDesc" name="blogPostOptionsDesc"><?= $thisBlogPost->summary; ?></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row mb-3">
-                                    <div class="col-12">
                                         
-                                        <h3 class="display-6">Post Icon<button type="button" class="btn btn-primary float-end" onclick="OpenSelectMediaModal('modalEditBlogPostOptions','blogPostOptionsIcon','blogPostOptionsIconFormInput');">Select Media</button></h3>
-                                        <div class="col-md-6" >
-
-                                            <input type="hidden" value="<?= $thisBlogPost->icon->crand;?>" id="blogPostOptionsIconFormInput" name="blogPostOptionsIcon" />
-                                            <img class="img-thumbnail" src="<?= $thisBlogPost->icon->getFullPath(); ?>" id="blogPostOptionsIcon" />
-
+                                    </div>
+                                    <div class="row mb-3">
+                                        <label for="blogPostOptionsLocator" class="form-label">URL</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">/blog/<?= $thisBlogPost->blogLocator; ?>/</span>
+                                            <input type="text" class="form-control" id="blogPostOptionsLocator" name="blogPostOptionsLocator" value="<?= $thisBlogPost->postLocator; ?>">
                                         </div>
-                                    </div>      
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label for="blogPostOptionsDesc" class="form-label">Summary:</label>
+                                                <textarea class="form-control" rows="5" id="blogPostOptionsDesc" name="blogPostOptionsDesc"><?= $thisBlogPost->summary; ?></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            
+                                            <h3 class="display-6">Post Icon<button type="button" class="btn btn-primary float-end" onclick="OpenSelectMediaModal('modalEditBlogPostOptions','blogPostOptionsIcon','blogPostOptionsIconFormInput');">Select Media</button></h3>
+                                            <div class="col-md-6" >
+
+                                                <input type="hidden" value="<?= $thisBlogPost->icon->crand;?>" id="blogPostOptionsIconFormInput" name="blogPostOptionsIcon" />
+                                                <img class="img-thumbnail" src="<?= $thisBlogPost->icon->getFullPath(); ?>" id="blogPostOptionsIcon" />
+
+                                            </div>
+                                        </div>      
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-                                <input type="submit" class="btn bg-ranked-1" onclick="" value="Apply changes" name="submitBlogOptions">
-                            </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                                    <input type="submit" class="btn bg-ranked-1" onclick="" value="Apply changes" name="submitBlogOptions">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -269,10 +276,14 @@ if ($thisBlogPost->blogLocator == "Kickback-Kingdom")
                                 
                                 <?php 
 
-                                    $canEditContent = $isWriterForBlogPost;
-                                    $contentViewerEditorTitle = "Blog Post Content Manager";
-                                    $_vPageContent = $thisBlogPost->content->pageContent;
+                                    $_vCanEditContent = $isWriterForBlogPost;
+                                    $_vContentViewerEditorTitle = "Blog Post Content Manager";
+                                    $_vPageContent = $thisBlogPost->getPageContent();
                                     require("php-components/content-viewer.php"); 
+                                    /*$_vCanEditContent = $thisQuest->canEdit();
+                                    $_vContentViewerEditorTitle = "Quest Information Manager";
+                                    $_vPageContent = $thisQuest->getPageContent();
+                                    require("php-components/content-viewer.php");*/
 
                                 ?>
                             </div>

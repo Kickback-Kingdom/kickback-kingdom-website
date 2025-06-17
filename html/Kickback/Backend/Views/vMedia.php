@@ -19,6 +19,11 @@ class vMedia extends vRecordId
     function __construct(string $ctime = '', int $crand = -1)
     {
         parent::__construct($ctime, $crand);
+
+        if ($crand == 221)
+        {
+            $this->_valid = false;
+        }
     }
 
     public function getFullPath()
@@ -60,6 +65,15 @@ class vMedia extends vRecordId
 
     public function isValid() : bool {
         return $this->_valid;
+    }
+
+    public static function isValidRecordId(vRecordId $media) : bool {
+        if ($media->crand == 221)
+            return false;
+        if ($media->crand < 0)
+            return false;
+        
+        return true;
     }
 }
 

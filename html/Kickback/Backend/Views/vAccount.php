@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace Kickback\Backend\Views;
 
 use Kickback\Backend\Views\vMedia;
+use Kickback\Backend\Views\vRecordId;
 use Kickback\Common\Version;
+use Kickback\Backend\Controllers\AccountController;
 
 class vAccount extends vRecordId
 {
@@ -32,7 +34,12 @@ class vAccount extends vRecordId
     public bool $isMasterOrApprentice;
     public bool $isArtist;
     public bool $isQuestGiver;
-
+    public bool $isMagisterOfAdventurers;
+    public bool $isChancellorOfExpansion;
+    public bool $isChancellorOfTechnology;
+    public bool $isStewardOfExpansion;
+    public bool $isStewardOfTechnology;
+    public bool $isServantOfTheLich;
     public bool $isGoldCardHolder;
 
     public ?vMedia $avatar = null;
@@ -44,12 +51,18 @@ class vAccount extends vRecordId
     
     public ?array $badge_display = null;
     public ?array $game_ranks = null;
+    public ?array $game_stats = null;
+    public ?array $match_stats = null;
     
     function __construct(string $ctime = '', int $crand = -1)
     {
         parent::__construct($ctime, $crand);
 
         $this->setDefaultProfilePicture();
+    }
+
+    public function canUploadImages() : bool {
+        return $this->isArtist || $this->isQuestGiver;
     }
 
     public function getURL() : string
@@ -88,6 +101,10 @@ class vAccount extends vRecordId
 
     public function getAccountElement() : string {
         return '<a href="'.$this->getURL().'" class="username">'.$this->username.'</a>';
+    }
+
+    public function getAccountTitle() : string {
+        return AccountController::getAccountTitle($this);
     }
 }
 

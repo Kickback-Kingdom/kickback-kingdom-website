@@ -5,6 +5,10 @@
 
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
+require_once ($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . '/vendor/PHPMailer/PHPMailer/Exception.php';
+require_once ($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . '/vendor/PHPMailer/PHPMailer/PHPMailer.php';
+require_once ($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . '/vendor/PHPMailer/PHPMailer/SMTP.php';
+
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
@@ -12,8 +16,9 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 use Kickback\Backend\Controllers\AccountController;
+use Kickback\Common\Version;
 
-\Kickback\Common\Version::$show_version_popup = false;
+Version::$show_version_popup = false;
 
 $redirectUrl = 'index.php';
 

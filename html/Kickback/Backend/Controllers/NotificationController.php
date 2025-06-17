@@ -23,6 +23,7 @@ class NotificationController
         
         $conn = Database::getConnection();
         $stmt = mysqli_prepare($conn, "SELECT * FROM v_notifications WHERE account_id = ?");
+        
         mysqli_stmt_bind_param($stmt, "i", $accountId->crand);
         mysqli_stmt_execute($stmt);
     
@@ -59,7 +60,7 @@ class NotificationController
             $quest->host1 = new vAccount('', $row["host_id"]);
             $quest->host1->username = $row["host_name"];
 
-            if ($row["host_id_2"] != null)
+            if ($row["host_id_2"] != null && $row["host_id_2"] > 0)
             {
                 $quest->host2 = new vAccount('', $row["host_id_2"]);
                 $quest->host2->username = $row["host_name_2"];

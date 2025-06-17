@@ -187,6 +187,36 @@ class QuoteController
                 "author" => "Hammurabi",
                 "date" => "1772 BC"
             ],
+
+            //Steve Jobs
+            [
+                "text" => "Ideas are worth nothing unless executed. They are just a multiplier. Execution is worth millions.",
+                "image" => "quotes/people/434.png",
+                "author" => "Steve Jobs",
+                "date" => "2000s AD"
+            ],
+
+            //Plato
+            [
+                "text" => "The beginning is the most important part of the work.",
+                "image" => "quotes/people/435.png",
+                "author" => "Plato",
+                "date" => "340 BC"
+            ],
+            [
+                "text" => "The one who learns and learns and doesn't practice is like the one who plows and plows and never plants.",
+                "image" => "quotes/people/435.png",
+                "author" => "Plato",
+                "date" => "340 BC"
+            ],
+            
+            //Nelson mandela
+            [
+                "text" => "Education is the most powerful weapon which you can use to change the world.",
+                "image" => "quotes/people/436.png",
+                "author" => "Nelson Mandela",
+                "date" => "1900s AD"
+            ]
         ];
         
 

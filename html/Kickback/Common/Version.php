@@ -30,7 +30,13 @@ final class Version
     * @var array<array{int,int,int,string,string,string}>
     */
     private const HISTORY = [
-        [0,0,1,"","",   "update-writ-of-passage"]
+        [0,0,1,"","",   "update-writ-of-passage"],
+        [0,1,0,"","", "backend-overhaul"],
+        [0,1,1,"","", "elo-ranking-update"],
+        [0,1,2,"","", "ranked-match-history"],
+        [0,1,3,"","", "league-progression-viewer"],
+        [0,1,4,"","", "league-progression-viewer"],
+        [0,1,5,"","", "league-progression-viewer"]
     ];
 
     //private const LAST_HISTORY_ENTRY_IDX = array_key_last(self::HISTORY);
@@ -47,6 +53,12 @@ final class Version
     {
         return array_key_exists("KICKBACK_IS_BETA",$_SERVER) && $_SERVER["KICKBACK_IS_BETA"];
     }
+    public static function isLocalhost(): bool {
+        $whitelist = ['127.0.0.1', '::1', 'localhost'];
+        return in_array($_SERVER['REMOTE_ADDR'] ?? '', $whitelist) || 
+               in_array($_SERVER['SERVER_NAME'] ?? '', $whitelist);
+    }
+    
 
     public static function urlBetaPrefix() : string {
         if (self::isBeta())
@@ -57,7 +69,11 @@ final class Version
         return "";
     }
 
-    public static function formatUrl(string $url) : string {
+    public static function formatUrl(?string $url) : string {
+        
+        if ($url == null)
+            return "";
+
         return self::urlBetaPrefix().$url;
     }
 

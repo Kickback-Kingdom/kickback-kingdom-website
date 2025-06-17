@@ -7,12 +7,14 @@ class vReviewStatus
 {
     public bool $published;
     public bool $beingReviewed;
+    public bool $closed;
 
 
-    function __construct(bool $published = false, bool $beingReviewed = false)
+    function __construct(bool $published = false, bool $beingReviewed = false, bool $closed = false)
     {
         $this->published = $published;
         $this->beingReviewed = $beingReviewed;
+        $this->closed = $closed;
     }
 
     public function isDraft(): bool
@@ -33,6 +35,10 @@ class vReviewStatus
     public function isPublishedOrInReview(): bool
     {
         return $this->published || $this->beingReviewed;
+    }
+
+    public function isClosed(): bool {
+        return $this->closed;
     }
 }
 

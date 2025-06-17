@@ -29,7 +29,7 @@ class vFeedCard
     public ?string $url = null;
     public string $title;
     public ?vDateTime $dateTime = null;
-    public vREviewStatus $reviewStatus;
+    public ?vReviewStatus $reviewStatus = null;
     public string $description;
 
     //RENDERING TEXT
@@ -53,7 +53,7 @@ class vFeedCard
 
     public function getURL()
     {
-        return Version::formatUrl($this->url);
+        return $this->url;
     }
 
     public function getAccountLinks() : string {
@@ -72,6 +72,22 @@ class vFeedCard
         return $html;
     }
     
+    public function isDraft() : bool {
+        if ($this->reviewStatus == null)
+            return false;
+
+        return $this->reviewStatus->isDraft();
+    }
+
+    public function getTitle() : string {
+        if ($this->isDraft())
+        {
+            return "[DRAFT] ".$this->title." [DRAFT]";
+        }
+        else{
+            return $this->title;
+        }
+    }
 
     public function getAccounts() : array {
         $accounts = [];

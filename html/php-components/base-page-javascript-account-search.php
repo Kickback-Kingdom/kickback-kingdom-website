@@ -1,4 +1,9 @@
+<?php
+declare(strict_types=1);
 
+use Kickback\Common\Version;
+
+?>
 <script>
 
 var selectAccountModalCallerId = -1;
@@ -47,7 +52,7 @@ function SearchForAccount(formId, pageIndex = 1, clickableFunction = null, filte
         }
     }
 
-    fetch('/api/v1/account/search.php?json', {
+    fetch('<?= Version::formatUrl("/api/v1/account/search.php?json"); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -68,6 +73,7 @@ function LoadSearchAccountResults(formId, data, usersPerPage, pageIndex, clickab
     var response = JSON.parse(data);
     var results = response.data.accountItems;
     ClearSearchAccountResults(formId); 
+    $("#" + formId + "selectAccountLoadingSpinner").hide();
     for (let index = 0; index < results.length; index++) {
         const Account = results[index];
         console.log(Account);
@@ -80,6 +86,9 @@ function LoadSearchAccountResults(formId, data, usersPerPage, pageIndex, clickab
 function ClearSearchAccountResults(formId)
 {
     $("#"+formId+"selectAccountSearchResults").html("");
+
+    $("#"+formId+"selectUserPagination").html("");
+    $("#" + formId + "selectAccountLoadingSpinner").show();
 }
 
 
@@ -146,9 +155,9 @@ let ranks = 0;
 for (let rank of playerRanks) {
     ranks++;
     if (rank.rank === null) {
-        rankCode += `<div>${rank.name} <span class="badge unranked float-end" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Unranked: ${(rank.minimum_ranked_matches_required - rank.ranked_matches)} matches remaining">${rank.ranked_matches} / ${rank.minimum_ranked_matches_required}</span></div>`;
+        rankCode += `<div><a href="/g/${rank.locator}">${rank.name}</a> <span class="badge unranked float-end" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Unranked: ${(rank.minimum_ranked_matches_required - rank.ranked_matches)} matches remaining">${rank.ranked_matches} / ${rank.minimum_ranked_matches_required}</span></div>`;
     } else {
-        rankCode += `<div>${rank.name} <span class="badge ranked${rank.rank == 1 ? "-1" : ""} float-end" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Ranked #${rank.rank} Kingdom Wide">#${rank.rank}</span></div>`;
+        rankCode += `<div><a href="/g/${rank.locator}">${rank.name}</a> <span class="badge ranked${rank.rank == 1 ? "-1" : ""} float-end" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Ranked #${rank.rank} Kingdom Wide">#${rank.rank}</span></div>`;
     }
 }
 for (var i = ranks; i < 5; i ++ )
@@ -164,16 +173,16 @@ for (var i = ranks; i < 5; i ++ )
 ">X / X</span></div>`;
 
 }
-const clickableLayer = clickableFunction ? `<div class="clickable-layer" onclick="${clickableFunction}(${playerCardAccount.Id})"></div>` : '';
+const clickableLayer = clickableFunction ? `<div class="clickable-layer" onclick="${clickableFunction}(${playerCardAccount.crand})"></div>` : '';
 
 let playerCardHTML = `<div class="card player-card${isRanked1 ? " ranked-1" : ""}">
 ${clickableLayer}
         <div class="ribbons-container">
             ${true ? "<div class='ribbon red'></div>" : ""}
             ${playerCardAccount["isMerchant"] == 1 ? "<div class='ribbon blue'></div>" : ""}
-            ${false ? "<div class='ribbon green'></div>" : ""}
+            ${playerCardAccount["isSteward"] == 1  ? "<div class='ribbon green'></div>" : ""}
             ${false ? "<div class='ribbon yellow'></div>" : ""}
-            ${false ? "<div class='ribbon purple'></div>" : ""}
+            ${playerCardAccount["isMasterOrApprentice"] == 1 ? "<div class='ribbon purple'></div>" : ""}
         </div>
 
         <div class="card-header${isRanked1 ? " ranked-1" : ""}">

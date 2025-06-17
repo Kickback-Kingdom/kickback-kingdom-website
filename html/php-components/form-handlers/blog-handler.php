@@ -1,14 +1,19 @@
 <?php
-
+declare(strict_types=1);
+use Kickback\Backend\Controllers\BlogPostController;
+use Kickback\Common\Utility\FormToken;
+use Kickback\Backend\Views\vRecordId;
+use Kickback\Common\Version;
+use Kickback\Services\Session;
 
 if (isset($_POST["submit-blog-post-publish"]))
 {
-    $tokenResponse = Kickback\Common\Utility\FormToken::useFormToken();
+    $tokenResponse = FormToken::useFormToken();
     
     if ($tokenResponse->success) {
         $blog_post_id = $_POST["blog-post-id"];
 
-        $response = PublishBlogPost($blog_post_id);
+        $response = BlogPostController::publishBlogPost(new vRecordId('', (int)$blog_post_id));
 
         // Handle the response
         if ($response->success) {
@@ -37,10 +42,10 @@ if (isset($_POST["submitBlogOptions"])) {
     $title = $_POST["blogPostOptionsTitle"];
     $locator = $_POST["blogPostOptionsLocator"];
     $desc = $_POST["blogPostOptionsDesc"];
-    $imageId = $_POST["blogPostOptionsIcon"];
-    $postIdToUpdate = $_POST["blogPostId"]; // You'll need a way to determine which post to update.
+    $imageId = (int)$_POST["blogPostOptionsIcon"];
+    $postIdToUpdate = (int)$_POST["blogPostId"]; // You'll need a way to determine which post to update.
 
-    $response = UpdateBlogPost($postIdToUpdate, $title, $locator, $desc, $imageId);
+    $response = BlogPostController::updateBlogPost(new vRecordId('', $postIdToUpdate), $title, $locator, $desc, new vRecordId('', $imageId));
 
     // Handle the response
     if ($response->success) {
@@ -48,7 +53,7 @@ if (isset($_POST["submitBlogOptions"])) {
         $PopUpTitle = "Updated Blog Post";
         $PopUpMessage= "Your changes have been saved successfully.";
         $newURL = Version::urlBetaPrefix().$response->data;
-        header('Location: '.$newURL);
+        Session::redirect($newURL);
     } else {
         $showPopUpError = true;
         $PopUpTitle = "Error";

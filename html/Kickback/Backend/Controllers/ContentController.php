@@ -114,10 +114,10 @@ class ContentController {
             switch ($type) {
                 case 'BLOG-POST':
                     //$blog = GetBlogByLocator($ids[0]);
-                    $blogPostResp = GetBlogPostByLocators($ids[0],$ids[1]);
+                    $blogPostResp = BlogPostController::getBlogPostByLocators($ids[0],$ids[1]);
                     if ($blogPostResp->success)
                     {
-                        return IsWriterForBlogPost($blogPostResp->data);
+                        return $blogPostResp->data->isWriter();
                     }
                     else
                     {
@@ -147,6 +147,45 @@ class ContentController {
                         return false;
                     }
                     break;
+                case 'LICH-CARD':
+
+                    $lichCardResp = LichCardController::getLichCardByLocator($ids[0]);
+                    if ($lichCardResp->success)
+                    {
+                        return $lichCardResp->data->canEdit();
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    break;
+
+                        
+                case 'LICH-SET':
+
+                    $lichSetResp = LichCardController::getLichSetByLocator($ids[0]);
+                    if ($lichSetResp->success)
+                    {
+                        return $lichSetResp->data->canEdit();
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    break;
+
+                case 'TREASURE-HUNT':
+                    $treasureHuntResp = TreasureHuntController::getEventByLocator($ids[0]);
+                    if ($treasureHuntResp->success)
+                    {
+                        return $treasureHuntResp->data->canEdit();
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    break;
+
                 default:
                 return false;
             }
@@ -244,7 +283,7 @@ class ContentController {
     }
 
     
-    public static function insertNewContent()
+    public static function insertNewContent() : int
     {
         $conn = Database::getConnection();
         $summary = "New Content";

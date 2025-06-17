@@ -142,14 +142,19 @@ class AnalyticController
         Session::ensureSessionStarted();
         $ipAddress = self::getCurrentUserIP();
     
-        // Check if geolocation data for this IP is already cached in the session
-        if (isset($_SESSION['geoLocation']) && $_SESSION['geoLocation']['ip'] === $ipAddress) {
-            return new Response(true, "Returning cached data", (object)$_SESSION['geoLocation']['data']);
-        }
+    // Check if geolocation data for this IP is already cached in the session
+    if (
+        isset($_SESSION['geoLocation']) && 
+        is_array($_SESSION['geoLocation']) && 
+        isset($_SESSION['geoLocation']['ip']) &&
+        $_SESSION['geoLocation']['ip'] === $ipAddress
+    ) {
+        return new Response(true, "Returning cached data", (object)$_SESSION['geoLocation']['data']);
+    }
     
         // Fetch new data if not cached
         $response = self::fetchGeoData($ipAddress);
-        if (!$response->success) {
+        if (!$response->success || !is_array($response->data)) {
             // Prepare default geolocation data when fetch fails
             $defaultGeoData = (object) [
                 'continent' => '??', 
@@ -329,12 +334,55 @@ class AnalyticController
             return new Response(false, "Error fetching results: " . $stmt->error, null);
         }
     }
+
+    public static function getThisMonthsGrowthStats() {
+        $conn = Database::getConnection();
+    
+        // Get current year-month as a string (e.g. "2025-04")
+        $currentMonth = date('Y-m');
+    
+        $sql = "
+            SELECT 
+                month, 
+                new_accounts, 
+                total_accounts, 
+                growth_percentage, 
+                active_accounts, 
+                retention_rate, 
+                website_hits 
+            FROM 
+                kickbackdb.v_analytic_accounts_growth_retention_monthly 
+            WHERE 
+                month = ?
+            LIMIT 1;
+        ";
+    
+        $stmt = $conn->prepare($sql);
+    
+        if (!$stmt) {
+            return new Response(false, "Error preparing statement: " . $conn->error, null);
+        }
+    
+        $stmt->bind_param("s", $currentMonth);
+    
+        if (!$stmt->execute()) {
+            return new Response(false, "Error executing statement: " . $stmt->error, null);
+        }
+    
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+    
+        $stmt->close();
+    
+        return new Response(true, "This month's growth stats", $row ?: []);
+    }
+    
     
     public static function getMonthlyGrowthStats() {
         
         $conn = Database::getConnection();
         
-        $sql = "SELECT month, new_accounts, total_accounts, growth_percentage, active_accounts, retention_rate FROM kickbackdb.v_analytic_accounts_growth_retention_monthly;";
+        $sql = "SELECT month, new_accounts, total_accounts, growth_percentage, active_accounts, retention_rate, website_hits FROM kickbackdb.v_analytic_accounts_growth_retention_monthly;";
         $stmt = $conn->prepare($sql);
     
         if (!$stmt) {
@@ -361,6 +409,51 @@ class AnalyticController
         // Return an APIResponse with the fetched data
         return new Response(true, "Monthly growth stats", $rows);
     }
+
+    public static function getMapData() {
+        $conn = Database::getConnection();
+
+        // Query to aggregate user counts by country
+        $sql = "SELECT 
+    LOWER(a.country) AS code, 
+    COUNT(DISTINCT a.account_id) AS user_count
+FROM analytic a
+JOIN (
+    -- Subquery to find the latest log entry for each user
+    SELECT 
+        account_id, 
+        MAX(CONCAT(ctime, '-', crand)) AS latest_entry
+    FROM analytic
+    WHERE account_id IS NOT NULL AND country IS NOT NULL AND country <> '??'
+    GROUP BY account_id
+) AS latest_logs
+ON a.account_id = latest_logs.account_id 
+   AND CONCAT(a.ctime, '-', a.crand) = latest_logs.latest_entry
+GROUP BY a.country;
+";
+
+        $stmt = $conn->prepare($sql);
+
+        if (!$stmt) {
+            return new Response(false, "Error preparing statement: " . $conn->error, null);
+        }
+
+        if (!$stmt->execute()) {
+            return new Response(false, "Error executing statement: " . $stmt->error, null);
+        }
+
+        $result = $stmt->get_result();
+        $mapData = [];
+        while ($row = $result->fetch_assoc()) {
+            // Add each country's code and value as an array
+            $mapData[] = [$row['code'], (int)$row['user_count']];
+        }
+
+        $stmt->close();
+
+        return new Response(true, "Map data retrieved successfully", $mapData);
+    }
+
     
 }
 

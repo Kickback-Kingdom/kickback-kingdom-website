@@ -2,6 +2,7 @@
 declare(strict_types=1);
 use Kickback\Backend\Controllers\LootController;
 use Kickback\Backend\Controllers\AccountController;
+use Kickback\Common\Version;
 
 
 $badgeCode = '';
@@ -21,14 +22,14 @@ for ($i=0; $i < count($_vPlayerCardAccount->game_ranks); $i++) {
 
     if ($rank['rank'] == null)
     {
-        $rankCode .= '<div>'.htmlspecialchars($rank['name']).' <span class="badge unranked float-end" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Unranked: '.($rank['minimum_ranked_matches_required']-$rank['ranked_matches']).' matches remaining">'.$rank['ranked_matches'].' / '.$rank['minimum_ranked_matches_required'].'</span></div>';
+        $rankCode .= '<div><a href="/g/'.$rank['locator'].'">'.htmlspecialchars($rank['name']).'</a> <span class="badge unranked float-end" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Unranked: '.($rank['minimum_ranked_matches_required']-$rank['ranked_matches']).' matches remaining">'.$rank['ranked_matches'].' / '.$rank['minimum_ranked_matches_required'].'</span></div>';
     }
     else{
         if ($rank["rank"]==1)
         {
           $isRanked1 = true;
         }
-        $rankCode .= '<div>'.htmlspecialchars($rank['name']).' <span class="badge ranked'.($rank['rank']==1?"-1":"").' float-end" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Ranked #'.$rank['rank'].' Kingdom Wide">#'.$rank['rank'].'</span></div>';
+        $rankCode .= '<div><a href="/g/'.$rank['locator'].'">'.htmlspecialchars($rank['name']).'</a> <span class="badge ranked'.($rank['rank']==1?"-1":"").' float-end" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Ranked #'.$rank['rank'].' Kingdom Wide">#'.$rank['rank'].'</span></div>';
     }
 
     
@@ -59,9 +60,13 @@ for ($i = count($_vPlayerCardAccount->game_ranks); $i < 5; $i++ )
     <?php if ($_vPlayerCardAccount->isMerchant) { ?>
       <div class="ribbon blue"></div>
       <?php } ?>
-      <?php if (true == false) { ?>
+      <?php if ($_vPlayerCardAccount->isSteward) { ?>
       <div class="ribbon green"></div>
+      <?php } ?>
+      <?php if (true == false) { ?>
       <div class="ribbon yellow"></div>
+      <?php } ?>
+      <?php if ($_vPlayerCardAccount->isSteward) { ?>
       <div class="ribbon purple"></div>
       <?php } ?>
   </div>
@@ -82,7 +87,7 @@ for ($i = count($_vPlayerCardAccount->game_ranks); $i < 5; $i++ )
   <div class="card-body align-items-start d-flex justify-content-start<?php echo ($isRanked1?" ranked-1":"")?>">
     <img class="img-fluid img-thumbnail" src="<?= $_vPlayerCardAccount->getProfilePictureURL(); ?>" />
     <div class="player-card-ranks">
-        <?php echo $rankCode; ?>
+        <?= $rankCode; ?>
     </div>
   </div>
   <!--player card footer-->

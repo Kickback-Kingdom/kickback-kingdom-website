@@ -3,6 +3,10 @@
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: (__DIR__ . "/../../../..")) . "/Kickback/init.php");
 
 require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/engine.php");
+use Kickback\Backend\Controllers\MediaController;
+use Kickback\Services\Session;
+use Kickback\Backend\Config\ServiceCredentials;
+use Kickback\Backend\Controllers\AccountController;
 
 OnlyPOST();
 
@@ -10,18 +14,21 @@ $containsFieldsResp = POSTContainsFields("directory","name","desc","imgBase64","
 if (!$containsFieldsResp->success)
     return $containsFieldsResp;
 
-$kk_service_key = \Kickback\Backend\Config\ServiceCredentials::get("kk_service_key");
+$kk_service_key = ServiceCredentials::get("kk_service_key");
 
 $directory = Validate($_POST["directory"]);
 $imgBase64 = Validate($_POST["imgBase64"]);
 $name = Validate($_POST["name"]);
 $desc = Validate($_POST["desc"]);
 $sessionToken = Validate($_POST["sessionToken"]);
+$mediaCRAND = "";
+if (isset($_POST["crand"]))
+$mediaCRAND = Validate($_POST["crand"]);
 
-$loginResp = Kickback\Services\Session::GetLoginSession($kk_service_key, $sessionToken);
+$loginResp = AccountController::getAccountBySession($kk_service_key, $sessionToken);
 if (!$loginResp->success)
 {
     return $loginResp;
 }
-return UploadMediaImage($directory, $name, $desc, $imgBase64);
+return MediaController::UploadMediaImage($directory, $name, $desc, $imgBase64, $mediaCRAND);
 ?>

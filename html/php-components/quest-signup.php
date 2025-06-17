@@ -1,4 +1,8 @@
-<?php 
+<?php
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: (__DIR__ . "/..")) . "/Kickback/init.php");
+
+use Kickback\Common\Version;
+
 //$application_information = $thisQuest['application_information'];
 if ($thisQuest->isRaffle())
 {
@@ -8,7 +12,7 @@ if ($thisQuest->isRaffle())
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
 
-            <form method="post" action="<?php echo Version::urlBetaPrefix(); ?>/q/<?php echo $thisQuest["locator"]; ?>">
+            <form method="post" action="<?php echo Version::urlBetaPrefix(); ?>/q/<?php echo $thisQuest->locator; ?>">
                 <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
 
                 <input type="hidden" name="sessionToken"
@@ -28,7 +32,7 @@ if ($thisQuest->isRaffle())
                             <h6>Available Raffle Tickets: <?php echo $unusedTickets; ?></h6>
                             <fieldset>
                                 <div class="input-group">
-                                        <input class="touchspin" type="number" name="tickets" data-bts-init-val="1" min="1" max="<?php echo $unusedTickets; ?>">
+                                        <input class="touchspin" type="number" name="tickets" data-bts-init-val="1" min="1" max="<?= $unusedTickets; ?>" value="1">
                                         <!--<input class="touchspin" type="text" name="tickets" data-bts-init-val="1" oninput="validateMaxValue(this)">
 
                                         <script>

@@ -10,8 +10,9 @@ use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Controllers\AccountController;
-
-\Kickback\Common\Version::$show_version_popup = false;
+use Kickback\Common\Version;
+use Kickback\Backend\Controllers\FlavorTextController;
+Version::$show_version_popup = false;
 
 $hasError = false;
 $errorMessage = '';
@@ -86,7 +87,7 @@ if (isset($_GET['wi']))
     $kk_crypt_key_quest_id = ServiceCredentials::get("crypt_key_quest_id");
     require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/engine.php");
     $crypt = new IDCrypt($kk_crypt_key_quest_id);
-    $writ_of_passage_id_decrypted = $crypt->decrypt($writ_of_passage_id);
+    $writ_of_passage_id_decrypted = new vRecordId('',(int)$crypt->decrypt($writ_of_passage_id));
     $writResp = AccountController::getAccountByWritOfPassageLootId($writ_of_passage_id_decrypted);
     if ($writResp->success)
     {
@@ -126,6 +127,9 @@ if (isset($_GET['wq'])) {
         $showGuard = true;
 
     }
+}
+else{
+    $writ_of_passage_quest = "";
 }
 
 if (!$writProvided) {
@@ -210,8 +214,8 @@ else
                             </small>
                             <?php } ?>
                             <?php if ($writOfPassageOwner != null) { ?>
-                            <img src="/assets/media/<?php echo GetAccountProfilePicture($writOfPassageOwner);?>"  class="img-fluid img-thumbnail">
-                            <p style="margin-top: 8px; margin-left: 8px; margin-right: 8px;"><em><?php echo WritOfPassageProclamation($writOfPassageOwner['Username']); ?></em><figcaption class="blockquote-footer text-end"><a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo urlencode(htmlspecialchars($writOfPassageOwner["Username"])); ?>" class="username"><?php echo htmlspecialchars($writOfPassageOwner["Username"]); ?></a></figcaption></p>
+                            <img src="<?= $writOfPassageOwner->getProfilePictureURL();?>"  class="img-fluid img-thumbnail">
+                            <p style="margin-top: 8px; margin-left: 8px; margin-right: 8px;"><em><?=  FlavorTextController::writOfPassageProclamation($writOfPassageOwner->username); ?></em><figcaption class="blockquote-footer text-end"><?= $writOfPassageOwner->getAccountElement(); ?></figcaption></p>
                             <?php } ?>
                         </div>
                         <div class="col-12 col-lg-8">

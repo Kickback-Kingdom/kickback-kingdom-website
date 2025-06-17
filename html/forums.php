@@ -52,6 +52,7 @@ require("php-components/base-page-pull-active-account-info.php");
             
             <?php require("php-components/base-page-discord.php"); ?>
         </div>
+        <?php require("php-components/base-page-footer.php"); ?>
     </main>
 
     

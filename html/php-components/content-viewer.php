@@ -4,6 +4,7 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
 use Kickback\Backend\Controllers\ContentController;
 use Kickback\Services\Session;
+use Kickback\Common\Utility\FormToken;
 
 if (!isset($_vPageContentEditMode))
 {
@@ -376,7 +377,7 @@ if ($_vCanEditContent)
         <?php if ($_vPageContentEditMode) { ?>
 
             <form method="POST">
-                <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
+                <?= FormToken::registerForm(); ?>
 
                 <input type="hidden" name="edit-content-container-type" value="<?= $_vPageContent->containerType; ?>"/>
                 <input type="hidden" name="edit-content-container-id" value="<?= $_vPageContent->containerId; ?>"/>

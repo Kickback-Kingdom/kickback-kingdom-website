@@ -15,16 +15,16 @@ use Kickback\Backend\Controllers\FeedCardController;
 use Kickback\Backend\Controllers\FeedController;
 use Kickback\Common\Version;
 
-$availableQuestsResp = FeedController::getAvailableQuestsFeed();
+$availableQuestsResp = FeedController::getAvailableQuestsFeed(1, 100);
 $availableQuests = $availableQuestsResp->data;
 
 $archivedQuestsResp = FeedController::getArchivedQuestsFeed(1, 100);
 $archivedQuests = $archivedQuestsResp->data;
 
-$questLinesResp = FeedController::getAvailableQuestLinesFeed();
+$questLinesResp = FeedController::getAvailableQuestLinesFeed(1, 100);
 $questLines = $questLinesResp->data;
 
-$tbaQuestsResp = FeedController::getTBAQuestsFeed();
+$tbaQuestsResp = FeedController::getTBAQuestsFeed(1, 100);
 $tbaQuests = $tbaQuestsResp->data;
 $showTBAQuests = count($tbaQuests)>0;
 $tabActive = "active";
@@ -72,8 +72,8 @@ $tabPageActive = "active show";
                             </div>
                             <div class="card-body">
                                 
-                                <a href="<?php echo Version::urlBetaPrefix(); ?>/quest.php?new" class="btn btn-primary">Post a New Quest</a>
-                                <a href="<?php echo Version::urlBetaPrefix(); ?>/quest-line.php?new" class="btn btn-primary">Create New Quest Line</a>
+                                <a href="<?= Version::urlBetaPrefix(); ?>/quest.php?new" class="btn btn-primary">Post a New Quest</a>
+                                <a href="<?= Version::urlBetaPrefix(); ?>/quest-line.php?new" class="btn btn-primary">Create New Quest Line</a>
                             </div>
                         </div>
                     </div>
@@ -163,7 +163,7 @@ $tabPageActive = "active show";
             
             <?php require("php-components/base-page-discord.php"); ?>
         </div>
-        <?php require(\Kickback\SCRIPT_ROOT ."/php-components/base-page-footer.php"); ?>
+        <?php require("php-components/base-page-footer.php"); ?>
     </main>
 
     

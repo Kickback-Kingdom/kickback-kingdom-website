@@ -96,15 +96,21 @@ function Validate($data)
     return $data;
 }
 
+function ValidateCTime($data)
+{
+    if (!isset($data)) {
+        return "";
+    }
+
+    return trim($data);
+}
+
+
 function GetSQLError()
 {
     return $GLOBALS["conn"]->error;
 }
 
-function LocatorIsValidString($str) {
-    // The regex checks for a string made up of only letters (a-z, A-Z), numbers (0-9), underscores, or hyphens.
-    return preg_match('/^[a-zA-Z0-9_-]+$/', $str) === 1;
-}
 
 function encode_id($id) {
     return rtrim(strtr(base64_encode($id), '+/', '-_'), '=');
@@ -123,11 +129,6 @@ function free_mysqli_resources($mysqli) {
     }
 }
 
-function Redirect($localPath) {
-    $basePath = rtrim($GLOBALS["urlPrefixBeta"], '/');
-    header("Location: ".$basePath."/".ltrim($localPath, '/'), true, 302);
-    exit;
-}
 
 function StringStartsWith($str, $startsWith) {
     return (strpos(strtolower($str), strtolower($startsWith)) === 0);

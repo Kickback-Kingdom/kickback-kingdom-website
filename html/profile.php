@@ -826,9 +826,13 @@ $activeTabPage = 'active show';
 
                                                 foreach ($accountInventory as $accountInventoryItemStack) {
                                                     ?>
-                                                    <div class="inventory-item" onclick="ShowInventoryItemModal(<?= $accountInventoryItemStack->item->crand; ?>);"  data-bs-toggle="tooltip" data-bs-dismiss="modal" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($accountInventoryItemStack->item->name)?>">
-                                                        <img src="<?= $accountInventoryItemStack->item->iconSmall->getFullPath(); ?>" alt="Item <?= $accountInventoryItemStack->item->name; ?>">
-                                                        <div class="item-count">x<?= $accountInventoryItemStack->amount; ?></div>
+                                                    <div class="inventory-item" onclick="ShowInventoryItemModal(<?= $accountInventoryItemStack->item->crand; ?>, <?= $accountInventoryItemStack->itemLootId->crand; ?>);"  data-bs-toggle="tooltip" data-bs-dismiss="modal" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($accountInventoryItemStack->GetName())?>">
+                                                        <img src="<?= $accountInventoryItemStack->item->iconSmall->getFullPath(); ?>" alt="Item <?= $accountInventoryItemStack->GetName(); ?>">
+                                                        <?php if ($accountInventoryItemStack->isContainer) { ?>
+                                                        <div class="item-count"><i class="fa-solid fa-box"></i> <?= $accountInventoryItemStack->amount; ?></div>
+                                                        <?php } else { ?>
+                                                            <div class="item-count">x<?= $accountInventoryItemStack->amount; ?></div>
+                                                        <?php } ?>
                                                     </div>
                                                 
                                                 <?php

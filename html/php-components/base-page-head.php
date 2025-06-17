@@ -1,5 +1,6 @@
 <?php 
 use Kickback\Backend\Controllers\AnalyticController;
+use Kickback\Backend\Controllers\TreasureHuntController;
 use Kickback\Common\Version;
 $pageVisitId = AnalyticController::getCurrentPage();
 
@@ -59,6 +60,40 @@ if (isset($thisBlogPost))
     $pageVisitId = '/blog-post/'.$thisBlogPost->crand;
 }
 
+if (isset($thisLobby))
+{
+    $pageTitle = $thisLobby->name;
+}
+
+if (isset($thisGame))
+{
+    $pageTitle = $thisGame->name;
+    $pageVisitId = '/g/'.$thisGame->crand;
+}
+
+if (isset($thisLichSet))
+{
+    $pageTitle = $thisLichSet->name;
+    $pageImage = "https://kickback-kingdom.com/assets/media/Castles/RedCap-Studios/518.png";
+    $pageDesc = $thisLichSet->description;
+    $pageVisitId = '/lich-set/'.$thisLichSet->ctime.'/'.$thisLichSet->crand;
+}
+
+if (isset($thisLichCardData))
+{
+    $pageTitle = $thisLichCardData->name;
+    $pageImage = $thisLichCardData->cardImage->getFullPath();
+    $pageDesc = $thisLichCardData->description;
+    $pageVisitId = '/lich-card/'.$thisLichCardData->ctime.'/'.$thisLichCardData->crand;
+}
+
+if (isset($thisTreasureHuntEvent))
+{
+    $pageTitle = $thisTreasureHuntEvent->name;
+    $pageVisitId = '/treasure-hunt/'.$thisTreasureHuntEvent->ctime.'/'.$thisTreasureHuntEvent->crand;
+    $pageDesc = $thisTreasureHuntEvent->desc;
+    $pageImage = "https://kickback-kingdom.com".$thisTreasureHuntEvent->icon->getFullPath();
+}
 
 AnalyticController::recordPageVisit($pageVisitId);
 $pageVisitResp = AnalyticController::getPageVisits($pageVisitId);
@@ -67,6 +102,11 @@ if ($pageVisitResp->success)
 {
     $thisPageVisits = $pageVisitResp->data;
 }
+
+$currentTreasureHunts = TreasureHuntController::getCurrentEvents()->data;
+$currentHiddenObjects = TreasureHuntController::getHiddenObjectsOnPage($pageVisitId)->data;
+$treasureHuntPossibleItems = TreasureHuntController::getPossibleTreasureItems()->data;
+
 ?>
 <head>
     <meta charset="UTF-8">
@@ -75,8 +115,8 @@ if ($pageVisitResp->success)
     <title><?php echo $pageTitle; ?></title>
 
     
-    <meta name="description" content="<?php echo $pageDesc; ?>">
-    <meta name="keywords" content="rank, ranked, gaming, games, publisher, crypto, ada, cardano, kickback, kingdom, twilight racer, end of empires, lich, l.i.c.h., community, casual, roleplay, competitive, <?php $pageTitle; ?>">
+    <meta name="description" content="<?= $pageDesc; ?>">
+    <meta name="keywords" content="rank, ranked, gaming, games, publisher, crypto, ada, cardano, kickback, kingdom, twilight racer, end of empires, lich, l.i.c.h., community, casual, roleplay, competitive, <?= $pageTitle; ?>, atlas, odyssey, <?= $pageDesc; ?>">
     <meta name="author" content="Kickback Kingdom">
     <link rel="icon" href="/assets/media/icons/64.png" type="image/x-icon">
     <link rel="shortcut icon" href="/assets/media/icons/64.png" type="image/x-icon">
@@ -118,6 +158,10 @@ if ($pageVisitResp->success)
     <link rel="stylesheet" href="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/owl-carousel/owl.theme.css">
     <link rel="stylesheet" href="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/animate/animate.min.css"/>
     <script src="https://kit.fontawesome.com/f098b8e570.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <script src="https://unpkg.com/scrollreveal"></script>
 
     <?php
         $cssFile = Version::urlBetaPrefix().'/assets/css/kickback-kingdom.css';
@@ -138,7 +182,7 @@ if ($pageVisitResp->success)
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.css" rel="stylesheet" />
 
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
+    <link rel="stylesheet" href="<?php echo Version::urlBetaPrefix(); ?>/assets/vendors/datatable/jquery.dataTables.css" />
   
     
     <?php if (isset($_GET['borderless'])) { ?>
@@ -154,4 +198,10 @@ if ($pageVisitResp->success)
     </style>
     <?php } ?>
 
+    <style>
+        /*body {
+            background-image: url(/assets/media/seasonal/486.png) !important;
+        }*/
+
+    </style>
 </head>

@@ -9,6 +9,7 @@ use Kickback\Backend\Views\vReviewStatus;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Services\Session;
+use Kickback\Common\Version;
 
 class vQuestLine extends vRecordId
 {
@@ -32,7 +33,7 @@ class vQuestLine extends vRecordId
     }
 
     public function getURL() : string {
-        return '/quest-line/'.$this->locator;
+        return Version::formatUrl('/quest-line/'.$this->locator);
     }
     
     public function populateQuests() : void {
@@ -82,7 +83,7 @@ class vQuestLine extends vRecordId
         return ($this->hasPageContent() && ($this->content->isValid()));
     }
 
-    public function getPageContent() : array {
+    public function getPageContent() : vPageContent {
         return $this->content->pageContent;
     }
 
@@ -112,7 +113,7 @@ class vQuestLine extends vRecordId
 
     public function canEdit()
     {
-        return $this->isCreator() || Session::isAdmin();
+        return $this->isCreator() || Session::isMagisterOfTheAdventurersGuild();
     }
 
     public function isCreator()

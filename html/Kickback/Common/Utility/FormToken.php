@@ -25,7 +25,7 @@ class FormToken {
             session_start();
         }
 
-        if (!isset($_SESSION['form_token'])) {
+        if (!isset($_SESSION['form_token']) || !is_string($_SESSION['form_token']) || strlen($_SESSION['form_token']) !== 64) {
             $_SESSION['form_token'] = bin2hex(random_bytes(32));
         }
     }
@@ -55,7 +55,7 @@ class FormToken {
     }
 
     public static function registerForm() : string {
-        echo "<input type='hidden' name='form_token' value='".self::getFormToken()."'>";
+        return "<input type='hidden' name='form_token' value='".self::getFormToken()."'>";
     }
 }
 

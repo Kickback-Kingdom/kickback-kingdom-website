@@ -1,7 +1,9 @@
 <?php
+declare(strict_types=1);
 //ini_set('display_errors', 0);
 //ini_set('display_startup_errors', 0);
 //error_reporting(E_ALL);
+
 
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
@@ -10,8 +12,9 @@ require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Backend\Controllers\AccountController;
 use Kickback\Backend\Views\vAccount;
+use Kickback\Common\Version;
 
-\Kickback\Common\Version::$show_version_popup = false;
+Version::$show_version_popup = false;
 $redirectUrl = 'index.php';
 
 if (isset($_GET["redirect"]))
@@ -24,8 +27,8 @@ $errorMessage = "";
 
 
 
-$accountResp = AccountController::getAccountById(new vAccount('', $_GET["i"]));
-$code = $_GET["c"];
+$accountResp = AccountController::getAccountById(new vAccount('', (int)$_GET["i"]));
+$code = (int)$_GET["c"];
 
 if ($accountResp->success)
 {
@@ -104,7 +107,7 @@ else
                     
                 </div>
                 <div class="modal-footer">
-                    <a type="button" class="btn btn-secondary" href="<?php echo Version::urlBetaPrefix()."/".$redirectUrl; ?>">Back</a>
+                    <a type="button" class="btn btn-secondary" href="<?= Version::urlBetaPrefix()."/".$redirectUrl; ?>">Back</a>
                     <input type="submit" name="submit" class="btn btn-primary" value="Change Password">
                 </div>
             </div>

@@ -14,6 +14,7 @@ use Kickback\Backend\Models\PlayStyle;
 use Kickback\Backend\Controllers\QuestLineController;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Models\Response;
+use Kickback\Common\Version;
 
 class vQuest extends vRecordId
 {
@@ -44,7 +45,7 @@ class vQuest extends vRecordId
     }
 
     public function getURL() : string {
-        return '/q/'.$this->locator;
+        return Version::formatUrl('/q/'.$this->locator);
     }
 
     public function hasEndDate() : bool {
@@ -72,7 +73,7 @@ class vQuest extends vRecordId
     }
 
     public function canEdit() : bool {
-        return $this->isHost() || Session::isAdmin();
+        return $this->isHost() || Session::isMagisterOfTheAdventurersGuild();
     }
 
     public function isHost() : bool {
@@ -89,9 +90,9 @@ class vQuest extends vRecordId
         return $this->content->hasPageContent();
     }
 
-    public function getHost2Id() : string {
+    public function getHost2Id() : int {
         if ($this->host2 == null)
-            return "";
+            return -1;
         return $this->host2->crand;
     }
 

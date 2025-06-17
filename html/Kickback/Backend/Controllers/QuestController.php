@@ -18,14 +18,17 @@ use Kickback\Backend\Views\vReviewStatus;
 use Kickback\Backend\Views\vQuestLine;
 use Kickback\Backend\Models\PlayStyle;
 use Kickback\Backend\Models\ItemType;
+use Kickback\Backend\Models\Quest;
 use Kickback\Backend\Models\ItemRarity;
 use Kickback\Backend\Views\vTournament;
 use Kickback\Backend\Views\vQuestApplicant;
 use Kickback\Backend\Views\vRaffle;
 use Kickback\Backend\Controllers\AccountController;
+use Kickback\Backend\Controllers\SocialMediaController;
 
 class QuestController
 {
+
     public static function getQuestById(vRecordId $recordId): Response {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_quest_info WHERE Id = ?";
@@ -112,7 +115,7 @@ class QuestController
     function getTBAQuests() : Response {
         if (Session::isLoggedIn())
         {
-            if (Session::isAdmin())
+            if (Session::isMagisterOfTheAdventurersGuild())
             {
                 // Prepare the SQL statement
                 $sql = "SELECT * FROM kickbackdb.v_quest_info WHERE published = 0 order by end_date desc";
@@ -209,6 +212,25 @@ class QuestController
         return new Response(false, "We couldn't find a quest with that raffle id", null);
     }
 
+    
+    public static function getQuestByKickbackUpcoming(): Response {
+        $conn = Database::getConnection();
+        $stmt = $conn->prepare("SELECT * FROM v_quest_info WHERE (host_id = 46 or host_id_2 = 46) and finished = 0 and published = 1 order by end_date LIMIT 1");
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare query", null);
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+
+        if ($row !== null) {
+            return new Response(true, "Quest Information.", self::row_to_vQuest($row));
+        }
+
+        return new Response(false, "We couldn't find a quest with that raffle id", null);
+    }
+
     public static function getQuestRewardsByQuestId(vRecordId $questId) : Response {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_quest_reward_info WHERE quest_id = ?";
@@ -242,14 +264,22 @@ class QuestController
         `quest_applicants`.`participated` AS `participated`, 
         `quest_applicants`.`quest_id` AS `quest_id`, 
         `quest_applicants`.`seed_score` AS `seed_score`, 
-        case when `quest_applicants`.`participated` = 1 
-        or `quest_applicants`.`seed_score` > 0 then rank() over (
-          partition by `quest_applicants`.`quest_id` 
-          order by 
-            `quest_applicants`.`seed_score` desc, 
-            `account`.`exp` desc, 
-            `account`.`Id` desc
-        ) else NULL end AS `seed`, 
+        CASE 
+        WHEN `quest_applicants`.`seed_score` > 0 
+        THEN RANK() OVER (
+            PARTITION BY `quest_applicants`.`quest_id` 
+            ORDER BY 
+                `quest_applicants`.`seed_score` DESC, 
+                `account`.`Id` DESC
+        ) 
+        ELSE RANK() OVER (
+            PARTITION BY `quest_applicants`.`quest_id` 
+            ORDER BY 
+                CASE WHEN `v_game_rank`.`rank` IS NULL THEN 1 ELSE 0 END ASC, 
+                `v_game_rank`.`rank` ASC, 
+                `account`.`Id` DESC
+        ) 
+        END AS `seed`, 
         `v_game_rank`.`rank` AS `rank`
       from 
         (
@@ -339,7 +369,7 @@ class QuestController
             self::chooseRaffleWinner($quest->raffle);
         }
     }
-    
+
     public static function getSubmittedRaffleTickets(vRaffle $raffle): Response {
         $conn = Database::getConnection();
         $sql = "SELECT Id FROM kickbackdb.raffle_submissions WHERE raffle_id = ?";
@@ -420,8 +450,8 @@ class QuestController
                 }
 
                 $raffleWinner = $raffleWinnerResp->data;
-                $msg = self::getRaffleWinnerAnnouncement($raffleQuest["name"], $raffleWinner[0]["Username"]);
-                self::discordWebHook($msg);
+                $msg = FlavorTextController::getRaffleWinnerAnnouncement($raffleQuest->title, $raffleWinner["Username"]);
+                SocialMediaController::DiscordWebHook($msg);
 
                 return new Response(true, "Selected Raffle Winner!", null);
             } else {
@@ -432,9 +462,54 @@ class QuestController
         }
     }
 
+    public static function getRaffleWinner(vRaffle $raffle): Response {
+        $conn = Database::getConnection();
+    
+        // Prepare the SQL statement
+        $sql = "SELECT raffle_id, account_id, Username FROM kickbackdb.v_raffle_winners WHERE raffle_id = ?";
+    
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare statement: " . $conn->error, null);
+        }
+    
+        // Bind the parameter
+        $stmt->bind_param('i', $raffle->crand);
+    
+        // Execute the statement
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute statement: " . $stmt->error, null);
+        }
+    
+        // Fetch results
+        $result = $stmt->get_result();
+    
+        if ($result === false || $result->num_rows === 0) {
+            $stmt->close();
+            return new Response(false, "No winner found for the given raffle ID", null);
+        }
+    
+        $rows = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+    
+        // Populate the winner property in the raffle object with the first result
+        $winner = $rows[0];
+    
+        // Return winner details
+        return new Response(true, "Raffle Ticket Winner", $winner);
+    }
+    
+
     public static function getRaffleParticipants(vRaffle $raffle): Response {
         $conn = Database::getConnection();
-        $sql = "SELECT * FROM v_raffle_participants WHERE raffle_id = ?";
+        $sql = "SELECT `v_account_info`.*,
+                    `v_raffle_tickets`.`raffle_id` AS `raffle_id`
+                FROM
+                    (`v_raffle_tickets`
+                    LEFT JOIN `v_account_info` ON (`v_raffle_tickets`.`account_id` = `v_account_info`.`Id`))
+                WHERE
+                    `v_raffle_tickets`.`raffle_id` = ?
+                GROUP BY `v_raffle_tickets`.`raffle_id` , `v_raffle_tickets`.`account_id`";
 
         // Prepare the SQL statement
         $stmt = $conn->prepare($sql);
@@ -457,13 +532,17 @@ class QuestController
         }
 
         // Fetch all the rows
-        $rows = $result->fetch_all(MYSQLI_ASSOC);
+        //$rows = $result->fetch_all(MYSQLI_ASSOC);
 
+        $accounts = [];
+        while ($row = $result->fetch_assoc()) {
+            $accounts[] = AccountController::row_to_vAccount($row, true);
+        }
         // Free the result and close the statement
         $result->free();
         $stmt->close();
 
-        return new Response(true, "Raffle Participants", $rows);
+        return new Response(true, "Raffle Participants", $accounts);
     }
 
     public static function removeStandardParticipationRewards(vRecordId $questId) : Response {
@@ -741,7 +820,7 @@ class QuestController
         
         $conn = Database::getConnection();
         
-        if (!Session::isAdmin()) {
+        if (!Session::isMagisterOfTheAdventurersGuild()) {
             return new Response(false, "Approval denied. Insufficient permissions to edit this quest.", null);
         }
 
@@ -761,7 +840,7 @@ class QuestController
 
         return new Response(true, "Quest successfully approved and published.", null);
     }
-        
+
     public static function updateQuestContent(vRecordId $questId, vRecordId $contentId) : Response {
         $conn = Database::getConnection();
         $stmt = $conn->prepare("UPDATE quest SET content_id = ? WHERE Id = ?");
@@ -772,22 +851,21 @@ class QuestController
     }
 
     public static function submitRaffleTicket(vRecordId $account_id, vRecordId $raffle_id) : Response {
-        
         $conn = Database::getConnection();
-        $loot_id = GetUnusedAccountRaffleTicket($account_id)->data;
-        $raffle_id = mysqli_real_escape_string($conn, $raffle_id);
-
-        $sql = "INSERT INTO raffle_submissions (raffle_id, loot_id) VALUES ($raffle_id,$loot_id);";
-        $result = mysqli_query($conn,$sql);
-        if ($result === TRUE) {
-
-            return (new Response(true, "Submitted Raffle Ticket!",null));
-        } 
-        else 
-        {
-            return (new Response(false, "Failed to submit raffle ticket with error: ".GetSQLError(), null));
+    
+        // Get the unused account raffle ticket loot ID
+        $loot_id = AccountController::getUnusedAccountRaffleTicket($account_id)->data;
+    
+        // Prepare the statement to insert the raffle ticket
+        $stmt = $conn->prepare("INSERT INTO raffle_submissions (raffle_id, loot_id) VALUES (?, ?)");
+        mysqli_stmt_bind_param($stmt, 'ii', $raffle_id->crand, $loot_id);
+    
+        // Execute the statement
+        if (mysqli_stmt_execute($stmt)) {
+            return (new Response(true, "Submitted Raffle Ticket!", null));
+        } else {
+            return (new Response(false, "Failed to submit raffle ticket with error: " . mysqli_stmt_error($stmt), null));
         }
-
     }
 
     public static function accountHasRegisteredOrAppliedForQuest(vRecordId $account_id, vRecordId $quest_id) : Response {
@@ -822,7 +900,7 @@ class QuestController
         if (mysqli_stmt_execute($stmt)) {
             $account = AccountController::getAccountById($account_id)->data;
             $quest = self::getQuestById($quest_id)->data;
-            DiscordWebHook(FlavorTextController::GetRandomGreeting() . ', ' . $account->username . ' just signed up for the ' . $quest->title . ' quest.');
+            SocialMediaController::DiscordWebHook(FlavorTextController::GetRandomGreeting() . ', ' . $account->username . ' just signed up for the ' . $quest->title . ' quest.');
             mysqli_stmt_close($stmt);
             return (new Response(true, "Registered for quest successfully", null));
         } else {
@@ -898,7 +976,7 @@ class QuestController
         }
         else{
             $quest->content = new vContent();
-            $quest->content->htmlContent = $row["desc"];
+            $quest->content->htmlContent = $row["desc"] ?? "";
         }
 
         if ($row["quest_line_id"] != null)
@@ -910,6 +988,15 @@ class QuestController
         $host1->username = $row["host_name"];
 
         $quest->host1 = $host1;
+
+        if ($row["host_id_2"] != null && $row["host_name_2"] != null)
+        {
+
+            $host2 = new vAccount('', $row["host_id_2"]);
+            $host2->username = $row["host_name_2"];
+    
+            $quest->host2 = $host2;
+        }
 
         $quest->requiresApplication = (bool)$row["req_apply"];
 
@@ -956,6 +1043,8 @@ class QuestController
             $item->iconSmall = $smallImg;
         }
 
+        $item->iconBack = $item->iconBig;
+
         return $questReward;
     }
 
@@ -969,7 +1058,7 @@ class QuestController
         return $questApplicant;
     }
 
-    public static function submitFeedbackAndCollectRewards(vRecordId $account_id, vRecordId $quest_id, int $host_rating, int $quest_rating, string $feedback) : Response {
+    public static function submitFeedbackAndCollectRewards(vRecordId $account_id, vRecordId $quest_id, ?int $host_rating, ?int $quest_rating, ?string $feedback) : Response {
         $conn = Database::getConnection();
         
         //giving error
@@ -1020,6 +1109,8 @@ class QuestController
             if (!$questResp->success)
             {
                 $questModel = new Quest();
+                $questModel->title = $questName;
+                $questModel->locator = $questLocator;
                 $insertResp = self::insert($questModel);
                 $quest = $insertResp->data;
             }
@@ -1029,29 +1120,31 @@ class QuestController
             }
             if (!$quest->hasPageContent())
             {
-                $newContentId = InsertNewContent();
+                $newContentId = ContentController::insertNewContent();
                 
-                UpdateQuestContent($questResp->data["Id"],$newContentId);
+                self::updateQuestContent($quest,new vRecordId('', $newContentId));
 
-                $questResp = GetQuestByLocator($questLocator);
+                $questResp = self::getQuestByLocator($questLocator);
             }
 
             return (new Response(true, "New quest created.", $questResp->data));
         }
-        else{
+        else
+        {
             return (new Response(false, "You do not have permissions to post a new quest.", null));
         }
     }
 
     public static function insert(Quest $quest) : Response {
-
+        $conn = Database::getConnection();
         $stmt = $conn->prepare("INSERT INTO quest (name, locator, host_id) values (?,?,?)");
-        mysqli_stmt_bind_param($stmt, 'ssi', $questName, $questLocator, Kickback\Services\Session::getCurrentAccount()->crand);
+        mysqli_stmt_bind_param($stmt, 'ssi', $quest->title, $quest->locator, Session::getCurrentAccount()->crand);
         mysqli_stmt_execute($stmt);
-        $newId = mysqli_insert_id($conn);
-        $questResp = GetQuestByLocator($questLocator);
-        $rewardResp = SetupStandardParticipationRewards($newId);
-
+        //$newId = mysqli_insert_id($conn);
+        $questResp = self::getQuestByLocator($quest->locator);
+        $rewardResp = self::setupStandardParticipationRewards($questResp->data);
+        $questResp = self::getQuestByLocator($quest->locator);
+        return $questResp;
     }
 }
 ?>

@@ -3,6 +3,7 @@
 require("base-page-loading-overlay.php"); 
 
 use Kickback\Backend\Controllers\MediaController;
+use Kickback\Backend\Controllers\TreasureHuntController;
 use Kickback\Backend\Models\NotificationType;
 use Kickback\Common\Version;
 
@@ -17,7 +18,16 @@ $mediaDirs = $mediaDirsResp->data;
     </div>
 </div>
 
+
+
+
+
 <?php if(Kickback\Services\Session::isLoggedIn()) { ?>
+
+
+
+    <?php require(\Kickback\SCRIPT_ROOT . "/php-components/league-viewer.php"); ?>
+
 <!--CHESTS-->
 <div class="modal fade modal-chest " id="modalChest" tabindex="-1" aria-labelledby="modalChestLabel" aria-hidden="true" onclick="ToggleChest();">
     <div class="modal-dialog  modal-dialog-centered">
@@ -28,7 +38,12 @@ $mediaDirs = $mediaDirsResp->data;
                         <div>
                             <img id="imgShineBackground" class="img-fluid fa-spin" src="" style="    -khtml-user-select: none;    -o-user-select: none;    -moz-user-select: none;    -webkit-user-select: none;    user-select: none;    position: absolute;    left: 0;    right: 0;    top: 0;    bottom: 0;    z-index: -1;    " />
                             <img id="imgChest" class="img-fluid" src="" style="-khtml-user-select: none;    -o-user-select: none;    -moz-user-select: none;    -webkit-user-select: none;    user-select: none;" />
-                            <img id="imgItem" class="img-fluid" src="" style="-khtml-user-select: none;-o-user-select: none;-moz-user-select: none;-webkit-user-select: none;user-select: none;position: absolute;margin: auto;top: 0;bottom: 0;left: 0;right: 0;left: 0;z-index: 1;width: 250px;height: 250px;">
+                            
+                            <div id="imgItemWrapper" class="chest-item chest-item-flip-container">
+                                <img id="imgItemFront" class="img-fluid chest-item-face front" src="" />
+                                <img id="imgItemBack" class="img-fluid chest-item-face back" src="/assets/media/cards/card-back.png" />
+                            </div>
+
                             <img id="imgShineForeground" class="img-fluid fa-spin" src="" style="    -khtml-user-select: none;    -o-user-select: none;    -moz-user-select: none;    -webkit-user-select: none;    user-select: none;    position: absolute;    left: 0;    right: 0;    top: 0;    bottom: 0;    width: 400px;    height: 400px;    margin: auto;" />
                         </div>
                     </div>
@@ -56,10 +71,10 @@ $mediaDirs = $mediaDirsResp->data;
         ?>
         
       </div> 
-      <div class="modal-footer">
+      <!--<div class="modal-footer">
         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Back</button>
         <button type="button" class="btn bg-ranked-1" onclick="">Select</button>
-      </div>
+      </div>-->
     </div>
   </div>
 </div>
@@ -77,7 +92,7 @@ $mediaDirs = $mediaDirsResp->data;
         <?php require(\Kickback\SCRIPT_ROOT . "/php-components/select-media.php"); ?>
       </div> 
       <div class="modal-footer">
-        <?php if(Kickback\Services\Session::getCurrentAccount()->isArtist) { ?><button type="button" class="btn btn-primary" onclick="OpenMediaUploadModal()">Upload Media</button><?php } ?>
+        <?php if(Kickback\Services\Session::getCurrentAccount()->canUploadImages()) { ?><button type="button" class="btn btn-primary" onclick="OpenMediaUploadModal()">Upload Media</button><?php } ?>
         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Back</button>
         <button type="button" class="btn bg-ranked-1" onclick="AcceptSelectedMedia()">Select</button>
       </div>
@@ -85,7 +100,7 @@ $mediaDirs = $mediaDirsResp->data;
   </div>
 </div>
 
-<?php if(Kickback\Services\Session::getCurrentAccount()->isArtist) { ?>
+<?php if(Kickback\Services\Session::getCurrentAccount()->canUploadImages()) { ?>
 <!--UPLOAD MEDIA-->
 <div class="modal fade" id="uploadMediaModal" tabindex="-1" aria-labelledby="uploadMediaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -234,7 +249,34 @@ $mediaDirs = $mediaDirsResp->data;
     </div>
 </div>
 <?php } ?>
-
+<!-- PRESTIGE VIEW MODAL -->
+<form method="POST">
+    <input type="hidden" name="notification-view-prestige-id" id="notification-view-prestige-id" class="rating-value" required>
+    <div class="modal fade" id="notificationViewPrestigeModal" data-bs-keyboard="false" data-bs-backdrop="static" tabindex="-1" aria-labelledby="notificationViewPrestigeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="border-color: transparent;background: transparent;">
+                <div class="modal-header" style="background: transparent; border-bottom: none; text-align: center;">
+                    <h2 id="animated-prestige-title" class="animate__animated" style="color: gold; font-size: 28px; font-weight: bold; text-shadow: 0px 0px 15px gold;">
+                        Your Name Echoes in the Halls…
+                    </h2>
+                </div>
+                <div class="modal-body animate__animated" id="animated-prestige-body" style="background: #1e1e2d; color: white; border-radius: 8px; opacity: 0;">
+                    <div class="card p-3 shadow-sm" style="background: #252537; border: 1px solid gold; border-radius: 12px;">
+                        <div class="d-flex align-items-center mb-3">
+                            <img id="notification-view-prestige-avatar" src="" class="rounded-circle me-3" width="60" height="60" style="border: 2px solid gold;">
+                            <div>
+                                <h6 id="notification-view-prestige-username" class="mb-0 fw-bold" style="color: gold;"></h6>
+                                <small id="notification-view-prestige-date" style="color: gold;"></small>
+                            </div>
+                        </div>
+                        <p id="notification-view-prestige-message" class="fst-italic border-start ps-3" style="color: white;"></p>
+                        <div id="notification-view-prestige-commend" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
 <!--QUEST REVIEW MODAL-->
 <form method="POST">
     
@@ -404,91 +446,7 @@ $mediaDirs = $mediaDirsResp->data;
             aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
-        <?php 
-        
-            if (Kickback\Services\Session::isLoggedIn() && !is_null($activeAccountInfo->notifications))
-            {
-                
-                for ($i=0; $i < count($activeAccountInfo->notifications); $i++) { 
-                    # code...
-                    $not = $activeAccountInfo->notifications[$i];
-
-                    ?>
-                    <div class="toast show mb-1" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="bg-primary text-bg-primary toast-header">
-                            <strong class="me-auto">
-                            <?php
-
-                                echo $not->getTitle();
-
-                            ?>    
-                            </strong>
-                            <small><?php echo $not->date->timeElapsedString(); ?></small>
-                            <?php
-
-                            switch ($not->type) {
-                                case NotificationType::QUEST_REVIEW:
-                                case NotificationType::QUEST_IN_PROGRESS:
-                                case NotificationType::THANKS_FOR_HOSTING:
-                                case NotificationType::QUEST_REVIEWED:
-                                case NotificationType::PRESTIGE:
-                                    break;
-
-                                default:
-                                    echo '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>';
-                                    break;
-                            }
-
-                            ?>
-                        </div>
-                        <div class="toast-body">
-                            <?php
-                                echo $not->getText();
-                            ?>
-
-                        </div>
-                        <?php 
-                            switch ($not->type) {
-                                case NotificationType::QUEST_REVIEW:
-                                    ?>
-                                        <div class="toast-body"><button class="bg-ranked-1 btn btn-sm" onclick="LoadQuestReviewModal(<?php echo $i ?>);"><i class="fa-solid fa-gift"></i> Collect Rewards</button></div>
-                                    <?php
-                                    break;
-                                case NotificationType::THANKS_FOR_HOSTING:
-                                    ?>
-                                        <form method="POST">
-                                            <input type="hidden" name="quest-notifications-thanks-for-hosting-quest-id" value="<?php echo $not["quest_id"]; ?>"/>
-                                            <div class="toast-body">
-                                                <button type="submit" name="submit-notifications-thanks-for-hosting" class="bg-ranked-1 btn btn-sm"><i class="fa-solid fa-gift"></i> Collect Rewards</button>
-                                            </div>
-                                        </form>
-                                    <?php
-                                    break;
-                                
-                                case NotificationType::QUEST_REVIEWED:
-                                    ?> 
-                                        <!--<div class="toast-body"><a class="bg-ranked-1 btn btn-sm" href="#">View</a></div>-->
-                                    <?php
-                                    break;
-                                case NotificationType::PRESTIGE:
-                                    ?> 
-                                        <!--<div class="toast-body"><a class="bg-ranked-1 btn btn-sm" href="#">View</a></div>-->
-                                    <?php
-                                    break;
-                                    
-                                default:
-                                    # code...
-                                    break;
-                            }
-                        ?>
-                    </div>
-
-                    <?php
-                } // for ($i=0; $i < count($activeAccountInfo->notifications); $i++)
-            } // if (Kickback\Services\Session::isLoggedIn() && !is_null($activeAccountInfo->notifications))
-
-
-        ?>
+        <?php require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-components-notifications.php"); ?>
         
     </div>
 </div>
@@ -520,6 +478,56 @@ $mediaDirs = $mediaDirsResp->data;
                         <p id="inventoryItemDescription">Item Description</p>
                     </div>
                 </div>
+                <style>
+                    .container-panel {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.container-icon {
+    color: #6f42c1;
+}
+
+.open-container-button {
+    transition: all 0.2s ease-in-out;
+    font-weight: 500;
+}
+
+.open-container-button:hover {
+    background-color: #6f42c1;
+    color: white;
+    border-color: #6f42c1;
+}
+
+
+
+                </style>
+<!-- Container Interaction Section (Hidden by Default) -->
+<div class="row justify-content-center" id="inventoryItemContainerSection" style="display: none;">
+    <div class="col-12 col-md-10">
+        <div class="container-panel text-center p-4 mt-3">
+            <div class="container-icon mb-2">
+                <i class="fa-solid fa-box-archive fa-lg" id="containerIcon"></i>
+            </div>
+            <div class="container-label mb-3" id="containerExplanation">
+                This is a <strong>container item</strong>. Click below to view its contents.
+            </div>
+            <button class="btn btn-outline-secondary btn-sm open-container-button me-2" id="inventoryItemOpenContainerButton">
+                <i class="fa-duotone fa-regular fa-box-open me-1"></i> View Contents
+            </button>
+            <a href="#" class="btn btn-outline-primary btn-sm open-container-button d-none" id="inventoryItemEditDeckButton">
+                <i class="fa-regular fa-cards-blank me-1"></i> Edit Deck
+            </a>
+
+        </div>
+    </div>
+</div>
+
+
+
+
             </div>
             <div class="modal-footer" id="inventoryItemFooter">
                 <div class="row g-3 flex-fill">
@@ -541,65 +549,192 @@ $mediaDirs = $mediaDirsResp->data;
 </div>
 
 
-<!-- ERROR MODAL -->
-<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header text-bg-danger">
-        <h1 class="modal-title fs-5" id="errorModalLabel">Modal title</h1>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p id="errorModalMessage"></p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn bg-ranked-1" data-bs-dismiss="modal">Okay</button>
-      </div>
+<!--ITEM Container MODAL-->
+<div class="modal fade" id="inventoryItemContainerModal" tabindex="-1" aria-labelledby="inventoryItemContainerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content shadow rounded-4">
+            <div class="modal-header bg-dark text-white rounded-top-4">
+                <h5 class="modal-title" id="inventoryItemContainerTitle">Container Contents</h5>        
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-light text-center" style="max-height: 70vh; overflow-y: auto;">
+                <div id="inventoryItemContainerLoading" class="my-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-3">Opening container...</p>
+                </div>
+                <div id="inventoryItemContainerContents" class="inventory-grid d-none">
+                    <!-- Dynamically inserted container items -->
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div> 
-
-<!-- SUCCESS MODAL -->
-<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="successModalLabel">Modal title</h1>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p id="successModalMessage"></p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn bg-ranked-1" data-bs-dismiss="modal">Okay</button>
-      </div>
-    </div>
-  </div>
 </div>
 
-<!--LOADING MODAL-->
-<div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"  aria-labelledby="loadingModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        
-      <div class="d-flex align-items-center flex-fill">
-        <h5 class="modal-title" id="loadingModalLabel">Loading...</h5>        
-        
-        <i class="fa-solid fa-slash fa-spin ms-auto"></i>
+
+<?php if (Kickback\Services\Session::isEventOrganizer()) { 
+    
+    $currentAndUpComingTreasureHunts = TreasureHuntController::getCurrentEventsAndUpcoming()->data;
+    ?>
+<!--Treasure hunt hide object modal-->
+<div class="modal fade" id="treasureHuntHideObjectModal" tabindex="-1" aria-labelledby="treasureHuntHideObjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow rounded-4">
+            <div class="modal-header bg-dark text-white rounded-top-4">
+                <h5 class="modal-title">Hide and Manage Treasure</h5>        
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body bg-light">
+                    <div class="mb-3 text-start">
+                        <label for="huntSelect" class="form-label fw-semibold">Select Treasure Hunt</label>
+                        <select class="form-select" id="huntSelect" name="treasure_hunt_locator" required>
+                            <?php foreach ($currentAndUpComingTreasureHunts as $hunt): ?>
+                                <option value="<?= $hunt->locator ?>">
+                                    <?= htmlspecialchars($hunt->name) ?> (<?= $hunt->startDate->formattedBasic ?> – <?= $hunt->endDate->formattedBasic ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-check form-switch text-start mb-3">
+                        <input class="form-check-input" type="checkbox" id="oneTimeFind" name="one_time_find">
+                        <label class="form-check-label" for="oneTimeFind">This is a one-time find only</label>
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label for="objectContents" class="form-label fw-semibold">What's Inside?</label>
+                        <select class="form-select" id="objectContents" name="object_crand" required>
+                            <option value="" disabled selected>Select an item</option>
+                            <?php foreach ($treasureHuntPossibleItems as $item): ?>
+                                <option value="<?= $item->crand ?>">
+                                    <?= htmlspecialchars($item->name) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- Object Image -->
+                    <div class="mb-4 text-start">
+                        <label class="form-label fw-semibold d-block">
+                            Object Image
+                            <button type="button" class="btn btn-sm btn-primary float-end"
+                                onclick="OpenSelectMediaModal('treasureHuntHideObjectModal', 'treasure-object-image-preview', 'treasure-object-image-id')">
+                                <i class="fa-solid fa-image me-1"></i> Select Media
+                            </button>
+                        </label>
+
+                        <!-- Hidden input to store selected media CRAND -->
+                        <input type="hidden" name="object_image_id" id="treasure-object-image-id" value="">
+
+                        <!-- Preview box -->
+                        <div class="text-center border rounded p-2 bg-white">
+                            <img src="/assets/media/items/placeholder.png"
+                                id="treasure-object-image-preview"
+                                class="img-thumbnail"
+                                style="max-height: 150px; object-fit: contain;">
+                        </div>
+
+                        <small class="form-text text-muted mt-1">
+                            Select an image from the media library for the object you're hiding.
+                        </small>
+                    </div>
+
+                    
+                    <!-- Divider -->
+                    <hr class="my-4">
+
+                    <!-- Existing Hidden Objects List -->
+                    <h6 class="fw-bold text-start mb-3"><i class="fa-solid fa-eye-slash me-2 text-secondary"></i>Hidden Objects</h6>
+
+                    <?php if (!empty($currentHiddenObjects)): ?>
+                        <div class="table-responsive small">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Item</th>
+                                        <th>Name</th>
+                                        <th>Found</th>
+                                        <th class="text-end">Delete</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($currentHiddenObjects as $i => $obj): ?>
+                                        <tr>
+                                            <td><?= $i + 1 ?></td>
+                                            <td>
+                                                <img src="<?= $obj->media->url ?>" alt="Object" width="24" height="24" class="rounded me-2" style="object-fit: cover;">
+                                            </td>
+                                            <td>
+                                                <?= htmlspecialchars($obj->item->name) ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($obj->found): ?>
+                                                    <span class="badge bg-success">✔</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-secondary">✘</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="submitTreasureHuntDeleteObject('<?= $obj->ctime; ?>', <?= $obj->crand; ?>)">
+                                                    <i class="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="text-muted small text-center">No hidden objects on this page yet.</div>
+                    <?php endif; ?>
+
+                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn bg-ranked-1" onclick="submitTreasureHuntHideObject();" >Hide Object</button>
+            </div>
         </div>
-      </div>
-      <div class="modal-body">
-        <div class="progress" id="loadingModalProgress" role="progressbar" aria-label="Animated striped example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
-            <div  id="loadingModalProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 75%"></div>
-        </div>
-      </div> 
-      <div class="modal-footer">
-        Please Wait...
-      </div>
     </div>
-  </div>
 </div>
+<script>
+    function submitTreasureHuntDeleteObject(ctime, crand) {
+        
+
+        TreasureHuntDeleteObject(ctime, crand, function(success, message) {
+            console.log(success);
+            console.log(message);
+
+            if (success) {
+                
+                window.location.href = window.location.pathname;
+            }
+        });
+    }
+    function submitTreasureHuntHideObject() {
+        const huntLocator = document.getElementById("huntSelect").value;
+        const itemId = document.getElementById("objectContents").value;
+        const mediaId = document.getElementById("treasure-object-image-id").value;
+        const oneTimeOnly = document.getElementById("oneTimeFind").checked;
+        const pageUrl = "<?= $pageVisitId; ?>";
+        
+        const xPercent = (Math.random() * (80 - 20) + 20).toFixed(2);
+        const yPercent = (Math.random() * (80 - 20) + 20).toFixed(2);
+
+
+        TreasureHuntHideObject(huntLocator, itemId, mediaId, oneTimeOnly, pageUrl, xPercent, yPercent, function(success, message) {
+            console.log(success);
+            console.log(message);
+
+            if (success) {
+                
+                window.location.href = window.location.pathname;
+            }
+        });
+    }
+
+    
+</script>
+<?php } ?>
 
 
 
@@ -635,9 +770,9 @@ $mediaDirs = $mediaDirsResp->data;
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/town-square.php"><i class="nav-icon fa-regular fa-address-card"></i> Town Square <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
-            <li class="nav-item">
+            <!--<li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
-            </li>
+            </li>-->
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
@@ -646,12 +781,6 @@ $mediaDirs = $mediaDirsResp->data;
             </li>
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/business-plan.php"><i class="nav-icon fa-regular fa-file-lines"></i> Business Plan <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/project-roadmaps.php"><i class="nav-icon fa-solid fa-road"></i> Project Roadmaps <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/castles.php"><i class="nav-icon fa-brands fa-fort-awesome"></i> Castles <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/analytics.php"><i class="nav-icon fa-solid fa-chart-line"></i> Analytics <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
@@ -773,7 +902,7 @@ $mediaDirs = $mediaDirsResp->data;
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/town-square.php"><i class="nav-icon fa-regular fa-address-card"></i> Town Square</a></li>
-                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges</a></li>
+                        <!--<li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges</a></li>-->
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs</a></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities</a></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/guild-halls.php"><i class="nav-icon fa-solid fa-landmark"></i> Guild Halls</a></li>
@@ -793,12 +922,6 @@ $mediaDirs = $mediaDirsResp->data;
                     <ul class="dropdown-menu">
                         <li>
                             <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/business-plan.php"><i class="nav-icon fa-regular fa-file-lines"></i> Business Plan</a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/project-roadmaps.php"><i class="nav-icon fa-solid fa-road"></i> Project Roadmaps</a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/castles.php"><i class="nav-icon fa-brands fa-fort-awesome"></i> Castles</a>
                         </li>
                         <li>
                             <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/analytics.php"><i class="nav-icon fa-solid fa-chart-line"></i> Analytics</a>
@@ -887,6 +1010,17 @@ $mediaDirs = $mediaDirsResp->data;
                             <a class="dropdown-item" href="#" onclick="OpenSelectAccountModal(null,'UseDelegateAccess')">
                                 <i class="nav-icon fa-solid fa-eye"></i> Delegate Access
                             </a>
+                        </li>
+                        <?php } ?>
+                        <?php if (Kickback\Services\Session::isSteward()) { ?>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#treasureHuntHideObjectModal">
+                                <i class="nav-icon fa-solid fa-treasure-chest"></i> Hide Treasure
+                            </a>
+
                         </li>
                         <?php } ?>
                         <?php if (Kickback\Services\Session::isDelegatingAccess()) { ?>
