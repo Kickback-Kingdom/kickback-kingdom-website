@@ -131,7 +131,7 @@ class ContentController {
                     break;
                 case 'QUEST-LINE':
 
-                    $questResp = QuestLineController::requestQuestLineResponseByLocator($ids[0]);
+                    $questResp = QuestLineController::queryQuestLineByLocatorAsResponse($ids[0]);
                     if ($questResp->success)
                     {
                         return $questResp->data->canEdit();

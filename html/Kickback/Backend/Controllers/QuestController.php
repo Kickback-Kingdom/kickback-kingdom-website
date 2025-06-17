@@ -163,9 +163,9 @@ class QuestController
     /**
     * @return array<vQuest>
     */
-    public static function requestQuestsByQuestLineId(vRecordId $questLineId, int $page = 1, int $itemsPerPage = 10): array
+    public static function queryQuestsByQuestLineId(vRecordId $questLineId, int $page = 1, int $itemsPerPage = 10): array
     {
-        $resp = self::requestQuestsResponseByQuestLineId($questLineId, $page, $itemsPerPage);
+        $resp = self::queryQuestsByQuestLineIdAsResponse($questLineId, $page, $itemsPerPage);
         if ($resp->success) {
             // @phpstan-ignore-next-line
             return $resp->data;
@@ -174,7 +174,7 @@ class QuestController
         }
     }
 
-    public static function requestQuestsResponseByQuestLineId(vRecordId $questLineId, int $page = 1, int $itemsPerPage = 10): Response
+    public static function queryQuestsByQuestLineIdAsResponse(vRecordId $questLineId, int $page = 1, int $itemsPerPage = 10): Response
     {
         $conn = Database::getConnection();
         $offset = ($page - 1) * $itemsPerPage;
@@ -226,9 +226,9 @@ class QuestController
         return new Response(false, "We couldn't find a quest with that raffle id", null);
     }
 
-    public static function requestQuestByKickbackUpcoming(): vQuest
+    public static function queryQuestByKickbackUpcoming(): vQuest
     {
-        $resp = self::requestQuestResponseByKickbackUpcoming();
+        $resp = self::queryQuestByKickbackUpcomingAsResponse();
         if ($resp->success) {
             // @phpstan-ignore return.type
             return $resp->data;
@@ -237,7 +237,7 @@ class QuestController
         }
     }
 
-    public static function requestQuestResponseByKickbackUpcoming(): Response
+    public static function queryQuestByKickbackUpcomingAsResponse(): Response
     {
         $conn = Database::getConnection();
         $stmt = $conn->prepare("SELECT * FROM v_quest_info WHERE (host_id = 46 or host_id_2 = 46) and finished = 0 and published = 1 order by end_date LIMIT 1");
@@ -259,9 +259,9 @@ class QuestController
     /**
     * @return array<vQuestReward>
     */
-    public static function requestQuestRewardsByQuestId(vRecordId $questId) : array
+    public static function queryQuestRewardsByQuestId(vRecordId $questId) : array
     {
-        $questRewardsResp = QuestController::requestQuestRewardsResponseByQuestId($questId);
+        $questRewardsResp = QuestController::queryQuestRewardsByQuestIdAsResponse($questId);
         if ($questRewardsResp->success) {
             // @phpstan-ignore-next-line
             return $questRewardsResp->data;
@@ -270,7 +270,7 @@ class QuestController
         }
     }
 
-    public static function requestQuestRewardsResponseByQuestId(vRecordId $questId) : Response
+    public static function queryQuestRewardsByQuestIdAsResponse(vRecordId $questId) : Response
     {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_quest_reward_info WHERE quest_id = ?";
@@ -299,9 +299,9 @@ class QuestController
     /**
     * @return array<vQuestApplicant>
     */
-    public static function requestQuestApplicants(vQuest $quest): array
+    public static function queryQuestApplicants(vQuest $quest): array
     {
-        $questApplicantsResponse = self::requestQuestApplicantsResponse($quest);
+        $questApplicantsResponse = self::queryQuestApplicantsAsResponse($quest);
         if (!$questApplicantsResponse->success) {
             throw new \Exception($questApplicantsResponse->message);
         }
@@ -310,7 +310,7 @@ class QuestController
         return $questApplicantsResponse->data;
     }
 
-    public static function requestQuestApplicantsResponse(vQuest $quest): Response
+    public static function queryQuestApplicantsAsResponse(vQuest $quest): Response
     {
         $conn = Database::getConnection();
         //$sql = "SELECT * FROM kickbackdb.v_quest_applicants_account WHERE quest_id = ? ORDER BY seed ASC, exp DESC, prestige DESC";

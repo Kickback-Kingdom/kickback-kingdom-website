@@ -201,7 +201,7 @@ class vQuest extends vRecordId
     {
         if ($this->hasQuestLine())
         {
-            $this->questLine = QuestLineController::requestQuestLineById($this->questLine);
+            $this->questLine = QuestLineController::queryQuestLineById($this->questLine);
             if ($this->questLine->reviewStatus->published) {
                 $this->questLine->populateQuests();
             }
@@ -216,7 +216,7 @@ class vQuest extends vRecordId
     }
 
     public function populateRewards() : void {
-        $questRewards = QuestController::requestQuestRewardsByQuestId($this);
+        $questRewards = QuestController::queryQuestRewardsByQuestId($this);
         $this->rewards = [];
         foreach ($questRewards as $questReward) {
             $this->rewards[$questReward->category][] = $questReward;
@@ -263,8 +263,8 @@ class vQuest extends vRecordId
     /**
     * @return array<vQuestApplicant>
     */
-    public function requestQuestApplicants() : array {
-        return QuestController::requestQuestApplicants($this);
+    public function queryQuestApplicants() : array {
+        return QuestController::queryQuestApplicants($this);
     }
 
     public function populateEverything() : void {

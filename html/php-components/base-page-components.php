@@ -7,7 +7,7 @@ use Kickback\Backend\Controllers\TreasureHuntController;
 use Kickback\Backend\Models\NotificationType;
 use Kickback\Common\Version;
 
-$mediaDirs = MediaController::requestMediaDirectories();
+$mediaDirs = MediaController::queryMediaDirectories();
 ?>
 
 <!--CONFETTI-->
@@ -572,7 +572,7 @@ $mediaDirs = MediaController::requestMediaDirectories();
 
 <?php if (Kickback\Services\Session::isEventOrganizer()) { 
     
-    $currentAndUpComingTreasureHunts = TreasureHuntController::requestCurrentEventsAndUpcoming();
+    $currentAndUpComingTreasureHunts = TreasureHuntController::queryCurrentEventsAndUpcoming();
     ?>
 <!--Treasure hunt hide object modal-->
 <div class="modal fade" id="treasureHuntHideObjectModal" tabindex="-1" aria-labelledby="treasureHuntHideObjectModalLabel" aria-hidden="true">

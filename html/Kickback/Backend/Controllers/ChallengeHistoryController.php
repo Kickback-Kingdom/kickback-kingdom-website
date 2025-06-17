@@ -104,9 +104,9 @@ class ChallengeHistoryController
     /**
     * @return array<string,array<vAccount>>
     */
-    public static function requestMatchPlayersGroupedByTeamName(vChallengeHistory $challengeHistory) : array
+    public static function queryMatchPlayersGroupedByTeamName(vChallengeHistory $challengeHistory) : array
     {
-        $resp = self::requestMatchPlayersGroupedByTeamNameResponse($challengeHistory);
+        $resp = self::queryMatchPlayersGroupedByTeamNameAsResponse($challengeHistory);
         if ($resp->success) {
             // @phpstan-ignore-next-line
             return $resp->data;
@@ -115,7 +115,7 @@ class ChallengeHistoryController
         }
     }
 
-    public static function requestMatchPlayersGroupedByTeamNameResponse(vChallengeHistory $challengeHistory) : Response
+    public static function queryMatchPlayersGroupedByTeamNameAsResponse(vChallengeHistory $challengeHistory) : Response
     {
         $conn = Database::getConnection();
         $sql = 'SELECT a.*, r.elo_change, r.team_name, r.character, r.random_character, r.game_match_id, r.game_id FROM `game_record` r
@@ -162,7 +162,7 @@ class ChallengeHistoryController
         $challengeHistory->dateTime = new vDateTime((string)$row["match_date"]);
         if ($populatePlayers)
         {
-            $challengeHistory->teams = self::requestMatchPlayersGroupedByTeamName($challengeHistory);
+            $challengeHistory->teams = self::queryMatchPlayersGroupedByTeamName($challengeHistory);
         }
 
         return $challengeHistory;

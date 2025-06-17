@@ -171,7 +171,7 @@ class TreasureHuntController
         $eventName = "New Treasure Hunt Event";
         $eventLocator = "new-treasure-hunt-" . Session::getCurrentAccount()->crand;
 
-        if (!self::requestEventByLocatorInto($eventLocator,$event))
+        if (!self::queryEventByLocatorInto($eventLocator,$event))
         {
             // Event didn't exist; make a new one
             $insertResp = self::createTreasureHuntEvent(
@@ -187,7 +187,7 @@ class TreasureHuntController
         if (!$event->hasPageContent()) {
             $newContentId = ContentController::insertNewContent();
             self::updateEventContent($event, new vRecordId('', $newContentId));
-            self::requestEventByLocatorInto($eventLocator,$event);
+            self::queryEventByLocatorInto($eventLocator,$event);
         }
 
         return new Response(true, "New Treasure Hunt event created.", $event);
@@ -196,9 +196,9 @@ class TreasureHuntController
     /**
     * @phpstan-assert-if-true vTreasureHuntEvent $event
     */
-    public static function requestEventByLocatorInto(string $locator, ?vTreasureHuntEvent &$event): bool
+    public static function queryEventByLocatorInto(string $locator, ?vTreasureHuntEvent &$event): bool
     {
-        $resp = self::requestEventResponseByLocator($locator);
+        $resp = self::queryEventByLocatorAsResponse($locator);
         if ( $resp->success ) {
             $event = $resp->data;
             return true;
@@ -211,7 +211,7 @@ class TreasureHuntController
     /**
     * Get a Treasure Hunt Event by its locator.
     */
-    public static function requestEventResponseByLocator(string $locator): Response
+    public static function queryEventByLocatorAsResponse(string $locator): Response
     {
         $conn = Database::getConnection();
 
@@ -488,9 +488,9 @@ class TreasureHuntController
     /**
     * @return array<vTreasureHuntEvent>
     */
-    public static function requestCurrentEventsAndUpcoming(): array
+    public static function queryCurrentEventsAndUpcoming(): array
     {
-        $resp = self::requestCurrentEventsAndUpcomingResponse();
+        $resp = self::queryCurrentEventsAndUpcomingAsResponse();
         if ($resp->success) {
             // @phpstan-ignore return.type
             return $resp->data;
@@ -499,7 +499,7 @@ class TreasureHuntController
         }
     }
 
-    public static function requestCurrentEventsAndUpcomingResponse(): Response
+    public static function queryCurrentEventsAndUpcomingAsResponse(): Response
     {
         $conn = Database::getConnection();
         
@@ -625,7 +625,7 @@ class TreasureHuntController
             self::updateEventContent($event, new vRecordId('', $newContentId));
 
             // Re-fetch event to get updated data
-            $eventResp = self::requestEventResponseByLocator($event->locator);
+            $eventResp = self::queryEventByLocatorAsResponse($event->locator);
             if (!$eventResp->success) {
                 return new Response(false, "Failed to fetch newly updated event after adding content.", $event);
             }

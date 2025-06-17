@@ -75,7 +75,7 @@ class AdCarousel
 
         try
         {
-            $treasureHunts = TreasureHuntController::requestCurrentEventsAndUpcoming();
+            $treasureHunts = TreasureHuntController::queryCurrentEventsAndUpcoming();
             foreach ($treasureHunts as $treasureHunt)
             {
                 if ( is_null($treasureHunt->banner)
@@ -101,7 +101,7 @@ class AdCarousel
 
         try
         {
-            $kickbackQuest = QuestController::requestQuestByKickbackUpcoming();
+            $kickbackQuest = QuestController::queryQuestByKickbackUpcoming();
             if (!is_null($kickbackQuest->banner)
             &&  !is_null($kickbackQuest->bannerMobile) )
             {

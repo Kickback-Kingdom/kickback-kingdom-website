@@ -219,7 +219,7 @@ class Session {
         // @phpstan-ignore assign.propertyType
         $info->chests = $chestsResp->data;
 
-        $info->notifications = NotificationController::requestNotificationsByAccount($account);
+        $info->notifications = NotificationController::queryNotificationsByAccount($account);
 
         $chestsJSON = json_encode($info->chests);
         $notisJSON  = json_encode($info->notifications);

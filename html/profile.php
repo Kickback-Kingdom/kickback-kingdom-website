@@ -89,7 +89,7 @@ $check_prestige_token_use();
 $badgesResp = LootController::getBadgesByAccount($profile);
 $badges = $badgesResp->data;
 
-$prestigeResp = PrestigeController::requestPrestigeReviewsByAccountToResponse($profile);
+$prestigeResp = PrestigeController::queryPrestigeReviewsByAccountAsResponse($profile);
 
 if (!PrestigeController::convertPrestigeReviewsResponseInto($prestigeResp, $prestigeReviews))
 {

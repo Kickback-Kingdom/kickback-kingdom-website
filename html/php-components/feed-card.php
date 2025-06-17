@@ -318,7 +318,7 @@ $feedCardDateDetailed = date_format($feedCardDate,"M j, Y H:i:s");
                     if ($feedCardHasRewards)
                     {
 
-                    $questRewards = QuestController::requestQuestRewardsByQuestId($feedCard["Id"]);
+                    $questRewards = QuestController::queryQuestRewardsByQuestId($feedCard["Id"]);
                     $displayedItemIds = [];
 
                     for ($j=0; $j < count($questRewards); $j++) { 

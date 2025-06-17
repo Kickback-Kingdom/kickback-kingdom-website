@@ -15,9 +15,9 @@ use Kickback\Services\Session;
 
 class QuestLineController {
     
-    public static function requestQuestLineById(vRecordId $questLineId) : vQuestLine
+    public static function queryQuestLineById(vRecordId $questLineId) : vQuestLine
     {
-        $resp = self::requestQuestLineResponseById($questLineId);
+        $resp = self::queryQuestLineByIdAsResponse($questLineId);
         if ($resp->success) {
             // @phpstan-ignore return.type
             return $resp->data;
@@ -26,7 +26,7 @@ class QuestLineController {
         }
     }
 
-    public static function requestQuestLineResponseById(vRecordId $questLineId) : Response
+    public static function queryQuestLineByIdAsResponse(vRecordId $questLineId) : Response
     {
         $conn = Database::getConnection();
         $stmt = $conn->prepare("SELECT * FROM v_quest_line_info WHERE Id = ?");
@@ -47,9 +47,9 @@ class QuestLineController {
         }
     }
 
-    public static function requestQuestLineByLocator(string $locator) : vQuestLine
+    public static function queryQuestLineByLocator(string $locator) : vQuestLine
     {
-        $resp = self::requestQuestLineResponseByLocator($locator);
+        $resp = self::queryQuestLineByLocatorAsResponse($locator);
         if ($resp->success) {
             // @phpstan-ignore-next-line
             return $resp->data;
@@ -58,7 +58,7 @@ class QuestLineController {
         }
     }
 
-    public static function requestQuestLineResponseByLocator(string $locator) : Response
+    public static function queryQuestLineByLocatorAsResponse(string $locator) : Response
     {
         $conn = Database::getConnection();
         $stmt = $conn->prepare("SELECT * FROM v_quest_line_info WHERE locator = ?");
@@ -149,7 +149,7 @@ class QuestLineController {
         $questLineLocator = "new-quest-line-" . Session::getCurrentAccount()->crand;
 
         // Check if the quest line already exists by locator
-        $questLineResp = self::requestQuestLineResponseByLocator($questLineLocator);
+        $questLineResp = self::queryQuestLineByLocatorAsResponse($questLineLocator);
         if (!$questLineResp->success) {
             // Prepare the insert statement
             $stmt = $conn->prepare("INSERT INTO quest_line (name, locator, created_by_id, `desc`) VALUES (?, ?, ?, '')");
@@ -175,7 +175,7 @@ class QuestLineController {
             }
 
             // Fetch the newly inserted quest line
-            $questLineResp = self::requestQuestLineResponseByLocator($questLineLocator);
+            $questLineResp = self::queryQuestLineByLocatorAsResponse($questLineLocator);
             if (!$questLineResp->success) {
                 return new Response(false, "Failed to find newly inserted quest by locator.", $questLineLocator);
             }
@@ -187,7 +187,7 @@ class QuestLineController {
             self::updateQuestLineContent($questLineResp->data, $newContentId);
 
             // Re-fetch the quest line after inserting the content
-            $questLineResp = self::requestQuestLineResponseByLocator($questLineLocator);
+            $questLineResp = self::queryQuestLineByLocatorAsResponse($questLineLocator);
             if (!$questLineResp->success) {
                 return new Response(false, "Failed to find newly inserted quest by locator after inserting content record.", $questLineLocator);
             }
@@ -204,7 +204,7 @@ class QuestLineController {
         $conn = Database::getConnection();
 
         // Fetch the quest line by ID
-        $questResp = self::requestQuestLineResponseById($questId);
+        $questResp = self::queryQuestLineByIdAsResponse($questId);
         if (!$questResp->success) {
             return new Response(false, "Error updating quest. Could not find quest by Id.", null);
         }
@@ -321,7 +321,7 @@ class QuestLineController {
         $questLineId = $data["quest-line-id"];
 
         // Fetch the quest line details to check its existence and editability
-        $questLineResp = self::requestQuestLineResponseById(new vRecordId('', $questLineId));
+        $questLineResp = self::queryQuestLineByIdAsResponse(new vRecordId('', $questLineId));
         if (!$questLineResp->success) {
             return new Response(false, "Quest line submission failed. Quest line not found.", null);
         }
@@ -366,7 +366,7 @@ class QuestLineController {
         $questLineSummary = $data["edit-quest-line-options-summary"];
 
         // Fetch the quest line by ID
-        $questLineResp = self::requestQuestLineResponseById(new vRecordId('', $questLineId));
+        $questLineResp = self::queryQuestLineByIdAsResponse(new vRecordId('', $questLineId));
         if (!$questLineResp->success) {
             return new Response(false, "Error updating quest line. Could not find quest line by Id.", null);
         }

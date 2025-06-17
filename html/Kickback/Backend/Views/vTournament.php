@@ -42,7 +42,7 @@ class vTournament extends vRecordId
      */
     public function populate(): void
     {
-        $tournamentResults = TournamentController::requestTournamentResults($this);
+        $tournamentResults = TournamentController::queryTournamentResults($this);
 
         $this->competitors_ = [];
 
@@ -117,7 +117,7 @@ class vTournament extends vRecordId
     public function populateBrackets() : void
     {
         $brackets = [];
-        $this->bracketInfoArray_ = TournamentController::requestTournamentBracketInfos($this);
+        $this->bracketInfoArray_ = TournamentController::queryTournamentBracketInfos($this);
 
         foreach ($this->bracketInfoArray_ as $bracketInfo)
         {

@@ -21,9 +21,9 @@ class NotificationController
     /**
     * @return array<vNotification>
     */
-    public static function requestNotificationsByAccount(vRecordId $accountId) : array
+    public static function queryNotificationsByAccount(vRecordId $accountId) : array
     {
-        $resp = self::requestNotificationsResponseByAccount($accountId);
+        $resp = self::queryNotificationsByAccountAsResponse($accountId);
         if ($resp->success) {
             // @phpstan-ignore-next-line
             return $resp->data;
@@ -32,7 +32,7 @@ class NotificationController
         }
     }
 
-    public static function requestNotificationsResponseByAccount(vRecordId $accountId) : Response
+    public static function queryNotificationsByAccountAsResponse(vRecordId $accountId) : Response
     {
         $conn = Database::getConnection();
         $stmt = mysqli_prepare($conn, "SELECT * FROM v_notifications WHERE account_id = ?");

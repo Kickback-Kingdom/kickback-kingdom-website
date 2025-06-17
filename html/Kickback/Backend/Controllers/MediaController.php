@@ -184,7 +184,7 @@ class MediaController {
             return true;
         }
 
-        if(!self::requestMediaDirectoriesInto($validDirs)) {
+        if(!self::queryMediaDirectoriesInto($validDirs)) {
             return false;
         }
 
@@ -196,9 +196,9 @@ class MediaController {
     *
     * @phpstan-assert-if-true array $dirs
     */
-    public static function requestMediaDirectoriesInto(?array &$dirs) : bool
+    public static function queryMediaDirectoriesInto(?array &$dirs) : bool
     {
-        $resp = self::requestMediaDirectoriesResponse();
+        $resp = self::queryMediaDirectoriesAsResponse();
         if ( $resp->success ) {
             $dirs = $resp->data;
             return true;
@@ -211,9 +211,9 @@ class MediaController {
     /**
     * @return array<string>
     */
-    public static function requestMediaDirectories() : array
+    public static function queryMediaDirectories() : array
     {
-        $resp = self::requestMediaDirectoriesResponse();
+        $resp = self::queryMediaDirectoriesAsResponse();
         if ($resp->success) {
             // @phpstan-ignore return.type
             return $resp->data;
@@ -222,7 +222,7 @@ class MediaController {
         }
     }
 
-    public static function requestMediaDirectoriesResponse() : Response
+    public static function queryMediaDirectoriesAsResponse() : Response
     {
         // Use global connection
         $conn = Database::getConnection();

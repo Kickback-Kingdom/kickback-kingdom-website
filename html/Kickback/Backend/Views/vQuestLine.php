@@ -41,7 +41,7 @@ class vQuestLine extends vRecordId
     }
     
     public function populateQuests() : void {
-        $this->quests = QuestController::requestQuestsByQuestLineId($this);
+        $this->quests = QuestController::queryQuestsByQuestLineId($this);
     }
 
     public function populateContent() : void {

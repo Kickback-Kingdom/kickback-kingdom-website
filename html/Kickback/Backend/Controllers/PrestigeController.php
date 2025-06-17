@@ -31,22 +31,20 @@ class PrestigeController
         }
     }
 
-    public static function requestPrestigeReviewsByAccountToResponse(vRecordId $recordId) : Response
+    public static function queryPrestigeReviewsByAccountAsResponse(vRecordId $recordId) : Response
     {
         $conn = Database::getConnection();
-        
+
         // Debugging: Log the value of $recordId->crand
         error_log("Account ID to: " . $recordId->crand);
-    
+
         $stmt = mysqli_prepare($conn, "SELECT * FROM v_prestige_info WHERE account_id_to = ?");
         if ($stmt === false) {
             return new Response(false, "Failed to prepare the statement: " . mysqli_error($conn), []);
         }
-    
-        // Ensure $recordId->crand is an integer
-        $accountIdTo = $recordId->crand;
-        mysqli_stmt_bind_param($stmt, "i", $accountIdTo);
-    
+
+        mysqli_stmt_bind_param($stmt, "i", $recordId->crand);
+
         if (!mysqli_stmt_execute($stmt)) {
             return new Response(false, "Failed to execute the statement: " . mysqli_stmt_error($stmt), []);
         }

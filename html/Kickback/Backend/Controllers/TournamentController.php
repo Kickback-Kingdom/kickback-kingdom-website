@@ -24,9 +24,9 @@ class TournamentController
     /**
     * @return array<vBracketInfo>
     */
-    public static function requestTournamentBracketInfos(vRecordId $tournament_id) : array
+    public static function queryTournamentBracketInfos(vRecordId $tournament_id) : array
     {
-        $tournamentBracketInfoResp = self::requestTournamentBracketInfosResponse($tournament_id);
+        $tournamentBracketInfoResp = self::queryTournamentBracketInfosAsResponse($tournament_id);
         if (!$tournamentBracketInfoResp->success) {
             throw new \Exception($tournamentBracketInfoResp->message);
         }
@@ -35,7 +35,7 @@ class TournamentController
         return $tournamentBracketInfoResp->data;
     }
 
-    public static function requestTournamentBracketInfosResponse(vRecordId $tournament_id) : Response
+    public static function queryTournamentBracketInfosAsResponse(vRecordId $tournament_id) : Response
     {
         $conn = Database::getConnection();
         $stmt = mysqli_prepare($conn, "SELECT * FROM v_tournament_bracket_info WHERE tournament_id = ?");
@@ -57,9 +57,9 @@ class TournamentController
     /**
     * @return array<vTournamentResult>
     */
-    public static function requestTournamentResults(vRecordId $tournament_id) : array
+    public static function queryTournamentResults(vRecordId $tournament_id) : array
     {
-        $tournamentResultResp = self::requestTournamentResultsResponse($tournament_id);
+        $tournamentResultResp = self::queryTournamentResultsAsResponse($tournament_id);
         if (!$tournamentResultResp->success) {
             throw new \Exception($tournamentResultResp->message);
         }
@@ -68,7 +68,7 @@ class TournamentController
         return $tournamentResultResp->data;
     }
 
-    public static function requestTournamentResultsResponse(vRecordId $tournament_id) : Response
+    public static function queryTournamentResultsAsResponse(vRecordId $tournament_id) : Response
     {
         $conn = Database::getConnection();
 
