@@ -7,8 +7,7 @@ use Kickback\Backend\Controllers\TreasureHuntController;
 use Kickback\Backend\Models\NotificationType;
 use Kickback\Common\Version;
 
-$mediaDirsResp = MediaController::getMediaDirectories();
-$mediaDirs = $mediaDirsResp->data;
+$mediaDirs = MediaController::queryMediaDirectories();
 ?>
 
 <!--CONFETTI-->
@@ -200,7 +199,7 @@ $mediaDirs = $mediaDirsResp->data;
                                         <?php
 
                                             foreach($mediaDirs as $dir) {
-                                                echo "<option value='{$dir["Directory"]}'>{$dir["Directory"]}</option>";
+                                                echo "<option value='{$dir}'>{$dir}</option>";
                                             }
                                         ?>
                                     </select>
@@ -573,7 +572,7 @@ $mediaDirs = $mediaDirsResp->data;
 
 <?php if (Kickback\Services\Session::isEventOrganizer()) { 
     
-    $currentAndUpComingTreasureHunts = TreasureHuntController::getCurrentEventsAndUpcoming()->data;
+    $currentAndUpComingTreasureHunts = TreasureHuntController::queryCurrentEventsAndUpcoming();
     ?>
 <!--Treasure hunt hide object modal-->
 <div class="modal fade" id="treasureHuntHideObjectModal" tabindex="-1" aria-labelledby="treasureHuntHideObjectModalLabel" aria-hidden="true">
@@ -974,7 +973,7 @@ $mediaDirs = $mediaDirsResp->data;
                             if (Kickback\Services\Session::isLoggedIn())
                             {
                         ?>
-                        <img class="rounded-circle" style="height: 100%;width: auto;" src="<?= Kickback\Services\Session::getCurrentAccount()->getProfilePictureURL(); ?>"/>
+                        <img class="rounded-circle" style="height: 100%;width: auto;" src="<?= Kickback\Services\Session::getCurrentAccount()->profilePictureURL(); ?>"/>
                         <?php
                             }
                             else

@@ -7,6 +7,8 @@ namespace Kickback\Backend\Views;
 class vTournamentBracketRoundMatch
 {
     public int $match;
+
+    /** @var array<vTournamentBracketRoundMatchSet> */
     public array $sets;
 
     

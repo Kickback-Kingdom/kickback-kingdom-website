@@ -19,15 +19,15 @@ class vFeedCard
 {
     public string $type;
     public string $typeText;
-    public vMedia $icon;
+    public ?vMedia $icon;
     public ?vQuest $quest = null;
     public ?vQuote $quote = null;
     public ?vQuestLine $questLine = null;
     public ?vBlog $blog = null;
     public ?vBlogPost $blogPost = null;
     public ?vActivity $activity = null;
-    public ?string $url = null;
-    public string $title;
+    private ?string $url_ = null;
+    private string $title_;
     public ?vDateTime $dateTime = null;
     public ?vReviewStatus $reviewStatus = null;
     public string $description;
@@ -51,12 +51,16 @@ class vFeedCard
     public string $cssClassTextColSize = "col col-12 col-md-8 col-lg-9";
     public string $cssClassRight = "";
 
-    public function getURL()
+    public function url(?string ...$newValue) : ?string
     {
-        return $this->url;
+        if ( count($newValue) === 1 ) {
+            $this->url_ = $newValue[0];
+        }
+        return $this->url_;
     }
 
-    public function getAccountLinks() : string {
+    public function getAccountLinks() : string
+    {
         $html = '';
     
         $accounts = $this->getAccounts();
@@ -71,25 +75,36 @@ class vFeedCard
     
         return $html;
     }
-    
-    public function isDraft() : bool {
+
+    /**
+    * @phpstan-assert-if-true !null $this->reviewStatus
+    */
+    public function isDraft() : bool
+    {
         if ($this->reviewStatus == null)
             return false;
 
         return $this->reviewStatus->isDraft();
     }
 
-    public function getTitle() : string {
+    public function title(string ...$newValue) : string
+    {
+        if ( count($newValue) === 1 ) {
+            $this->title_ = $newValue[0];
+        }
+
         if ($this->isDraft())
         {
-            return "[DRAFT] ".$this->title." [DRAFT]";
+            return "[DRAFT] ".$this->title_." [DRAFT]";
         }
         else{
-            return $this->title;
+            return $this->title_;
         }
     }
 
-    public function getAccounts() : array {
+    /** @return array<vAccount> */
+    public function getAccounts() : array
+    {
         $accounts = [];
         if ($this->quest != null)
         {
@@ -122,16 +137,20 @@ class vFeedCard
 
         return $accounts;
     }
+
     public function getAccountCount() : int {
-        return count(getAccounts());
+        return count($this->getAccounts());
     }
-    
+
+    /**
+    * @phpstan-assert-if-true !null $this->dateTime
+    */
     public function hasDateTime() : bool {
         return ($this->dateTime != null);
     }
 
     public function useGoldTrim() : bool {
-        return !(($this->hasDateTime() && $this->dateTime->isExpired()) || !$this->hasDateTime());
+        return !(($this->hasDateTime() && $this->dateTime->expired()) || !$this->hasDateTime());
     }
 }
 

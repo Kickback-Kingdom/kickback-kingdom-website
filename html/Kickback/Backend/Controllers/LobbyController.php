@@ -8,10 +8,12 @@ use Kickback\Backend\Models\LobbyMatch;
 use Kickback\Backend\Models\Response;
 use Kickback\Services\Database;
 
+use Kickback\Common\Str;
+
 class LobbyController
 {
 
-    public static function host(Lobby $lobby, $password) : Response
+    public static function host(Lobby $lobby, string $password) : Response
     {
         $insertLobbyResp = Insert($lobby, $password);
 
@@ -30,18 +32,18 @@ class LobbyController
         
     }
 
-    public static function getLobbies() : array {
-        
+    public static function getLobbies() : array
+    {
         $conn = Database::getConnection();
 
         $sql = "SELECT l.ctime, l.crand, ";
     }
 
-    private static function insert(Lobby $lobby, $password) : Response {
-
+    private static function insert(Lobby $lobby, string $password) : Response
+    {
         $conn = Database::getConnection();
 
-        if (!empty($password)) {
+        if (!Str::empty($password)) {
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
         } else {
             $password_hash = null;

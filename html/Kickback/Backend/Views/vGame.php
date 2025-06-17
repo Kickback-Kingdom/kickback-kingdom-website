@@ -23,7 +23,7 @@ class vGame extends vRecordId
         parent::__construct($ctime, $crand);
     }
 
-    public function GetURL()
+    public function url() : string
     {
         return "/g/".$this->locator;
     }

@@ -3,83 +3,14 @@ declare(strict_types=1);
 
 namespace Kickback\Frontend\Components;
 
+use Kickback\Common\Str;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Controllers\TreasureHuntController;
 use Kickback\Backend\Views\vTreasureHuntEvent;
 
-class CarouselAd
-{
-    public string $imageDesktop;
-    public string $imageMobile;
-    public string $title;
-    public string $description;
-    public ?string $link;
-    public ?string $videoEmbed;
-    public ?string $videoMp4;
-    public bool $isActive;
-    public int $interval;
-    public string $cta;
-
-    public function __construct(
-        string $imageDesktop,
-        string $imageMobile,
-        string $title,
-        string $description,
-        ?string $link = null,
-        ?string $videoEmbed = null,
-        ?string $videoMp4 = null,
-        int $interval = 7000,
-        string $cta = "Learn More"
-    ) {
-        $this->imageDesktop = $imageDesktop;
-        $this->imageMobile = $imageMobile;
-        $this->title = $title;
-        $this->description = $description;
-        $this->link = $link;
-        $this->videoEmbed = $videoEmbed;
-        $this->videoMp4 = $videoMp4;
-        $this->isActive = false;
-        $this->interval = $interval;
-        $this->cta = $cta;
-    }
-
-    public function render(): string
-    {
-        $activeClass = $this->isActive ? "active" : "";
-        $content = '';
-
-        if ($this->videoEmbed) {
-            $content .= "<div class='embed-responsive'>
-                            <iframe src='{$this->videoEmbed}' allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe>
-                         </div>";
-        } elseif ($this->videoMp4) {
-            $content .= "<div class='embed-responsive'>
-                            <video autoplay muted loop playsinline style='width: 100%;'>
-                                <source src='{$this->videoMp4}' type='video/mp4'>
-                                Your browser does not support the video tag.
-                            </video>
-                         </div>";
-        } else {
-            $content .= "<img src='{$this->imageDesktop}' class='d-none d-md-block w-100' style='aspect-ratio: 96/25;'>
-                         <img src='{$this->imageMobile}' class='d-block d-md-none w-100'  style='aspect-ratio: 54/25;'>";
-        }
-
-        $caption = "<div class='carousel-caption d-block d-md-block text-shadow'>
-                        <h5>{$this->title}</h5>
-                        <p>{$this->description}</p>";
-
-        if ($this->link) {
-            $caption .= "<a href='{$this->link}' class='bg-ranked-1 btn btn-sm' style='text-shadow: none;'>{$this->cta}</a>";
-        }
-
-        $caption .= "</div>";
-
-        return "<div class='carousel-item {$activeClass}' data-bs-interval='{$this->interval}'>{$content}{$caption}</div>";
-    }
-}
-
 class AdCarousel
 {
+    /** @var array<CarouselAd> */
     private array $ads = [];
 
     public function __construct()
@@ -142,16 +73,22 @@ class AdCarousel
             array_push($this->ads, $pageAds[$currentPage]);
         }
 
-        $treasureHuntResp = TreasureHuntController::getCurrentEventsAndUpcoming();
-        if ($treasureHuntResp->success) {
-            $treasureHunts = $treasureHuntResp->data; // Assuming this is an array
-            foreach ($treasureHunts as $treasureHunt) {
+        try
+        {
+            $treasureHunts = TreasureHuntController::queryCurrentEventsAndUpcoming();
+            foreach ($treasureHunts as $treasureHunt)
+            {
+                if ( is_null($treasureHunt->banner)
+                ||   is_null($treasureHunt->bannerMobile) ) {
+                    continue;
+                }
+
                 array_push($this->ads, new CarouselAd(
                     $treasureHunt->banner->getFullPath(),
                     $treasureHunt->bannerMobile->getFullPath(),
                     $treasureHunt->name,
                     "",
-                    $treasureHunt->getURL(),
+                    $treasureHunt->url(),
                     null,
                     null,
                     7000,
@@ -159,23 +96,29 @@ class AdCarousel
                 ));
             }
         }
+        catch (\Exception $e) {;}
 
 
-        $kickbackQuestResp = QuestController::getQuestByKickbackUpcoming();
-        if ($kickbackQuestResp->success) {
-            array_push($this->ads, new CarouselAd(
-                $kickbackQuestResp->data->banner->getFullPath(),
-                $kickbackQuestResp->data->bannerMobile->getFullPath(),
-                $kickbackQuestResp->data->title,
-                "",
-                $kickbackQuestResp->data->getURL(),
-                null,
-                null,
-                7000,
-                "View Quest"
-            ));
+        try
+        {
+            $kickbackQuest = QuestController::queryQuestByKickbackUpcoming();
+            if (!is_null($kickbackQuest->banner)
+            &&  !is_null($kickbackQuest->bannerMobile) )
+            {
+                array_push($this->ads, new CarouselAd(
+                    $kickbackQuest->banner->getFullPath(),
+                    $kickbackQuest->bannerMobile->getFullPath(),
+                    $kickbackQuest->title,
+                    "",
+                    $kickbackQuest->url(),
+                    null,
+                    null,
+                    7000,
+                    "View Quest"
+                ));
+            }
         }
-
+        catch (\Exception $e) {;}
 
         // Push missing ads into the array dynamically
         array_push($this->ads, new CarouselAd(
@@ -208,8 +151,8 @@ class AdCarousel
                 30000)*/
         );
 
-        if (empty($this->ads)) {
-
+        // @phpstan-ignore smaller.alwaysTrue
+        if (0 < count($this->ads)) {
             $this->addDefaultAd();
         }
         $this->ads[0]->isActive = true;
