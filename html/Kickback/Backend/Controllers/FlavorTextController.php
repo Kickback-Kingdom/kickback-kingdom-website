@@ -1039,7 +1039,7 @@ class FlavorTextController
         return $flavorTexts[$index];
     }
 
-    public static function writOfPassageProclamation() : string
+    public static function writOfPassageProclamation(?string $writOfPassageOwnerUsername = null) : string
     {
         // Compose a concise medieval-style proclamation
         $proclamation = "I pledge my honor to sponsor a new entrant into our great kingdom. My word shall be their bond, my honor their shield.";

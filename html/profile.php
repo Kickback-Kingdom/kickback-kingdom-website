@@ -16,14 +16,18 @@ use Kickback\Backend\Models\ItemEquipmentSlot;
 use Kickback\Common\Version;
 
 if (isset($_GET['id'])) {
-    $profile = AccountController::getAccountById($_GET['id']);
+    $profileResp = AccountController::getAccountById($_GET['id']);
 }
 
 if (isset($_GET['u']) && !isset($profile)) {
-    $profile = AccountController::getAccountByUsername($_GET['u']);
+    $profileResp = AccountController::getAccountByUsername($_GET['u']);
 }
 
-$profile = $profile->data;
+if (isset($profileResp)) {
+    $profile = $profileResp->data;
+} else {
+    $profile = null;
+}
 
 $thisProfile = $profile;
 
@@ -45,7 +49,16 @@ $check_prestige_token_use = function()
         return;
     }
 
-    $isMyProfile = ($profile->crand === Kickback\Services\Session::getCurrentAccount()->crand);
+    if (!isset($profile)) {
+        return;
+    }
+
+    $currentAccount = Kickback\Services\Session::getCurrentAccount();
+    if (!isset($currentAccount)) {
+        return;
+    }
+
+    $isMyProfile = ($profile->crand === $currentAccount->crand);
     if ($isMyProfile || !isset($_POST["review-submit"])) {
         return;
     }
