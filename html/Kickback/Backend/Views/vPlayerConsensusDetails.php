@@ -34,24 +34,30 @@ class vPlayerConsensusDetails
     }
 
     /**
-     * Determines if the picked random value has consensus.
-     */
+    * Determines if the picked random value has consensus.
+    *
+    * @phpstan-assert-if-true bool $this->pickedRandom
+    */
     public function pickedRandomHasConsensus(): bool
     {
         return $this->pickedRandom !== null && $this->pickedRandomPercentage > 0;
     }
 
     /**
-     * Determines if the team name has consensus.
-     */
+    * Determines if the team name has consensus.
+    *
+    * @phpstan-assert-if-true string $this->teamName
+    */
     public function teamNameHasConsensus(): bool
     {
         return $this->teamName !== null && $this->teamNamePercentage > 0;
     }
 
     /**
-     * Determines if the character has consensus.
-     */
+    * Determines if the character has consensus.
+    *
+    * @phpstan-assert-if-true string $this->character
+    */
     public function characterHasConsensus(): bool
     {
         return $this->character !== null && $this->characterPercentage > 0;

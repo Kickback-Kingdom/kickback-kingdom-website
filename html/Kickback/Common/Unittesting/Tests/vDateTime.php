@@ -28,7 +28,12 @@ function test(string $name, callable $fn): void {
     }
 }
 
-function assertEqual($a, $b, string $msg = '') {
+function assertEqual(
+    string|int|float|bool  $a,
+    string|int|float|bool  $b,
+    string                 $msg = ''
+) : void
+{
     if ($a !== $b) {
         throw new \Exception("Assertion failed: $a !== $b. $msg");
     }
@@ -139,14 +144,14 @@ test("Clone modify does not mutate original", function () {
     assertEqual($modified->formattedYmd, "2020-01-02");
 });
 
-test("IsExpired returns false for future", function () {
+test("expired() returns false for future", function () {
     $future = (new vDateTime())->addDays(1);
-    assertEqual($future->isExpired(), false);
+    assertEqual($future->expired(), false);
 });
 
-test("IsExpired returns true for past", function () {
+test("expired() returns true for past", function () {
     $past = (new vDateTime())->subDays(1);
-    assertEqual($past->isExpired(), true);
+    assertEqual($past->expired(), true);
 });
 
 test("getDateTimeElement produces HTML", function () {

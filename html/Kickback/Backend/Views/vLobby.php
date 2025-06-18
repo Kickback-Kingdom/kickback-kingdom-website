@@ -40,14 +40,18 @@ class vLobby extends vRecordId
         }
     }
     
-    public function isHost() : bool {
-        if (Session::isLoggedIn())
-        {
-            return (Session::getCurrentAccount()->crand == $this->host->crand);
-        }
-        else{
+    public function isHost() : bool
+    {
+        if (!Session::isLoggedIn()) {
             return false;
         }
+
+        $currentAccount = Session::getCurrentAccount();
+        if (!isset($currentAccount)) {
+            return false;
+        }
+
+        return ($currentAccount->crand == $this->host->crand);
     }
 
     function hostCanStart() : bool {
@@ -108,29 +112,30 @@ class vLobby extends vRecordId
         // Check if the challenge is not ready and the review status is published
         return !$this->challenge->ready && $this->reviewStatus->isPublished();
     }
-    
-    
 
-    public function getLobbyStatus(): array {
+    /**
+    * @return array<string,string>
+    */
+    public function getLobbyStatus(): array
+    {
         if ($this->reviewStatus->published == false) {
             return ["message" => "Please select a game mode and rules...", "class" => "bg-danger text-bg-danger"];
         }
-        if ($this->challenge->getPlayerCount() > 1) {
-            if ($this->challenge->started) {
-                return ["message" => "Ranked Challenge in progress...", "class" => "bg-warning text-bg-warning"];
-            } else {
-                if ($this->challenge->allPlayersReady) {
-                    return ["message" => "Waiting for host to start the challenge...", "class" => "bg-info text-bg-info"];
-                } else {
-                    if ($this->challenge->ready) {
-                        return ["message" => "Waiting for other challengers to ready up... (".$this->challenge->playersReady."/".$this->challenge->playerCount.")", "class" => "bg-secondary text-bg-secondary"];
-                    } else {
-                        return ["message" => "Waiting for you to ready up...", "class" => "bg-primary text-bg-primary"];
-                    }
-                }
-            }
-        } else {
+
+        if ($this->challenge->getPlayerCount() <= 1) {
             return ["message" => "Waiting for challengers...", "class" => "bg-success text-bg-success"];
+        }
+
+        if ($this->challenge->started) {
+            return ["message" => "Ranked Challenge in progress...", "class" => "bg-warning text-bg-warning"];
+        } else
+        if ($this->challenge->allPlayersReady) {
+            return ["message" => "Waiting for host to start the challenge...", "class" => "bg-info text-bg-info"];
+        } else
+        if ($this->challenge->ready) {
+            return ["message" => "Waiting for other challengers to ready up... (".$this->challenge->playersReady."/".$this->challenge->playerCount.")", "class" => "bg-secondary text-bg-secondary"];
+        } else {
+            return ["message" => "Waiting for you to ready up...", "class" => "bg-primary text-bg-primary"];
         }
     }
     
