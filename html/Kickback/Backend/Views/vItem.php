@@ -34,6 +34,7 @@ class vItem extends vRecordId
     public ?ItemCategory $containerItemCategory = null;
     public ?ItemCategory $itemCategory = null;
 
+    /** @var array<vLichCard> */
     public array $auxData;
 
     function __construct(string $ctime = '', int $crand = -1)

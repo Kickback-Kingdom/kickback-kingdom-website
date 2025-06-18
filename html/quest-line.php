@@ -14,7 +14,7 @@ if (isset($_GET['id']))
 {
 
     $id = $_GET['id'];
-    $questLineResp = QuestLineController::getQuestLineById($id);
+    $questLineResp = QuestLineController::queryQuestLineByIdAsResponse($id);
 
     /*$showPopUpSuccess = true;
     $PopUpTitle = "Loaded quest line by id";
@@ -24,7 +24,7 @@ if (isset($_GET['id']))
 if (isset($_GET['locator'])){
         
     $name = $_GET['locator'];
-    $questLineResp = QuestLineController::getQuestLineByLocator($name);
+    $questLineResp = QuestLineController::queryQuestLineByLocatorAsResponse($name);
 
     /*$showPopUpSuccess = true;
     $PopUpTitle = "Loaded quest line by locator";
@@ -489,7 +489,7 @@ $thisQuestLine->populateEverything();
                                 {
                                     $_vCanEditContent = $thisQuestLine->canEdit();
                                     $_vContentViewerEditorTitle = "Quest Line Information Manager";
-                                    $_vPageContent = $thisQuestLine->getPageContent();
+                                    $_vPageContent = $thisQuestLine->pageContent();
                                     require("php-components/content-viewer.php");
                                 }
                                 

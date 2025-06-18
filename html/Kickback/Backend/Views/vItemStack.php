@@ -20,6 +20,7 @@ class vItemStack
     public string $nickname;
     public string $description;
 
+    /** @var array<vLoot> */
     public ?array $lootStack = null;
 
     public function GetName() : string {

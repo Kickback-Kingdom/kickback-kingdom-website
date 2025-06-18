@@ -66,7 +66,7 @@ if ($thisLichSet == null) {
                         if ($thisLichSet->hasPageContent()) {
                             $_vCanEditContent = $thisLichSet->canEdit();
                             $_vContentViewerEditorTitle = "L.I.C.H. Set Information Manager";
-                            $_vPageContent = $thisLichSet->getPageContent();
+                            $_vPageContent = $thisLichSet->pageContent();
                             require("php-components/content-viewer.php");
                         }
                         ?>
@@ -84,7 +84,7 @@ if ($thisLichSet == null) {
     <?php 
     if ($thisLichSet->hasPageContent())
     {
-        $_vPageContent = $thisLichSet->getPageContent();
+        $_vPageContent = $thisLichSet->pageContent();
         require("php-components/content-viewer-javascript.php"); 
     }
     ?>

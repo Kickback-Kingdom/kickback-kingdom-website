@@ -4,7 +4,7 @@
     <?php
 
         foreach($mediaDirs as $dir) {
-            echo "<option value='{$dir["Directory"]}'>{$dir["Directory"]}</option>";
+            echo "<option value='{$dir}'>{$dir}</option>";
         }
     ?>
   </select>  

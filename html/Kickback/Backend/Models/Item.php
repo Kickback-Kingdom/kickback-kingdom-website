@@ -30,9 +30,9 @@ class Item extends RecordId
     public ?ItemCategory $containerItemCategory = null;
     public ?ItemCategory $itemCategory = null;
 
-    public function __construct(string $ctime = '', int $crand = -1)
+    public function __construct()
     {
-        parent::__construct($ctime, $crand);
+        parent::__construct();
 
         $this->type = ItemType::Standard;
         $this->rarity = ItemRarity::Common;

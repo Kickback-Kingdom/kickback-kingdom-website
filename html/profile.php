@@ -15,11 +15,13 @@ use Kickback\Backend\Controllers\ItemController;
 use Kickback\Backend\Models\ItemEquipmentSlot;
 use Kickback\Common\Version;
 
-if (isset($_GET['id']))
-$profile = AccountController::getAccountById($_GET['id']);
+if (isset($_GET['id'])) {
+    $profile = AccountController::getAccountById($_GET['id']);
+}
 
-if (isset($_GET['u']) && !isset($profile))
-$profile = AccountController::getAccountByUsername($_GET['u']);
+if (isset($_GET['u']) && !isset($profile)) {
+    $profile = AccountController::getAccountByUsername($_GET['u']);
+}
 
 $profile = $profile->data;
 
@@ -29,67 +31,74 @@ if (!isset($hasError))
     $hasError = false;
 if (!isset($hasSuccess))
     $hasSuccess = false;
-$isMyProfile = false;
-if (Kickback\Services\Session::isLoggedIn())
-{
-    $isMyProfile = ($profile->crand == Kickback\Services\Session::getCurrentAccount()->crand);
+if (!isset($errorMessage))
+    $errorMessage = '';
+if (!isset($successMessage))
+    $successMessage = '';
 
-    if ($isMyProfile)
+$isMyProfile = false;
+
+$check_prestige_token_use = function()
+    use($profile, &$isMyProfile, &$hasError, &$errorMessage, &$hasSuccess, &$successMessage) : void
+{
+    if (Kickback\Services\Session::isLoggedIn()) {
+        return;
+    }
+
+    $isMyProfile = ($profile->crand === Kickback\Services\Session::getCurrentAccount()->crand);
+    if ($isMyProfile || !isset($_POST["review-submit"])) {
+        return;
+    }
+
+    $desc = $_POST["review-message"];
+    if (!isset($desc)) {
+        $hasError = true;
+        $errorMessage = "Failed to use prestige token because a null review was provided.";
+        return;
+    }
+
+    $rating = $_POST["review-rating"];
+    if ($rating == "-1") {
+        $commend = false;
+    } else
+    if ($rating == "1") {
+        $commend = true;
+    } else {
+        $hasError = true;
+        $errorMessage = "Failed to use prestige token because a null rating was provided.";
+        return;
+    }
+
+    $usePrestigeTokenResp = ItemController::usePrestigeToken(Kickback\Services\Session::getCurrentAccount(),$profile,$commend,$desc);
+    if ($usePrestigeTokenResp->success == false)
     {
-        
+        $hasError = true;
+        $errorMessage = $usePrestigeTokenResp->message;
+        return;
     }
     else
     {
-
-        if (isset($_POST["review-submit"]))
-        {
-            
-            $rating = $_POST["review-rating"];
-            if ($rating == "-1")
-                $commend = false;
-    
-            if ($rating == "1")
-                $commend = true;
-    
-            $usePrestigeTokenResp = ItemController::UsePrestigeToken(Kickback\Services\Session::getCurrentAccount(),$profile,$commend,$_POST["review-message"]);
-            if ($usePrestigeTokenResp->success == false)
-            {
-                $hasError = true;
-                $errorMessage = $usePrestigeTokenResp->message;
-            }
-            else
-            {
-                $hasSuccess = true;
-                $successMessage= $usePrestigeTokenResp->message;
-            }
-        }
+        $hasSuccess = true;
+        $successMessage= $usePrestigeTokenResp->message;
+        return;
     }
-}
+};
 
+$check_prestige_token_use();
 
 $badgesResp = LootController::getBadgesByAccount($profile);
 $badges = $badgesResp->data;
 
-$prestigeResp = PrestigeController::getPrestigeReviewsByAccountTo($profile);
+$prestigeResp = PrestigeController::queryPrestigeReviewsByAccountAsResponse($profile);
 
-if (!$prestigeResp->success)
+if (!PrestigeController::convertPrestigeReviewsResponseInto($prestigeResp, $prestigeReviews))
 {
     $showPopUpError = true;
     $PopUpTitle = "Error!";
     $PopUpMessage = $prestigeResp->message;
 }
 
-$prestigeReviews = $prestigeResp->data;
-
-$prestigeNet = PrestigeController::getAccountPrestigeValue($prestigeReviews);
-
-/*$remainingPrestigeTokensResp = GetPrestigeTokensRemaining($profile->crand);
-$remainingPrestigeTokens = $remainingPrestigeTokensResp->data["PrestigeTokens"];
-
-
-$unusedTicketsResp = GetTotalUnusedRaffleTickets($profile->crand);
-$unusedTickets = $unusedTicketsResp->data;
-*/
+//$prestigeNet = PrestigeController::getAccountPrestigeValue($prestigeReviews);
 
 $accountInventoryResp = AccountController::getAccountInventory($profile);
 $accountInventory = $accountInventoryResp->data;
@@ -113,9 +122,9 @@ foreach ($accountInventory as $accountInventoryItemStack) {
         }
         else
         {
+            // BUG: This variable/array isn't used. Note the lack of an 's'. Typo?
             $itemInfo["useable"] = false;
         }
-        
     }
     array_push($itemInfos, $accountInventoryItemStack->item);
 }
@@ -146,11 +155,11 @@ $activeTabPage = 'active show';
         <!--TOP BANNER-->
         <div class="d-none d-md-block w-100 ratio" style="--bs-aspect-ratio: 26%; margin-top: 56px">
             <img src="/assets/images/kk-1.jpg" class="" />
-            <img class="img-fluid img-thumbnail" src="<?= $profile->getProfilePictureURL(); ?>" style="width: auto;height: 90%;top: 5%;left: 5%;">
+            <img class="img-fluid img-thumbnail" src="<?= $profile->profilePictureURL(); ?>" style="width: auto;height: 90%;top: 5%;left: 5%;">
         </div>
         <div class="d-block d-md-none w-100 ratio" style="margin-top: 56px; --bs-aspect-ratio: 46.3%;">
             <img src="/assets/images/kk-2.jpg" />
-            <img class="img-fluid img-thumbnail" src="<?= $profile->getProfilePictureURL(); ?>" style="width: auto;height: 90%;top: 5%;left: 5%;">
+            <img class="img-fluid img-thumbnail" src="<?= $profile->profilePictureURL(); ?>" style="width: auto;height: 90%;top: 5%;left: 5%;">
         </div>
     </div>
 
@@ -799,7 +808,7 @@ $activeTabPage = 'active show';
                                                         if ($badge->quest != null)
                                                         {
                                                             ?>
-                                                            <a class="btn btn-primary btn-sm" href="<?= $badge->quest->getURL(); ?>"><?= $badge->quest->title; ?></a>
+                                                            <a class="btn btn-primary btn-sm" href="<?= $badge->quest->url(); ?>"><?= $badge->quest->title; ?></a>
                                                             <?php 
 
                                                         }

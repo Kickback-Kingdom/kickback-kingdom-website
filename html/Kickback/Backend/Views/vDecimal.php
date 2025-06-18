@@ -30,7 +30,15 @@ class vDecimal implements \JsonSerializable
             throw new \InvalidArgumentException("Unsupported input type passed to vDecimal.");
         }
     }
-    
+
+    /**
+    * @return array{
+    *     atomic:    int,
+    *     formatted: string,
+    *     float:     float,
+    *     scale:     int
+    * }
+    */
     public function jsonSerialize(): array
     {
         return [

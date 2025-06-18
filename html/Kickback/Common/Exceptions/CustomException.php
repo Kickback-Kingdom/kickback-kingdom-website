@@ -3,12 +3,18 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Exceptions;
 
+use Kickback\Common\Exceptions\CustomExceptionTrait;
 use Kickback\Common\Exceptions\IException;
 
 
 /** This class was taken from a comment written by `ask at nilpo dot com`
 *   (ask\@nilpo.com) on the PHP Exceptions documentation page:
 *   https://www.php.net/manual/en/language.exceptions.php#91159
+*
+*   The contents of the class have been moved into `CustomExceptionTrait`
+*   to make it easier to do the same thing for exceptions that should
+*   extend PHP's built-in (or SPL) exceptions. An example of that would
+*   be `UnexpectedNullException`, which extends `UnexpectedValueException`.
 *
 *   It allows for very concise definitions of new exception types.
 *
@@ -26,29 +32,6 @@ use Kickback\Common\Exceptions\IException;
 */
 abstract class CustomException extends \Exception implements IException
 {
-    //protected string    $message = 'Unknown exception';     // Exception message
-    //private   string     $string;                            // Unknown
-    //protected int        $code    = 0;                       // User-defined exception code
-    //protected string     $file;                              // Source filename of exception
-    //protected int        $line;                              // Source line of exception
-    /// @var (mixed[])[]
-    //private   array      $trace;                             // Unknown
-    //private   ?Throwable $previous = null;
-
-
-    public function __construct(?string $message = null, int $code = 0, ?\Throwable $previous = null)
-    {
-        if (!isset($message)) {
-            throw new $this('Unknown '. get_class($this));
-        }
-        parent::__construct($message, $code, $previous);
-    }
-
-    public function __toString()
-    {
-        return get_class($this)
-            . " '{$this->message}' in {$this->file}({$this->line})\n"
-            . "{$this->getTraceAsString()}";
-    }
+    use CustomExceptionTrait;
 }
 ?>

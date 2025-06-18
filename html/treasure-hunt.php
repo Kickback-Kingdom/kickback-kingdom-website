@@ -315,7 +315,7 @@ $bannerUrl = $thisTreasureHuntEvent->banner->getFullPath();
                         if ($thisTreasureHuntEvent->hasPageContent()) {
                             $_vCanEditContent = $thisTreasureHuntEvent->canEdit();
                             $_vContentViewerEditorTitle = "Treasure Hunt Information Manager";
-                            $_vPageContent = $thisTreasureHuntEvent->getPageContent();
+                            $_vPageContent = $thisTreasureHuntEvent->pageContent();
                             require("php-components/content-viewer.php");
                         }
                         ?>
@@ -333,7 +333,7 @@ $bannerUrl = $thisTreasureHuntEvent->banner->getFullPath();
     <?php 
     if ($thisTreasureHuntEvent->hasPageContent())
     {
-        $_vPageContent = $thisTreasureHuntEvent->getPageContent();
+        $_vPageContent = $thisTreasureHuntEvent->pageContent();
         require("php-components/content-viewer-javascript.php"); 
     }
     ?>

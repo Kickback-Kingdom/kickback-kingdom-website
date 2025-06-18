@@ -44,10 +44,9 @@ if ($thisQuest->canEdit())
 }
 
 $thisQuest->populateTournament();
-$questApplicantsResp = $thisQuest->getQuestApplicants();
-$questApplicants = $questApplicantsResp->data;
+$questApplicants = $thisQuest->queryQuestApplicants();
 
-$bracketRenderData = $thisQuest->tournament->getBracketRenderData($questApplicants);
+$bracketRenderData = $thisQuest->tournament->calculateBracketRenderData($questApplicants);
 $teams = $bracketRenderData[0];
 $matchArray = $bracketRenderData[1];
 $startPlacementArray = $bracketRenderData[2];

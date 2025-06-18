@@ -227,7 +227,7 @@ if (!isset($thisLichCardData))
                         if ($thisLichCardData->hasPageContent()) {
                             $_vCanEditContent = $thisLichCardData->canEdit();
                             $_vContentViewerEditorTitle = "L.I.C.H. Card Information Manager";
-                            $_vPageContent = $thisLichCardData->getPageContent();
+                            $_vPageContent = $thisLichCardData->pageContent();
                             require("php-components/content-viewer.php");
                         }
                         ?>
@@ -244,7 +244,7 @@ if (!isset($thisLichCardData))
     <?php 
     if ($thisLichCardData->hasPageContent())
     {
-        $_vPageContent = $thisLichCardData->getPageContent();
+        $_vPageContent = $thisLichCardData->pageContent();
         require("php-components/content-viewer-javascript.php"); 
     }
     ?>

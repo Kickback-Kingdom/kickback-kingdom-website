@@ -9,6 +9,8 @@ use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Models\Response;
 use Kickback\Services\Database;
+use Kickback\Common\Arr;
+use Kickback\Common\Str;
 
 class GameController
 {
@@ -51,9 +53,9 @@ class GameController
     
         return new Response(true, "Characters retrieved successfully.", $characters);
     }
-    
 
-    public static function getCurrentWinStreak(vRecordId $gameId): Response {
+    public static function getCurrentWinStreak(vRecordId $gameId): Response
+    {
         $conn = Database::getConnection();
     
         $sql = "
@@ -136,7 +138,7 @@ class GameController
     
         $stmt->close();
     
-        if (empty($winStreaks)) {
+        if (Arr::empty($winStreaks)) {
             return new Response(false, "No win streaks found for the given game.");
         }
     
@@ -236,7 +238,7 @@ class GameController
     
         $stmt->close();
     
-        if (empty($winStreaks)) {
+        if (Arr::empty($winStreaks)) {
             return new Response(false, "No all-time win streaks found for the given game.");
         }
     
@@ -307,14 +309,20 @@ class GameController
     
         $stmt->close();
     
-        if (empty($winStreaks)) {
+        if (Arr::empty($winStreaks)) {
             return new Response(false, "No random wins found for the given game.");
         }
     
         return new Response(true, "Random wins retrieved successfully.", $winStreaks);
     }
     
-    public static function getGames($rankedOnly = false, $searchTerm = '', $page = 0, $pageSize = 0): Response {
+    public static function getGames(
+        bool   $rankedOnly = false,
+        string $searchTerm = '',
+        int    $page = 0,
+        int    $pageSize = 0
+    ): Response
+    {
         $conn = Database::getConnection();
     
         $sql = "SELECT Id, `Name`, `Desc`, MinRankedMatches, ShortName, CanRank, media_icon_id, media_banner_id, media_banner_mobile_id, icon_path, banner_path, banner_mobile_path, locator
@@ -331,14 +339,14 @@ class GameController
         }
     
         // Search term filter
-        if (!empty($searchTerm)) {
+        if (!Str::empty($searchTerm)) {
             $conditions[] = "(Name LIKE ? OR Desc LIKE ?)";
             $params[] = "%{$searchTerm}%";
             $params[] = "%{$searchTerm}%";
             $types .= 'ss';
         }
     
-        if (!empty($conditions)) {
+        if (!Arr::empty($conditions)) {
             $sql .= " WHERE " . implode(" AND ", $conditions);
         }
     
@@ -358,7 +366,7 @@ class GameController
             return new Response(false, "Failed to prepare the SQL statement.");
         }
 
-        if (!empty($params)) {
+        if (!Arr::empty($params)) {
             if (!$stmt->bind_param($types, ...$params)) {
                 return new Response(false, "Failed to bind parameters.");
             }

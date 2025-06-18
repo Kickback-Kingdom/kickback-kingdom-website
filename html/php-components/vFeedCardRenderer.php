@@ -9,8 +9,8 @@ use Kickback\Backend\Controllers\QuestController;
         </div>
         <div class="<?= $_vFeedCard->cssClassTextColSize; ?> <?= $_vFeedCard->cssClassRight; ?>" >
             <div class="card-body <?= ($_vFeedCard->quoteStyleText?"card-body-vertical-center":""); ?>">
-                <a class="feed-title" href="<?= $_vFeedCard->getURL(); ?>">
-                    <h5 class="card-title"><?= $_vFeedCard->getTitle(); ?></h5>
+                <a class="feed-title" href="<?= $_vFeedCard->url(); ?>">
+                    <h5 class="card-title"><?= $_vFeedCard->title(); ?></h5>
                 </a>
                 <?php if ($_vFeedCard->hasCreatedBy) { ?>
                 <p class="card-text">
@@ -48,9 +48,7 @@ use Kickback\Backend\Controllers\QuestController;
                     if ($_vFeedCard->hasRewards)
                     {
 
-                        $questRewardsResp = QuestController::getQuestRewardsByQuestId($_vFeedCard->quest);
-                        $questRewards = $questRewardsResp->data;
-                        
+                        $questRewards = QuestController::queryQuestRewardsByQuestId($_vFeedCard->quest);
                         $displayedItemIds = [];
 
                         for ($j=0; $j < count($questRewards); $j++) { 
@@ -85,7 +83,7 @@ use Kickback\Backend\Controllers\QuestController;
                 <?php } 
                 
                 if (!$_vFeedCard->hideCTA) { ?>
-                    <a class="btn btn-sm float-end <?= (!$_vFeedCard->useGoldTrim()?"text-white bg-tertiary":"bg-ranked-1"); ?>" href="<?= $_vFeedCard->getURL();?>"><?= $_vFeedCard->cta; ?> <i
+                    <a class="btn btn-sm float-end <?= (!$_vFeedCard->useGoldTrim()?"text-white bg-tertiary":"bg-ranked-1"); ?>" href="<?= $_vFeedCard->url();?>"><?= $_vFeedCard->cta; ?> <i
                             class="fa-solid fa-angle-right"></i></a><?php } ?>
                 </p>
             </div>
