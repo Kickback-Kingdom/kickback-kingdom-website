@@ -34,7 +34,7 @@ class Session {
     * (It will probably be null, but you shouldn't count on it: always use
     * the return value to determine if it is safe to proceed.)
     *
-    * @phpstan-assert-if-true vAccount $account
+    * @phpstan-assert-if-true =vAccount $account
     */
     public static function readCurrentAccountInto(?vAccount &$account) : bool
     {
@@ -84,7 +84,7 @@ class Session {
         self::$currentAccount = null;
     }
 
-    public static function redirect(string $localPath) : void {
+    public static function redirect(string $localPath) : never {
         $basePath = rtrim(Version::urlBetaPrefix(), '/');
         header("Location: ".$basePath."/".ltrim($localPath, '/'), true, 302);
         exit;

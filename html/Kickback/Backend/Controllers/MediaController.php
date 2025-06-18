@@ -194,7 +194,7 @@ class MediaController {
     /**
     * @param ?array<string> &$dirs
     *
-    * @phpstan-assert-if-true array $dirs
+    * @phpstan-assert-if-true =array<string> $dirs
     */
     public static function queryMediaDirectoriesInto(?array &$dirs) : bool
     {

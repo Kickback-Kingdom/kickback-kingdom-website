@@ -30,7 +30,23 @@ use Kickback\Common\Str;
 class QuestController
 {
 
-    public static function getQuestById(vRecordId $recordId): Response {
+    /**
+    * @phpstan-assert-if-true =vQuest $quest
+    */
+    public static function queryQuestByIdInto(vRecordId $recordId, ?vQuest &$quest): bool
+    {
+        $resp = self::queryQuestByIdAsResponse($recordId);
+        if ( $resp->success ) {
+            $quest = $resp->data;
+            return true;
+        } else {
+            $quest = null;
+            return false;
+        }
+    }
+
+    public static function queryQuestByIdAsResponse(vRecordId $recordId): Response
+    {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_quest_info WHERE Id = ?";
     
@@ -65,8 +81,35 @@ class QuestController
     
         return new Response(false, "We couldn't find a quest with that id", null);
     }
+
+    /**
+    * @phpstan-assert-if-true =vQuest $quest
+    */
+    public static function queryQuestByLocatorInto(string $locator, ?vQuest &$quest): bool
+    {
+        $resp = self::queryQuestByLocatorAsResponse($locator);
+        if ( $resp->success ) {
+            $quest = $resp->data;
+            return true;
+        } else {
+            $quest = null;
+            return false;
+        }
+    }
+
+    public static function queryQuestByLocator(string $locator) : vQuest
+    {
+        $resp = self::queryQuestByLocatorAsResponse($locator);
+        if ($resp->success) {
+            // @phpstan-ignore return.type
+            return $resp->data;
+        } else {
+            throw new \Exception($resp->message);
+        }
+    }
     
-    public static function getQuestByLocator(string $locator): Response {
+    public static function queryQuestByLocatorAsResponse(string $locator): Response
+    {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_quest_info WHERE locator = ?";
 
@@ -167,7 +210,7 @@ class QuestController
     {
         $resp = self::queryQuestsByQuestLineIdAsResponse($questLineId, $page, $itemsPerPage);
         if ($resp->success) {
-            // @phpstan-ignore-next-line
+            // @phpstan-ignore return.type
             return $resp->data;
         } else {
             throw new \Exception($resp->message);
@@ -602,11 +645,13 @@ class QuestController
         return new Response(true, "Raffle Participants", $accounts);
     }
 
-    public static function removeStandardParticipationRewards(vRecordId $questId) : Response {
-        $questResp = self::getQuestById($questId);
-        $quest = $questResp->data;
-        if (!$quest->canEdit())
-        {
+    public static function removeStandardParticipationRewards(vRecordId $questId) : Response
+    {
+        if (!self::queryQuestByIdInto($questId, $quest)) {
+            return new Response(false, "Could not find quest with that ID; can't remove standard participation rewards.", null);
+        }
+
+        if (!$quest->canEdit()) {
             return new Response(false, "You do not have permissions to remove standard participation rewards from this quest.", null);
         }
 
@@ -655,10 +700,11 @@ class QuestController
 
     public static function addStandardParticipationRewards(vRecordId $questId) : Response
     {
-        $questResp = self::getQuestById($questId);
-        $quest = $questResp->data;
-        if (!$quest->canEdit())
-        {
+        if (!self::queryQuestByIdInto($questId, $quest)) {
+            return new Response(false, "Could not find quest with that ID; can't add standard participation rewards.", null);
+        }
+
+        if (!$quest->canEdit()) {
             return new Response(false, "You do not have permissions to add standard participation rewards to this quest.", null);
         }
         
@@ -706,7 +752,8 @@ class QuestController
         }
     }
 
-    public static function rejectQuestReviewById(vRecordId $questId) : Response {
+    public static function rejectQuestReviewById(vRecordId $questId) : Response
+    {
         $conn = Database::getConnection();
          // Prepare the SQL statement to mark the quest as being reviewed
          $stmt = $conn->prepare("UPDATE quest SET published = 0, being_reviewed = 0 WHERE Id = ? and (being_reviewed = 1 or published = 1)");
@@ -751,13 +798,9 @@ class QuestController
             $questLineIdValue = null;
         }
 
-        $questResp = self::getQuestById($questId);
-
-        if (!$questResp->success)
-        {
+        if (!self::queryQuestByIdInto($questId, $quest)) {
             return (new Response(false, "Error updating quest. Could not find quest by Id.", null));
         }
-        $quest = $questResp->data;
 
         if (str_starts_with($questLocator, 'new-quest-'))
         {
@@ -807,17 +850,13 @@ class QuestController
         }
     }
     
-    public static function updateQuestImages(vRecordId $questId,vRecordId  $desktop_banner_id,vRecordId  $mobile_banner_id,vRecordId  $icon_id) : Response {
-
+    public static function updateQuestImages(vRecordId $questId,vRecordId  $desktop_banner_id,vRecordId  $mobile_banner_id,vRecordId  $icon_id) : Response
+    {
         $conn = Database::getConnection();
 
-        $questResp = self::getQuestById($questId);
-
-        if (!$questResp->success)
-        {
+        if (!self::queryQuestByIdInto($questId, $quest)) {
             return (new Response(false, "Error updating quest. Could not find quest by Id.", null));
         }
-        $quest = $questResp->data;
 
         if (!$quest->canEdit())
         {
@@ -849,13 +888,10 @@ class QuestController
 
         $conn = Database::getConnection();
 
-        
-        $questResp = self::getQuestById($questId); 
-        if (!$questResp->success) {
+        if (!self::queryQuestByIdInto($questId, $quest)) {
             return new Response(false, "Quest submission failed. Quest not found.", null);
         }
 
-        $quest = $questResp->data;
         if (!$quest->canEdit()) {
             return new Response(false, "Submission denied. Insufficient permissions to edit this quest.", null);
         }
@@ -948,7 +984,8 @@ class QuestController
         }
     }
 
-    public static function applyOrRegisterForQuest(vRecordId $account_id, vRecordId $quest_id) : Response {
+    public static function applyOrRegisterForQuest(vRecordId $account_id, vRecordId $quest_id) : Response
+    {
         $conn = Database::getConnection();
         // Check if the account has already registered or applied for the quest
         $checkResponse = self::accountHasRegisteredOrAppliedForQuest($account_id, $quest_id);
@@ -961,7 +998,9 @@ class QuestController
         mysqli_stmt_bind_param($stmt, 'ii', $account_id->crand, $quest_id->crand);
         if (mysqli_stmt_execute($stmt)) {
             $account = AccountController::getAccountById($account_id)->data;
-            $quest = self::getQuestById($quest_id)->data;
+            if (!self::queryQuestByIdInto($quest_id, $quest)) {
+                return new Response(false, "Could not find quest with that ID; failed to register for quest.", null);
+            }
             SocialMediaController::DiscordWebHook(FlavorTextController::getRandomGreeting() . ', ' . $account->username . ' just signed up for the ' . $quest->title . ' quest.');
             mysqli_stmt_close($stmt);
             return (new Response(true, "Registered for quest successfully", null));
@@ -1160,52 +1199,46 @@ class QuestController
         return (new Response(true, "Feedback submitted and rewards converted successfully", null));
     }
 
-    public static function insertNewQuest() : Response {
-        if (Session::isQuestGiver())
-        {
-            
-            $questName = "New Quest";
-            $questLocator = "new-quest-".Session::getCurrentAccount()->crand;
-
-            $questResp = self::getQuestByLocator($questLocator);
-            if (!$questResp->success)
-            {
-                $questModel = new Quest();
-                $questModel->title = $questName;
-                $questModel->locator = $questLocator;
-                $insertResp = self::insert($questModel);
-                $quest = $insertResp->data;
-            }
-            else
-            {
-                $quest = $questResp->data;
-            }
-            if (!$quest->hasPageContent())
-            {
-                $newContentId = ContentController::insertNewContent();
-                
-                self::updateQuestContent($quest,new vRecordId('', $newContentId));
-
-                $questResp = self::getQuestByLocator($questLocator);
-            }
-
-            return (new Response(true, "New quest created.", $questResp->data));
-        }
-        else
-        {
+    public static function insertNewQuest() : Response
+    {
+        if (!Session::isQuestGiver()) {
             return (new Response(false, "You do not have permissions to post a new quest.", null));
         }
+
+        $questName = "New Quest";
+        $questLocator = "new-quest-".Session::getCurrentAccount()->crand;
+
+        if (!self::queryQuestByLocatorInto($questLocator, $quest))
+        {
+            $questModel = new Quest();
+            $questModel->title = $questName;
+            $questModel->locator = $questLocator;
+            $insertResp = self::insert($questModel);
+            $quest = $insertResp->data;
+        }
+
+        if (!$quest->hasPageContent())
+        {
+            $newContentId = ContentController::insertNewContent();
+
+            self::updateQuestContent($quest,new vRecordId('', $newContentId));
+
+            $quest = self::queryQuestByLocator($questLocator);
+        }
+
+        return (new Response(true, "New quest created.", $quest));
     }
 
-    public static function insert(Quest $quest) : Response {
+    public static function insert(Quest $quest) : Response
+    {
         $conn = Database::getConnection();
         $stmt = $conn->prepare("INSERT INTO quest (name, locator, host_id) values (?,?,?)");
         mysqli_stmt_bind_param($stmt, 'ssi', $quest->title, $quest->locator, Session::getCurrentAccount()->crand);
         mysqli_stmt_execute($stmt);
         //$newId = mysqli_insert_id($conn);
-        $questResp = self::getQuestByLocator($quest->locator);
+        $questResp = self::queryQuestByLocatorAsResponse($quest->locator);
         $rewardResp = self::setupStandardParticipationRewards($questResp->data);
-        $questResp = self::getQuestByLocator($quest->locator);
+        $questResp = self::queryQuestByLocatorAsResponse($quest->locator);
         return $questResp;
     }
 }

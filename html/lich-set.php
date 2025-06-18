@@ -12,13 +12,10 @@ if (isset($_GET["locator"])) {
     $locator = $_GET["locator"];
     
     // Fetch the Lich Set by its locator
-    $response = LichCardController::getLichSetByLocator($locator);
-    
-
-    // Lich Set details
-    $thisLichSet = $response->data; // This is a vLichSet object
-    $thisLichSet->populateEverything();
-} 
+    if ( LichCardController::queryLichSetByLocatorInto($locator, $thisLichSet) ) {
+        $thisLichSet->populateEverything();
+    }
+}
 
 if ($thisLichSet == null) {
     // Redirect to homepage if no locator is provided
