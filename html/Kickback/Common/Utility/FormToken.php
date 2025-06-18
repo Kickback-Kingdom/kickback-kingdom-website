@@ -20,7 +20,7 @@ class FormToken {
     /**
      * Generates a new form token and stores it in the session.
      */
-    public static function generateFormToken() {
+    public static function generateFormToken() : void {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }

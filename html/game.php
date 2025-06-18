@@ -111,7 +111,7 @@ $gameQuests = $gameQuestsResp->data->items;
                                 <?php if (!empty($currentWinStreak)): ?>
                                     <?php foreach ($currentWinStreak as $streak): ?>
                                         <div class="d-flex align-items-center mb-3 p-2 bg-light rounded">
-                                            <img src="<?= $streak['account']->getProfilePictureURL() ?>" 
+                                            <img src="<?= $streak['account']->profilePictureURL() ?>"
                                                 alt="<?= htmlspecialchars($streak['account']->username) ?>" 
                                                 class="rounded-circle shadow"
                                                 style="height: 50px; width: 50px; object-fit: cover; border: 2px solid #007bff;">
@@ -140,7 +140,7 @@ $gameQuests = $gameQuestsResp->data->items;
                                 <?php if (!empty($AllTimeWinStreak)): ?>
                                     <?php foreach ($AllTimeWinStreak as $streak): ?>
                                         <div class="d-flex align-items-center mb-3 p-2 bg-light rounded">
-                                            <img src="<?= $streak['account']->getProfilePictureURL() ?>" 
+                                            <img src="<?= $streak['account']->profilePictureURL() ?>"
                                                 alt="<?= htmlspecialchars($streak['account']->username) ?>" 
                                                 class="rounded-circle shadow"
                                                 style="height: 50px; width: 50px; object-fit: cover; border: 2px solid #28a745;">
@@ -169,7 +169,7 @@ $gameQuests = $gameQuestsResp->data->items;
                                 <?php if (!empty($randomCharacterWin)): ?>
                                     <?php foreach ($randomCharacterWin as $streak): ?>
                                         <div class="d-flex align-items-center mb-3 p-2 bg-light rounded">
-                                            <img src="<?= $streak['account']->getProfilePictureURL() ?>" 
+                                            <img src="<?= $streak['account']->profilePictureURL() ?>"
                                                 alt="<?= htmlspecialchars($streak['account']->username) ?>" 
                                                 class="rounded-circle shadow"
                                                 style="height: 50px; width: 50px; object-fit: cover; border: 2px solid #17a2b8;">
@@ -273,7 +273,7 @@ $gameQuests = $gameQuestsResp->data->items;
                                                                         data-bs-placement="top" 
                                                                         data-bs-title="<?= htmlspecialchars($player->username) ?>" 
                                                                         data-bs-content="<?= htmlspecialchars($teamName) ?>">
-                                                                        <img src="<?= htmlspecialchars($player->getProfilePictureURL()) ?>" 
+                                                                        <img src="<?= htmlspecialchars($player->profilePictureURL()) ?>"
                                                                             class="loot-badge" 
                                                                             alt="<?= htmlspecialchars($player->username) ?>">
                                                                     </span>

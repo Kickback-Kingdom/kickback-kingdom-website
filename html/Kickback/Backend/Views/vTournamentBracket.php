@@ -6,6 +6,8 @@ namespace Kickback\Backend\Views;
 class vTournamentBracket
 {
     public int $bracket;
+
+    /** @var array<vTournamentBracketRound> */
     public array $rounds;
 
     

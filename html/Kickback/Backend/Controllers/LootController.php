@@ -595,7 +595,8 @@ class LootController
         }
 
         $itemStack = null;
-        if ($row = $result->fetch_assoc()) {
+        $row = $result->fetch_assoc();
+        if (isset($row) && $row !== false) {
             $itemStack = self::row_to_vItemStack($row);
         }
 
@@ -609,26 +610,27 @@ class LootController
     }
 
     public static function givePrestigeToken(vRecordId $account_id) : Response {
-        return GiveLoot($account_id, 3);
+        return self::giveLoot($account_id, 3);
     }
 
-    public static function giveBadge(vRecordId $account_id,  $item_id) : Response {
-        return GiveLoot($account_id, $item_id);
+    public static function giveBadge(vRecordId $account_id, vRecordId $item_id) : Response {
+        return self::giveLoot($account_id, $item_id);
     }
 
     public static function giveRaffleTicket(vRecordId $account_id) : Response {
-        return GiveLoot($account_id, 4);
+        return self::giveLoot($account_id, 4);
     }
 
     public static function giveWritOfPassage(vRecordId $account_id) : Response {
         return self::giveLoot($account_id, new vRecordId('', 14));
     }
 
-    public static function giveMerchantGuildShare(vRecordId $account_id, $date) : Response {
-        return GiveLoot($account_id, 16, $date);
+    public static function giveMerchantGuildShare(vRecordId $account_id, string $dateObtained) : Response {
+        return self::giveLoot($account_id, 16, $dateObtained);
     }
 
-    public static function giveLoot(vRecordId $account_id,vRecordId $item_id, $dateObtained = null) : Response {
+    public static function giveLoot(vRecordId $account_id,vRecordId $item_id, ?string $dateObtained = null) : Response
+    {
         $conn = Database::getConnection();
 
         // Checking if dateObtained is null
@@ -640,23 +642,23 @@ class LootController
         $sql = "INSERT INTO loot (item_id, opened, account_id, dateObtained) VALUES (?, 0, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
         
-        if ($stmt) {
-            // Bind parameters
-            mysqli_stmt_bind_param($stmt, 'iis', $item_id->crand, $account_id->crand, $dateObtained);
-            
-            // Execute the statement
-            $result = mysqli_stmt_execute($stmt);
-            
-            // Close the statement
-            mysqli_stmt_close($stmt);
-            
-            if ($result) {
-                return (new Response(true, "Successfully gave loot to account", null));
-            } else {
-                return (new Response(false, "Failed to award account", null));
-            }
-        } else {
+        if ($stmt === false) {
             return (new Response(false, "Failed to prepare SQL statement!", null));
+        }
+
+        // Bind parameters
+        mysqli_stmt_bind_param($stmt, 'iis', $item_id->crand, $account_id->crand, $dateObtained);
+
+        // Execute the statement
+        $result = mysqli_stmt_execute($stmt);
+
+        // Close the statement
+        mysqli_stmt_close($stmt);
+
+        if ($result) {
+            return (new Response(true, "Successfully gave loot to account", null));
+        } else {
+            return (new Response(false, "Failed to award account", null));
         }
     }
 
@@ -712,8 +714,8 @@ class LootController
         
 
         // Set container loot (if inside another container)
-        if (!empty($row["container_loot_id"])) {
-            $loot->containerLoot = new vLoot('', (int)$row["container_loot_id"]);
+        if (array_key_exists('container_loot_id', $row) && isset($row["container_loot_id"])) {
+            $loot->containerLoot = new vLoot('', intval($row["container_loot_id"]));
         } else {
             $loot->containerLoot = null;
         }

@@ -50,12 +50,12 @@ class ItemController
     
         $equipmentSlot = $item->equipmentSlot?->value;
         $nominatedById = $item->nominatedBy?->crand;
-        $collectionId = $item->collection?->crand;
+        $collectionId  = $item->collection?->crand;
         $containerItemCategory = $item->containerItemCategory?->value;
-        $itemCategory = $item->itemCategory?->value;
+        $itemCategory  = $item->itemCategory?->value;
     
-        $typeValue = (int) $item->type->value; 
-        $rarityValue = (int) $item->rarity->value;
+        $typeValue   = $item->type->value;
+        $rarityValue = $item->rarity->value;
 
         $mediaIdBack = $item->mediaLarge->crand;
 
@@ -162,7 +162,8 @@ class ItemController
         }
     }
 
-    public static function usePrestigeToken(vRecordId $fromAccountId, vRecordId $toAccountId, bool $commend, string $desc) : Response {
+    public static function usePrestigeToken(vRecordId $fromAccountId, vRecordId $toAccountId, bool $commend, string $desc) : Response
+    {
         if ($fromAccountId == null) {
             return new Response(false, "Failed to use prestige token because you provided a null fromAccountId.", $fromAccountId);
         }
@@ -172,13 +173,7 @@ class ItemController
         if ($fromAccountId->crand == $toAccountId->crand) {
             return new Response(false, "You cannot leave a review on yourself.", $toAccountId);
         }
-        if ($commend === null) {
-            return new Response(false, "Failed to use prestige token because you provided a null rating.", $commend);
-        }
-        if ($desc == null) {
-            return new Response(false, "Failed to use prestige token because you provided a null review.", $desc);
-        }
-    
+
         $conn = Database::getConnection();
         // Get unused prestige token
         $prestigeTokenResp = AccountController::getPrestigeTokens($fromAccountId);

@@ -6,10 +6,9 @@ use Kickback\Common\Version;
 
 
 $badgeCode = '';
-for ($i=0; $i < count($_vPlayerCardAccount->badge_display) && $i < 5; $i++) { 
-
+for ($i=0; $i < count($_vPlayerCardAccount->badge_display) && $i < 5; $i++)
+{
     $badge = $_vPlayerCardAccount->badge_display[$i];
-
 
     //$badgeCode .= '<li class="d-inline-block" style="margin-left:0px;"><img class="img-40" style="box-shadow: none; border: none; -webkit-box-shadow: none;" src="/assets/media/'.$badge["SmallImgPath"].'" alt=""></li>';
     $badgeCode .= '<span tabindex="0" data-bs-toggle="popover" data-bs-custom-class="custom-popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="'.htmlspecialchars($badge->item->name).'" data-bs-content="'.htmlspecialchars($badge->item->description).'"><img src="'.$badge->item->iconSmall->getFullPath().'" class="loot-badge"></span>';
@@ -85,7 +84,7 @@ for ($i = count($_vPlayerCardAccount->game_ranks); $i < 5; $i++ )
     </h6>
   </div>
   <div class="card-body align-items-start d-flex justify-content-start<?php echo ($isRanked1?" ranked-1":"")?>">
-    <img class="img-fluid img-thumbnail" src="<?= $_vPlayerCardAccount->getProfilePictureURL(); ?>" />
+    <img class="img-fluid img-thumbnail" src="<?= $_vPlayerCardAccount->profilePictureURL(); ?>" />
     <div class="player-card-ranks">
         <?= $rankCode; ?>
     </div>

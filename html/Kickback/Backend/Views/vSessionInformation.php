@@ -7,8 +7,11 @@ class vSessionInformation
 {
     public ?vAccount $account;
     public string $chestsJSON;
+
+    /** @var array<mixed> */
     public array $chests;
 
+    /** @var array<vNotification> */
     public array $notifications;
     public string $notificationsJSON;
 

@@ -6,29 +6,29 @@ namespace Kickback\Backend\Controllers;
 
 class EloController
 {
-    private $kFactor;
-    private $baseRating;
+    private int $kFactor;
+    private int $baseRating;
 
-    public function __construct($baseRating = 1500, $kFactor = 30)
+    public function __construct(int $baseRating = 1500, int $kFactor = 30)
     {
         $this->baseRating = $baseRating;
         $this->kFactor = $kFactor;
     }
 
-    public function getBaseRating()
+    public function getBaseRating() : int
     {
         return $this->baseRating;
     }
 
-    public function getKFactor()
+    public function getKFactor() : int
     {
         return $this->kFactor;
     }
-    
+
     /**
      * Calculate the expected score between two players.
      */
-    public function calculateExpectedScore($ratingA, $ratingB)
+    public function calculateExpectedScore(int $ratingA, int $ratingB) : float
     {
         return 1 / (1 + pow(10, ($ratingB - $ratingA) / 400));
     }
@@ -36,15 +36,17 @@ class EloController
     /**
      * Calculate new rating for a player.
      */
-    public function calculateNewRating($currentRating, $expectedScore, $actualScore)
+    public function calculateNewRating(mixed $currentRating, mixed $expectedScore, mixed $actualScore) : int
     {
-        return round($currentRating + $this->kFactor * ($actualScore - $expectedScore));
+        return intval(round($currentRating + $this->kFactor * ($actualScore - $expectedScore)));
     }
 
     /**
-     * Calculate team average rating.
-     */
-    public function calculateTeamAverage($ratings, $team)
+    * Calculate team average rating.
+    * @param array<int,int> $ratings
+    * @param array<int>     $team
+    */
+    public function calculateTeamAverage(array $ratings, array $team) : float
     {
         $totalRating = array_reduce($team, function ($sum, $accountId) use ($ratings) {
             return $sum + ($ratings[$accountId] ?? $this->baseRating);
@@ -54,11 +56,12 @@ class EloController
     }
 
     /**
-     * Batch update ELO changes in the database.
-     */
-    public function batchUpdateEloChange($conn, array $eloUpdates)
+    * Batch update ELO changes in the database.
+    * @param array<array<string,bool|float|int|string>> $eloUpdates
+    */
+    public function batchUpdateEloChange(\mysqli $conn, array $eloUpdates) : void
     {
-        if (empty($eloUpdates)) {
+        if (0 === count($eloUpdates)) {
             return;
         }
 
@@ -66,9 +69,9 @@ class EloController
         $ids = [];
 
         foreach ($eloUpdates as $update) {
-            $gameMatchId = (int)$update['game_match_id'];
-            $accountId = (int)$update['account_id'];
-            $eloChange = (int)$update['elo_change'];
+            $gameMatchId = intval($update['game_match_id']);
+            $accountId = intval($update['account_id']);
+            $eloChange = intval($update['elo_change']);
 
             $query .= " WHEN game_match_id = $gameMatchId AND account_id = $accountId THEN $eloChange";
             $ids[] = "($gameMatchId, $accountId)";
@@ -85,15 +88,16 @@ class EloController
      * Update player ranking and statistics.
      */
     public function updatePlayerStats(
-        $conn,
-        $accountId,
-        $gameId,
-        $newRating,
-        $matchesPlayed,
-        $wins,
-        $losses,
-        $minRankedMatches
-    ) {
+        \mysqli $conn,
+        int     $accountId,
+        int     $gameId,
+        int     $newRating,
+        int     $matchesPlayed,
+        int     $wins,
+        int     $losses,
+        int     $minRankedMatches
+    ) : void
+    {
         $isRanked = $matchesPlayed >= $minRankedMatches ? 1 : 0;
 
         $stmt = mysqli_prepare($conn, 'INSERT INTO account_game_elo (account_id, game_id, elo_rating, is_ranked, total_matches, total_wins, total_losses, win_rate)
@@ -114,13 +118,22 @@ class EloController
     }
 
     /**
-     * Calculate ELO changes for group matches.
-     */
-    public function calculateGroupMatchElo($ratings, $winnerId, $loserIds)
+    * Calculate ELO changes for group matches.
+    * @param array<int> $ratings
+    * @param array<int> $loserIds
+    * @return array<array{
+    *     winner_id:     int,
+    *     winner_change: int,
+    *     loser_id:      int,
+    *     loser_change:  int
+    * }>
+    */
+    public function calculateGroupMatchElo(array $ratings, int $winnerId, array $loserIds) : array
     {
         $updates = [];
 
-        foreach ($loserIds as $loserId) {
+        foreach ($loserIds as $loserId)
+        {
             $expectedWin = $this->calculateExpectedScore($ratings[$winnerId], $ratings[$loserId]);
             $expectedLose = 1 - $expectedWin;
 
@@ -148,8 +161,11 @@ class EloController
 
     /**
      * Adjust ELO for tied matches in group battles.
+    * @param array<int,int> $ratings
+    * @param array<int>     $participantIds
+    * @return array<array{account_id: int,  elo_change: int}>
      */
-    public function calculateTieElo($ratings, $participantIds)
+    public function calculateTieElo(array $ratings, array $participantIds) : array
     {
         $updates = [];
         $averageRating = $this->calculateTeamAverage($ratings, $participantIds);
