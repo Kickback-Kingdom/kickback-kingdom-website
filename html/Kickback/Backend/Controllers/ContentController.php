@@ -169,10 +169,9 @@ class ContentController {
                     break;
 
                 case 'TREASURE-HUNT':
-                    $treasureHuntResp = TreasureHuntController::getEventByLocator($ids[0]);
-                    if ($treasureHuntResp->success)
+                    if ( TreasureHuntController::queryEventByLocatorInto($ids[0], $treasureHunt) )
                     {
-                        return $treasureHuntResp->data->canEdit();
+                        return $treasureHunt->canEdit();
                     }
                     else
                     {
