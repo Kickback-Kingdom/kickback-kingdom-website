@@ -283,7 +283,7 @@ class TreasureHuntController
 
         if (Session::isEventOrganizer())
         {
-            return new Response(false, "It is working! but you are an event organizer and cannot collect treasure!");
+            //return new Response(false, "It is working! but you are an event organizer and cannot collect treasure!");
         }
 
         $conn = Database::getConnection();

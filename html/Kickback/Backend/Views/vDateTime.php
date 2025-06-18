@@ -50,7 +50,10 @@ class vDateTime
 
         return $dateTime;
     }
-
+    public static function now(): vDateTime {
+        return new vDateTime();
+    }
+    
     public function setDateTimeFromString(string $dateTimeString)
     {
         $this->dbValue = $dateTimeString;

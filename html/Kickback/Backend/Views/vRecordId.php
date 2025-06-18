@@ -48,6 +48,10 @@ class vRecordId
 
         return new self($ctime, (int)$crand);
     }
+
+    public function isset() : bool {
+        return $this->crand != -1;
+    }
 }
 
 ?>

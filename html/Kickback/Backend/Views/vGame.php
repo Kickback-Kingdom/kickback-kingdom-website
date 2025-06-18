@@ -13,6 +13,8 @@ class vGame extends vRecordId
     public string $shortName;
     public bool $canRank;
     public string $locator;
+    public bool $allowsCharacterSelection = true;
+    public bool $allowsRandomPicks = true;
     
     public vMedia $icon;
     public vMedia $banner;

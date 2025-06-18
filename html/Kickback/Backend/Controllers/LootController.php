@@ -612,7 +612,7 @@ class LootController
         return GiveLoot($account_id, 3);
     }
 
-    public static function giveBadge(vRecordId $account_id,  $item_id) : Response {
+    public static function giveBadge(vRecordId $account_id, vRecordId $item_id) : Response {
         return GiveLoot($account_id, $item_id);
     }
 
@@ -624,25 +624,29 @@ class LootController
         return self::giveLoot($account_id, new vRecordId('', 14));
     }
 
-    public static function giveMerchantGuildShare(vRecordId $account_id, $date) : Response {
-        return GiveLoot($account_id, 16, $date);
+    public static function giveMerchantGuildShare(vRecordId $account_id, vDateTime $date) : Response {
+        return self::giveLoot($account_id, new vRecordId('', 16), $date);
     }
 
-    public static function giveLoot(vRecordId $account_id,vRecordId $item_id, $dateObtained = null) : Response {
+    public static function giveLoot(vRecordId $account_id,vRecordId $item_id, ?vDateTime $dateObtained = null) : Response {
         $conn = Database::getConnection();
 
-        // Checking if dateObtained is null
+        // If no date given, use current UTC datetime
         if ($dateObtained === null) {
-            $dateObtained = date('Y-m-d H:i:s');  // Set to current date and time
+            $dateObtained = vDateTime::now();
+
         }
-        
+
+        // Make sure we are binding a string (in UTC database format)
+        $dateString = $dateObtained->dbValue;
+
         // Prepare the SQL statement
         $sql = "INSERT INTO loot (item_id, opened, account_id, dateObtained) VALUES (?, 0, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
         
         if ($stmt) {
             // Bind parameters
-            mysqli_stmt_bind_param($stmt, 'iis', $item_id->crand, $account_id->crand, $dateObtained);
+            mysqli_stmt_bind_param($stmt, 'iis', $item_id->crand, $account_id->crand, $dateString);
             
             // Execute the statement
             $result = mysqli_stmt_execute($stmt);
@@ -680,48 +684,38 @@ class LootController
         }
     }
     
-    private static function row_to_vLoot(array $row, bool $populateItem = true) : vLoot {
+    public static function row_to_vLoot(array $row, bool $populateItem = true) : vLoot {
         
-        $crand = isset($row["Id"]) ? (int)$row["Id"] : -1;
+        $crand = (int)($row["Id"] ?? -1);
         $ctime = $row["ctime"] ?? '';
 
 
-        $loot = new vLoot($ctime,$crand);
-        $loot->opened = isset($row["opened"]) ? (bool)$row["opened"] : false;
 
-        $ownerId = new vRecordId('',$row["account_id"] ?? -1);
+        $loot = new vLoot($ctime, $crand);
+        $loot->opened = (bool)($row["opened"] ?? false);
+        $loot->ownerId = new vRecordId('', (int)($row["account_id"] ?? -1));
 
-        $loot->ownerId = $ownerId;
-
-        if ($row["quest_id"] != null)
-        {
-            $quest = new vQuest('', $row["quest_id"]);
-            $quest->title = $row["quest_name"];
-            $quest->locator = $row["quest_locator"];
-
+        if (!empty($row["quest_id"])) {
+            $quest = new vQuest('', (int)$row["quest_id"]);
+            $quest->title = $row["quest_name"] ?? '';
+            $quest->locator = $row["quest_locator"] ?? '';
             $loot->quest = $quest;
         }
         
-        $dateObtained = new vDateTime();
-        $dateObtained->setDateTimeFromString($row["dateObtained"]);
-        $loot->dateObtained = $dateObtained;
+        $loot->dateObtained = vDateTime::fromDB($row["dateObtained"] ?? '');
 
         if ($populateItem)
             $loot->item = ItemController::row_to_vItem($row);
 
         
 
-        // Set container loot (if inside another container)
-        if (!empty($row["container_loot_id"])) {
-            $loot->containerLoot = new vLoot('', (int)$row["container_loot_id"]);
-        } else {
-            $loot->containerLoot = null;
-        }
-
-        // Set nickname and description
+        $loot->containerLoot = isset($row["container_loot_id"]) 
+        ? new vLoot('', (int)$row["container_loot_id"]) 
+        : null;
+    
         $loot->nickname = $row["nickname"] ?? '';
         $loot->description = $row["description"] ?? '';
-        
+    
         return $loot;
     }
 

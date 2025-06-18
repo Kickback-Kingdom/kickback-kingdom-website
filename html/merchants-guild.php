@@ -4,39 +4,13 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
 
+use Kickback\Services\Session;
+use Kickback\Backend\Controllers\MerchantGuildController;
+use Kickback\Common\Version;
+
 $totalCombinedShares = 0;
 $totalMembers = 0;
 $minRequiredShares = 20;
-if (Kickback\Services\Session::isLoggedIn())
-{
-    $accountId = Kickback\Services\Session::getCurrentAccount()->crand;
-    $targetDate = date("Y-m", strtotime("+1 month")) . "-01";
-    $interestDate = date("Y-m", strtotime("-1 month")) . "-01";
-    $currentStatement = BuildStatement($accountId, $targetDate);
-    $totalCombinedShares = $currentStatement["fractional_shares"]+$currentStatement["total_shares"];
-    $totalSharesOwned = 0;
-    if (IsMerchant())
-    {
-        $purchases = PullPurchasesUntilForAll($targetDate);
-        $shareholders = PullMerchantGuildShareHolders();
-
-        
-        foreach ($shareholders as $shareholder):
-            $totalSharesOwned += $shareholder["shares"];
-            if ($shareholder["shares"] >= $minRequiredShares)
-            {
-                $totalMembers++;
-            }
-        endforeach;
-    }
-    else
-    {
-        $purchases = PullPurchasesUntil($accountId, $targetDate);
-    }
-}
-
-$percentUntilGuildMember = min(($totalCombinedShares/$minRequiredShares)*100, 100);
-
 
 $milestones = [
     ['shares' => 20, 'reward' => 'Basic Reward', 'icon' => 'fa-trophy'],
@@ -45,15 +19,45 @@ $milestones = [
 ];
 
 
-
-// Sample owned shares for demonstration
-$ownedShares = $currentStatement["total_shares"];
-
-// Total shares based on the milestones
 $totalShares = end($milestones)['shares'];
 
-// Calculate the fill height based on owned shares
-$fillHeight = ($ownedShares / $totalShares) * 300; // assuming 300px is the full height of the progress bar
+if (Session::isLoggedIn())
+{
+    $accountId = Session::getCurrentAccount()->crand;
+    $targetDate = date("Y-m", strtotime("+1 month")) . "-01";
+    $interestDate = date("Y-m", strtotime("-1 month")) . "-01";
+    $currentStatement = BuildStatement($accountId, $targetDate);
+    $totalCombinedShares = $currentStatement["fractional_shares"]+$currentStatement["total_shares"];
+    $totalSharesOwned = 0;
+    if (Session::isMerchant())
+    {
+        $purchasesResp = MerchantGuildController::PullPurchasesUntilForAll($targetDate);
+        $purchases = $purchasesResp->data;
+
+        $shareholdersResp = MerchantGuildController::PullMerchantGuildShareHolders();
+        $shareholders = $shareholdersResp->data;
+
+        
+        foreach ($shareholders as $shareholder):
+            $totalSharesOwned += $shareholder->shares;
+            if ($shareholder->shares >= $minRequiredShares)
+            {
+                $totalMembers++;
+            }
+        endforeach;
+    }
+    else
+    {
+        $purchasesResp = MerchantGuildController::PullPurchasesUntil(Session::getCurrentAccount(), $targetDate);
+        $purchases = $purchasesResp->data;
+    }
+    
+    $ownedShares = $currentStatement["total_shares"];
+    $fillHeight = ($ownedShares / $totalShares) * 300; // assuming 300px is the full height of the progress bar
+}
+
+$percentUntilGuildMember = min(($totalCombinedShares/$minRequiredShares)*100, 100);
+
 
 $progressBarHeight = 500; // adjust this to match your design if needed
 
@@ -112,7 +116,7 @@ $padlockOffset = $descriptionHeight / 2;
                 
                 ?>
                 
-                <?php if (IsMerchant()) { ?>
+                <?php if (Session::isMerchant()) { ?>
                 <div class="row">
                     <div class="col-12">
                         
@@ -248,7 +252,7 @@ $padlockOffset = $descriptionHeight / 2;
                                                     <i class="fa-solid fa-handshake fa-2x me-3"></i>
                                                     <div>
                                                         <div class="text-muted">Total Shares Owned</div>
-                                                        <div class="h5 mb-0"><?php echo $totalSharesOwned; ?> Shares</div> <!-- Replace with dynamic value -->
+                                                        <div class="h5 mb-0"><?= $totalSharesOwned; ?> Shares</div> <!-- Replace with dynamic value -->
                                                     </div>
                                                 </div>
                                             </div>
@@ -258,7 +262,7 @@ $padlockOffset = $descriptionHeight / 2;
                                                     <i class="fa-solid fa-users fa-2x me-3"></i>
                                                     <div>
                                                         <div class="text-muted">Guild Members</div>
-                                                        <div class="h5 mb-0"><?php echo $totalMembers; ?></div> <!-- Replace with dynamic value -->
+                                                        <div class="h5 mb-0"><?= $totalMembers; ?></div> <!-- Replace with dynamic value -->
                                                     </div>
                                                 </div>
                                             </div>
@@ -268,7 +272,7 @@ $padlockOffset = $descriptionHeight / 2;
                                                     <i class="fa-solid fa-users fa-2x me-3"></i>
                                                     <div>
                                                         <div class="text-muted">Shareholders</div>
-                                                        <div class="h5 mb-0"><?php echo count($shareholders); ?></div> <!-- Replace with dynamic value -->
+                                                        <div class="h5 mb-0"><?= count($shareholders); ?></div> <!-- Replace with dynamic value -->
                                                     </div>
                                                 </div>
                                             </div>
@@ -330,10 +334,10 @@ $padlockOffset = $descriptionHeight / 2;
                                             <tbody>
                                                 <?php foreach ($shareholders as $shareholder): ?>
                                                     <tr>
-                                                        <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="/assets/media/<?php echo GetAccountProfilePicture($shareholder); ?>"/><a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo $shareholder['Username']; ?>" class="username"><?php echo $shareholder['Username']; ?></a></td>
-                                                        <td><?php echo $shareholder['shares']; ?></td>
-                                                        <td><?php echo ($shareholder['shares'] >= $minRequiredShares ? "YES":"NO") ?></td>
-                                                        <td><?php echo round(($shareholder['shares']/$totalSharesOwned)*10000)/100; ?>%</td>
+                                                        <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="<?= $shareholder->account->getProfilePictureURL(); ?>"/><?= $shareholder->account->getAccountElement(); ?></td>
+                                                        <td><?= $shareholder->shares; ?></td>
+                                                        <td><?= ($shareholder->shares >= $minRequiredShares ? "YES":"NO") ?></td>
+                                                        <td><?= round(($shareholder->shares/$totalSharesOwned)*10000)/100; ?>%</td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
@@ -359,12 +363,12 @@ $padlockOffset = $descriptionHeight / 2;
                                     <tbody>
                                         <?php foreach ($purchases as $purchase): ?>
                                             <tr>
-                                                <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="/assets/media/<?php echo GetAccountProfilePicture($purchase); ?>"/><a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo $purchase['Username']; ?>" class="username"><?php echo $purchase['Username']; ?></a></td>
-                                                <td><?php echo $purchase['SharesPurchased']; ?></td>
-                                                <td><?php echo $purchase['PurchaseDate']; ?></td>
-                                                <td><?php echo $purchase['Amount']." ".$purchase['Currency']; ?></td>
-                                                <td><?php echo $purchase['ADAValue']; ?></td>
-                                                <td><?php echo $purchase['purchase_id']; ?></td>
+                                                <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="<?= $purchase->account->getProfilePictureURL(); ?>"/><?= $purchase->account->getAccountElement(); ?></td>
+                                                <td><?= $purchase->SharesPurchased; ?></td>
+                                                <td><?= $purchase->PurchaseDate->formattedYmd; ?></td>
+                                                <td><?= $purchase->Amount." ".$purchase->Currency; ?></td>
+                                                <td><?= $purchase->ADAValue; ?></td>
+                                                <td><?= $purchase->crand; ?></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -548,11 +552,11 @@ $padlockOffset = $descriptionHeight / 2;
                                     <tbody>
                                         <?php foreach ($purchases as $purchase): ?>
                                             <tr>
-                                                <td><?php echo $purchase['purchase_id']; ?></td>
-                                                <td><?php echo $purchase['SharesPurchased']; ?></td>
-                                                <td><?php echo $purchase['PurchaseDate']; ?></td>
-                                                <td><?php echo $purchase['Amount']." ".$purchase['Currency']; ?></td>
-                                                <td><?php echo $purchase['ADAValue']; ?></td>
+                                                <td><?= $purchase->crand; ?></td>
+                                                <td><?= $purchase->SharesPurchased; ?></td>
+                                                <td><?= $purchase->PurchaseDate->formattedYmd; ?></td>
+                                                <td><?= $purchase->Amount." ".$purchase->Currency; ?></td>
+                                                <td><?= $purchase->ADAValue; ?></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -563,7 +567,7 @@ $padlockOffset = $descriptionHeight / 2;
                                 <p class="mb-4">You must be logged in to gain access to the Merchants' Guild.</p>
 
                                 <!-- Login Button -->
-                                <a href="<?php echo Version::urlBetaPrefix(); ?>/login.php?redirect=merchants-guild.php" class="btn btn-primary">Log In</a>
+                                <a href="<?= Version::urlBetaPrefix(); ?>/login.php?redirect=merchants-guild.php" class="btn btn-primary">Log In</a>
 
                             <?php } ?>
                         </div>
@@ -575,6 +579,7 @@ $padlockOffset = $descriptionHeight / 2;
             
             <?php require("php-components/base-page-discord.php"); ?>
         </div>
+        <?php require("php-components/base-page-footer.php"); ?>
     </main>
 
     
@@ -583,23 +588,23 @@ $padlockOffset = $descriptionHeight / 2;
         $(document).ready( function () {
             $('#datatable-members').DataTable({
                 "order": [[1, 'desc']],
-                "responsive": true,
-                "scrollX": true,
+                //"responsive": true,
+                //"scrollX": true,
             });
             $('#datatable-purchases').DataTable({
                 "order": [[2, 'desc']],
-                "responsive": true,
-                "scrollX": true,
+                //"responsive": true,
+                //"scrollX": true,
             });
             $('#datatable-cash-flow-out').DataTable({
                 "order": [[5, 'desc']],
-                "responsive": true,
-                "scrollX": true,
+                //"responsive": true,
+                //"scrollX": true,
             });
             $('#datatable-cash-flow-in').DataTable({
                 "order": [[2, 'desc']],
-                "responsive": true,
-                "scrollX": true,
+                //"responsive": true,
+                //"scrollX": true,
             });
         } );
     </script>

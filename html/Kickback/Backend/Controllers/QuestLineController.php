@@ -160,8 +160,8 @@ class QuestLineController {
         }
 
         // Check if content ID is null and handle content insertion if needed
-        if ($questLineResp->data->hasPageContent()) {
-            $newContentId = ContentController::insertNewContent(); // Assuming a ContentController method exists
+        if (!$questLineResp->data->hasPageContent()) {
+            $newContentId = ContentController::insertNewContent();
             self::updateQuestLineContent($questLineResp->data, $newContentId);
 
             // Re-fetch the quest line after inserting the content
