@@ -152,7 +152,21 @@ class ContentController
         return (new Response(true, "Content retrieved successfully.", $contentData));
     }
 
-    public static function getContentTypes() : Response
+    /**
+    * @return array<array{ Id : string,  type_name : string }>
+    */
+    public static function queryContentTypes() : array
+    {
+        $resp = self::queryContentTypesAsResponse();
+        if ($resp->success) {
+            // @phpstan-ignore-next-line
+            return $resp->data;
+        } else {
+            throw new \Exception($resp->message);
+        }
+    }
+
+    public static function queryContentTypesAsResponse() : Response
     {
         $conn = Database::getConnection();
         $query = "SELECT Id, type_name FROM content_type";
@@ -172,79 +186,78 @@ class ContentController
 
     public static function canUpdateContent(string $contentContainerId, string $contentContainerType) : bool
     {
-        if (Session::isLoggedIn())
-        {
-            $ids = explode("/", $contentContainerId);
-            switch ($contentContainerType)
-            {
-                case 'BLOG-POST':
-                    if ( BlogPostController::queryBlogPostByLocatorsInto($ids[0], $ids[1], $blogPost) )
-                    {
-                        return $blogPost->isWriter();
-                    }
-                    else
-                    {
-                        return false;
-                    }
-
-                case 'QUEST':
-                    if ( QuestController::queryQuestByLocatorInto($ids[0], $quest) )
-                    {
-                        return $quest->canEdit();
-                    }
-                    else
-                    {
-                        return false;
-                    }
-
-                case 'QUEST-LINE':
-
-                    if ( QuestLineController::queryQuestLineByLocatorInto($ids[0], $questLine) )
-                    {
-                        return $questLine->canEdit();
-                    }
-                    else
-                    {
-                        return false;
-                    }
-
-                case 'LICH-CARD':
-                    if ( LichCardController::queryLichCardByLocatorInto($ids[0], $lichCard) )
-                    {
-                        return $lichCard->canEdit();
-                    }
-                    else
-                    {
-                        return false;
-                    }
-
-                        
-                case 'LICH-SET':
-                    if ( LichCardController::queryLichSetByLocatorInto($ids[0], $lichSet) )
-                    {
-                        return $lichSet->canEdit();
-                    }
-                    else
-                    {
-                        return false;
-                    }
-
-                case 'TREASURE-HUNT':
-                    if ( TreasureHuntController::queryEventByLocatorInto($ids[0], $treasureHunt) )
-                    {
-                        return $treasureHunt->canEdit();
-                    }
-                    else
-                    {
-                        return false;
-                    }
-
-                default:
-                return false;
-            }
+        if (!Session::isLoggedIn()) {
+            return false;
         }
 
-        return false;
+        $ids = explode("/", $contentContainerId);
+        switch ($contentContainerType)
+        {
+            case 'BLOG-POST':
+                if ( BlogPostController::queryBlogPostByLocatorsInto($ids[0], $ids[1], $blogPost) )
+                {
+                    return $blogPost->isWriter();
+                }
+                else
+                {
+                    return false;
+                }
+
+            case 'QUEST':
+                if ( QuestController::queryQuestByLocatorInto($ids[0], $quest) )
+                {
+                    return $quest->canEdit();
+                }
+                else
+                {
+                    return false;
+                }
+
+            case 'QUEST-LINE':
+
+                if ( QuestLineController::queryQuestLineByLocatorInto($ids[0], $questLine) )
+                {
+                    return $questLine->canEdit();
+                }
+                else
+                {
+                    return false;
+                }
+
+            case 'LICH-CARD':
+                if ( LichCardController::queryLichCardByLocatorInto($ids[0], $lichCard) )
+                {
+                    return $lichCard->canEdit();
+                }
+                else
+                {
+                    return false;
+                }
+
+
+            case 'LICH-SET':
+                if ( LichCardController::queryLichSetByLocatorInto($ids[0], $lichSet) )
+                {
+                    return $lichSet->canEdit();
+                }
+                else
+                {
+                    return false;
+                }
+
+            case 'TREASURE-HUNT':
+                if ( TreasureHuntController::queryEventByLocatorInto($ids[0], $treasureHunt) )
+                {
+                    return $treasureHunt->canEdit();
+                }
+                else
+                {
+                    return false;
+                }
+
+            default:
+            return false;
+        }
     }
 
     /**
@@ -288,114 +301,121 @@ class ContentController
     /**
     * @param editContentRequestListPOST $content_data
     */
-    public static function handleContentEditRequests(array $content_data) : Response
+    private static function handleContentEditRequests(array $content_data) : Response
     {
         $conn = Database::getConnection();
 
         foreach ($content_data as $contentItem) {
             try {
-                // Ignore items with both deleted=true and inserted=true
-                if (self::editContentFlagIsTrue($contentItem, 'deleted') && self::editContentFlagIsTrue($contentItem, 'inserted')) {
-                    continue;
-                }
-
-                // Handle Deleted Items
-                if (self::editContentRequestIsDelete($contentItem))
-                //if (isset($contentItem['deleted']) && $contentItem['deleted'])
-                {
-                    // Delete content_detail_data
-                    $stmt = $conn->prepare('DELETE FROM content_detail_data WHERE content_detail_id = ?');
-                    mysqli_stmt_bind_param($stmt, 'i', $contentItem['content_detail_id']);
-                    mysqli_stmt_execute($stmt);
-
-                    // Delete content_detail
-                    $stmt = $conn->prepare("DELETE FROM content_detail WHERE Id = ?");
-                    mysqli_stmt_bind_param($stmt, 'i', $contentItem['content_detail_id']);
-                    mysqli_stmt_execute($stmt);
-                }
-                // Handle Updated Items (only if not marked as inserted)
-                elseif (self::editContentRequestIsUpdate($contentItem))
-                {
-                    // Disabled for now; it might break things.
-                    // (I'm not sure if it's valid to have 0 detail items or not.)
-                    // -- Chad Joan  2025-06-18
-                    //if ( !self::extractEditContentDetailInto($contentItem, $dataItems) ) {
-                    //    return new Response(false, 'Invalid edit-content HTTP POST request: no detail items in `update` request.', null);
-                    //}
-
-                    // Update content_detail
-                    $stmt = $conn->prepare('UPDATE content_detail SET content_type_id = ?, `order` = ? WHERE Id = ?');
-                    mysqli_stmt_bind_param($stmt, 'iii', $contentItem['content_type'], $contentItem['element_order'], $contentItem['content_detail_id']);
-                    mysqli_stmt_execute($stmt);
-
-                    // If there are no detail items, then we're done.
-                    // This check guards the foreach loop against
-                    // potentially trying to iterate over a `null` value.
-                    // (See also: commented out code above would be how to make this an error, if that's desired.)
-                    if ( !self::extractEditContentDetailInto($contentItem, $dataItems) ) {
-                        continue;
-                    }
-
-                    // Update, Insert, or Delete content_detail_data (loop through each data item)
-                    foreach ($dataItems as $dataItem) {
-                        if (self::editContentDetailIsDelete($dataItem)) {
-                            // Delete the data_item if it has a content_detail_data_id
-                            if (isset($dataItem['content_detail_data_id'])) {
-                                $stmt = $conn->prepare('DELETE FROM content_detail_data WHERE Id = ?');
-                                mysqli_stmt_bind_param($stmt, 'i', $dataItem['content_detail_data_id']);
-                                mysqli_stmt_execute($stmt);
-                            }
-                        } elseif (isset($dataItem['content_detail_data_id'])) {
-                            // It's an existing data item, so update
-                            $stmt = $conn->prepare('UPDATE content_detail_data SET data = ?, data_order = ?, media_id = ? WHERE Id = ?');
-                            mysqli_stmt_bind_param($stmt, 'siii', $dataItem['data'], $dataItem['data_order'], $dataItem['media_id'], $dataItem['content_detail_data_id']);
-                            mysqli_stmt_execute($stmt);
-                        } else {
-                            // It's a new data item, so insert
-                            $stmt = $conn->prepare('INSERT INTO content_detail_data (content_detail_id, data, data_order, media_id) VALUES (?, ?, ?, ?)');
-                            mysqli_stmt_bind_param($stmt, 'isii', $contentItem['content_detail_id'], $dataItem['data'], $dataItem['data_order'], $dataItem['media_id']);
-                            mysqli_stmt_execute($stmt);
-                        }
-                    }
-                }
-                // Handle Inserted Items
-                elseif (self::editContentRequestIsInsert($contentItem))
-                {
-                    // Disabled for now; it might break things.
-                    // (I'm not sure if it's valid to have 0 detail items or not.)
-                    // -- Chad Joan  2025-06-18
-                    //if ( !self::extractInsertContentDetailInto($contentItem, $dataItems) ) {
-                    //    return new Response(false, 'Invalid edit-content HTTP POST request: no detail items in `update` request.', null);
-                    //}
-
-                    // Insert into content_detail
-                    $stmt = $conn->prepare('INSERT INTO content_detail (content_id, content_type_id, `order`) VALUES (?, ?, ?)');
-                    mysqli_stmt_bind_param($stmt, 'iii', $contentItem['content_id'], $contentItem['content_type'], $contentItem['element_order']);
-                    mysqli_stmt_execute($stmt);
-                    $newContentDetailId = mysqli_insert_id($conn);
-
-                    // If there are no detail items, then we're done.
-                    // This check guards the foreach loop against
-                    // potentially trying to iterate over a `null` value.
-                    // (See also: commented out code above would be how to make this an error, if that's desired.)
-                    if ( !self::extractInsertContentDetailInto($contentItem, $dataItems) ) {
-                        continue;
-                    }
-
-                    // Insert into content_detail_data (loop for each data item)
-                    foreach ($dataItems as $dataItem) {
-                        $stmt = $conn->prepare('INSERT INTO content_detail_data (content_detail_id, data, data_order, media_id) VALUES (?, ?, ?, ?)');
-                        mysqli_stmt_bind_param($stmt, 'isii', $newContentDetailId, $dataItem['data'], $dataItem['data_order'], $dataItem['media_id']);
-                        mysqli_stmt_execute($stmt);
-                    }
-                }
+                self::handleContentEditRequest($conn, $contentItem);
             } catch (\Exception $e) {
                 return new Response(false, $e->getMessage(), null);
-
             }
         }
 
         return new Response(true, 'Content updated successfully.', null);
+    }
+
+    /**
+    * @param editContentRequestPOST $contentItem
+    */
+    private static function handleContentEditRequest(\mysqli $conn, array $contentItem) : void
+    {
+        // Ignore items with both deleted=true and inserted=true
+        if (self::editContentFlagIsTrue($contentItem, 'deleted') && self::editContentFlagIsTrue($contentItem, 'inserted')) {
+            return;
+        }
+
+        // Handle Deleted Items
+        if (self::editContentRequestIsDelete($contentItem))
+        //if (isset($contentItem['deleted']) && $contentItem['deleted'])
+        {
+            // Delete content_detail_data
+            $stmt = $conn->prepare('DELETE FROM content_detail_data WHERE content_detail_id = ?');
+            mysqli_stmt_bind_param($stmt, 'i', $contentItem['content_detail_id']);
+            mysqli_stmt_execute($stmt);
+
+            // Delete content_detail
+            $stmt = $conn->prepare("DELETE FROM content_detail WHERE Id = ?");
+            mysqli_stmt_bind_param($stmt, 'i', $contentItem['content_detail_id']);
+            mysqli_stmt_execute($stmt);
+        }
+        // Handle Updated Items (only if not marked as inserted)
+        elseif (self::editContentRequestIsUpdate($contentItem))
+        {
+            // Disabled for now; it might break things.
+            // (I'm not sure if it's valid to have 0 detail items or not.)
+            // -- Chad Joan  2025-06-18
+            //if ( !self::extractEditContentDetailInto($contentItem, $dataItems) ) {
+            //    throw new \Exception('Invalid edit-content HTTP POST request: no detail items in `update` request.');
+            //}
+
+            // Update content_detail
+            $stmt = $conn->prepare('UPDATE content_detail SET content_type_id = ?, `order` = ? WHERE Id = ?');
+            mysqli_stmt_bind_param($stmt, 'iii', $contentItem['content_type'], $contentItem['element_order'], $contentItem['content_detail_id']);
+            mysqli_stmt_execute($stmt);
+
+            // If there are no detail items, then we're done.
+            // This check guards the foreach loop against
+            // potentially trying to iterate over a `null` value.
+            // (See also: commented out code above would be how to make this an error, if that's desired.)
+            if ( !self::extractEditContentDetailInto($contentItem, $dataItems) ) {
+                return;
+            }
+
+            // Update, Insert, or Delete content_detail_data (loop through each data item)
+            foreach ($dataItems as $dataItem) {
+                if (self::editContentDetailIsDelete($dataItem)) {
+                    // Delete the data_item if it has a content_detail_data_id
+                    if (isset($dataItem['content_detail_data_id'])) {
+                        $stmt = $conn->prepare('DELETE FROM content_detail_data WHERE Id = ?');
+                        mysqli_stmt_bind_param($stmt, 'i', $dataItem['content_detail_data_id']);
+                        mysqli_stmt_execute($stmt);
+                    }
+                } elseif (isset($dataItem['content_detail_data_id'])) {
+                    // It's an existing data item, so update
+                    $stmt = $conn->prepare('UPDATE content_detail_data SET data = ?, data_order = ?, media_id = ? WHERE Id = ?');
+                    mysqli_stmt_bind_param($stmt, 'siii', $dataItem['data'], $dataItem['data_order'], $dataItem['media_id'], $dataItem['content_detail_data_id']);
+                    mysqli_stmt_execute($stmt);
+                } else {
+                    // It's a new data item, so insert
+                    $stmt = $conn->prepare('INSERT INTO content_detail_data (content_detail_id, data, data_order, media_id) VALUES (?, ?, ?, ?)');
+                    mysqli_stmt_bind_param($stmt, 'isii', $contentItem['content_detail_id'], $dataItem['data'], $dataItem['data_order'], $dataItem['media_id']);
+                    mysqli_stmt_execute($stmt);
+                }
+            }
+        }
+        // Handle Inserted Items
+        elseif (self::editContentRequestIsInsert($contentItem))
+        {
+            // Disabled for now; it might break things.
+            // (I'm not sure if it's valid to have 0 detail items or not.)
+            // -- Chad Joan  2025-06-18
+            //if ( !self::extractInsertContentDetailInto($contentItem, $dataItems) ) {
+            //    throw new \Exception('Invalid edit-content HTTP POST request: no detail items in `insert` request.');
+            //}
+
+            // Insert into content_detail
+            $stmt = $conn->prepare('INSERT INTO content_detail (content_id, content_type_id, `order`) VALUES (?, ?, ?)');
+            mysqli_stmt_bind_param($stmt, 'iii', $contentItem['content_id'], $contentItem['content_type'], $contentItem['element_order']);
+            mysqli_stmt_execute($stmt);
+            $newContentDetailId = mysqli_insert_id($conn);
+
+            // If there are no detail items, then we're done.
+            // This check guards the foreach loop against
+            // potentially trying to iterate over a `null` value.
+            // (See also: commented out code above would be how to make this an error, if that's desired.)
+            if ( !self::extractInsertContentDetailInto($contentItem, $dataItems) ) {
+                return;
+            }
+
+            // Insert into content_detail_data (loop for each data item)
+            foreach ($dataItems as $dataItem) {
+                $stmt = $conn->prepare('INSERT INTO content_detail_data (content_detail_id, data, data_order, media_id) VALUES (?, ?, ?, ?)');
+                mysqli_stmt_bind_param($stmt, 'isii', $newContentDetailId, $dataItem['data'], $dataItem['data_order'], $dataItem['media_id']);
+                mysqli_stmt_execute($stmt);
+            }
+        }
     }
 
     /**
