@@ -8,6 +8,8 @@ namespace Kickback\Common;
 */
 final class Arr
 {
+    use \Kickback\Common\StaticClassTrait;
+
     /**
     * A type-safe alternative to the `empty` builtin.
     *
@@ -28,12 +30,6 @@ final class Arr
     public static function is_longer_than(?array $var, int $minLength) : bool
     {
         return !is_null($var) && count($var) >= $minLength;
-    }
-
-    // Prevent instantiation/construction of the (static/constant) class.
-    /** @return never */
-    private function __construct() {
-        throw new \Exception("Instantiation of static class " . get_class($this) . "is not allowed.");
     }
 }
 ?>

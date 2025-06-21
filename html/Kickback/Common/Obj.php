@@ -5,6 +5,8 @@ namespace Kickback\Common;
 
 final class Obj
 {
+    use \Kickback\Common\StaticClassTrait;
+
     /**
     * Uses the data in `$source` to populate the object/class `$dest`,
     * assuming that the keys in `$source` are the field (property)
@@ -119,12 +121,6 @@ final class Obj
             catch(\Exception $e) {;}
         }
         return $dest;
-    }
-
-    // Prevent instantiation/construction of the (static/constant) class.
-    /** @return never */
-    private function __construct() {
-        throw new \Exception("Instantiation of static class " . get_class($this) . "is not allowed.");
     }
 }
 ?>
