@@ -95,10 +95,16 @@ class DatabaseRow implements \IteratorAggregate, \ArrayAccess, \Countable, Datab
 
 		// Error handling.
 		$values = $db_rows->fetch_array(MYSQLI_NUM);
-		if ( $values === false ) {
+		// Ignore these errors because PHPStan is seeing a version of the `fetch_array`
+		// function that never returns `false`. Meanwhile, the PHP documents
+		// suggest that `fetch_array` _might_ return `false`. So we're leaving
+		// this check in place, just in case a different version of PHP will
+		// potentially return the `false` value from the `fetch_array` method.
+		/** @phpstan-ignore identical.alwaysFalse,booleanAnd.alwaysFalse */
+		if ( isset($values) && $values === false ) {
 			throw new \UnexpectedValueException("Could not retrieve row from \mysqli_result object due to unknown error(s).");
 		} else
-		if ( is_null($values) ) {
+		if ( !isset($values) ) {
 			return false;
 		}
 
