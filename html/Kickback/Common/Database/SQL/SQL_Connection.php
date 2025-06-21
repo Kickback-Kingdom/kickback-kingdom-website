@@ -5,7 +5,6 @@ namespace Kickback\Common\Database\SQL;
 
 interface SQL_Connection
 {
-    //public function set_column_access_type_strictness(int $strictness_level) : void;
     public function close() : bool;
 
     //public function mysqli_autocommit(bool $enable): bool;

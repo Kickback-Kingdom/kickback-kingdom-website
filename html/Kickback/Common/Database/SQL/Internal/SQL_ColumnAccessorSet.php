@@ -39,6 +39,9 @@ interface SQL_ColumnAccessorSet
     public function nstr(int|string $column_number_or_name = null)      : SQL_NullableColumnAccessorString|string|null;
     public function nstring(int|string $column_number_or_name = null)   : SQL_NullableColumnAccessorString|string|null;
 
+    // These will probably be moved to a different accessor set,
+    // as they do not yield values directly, and do not have the
+    // same interface as the "column" accessors.
     // // Time-unit accessors that precede either int (timestamp) or DateTime accessors
     // // as a way to provide scale/precision information to integer-valued
     // // Unix timestamps on either side of the data transfer.

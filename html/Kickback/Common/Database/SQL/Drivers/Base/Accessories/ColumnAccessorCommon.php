@@ -12,8 +12,6 @@ use Kickback\Common\Database\SQL\Accessories\SQL_ColumnAccessor;
 use Kickback\Common\Database\SQL\Accessories\SQL_ColumnAccessorBool;
 
 /**
-* @phpstan-import-type kksql_any_supported_type from SQL_ColumnAccessorSet
-*
 * @template T
 */
 abstract class ColumnAccessorCommon

@@ -19,9 +19,6 @@ use Kickback\Common\Database\SQL\Accessories\SQL_NullableColumnAccessorFloat;
 use Kickback\Common\Database\SQL\Accessories\SQL_NullableColumnAccessorInt;
 use Kickback\Common\Database\SQL\Accessories\SQL_NullableColumnAccessorString;
 
-use Kickback\Common\Database\SQL\Accessories\SQL_MetaAccessorUnitOfTime;
-use Kickback\Common\Database\SQL\Accessories\SQL_MetaAccessorEnumClass;
-
 use Kickback\Common\Database\SQL\SQL_TypeStrictness;
 
 trait ColumnAccessorSetTrait
@@ -41,14 +38,17 @@ trait ColumnAccessorSetTrait
     /** @return ($cnon is null ? SQL_NullableColumnAccessorString   : ?string   ) */ public function nstr(int|string $cnon = null)      : SQL_NullableColumnAccessorString|string|null       { return Misc::column_accessor_impl($cnon, $this->column_accessor_set()->nstring()); }
     /** @return ($cnon is null ? SQL_NullableColumnAccessorString   : ?string   ) */ public function nstring(int|string $cnon = null)   : SQL_NullableColumnAccessorString|string|null       { return Misc::column_accessor_impl($cnon, $this->column_accessor_set()->nstring()); }
 
-    //// Time-unit accessors that precede either int (timestamp) or DateTime accessors
-    //// as a way to provide scale/precision information to integer-valued
-    //// Unix timestamps on either side of the data transfer.
-    //public function secs()      : SQL_ColumnAccessorUnitOfTime;
-    //public function msecs()     : SQL_ColumnAccessorUnitOfTime;
-    //public function usecs()     : SQL_ColumnAccessorUnitOfTime;
-    //public function hnsecs()    : SQL_ColumnAccessorUnitOfTime;
-    //public function nsecs()     : SQL_ColumnAccessorUnitOfTime;
+    // These will probably be moved to a different accessor set,
+    // as they do not yield values directly, and do not have the
+    // same interface as the "column" accessors.
+    // // Time-unit accessors that precede either int (timestamp) or DateTime accessors
+    // // as a way to provide scale/precision information to integer-valued
+    // // Unix timestamps on either side of the data transfer.
+    // public function secs()      : SQL_ColumnAccessorUnitOfTime;
+    // public function msecs()     : SQL_ColumnAccessorUnitOfTime;
+    // public function usecs()     : SQL_ColumnAccessorUnitOfTime;
+    // public function hnsecs()    : SQL_ColumnAccessorUnitOfTime;
+    // public function nsecs()     : SQL_ColumnAccessorUnitOfTime;
 }
 
 ?>

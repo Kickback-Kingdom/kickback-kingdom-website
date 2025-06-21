@@ -11,8 +11,6 @@ use Kickback\Common\Database\SQL\Drivers\Base\Accessories\ColumnAccessorCommon;
 
 
 /**
-* @phpstan-import-type kksql_any_supported_type from SQL_ColumnAccessorSet
-*
 * @extends ColumnAccessorCommon<bool>
 * @implements \ArrayAccess<int|string,bool>
 */

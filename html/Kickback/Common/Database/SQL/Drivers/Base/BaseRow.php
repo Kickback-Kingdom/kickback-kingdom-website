@@ -147,28 +147,6 @@ abstract class BaseRow implements SQL_Row
         }
     }
 
-    /*
-    * The `__get` and `__isset` magic methods implement properties that correspond
-    * to the methods `secs()`, `msecs()`, `usecs()`, `hnsecs()`, and `nsecs()`.
-    *
-    * This allows us to write more concise access chains. For example,
-    * `$row->int()->hnsecs()['foo']` can instead be written as `$row->int->hnsecs['foo']`.
-    *
-    * Note that setting and unsetting are not allowed. See
-    * `Kickback\\Common\\Database\\SQL\\SQL_Row::__get` for details.
-    *
-    * @param 'secs'|'msecs'|'hnsecs'|'usecs'|'nsecs'|'enum_class' $name
-    *
-    * @return ($name is 'secs'       ? SQL_MetaAccessorUnitOfTime :
-    *          $name is 'msecs'      ? SQL_MetaAccessorUnitOfTime :
-    *          $name is 'usecs'      ? SQL_MetaAccessorUnitOfTime :
-    *          $name is 'hnsecs'     ? SQL_MetaAccessorUnitOfTime :
-    *          $name is 'nsecs'      ? SQL_MetaAccessorUnitOfTime :
-    *          $name is 'enum_class' ? SQL_MetaAccessorEnumClass  :
-    *          never)
-    */
-    //public function __get(string $name): mixed;
-
     /**
     * @see __get
     *
@@ -203,35 +181,6 @@ abstract class BaseRow implements SQL_Row
     //public function __call(string $column_name, array $arguments): mixed
 
     //public function __toString() : string;
-
-
-    // /** @param int|string $offset */
-    // public function offsetExists(mixed $offset) : bool;
-    //
-    // /**
-    // * @param int|string $offset
-    // * @return foobarbaz
-    // */
-    // public function offsetGet(mixed $offset) : mixed;
-    //
-    // /**
-    // * @param int|string|null           $offset
-    // * @param foobarbaz  $value
-    // * @return never
-    // */
-    // public function offsetSet(mixed $offset, mixed $value) : never {
-    //     throw new \BadMethodCallException();
-    // }
-    //
-    // /**
-    // * @param int|string $offset
-    // * @return never
-    // */
-    // public function offsetUnset(mixed $offset) : never {
-    //     $zsome_integer = strval(self::get_an_int());
-    //     echo "Here's an integer: $zsome_integer\n";
-    //     throw new \BadMethodCallException();
-    // }
 }
 
 ?>

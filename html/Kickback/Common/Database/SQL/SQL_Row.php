@@ -20,6 +20,69 @@ use Kickback\Common\Database\SQL\Accessories\SQL_MetaAccessorUnitOfTime;
 use Kickback\Common\Database\SQL\Accessories\SQL_MetaAccessorEnumClass;
 
 /**
+* When reading from a column/cell, a type conversion may occur
+* if the SQL driver does not deliver a value that is exactly the same
+* (PHP) type as the type requested from the `SQL_Row` object.
+*
+* The rules for such type conversions are as follows:
+* * For reading `bool` from a string columns:
+*     The strings '', '0', and 'false' will convert to boolean `false`,
+*     while the strings '1' (and other non-zero integers) and 'true'
+*     will convert to boolean `true`.
+*     Other strings will result in a \DomainException being thrown.
+* * For reading `bool` from integer or decimal columns:
+*     The value 0 will be `false`, and any non-zero values will be `true`.
+* * For reading `float` from string columns:
+*     Whitespace (ASCII) is stripped from both ends of the string, then
+*     a conversion will be attempted using
+*     `filter_var($column, FILTER_VALIDATE_FLOAT)`
+*     If conversion fails, a \DomainException will be thrown.
+* * For reading `int` from string columns:
+*     Whitespace (ASCII) is stripped from both ends of the string, then
+*     a conversion will be attempted using
+*     `filter_var($column, FILTER_VALIDATE_INT)`.
+*     If conversion fails, a \DomainException will be thrown.
+* * For reading `string` from any other type of column:
+*     It will be stringized using string interpolation or equivalent,
+*     i.e. `return "$column"`. For all scalar types, this will be guaranteed
+*     to succeed. DateTime objects, if provided by the SQL driver (unlikely,
+*     but technically possible), will be formatted like so:
+*     `YYYY-MM-DD hh:mm:ss +0000`
+* * For reading `int` from a datetime column:
+*     The `int` accessor does not provide this feature directly;
+*     but a unit-of-time accessor allows integer output with its `timestamp` accessor.
+*     If precision/units aren't provided, then a \BadMethodCallException will be thrown.
+*     If precision/units are provided (ex: `$row->hnsecs->timestamp['my_datetime']`),
+*     then the datetime will be converted to a unix timestamp with
+*     the given precision (in the example, it'd be hectonanoseconds since Unix Epoch).
+*     If the database column metadata or value does not contain timezone information,
+*     then it is assumed to be in the UTC timezone.
+* * For reading `datetime` from an integer or decimal column:
+*     If precision/units aren't provided, then a \BadMethodCallException will be thrown.
+*     If precision/units are provided (ex: `$row->usecs->DateTime['my_timestamp']`),
+*     then the source column will be assumed to be a unix timestamp with the
+*     given precision (in the example, it'd be microseconds since Unix Epoch)
+*     and that will be converted into a `DateTime` object.
+*     The resulting `DateTime` object will be in the UTC timezone.
+*     NOTE: PHP \DateTime objects have only `microsecond` resolution.
+*     Any precision beyond a microsecond level will be truncated
+*     during a conversion to a \DateTime object. If preservation of data
+*     is desired, then it is recommended to use an `int` internally
+*     (on 64-bit systems) to represent timestamps/datetimes, and only
+*     convert it to something else when displaying approximate datetime
+*     to the user.
+*
+* These conversions are invalid, and will result in a \TypeError being thrown:
+* * `DateTime` to `bool`
+* * `DateTime` to `float`
+* * `float` to `bool`
+* * `float` to `DateTime`
+* * `bool` to `float`
+* * `bool` to `DateTime`
+* * `int` to `DateTime`
+*
+* A \TypeError will only be thrown if the conversion fails.
+*
 * @phpstan-import-type kksql_any_supported_type   from SQL_ColumnAccessorSet
 * @phpstan-import-type all_column_accessor_names  from SQL_ColumnAccessorSet
 *

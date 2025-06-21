@@ -11,8 +11,6 @@ use Kickback\Common\Database\SQL\Drivers\Base\Accessories\ColumnAccessorCommon;
 use Kickback\Common\Database\SQL\Drivers\Base\Accessories\ColumnAccessorInt;
 
 /**
-* @phpstan-import-type kksql_any_supported_type from SQL_ColumnAccessorSet
-*
 * @extends ColumnAccessorCommon<?int>
 * @implements \ArrayAccess<int|string,?int>
 */

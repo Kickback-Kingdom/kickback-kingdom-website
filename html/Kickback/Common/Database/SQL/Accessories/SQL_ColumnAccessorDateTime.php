@@ -49,28 +49,6 @@ interface SQL_ColumnAccessorDateTime extends \ArrayAccess, SQL_ColumnAccessor
     */
     public function precision() : ?int;
 
-    // /** @param int|string $offset */
-    // public function offsetExists(mixed $offset) : bool;
-    //
-    // /**
-    // * @param int|string $offset
-    // * @return \DateTime
-    // */
-    // public function offsetGet(mixed $offset) : mixed;
-    //
-    // /**
-    // * @param int|string|null $offset
-    // * @param \DateTime       $value
-    // * @return never
-    // */
-    // public function offsetSet(mixed $offset, mixed $value) : never;
-    //
-    // /**
-    // * @param int|string $offset
-    // * @return never
-    // */
-    // public function offsetUnset(mixed $offset) : never;
-
     /*
     * The `__get` and `__isset` magic methods implement properties that correspond
     * to the methods `secs()`, `msecs()`, `usecs()`, `hnsecs()`, and `nsecs()`.
