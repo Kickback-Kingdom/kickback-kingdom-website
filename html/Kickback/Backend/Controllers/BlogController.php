@@ -13,7 +13,23 @@ use Kickback\Backend\Views\vDateTime;
 
 class BlogController 
 {
-    public static function getBlogByLocator(string $locator) : Response {
+    /**
+    * @phpstan-assert-if-true =vBlog $blog
+    */
+    public static function queryBlogByLocatorInto(string $locator, ?vBlog &$blog): bool
+    {
+        $resp = self::queryBlogByLocatorAsResponse($locator);
+        if ( $resp->success ) {
+            $blog = $resp->data;
+            return true;
+        } else {
+            $blog = null;
+            return false;
+        }
+    }
+
+    public static function queryBlogByLocatorAsResponse(string $locator) : Response
+    {
         $sql = "SELECT * FROM v_blog_info WHERE locator = ? LIMIT 1";
 
         $conn = Database::getConnection();

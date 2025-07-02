@@ -25,13 +25,13 @@ if (isset($_GET['id']))
 {
 
     $id = $_GET['id'];
-    $questResp = QuestController::getQuestById($id);
+    $questResp = QuestController::queryQuestByIdAsResponse($id);
 }
 
 if (isset($_GET['locator'])){
         
     $name = $_GET['locator'];
-    $questResp = QuestController::getQuestByLocator($name);
+    $questResp = QuestController::queryQuestByLocatorAsResponse($name);
 }
 
 if (isset($_GET['new']))
@@ -43,7 +43,7 @@ if (isset($_GET['new']))
 
 
 //print_r($questResp);
-if (!$questResp->success)
+if (isset($questResp) && !$questResp->success)
 {
     unset($questResp);
 }
