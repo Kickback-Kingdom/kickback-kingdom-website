@@ -137,52 +137,6 @@ class StoreController extends DatabaseController
         return $resp;
     }
 
-    public static function renderStoreProductsHtml(vRecordId $cart, array $products) : string
-    {
-        ob_start();
-        foreach ($products as $product) 
-        {
-            $media = new vMedia();
-            $media->setMediaPath($product->ref_small_image_path);
-        ?>
-                        <div class="col">
-                            <div class="card h-100">         
-                                    <button>
-                                        <img src="<?=$media->getFullPath()?>" class="card-img-top" alt="<?=$product->name?> image">
-                                       
-                                        <div class="card-body">
-                                            <h5 class="card-title"><?=$product->name?></h5>
-                                            <?php
-                                                if($product->currency_item->crand == -1)
-                                                {
-                                                    ?>
-                                                    <p class="card-text"><?=$product->price->returnPriceWithSymbol() ?></p>
-                                                    <?php
-                                                }
-                                                else
-                                                {
-                                                    ?>
-                                                    <p class="card-text"><?=$product->price->smallCurrencyUnit ?> <?=$product->currency_item_name?></p>
-                                                    <?php
-                                                }
-                                            ?>
-                                            
-                                        </div>
-                                    </button> 
-                                <form class="add-product-to-cart">
-                                    <input type="hidden" name="productCtime" value="<?=$product->ctime?>">
-                                    <input type="hidden" name="productCrand" value="<?=$product->crand?>">
-                                    <div class="card-footer ">
-                                        <button type="submit" class="btn btn-primary">Add to Cart</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    <?php
-                    }
-       return ob_get_clean();
-    }
-
 }
 
 ?>

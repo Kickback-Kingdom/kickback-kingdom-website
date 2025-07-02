@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Kickback\Backend\Views;
 
 use \Kickback\Backend\Models\ForeignRecordId;
+use \Kickback\Backend\Views\vMedia;
+use \Kickback\Backend\Controllers\ItemController;
 
 
 class vProduct extends vRecordId
@@ -14,9 +16,9 @@ class vProduct extends vRecordId
     public string $currency_item_name;
     public vPrice $price;
     public string $description;
-    public ForeignRecordId $currency_item;
-    public string $ref_small_image_path;
-    public string $ref_large_image_path;
+    public vItem $currency_item;
+    public vMedia $ref_small_image_path;
+    public vMedia $ref_large_image_path;
     public ForeignRecordId $storeId;
 
     function __construct(
@@ -28,8 +30,8 @@ class vProduct extends vRecordId
         vPrice $price, 
         string $description, 
         ?vRecordId $currency_item,
-        string $ref_small_image_path,
-        string $ref_large_image_path,
+        ?string $ref_small_image_path,
+        ?string $ref_large_image_path,
         vRecordId $storeId
         )
     {
@@ -40,9 +42,32 @@ class vProduct extends vRecordId
         $this->currency_item_name = is_null($currency_item_name) ? "ADA" : $currency_item_name;
         $this->price = $price;
         $this->description = $description;
-        $this->currency_item = new ForeignRecordId($currency_item->ctime, $currency_item->crand);
-        $this->ref_small_image_path = $ref_small_image_path;
-        $this->ref_large_image_path = $ref_large_image_path;
+
+        $currencyItemResp = ItemController::getItemById($currency_item);
+
+        if ($currencyItemResp->success)
+            $this->currency_item = $currencyItemResp->data;
+
+        if ($ref_small_image_path != null)
+        {
+            $this->ref_small_image_path = new vMedia();
+            $this->ref_small_image_path->setMediaPath($ref_small_image_path);
+        }
+        else{
+
+            $this->ref_small_image_path = vMedia::defaultIcon();
+        }
+
+        if ($ref_small_image_path != null)
+        {
+            $this->ref_large_image_path = new vMedia();
+            $this->ref_large_image_path->setMediaPath($ref_large_image_path);
+        }
+        else {
+            
+            $this->ref_large_image_path = vMedia::defaultIcon();
+        }
+
         $this->storeId = $storeId->getForeignRecordId();
     }
 }

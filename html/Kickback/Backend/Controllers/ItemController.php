@@ -132,7 +132,7 @@ class ItemController
     public static function getItemById(vRecordId $item_id) : Response {
         // Prepare SQL statement
         $conn = Database::getConnection();
-        $stmt = mysqli_prepare($conn, "SELECT * FROM item WHERE Id = ?");
+        $stmt = mysqli_prepare($conn, "SELECT * FROM v_item_info WHERE Id = ?");
    
         mysqli_stmt_bind_param($stmt, "i", $item_id->crand);
     
