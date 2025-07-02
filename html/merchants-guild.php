@@ -334,7 +334,7 @@ $padlockOffset = $descriptionHeight / 2;
                                             <tbody>
                                                 <?php foreach ($shareholders as $shareholder): ?>
                                                     <tr>
-                                                        <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="<?= $shareholder->account->getProfilePictureURL(); ?>"/><?= $shareholder->account->getAccountElement(); ?></td>
+                                                        <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="<?= $shareholder->account->profilePictureURL(); ?>"/><?= $shareholder->account->getAccountElement(); ?></td>
                                                         <td><?= $shareholder->shares; ?></td>
                                                         <td><?= ($shareholder->shares >= $minRequiredShares ? "YES":"NO") ?></td>
                                                         <td><?= round(($shareholder->shares/$totalSharesOwned)*10000)/100; ?>%</td>
@@ -363,7 +363,7 @@ $padlockOffset = $descriptionHeight / 2;
                                     <tbody>
                                         <?php foreach ($purchases as $purchase): ?>
                                             <tr>
-                                                <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="<?= $purchase->account->getProfilePictureURL(); ?>"/><?= $purchase->account->getAccountElement(); ?></td>
+                                                <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="<?= $purchase->account->profilePictureURL(); ?>"/><?= $purchase->account->getAccountElement(); ?></td>
                                                 <td><?= $purchase->SharesPurchased; ?></td>
                                                 <td><?= $purchase->PurchaseDate->formattedYmd; ?></td>
                                                 <td><?= $purchase->Amount." ".$purchase->Currency; ?></td>

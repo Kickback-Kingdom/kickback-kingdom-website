@@ -256,7 +256,7 @@ $reviewFeed = $reviewFeedResp->data;
                                             if ($merchantGuildTask->TaskType == 0) {
                                         ?>
                                             <tr>
-                                                <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="<?= $merchantGuildTask->sharePurchase->account->getProfilePictureURL(); ?>"/><?= $merchantGuildTask->sharePurchase->account->getAccountElement(); ?></td>
+                                                <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="<?= $merchantGuildTask->sharePurchase->account->profilePictureURL(); ?>"/><?= $merchantGuildTask->sharePurchase->account->getAccountElement(); ?></td>
                                                 <td><?= $merchantGuildTask->sharePurchase->SharesPurchased; ?></td>
                                                 <td><?= $merchantGuildTask->sharePurchase->PurchaseDate->formattedYmd; ?></td>
                                                 <td><?= $merchantGuildTask->sharePurchase->Amount." ".$merchantGuildTask->sharePurchase->Currency; ?></td>

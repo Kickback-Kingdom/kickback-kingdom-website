@@ -467,7 +467,7 @@ if ($myChallengePlayer) {
                                                     <div class="mb-3 border-bottom pb-3">
                                                         <!-- Profile Picture and Player Name -->
                                                         <div class="d-flex align-items-center mb-3">
-                                                            <img src="<?= htmlspecialchars($player->account->getProfilePictureURL()) ?>" alt="<?= htmlspecialchars($player->account->username) ?> Profile" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                                            <img src="<?= htmlspecialchars($player->account->profilePictureURL()) ?>" alt="<?= htmlspecialchars($player->account->username) ?> Profile" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
                                                             <?= $player->account->getAccountElement(); ?>
                                                         </div>
                                                         <!-- Player Details -->

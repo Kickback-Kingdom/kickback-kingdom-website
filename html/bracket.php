@@ -9,7 +9,7 @@ use Kickback\Backend\Controllers\TournamentController;
 use Kickback\Common\Version;
 
 $id   = array_key_exists('id',   $_GET) ? $_GET['id']   : null;
-$name = array_key_exists('name', $_GET) ? $_GET['name'] : null;
+$name = array_key_exists('locator', $_GET) ? $_GET['locator'] : null;
 
 $thisQuest = null;
 if ((isset($id)   && QuestController::queryQuestByIdInto($id, $thisQuest))

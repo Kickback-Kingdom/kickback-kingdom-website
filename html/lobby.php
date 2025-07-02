@@ -199,7 +199,7 @@ $teamPlayers = $thisLobby->challenge->getGroupedPlayers();
                                                                 ?>
                                                                 <div class="d-flex align-items-center border p-2 rounded border-2 position-relative <?= $borderColor ?> <?= $bgColor ?>">
                                                                     <!-- Player Profile Picture -->
-                                                                    <img src="<?= htmlspecialchars($player->account->getProfilePictureURL()) ?>" 
+                                                                    <img src="<?= htmlspecialchars($player->account->profilePictureURL()) ?>" 
                                                                         alt="<?= htmlspecialchars($player->account->username) ?> Profile" 
                                                                         class="rounded-circle  border border-2 border-dark-subtle"" 
                                                                         style="width: 60px; height: 60px; object-fit: cover;">
