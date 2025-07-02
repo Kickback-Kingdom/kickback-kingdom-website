@@ -457,7 +457,8 @@ class AccountController
         array  $mainParams,
         string $mainTypes,
         int    $itemsPerPage,
-        int    $offset)
+        int    $offset,
+        bool   $hasSearchTerm)
         : array
     {
         $conn = Database::getConnection();
