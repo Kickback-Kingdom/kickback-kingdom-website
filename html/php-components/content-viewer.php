@@ -15,7 +15,6 @@ if (!isset($_vPageContent))
   throw new \Exception("No page content for content viewer!");
 }
 
-$contentTypesResp = null;
 $_vContentViewerEditorTitle = (Session::isLoggedIn() ? (isset($_vContentViewerEditorTitle) ? $_vContentViewerEditorTitle : "Welcome back, ".Session::getCurrentAccount()->username.". What would you like to do?") : "");
 $_vCanEditContent = (isset($_vCanEditContent) && $_vCanEditContent == true);
 $_vPageContentEditMode = (isset($_POST["edit-content"]) && $_vCanEditContent);
@@ -23,8 +22,7 @@ if ($_vCanEditContent)
 {
 
     if ($_vPageContentEditMode) {
-        $contentTypesResp = ContentController::getContentTypes();
-        $contentTypes = $contentTypesResp->data;
+        $contentTypes = ContentController::queryContentTypes();
 ?>
 
 <!-- EDIT CODE MODAL -->

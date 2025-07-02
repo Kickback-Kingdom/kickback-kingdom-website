@@ -12,45 +12,42 @@ use Kickback\Backend\Controllers\BlogPostController;
 use Kickback\Backend\Controllers\FeedCardController;
 use Kickback\Services\Session;
 
-if (isset($_GET['blogLocator'])) {
-    
-
-        if (isset($_GET['postLocator']))
-        {
-        
-            $blogPostResp = BlogPostController::getBlogPostByLocators($_GET['blogLocator'],$_GET['postLocator']);
-        
-            
+if (isset($_GET['blogLocator']))
+{
+    if (isset($_GET['postLocator']))
+    {
+        if (BlogPostController::queryBlogPostByLocatorsInto($_GET['blogLocator'], $_GET['postLocator'], $thisBlogPost)) {
+            BlogController::queryBlogByLocatorInto($_GET['blogLocator'], $blog);
         }
-        elseif (isset($_GET["new"]))
-        {
-            $blog = BlogController::getBlogByLocator($_GET['blogLocator'])->data;
+    }
+    elseif (isset($_GET["new"]))
+    {
+        if (BlogController::queryBlogByLocatorInto($_GET['blogLocator'], $blog)) {
             $blogPostResp = BlogPostController::insertNewBlogPost($blog, $_GET['blogLocator']);
+            if ($blogPostResp->success) {
+                $thisBlogPost = $blogPostResp->data;
+            }
         }
-        
-        if ($blogPostResp->success)
-        {
-            $thisBlogPost = $blogPostResp->data;
-            $thisBlogPost->populateContent();
-            
-            $blogResp = BlogController::getBlogByLocator($_GET['blogLocator']);
-            $thisBlogPost->blog = $blogResp->data;
+    }
+
+    if (isset($thisBlogPost))
+    {
+        $thisBlogPost->populateContent();
+        if (isset($blog)) { // Maybe this should be an assert or something?
+            $thisBlogPost->blog = $blog;
         }
-    
+    }
 }
 
-if (!isset($thisBlogPost) || (isset($thisBlogPost) && $thisBlogPost == null))
+if (!isset($thisBlogPost))
 {
-    Session::Redirect("/blog/".$_GET['blogLocator']);
+    Session::redirect("/blog/".$_GET['blogLocator']);
 }
 
 $isWriterForBlogPost = $thisBlogPost->isWriter();
 
-
-
 if ($thisBlogPost->blogLocator == "Kickback-Kingdom")
 {
-
     if ( array_key_exists($thisBlogPost->postLocator, Version::history_by_blogpost_locator()) ) {
         Version::$client_is_viewing_blogpost_for_current_version_update = true;
     }
@@ -108,13 +105,20 @@ if ($thisBlogPost->blogLocator == "Kickback-Kingdom")
                     </div>
                 </div>
 
-                <?php if ($isWriterForBlogPost) { ?>
+                <?php if ($isWriterForBlogPost) {
+                    $currentAccount = Kickback\Services\Session::getCurrentAccount();
+                    if(isset($currentAccount)) {
+                        $username = $currentAccount->username;
+                    } else {
+                        $username = '(Error: Couldn\'t retrieve current account.)';
+                    }
+                ?>
                 <div class="row">
                     <div class="col-12">
                         <div class="card mb-3">
     
                             <div class="card-header bg-ranked-1">
-                                <h5 class="mb-0">Welcome back, Scribe <?php echo Kickback\Services\Session::getCurrentAccount()->username; ?>. What would you like to do?</h5>
+                                <h5 class="mb-0">Welcome back, Scribe <?php echo $username; ?>. What would you like to do?</h5>
                             </div>
                             <div class="card-body">
                                 <button type="button" class="btn btn-primary" onclick="OpenModalEditBlogPostOptions()">Edit Blog Post Details</button>

@@ -41,12 +41,13 @@ class vContent extends vRecordId
         }
     }
 
-    public function populateContent(string $container_type,string $container_id) : void {
-        $contentResp = ContentController::getContentDataById($this,$container_type,$container_id);
+    public function populateContent(string $container_type,string $container_id) : void
+    {
+        $contentResp = ContentController::queryContentDataByIdAsResponse($this, $container_type, $container_id);
         if ($contentResp->success)
         {
-            // @phpstan-ignore-next-line
-            $this->pageContent_ = $contentResp->data;
+            $convSuccess = ContentController::convertContentDataResponseInto($contentResp, $this->pageContent_);
+            assert($convSuccess);
         }
         else{
             throw new \Exception($contentResp->message);
