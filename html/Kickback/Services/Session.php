@@ -200,8 +200,19 @@ class Session {
         $info->notificationsJSON = "[]";
         $info->delayUpdateAfterChests = false;
 
+        // This might seem odd, because we aren't retrieving session information
+        // BUT we are still returning `true`, as if successfully retrieving
+        // session information.
+        //
+        // The key difference is that "not having a session" is _actually_
+        // a valid state: it's the state that everyone is in when they
+        // casually visit the site and haven't logged in or created an account.
+        //
+        // So the `true` return in this instance is to indicate that we are
+        // still in a valid state. We don't have session info, but
+        // at the same time, nothing has gone wrong. It's fine.
         if (!self::isLoggedIn()) {
-            return new Response(false, "Not logged in", $info);
+            return new Response(true, "Not logged in", $info);
         }
 
         $account = self::getCurrentAccount();
