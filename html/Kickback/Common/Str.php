@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace Kickback\Common;
 
 /**
-* As of this writing, this class just exists to silence the PHPStan error about `empty` being not allowed.
+* This class originally existed to silence the PHPStan error about `empty` being not allowed.
 */
 final class Str
 {
+    use \Kickback\Common\StaticClassTrait;
+
     /**
     * A type-safe alternative to the `empty` builtin.
     *
@@ -20,10 +22,9 @@ final class Str
         return !isset($x) || (0 === strlen($x));
     }
 
-    // Prevent instantiation/construction of the (static/constant) class.
-    /** @return never */
-    private function __construct() {
-        throw new \Exception("Instantiation of static class " . get_class($this) . "is not allowed.");
+    public static function is_longer_than(?string $var, int $minLength) : bool
+    {
+        return !is_null($var) && strlen($var) >= $minLength;
     }
 }
 ?>

@@ -14,14 +14,9 @@ if (!isset($thisLichCardData))
 
     if (isset($_GET["locator"]))
     {
-        // Retrieve the Lich Card by locator
-        $response = LichCardController::getLichCardByLocator($_GET["locator"]);
-
-        if ($response->success) {
-            $thisLichCardData = $response->data;
+        if ( LichCardController::queryLichCardByLocatorInto($_GET["locator"], $thisLichCardData) ) {
             $thisLichCardData->populateEverything();
         } else {
-            // Handle error (e.g., display an error message)
             $thisLichCardData = new vLichCard(); // Default to an empty Lich Card
         }
     }
@@ -227,7 +222,7 @@ if (!isset($thisLichCardData))
                         if ($thisLichCardData->hasPageContent()) {
                             $_vCanEditContent = $thisLichCardData->canEdit();
                             $_vContentViewerEditorTitle = "L.I.C.H. Card Information Manager";
-                            $_vPageContent = $thisLichCardData->getPageContent();
+                            $_vPageContent = $thisLichCardData->pageContent();
                             require("php-components/content-viewer.php");
                         }
                         ?>
@@ -244,7 +239,7 @@ if (!isset($thisLichCardData))
     <?php 
     if ($thisLichCardData->hasPageContent())
     {
-        $_vPageContent = $thisLichCardData->getPageContent();
+        $_vPageContent = $thisLichCardData->pageContent();
         require("php-components/content-viewer-javascript.php"); 
     }
     ?>

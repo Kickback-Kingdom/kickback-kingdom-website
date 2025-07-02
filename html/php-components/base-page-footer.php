@@ -93,7 +93,7 @@ use \Kickback\Common\Version;
                     cursor: pointer;
                     z-index: 1000;
                 "
-                onclick="submitTreasureHuntFoundObject('<?= $obj->ctime ?>', <?= $obj->crand ?>, '<?= $obj->getURL(); ?>')"
+                onclick="submitTreasureHuntFoundObject('<?= $obj->ctime ?>', <?= $obj->crand ?>, '<?= $obj->url(); ?>')"
             >
                 <!-- Shine Spinner -->
                 <img 

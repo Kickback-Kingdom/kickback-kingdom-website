@@ -17,10 +17,12 @@ use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vReviewStatus;
 
+use Kickback\Common\Str;
+
 class LobbyController
 {
 
-    public static function host(Lobby $lobby, $password) : Response
+    public static function host(Lobby $lobby, string $password) : Response
     {
         $insertLobbyResp = self::insert($lobby, $password);
 
@@ -93,8 +95,8 @@ class LobbyController
         }
     }
 
-    public static function getLobbies() : Response {
-        
+    public static function getLobbies() : Response
+    {
         $conn = Database::getConnection();
 
         $sql = "SELECT l.ctime, l.crand, g.Id as game_crand, g.Name as game_name, h.Id as host_id, h.username as host_username, l.name, lm.ctime as lobby_challenge_ctime, lm.crand as lobby_challenge_crand, lm.style, lm.rules, icon.mediaPath as icon_path,
@@ -162,11 +164,11 @@ class LobbyController
     }
 
 
-    private static function insert(Lobby $lobby, $password) : Response {
-
+    private static function insert(Lobby $lobby, string $password) : Response
+    {
         $conn = Database::getConnection();
 
-        if (!empty($password)) {
+        if (!Str::empty($password)) {
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
         } else {
             $password_hash = null;

@@ -18,6 +18,7 @@ use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Backend\Views\vRaffle;
 use Kickback\Backend\Views\vGameStats;
 use Kickback\Backend\Controllers\SocialMediaController;
+use Kickback\Common\Str;
 
 class AccountController
 {
@@ -210,7 +211,8 @@ class AccountController
         }
     }
     
-    public static function getAccountsByChallenge(vRecordId $challengeId) {
+    public static function getAccountsByChallenge(vRecordId $challengeId) : Response
+    {
         $conn = Database::getConnection();
 
         $sql = "SELECT a.* FROM `lobby_challenge_account` lca inner join v_account_info a on lca.account_id = a.Id where lca.ref_challenge_ctime = ? and lca.ref_challenge_crand = ?";
@@ -278,7 +280,7 @@ class AccountController
         $result->free();
         $stmt->close();
 
-        if ($row) {
+        if (!is_null($row)) {
             return new Response(true, "Raffle Ticket Winner", self::row_to_vAccount($row, true));
         } else {
             return new Response(true, "No winner found for the raffle", null);
@@ -288,7 +290,7 @@ class AccountController
     public static function getAccountChests(vRecordId $recordId) : Response {
         $conn = Database::getConnection();
         // Prepare the SQL statement
-        $sql = "SELECT 
+        $sql = "SELECT
                 loot.Id, 
                 loot.rarity, 
                 CONCAT(b.Directory, '/', b.Id, '.', b.extension) AS ItemImg,
@@ -324,14 +326,14 @@ class AccountController
         mysqli_free_result($result);
         mysqli_stmt_close($stmt);
 
-        return (new Response(true, "Account Chests",  $rows ));
+        return (new Response(true, 'Account Chests',  $rows ));
     }
 
     public static function getAccountBySession(string $serviceKey, string $sessionToken) : Response {
         try {
             $conn = Database::getConnection();
             // SQL statement with placeholders
-            $sql = "SELECT account.*, service.Name as 'ServiceName', ? as SessionToken
+            $sql = 'SELECT account.*, service.Name as \'ServiceName\', ? as SessionToken
             FROM v_account_info as account 
             LEFT JOIN service on service.PublicKey = ? 
             LEFT JOIN account_sessions on account_sessions.SessionToken = ? 
@@ -339,25 +341,25 @@ class AccountController
             and account_sessions.account_id = account.Id 
             WHERE account.Banned = 0 
             AND account_sessions.login_time >= (NOW() - INTERVAL 7 DAY) 
-            AND service.PublicKey = ?";
+            AND service.PublicKey = ?';
 
             // Prepare the SQL statement
             $stmt = mysqli_prepare($conn, $sql);
 
             // Check if the statement was prepared successfully
             if ($stmt === false) {
-                return (new Response(false, "Failed to prepare statement: ".mysqli_error($conn), null));
+                return (new Response(false, 'Failed to prepare statement: '.mysqli_error($conn), null));
             }
 
             // Bind parameters to the placeholders
-            mysqli_stmt_bind_param($stmt, "ssss", $sessionToken, $serviceKey, $sessionToken, $serviceKey);
+            mysqli_stmt_bind_param($stmt, 'ssss', $sessionToken, $serviceKey, $sessionToken, $serviceKey);
 
             // Execute the statement
             $result = mysqli_stmt_execute($stmt);
 
             // Check the result of the query
             if (!$result) {
-                return (new Response(false, "Failed to get result: ".mysqli_stmt_error($stmt), null));
+                return (new Response(false, 'Failed to get result: '.mysqli_stmt_error($stmt), null));
             }
 
             // Bind result variables
@@ -365,14 +367,14 @@ class AccountController
 
             // Fetch the result
             if (mysqli_num_rows($res) === 0) {
-                return (new Response(false, "Session Token or Service Key are incorrect", null));
+                return (new Response(false, 'Session Token or Service Key are incorrect', null));
             } else {
                 $row = mysqli_fetch_assoc($res);
                 $account = self::row_to_vAccount($row);
-                return (new Response(true, "Welcome to " . $row["ServiceName"] . "! A Kickback Kingdom original.", $account));
+                return (new Response(true, 'Welcome to ' . $row['ServiceName'] . '! A Kickback Kingdom original.', $account));
             }
-        } catch (Throwable $th) {
-            return (new Response(false, "Error. Check the data for more info.", $th));
+        } catch (\Throwable $th) {
+            return (new Response(false, 'Error. Check the data for more info.', $th));
         }
     }
 
@@ -417,7 +419,16 @@ class AccountController
         ];
     }
 
-    private static function executeCountQuery(string $joinQuery, string $whereClause, array $countParams, string $countTypes): int {
+    /**
+    * @param array<string|int> $countParams
+    */
+    private static function executeCountQuery(
+        string $joinQuery,
+        string $whereClause,
+        array  $countParams,
+        string $countTypes)
+        : int
+    {
         $conn = Database::getConnection();
         $countQuery = "SELECT COUNT(*) AS total FROM v_account_info $joinQuery $whereClause";
     
@@ -432,15 +443,26 @@ class AccountController
         }
         $stmt->execute();
         $result = $stmt->get_result();
-        $count = $result->fetch_assoc()['total'] ?? 0;
+        $countStr = $result->fetch_assoc()['total'] ?? '0';
+        $count = intval($countStr);
         $stmt->close();
     
         return $count;
     }
 
-    private static function executeMainQuery(string $joinQuery, string $whereClause, array $mainParams, string $mainTypes, int $itemsPerPage, int $offset, bool $hasSearchTerm): array {
+    /**
+    * @param array<string|int> $mainParams
+    */
+    private static function executeMainQuery(
+        string $joinQuery,
+        string $whereClause,
+        array  $mainParams,
+        string $mainTypes,
+        int    $itemsPerPage,
+        int    $offset)
+        : array
+    {
         $conn = Database::getConnection();
-
 
         $mainQuery = "SELECT v_account_info.*" . 
         ($hasSearchTerm ? ", MATCH(Username, FirstName, LastName, Email) AGAINST (?) AS relevancy_score" : "") . "
@@ -469,14 +491,13 @@ class AccountController
         
         return $accountItems;
     }
-    
-    public static function searchForAccount(string $searchTerm, int $page, int $itemsPerPage, array $filters = []): Response {
-        
 
+    public static function searchForAccount(string $searchTerm, int $page, int $itemsPerPage, array $filters = []): Response
+    {
         $page = max(1, $page);
         $itemsPerPage = max(1, $itemsPerPage);
         $offset = ($page - 1) * $itemsPerPage;
-    
+
         $filterConditions = ["Banned = 0"];
         $filterParams = [];
         $paramTypes = "";
@@ -488,7 +509,6 @@ class AccountController
             $filterParams[] = $fulltextTerm;
             $paramTypes .= "s";
         }
-
     
         $joinData = self::buildJoinsAndConditions($filters);
         $joinQuery = $joinData['joinQuery'];
@@ -497,7 +517,7 @@ class AccountController
         $countParams = array_merge($filterParams, $joinData['params']);
         $countTypes = $paramTypes . $joinData['paramTypes'];
 
-        $whereClause = " WHERE " . implode(" AND ", $filterConditions);
+        $whereClause = ' WHERE ' . implode(' AND ', $filterConditions);
     
         $count = self::executeCountQuery($joinQuery, $whereClause, $countParams, $countTypes);
         
@@ -507,13 +527,13 @@ class AccountController
             $joinData['params'],
             [$itemsPerPage, $offset]
         );
-        $mainTypes = $paramTypes . $paramTypes . $joinData['paramTypes']."ii";
+        $mainTypes = $paramTypes . $paramTypes . $joinData['paramTypes'].'ii';
     
         $accountItems = self::executeMainQuery($joinQuery, $whereClause, $mainParams, $mainTypes, $itemsPerPage, $offset, $hasSearchTerm);
     
         $newAccountItems = array_map(fn($row) => self::row_to_vAccount($row, true), $accountItems);
     
-        return new Response(true, "Accounts found", [
+        return new Response(true, 'Accounts found', [
             'total' => $count,
             'accountItems' => $newAccountItems,
         ]);
@@ -741,8 +761,26 @@ class AccountController
         
         return new Response(false, "We couldn't find an account with that id", $accountId);
     }
-    
-    public static function getWritOfPassageByAccountId(vRecordId $account_id) : Response {
+
+    /**
+    * @param ?array<string,mixed> $writ
+    *
+    * @phpstan-assert-if-true =array<string,mixed> $writ
+    */
+    public static function queryWritOfPassageByAccountIdInto(vRecordId $account_id, ?array &$writ): bool
+    {
+        $resp = self::queryWritOfPassageByAccountIdAsResponse($account_id);
+        if ( $resp->success ) {
+            $writ = $resp->data;
+            return true;
+        } else {
+            $writ = null;
+            return false;
+        }
+    }
+
+    public static function queryWritOfPassageByAccountIdAsResponse(vRecordId $account_id) : Response
+    {
         $conn = Database::getConnection();
     
         $sql = "SELECT * FROM kickbackdb.v_account_writs_of_passage WHERE account_id = ?";
@@ -787,12 +825,14 @@ class AccountController
             return new Response(false, "We couldn't find an account with that id", $account->crand);
         }
         if ($num_rows > 1) {
-            return new Response(false, "Internal error; ambiguous account ID", $account->crand);
+            return new Response(false, "Internal error: ambiguous account ID", $account->crand);
         }
 
         $row = $result->fetch_assoc();
-        $db_pass_reset = $row["pass_reset"];
-        assert(is_int($db_pass_reset));
+        if (!isset($row)) {
+            return new Response(false, "Internal error: failed to fetch row for given account ID.", $account->crand);
+        }
+        $db_pass_reset = intval($row['pass_reset']);
 
         $stmt->close();
 
@@ -1128,151 +1168,133 @@ class AccountController
 
         $account->title = self::getAccountTitle($account);
 
-
-        if ($populateChildData) {
+        if ($populateChildData)
+        {
             $badgesResp = LootController::getBadgesByAccount($account);
             $account->badge_display = $badgesResp->data;
 
             $playerRankResp = self::getAccountGameRanks($account);
             $account->game_ranks = $playerRankResp->data;
-            $account->isGoldCardHolder = in_array(1, array_column($playerRankResp->data, 'rank'));
-            
+            $account->isGoldCardHolder = in_array(1, array_column($playerRankResp->data, 'rank'), true);
         }
 
         return $account;
     }
 
-    public static function RegisterAccount(string $firstName,string $lastName,string $password,string $confirm_password,string $username,string $email,bool $i_agree,string $passage_quest,string $passage_id) : Response {
+    public static function registerAccount(string $firstName,string $lastName,string $password,string $confirm_password,string $username,string $email,bool $i_agree,string $passage_quest,string $passage_id) : Response {
         
         $conn = Database::getConnection();
         
         if (!$i_agree)
         {
-            return (new Response(false, "Please agree to the terms of service", null));
+            return (new Response(false, 'Please agree to the terms of service', null));
         }
     
         if ($password != $confirm_password)
         {
-            return (new Response(false, "Password does not match.", null));
+            return (new Response(false, 'Password does not match.', null));
         }
     
         if (strlen($password) < 8)
         {   
-            return (new Response(false, "Password is too short.", null));
+            return (new Response(false, 'Password is too short.', null));
         }
     
         if (strlen($firstName) < 2)
         {   
-            return (new Response(false, "First Name is too short.", null));
+            return (new Response(false, 'First Name is too short.', null));
         }
     
         if (strlen($lastName) < 2)
         {
-            return (new Response(false, "Last Name is too short.", null));
+            return (new Response(false, 'Last Name is too short.', null));
         }
     
         if (strlen($username) < 5)
         {   
-            return (new Response(false, "Username is too short.", null));
+            return (new Response(false, 'Username is too short.', null));
         }
         
         if (strlen($username) > 15)
         {   
-            return (new Response(false, "Username is too long.", null));
+            return (new Response(false, 'Username is too long.', null));
         }
     
         if (strlen($email) < 5)
         {
-            return (new Response(false, "Email is too short.", null));
+            return (new Response(false, 'Email is too short.', null));
         }
-    
-    
-        $kk_crypt_key_quest_id = ServiceCredentials::get("crypt_key_quest_id");
+
+        $kk_crypt_key_quest_id = ServiceCredentials::get('crypt_key_quest_id');
         $crypt = new IDCrypt($kk_crypt_key_quest_id);
-        if (ContainsData($passage_id,"passage_id")->success)
+        if (!Str::empty($passage_id))
         {
-    
             $writ_item_id = $crypt->decrypt($passage_id);
         }
         else
         {
-            if (ContainsData($passage_quest,"passage_quest")->success)
-            {
-                
-                $writ_quest_id = $crypt->decrypt($passage_quest);
-                $writ_quest_id = new vRecordId('', (int)$writ_quest_id);
-                $questResp = QuestController::getQuestById($writ_quest_id);
-                if ($questResp->success)
-                {
-                    $quest = $questResp->data;
-                    $writResp = self::getWritOfPassageByAccountId($quest->host1);
-                    if ($writResp->success)
-                    {
-                        $writ = $writResp->data;
-                        $writ_item_id = $writ['next_item_id'];
-                    }
-                    else
-                    {
-                        return (new Response(false, "The host of the quest you are joining ran out of Writs of Passage. Please contact ".$quest->host1->username.'.', null));
-                    }
-                }
-                else
-                {
-                    return (new Response(false, "We couldn't find the quest associated with your Writ of Passage.",$passage_quest."|".$writ_quest_id));
-                }
+            if (Str::empty($passage_quest)) {
+                return (new Response(false, 'Please provide a Writ of Passage.', null));
             }
-            else
-            {
-                return (new Response(false, "Please provide a Writ of Passage.", null));
+
+            $writ_quest_id = $crypt->decrypt($passage_quest);
+            $writ_quest_id = new vRecordId('', intval($writ_quest_id));
+            if(!QuestController::queryQuestByIdInto($writ_quest_id, $quest)) {
+                return (new Response(false, 'We couldn\'t find the quest associated with your Writ of Passage.',$passage_quest.'|'.$writ_quest_id));
             }
+
+            if (!self::queryWritOfPassageByAccountIdInto($quest->host1, $writ)) {
+                return (new Response(false, 'The host of the quest you are joining ran out of Writs of Passage. Please contact '.$quest->host1->username.'.', null));
+            }
+
+            $writ_item_id = $writ['next_item_id'];
+            assert(is_string($writ_item_id));
         }
-        
-        if (!ContainsData($writ_item_id,"writ_item_id")->success)
-        {
-            return (new Response(false, "The host of the quest you are joining ran out of Writs of Passage. Please contact ".$quest->host1->username.'.', null));
+
+        if (Str::empty($writ_item_id)) {
+            if (isset($quest)) {
+                return (new Response(false, 'The host of the quest you are joining ran out of Writs of Passage. Please contact '.$quest->host1->username.'.', null));
+            } else {
+                return (new Response(false, 'The host of the quest you are joining ran out of Writs of Passage.', null));
+            }
         }
     
     
         $userResp = self::getAccountByUsername($username);
-    
-        
         if ($userResp->success)
         {
-            return (new Response(false, "Your desired username already exists.", null));
+            return (new Response(false, 'Your desired username already exists.', null));
         }
     
         $emailResp = self::getAccountByEmail($email);
-    
         if ($emailResp->success)
         {
-            return (new Response(false, "Account already exists. Please register with a different email.", null));
+            return (new Response(false, 'Account already exists. Please register with a different email.', null));
         }
-    
-    
-        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
         $conn->begin_transaction();
 
         try {
             // Use prepared statements to insert the new account
-            $stmt = $conn->prepare("INSERT INTO account (Email, Password, FirstName, LastName, Username, passage_id) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt = $conn->prepare('INSERT INTO account (Email, Password, FirstName, LastName, Username, passage_id) VALUES (?, ?, ?, ?, ?, ?)');
             if (false === $stmt) {
-                throw new Exception("Failed to prepare SQL statement: " . $conn->error);
+                throw new \Exception('Failed to prepare SQL statement: ' . $conn->error);
             }
     
             $stmt->bind_param('ssssss', $email, $passwordHash, $firstName, $lastName, $username, $writ_item_id);
     
             if (false === $stmt->execute()) {
-                throw new Exception("Failed to execute SQL statement: " . $stmt->error);
+                throw new \Exception('Failed to execute SQL statement: ' . $stmt->error);
             }
     
             $stmt->close();
     
-            $kk_service_key = ServiceCredentials::get("kk_service_key");
-            $loginResp = Session::Login($kk_service_key, $email, $password);
+            $kk_service_key = ServiceCredentials::get('kk_service_key');
+            $loginResp = Session::login($kk_service_key, $email, $password);
             if (!$loginResp->success) {
-                throw new Exception("Failed to log in after registration.");
+                throw new \Exception('Failed to log in after registration.');
             }
     
             $login = $loginResp->data;
@@ -1284,13 +1306,13 @@ class AccountController
             // Commit transaction
             $conn->commit();
     
-            return new Response(true, "Account created successfully", $login);
+            return new Response(true, 'Account created successfully', $login);
     
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // Rollback transaction on error
             $conn->rollback();
             error_log($e->getMessage());
-            return new Response(false, "Failed to register account: " . $e->getMessage(), null);
+            return new Response(false, 'Failed to register account: ' . $e->getMessage(), null);
         }
     }
 }

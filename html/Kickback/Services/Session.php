@@ -20,6 +20,37 @@ class Session {
         return self::$currentAccount;
     }
 
+    /**
+    * This method allows the caller to check if we're logged in, check if the
+    * $currentAccount object is null, and then obtain the $currentAccount
+    * object all in one expression.
+    *
+    * If this method returns `true`, then the current account is logged in, the
+    * value in `$account` after this call will be non-null, and it will be
+    * safe to use that value.
+    *
+    * If this method returns `false`, then there is no current account available,
+    * and the value stored in `$account` after the call will be undefined.
+    * (It will probably be null, but you shouldn't count on it: always use
+    * the return value to determine if it is safe to proceed.)
+    *
+    * @phpstan-assert-if-true =vAccount $account
+    */
+    public static function readCurrentAccountInto(?vAccount &$account) : bool
+    {
+        if (is_null(self::$currentAccount)) {
+            self::$currentAccount = self::fetchCurrentAccount();
+        }
+
+        if (is_null(self::$currentAccount)) {
+            $account = null;
+            return false;
+        } else {
+            $account = self::$currentAccount;
+            return true;
+        }
+    }
+
     public static function isLoggedIn(): bool {
         return isset($_SESSION["sessionToken"], $_SESSION["serviceKey"], $_SESSION["vAccount"]);
     }
@@ -30,8 +61,14 @@ class Session {
 
     private static function fetchCurrentAccount(): ?vAccount {
         // Logic to fetch current account from session or database
-        if (self::isLoggedIn()) {
-            return self::getSessionData('vAccount');
+        if (self::isLoggedIn())
+        {
+            $account = self::getSessionData('vAccount');
+            if ( !is_null($account) && $account instanceof vAccount ) {
+                return $account;
+            } else {
+                return null;
+            }
         }
         return null;
     }
@@ -47,8 +84,7 @@ class Session {
         self::$currentAccount = null;
     }
 
-    
-    public static function redirect(string $localPath) : void {
+    public static function redirect(string $localPath) : never {
         $basePath = rtrim(Version::urlBetaPrefix(), '/');
         header("Location: ".$basePath."/".ltrim($localPath, '/'), true, 302);
         exit;
@@ -93,25 +129,23 @@ class Session {
         }
     
         $conn = Database::getConnection();
-        assert($conn instanceof mysqli);
     
-        $sessionToken = self::getSessionData("sessionToken");
-        $serviceKey = self::getSessionData("serviceKey");
+        $sessionToken = self::sessionDataString("sessionToken");
+        $serviceKey = self::sessionDataString("serviceKey");
         $query = "delete from account_sessions where SessionToken = '$sessionToken' and ServiceKey = '$serviceKey'";
         $result = $conn->query($query);
         if (false === $result) {
-            return (new Response(false, "Failed to log out with error: ".GetSQLError(), null));
+            return (new Response(false, "Failed to log out with error: ".self::getSQLError(), null));
         }
     
         self::setSessionData("sessionToken",null);
         self::clearCurrentAccount();
         return (new Response(true, "Logged out successfully",null));
     }
-        
-    public static function login($serviceKey,$email,$pwd) : Response
+
+    public static function login(string $serviceKey, string $email, string $pwd) : Response
     {
         $conn = Database::getConnection();
-        assert($conn instanceof mysqli);
 
         $serviceKey = mysqli_real_escape_string($conn, $serviceKey);
         $email = mysqli_real_escape_string($conn, $email);
@@ -120,7 +154,7 @@ class Session {
         $query = "SELECT account.Id, account.Password, service.Name as ServiceName FROM account inner join service on service.PublicKey = '$serviceKey' WHERE Email = '$email' and Banned = 0;";
         $result = $conn->query($query);
         if (false === $result) {
-            return (new Response(false, "Failed to log in with error: ".GetSQLError(), null));
+            return (new Response(false, "Failed to log in with error: ".self::getSQLError(), null));
         }
 
         $num_rows = $result->num_rows;
@@ -129,13 +163,14 @@ class Session {
         }
 
         $row = $result->fetch_assoc();
+        assert(!is_null($row));
         $serviceName = $row["ServiceName"];
         if (!password_verify($pwd, $row["Password"])) {
             return (new Response(false, "Credentials are incorrect",null));
         }
 
-        $accountId = $row["Id"];
-        assert(is_string($accountId));
+        $accountId = intval($row["Id"]);
+        //assert(is_string($accountId));
         if (!self::loginToService($accountId, $serviceKey)) {
             return (new Response(false, "Failed to login", null));
         }
@@ -148,104 +183,112 @@ class Session {
         }
 
         $row = $result->fetch_assoc();
+        assert(!is_null($row));
 
         self::setSessionData("sessionToken",$row["SessionToken"]);
         self::setSessionData("serviceKey",$serviceKey);
         return AccountController::getAccountBySession($serviceKey, $row["SessionToken"]);
     }
 
-    public static function getSessionInformation() : Response {
-
+    public static function getSessionInformation() : Response
+    {
         $info = new vSessionInformation();
 
-        
         $info->chestsJSON = "[]";
         $info->chests = [];
         $info->notifications = [];
         $info->notificationsJSON = "[]";
         $info->delayUpdateAfterChests = false;
-        if (self::isLoggedIn())
-        {
-            $account = self::getCurrentAccount();
-            $accountResp = AccountController::getAccountById($account);
-            if ($accountResp->success)
-            {
 
-                self::setCurrentAccount($account);
-                $chestsResp = AccountController::getAccountChests($account);
-                $info->chests = $chestsResp->data;
-                
-                $info->notifications = NotificationController::getNotificationsByAccount($account)->data;
-    
-                $info->chestsJSON = json_encode($info->chests);
-                $info->notificationsJSON = json_encode($info->notifications);
-            }
-            else 
-            {
-                return new Response(false, $accountResp->message, $info);
-            }
+        if (!self::isLoggedIn()) {
+            return new Response(false, "Not logged in", $info);
         }
 
+        $account = self::getCurrentAccount();
+        if (is_null($account)) {
+            return new Response(false, "Logged in, but there is no account for the current session", $info);
+        }
+
+        $accountResp = AccountController::getAccountById($account);
+        if (!$accountResp->success) {
+            return new Response(false, $accountResp->message, $info);
+        }
+
+        self::setCurrentAccount($account);
+        $chestsResp = AccountController::getAccountChests($account);
+        // @phpstan-ignore assign.propertyType
+        $info->chests = $chestsResp->data;
+
+        $info->notifications = NotificationController::queryNotificationsByAccount($account);
+
+        $chestsJSON = json_encode($info->chests);
+        $notisJSON  = json_encode($info->notifications);
+
+        if ( $chestsJSON === false ) { $chestsJSON = 'Error PHP-side: Could not JSON encode chests.'; }
+        if ( $notisJSON  === false ) { $notisJSON  = 'Error PHP-side: Could not JSON encode notifications.'; }
+
+        $info->chestsJSON = $chestsJSON;
+        $info->notificationsJSON = $notisJSON;
 
         return new Response(true, "Session information",$info);
     }
 
-    public static function isAdmin() : bool {
-        if (self::isLoggedIn())
-        {
+    public static function isAdmin() : bool
+    {
+        if (self::isLoggedIn() && !is_null(self::getCurrentAccount())) {
             return self::getCurrentAccount()->isAdmin;
         }
 
         return false;
     }
 
-    public static function isMagisterOfTheAdventurersGuild() : bool {
-
+    public static function isMagisterOfTheAdventurersGuild() : bool
+    {
         if (self::isAdmin())
         {
             return true;
         }
 
-        if (self::isLoggedIn())
+        if (self::readCurrentAccountInto($account))
         {
-            return self::getCurrentAccount()->isMagisterOfAdventurers;
+            return $account->isMagisterOfAdventurers;
         }
 
         return false;
     }
-    
-    public static function isSteward() : bool {
 
+    public static function isSteward() : bool
+    {
         if (self::isAdmin())
         {
             return true;
         }
 
-        if (self::isLoggedIn())
+        if (self::readCurrentAccountInto($account))
         {
-            return self::getCurrentAccount()->isSteward;
+            return $account->isSteward;
         }
 
         return false;
     }
 
-    public static function isMerchant() : bool {
-        
+    public static function isMerchant() : bool
+    {
         if (self::isAdmin())
         {
             return true;
         }
 
-        if (self::isLoggedIn())
+        if (self::readCurrentAccountInto($account))
         {
-            return self::getCurrentAccount()->isMerchant;
+            return $account->isMerchant;
         }
 
         return false;
     }
 
-    public static function isEventOrganizer() : bool {
-        
+    public static function isEventOrganizer() : bool
+    {
         if (self::isAdmin())
         {
             return true;
@@ -254,55 +297,75 @@ class Session {
         return self::isSteward();
     }
 
-    public static function isServantOfTheLich() : bool {
-
+    public static function isServantOfTheLich() : bool
+    {
         if (self::isAdmin())
         {
             return true;
         }
 
-        if (self::isLoggedIn())
+        if (self::readCurrentAccountInto($account))
         {
-            return self::getCurrentAccount()->isServantOfTheLich;
+            return $account->isServantOfTheLich;
         }
 
         return false;
     }
-    
-    public static function isQuestGiver() : bool {
-        if (self::isLoggedIn())
+
+    public static function isQuestGiver() : bool
+    {
+        if (self::readCurrentAccountInto($account))
         {
-            return self::getCurrentAccount()->isQuestGiver;
+            return $account->isQuestGiver;
         }
 
         return false;
     }
-    
-    public static function setSessionData($key, $value) {
+
+    public static function setSessionData(string $key, mixed $value) : void {
         $_SESSION[$key] = $value;
     }
 
-    public static function getSessionData($key) {
+    public static function sessionDataInt(string $key) : ?int {
+        $data = self::getSessionData($key);
+        return is_int($data) ? $data : null;
+    }
+
+    public static function sessionDataString(string $key) : ?string {
+        $data = self::getSessionData($key);
+        return is_string($data) ? $data : null;
+    }
+
+    public static function getSessionData(string $key) : mixed {
         return isset($_SESSION[$key]) ? $_SESSION[$key] : null;
     }
 
-    public static function removeSessionData($key) {
+    public static function removeSessionData(string $key) : void {
         if (isset($_SESSION[$key])) {
             unset($_SESSION[$key]);
         }
     }
-    
-    public static function getCurrentSessionId() {
-        self::ensureSessionStarted();
-        return session_id() ?: null; // Use null coalescing operator to handle non-existent session IDs.
-    }
 
-    
-    public static function ensureSessionStarted() {
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
+    public static function getCurrentSessionId() : ?string {
+        self::ensureSessionStarted();
+        $id = \session_id();
+        if ( $id === false ) {
+            return null;
+        } else {
+            return $id;
         }
     }
-    
+
+    public static function ensureSessionStarted() : void
+    {
+        if (\session_status() !== PHP_SESSION_ACTIVE) {
+            \session_start();
+        }
+    }
+
+    private static function getSQLError() : string
+    {
+        return $GLOBALS["conn"]->error;
+    }
 }
 ?>

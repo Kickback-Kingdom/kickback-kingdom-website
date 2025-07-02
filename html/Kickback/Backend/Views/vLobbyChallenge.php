@@ -4,11 +4,13 @@ declare(strict_types=1);
 namespace Kickback\Backend\Views;
 
 use Kickback\Backend\Views\vRecordId;
+use Kickback\Backend\Models\ForeignRecordId;
 use Kickback\Backend\Models\PlayStyle;
 use Kickback\Backend\Controllers\LobbyChallengeController;
 use Kickback\Backend\Models\Response;
 use Kickback\Backend\Views\vChallengePlayer;
 use Kickback\Services\Session;
+use Kickback\Common\Arr;
 
 class vLobbyChallenge extends vRecordId
 {
@@ -17,6 +19,7 @@ class vLobbyChallenge extends vRecordId
     public string $rules;
     public PlayStyle $style;
     public ForeignRecordId $lobbyId;
+    /** @var array<vChallengePlayer> */
     public array $players;
     public bool $hasJoined;
     public int $playerCount;
@@ -50,16 +53,16 @@ class vLobbyChallenge extends vRecordId
         }
         return $resp;
     }
-    
 
-    public function getHighestRankedPlayer(): ?vChallengePlayer {
-        if (empty($players)) {
+    public function getHighestRankedPlayer(): ?vChallengePlayer
+    {
+        if (Arr::empty($this->players)) {
             return null; // Return null if the array is empty
         }
 
-        $highestRankedPlayer = $players[0];
+        $highestRankedPlayer = $this->players[0];
 
-        foreach ($players as $player) {
+        foreach ($this->players as $player) {
             if ($player->elo > $highestRankedPlayer->elo) {
                 $highestRankedPlayer = $player;
             }
@@ -68,8 +71,9 @@ class vLobbyChallenge extends vRecordId
         return $highestRankedPlayer;
     }
 
-
-
+    /**
+    * @return array<string,array<vChallengePlayer>>
+    */
     public function getGroupedPlayers(): array {
         $grouped = [];
 
@@ -80,22 +84,24 @@ class vLobbyChallenge extends vRecordId
         return $grouped;
     }
 
-    public function getMyPlayer() : ?vChallengePlayer {
-        if (Session::isLoggedIn())
+    public function getMyPlayer() : ?vChallengePlayer
+    {
+        if (!Session::isLoggedIn()) {
+            return null;
+        }
+
+        $currentAccount = Session::getCurrentAccount();
+        if (!isset($currentAccount)) {
+            return null;
+        }
+
+        $myId = $currentAccount->crand;
+
+        foreach ($this->players as $player)
         {
-            $myId = Session::getCurrentAccount()->crand;
-
-            
-            foreach ($this->players as $player) {
-                
-                if ($player->account->crand == $myId)
-                {
-                    return $player;
-                }
+            if ($player->account->crand == $myId) {
+                return $player;
             }
-
-
-
         }
 
         return null;

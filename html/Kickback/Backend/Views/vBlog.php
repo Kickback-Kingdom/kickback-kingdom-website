@@ -26,14 +26,14 @@ class vBlog extends vRecordId
         parent::__construct($ctime, $crand);
     }
 
-    public function getURL() : string {
+    public function url() : string {
         return Version::formatUrl('/blog/'.$this->locator);
     }
 
     public function isManager() : bool {
-        if (Session::isLoggedIn())
+        if (Session::isLoggedIn() && !is_null(Session::getCurrentAccount()))
         {
-            return BlogController::accountIsManager(Session::getCurrentAccount(), $this)->data;
+            return BlogController::accountIsManager(Session::getCurrentAccount(), $this);
         }
         else
         {
@@ -42,9 +42,9 @@ class vBlog extends vRecordId
     }
 
     public function isWriter() : bool {
-        if (Session::isLoggedIn())
+        if (Session::isLoggedIn() && !is_null(Session::getCurrentAccount()))
         {
-            return BlogController::accountIsWriter(Session::getCurrentAccount(), $this)->data;
+            return BlogController::accountIsWriter(Session::getCurrentAccount(), $this);
         }
         else
         {

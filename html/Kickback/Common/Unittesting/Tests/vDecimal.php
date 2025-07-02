@@ -30,7 +30,12 @@ function test(string $name, callable $fn): void {
 
 
 // Simple assertion
-function assertEqual($a, $b, string $msg = '') {
+function assertEqual(
+    string|int|float|bool  $a,
+    string|int|float|bool  $b,
+    string                 $msg = ''
+) : void
+{
     if ($a !== $b) {
         throw new \Exception("Assertion failed: $a !== $b. $msg");
     }
@@ -94,7 +99,7 @@ test("Divide by zero", function () {
 
     try {
         $a->div($b);
-        throw new Exception("Expected exception for division by zero not thrown");
+        throw new \Exception("Expected exception for division by zero not thrown");
     } catch (\InvalidArgumentException $e) {
         assertEqual($e->getMessage(), "Division by zero");
     }
@@ -138,7 +143,7 @@ test("Scale mismatch throws", function () {
 
     try {
         $a->add($b);
-        throw new Exception("Expected scale mismatch exception not thrown");
+        throw new \Exception("Expected scale mismatch exception not thrown");
     } catch (\InvalidArgumentException $e) {
         assertEqual(strpos($e->getMessage(), "Mismatched vDecimal scales") !== false, true);
     }
@@ -442,7 +447,7 @@ test("Chained atomic/whole/scalar consistency", function () {
 test("Invalid string throws", function () {
     try {
         new vDecimal("abc123", 6);
-        throw new Exception("Expected exception for invalid numeric string not thrown");
+        throw new \Exception("Expected exception for invalid numeric string not thrown");
     } catch (\Throwable $e) {
         assertEqual(true, true); // Pass
     }

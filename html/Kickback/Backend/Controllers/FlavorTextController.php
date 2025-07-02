@@ -7,7 +7,7 @@ use Kickback\Backend\Views\vBlogPost;
 
 class FlavorTextController
 {
-    public static function getRandomGreeting()
+    public static function getRandomGreeting() : string
     {
         $royalGreetingsPlural = array(
             "Your Majesties",
@@ -24,11 +24,13 @@ class FlavorTextController
         return $royalGreetingsPlural[$randomIndex];
     }
 
-    public static function getRaffleWinnerAnnouncement(string $raffleName,string $winnerUsername) {
+    public static function getRaffleWinnerAnnouncement(string $raffleName,string $winnerUsername) : string
+    {
         return "🎉 Exciting Announcement! 🎉 The $raffleName has come to a thrilling conclusion. Congratulations to $winnerUsername, the lucky winner! We thank everyone who participated and encourage you to stay tuned for more exciting events and opportunities in the future.";
     }
 
-    public static function getNewcomerIntroduction(string $username) : string {
+    public static function getNewcomerIntroduction(string $username) : string
+    {
         $introductions = [
             "Esteemed members of the royal court, I am honored to present $username, a distinguished guest from distant lands, who comes bearing tales of far-off cultures and seeks the gracious hospitality of Kickback Kingdom.",
             "Your Majesties and Royal Highnesses, before you stands $username, a traveler of great wisdom, eager to share the richness of their heritage with the vibrant community of Kickback Kingdom.",
@@ -56,7 +58,7 @@ class FlavorTextController
         return $introductions[$randomIndex];
     }
 
-    public static function getParticipationFlavorText(string $username,string $questName,?string $seedString = null)
+    public static function getParticipationFlavorText(string $username,string $questName,?string $seedString = null) : string
     {
         if ($seedString == null)
         {
@@ -148,15 +150,12 @@ class FlavorTextController
             "Amidst the storm of $questName, $username stands unshaken, a testament to the enduring power of hope and heroism.",
             "As $username embarks upon $questName, they weave their spirit into the fabric of the universe, a constellation of courage burning bright."
         ];
-        
-        
-        
 
-        $index = GetRandomIntFromSeedString($seedString, count($flavorTexts));
+        $index = self::getRandomIntFromSeedString($seedString, count($flavorTexts));
         return $flavorTexts[$index];
     }
 
-    public static function getBailedFlavorText(string $username,string $questName, ?string $seedString = null)
+    public static function getBailedFlavorText(string $username,string $questName, ?string $seedString = null) : string
     {
         if ($seedString == null)
         {
@@ -238,16 +237,12 @@ class FlavorTextController
             "Before the mighty $questName, $username recalls the advice of an old friend: 'Never quest on an empty stomach.' Dinner takes precedence.",
             "The epic challenge of $questName fades as $username is reminded of the joy of simple pleasures, like watching clouds pass by."
         ];
-        
-        
-        
-        
 
-        $index = GetRandomIntFromSeedString($seedString, count($flavorTexts));
+        $index = self::getRandomIntFromSeedString($seedString, count($flavorTexts));
         return $flavorTexts[$index];
     }
 
-    public static function getWonMatchFlavorText(string $username,string $gameName,?string $seedString = null)
+    public static function getWonMatchFlavorText(string $username,string $gameName,?string $seedString = null) : string
     {
         if ($seedString == null)
         {
@@ -339,15 +334,13 @@ class FlavorTextController
             "In the saga of $gameName, $username carves out their victory, a jewel in the crown of their competitive journey.",
             "The halls of $gameName are hallowed with $username's victory, a testament to their strategic acumen and indomitable will."
         ];
-        
-        
-        
-        $index = GetRandomIntFromSeedString($seedString, count($flavorTexts));
+
+        $index = self::getRandomIntFromSeedString($seedString, count($flavorTexts));
         return $flavorTexts[$index];
     }
 
 
-    public static function getLostMatchFlavorText(string $username,string $gameName,?string $seedString = null)
+    public static function getLostMatchFlavorText(string $username,string $gameName,?string $seedString = null) : string
     {
         if ($seedString == null)
         {
@@ -439,15 +432,12 @@ class FlavorTextController
             "The rhythm of $gameName is unpredictable, and though $username stumbles today, it's but a step in their dance towards triumph.",
             "Today's loss in $gameName for $username is not a closing curtain but an intermission, promising a second act filled with potential and victory."
         ];
-        
-        
-        
-        
-        $index = GetRandomIntFromSeedString($seedString, count($flavorTexts));
+
+        $index = self::getRandomIntFromSeedString($seedString, count($flavorTexts));
         return $flavorTexts[$index];
     }
 
-    public static function getCommendedSomeoneFlavorText(string $usernameFrom,string $usernameTo,?string $seedString = null)
+    public static function getCommendedSomeoneFlavorText(string $usernameFrom,string $usernameTo,?string $seedString = null) : string
     {
         if ($seedString == null)
         {
@@ -518,17 +508,13 @@ class FlavorTextController
             "For $usernameTo's unyielding commitment to fairness and sportsmanship, $usernameFrom offers their highest commendation, a symbol of mutual respect.",
             "$usernameFrom and $usernameTo, through shared trials and triumphs, have woven a tale not just of competition, but of profound alliance and friendship."
         ];
-        
-        
-        
-        
-        
-        $index = GetRandomIntFromSeedString($seedString, count($flavorTexts));
+
+        $index = self::getRandomIntFromSeedString($seedString, count($flavorTexts));
         return $flavorTexts[$index];
     }
 
 
-    public static function getDenouncedSomeoneFlavorText(string $usernameFrom,string $usernameTo,?string $seedString = null)
+    public static function getDenouncedSomeoneFlavorText(string $usernameFrom,string $usernameTo,?string $seedString = null) : string
     {
         if ($seedString == null)
         {
@@ -599,14 +585,13 @@ class FlavorTextController
             "‘Let the ink of today's dishonor dry,' suggests $usernameFrom to $usernameTo, ‘and tomorrow, pen a new chapter of valor and respect.'",
             "$usernameFrom, once dismayed by $usernameTo's deeds, now fosters hope for their awakening to the dawn of renewed honor and dignity."
         ];
-        
-        
-        $index = GetRandomIntFromSeedString($seedString, count($flavorTexts));
+
+        $index = self::getRandomIntFromSeedString($seedString, count($flavorTexts));
         return $flavorTexts[$index];
     }
 
 
-    public static function GetHostedQuestFlavorText(string $username,string $questName,?string $seedString = null)
+    public static function getHostedQuestFlavorText(string $username,string $questName,?string $seedString = null) : string
     {
         if ($seedString == null)
         {
@@ -702,12 +687,12 @@ class FlavorTextController
         
         ];
         
-        $index = GetRandomIntFromSeedString($seedString, count($flavorTexts));
+        $index = self::getRandomIntFromSeedString($seedString, count($flavorTexts));
         return $flavorTexts[$index];
     }
 
 
-    public static function GetEarnedBadgeFlavorText(string $username,string $badgeName,?string $seedString = null)
+    public static function getEarnedBadgeFlavorText(string $username,string $badgeName,?string $seedString = null) : string
     {
         $badgeName .= " badge";
         if ($seedString == null)
@@ -805,11 +790,11 @@ class FlavorTextController
 
         ];
         
-        $index = GetRandomIntFromSeedString($seedString, count($flavorTexts));
+        $index = self::getRandomIntFromSeedString($seedString, count($flavorTexts));
         return $flavorTexts[$index];
     }
 
-    public static function GetLostTournamentFlavorText(string $username,string $tournamentName,?string $seedString = null)
+    public static function getLostTournamentFlavorText(string $username,string $tournamentName,?string $seedString = null) : string
     {
         if ($seedString == null)
         {
@@ -903,11 +888,11 @@ class FlavorTextController
 
         ];
         
-        $index = GetRandomIntFromSeedString($seedString, count($flavorTexts));
+        $index = self::getRandomIntFromSeedString($seedString, count($flavorTexts));
         return $flavorTexts[$index];
     }
 
-    public static function GetWinTournamentFlavorText(string $username,string $tournamentName,?string $seedString = null)
+    public static function getWinTournamentFlavorText(string $username,string $tournamentName,?string $seedString = null) : string
     {
         if ($seedString == null)
         {
@@ -1003,12 +988,12 @@ class FlavorTextController
 
         ];
         
-        $index = GetRandomIntFromSeedString($seedString, count($flavorTexts));
+        $index = self::getRandomIntFromSeedString($seedString, count($flavorTexts));
         return $flavorTexts[$index];
     }
 
 
-    public static function getWroteBlogPostFlavorText(string $username,string $blogPostTitle,?string $seedString = null)
+    public static function getWroteBlogPostFlavorText(string $username,string $blogPostTitle,?string $seedString = null) : string
     {
         if ($seedString == null)
         {
@@ -1048,16 +1033,14 @@ class FlavorTextController
             "With the revelation of '$blogPostTitle', $username invites us to the crossroads of past wisdom and future insight, where thoughts converge and set forth anew.",
             "From the phoenix quill of $username arises '$blogPostTitle', a rebirth of ideas in the vast landscape of digital dialogue.",
             "In the crafting of '$blogPostTitle', $username weaves a rich tapestry within the grand hall of discourse, inviting all who pass to gaze and wonder."
-            
-
-
         ];
         
-        $index = GetRandomIntFromSeedString($seedString, count($flavorTexts));
+        $index = self::getRandomIntFromSeedString($seedString, count($flavorTexts));
         return $flavorTexts[$index];
     }
 
-    public static function writOfPassageProclamation() {
+    public static function writOfPassageProclamation(?string $writOfPassageOwnerUsername = null) : string
+    {
         // Compose a concise medieval-style proclamation
         $proclamation = "I pledge my honor to sponsor a new entrant into our great kingdom. My word shall be their bond, my honor their shield.";
     
@@ -1066,12 +1049,23 @@ class FlavorTextController
     }
 
     
-    public static function getNewBlogPostAnnouncement(vBlogPost $blogPost) {
+    public static function getNewBlogPostAnnouncement(vBlogPost $blogPost) : string
+    {
         $blogName = $blogPost->blog->title;
         $postTitle = $blogPost->title;
         $postUrl = "https://kickback-kingdom.com/blog/".$blogPost->blogLocator."/".$blogPost->postLocator;
         $writerUsername = $blogPost->author->username;
         return "Exciting News from $blogName! 🌟 Our talented writer $writerUsername has just published a new blog post titled '$postTitle'. Dive into this captivating read at $postUrl";
+    }
+
+    private static function getRandomIntFromSeedString(string $seedString, int $maxInt) : int
+    {
+        // Generate a hash from the seed string
+        $hash = md5($seedString);
+        // Convert the hash into an integer via base conversion
+        $hashToInt = base_convert(substr($hash, 0, 8), 16, 10);
+        // Use modulo to ensure the integer falls within the desired range
+        return $hashToInt % $maxInt;
     }
 }
 ?>

@@ -48,10 +48,25 @@ class vAccount extends vRecordId
     public ?vMedia $background = null;
     public ?vMedia $charm = null;
     public ?vMedia $companion = null;
-    
+
+    /** @var array<vLoot> */
     public ?array $badge_display = null;
+
+    /**
+    * @var array<array{
+    *     rank:     int,
+    *     locator:  string,
+    *     name:     string,
+    *     ranked_matches:  int,
+    *     minimum_ranked_matches_required:  int
+    * }>
+    */
     public ?array $game_ranks = null;
+
+    /** @var array<vGameStats> */
     public ?array $game_stats = null;
+
+    /** @var array<vMatchStats> */
     public ?array $match_stats = null;
     
     function __construct(string $ctime = '', int $crand = -1)
@@ -65,32 +80,25 @@ class vAccount extends vRecordId
         return $this->isArtist || $this->isQuestGiver;
     }
 
-    public function getURL() : string
+    public function url() : string
     {
         return Version::formatUrl("/u/".$this->username);
     }
 
-    public function getProfilePictureURL() : string
+    public function profilePictureURL() : ?string
     {
-        return $this->avatar->getFullPath();
+        return !is_null($this->avatar) ? $this->avatar->getFullPath() : null;
     }
 
-    private function setDefaultProfilePicture()
+    private function setDefaultProfilePicture() : void
     {
         $avatarMedia = new vMedia();
         $avatarMedia->setMediaPath(self::getDefaultProfilePicture($this->crand));
         $this->avatar = $avatarMedia;
     }
 
-
-    private static function getAccountDefaultProfilePicture(vRecordId $recordId) : string 
-    {
-        return self::getDefaultProfilePicture($recordId->crand);
-    }
-
     private static function getDefaultProfilePicture(int $i) : string
     {
-
         $total = 34;
         $hash = md5((string)$i);
         $hash_number = hexdec(substr($hash, 0, 8));
@@ -100,7 +108,7 @@ class vAccount extends vRecordId
     }
 
     public function getAccountElement() : string {
-        return '<a href="'.$this->getURL().'" class="username">'.$this->username.'</a>';
+        return '<a href="'.$this->url().'" class="username">'.$this->username.'</a>';
     }
 
     public function getAccountTitle() : string {

@@ -8,58 +8,54 @@ use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Controllers\TournamentController;
 use Kickback\Common\Version;
 
-$hasError = false;
-$errorMessage = "";
-if (isset($_GET['id']))
+$id   = array_key_exists('id',   $_GET) ? $_GET['id']   : null;
+$name = array_key_exists('name', $_GET) ? $_GET['name'] : null;
+
+$thisQuest = null;
+if ((isset($id)   && QuestController::queryQuestByIdInto($id, $thisQuest))
+||  (isset($name) && QuestController::queryQuestByLocatorInto($name, $thisQuest)))
 {
-
-    $id = $_GET['id'];
-    $questResp = QuestController::getQuestById($id);
+    $hasError = false;
+    $errorMessage = '';
 }
-
-if (isset($_GET['locator'])){
-        
-    $name = $_GET['locator'];
-    $questResp = QuestController::getQuestByLocator($name);
-}
-
-if (!$questResp->success)
-{
-    unset($questResp);
-}
-
-if (!isset($questResp))
+else
 {
     $hasError = true;
-    $errorMessage = "Failed to load bracket";
+    $errorMessage = 'Failed to load bracket';
 }
 
-$thisQuest = $questResp->data;
+$userCanEditQuest = ($thisQuest->canEdit());
 
-$userCanEditQuest = false;
-
-if ($thisQuest->canEdit())
+if ( isset($thisQuest) )
 {
-    $userCanEditQuest = true;
+    $thisQuest->populateTournament();
+    $questApplicants = $thisQuest->queryQuestApplicants();
+
+    $bracketRenderData = $thisQuest->tournament->calculateBracketRenderData($questApplicants);
+    $teams = $bracketRenderData[0];
+    $matchArray = $bracketRenderData[1];
+    $startPlacementArray = $bracketRenderData[2];
+    $pairs = $bracketRenderData[3];
+
+    $seedsAreTBD = false;
+
+    if ($questApplicants[0]->seed==null)
+    {
+        $seedsAreTBD = true;
+        $hasError = true;
+        $errorMessage = "Seeds are to be determined.";
+    }
 }
-
-$thisQuest->populateTournament();
-$questApplicantsResp = $thisQuest->getQuestApplicants();
-$questApplicants = $questApplicantsResp->data;
-
-$bracketRenderData = $thisQuest->tournament->getBracketRenderData($questApplicants);
-$teams = $bracketRenderData[0];
-$matchArray = $bracketRenderData[1];
-$startPlacementArray = $bracketRenderData[2];
-$pairs = $bracketRenderData[3];
-
-$seedsAreTBD = false;
-
-if ($questApplicants[0]->seed==null)
+else
 {
-    $seedsAreTBD = true;
-    $hasError = true;
-    $errorMessage = "Seeds are to be determined.";
+    $questApplicants = null;
+    $bracketRenderData = null;
+    $teams = null;
+    $matchArray = null;
+    $startPlacementArray = null;
+    $pairs = null;
+    $seedsAreTBD = null;
+    // Error flag will already have been raised by this point.
 }
 
 ?>
@@ -124,7 +120,7 @@ if ($questApplicants[0]->seed==null)
                                     </div>
                                 </div>
                                 <?php 
-                                if ($thisQuest->CanEdit())
+                                if (isset($thisQuest) && $thisQuest->CanEdit())
                                 {
                                     ?>
                                 

@@ -10,31 +10,18 @@ use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vDateTime;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Services\Session;
+use Kickback\Common\Str;
 use Kickback\Common\Version;
 
 class MediaController {
-    
-    public static function getMediaDirectories() : Response {
-        // Use global connection
-        $conn = Database::getConnection();
 
-        // Retrieve events for the specified month and year
-        $query = "SELECT * FROM v_media_directories";
-        $stmt = mysqli_prepare($conn, $query);
-
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-
-        // Fetch the events into an associative array
-        $dirs = mysqli_fetch_all($result, MYSQLI_ASSOC);
-
-        mysqli_stmt_close($stmt);
-
-        
-        return (new Response(true, "Media Directories",  $dirs ));
-    }
-
-    public static function searchForMedia($directory, $searchTerm, $page, $itemsPerPage) : Response {
+    public static function searchForMedia(
+        ?string $directory,
+        string  $searchTerm,
+        int     $page,
+        int     $itemsPerPage
+    ) : Response
+    {
         $conn = Database::getConnection();
     
         // Add the wildcards to the searchTerm itself
@@ -42,7 +29,7 @@ class MediaController {
     
         $offset = ($page - 1) * $itemsPerPage;
     
-        if (empty($directory)) {
+        if (Str::empty($directory)) {
             $countQuery = "SELECT COUNT(*) as total FROM v_media WHERE `name` LIKE ? OR `desc` LIKE ?";
             $stmtCount = mysqli_prepare($conn, $countQuery);
             mysqli_stmt_bind_param($stmtCount, 'ss', $searchTerm, $searchTerm);
@@ -63,7 +50,11 @@ class MediaController {
         // Execute the count statement
         mysqli_stmt_execute($stmtCount);
         $resultCount = mysqli_stmt_get_result($stmtCount);
-        $count = mysqli_fetch_assoc($resultCount)["total"];
+        $row = mysqli_fetch_assoc($resultCount);
+        if ( !isset($row) || $row === false ) {
+            throw new \Exception("SQL function fetch_assoc() failed while trying to search for media with query '$searchTerm'");
+        }
+        $count = $row["total"];
         mysqli_stmt_close($stmtCount);
     
         // Execute the main search statement
@@ -80,7 +71,15 @@ class MediaController {
         ]));
     }
 
-    public static function InsertOrUpdateMediaRecord($conn, $directory, $name, $desc, $extension, $crand = -1) {
+    public static function InsertOrUpdateMediaRecord(
+        \mysqli $conn,
+        string  $directory,
+        string  $name,
+        string  $desc,
+        string  $extension,
+        int     $crand = -1
+    ) : int|string
+    {
         // Get the global database connection and service key
         $kk_service_key = \Kickback\Backend\Config\ServiceCredentials::get("kk_service_key");
         
@@ -90,7 +89,7 @@ class MediaController {
         // Check if we are updating an existing record
         if ($crand >= 0) {
             if (!Session::isSteward()) {
-                return false;
+                return 0;
             }
             // Update existing record
             $query = "UPDATE Media 
@@ -100,7 +99,7 @@ class MediaController {
     
             if (!$stmt) {
                 error_log("Failed to prepare update statement: " . mysqli_error($conn));
-                return false;
+                return 0;
             }
     
             // Bind parameters
@@ -111,7 +110,7 @@ class MediaController {
                 return $crand; // Return the updated record's ID
             } else {
                 error_log("Failed to execute update statement: " . mysqli_stmt_error($stmt));
-                return false;
+                return 0;
             }
         } else {
             // Insert a new record
@@ -121,7 +120,7 @@ class MediaController {
     
             if (!$stmt) {
                 error_log("Failed to prepare insert statement: " . mysqli_error($conn));
-                return false;
+                return 0;
             }
     
             // Bind parameters
@@ -132,13 +131,20 @@ class MediaController {
                 return mysqli_insert_id($conn); // Return the ID of the newly inserted record
             } else {
                 error_log("Failed to execute insert statement: " . mysqli_stmt_error($stmt));
-                return false;
+                return 0;
             }
         }
     }
 
-    
-    public static function InsertMediaRecord($conn, $directory, $name, $desc, $extension, $crand = -1) {
+    public static function InsertMediaRecord(
+        \mysqli $conn,
+        string  $directory,
+        string  $name,
+        string  $desc,
+        string  $extension,
+        int     $crand = -1
+    ) : int|string
+    {
         // Get the global database connection and service key
     
         $kk_service_key = \Kickback\Backend\Config\ServiceCredentials::get("kk_service_key");
@@ -154,7 +160,7 @@ class MediaController {
         if (!$stmt) {
             // Failed to prepare the statement
             error_log("Failed to prepare statement: " . mysqli_error($conn));
-            return false;
+            return 0;
         }
         
         // Bind the parameters
@@ -167,46 +173,101 @@ class MediaController {
         } else {
             // Log any error
             error_log("Failed to execute statement: " . mysqli_stmt_error($stmt));
-            return false;
+            return 0;
         }
     }
     
-    public static function isAllowedDirectory($directory) {
+    public static function isAllowedDirectory(string $directory) : bool
+    {
         if (Session::isAdmin()) {
             // Admins can upload to any directory
             return true;
         }
-    
-        $allowedDirectoriesResponse = self::GetMediaDirectories();
-        if (!$allowedDirectoriesResponse->success) {
+
+        if(!self::queryMediaDirectoriesInto($validDirs)) {
             return false;
         }
-    
-        $validDirs = [];
-        foreach ($allowedDirectoriesResponse->data as $dir) {
-            $validDirs[] = $dir['Directory'];
+
+        return in_array($directory, $validDirs, true);
+    }
+
+    /**
+    * @param ?array<string> &$dirs
+    *
+    * @phpstan-assert-if-true =array<string> $dirs
+    */
+    public static function queryMediaDirectoriesInto(?array &$dirs) : bool
+    {
+        $resp = self::queryMediaDirectoriesAsResponse();
+        if ( $resp->success ) {
+            $dirs = $resp->data;
+            return true;
+        } else {
+            $dirs = null;
+            return false;
         }
-    
-        return in_array($directory, $validDirs);
+    }
+
+    /**
+    * @return array<string>
+    */
+    public static function queryMediaDirectories() : array
+    {
+        $resp = self::queryMediaDirectoriesAsResponse();
+        if ($resp->success) {
+            // @phpstan-ignore return.type
+            return $resp->data;
+        } else {
+            throw new \Exception($resp->message);
+        }
+    }
+
+    public static function queryMediaDirectoriesAsResponse() : Response
+    {
+        // Use global connection
+        $conn = Database::getConnection();
+
+        // Retrieve events for the specified month and year
+        $query = "SELECT * FROM v_media_directories";
+        $stmt = mysqli_prepare($conn, $query);
+
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+
+        // Fetch the events into an associative array
+        $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+        mysqli_stmt_close($stmt);
+
+        $dirs = array_map(fn(array $row) => $row['Directory'], $rows);
+        return (new Response(true, "Media Directories",  $dirs ));
     }
     
-    public static function UploadMediaImage($directory, $name, $desc, $imageBase64, $mediaCRAND = "") : Response {
+    public static function UploadMediaImage(
+        string  $directory,
+        string  $name,
+        string  $desc,
+        string  $imageBase64,
+        string  $mediaCRAND = ""
+    ) : Response
+    {
         list($type, $data) = explode(';', $imageBase64);
         list(, $data) = explode(',', $data);
-        $decodedImageData = base64_decode($data);
         $crand = -1;
-        // Check if decoded data is empty
-        if (empty($decodedImageData)) {
+
+        $decodedImageData = base64_decode($data, true);
+        if ($decodedImageData === false) {
+            return new Response(false, 'Decoding of image data failed; check data for characters outside the base64 alphabet.', null);
+        }
+        if (Str::empty($decodedImageData)) {
             return new Response(false, 'Decoded image data is empty.', null);
         }
 
         try {
             // Check if $mediaCRAND is set and not empty
-            if (!empty($mediaCRAND)) {
-                
-                $crand = (int)$mediaCRAND;
-                
-                
+            if (!Str::empty($mediaCRAND))
+            {
+                $crand = intval($mediaCRAND);
                 if (!ctype_digit($mediaCRAND) || $crand < 0) { 
                     throw new \Exception("Invalid mediaCRAND value: $mediaCRAND");
                 }
@@ -234,7 +295,7 @@ class MediaController {
         $mime = $finfo->buffer($decodedImageData);
     
         $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        if (!in_array($mime, $allowedMimeTypes)) {
+        if (!in_array($mime, $allowedMimeTypes, true)) {
             return new Response(false, 'Invalid image type.', $mime);
         }
     
@@ -263,10 +324,19 @@ class MediaController {
         }
     }
     
-    public static function UploadMediaImageTransaction($conn, $directory, $name, $desc, $fileExtension, $decodedImageData, $crand = -1) {
+    public static function UploadMediaImageTransaction(
+        \mysqli $conn,
+        string  $directory,
+        string  $name,
+        string  $desc,
+        string  $extension,
+        string  $decodedImageData,
+        int     $crand = -1
+    ) : Response
+    {
         // Insert media record
         
-        $mediaId = self::InsertOrUpdateMediaRecord($conn, $directory, $name, $desc, $fileExtension, $crand);
+        $mediaId = self::InsertOrUpdateMediaRecord($conn, $directory, $name, $desc, $extension, $crand);
         if (!$mediaId) {
             throw new \Exception('Error saving media record: ' . mysqli_error($conn));
         }
@@ -277,7 +347,7 @@ class MediaController {
         {
             $rootPath = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR);
         }
-        $localPath = join(DIRECTORY_SEPARATOR, ['assets', 'media', $directory, "{$mediaId}.{$fileExtension}"]);
+        $localPath = join(DIRECTORY_SEPARATOR, ['assets', 'media', $directory, "{$mediaId}.{$extension}"]);
         $filePath = join(DIRECTORY_SEPARATOR, [$rootPath, $localPath]);
     
         $directoryPath = dirname($filePath);

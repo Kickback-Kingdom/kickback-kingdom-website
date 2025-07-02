@@ -10,6 +10,7 @@ use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Services\Session;
 use Kickback\Common\Version;
+use Kickback\Common\Str;
 
 class vQuestLine extends vRecordId
 {
@@ -20,7 +21,10 @@ class vQuestLine extends vRecordId
     public vAccount $createdBy;
     public vReviewStatus $reviewStatus;
     public vContent $content;
-    
+
+    /**
+    * @var ?array<vQuest> $quests
+    */
     public ?array $quests = null;
 
     public ?vMedia $icon;
@@ -32,19 +36,13 @@ class vQuestLine extends vRecordId
         parent::__construct($ctime, $crand);
     }
 
-    public function getURL() : string {
+    public function url() : string {
         return Version::formatUrl('/quest-line/'.$this->locator);
     }
     
     public function populateQuests() : void {
-        
-        $resp = QuestController::getQuestsByQuestLineId($this);
-        if ($resp->success)
-            $this->quests = $resp->data;
-        else
-            throw new \Exception($resp->message);
+        $this->quests = QuestController::queryQuestsByQuestLineId($this);
     }
-
 
     public function populateContent() : void {
         if ($this->hasPageContent())
@@ -58,8 +56,9 @@ class vQuestLine extends vRecordId
         $this->populateContent();
     }
     
-    public function nameIsValid() {
-        $valid = StringIsValid($this->title, 10);
+    public function nameIsValid() : bool
+    {
+        $valid = Str::is_longer_than($this->title, 10);
         if ($valid) 
         {
             if (strtolower($this->title) == "new quest")
@@ -70,7 +69,7 @@ class vQuestLine extends vRecordId
     }
 
     public function summaryIsValid() : bool {
-        $valid = StringIsValid($this->summary, 200);
+        $valid = Str::is_longer_than($this->summary, 200);
 
         return $valid;
     }
@@ -83,12 +82,12 @@ class vQuestLine extends vRecordId
         return ($this->hasPageContent() && ($this->content->isValid()));
     }
 
-    public function getPageContent() : vPageContent {
-        return $this->content->pageContent;
+    public function pageContent() : vPageContent {
+        return $this->content->pageContent();
     }
 
     public function locatorIsValid() : bool {
-        $valid = StringIsValid($this->locator, 5);
+        $valid = Str::is_longer_than($this->locator, 5);
         if ($valid) 
         {
             if (strpos(strtolower($this->locator), 'new-quest-') === 0) {
@@ -103,24 +102,25 @@ class vQuestLine extends vRecordId
         return self::imageIsValid($this->icon) && self::imageIsValid($this->banner) && self::imageIsValid($this->bannerMobile);
     }
 
-    private static function imageIsValid($media) : bool {
-        return isset($media) && !is_null($media);
+    private static function imageIsValid(?vMedia $media) : bool {
+        return isset($media);
+        // && !is_null($media); <- redundant with `isset`; it makes PHPStan complain because then `is_null($media)` is ALWAYS false.
     }
 
     public function isValidForPublish() : bool {
         return $this->nameIsValid() && $this->summaryIsValid() && $this->locatorIsValid() && $this->pageContentIsValid() && $this->imagesAreValid();
     }
 
-    public function canEdit()
+    public function canEdit() : bool
     {
         return $this->isCreator() || Session::isMagisterOfTheAdventurersGuild();
     }
 
-    public function isCreator()
+    public function isCreator() : bool
     {
         if (Session::isLoggedIn())
         {
-            return (Session::getCurrentAccount()->crand == $this->createdBy->crand );
+            return !is_null(Session::getCurrentAccount()) && (Session::getCurrentAccount()->crand == $this->createdBy->crand );
         }
         else{
             return false;

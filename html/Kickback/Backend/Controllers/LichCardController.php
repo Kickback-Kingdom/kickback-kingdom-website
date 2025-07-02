@@ -22,6 +22,8 @@ use Kickback\Backend\Models\ItemRarity;
 use Kickback\Backend\Models\ItemCategory;
 use Kickback\Backend\Models\ForeignRecordId;
 
+use Kickback\Common\Arr;
+
 class LichCardController
 {
     public static function getPreConDeckByLootId(vRecordId $deckContainerLootId) : Response {
@@ -75,7 +77,7 @@ class LichCardController
 
         $stmt->close();
 
-        if (empty($cards)) {
+        if (Arr::empty($cards)) {
             return new Response(false, "No Lich cards found.");
         }
 
@@ -119,14 +121,29 @@ class LichCardController
 
         $stmt->close();
 
-        if (empty($lichSets)) {
+        if (Arr::empty($lichSets)) {
             return new Response(false, "No Lich Sets found.");
         }
 
         return new Response(true, "Lich Sets retrieved successfully.", $lichSets);
     }
 
-    public static function getLichSetByLocator(string $locator): Response {
+    /**
+    * @phpstan-assert-if-true =vLichSet $lichSet
+    */
+    public static function queryLichSetByLocatorInto(string $locator, ?vLichSet &$lichSet): bool
+    {
+        $resp = self::queryLichSetByLocatorAsResponse($locator);
+        if ( $resp->success ) {
+            $lichSet = $resp->data;
+            return true;
+        } else {
+            $lichSet = null;
+            return false;
+        }
+    }
+
+    public static function queryLichSetByLocatorAsResponse(string $locator): Response {
         $conn = Database::getConnection();
 
         $sql = "
@@ -318,7 +335,7 @@ class LichCardController
 
         mysqli_stmt_close($stmt);
 
-        if (empty($subtypes)) {
+        if (Arr::empty($subtypes)) {
             return new Response(false, "No subtypes found.", []);
         }
 
@@ -540,7 +557,7 @@ class LichCardController
             $conn->commit(); // Commit the transaction
             return new Response(true, "Lich Card saved successfully.", $model);
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $conn->rollback(); // Rollback transaction on failure.
             return new Response(false, "Error saving Lich Card: " . $e->getMessage(), null);
         }
@@ -660,8 +677,23 @@ class LichCardController
 
         return new Response(true, "Lich Card retrieved successfully.", $lichCard);
     }
+
+    /**
+    * @phpstan-assert-if-true =vLichCard $lichCard
+    */
+    public static function queryLichCardByLocatorInto(string $locator, ?vLichCard &$lichCard): bool
+    {
+        $resp = self::queryLichCardByLocatorAsResponse($locator);
+        if ( $resp->success ) {
+            $lichCard = $resp->data;
+            return true;
+        } else {
+            $lichCard = null;
+            return false;
+        }
+    }
    
-    public static function getLichCardByLocator(string $locator): Response {
+    public static function queryLichCardByLocatorAsResponse(string $locator): Response {
         $conn = Database::getConnection();
 
         $sql = "
@@ -808,7 +840,8 @@ class LichCardController
         $lichCard->content = new vContent('', $contentId);
         
          // Check if content ID is null and handle content insertion if needed
-         if (!$lichCard->hasPageContent() && array_key_exists("content_id", $row)) {
+         if (!$lichCard->hasPageContent() && array_key_exists("content_id", $row))
+         {
             $newContentId = ContentController::insertNewContent();
             self::updateLichCardWikiContent($lichCard, $newContentId);
 
@@ -817,7 +850,6 @@ class LichCardController
             if (!$lichCardResp->success) {
                 return new Response(false, "Failed to find newly inserted lich card by id after inserting content record.", $lichCard);
             }
-
 
             $lichCard = $lichCardResp->data;
         }
@@ -858,11 +890,9 @@ class LichCardController
                 }
             }
 
-
-
             // Handle art media
-            if (!empty($row['mediaId'])) {
-                $art = new vMedia('', $row['mediaId']);
+            if (array_key_exists('mediaId', $row) && isset($row['mediaId'])) {
+                $art = new vMedia('', intval($row['mediaId']));
                 $art->setMediaPath($row['artPath']);
                 $lichCard->art = $art;
             } else {
@@ -870,7 +900,7 @@ class LichCardController
             }
 
             // Handle finished card media
-            if (!empty($row['finishedMediaId'])) {
+            if (array_key_exists('finishedMediaId', $row) && isset($row['finishedMediaId'])) {
                 $finishedCard = new vMedia('', $row['finishedMediaId']);
                 $finishedCard->setMediaPath($row['cardImagePath']);
                 $lichCard->cardImage = $finishedCard;
@@ -878,7 +908,7 @@ class LichCardController
                 $lichCard->cardImage = vMedia::defaultIcon();
             }
 
-            if (!empty($row['item_id'])) {
+            if (array_key_exists('item_id', $row) && isset($row['item_id'])) {
                 $item = new vItem('', $row['item_id']);
                 $lichCard->item = $item;
             } else {
@@ -891,11 +921,8 @@ class LichCardController
                     
                     throw new \Exception("Failed to insert item for Lich Card: " . $response->message);
                 }
-
             }
         }
-
-        
 
         return $lichCard;
     }
