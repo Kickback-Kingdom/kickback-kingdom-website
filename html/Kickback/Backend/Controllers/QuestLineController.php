@@ -47,6 +47,21 @@ class QuestLineController {
         }
     }
 
+    /**
+    * @phpstan-assert-if-true =vQuestLine $questLine
+    */
+    public static function queryQuestLineByLocatorInto(string $locator, ?vQuestLine &$questLine): bool
+    {
+        $resp = self::queryQuestLineByLocatorAsResponse($locator);
+        if ( $resp->success ) {
+            $questLine = $resp->data;
+            return true;
+        } else {
+            $questLine = null;
+            return false;
+        }
+    }
+
     public static function queryQuestLineByLocator(string $locator) : vQuestLine
     {
         $resp = self::queryQuestLineByLocatorAsResponse($locator);

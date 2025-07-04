@@ -75,6 +75,7 @@ if (isset($_POST["submit"]))
     }
   }
 }
+
 $showGuard = false;
 $writProvided =  false;
 $guardImg = 'halt';
@@ -85,6 +86,7 @@ if (isset($_GET['wi']))
     $writ_of_passage_id = ($_GET['wi']);
     $writProvided = true;
     $kk_crypt_key_quest_id = ServiceCredentials::get("crypt_key_quest_id");
+    assert(is_string($kk_crypt_key_quest_id));
     require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/engine.php");
     $crypt = new IDCrypt($kk_crypt_key_quest_id);
     $writ_of_passage_id_decrypted = new vRecordId('',(int)$crypt->decrypt($writ_of_passage_id));
@@ -107,25 +109,22 @@ else
 
 if (isset($_GET['wq'])) {
     $kk_crypt_key_quest_id = ServiceCredentials::get("crypt_key_quest_id");
+    assert(is_string($kk_crypt_key_quest_id));
 
     $writ_of_passage_quest = ($_GET['wq']);
+    assert(is_string($writ_of_passage_quest));
+
     $writProvided = true;
     require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/engine.php");
     $crypt = new IDCrypt($kk_crypt_key_quest_id);
     $wq = $crypt->decrypt($writ_of_passage_quest);
-    $wq = new vRecordId('', (int) $wq);
-    $questResp = QuestController::getQuestById($wq);
-    if ($questResp->success)
-    {
-        $quest = $questResp->data;
-    }
-    else
+    $questId = new vRecordId('', intval($wq));
+    if (!QuestController::queryQuestByIdInto($questId, $quest))
     {
         $hasError = true;
         $errorMessage = "Something isn't right, we couldn't find the quest associated with your Writ of Passage. Please try again.";
         $guardImg = 'halt-writ';
         $showGuard = true;
-
     }
 }
 else{

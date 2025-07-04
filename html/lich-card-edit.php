@@ -21,21 +21,10 @@ if (!Kickback\Services\Session::isServantOfTheLich())
 
 if (!isset($thisLichCardData))
 {
-
-    if (isset($_GET["locator"]))
+    if (!isset($_GET["locator"])
+    ||  !LichCardController::queryLichCardByLocatorInto($_GET["locator"], $thisLichCardData) )
     {
-        // Retrieve the Lich Card by locator
-        $response = LichCardController::getLichCardByLocator($_GET["locator"]);
-
-        if ($response->success) {
-            $thisLichCardData = $response->data;
-        } else {
-            // Handle error (e.g., display an error message)
-            $thisLichCardData = new vLichCard(); // Default to an empty Lich Card
-        }
-    }
-    else{
-        $thisLichCardData = new vLichCard();
+        $thisLichCardData = new vLichCard(); // Default to an empty Lich Card
     }
 }
 
