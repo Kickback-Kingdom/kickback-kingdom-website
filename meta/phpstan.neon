@@ -14,9 +14,21 @@ parameters:
             - ../html/phpmyadmin
         analyseAndScan:
             - ../html/scratch-pad
+    reportUnmatchedIgnoredErrors: false
     ignoreErrors:
         -
             identifier: ternary.shortNotAllowed
+
+        # These are here because of a PHPStan bug that happens when a variable
+        # of type ReflectionClass is created:
+        # https://github.com/phpstan/phpstan/issues/4078
+        #
+        # Thanks goes to github user `dereuromark` for this workaround:
+        # https://github.com/spryker-sdk/composer-constrainer/blob/master/phpstan.neon
+        #
+        - '#.*? with generic class ReflectionClass does not specify its types: T#'
+        - '#Parameter \#1 \$[a-zA-Z]* of class ReflectionClass constructor expects class-string<T of object>\|T of object, string given.#'
+
     checkAlwaysTrueStrictComparison: false
     dynamicConstantNames:
         - Kickback\InitializationScripts\AUTOLOAD_DO_DEBUG_ECHO
