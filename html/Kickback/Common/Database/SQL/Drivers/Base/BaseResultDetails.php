@@ -24,9 +24,6 @@ TODO: explain accessors
 /**
 * @see \Kickback\Common\Database\SQL\SQL_ResultDetails
 *
-* \@template Driver_ResultT of BaseResultDetails
-* \@template-contravariant Driver_RowT of SQL_Row
-* \@implements SQL_Result<Driver_ResultT,Driver_RowT>
 * @template DRIVER_ID of DriverID::*
 * @implements SQL_Result<DRIVER_ID>
 */
@@ -81,8 +78,11 @@ abstract class BaseResultDetails implements SQL_Result
     /**
     * @param BaseStatementDetails<DRIVER_ID> $statement
     */
-    public function __construct(BaseStatementDetails $statement) {
+    public function __construct(BaseStatementDetails $statement)
+    {
+        // This assignment is required for `BaseDriverMetadataTrait` to work.
         $this->driver_id_value = $this->driver_id_definition();
+
         $this->statement_ = $statement;
     }
 

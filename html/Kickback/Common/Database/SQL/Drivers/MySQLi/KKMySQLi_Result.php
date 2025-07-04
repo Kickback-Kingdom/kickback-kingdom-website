@@ -7,6 +7,7 @@ use Kickback\Common\Attributes\KickbackGetter;
 
 use Kickback\Common\Database\SQL\Drivers\DriverID;
 
+use Kickback\Common\Database\SQL\Drivers\MySQLi\KKMySQLi_DriverMetadataTrait;
 use Kickback\Common\Database\SQL\Drivers\MySQLi\KKMySQLi_StatementDetails;
 use Kickback\Common\Database\SQL\Drivers\MySQLi\KKMySQLi_ResultDetails;
 use Kickback\Common\Database\SQL\Drivers\MySQLi\KKMySQLi_Row;
@@ -18,10 +19,7 @@ use Kickback\Common\Database\SQL\SQL_Row;
 /**
 * @see \Kickback\Common\Database\SQL\SQL_ResultDetails
 *
-* TODO: DElete
-* \@extends KKMySQLi_ResultDetails<KKMySQLi_Result,KKMySQLi_Row>
-*
-* @phpstan-type DRIVER_ID  DriverID::MySQLi
+* @phpstan-import-type DRIVER_ID  from KKMySQLi_DriverMetadataTrait
 */
 final class KKMySQLi_Result extends KKMySQLi_ResultDetails
 {

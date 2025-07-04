@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Kickback\Common\Database\SQL\Drivers\MySQLi;
 
 use Kickback\Common\Database\SQL\Drivers\DriverID;
+
 use Kickback\Common\Database\SQL\Drivers\Base\BaseDriverMetadataTrait;
 
 /**

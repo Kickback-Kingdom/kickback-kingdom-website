@@ -29,6 +29,7 @@ use Kickback\Common\Database\SQL\Accessories\SQL_NullableColumnAccessorString;
 use Kickback\Common\Database\SQL\Accessories\SQL_MetaAccessorUnitOfTime;
 use Kickback\Common\Database\SQL\Accessories\SQL_MetaAccessorEnumClass;
 
+
 /**
 * This interface represents a single row returned from an SQL query.
 *

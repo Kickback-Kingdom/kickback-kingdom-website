@@ -23,10 +23,6 @@ TODO: explain accessors
 /**
 * @see \Kickback\Common\Database\SQL\SQL_ResultDetails
 *
-* TODO: Delete
-* \@template Driver_ResultT of BaseResultDetails
-* \@template-contravariant Driver_RowT of BaseRow
-* \@extends BaseResultDetails<Driver_ResultT,Driver_RowT>
 * @template DRIVER_ID of DriverID::*
 * @extends BaseResultDetails<DRIVER_ID>
 */

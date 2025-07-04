@@ -9,13 +9,6 @@ use Kickback\Common\Database\SQL\SQL_ResultDetails;
 use Kickback\Common\Database\SQL\SQL_Row;
 use Kickback\Common\Database\SQL\Accessories\SQL_BindingMap;
 
-// /**
-// * @see SQL_ResultDetails
-// *
-// * @template Driver_ResultT of SQL_Result
-// * @template-contravariant Driver_RowT of SQL_Row
-// * @extends \Iterator<int,SQL_Row>
-// */
 /**
 * @see SQL_ResultDetails
 *
@@ -99,7 +92,6 @@ interface SQL_Result extends SQL_ResultDetails, \Iterator
     * out of the `SQL_Row` object (`$row_to_populate`) before calling
     * `fetch_into_row` again.
     *
-    * \@param Driver_RowT $row_to_populate
     * @param SQL_Row<DRIVER_ID> $row_to_populate
     *
     * @return bool  `true` if the row is populated; `false` if there is no current row (because all rows have already been fetched)

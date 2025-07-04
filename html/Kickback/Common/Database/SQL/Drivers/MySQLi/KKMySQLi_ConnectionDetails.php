@@ -3,21 +3,23 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Database\SQL\Drivers\MySQLi;
 
+use Kickback\Common\Attributes\KickbackGetter;
+
 use Kickback\Common\Database\SQL\Drivers\DriverID;
+
+use Kickback\Common\Database\SQL\Drivers\MySQLi\KKMySQLi_DriverMetadataTrait;
 use Kickback\Common\Database\SQL\Drivers\Base\BaseConnection;
+
 
 /**
 * @see \Kickback\Common\Database\SQL\SQL_ConnectionDetails
 *
-* @phpstan-type DRIVER_ID  DriverID::MySQLi
+* @phpstan-import-type DRIVER_ID  from KKMySQLi_DriverMetadataTrait
 * @extends BaseConnection<DRIVER_ID>
 */
 abstract class KKMySQLi_ConnectionDetails extends BaseConnection
 {
-    /**  @return DRIVER_ID  **/
-    protected final function driver_id_definition() : int {
-        return DriverID::MySQLi;
-    }
+    use KKMySQLi_DriverMetadataTrait;
 
     protected ?\mysqli $mysqli_;
 

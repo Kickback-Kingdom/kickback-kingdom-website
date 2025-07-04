@@ -21,6 +21,7 @@ abstract class BaseConnectionDetails implements SQL_Connection
     use BaseDriverMetadataTrait;
 
     public function __construct() {
+        // This assignment is required for `BaseDriverMetadataTrait` to work.
         $this->driver_id_value = $this->driver_id_definition();
     }
 

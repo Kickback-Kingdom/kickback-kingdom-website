@@ -7,6 +7,7 @@ use Kickback\Common\Attributes\KickbackGetter;
 
 use Kickback\Common\Database\SQL\Drivers\DriverID;
 
+use Kickback\Common\Database\SQL\Drivers\MySQLi\KKMySQLi_DriverMetadataTrait;
 use Kickback\Common\Database\SQL\Drivers\MySQLi\KKMySQLi_ConnectionDetails;
 use Kickback\Common\Database\SQL\Drivers\MySQLi\KKMySQLi_StatementDetails;
 use Kickback\Common\Database\SQL\Drivers\Base\BaseResult;
@@ -15,15 +16,12 @@ use Kickback\Common\Database\SQL\Drivers\Base\BaseRow;
 /**
 * @see \Kickback\Common\Database\SQL\SQL_ResultDetails
 *
-* @phpstan-type DRIVER_ID  DriverID::MySQLi
+* @phpstan-import-type DRIVER_ID  from KKMySQLi_DriverMetadataTrait
 * @extends BaseResult<DRIVER_ID>
 */
 abstract class KKMySQLi_ResultDetails extends BaseResult
 {
-    /**  @return DRIVER_ID  **/
-    protected final function driver_id_definition() : int {
-        return DriverID::MySQLi;
-    }
+    use KKMySQLi_DriverMetadataTrait;
 
     protected ?\mysqli_result $mysqli_result_;
 

@@ -74,25 +74,12 @@ abstract class BaseRow implements SQL_Row
     */
     public function __construct(BaseResultDetails $result,  SQL_ColumnAccessor  $column_accessor_mixed)
     {
+        // This assignment is required for `BaseDriverMetadataTrait` to work.
         $this->driver_id_value = $this->driver_id_definition();
+
         $this->result_ = $result;
         $this->column_accessor_set_ = new RawColumnAccessorSetImplementation($column_accessor_mixed);
     }
-
-    // TODO: Delete
-    // // Optimization: allow other classes to read $driver_id_value directly,
-    // // as this could theoretically reduce dynamic dispatch overhead from
-    // // having to do a vtable lookup on `::driver_id()`.
-    // /**  @var DriverID::*  **/
-    // public readonly int $driver_id_value;
-    // /**  @return DriverID::*  **/
-    // public final function driver_id() : int { return $this->driver_id_value; }
-    // /**  @return DriverID::*  **/
-    // protected abstract function driver_id_definition() : int;
-    //
-    // /**
-    // * @var ($this->disposed_ ? BaseResultDetails : null)
-    // */
 
     /** @var ?BaseResultDetails<DRIVER_ID> $result_ */
     private ?BaseResultDetails $result_;
@@ -149,6 +136,10 @@ abstract class BaseRow implements SQL_Row
     // public function to_array() : array {
     //     return []; // TODO!
     // }
+    // // Should this even be implemented here?
+    // // If we leave it out, then it _forces_ the driver code to
+    // // implement a proper version of it, which seems better
+    // // than potentially having a stub.
 
     /**
     * @see \Kickback\Common\Database\SQL\SQL_Row::__get

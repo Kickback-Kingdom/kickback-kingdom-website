@@ -7,29 +7,13 @@ use Kickback\Common\Attributes\KickbackGetter;
 
 use Kickback\Common\Database\SQL\Drivers\DriverID;
 
-use Kickback\Common\Database\SQL\Internal\SQL_ColumnAccessorSet;
-
-// use Kickback\Common\Database\SQL\Accessories\SQL_Accessor;
-// use Kickback\Common\Database\SQL\Accessories\SQL_ColumnAccessor;
-//
-// use Kickback\Common\Database\SQL\Accessories\SQL_ColumnAccessorBool;
-// use Kickback\Common\Database\SQL\Accessories\SQL_ColumnAccessorDateTime;
-// use Kickback\Common\Database\SQL\Accessories\SQL_ColumnAccessorFloat;
-// use Kickback\Common\Database\SQL\Accessories\SQL_ColumnAccessorInt;
-// use Kickback\Common\Database\SQL\Accessories\SQL_ColumnAccessorString;
-// use Kickback\Common\Database\SQL\Accessories\SQL_NullableColumnAccessorBool;
-// use Kickback\Common\Database\SQL\Accessories\SQL_NullableColumnAccessorDateTime;
-// use Kickback\Common\Database\SQL\Accessories\SQL_NullableColumnAccessorFloat;
-// use Kickback\Common\Database\SQL\Accessories\SQL_NullableColumnAccessorInt;
-// use Kickback\Common\Database\SQL\Accessories\SQL_NullableColumnAccessorString;
-
-//use Kickback\Common\Database\SQL\Accessories\SQL_MetaAccessorUnitOfTime;
-//use Kickback\Common\Database\SQL\Accessories\SQL_MetaAccessorEnumClass;
-
+use Kickback\Common\Database\SQL\Drivers\MySQLi\KKMySQLi_DriverMetadataTrait;
 use Kickback\Common\Database\SQL\Drivers\MySQLi\KKMySQLi_ConnectionDetails;
 use Kickback\Common\Database\SQL\Drivers\MySQLi\KKMySQLi_StatementDetails;
 use Kickback\Common\Database\SQL\Drivers\MySQLi\KKMySQLi_ResultDetails;
 use Kickback\Common\Database\SQL\Drivers\Base\BaseRow;
+
+use Kickback\Common\Database\SQL\Internal\SQL_ColumnAccessorSet;
 
 // NOTE: regarding the `kkmysqli_column_types` list...
 //
@@ -58,15 +42,12 @@ use Kickback\Common\Database\SQL\Drivers\Base\BaseRow;
 * @phpstan-type kkmysqli_native_row     array<int|string, kkmysqli_column_types>
 * @phpstan-type kkmysqli_native_nrow    array<int|string, kkmysqli_ncolumn_types>
 *
-* @phpstan-type DRIVER_ID  DriverID::MySQLi
+* @phpstan-import-type DRIVER_ID  from KKMySQLi_DriverMetadataTrait
 * @extends BaseRow<DRIVER_ID>
 */
 final class KKMySQLi_Row extends BaseRow
 {
-    /**  @return DRIVER_ID  **/
-    protected final function driver_id_definition() : int {
-        return DriverID::MySQLi;
-    }
+    use KKMySQLi_DriverMetadataTrait;
 
     /** @var ?kkmysqli_native_nrow */
     private ?array $row_;

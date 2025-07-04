@@ -21,6 +21,15 @@ trait BaseDriverMetadataTrait
     public final function driver_id() : int { return $this->driver_id_value; }
     /**  @return DRIVER_ID  **/
     protected abstract function driver_id_definition() : int;
+
+    // Ideally, we'd do this:
+    // private function setup_driver_metadata_trait() : void {
+    //     $this->driver_id_value = $this->driver_id_definition();
+    // }
+    //
+    // Unfortunately, this leads to PHPStan `property.readOnlyAssignNotInConstructor`
+    // errors because the `$this->driver_id_value` variable MUST be assigned
+    // within the constructor, not just in a function called from the constructor.
 }
 
 ?>

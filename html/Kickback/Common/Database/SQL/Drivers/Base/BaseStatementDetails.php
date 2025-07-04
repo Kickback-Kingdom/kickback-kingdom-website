@@ -21,17 +21,6 @@ abstract class BaseStatementDetails implements SQL_Statement
     /** @use BaseDriverMetadataTrait<DRIVER_ID> */
     use BaseDriverMetadataTrait;
 
-    // TODO: Delete
-    // // Optimization: allow other classes to read $driver_id_value directly,
-    // // as this could theoretically reduce dynamic dispatch overhead from
-    // // having to do a vtable lookup on `::driver_id()`.
-    // /**  @var DriverID::*  **/
-    // public readonly int $driver_id_value;
-    // /**  @return DriverID::*  **/
-    // public final function driver_id() : int { return $this->driver_id_value; }
-    // /**  @return DriverID::*  **/
-    // protected abstract function driver_id_definition() : int;
-
     /** @var ?BaseConnectionDetails<DRIVER_ID> */
     private ?BaseConnectionDetails $connection_;
 
@@ -50,6 +39,7 @@ abstract class BaseStatementDetails implements SQL_Statement
     */
     public function __construct(BaseConnectionDetails $connection)
     {
+        // This assignment is required for `BaseDriverMetadataTrait` to work.
         $this->driver_id_value = $this->driver_id_definition();
 
         // Although this line is similar in function to the `attach` method,
