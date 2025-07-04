@@ -26,18 +26,18 @@ use Kickback\Common\Database\SQL\Accessories\SQL_MetaAccessorEnumClass;
 */
 interface SQL_ColumnAccessorSet
 {
-    public function bool(int|string $column_number_or_name = null)      : SQL_ColumnAccessorBool|bool;
-    public function DateTime(int|string $column_number_or_name = null)  : SQL_ColumnAccessorDateTime|\DateTime;
-    public function float(int|string $column_number_or_name = null)     : SQL_ColumnAccessorFloat|float;
-    public function int(int|string $column_number_or_name = null)       : SQL_ColumnAccessorInt|int;
-    public function str(int|string $column_number_or_name = null)       : SQL_ColumnAccessorString|string;
-    public function string(int|string $column_number_or_name = null)    : SQL_ColumnAccessorString|string;
-    public function nbool(int|string $column_number_or_name = null)     : SQL_NullableColumnAccessorBool|bool|null;
-    public function nDateTime(int|string $column_number_or_name = null) : SQL_NullableColumnAccessorDateTime|\DateTime|null;
-    public function nfloat(int|string $column_number_or_name = null)    : SQL_NullableColumnAccessorFloat|float|null;
-    public function nint(int|string $column_number_or_name = null)      : SQL_NullableColumnAccessorInt|int|null;
-    public function nstr(int|string $column_number_or_name = null)      : SQL_NullableColumnAccessorString|string|null;
-    public function nstring(int|string $column_number_or_name = null)   : SQL_NullableColumnAccessorString|string|null;
+    public function bool     (int|string $column_number_or_name = null) : SQL_ColumnAccessorBool             | bool            ;
+    public function DateTime (int|string $column_number_or_name = null) : SQL_ColumnAccessorDateTime         | \DateTime       ;
+    public function float    (int|string $column_number_or_name = null) : SQL_ColumnAccessorFloat            | float           ;
+    public function int      (int|string $column_number_or_name = null) : SQL_ColumnAccessorInt              | int             ;
+    public function str      (int|string $column_number_or_name = null) : SQL_ColumnAccessorString           | string          ;
+    public function string   (int|string $column_number_or_name = null) : SQL_ColumnAccessorString           | string          ;
+    public function nbool    (int|string $column_number_or_name = null) : SQL_NullableColumnAccessorBool     | bool      | null;
+    public function nDateTime(int|string $column_number_or_name = null) : SQL_NullableColumnAccessorDateTime | \DateTime | null;
+    public function nfloat   (int|string $column_number_or_name = null) : SQL_NullableColumnAccessorFloat    | float     | null;
+    public function nint     (int|string $column_number_or_name = null) : SQL_NullableColumnAccessorInt      | int       | null;
+    public function nstr     (int|string $column_number_or_name = null) : SQL_NullableColumnAccessorString   | string    | null;
+    public function nstring  (int|string $column_number_or_name = null) : SQL_NullableColumnAccessorString   | string    | null;
 
     // These will probably be moved to a different accessor set,
     // as they do not yield values directly, and do not have the

@@ -3,6 +3,16 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Database\SQL;
 
+use Kickback\Common\Attributes\KickbackGetter;
+
+use Kickback\Common\Database\SQL\Drivers\DriverID;
+
+use Kickback\Common\Database\SQL\SQL_DriverMetadata;
+
+use Kickback\Common\Database\SQL\SQL_ConnectionDetails;
+use Kickback\Common\Database\SQL\SQL_StatementDetails;
+use Kickback\Common\Database\SQL\SQL_ResultDetails;
+
 use Kickback\Common\Database\SQL\Internal\SQL_ColumnAccessorSet;
 
 use Kickback\Common\Database\SQL\Accessories\SQL_ColumnAccessorBool;
@@ -20,6 +30,37 @@ use Kickback\Common\Database\SQL\Accessories\SQL_MetaAccessorUnitOfTime;
 use Kickback\Common\Database\SQL\Accessories\SQL_MetaAccessorEnumClass;
 
 /**
+* This interface represents a single row returned from an SQL query.
+*
+* It provides type-safe access to the row contents, thus ensuring that
+* analysis tools (such as PHPStan) will be able to determine exactly
+* what kind of data the calling code expects when querying databases.
+*
+* Examples:
+* ```
+* // Using conventional array notation.
+* $row = $results->fetch();
+* $player->name            = $row->string['name'];
+* $player->strength        = $row->int['strength'];
+* $player->dexterity       = $row->int['dexterity'];
+* $player->intelligence    = $row->int['intelligence'];
+* $player->location->x     = $row->int['location$x'];
+* $player->location->y     = $row->int['location$y'];
+* $player->last_login_time = $row->datetime['last_login'];
+*
+* // Using field notation.
+* // This works whenever the result's SQL field name is also a valid
+* // PHP identifier. Otherwise, array notation must be used.
+* $row = $results->fetch();
+* $player->name            = $row->string->name;
+* $player->strength        = $row->int->strength;
+* $player->dexterity       = $row->int->dexterity;
+* $player->intelligence    = $row->int->intelligence;
+* $player->location->x     = $row->int['location$x'];
+* $player->location->y     = $row->int['location$y'];
+* $player->last_login_time = $row->datetime->last_login;
+* ```
+*
 * When reading from a column/cell, a type conversion may occur
 * if the SQL driver does not deliver a value that is exactly the same
 * (PHP) type as the type requested from the `SQL_Row` object.
@@ -89,17 +130,48 @@ use Kickback\Common\Database\SQL\Accessories\SQL_MetaAccessorEnumClass;
 * @phpstan-type unit_of_time_names    'secs'|'msecs'|'hnsecs'|'usecs'|'nsecs'
 * @phpstan-type validator_names       'enum_class'
 * @phpstan-type kksql_all_stem_names  all_column_accessor_names|unit_of_time_names|validator_names
+*
+* @template DRIVER_ID of DriverID::*
+* @extends SQL_DriverMetadata<DRIVER_ID>
 */
-interface SQL_Row extends SQL_ColumnAccessorSet
+interface SQL_Row extends SQL_ColumnAccessorSet, SQL_DriverMetadata
 {
+    /* NOTE: All of the (definitions for) accessor methods,
+    * ex: `int()`, `string()`, `bool()`, etc,
+    * are provided by extending the `SQL_ColumnAccessorSet` interface.
+    */
+
+    /**
+    * @throws void
+    * @return SQL_ConnectionDetails<DRIVER_ID>
+    */
+    #[KickbackGetter]
+    public function connection() : SQL_ConnectionDetails;
+
+    /**
+    * @throws void
+    * @return SQL_StatementDetails<DRIVER_ID>
+    */
+    #[KickbackGetter]
+    public function statement() : SQL_StatementDetails;
+
+    /**
+    * @throws void
+    * @return SQL_ResultDetails<DRIVER_ID>
+    */
+    #[KickbackGetter]
+    public function result() : SQL_ResultDetails;
+
     // Time-unit accessors that precede either int (timestamp) or DateTime accessors
     // as a way to provide scale/precision information to integer-valued
     // Unix timestamps on either side of the data transfer.
+    /* TODO
     public function secs()      : SQL_MetaAccessorUnitOfTime;
     public function msecs()     : SQL_MetaAccessorUnitOfTime;
     public function usecs()     : SQL_MetaAccessorUnitOfTime;
     public function hnsecs()    : SQL_MetaAccessorUnitOfTime;
     public function nsecs()     : SQL_MetaAccessorUnitOfTime;
+    */
 
     /**
     * This yields an accessor, similar to `$row->int()`, but validates the
@@ -162,9 +234,14 @@ interface SQL_Row extends SQL_ColumnAccessorSet
     * * When the row's contents must be stored past the current iteration of the result set.
     *     (e.g. before calling `$results->next()`)
     *
-    * @return array<int|string,kksql_any_supported_type>
+    * @return array<int|string,kksql_any_supported_type|null>
     */
     public function to_array() : array;
+
+    /**
+    * Removes all data from the `SQL_Row` object without deallocating memory.
+    */
+    public function clear() : void;
 
     /**
     * The `__get` and `__isset` magic methods implement properties that correspond
@@ -222,6 +299,9 @@ interface SQL_Row extends SQL_ColumnAccessorSet
     //public function __call(string $name, array $arguments): mixed
 
     public function __toString() : string;
+
+    public function dispose() : void;
+    public function disposed() : bool;
 }
 
 ?>

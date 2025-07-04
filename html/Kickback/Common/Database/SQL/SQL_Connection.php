@@ -3,17 +3,24 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Database\SQL;
 
-interface SQL_Connection
-{
-    public function close() : bool;
+use Kickback\Common\Database\SQL\Drivers\DriverID;
 
-    //public function mysqli_autocommit(bool $enable): bool;
-    //public function mysqli_begin_transaction(int $flags = 0, ?string $name = null): bool;
-    //public function mysqli_change_user(string $username, #[\SensitiveParameter] string $password, ?string $database): bool;
-    //public function mysqli_character_set_name(): string;
-    //public function mysqli_close() : bool;
-    //public function mysqli_commit(int $flags = 0, ?string $name = null): bool;
-    //public function mysqli_rollback(int $flags = 0, ?string $name = null): bool;
+use Kickback\Common\Database\SQL\SQL_Statement;
+use Kickback\Common\Database\SQL\SQL_ConnectionDetails;
+
+/**
+* @see SQL_ConnectionDetails
+*
+* @template DRIVER_ID of DriverID::*
+* @extends SQL_ConnectionDetails<DRIVER_ID>
+*/
+interface SQL_Connection extends SQL_ConnectionDetails
+{
+    /**
+    * @param     ?SQL_Statement<DRIVER_ID> $statement
+    * @param-out SQL_Statement<DRIVER_ID>  $statement
+    */
+    public function prepare(?SQL_Statement &$statement, string $query) : void;
 }
 
 ?>

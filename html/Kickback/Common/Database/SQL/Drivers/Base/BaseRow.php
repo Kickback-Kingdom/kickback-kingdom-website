@@ -3,12 +3,16 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Database\SQL\Drivers\Base;
 
-use Kickback\Common\Exceptions\NotImplementedMethodException;
+use Kickback\Common\Attributes\KickbackGetter;
+
+use Kickback\Common\Database\SQL\Drivers\DriverID;
+use Kickback\Common\Database\SQL\Drivers\Base\BaseDriverMetadataTrait;
+use Kickback\Common\Database\SQL\Drivers\Base\BaseConnectionDetails;
+use Kickback\Common\Database\SQL\Drivers\Base\BaseStatementDetails;
+use Kickback\Common\Database\SQL\Drivers\Base\BaseResultDetails;
+use Kickback\Common\Database\SQL\SQL_Row;
 
 use Kickback\Common\Database\SQL\Internal\SQL_ColumnAccessorSet;
-
-use Kickback\Common\Database\SQL\SQL_Row;
-use Kickback\Common\Database\SQL\SQL_TypeStrictness;
 
 use Kickback\Common\Database\SQL\Accessories\SQL_Accessor;
 use Kickback\Common\Database\SQL\Accessories\SQL_ColumnAccessor;
@@ -34,14 +38,22 @@ use Kickback\Common\Database\SQL\Drivers\Base\RawColumnAccessorSetInterface;
 
 use Kickback\Common\Database\SQL\Drivers\Base\Accessories\MetaAccessorEnumClass;
 
+use Kickback\Common\Exceptions\NotImplementedMethodException;
+
 /**
+* @see \Kickback\Common\Database\SQL\SQL_Row
+*
 * @phpstan-import-type kksql_any_supported_type from SQL_ColumnAccessorSet
 * @phpstan-import-type kksql_all_stem_names     from SQL_Row
 *
-* @phpstan-type SQL_TypeStrictness  int
+* @template DRIVER_ID of DriverID::*
+* @implements SQL_Row<DRIVER_ID>
 */
 abstract class BaseRow implements SQL_Row
 {
+    /** @use BaseDriverMetadataTrait<DRIVER_ID> */
+    use BaseDriverMetadataTrait;
+
     use ColumnAccessorSetTrait;
 
     // This field (specifically, its getter below)
@@ -57,24 +69,66 @@ abstract class BaseRow implements SQL_Row
     }
 
     /**
-    * @param SQL_ColumnAccessor<mixed> $column_accessor_mixed
+    * @param BaseResultDetails<DRIVER_ID> $result
+    * @param SQL_ColumnAccessor<mixed>    $column_accessor_mixed
     */
-    public function __construct(SQL_ColumnAccessor  $column_accessor_mixed)
+    public function __construct(BaseResultDetails $result,  SQL_ColumnAccessor  $column_accessor_mixed)
     {
+        $this->driver_id_value = $this->driver_id_definition();
+        $this->result_ = $result;
         $this->column_accessor_set_ = new RawColumnAccessorSetImplementation($column_accessor_mixed);
+    }
+
+    // TODO: Delete
+    // // Optimization: allow other classes to read $driver_id_value directly,
+    // // as this could theoretically reduce dynamic dispatch overhead from
+    // // having to do a vtable lookup on `::driver_id()`.
+    // /**  @var DriverID::*  **/
+    // public readonly int $driver_id_value;
+    // /**  @return DriverID::*  **/
+    // public final function driver_id() : int { return $this->driver_id_value; }
+    // /**  @return DriverID::*  **/
+    // protected abstract function driver_id_definition() : int;
+    //
+    // /**
+    // * @var ($this->disposed_ ? BaseResultDetails : null)
+    // */
+
+    /** @var ?BaseResultDetails<DRIVER_ID> $result_ */
+    private ?BaseResultDetails $result_;
+
+    /**
+    * @throws void
+    * @return BaseConnectionDetails<DRIVER_ID>
+    */
+    #[KickbackGetter]
+    public function connection() : BaseConnectionDetails {
+        return $this->result()->connection();
+    }
+
+    /**
+    * @throws void
+    * @return BaseStatementDetails<DRIVER_ID>
+    */
+    #[KickbackGetter]
+    public function statement() : BaseStatementDetails {
+        return $this->result()->statement();
+    }
+
+    /**
+    * @throws void
+    * @return BaseResultDetails<DRIVER_ID>
+    */
+    #[KickbackGetter]
+    public function result() : BaseResultDetails {
+        assert(!$this->disposed());
+        return $this->result_;
     }
 
     private ?MetaAccessorEnumClass $accessor_EnumClass_ = null;
     protected function accessor_EnumClass() : SQL_MetaAccessorEnumClass {
         return Misc::accessor_property_impl($this->accessor_EnumClass_, fn() => new MetaAccessorEnumClass($this->column_accessor_set()));
     }
-
-    // /**
-    // * True to its name, it does what it says. (This is here to test how PHPStan behaves when an ambiguous symbol (type alias vs class) is present.)
-    // *
-    // * @return SQL_TypeStrictness
-    // */
-    // private function get_an_int() : int { return 42; }
 
     /**
     * @see \Kickback\Common\Database\SQL\SQL_Row::enum_class
@@ -181,6 +235,22 @@ abstract class BaseRow implements SQL_Row
     //public function __call(string $column_name, array $arguments): mixed
 
     //public function __toString() : string;
+
+    private bool  $disposed_ = false;
+    public function dispose() : void
+    {
+        $this->disposed_ = true;
+        $this->result_ = null;
+    }
+
+    /**
+    * @phpstan-assert-if-true  null               $this->result_
+    * @phpstan-assert-if-false BaseResultDetails  $this->result_
+    */
+    public function disposed() : bool
+    {
+        return $this->disposed_;
+    }
 }
 
 ?>
