@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Kickback\Common;
+namespace Kickback\Common\Primitives;
 
 /**
 * This class originally existed to silence the PHPStan error about `empty` being not allowed.
