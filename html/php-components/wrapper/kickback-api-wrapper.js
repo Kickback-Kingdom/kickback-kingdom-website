@@ -8,18 +8,20 @@ class KickbackAPI {
         this.sessionToken = null;
         this.serviceKey = null;
         
-        // Delegate to component classes
-        this.item = ItemAPI;
-        
-        // Will add more as we implement them:
-        // this.account = AccountAPI;
-        // this.media = MediaAPI;
-        // this.session = SessionAPI;
-        // this.lich = LichAPI;
-        // this.match = MatchAPI;
+        // Lazy-initialized component classes
+        this._item = null;
         
         console.log('KickbackAPI wrapper initialized v' + this.version);
     }
+    
+    // Lazy getters for component classes
+    get item() {
+        if (!this._item) {
+            this._item = ItemAPI; // Static class, no instantiation needed
+        }
+        return this._item;
+    }
+    
 
     /**
      * Set session token for authenticated requests
