@@ -8,7 +8,7 @@ use Kickback\Backend\Models\LobbyMatch;
 use Kickback\Backend\Models\Response;
 use Kickback\Services\Database;
 
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Str;
 
 class LobbyController
 {

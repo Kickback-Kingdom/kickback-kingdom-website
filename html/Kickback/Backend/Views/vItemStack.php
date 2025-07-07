@@ -6,7 +6,7 @@ namespace Kickback\Backend\Views;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Views\vItem;
 use Kickback\Backend\Views\vLoot;
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Str;
 
 class vItemStack
 {

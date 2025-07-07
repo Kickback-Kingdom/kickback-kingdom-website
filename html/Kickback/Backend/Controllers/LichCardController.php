@@ -22,7 +22,7 @@ use Kickback\Backend\Models\ItemRarity;
 use Kickback\Backend\Models\ItemCategory;
 use Kickback\Backend\Models\ForeignRecordId;
 
-use Kickback\Common\Arr;
+use Kickback\Common\Primitives\Arr;
 
 class LichCardController
 {

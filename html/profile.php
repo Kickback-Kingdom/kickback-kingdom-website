@@ -45,7 +45,7 @@ $isMyProfile = false;
 $check_prestige_token_use = function()
     use($profile, &$isMyProfile, &$hasError, &$errorMessage, &$hasSuccess, &$successMessage) : void
 {
-    if (Kickback\Services\Session::isLoggedIn()) {
+    if (!Kickback\Services\Session::isLoggedIn()) {
         return;
     }
 
