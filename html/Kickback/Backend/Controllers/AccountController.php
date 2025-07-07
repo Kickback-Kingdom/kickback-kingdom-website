@@ -18,7 +18,7 @@ use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Backend\Views\vRaffle;
 use Kickback\Backend\Views\vGameStats;
 use Kickback\Backend\Controllers\SocialMediaController;
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Str;
 
 class AccountController
 {
