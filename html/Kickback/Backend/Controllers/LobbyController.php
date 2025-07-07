@@ -17,7 +17,7 @@ use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vReviewStatus;
 
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Str;
 
 class LobbyController
 {

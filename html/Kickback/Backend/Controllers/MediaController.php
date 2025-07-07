@@ -10,7 +10,7 @@ use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vDateTime;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Services\Session;
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Str;
 use Kickback\Common\Version;
 
 class MediaController {

@@ -9,8 +9,8 @@ use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Models\Response;
 use Kickback\Services\Database;
-use Kickback\Common\Arr;
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Arr;
+use Kickback\Common\Primitives\Str;
 
 class GameController
 {
