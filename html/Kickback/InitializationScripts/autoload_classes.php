@@ -166,6 +166,16 @@ define('Kickback\InitializationScripts\AUTOLOAD_INCOMPLETE', 1);
 define('Kickback\InitializationScripts\AUTOLOAD_FAILURE',    2);
 
 /**
+* Returned by autoloader functions internally to indicate that the given
+* symbol (class fqn) matches a special pattern that is used to tell the
+* autoloader to NOT attempt autoloading.
+*
+* Example: if a symbol is all lower-case and ends in `_a`, then it is
+* considered to be a PHPStan "local alias" and should NOT be autoloaded.
+*/
+define('Kickback\InitializationScripts\AUTOLOAD_IGNORED',    3);
+
+/**
 * Converts Kickback autoloader return codes into their short (unqualified) names.
 */
 function autoload_result_name(int $result) : string
@@ -175,6 +185,7 @@ function autoload_result_name(int $result) : string
         case \Kickback\InitializationScripts\AUTOLOAD_SUCCESS:    return "AUTOLOAD_SUCCESS";
         case \Kickback\InitializationScripts\AUTOLOAD_INCOMPLETE: return "AUTOLOAD_INCOMPLETE";
         case \Kickback\InitializationScripts\AUTOLOAD_FAILURE:    return "AUTOLOAD_FAILURE";
+        case \Kickback\InitializationScripts\AUTOLOAD_IGNORED:    return 'AUTOLOAD_IGNORED';
     }
     return "Invalid value: " . strval($result);
 }
@@ -182,7 +193,7 @@ function autoload_result_name(int $result) : string
 /**
 * Call `generic_autoload_function` instead.
 *
-* @return int  One of {AUTOLOAD_SUCCESS, AUTOLOAD_INCOMPLETE, AUTOLOAD_FAILURE}
+* @return int  One of {AUTOLOAD_SUCCESS, AUTOLOAD_INCOMPLETE, AUTOLOAD_FAILURE, AUTOLOAD_IGNORED}
 * @see \Kickback\InitializationScripts\generic_autoload_function
 */
 function generic_autoload_function_impl(string $class_fqn, string $namespace_to_try, string $root_dir) : int
@@ -224,6 +235,18 @@ function generic_autoload_function_impl(string $class_fqn, string $namespace_to_
     if (0 !== strncmp($namespace_to_try, $class_fqn, $namespace_name_len)) {
         // No, move on to the next registered autoloader
         return AUTOLOAD_INCOMPLETE;
+    }
+
+    // Weird workaround:
+    // Sometimes using the `never` return type will cause the autoloader to be invoked.
+    // This doesn't make sense though, because `never` is not a class, it's a built-in
+    // PHP type that indicates that a function will "never" return.
+    // So we'll just... "not do this, but say we did". heh.
+    // (It got worse: Apparently PHPStan does this whenever something uses
+    // a type defined with @phpstan-type or @phpstan-type-import. Guh!
+    // Well, I have no way to predict what those are in a general way. Sadge.)
+    if ($class_fqn === 'never' || str_ends_with($class_fqn, '\\never')) {
+        return AUTOLOAD_SUCCESS;
     }
 
     // Now we have proven that the $namespace_to_try is actually the namespace
@@ -302,7 +325,7 @@ function generic_autoload_function_impl(string $class_fqn, string $namespace_to_
 * information, they can use associative lookup to narrow valid namespaces
 * until they have one to pass to this function.)
 *
-* @return int  One of {AUTOLOAD_SUCCESS, AUTOLOAD_INCOMPLETE, AUTOLOAD_FAILURE}
+* @return int  One of {AUTOLOAD_SUCCESS, AUTOLOAD_INCOMPLETE, AUTOLOAD_FAILURE, AUTOLOAD_IGNORED}
 *
 * @see \Kickback\InitializationScripts\autoload_function
 */
@@ -339,7 +362,7 @@ function generic_autoload_function(string $class_fqn, string $namespace_to_try, 
 /**
 * Internal function that should only be called from `autoload_try_vendor_folder`.
 *
-* @return int  One of {AUTOLOAD_SUCCESS, AUTOLOAD_INCOMPLETE, AUTOLOAD_FAILURE}
+* @return int  One of {AUTOLOAD_SUCCESS, AUTOLOAD_INCOMPLETE, AUTOLOAD_FAILURE, AUTOLOAD_IGNORED}
 */
 function autoload_try_vendor_folder_impl(string $class_fqn) : int
 {
@@ -488,8 +511,7 @@ function autoload_try_vendor_folder_impl(string $class_fqn) : int
 
         // Attempt to autoload the class using this namespace+directory.
         $try_result = generic_autoload_function($class_fqn, $dir_name, $vendor_dir_path);
-        if((AUTOLOAD_SUCCESS === $try_result)
-        || (AUTOLOAD_FAILURE === $try_result))
+        if(AUTOLOAD_INCOMPLETE !== $try_result)
         {
             $final_result = $try_result;
             break;
@@ -508,7 +530,7 @@ function autoload_try_vendor_folder_impl(string $class_fqn) : int
 *
 * It is an autoloader that checks the ./vendor directory.
 *
-* @return int  One of {AUTOLOAD_SUCCESS, AUTOLOAD_INCOMPLETE, AUTOLOAD_FAILURE}
+* @return int  One of {AUTOLOAD_SUCCESS, AUTOLOAD_INCOMPLETE, AUTOLOAD_FAILURE, AUTOLOAD_IGNORED}
 */
 function autoload_try_vendor_folder(string $class_fqn) : int
 {
@@ -543,10 +565,27 @@ function autoload_try_vendor_folder(string $class_fqn) : int
 /**
 * Internal function that should only be called from `autoload_function`.
 *
-* @return int  One of {AUTOLOAD_SUCCESS, AUTOLOAD_INCOMPLETE, AUTOLOAD_FAILURE}
+* @return int  One of {AUTOLOAD_SUCCESS, AUTOLOAD_INCOMPLETE, AUTOLOAD_FAILURE, AUTOLOAD_IGNORED}
 */
 function autoload_function_impl(string $class_fqn) : int
 {
+    // Ignore symbols that tell us to exclude them from autoloading.
+    // Right now, this is anything in the Kickback namespace that ends
+    // with the suffix `_a`. This can be used to designate PHPStan local aliases.
+    if (str_ends_with($class_fqn,'_a')
+    &&  (  str_starts_with($class_fqn,'Kickback')
+        || str_starts_with($class_fqn,'\\Kickback')))
+    {
+        // ex: 'Kickback\Foo\Bar\my_local_alias_a' -> 'my_local_alias_a'
+        $local_symbol = strrchr($class_fqn,'\\');
+
+        // Check if it's all lower-cased.
+        if ($local_symbol !== false
+        &&  mb_strtolower($local_symbol) === $local_symbol) {
+            return AUTOLOAD_IGNORED;
+        }
+    }
+
     // Attempt to load Kickback classes first.
     // These are the highest priority.
     $result = generic_autoload_function($class_fqn, 'Kickback', \Kickback\SCRIPT_ROOT);
@@ -608,6 +647,7 @@ function autoload_function(string $class_fqn) : void
             case AUTOLOAD_SUCCESS:    $found_str = " (success! class found.)"; break;
             case AUTOLOAD_INCOMPLETE: $found_str = " (not found)"; break;
             case AUTOLOAD_FAILURE:    $found_str = " (class file found, but had loading errors)"; break;
+            case AUTOLOAD_IGNORED:    $found_str = " (symbol excluded from autoloading)"; break;
         }
         return "End autoload of class $class_fqn$found_str";
     });
