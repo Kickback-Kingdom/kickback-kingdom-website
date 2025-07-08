@@ -20,7 +20,7 @@ namespace Kickback\Common\Primitives;
 */
 final class Meta
 {
-    use \Kickback\Common\StaticClassTrait;
+    use \Kickback\Common\Traits\StaticClassTrait;
 
     /**
     * @param kkdebug_backtrace $trace

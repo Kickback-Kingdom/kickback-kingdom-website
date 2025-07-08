@@ -8,7 +8,7 @@ namespace Kickback\Common\Primitives;
 */
 final class Obj
 {
-    use \Kickback\Common\StaticClassTrait;
+    use \Kickback\Common\Traits\StaticClassTrait;
 
     /**
     * Uses the data in `$source` to populate the object/class `$dest`,

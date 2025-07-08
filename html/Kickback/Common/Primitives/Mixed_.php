@@ -10,7 +10,7 @@ use Kickback\Common\Primitives\Meta;
 */
 final class Mixed_
 {
-    use \Kickback\Common\StaticClassTrait;
+    use \Kickback\Common\Traits\StaticClassTrait;
 
     /**
     * @template TComparable

@@ -8,7 +8,7 @@ namespace Kickback\Common\Primitives;
 */
 final class Float_
 {
-    use \Kickback\Common\StaticClassTrait;
+    use \Kickback\Common\Traits\StaticClassTrait;
 
     /**
     * @param      array<array-key, ?float>  $arr

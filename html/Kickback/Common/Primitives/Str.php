@@ -10,7 +10,7 @@ namespace Kickback\Common\Primitives;
 */
 final class Str
 {
-    use \Kickback\Common\StaticClassTrait;
+    use \Kickback\Common\Traits\StaticClassTrait;
 
     /**
     * A type-safe alternative to the `empty` builtin.

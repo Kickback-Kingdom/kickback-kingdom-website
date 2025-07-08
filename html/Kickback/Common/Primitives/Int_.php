@@ -8,7 +8,7 @@ namespace Kickback\Common\Primitives;
 */
 final class Int_
 {
-    use \Kickback\Common\StaticClassTrait;
+    use \Kickback\Common\Traits\StaticClassTrait;
 
     /**
     * @param      array<array-key, ?int>  $arr
