@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Primitives;
 
+/**
+* Extended functionality for the `object` type.
+*/
 final class Obj
 {
     use \Kickback\Common\StaticClassTrait;
