@@ -10,6 +10,10 @@ final class Int_
 {
     use \Kickback\Common\Traits\StaticClassTrait;
 
+    // TODO: These PHPDoc comments should probably be updated to be
+    //   in sync with what's in `Mixed_`. I just don't have time for it right now.
+    //   (And perhaps later versions of PHPStan could make that logic less nasty...)
+    //   -- Chad Joan  2025-07-08
     /**
     * @param      array<array-key, ?int>  $arr
     * @param      ?int          $first_min_index   The lowest 0-based position in the array where the minimum appears.

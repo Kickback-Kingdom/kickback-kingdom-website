@@ -14,19 +14,39 @@ final class Mixed_
 
     /**
     * @template TComparable
-    * @param array<array-key, ?TComparable>  $arr
-    * @param int   $first_max_index   The lowest 0-based position in the array where the match appears.
-    * @param int   $last_max_index    The highest 0-based position in the array where the match appears.
+    *
+    * @param      array<array-key, ?TComparable>  $arr
+    *
     * @param      ?int          $first_max_index   The lowest 0-based position in the array where the match appears.
-    * @param-out  int           $first_max_index
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?int :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? int  : ?int
+    *                        )  $first_max_index
+    *
     * @param      ?array-key    $first_max_key
-    * @param-out  array-key     $first_max_key
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?array-key :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? array-key  : ?array-key
+    *                        )  $first_max_key
+    *
     * @param      ?int          $last_max_index    The highest 0-based position in the array where the match appears.
-    * @param-out  int           $last_max_index
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?int :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? int  : ?int
+    *                        )  $last_max_index
+    *
     * @param      ?array-key    $last_max_key
-    * @param-out  array-key     $last_max_key
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?array-key :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? array-key  : ?array-key
+    *                        )  $last_max_key
+    *
     * @param      ?TComparable  $max_value
-    * @param-out  TComparable   $max_value
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?TComparable :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? TComparable  : ?TComparable
+    *                        )  $max_value
+    *
     * @param callable(TComparable,TComparable): int  $cmp
     *
     * @return (
@@ -186,17 +206,39 @@ final class Mixed_
     * will be thrown.
     *
     * @template TComparable
+    *
     * @param      array<array-key, ?TComparable>  $arr
+    *
     * @param      ?int          $first_max_index   The lowest 0-based position in the array where the match appears.
-    * @param-out  int           $first_max_index
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?int :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? int  : ?int
+    *                        )  $first_max_index
+    *
     * @param      ?array-key    $first_max_key
-    * @param-out  array-key     $first_max_key
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?array-key :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? array-key  : ?array-key
+    *                        )  $first_max_key
+    *
     * @param      ?int          $last_max_index    The highest 0-based position in the array where the match appears.
-    * @param-out  int           $last_max_index
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?int :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? int  : ?int
+    *                        )  $last_max_index
+    *
     * @param      ?array-key    $last_max_key
-    * @param-out  array-key     $last_max_key
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?array-key :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? array-key  : ?array-key
+    *                        )  $last_max_key
+    *
     * @param      ?TComparable  $max_value
-    * @param-out  TComparable   $max_value
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?TComparable :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? TComparable  : ?TComparable
+    *                        )  $max_value
+    *
     * @param callable(TComparable,TComparable): int  $cmp   Returns
     *     -1 if left-side is precedes (ex: "less-than") the right-side,
     *     0 if equal, and
@@ -242,17 +284,39 @@ final class Mixed_
     * @see self::max_pair_generalized
     *
     * @template TComparable
+    *
     * @param      array<array-key, ?TComparable>  $arr
+    *
     * @param      ?int          $first_min_index   The lowest 0-based position in the array where the match appears.
-    * @param-out  int           $first_min_index
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?int :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? int  : ?int
+    *                        )  $first_min_index
+    *
     * @param      ?array-key    $first_min_key
-    * @param-out  array-key     $first_min_key
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?array-key :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? array-key  : ?array-key
+    *                        )  $first_min_key
+    *
     * @param      ?int          $last_min_index    The highest 0-based position in the array where the match appears.
-    * @param-out  int           $last_min_index
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?int :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? int  : ?int
+    *                        )  $last_min_index
+    *
     * @param      ?array-key    $last_min_key
-    * @param-out  array-key     $last_min_key
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?array-key :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? array-key  : ?array-key
+    *                        )  $last_min_key
+    *
     * @param      ?TComparable  $min_value
-    * @param-out  TComparable   $min_value
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?TComparable :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? TComparable  : ?TComparable
+    *                        )  $min_value
+    *
     * @param callable(TComparable,TComparable): int  $cmp   Returns
     *     -1 if left-side is precedes (ex: "less-than") the right-side,
     *     0 if equal, and
@@ -278,17 +342,38 @@ final class Mixed_
 
     /**
     * @template TComparable
+    *
     * @param      array<array-key, ?TComparable>  $arr
+    *
     * @param      ?int          $first_min_index   The lowest 0-based position in the array where the minimum appears.
-    * @param-out  int           $first_min_index
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?int :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? int  : ?int
+    *                        )  $first_min_index
+    *
     * @param      ?array-key    $first_min_key
-    * @param-out  array-key     $first_min_key
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?array-key :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? array-key  : ?array-key
+    *                        )  $first_min_key
+    *
     * @param      ?int          $last_min_index    The highest 0-based position in the array where the minimum appears.
-    * @param-out  int           $last_min_index
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?int :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? int  : ?int
+    *                        )  $last_min_index
+    *
     * @param      ?array-key    $last_min_key
-    * @param-out  array-key     $last_min_key
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?array-key :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? array-key  : ?array-key
+    *                        )  $last_min_key
+    *
     * @param      ?TComparable  $min_value
-    * @param-out  TComparable   $min_value
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?TComparable :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? TComparable  : ?TComparable
+    *                        )  $min_value
     *
     * @return (
     *   $arr is non-empty-array<array-key, null>         ? false :
@@ -351,7 +436,7 @@ final class Mixed_
         $nullify_params();
         $arr = ['x' => null, 'y' => 2];
         $ok = self::min_pair($arr, $first, $first_key, $last, $last_key, $min);
-        assert($ok === true); /** @phpstan-ignore function.alreadyNarrowedType */
+        assert($ok === true);
         assert($first === 1 && $first_key === 'y');
         assert($last === 1 && $last_key === 'y');
         assert($min === 2);
@@ -414,13 +499,20 @@ final class Mixed_
     *
     * @param      array<array-key, ?TComparable>  $arr
     * @param      ?array-key                      $min_key
-    * @param-out  array-key                       $min_key
+    * @phpstan-param-out (
+    *   $arr is non-empty-array<array-key, null>         ? ?array-key :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? array-key  : ?array-key)  $min_key
     *
-    * @return int  The 0-based position in the array where the minimum occurs.
+    * @return (
+    *   $arr is non-empty-array<array-key, null>         ? \PHP_INT_MAX :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? int          : \PHP_INT_MAX
+    * )  The 0-based position in the array where the minimum occurs,
+    *    or \PHP_INT_MAX if the array is empty or filled with `null` values.
     */
     public static function first_min_pair(array $arr, int|string|null &$min_key,  mixed &$min_value) : int
     {
         if (self::min_pair($arr, $first_min_index, $min_key, $last_min_index, $last_min_key, $min_value)) {
+            assert(isset($first_min_index));
             return $first_min_index;
         } else {
             return \PHP_INT_MAX;
@@ -475,13 +567,20 @@ final class Mixed_
     *
     * @param      array<array-key, ?TComparable>  $arr
     * @param      ?array-key                      $min_key
-    * @param-out  array-key                       $min_key
+    * @phpstan-param-out (
+    *   $arr is non-empty-array<array-key, null>         ? ?array-key :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? array-key  : ?array-key)  $min_key
     *
-    * @return int  The 0-based position in the array where the minimum occurs.
+    * @return (
+    *   $arr is non-empty-array<array-key, null>         ? \PHP_INT_MAX :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? int          : \PHP_INT_MAX
+    * )  The 0-based position in the array where the minimum occurs,
+    *    or \PHP_INT_MAX if the array is empty or filled with `null` values.
     */
     public static function last_min_pair(array $arr, int|string|null &$min_key,  mixed &$min_value) : int
     {
         if (self::min_pair($arr, $first_min_index, $first_min_key, $last_min_index, $min_key, $min_value)) {
+            assert(isset($last_min_index));
             return $last_min_index;
         } else {
             return \PHP_INT_MAX;
@@ -514,17 +613,38 @@ final class Mixed_
 
     /**
     * @template TComparable
+    *
     * @param      array<array-key, ?TComparable>  $arr
+    *
     * @param      ?int          $first_max_index   The lowest 0-based position in the array where the maximum appears.
-    * @param-out  int           $first_max_index
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?int :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? int  : ?int
+    *                        )  $first_max_index
+    *
     * @param      ?array-key    $first_max_key
-    * @param-out  array-key     $first_max_key
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?array-key :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? array-key  : ?array-key
+    *                        )  $first_max_key
+    *
     * @param      ?int          $last_max_index    The highest 0-based position in the array where the maximum appears.
-    * @param-out  int           $last_max_index
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?int :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? int  : ?int
+    *                        )  $last_max_index
+    *
     * @param      ?array-key    $last_max_key
-    * @param-out  array-key     $last_max_key
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?array-key :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? array-key  : ?array-key
+    *                        )  $last_max_key
+    *
     * @param      ?TComparable  $max_value
-    * @param-out  TComparable   $max_value
+    * @param-out  (
+    *   $arr is non-empty-array<array-key, null>         ? ?TComparable :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? TComparable  : ?TComparable
+    *                        )  $max_value
     *
     * @return (
     *   $arr is non-empty-array<array-key, null>         ? false :
@@ -574,13 +694,20 @@ final class Mixed_
     *
     * @param      array<array-key, ?TComparable>  $arr
     * @param      ?array-key                      $max_key
-    * @param-out  array-key                       $max_key
+    * @phpstan-param-out (
+    *   $arr is non-empty-array<array-key, null>         ? ?array-key :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? array-key  : ?array-key)  $max_key
     *
-    * @return int  The 0-based position in the array where the minimum occurs.
+    * @return (
+    *   $arr is non-empty-array<array-key, null>         ? \PHP_INT_MAX :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? int          : \PHP_INT_MAX
+    * )  The 0-based position in the array where the maximum occurs,
+    *    or \PHP_INT_MAX if the array is empty or filled with `null` values.
     */
     public static function first_max_pair(array $arr, int|string|null &$max_key,  mixed &$max_value) : int
     {
         if (self::max_pair($arr, $first_max_index, $max_key, $last_max_index, $last_max_key, $max_value)) {
+            assert(isset($first_max_index));
             return $first_max_index;
         } else {
             return \PHP_INT_MAX;
@@ -613,13 +740,20 @@ final class Mixed_
     *
     * @param      array<array-key, ?TComparable>  $arr
     * @param      ?array-key                      $max_key
-    * @param-out  array-key                       $max_key
+    * @phpstan-param-out (
+    *   $arr is non-empty-array<array-key, null>         ? ?array-key :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? array-key  : ?array-key)  $max_key
     *
-    * @return int  The 0-based position in the array where the minimum occurs.
+    * @return (
+    *   $arr is non-empty-array<array-key, null>         ? \PHP_INT_MAX :
+    *   $arr is non-empty-array<array-key, ?TComparable> ? int          : \PHP_INT_MAX
+    * )  The 0-based position in the array where the maximum occurs,
+    *    or \PHP_INT_MAX if the array is empty or filled with `null` values.
     */
     public static function last_max_pair(array $arr, int|string|null &$max_key,  mixed &$max_value) : int
     {
         if (self::max_pair($arr, $first_max_index, $first_max_key, $last_max_index, $max_key, $max_value)) {
+            assert(isset($last_max_index));
             return $last_max_index;
         } else {
             return \PHP_INT_MAX;
