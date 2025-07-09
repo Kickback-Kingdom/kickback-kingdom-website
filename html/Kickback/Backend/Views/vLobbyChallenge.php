@@ -10,7 +10,7 @@ use Kickback\Backend\Controllers\LobbyChallengeController;
 use Kickback\Backend\Models\Response;
 use Kickback\Backend\Views\vChallengePlayer;
 use Kickback\Services\Session;
-use Kickback\Common\Arr;
+use Kickback\Common\Primitives\Arr;
 
 class vLobbyChallenge extends vRecordId
 {
