@@ -6,7 +6,7 @@ namespace Kickback\Backend\Views;
 use Kickback\Backend\Views\vRecordId;
 
 /**
-* @phpstan-type vPageContent_data array<
+* @phpstan-type vPageContent_data_a array<
 *     array{
 *         content_id:        int,
 *         content_detail_id: int,
@@ -25,7 +25,7 @@ use Kickback\Backend\Views\vRecordId;
 class vPageContent extends vRecordId 
 {
     /**
-    * @var vPageContent_data
+    * @var vPageContent_data_a
     */
     public array $data;
 
