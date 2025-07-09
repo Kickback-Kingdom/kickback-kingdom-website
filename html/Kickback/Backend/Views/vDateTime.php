@@ -221,7 +221,7 @@ class vDateTime
         assert($toString('P0002-02-14T02:02:02', 8) === '2 years, 2 months, 2 weeks, 2 hours, 2 minutes, 2 seconds');
         assert($toString('P0002-02-16T02:02:02', 8) === '2 years, 2 months, 2 weeks, 2 days, 2 hours, 2 minutes, 2 seconds');
 
-        echo("  unittest_timeIntervalToString()\n");
+        echo("  ".__FUNCTION__."()\n");
     }
 
     public function addYears(int $years): vDateTime {
@@ -358,10 +358,13 @@ class vDateTime
         return (int)$this->value->format("s");
     }
 
-    public static function unittest() : void
+    public static function unittests() : void
     {
-        echo("Running `\\Kickback\\Backend\\Views\\vDateTime::unittest()`\n");
+        $class_fqn = self::class;
+        echo("Running `$class_fqn::unittests()`\n");
+
         self::unittest_timeIntervalToString();
+
         echo("  ... passed.\n\n");
     }
 }
