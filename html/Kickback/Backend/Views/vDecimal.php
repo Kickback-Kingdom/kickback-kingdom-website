@@ -124,7 +124,6 @@ class vDecimal implements \JsonSerializable
         return $this->div(new self($scalar, $this->scale));
     }
 
-
     public function addWhole(int $units): vDecimal
     {
         return $this->add(new self(number_format($units, $this->scale, '.', ''), $this->scale));
@@ -183,7 +182,6 @@ class vDecimal implements \JsonSerializable
         return $this->subWhole($this->toWholeUnitsInt());
     }
 
-    
     public function toFloat(): float
     {
         return $this->value / pow(10, $this->scale);
@@ -231,6 +229,5 @@ class vDecimal implements \JsonSerializable
         $rounded = (int)(round($this->value / (int)$unitScale)) * (int)$unitScale;
         return new self($rounded, $this->scale);
     }
-
 }
 ?>

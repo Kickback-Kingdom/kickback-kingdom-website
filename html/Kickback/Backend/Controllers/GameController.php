@@ -14,6 +14,46 @@ use Kickback\Common\Primitives\Str;
 
 class GameController
 {
+    public static function getDistinctCharacters(vRecordId $gameId): Response {
+        $conn = Database::getConnection();
+    
+        $sql = "
+            SELECT DISTINCT `character`
+            FROM `game_record`
+            WHERE `character` IS NOT NULL
+              AND `character` <> ''
+              AND game_id = ?
+              order by 1
+        ";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare the SQL statement.");
+        }
+    
+        if (!$stmt->bind_param('i', $gameId->crand)) {
+            return new Response(false, "Failed to bind parameters.");
+        }
+    
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute the SQL statement.");
+        }
+    
+        $result = $stmt->get_result();
+        if (!$result) {
+            return new Response(false, "Failed to retrieve the result set.");
+        }
+    
+        $characters = [];
+        while ($row = $result->fetch_assoc()) {
+            $characters[] = $row['character'];
+        }
+    
+        $stmt->close();
+    
+        return new Response(true, "Characters retrieved successfully.", $characters);
+    }
+
     public static function getCurrentWinStreak(vRecordId $gameId): Response
     {
         $conn = Database::getConnection();
