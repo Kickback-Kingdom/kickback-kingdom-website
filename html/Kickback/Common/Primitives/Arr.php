@@ -4,11 +4,13 @@ declare(strict_types=1);
 namespace Kickback\Common\Primitives;
 
 /**
+* Extended functionality for the `array` type.
+*
 * This class originally existed to silence the PHPStan error about `empty` being not allowed.
 */
 final class Arr
 {
-    use \Kickback\Common\StaticClassTrait;
+    use \Kickback\Common\Traits\StaticClassTrait;
 
     /**
     * A type-safe alternative to the `empty` builtin.
