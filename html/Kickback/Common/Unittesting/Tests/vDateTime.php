@@ -249,6 +249,7 @@ echo "✅ Passed: {$results['passed']}<br/>";
 echo "❌ Failed: {$results['failed']}<br/>";
 echo "====================<br/>";
 
+/** @phpstan-ignore greater.alwaysFalse */
 if ($results['failed'] > 0) {
     exit(1);
 }
