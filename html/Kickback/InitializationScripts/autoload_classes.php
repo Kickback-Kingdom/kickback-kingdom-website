@@ -170,8 +170,8 @@ define('Kickback\InitializationScripts\AUTOLOAD_FAILURE',    2);
 * symbol (class fqn) matches a special pattern that is used to tell the
 * autoloader to NOT attempt autoloading.
 *
-* Example: if a symbol is all lower-case and ends in `_a`, then it is
-* considered to be a PHPStan "local alias" and should NOT be autoloaded.
+* Example: if a symbol is ends in `_a`, then it is considered
+* to be a PHPStan "local alias" and should NOT be autoloaded.
 */
 define('Kickback\InitializationScripts\AUTOLOAD_IGNORED',    3);
 
@@ -1071,14 +1071,7 @@ function autoload_function_impl(string $class_fqn) : int
     &&  (  str_starts_with($class_fqn,'Kickback')
         || str_starts_with($class_fqn,'\\Kickback')))
     {
-        // ex: 'Kickback\Foo\Bar\my_local_alias_a' -> 'my_local_alias_a'
-        $local_symbol = strrchr($class_fqn,'\\');
-
-        // Check if it's all lower-cased.
-        if ($local_symbol !== false
-        &&  mb_strtolower($local_symbol) === $local_symbol) {
-            return AUTOLOAD_IGNORED;
-        }
+        return AUTOLOAD_IGNORED;
     }
 
     // Attempt to load Kickback classes first.
