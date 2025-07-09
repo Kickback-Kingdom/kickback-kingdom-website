@@ -65,28 +65,31 @@ class UnittestEntryPoint
         echo "==================================================\n";
         echo "-------- Finished running ALL unittests. ---------\n";
         echo "--------------------------------------------------\n";
-
         echo "\n";
-        echo "Now we will trigger an assertion just to make sure assertions are turned on!\n";
-        echo "(If you don't see any assertion error, then nothing is being tested.)\n";
-        echo "\n";
-        echo "You can ensure that unittests are enabled by passing `-d zend.assertions=1` to your php command.\n";
-        echo "Example:\n";
-        echo "cd [YOUR_KICKBACK_ROOT]/html\n";
-        echo "php -d zend.assertions=1 scratch-pad/unittest.php\n";
-        echo "\n";
+        echo "Now we will trigger an assertion just to make sure assertions are turned on.\n";
+        echo "(Or throw an exception if they aren't.)\n";
         echo "...\n";
         echo "\n";
-        assert(false,
-            "\n------------------------------------------------------------".
-            "\n--->   GOOD! Your `zend.assertions` is set correctly!   <---".
-            "\n------------------------------------------------------------\n\n");
+        assert(false, "\n".
+            "------------------------------------------------------------\n".
+            "--->   GOOD! Your `zend.assertions` is set correctly!   <---\n".
+            "------------------------------------------------------------\n".
+            "\n");
 
-        throw new \Exception(
-            "\n------------------------------------------------------------".
-            "\n!!!!!!!       BAD! ^o^  Unittests DID NOT RUN!       !!!!!!!".
-            "\n!!!!!!!  (`zend.assertions` may be set incorrectly.) !!!!!!!".
-            "\n------------------------------------------------------------\n\n");
+        throw new \Exception( "\n".
+            "------------------------------------------------------------\n".
+            "!!!!!!!       BAD! ^o^  Unittests DID NOT RUN!       !!!!!!!\n".
+            "!!!!!!!  (`zend.assertions` may be set incorrectly.) !!!!!!!\n".
+            "------------------------------------------------------------\n".
+            ":                                                          :\n".
+            ": You can ensure that unittests are enabled                :\n".
+            ": by passing `-d zend.assertions=1` to your php command.   :\n".
+            ": Example:                                                 :\n".
+            ":   cd [YOUR_KICKBACK_ROOT]/html                           :\n".
+            ":   php -d zend.assertions=1 scratch-pad/unittest.php      :\n".
+            ":                                                          :\n".
+            "------------------------------------------------------------\n".
+            "\n");
     }
 }
 ?>
