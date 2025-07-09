@@ -6,7 +6,7 @@ namespace Kickback\Common\Primitives;
 /**
 * Miscellaneous functions that do useful things with PHP metadata (ex: Reflection API).
 *
-* @phpstan-type  kkdebug_frame  array{
+* @phpstan-type  kkdebug_frame_a  array{
 *       function? : string,
 *       line?     : int,
 *       file?     : string,
@@ -16,14 +16,14 @@ namespace Kickback\Common\Primitives;
 *       args?     : array<int|string, mixed>
 *   }
 *
-* @phpstan-type  kkdebug_backtrace  kkdebug_frame[]
+* @phpstan-type  kkdebug_backtrace_a  kkdebug_frame_a[]
 */
 final class Meta
 {
     use \Kickback\Common\Traits\StaticClassTrait;
 
     /**
-    * @param kkdebug_backtrace $trace
+    * @param kkdebug_backtrace_a $trace
     */
     private static function handle_outermost_caller_name_corner_case(array $trace, int $frame_number) : string
     {
@@ -49,8 +49,8 @@ final class Meta
     // This function is factored out so that we can specify, in phpstan,
     // the array type returned by the `\debug_backtrace` function.
     /**
-    * @param kkdebug_backtrace $trace
-    * @param ?class-string     $home_class_fqn
+    * @param kkdebug_backtrace_a $trace
+    * @param ?class-string       $home_class_fqn
     */
     private static function outermost_caller_name_within_class_impl(array $trace, ?string $home_class_fqn) : string
     {
@@ -224,37 +224,5 @@ final class Meta
         echo("  ... passed.\n\n");
     }
 }
-
-// function bar(int $context) {
-//     echo "number is $context\n";
-//     vardump(debug_backtrace());
-// }
-//
-// function foo(callback $cbfunc, int $context) {
-//     $cbfunc($context);
-// }
-//
-// foo('bar', 42);
-
-//    * If execution weaves in and out of the target class throughout the
-//    * stack trace, then this function may be unable to find the correct
-//    * or intended function name. It will return the first one it finds,
-//    * whether that makes sense or not.
-//    *
-//    * An exception to the above: if this is called from within a callback
-//    * that is declared outside of the intended class, then the `$home_class_fqn`
-//    * parameter might allow the tracer to "skip" the troublesome callback
-//    * frames, and any other intermediates. However, this does not work
-//    * when execution begins in the "home" class, leaves that class,
-//    * then returns to the "home" class": the scanner will already have
-//    * triggered at the beginning of the backtrace.
-//    *
-//    * This method also makes no attempt to determine if
-//    * there was an "excursion" through a callback at any other point
-//    * in the backtrace, or if the "outermost" is actually in a different
-//    * class/context because the caller (frame 1) is in a callback that
-//    * was called by the intended class. If the
-//    * caller knows what class should be used as a boundary, then the
-//    * `$home_class_fqn` parameter may help.
 
 ?>
