@@ -8,7 +8,7 @@ use Kickback\Common\Database\RowInterface;
 
 final class Row
 {
-    use \Kickback\Common\StaticClassTrait;
+    use \Kickback\Common\Traits\StaticClassTrait;
 
     /**
     * @param array<string,?mixed> $row

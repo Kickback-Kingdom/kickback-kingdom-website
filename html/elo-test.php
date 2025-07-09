@@ -229,22 +229,21 @@ foreach ($matches as $match) {
         print_r($losingTeams);
         echo "<br>";
 
-
+        
         $eloUpdates = [];
         // Compute Elo rating updates for each pair of teams
         foreach ($pairs as $pair) {
             echo "<h3>Pair: $pair[0] v $pair[1]</h3>";
-            // Compute expected scores
-            $expected1 = 1 / (1 + pow(10, ($averageRatings[$pair[1]] - $averageRatings[$pair[0]]) / 400));
-            $expected2 = 1 / (1 + pow(10, ($averageRatings[$pair[0]] - $averageRatings[$pair[1]]) / 400));
 
-            // Set actual scores depending on whether each team won or lost
-            $actual1 = in_array($pair[0], $winningTeams) ? 1 : (in_array($pair[1], $winningTeams) ? 0 : 0.5);
-            $actual2 = in_array($pair[1], $winningTeams) ? 1 : (in_array($pair[0], $winningTeams) ? 0 : 0.5);
-            $isTie = ($actual1 == 0.5 && $actual2 == 0.5);
+            $team0Won = in_array($pair[0], $winningTeams);
+            $team1Won = in_array($pair[1], $winningTeams);
+
+            $team0Elo = $averageRatings[$pair[0]];
+            $team1Elo = $averageRatings[$pair[1]];
+
+            $isTie = ($team0Won == $team1Won);
             $shouldSkip = ($isTie && $moreThan2Teams); //when teams tie they shouldnt affect each others elo if they are in a group match with more than 2 teams
-            // Update ratings for all players on each team
-            //$eloUpdates = [];
+            
             echo "shouldSkip: $shouldSkip, isTie: $isTie, moreThan2Teams: $moreThan2Teams<br>";
 
             if ($shouldSkip) {
@@ -252,6 +251,16 @@ foreach ($matches as $match) {
                 continue; // Skip if this is a tie in a multi-team match
             }
             
+            // Compute expected scores
+            $expected1 = 1 / (1 + pow(10, ($team1Elo - $team0Elo) / 400));
+            $expected2 = 1 / (1 + pow(10, ($team0Elo - $team1Elo) / 400));
+
+            // Set actual scores depending on whether each team won or lost
+            $actual1 = $team0Won ? 1 : ($team1Won ? 0 : 0.5);
+            $actual2 = $team1Won ? 1 : ($team0Won ? 0 : 0.5);
+            
+            // Update ratings for all players on each team
+            //$eloUpdates = [];
             // Process each team
             foreach ([$pair[0], $pair[1]] as $index => $teamName) {
                 $expected = $index === 0 ? $expected1 : $expected2;
@@ -277,6 +286,7 @@ foreach ($matches as $match) {
                     $eloUpdates[$accountId]['elo_change'] += $eloChange;
                 }
             }
+
             
             // Convert eloUpdates to an array suitable for batch update
             $batchUpdates = array_values($eloUpdates);

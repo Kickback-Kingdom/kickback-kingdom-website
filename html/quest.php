@@ -25,13 +25,13 @@ if (isset($_GET['id']))
 {
 
     $id = $_GET['id'];
-    $questResp = QuestController::getQuestById($id);
+    $questResp = QuestController::queryQuestByIdAsResponse($id);
 }
 
 if (isset($_GET['locator'])){
         
     $name = $_GET['locator'];
-    $questResp = QuestController::getQuestByLocator($name);
+    $questResp = QuestController::queryQuestByLocatorAsResponse($name);
 }
 
 if (isset($_GET['new']))
@@ -43,7 +43,7 @@ if (isset($_GET['new']))
 
 
 //print_r($questResp);
-if (!$questResp->success)
+if (isset($questResp) && !$questResp->success)
 {
     unset($questResp);
 }
@@ -1395,7 +1395,7 @@ $itemInformationJSON = json_encode($itemInfos);
     </div>
 </div>
 <?php } ?>
-<?php if (!is_null($thisQuest->tournament()) && $thisQuest->tournament->competitors() != null) { ?>
+<?php if (!is_null($thisQuest->tournament) && $thisQuest->tournament->competitors() != null) { ?>
     <div class="container py-5">
         <h2 class="text-center mb-4">Participating Teams</h2>
         <div class="row justify-content-center">

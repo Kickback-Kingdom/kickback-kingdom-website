@@ -17,7 +17,7 @@ class PrestigeController
     /**
     * @param ?array<vPrestigeReview> &$reviews
     *
-    * @phpstan-assert-if-true array $reviews
+    * @phpstan-assert-if-true =array<vPrestigeReview> $reviews
     */
     public static function convertPrestigeReviewsResponseInto(Response $prestige_reviews_response, ?array &$reviews) : bool
     {

@@ -3,24 +3,20 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: (__DIR__ . "/..")) . "/Kickback/init.
 
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 
-function free_mysqli_resources($mysqli) {
-    while ($mysqli->more_results() && $mysqli->next_result()) {
-        $dummyResult = $mysqli->use_result();
-        if ($dummyResult instanceof mysqli_result) {
-            $dummyResult->free();
-        }
-    }
-}
+
+use Kickback\Services\Database;
 
 function getInvestorsWithShares() {
+    $conn = Database::getConnection();
+
     $query = "SELECT account_id, count(*) as shares FROM loot where item_id = 16 group by account_id";
-    $result = mysqli_query($GLOBALS["conn"], $query);
+    $result = mysqli_query($conn, $query);
     if (!$result) {
-        die("Error getting investors: " . mysqli_error($GLOBALS["conn"]));
+        die("Error getting investors: " . mysqli_error($conn));
     }
     $investors = mysqli_fetch_all($result, MYSQLI_ASSOC);
     $result->free();
-    free_mysqli_resources($GLOBALS["conn"]);
+    free_mysqli_resources($conn);
     return $investors;
 }
 

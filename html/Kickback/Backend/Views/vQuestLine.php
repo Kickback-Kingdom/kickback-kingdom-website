@@ -10,7 +10,7 @@ use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Services\Session;
 use Kickback\Common\Version;
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Str;
 
 class vQuestLine extends vRecordId
 {

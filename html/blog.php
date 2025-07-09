@@ -11,20 +11,25 @@ use Kickback\Common\Version;
 if (isset($_GET['locator'])){
         
     $locator = $_GET['locator'];
-    $blogResp = BlogController::getBlogByLocator($locator);
-    $thisBlog = $blogResp->data;
-
+    BlogController::queryBlogByLocatorInto($locator, $thisBlog);
     
     $blogPostsResp = FeedController::getBlogFeed($locator);
 
     $blogPosts = $blogPostsResp->data;
 }
 else{
+    $thisBlog = null;
+    $blogPosts = null;
     echo "no locator!";
 }
 
-$isBlogManager = $thisBlog->isManager();
-$isBlogWriter = $thisBlog->isWriter();
+if(!isset($thisBlog)) {
+    $isBlogManager = $thisBlog->isManager();
+    $isBlogWriter = $thisBlog->isWriter();
+} else {
+    $isBlogManager = false;
+    $isBlogWriter = false;
+}
 
 ?>
 
