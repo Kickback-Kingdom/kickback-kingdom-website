@@ -20,7 +20,22 @@ class vDateTime
     public function expired() : bool {
         return ($this->value < (New DateTime()));
     }
-
+    public function isBefore(vDateTime $other): bool {
+        return $this->value < $other->value;
+    }
+    
+    public function isAfter(vDateTime $other): bool {
+        return $this->value > $other->value;
+    }
+    
+    public function isSameOrBefore(vDateTime $other): bool {
+        return $this->value <= $other->value;
+    }
+    
+    public function isSameOrAfter(vDateTime $other): bool {
+        return $this->value >= $other->value;
+    }
+    
     public function setDateTime(DateTime $dateTime) : void
     {
         //change timezone to utc

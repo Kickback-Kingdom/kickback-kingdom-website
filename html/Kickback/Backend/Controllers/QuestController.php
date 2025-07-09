@@ -1208,5 +1208,51 @@ class QuestController
         $questResp = self::getQuestByLocator($quest->locator);
         return $questResp;
     }
+
+    public static function countQuestParticipations(int $accountId): int
+    {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT COUNT(*) FROM quest_applicants
+                WHERE account_id = ? AND participated = 1";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+
+        $stmt->bind_param("i", $accountId);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+    
+    public static function countQuestParticipationsBetween(int $accountId, string $startDate, string $endDate): int
+    {
+        $conn = Database::getConnection();
+    
+        $sql = "SELECT COUNT(*) FROM quest_applicants qa
+                JOIN quest q ON qa.quest_id = q.Id
+                WHERE qa.account_id = ?
+                  AND qa.participated = 1
+                  AND q.end_date BETWEEN ? AND ?";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+    
+        $stmt->bind_param("iss", $accountId, $startDate, $endDate);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+    
+        return (int)$count;
+    }
+    
 }
 ?>

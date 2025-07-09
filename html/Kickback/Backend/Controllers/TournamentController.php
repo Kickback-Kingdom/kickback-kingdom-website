@@ -152,7 +152,26 @@ class TournamentController
 
         return $bracketInfo;
     }
-
+    public static function countTournamentsWon(int $accountId): int
+    {
+        $conn = Database::getConnection();
+    
+        $sql = "SELECT COUNT(*) FROM v_tournament_results 
+                WHERE account_id = ? AND win = 1";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+    
+        $stmt->bind_param("i", $accountId);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+    
+        return (int)$count;
+    }
 }
 
 

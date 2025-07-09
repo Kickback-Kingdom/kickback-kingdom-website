@@ -629,9 +629,12 @@ class LootController
         return self::giveLoot($account_id, 16, $dateObtained);
     }
 
-    public static function giveLoot(vRecordId $account_id,vRecordId $item_id, ?string $dateObtained = null) : Response
+    public static function giveLoot(vRecordId $account_id,vRecordId $item_id, ?string $dateObtained = null, ?\mysqli $conn = null) : Response
     {
-        $conn = Database::getConnection();
+        if ($conn === null) {
+            $conn = Database::getConnection();
+        }
+    
 
         // Checking if dateObtained is null
         if ($dateObtained === null) {
