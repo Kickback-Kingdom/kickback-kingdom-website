@@ -142,5 +142,7 @@ function shutdownHandler() : void
 }
 
 // Initialize error handling
-initializeErrorHandling();
+if ('WEB' === PARENT_PROCESS_TYPE()) {
+    initializeErrorHandling();
+}
 ?>
