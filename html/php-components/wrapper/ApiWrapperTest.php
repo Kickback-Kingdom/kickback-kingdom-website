@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace Kickback\ApiWrapper\Tests;
 
-require_once __DIR__ . '/item-api.php';
-
 /**
  * Unit tests for JavaScript API Wrapper components
  * Follows the project's standard unit testing pattern
@@ -12,92 +10,138 @@ require_once __DIR__ . '/item-api.php';
 class WrapperUnitTest
 {
     /**
-     * Test ItemAPI PHP component functionality
+     * Test that item-api.php file exists and generates proper JavaScript
      */
-    private static function unittest_itemAPI(): void
+    private static function unittest_itemAPIFile(): void
     {
-        echo("  unittest_itemAPI()\n");
+        // Test that the item-api.php file exists
+        $itemApiPath = __DIR__ . '/item-api.php';
+        assert(file_exists($itemApiPath));
         
-        // Test ItemAPI class exists and can be instantiated
-        assert(class_exists('ItemAPI'), 'ItemAPI class should exist');
+        // Mock required globals for CLI testing
+        $_SERVER['HTTP_HOST'] = 'localhost';
+        $_SERVER['REQUEST_URI'] = '/test';
         
-        $itemAPI = new \ItemAPI();
-        assert($itemAPI instanceof \ItemAPI, 'ItemAPI should be instantiable');
-        
-        // Test that getById method exists
-        assert(method_exists($itemAPI, 'getById'), 'ItemAPI should have getById method');
-        assert(method_exists($itemAPI, 'getByIds'), 'ItemAPI should have getByIds method');
-        
-        // Note: We can't easily test actual API calls in unit tests without mocking
-        // Those would be integration tests. Here we test the structure.
-        
-        echo("    ✓ ItemAPI class structure validated\n");
-    }
-    
-    /**
-     * Test that the ItemAPI wrapper generates proper JavaScript
-     */
-    private static function unittest_itemAPIJavaScript(): void
-    {
-        echo("  unittest_itemAPIJavaScript()\n");
+        // Mock the Version class since we can't initialize full framework in CLI
+        if (!class_exists('Kickback\Common\Version')) {
+            eval('namespace Kickback\Common { class Version { public static function formatUrl($path) { return $path; } } }');
+        }
         
         // Capture the JavaScript output
         ob_start();
-        $itemAPI = new \ItemAPI();
-        $itemAPI->renderJavaScript();
+        include $itemApiPath;
         $jsOutput = ob_get_clean();
         
-        // Verify JavaScript contains expected patterns
-        assert(strpos($jsOutput, 'class ItemAPI') !== false, 'JavaScript should contain ItemAPI class');
-        assert(strpos($jsOutput, 'async getById(') !== false, 'JavaScript should contain getById method');
-        assert(strpos($jsOutput, 'async getByIds(') !== false, 'JavaScript should contain getByIds method');
-        assert(strpos($jsOutput, '/api/v1/item/get.php') !== false, 'JavaScript should reference correct API endpoint');
+        // Test JavaScript structure
+        assert(strpos($jsOutput, '<script>') !== false);
+        assert(strpos($jsOutput, 'class ItemAPI') !== false);
+        assert(strpos($jsOutput, 'static async getById(') !== false);
+        assert(strpos($jsOutput, 'static async getByIds(') !== false);
+        assert(strpos($jsOutput, '/api/v1/item/get.php') !== false);
+        assert(strpos($jsOutput, '</script>') !== false);
         
-        echo("    ✓ ItemAPI JavaScript generation validated\n");
+        echo("  unittest_itemAPIFile()\n");
     }
     
     /**
-     * Test the backward compatibility function
+     * Test backward compatibility functions in the JavaScript output
      */
     private static function unittest_backwardCompatibility(): void
     {
+        // Mock required globals
+        $_SERVER['HTTP_HOST'] = 'localhost';
+        $_SERVER['REQUEST_URI'] = '/test';
+        
+        // Mock Version class
+        if (!class_exists('Kickback\Common\Version')) {
+            eval('namespace Kickback\Common { class Version { public static function formatUrl($path) { return $path; } } }');
+        }
+        
+        // Capture JavaScript output
+        ob_start();
+        include __DIR__ . '/item-api.php';
+        $jsOutput = ob_get_clean();
+        
+        // Test that backward compatibility functions exist
+        assert(strpos($jsOutput, 'function GetItemInformationById(') !== false);
+        assert(strpos($jsOutput, 'function GetItemInformationByIdWithAPI(') !== false);
+        assert(strpos($jsOutput, 'window.itemInformation') !== false);
+        assert(strpos($jsOutput, 'ItemAPI component loaded') !== false);
+        
         echo("  unittest_backwardCompatibility()\n");
-        
-        // Test that GetItemInformationById function exists
-        assert(function_exists('GetItemInformationById'), 'GetItemInformationById function should exist for backward compatibility');
-        
-        // Test that it returns a string (JavaScript function call)
-        $result = GetItemInformationById(1);
-        assert(is_string($result), 'GetItemInformationById should return a string');
-        assert(strpos($result, 'kickbackApi.item.getById(1)') !== false, 'Should return proper wrapper call');
-        
-        echo("    ✓ Backward compatibility validated\n");
     }
     
     /**
-     * Test wrapper configuration and structure
+     * Test the wrapper JavaScript file structure
      */
-    private static function unittest_wrapperStructure(): void
+    private static function unittest_wrapperJavaScript(): void
     {
-        echo("  unittest_wrapperStructure()\n");
-        
-        // Test that the wrapper JavaScript file exists
         $wrapperPath = __DIR__ . '/kickback-api-wrapper.js';
-        assert(file_exists($wrapperPath), 'kickback-api-wrapper.js should exist');
+        assert(file_exists($wrapperPath));
         
-        // Read and validate wrapper content
         $wrapperContent = file_get_contents($wrapperPath);
-        assert($wrapperContent !== false, 'Should be able to read wrapper file');
+        assert($wrapperContent !== false);
         
-        // Check for key components
-        assert(strpos($wrapperContent, 'class KickbackAPI') !== false, 'Wrapper should contain KickbackAPI class');
-        assert(strpos($wrapperContent, 'get item()') !== false, 'Wrapper should have item getter');
-        assert(strpos($wrapperContent, 'version:') !== false, 'Wrapper should have version property');
-        assert(strpos($wrapperContent, 'getStatus()') !== false, 'Wrapper should have getStatus method');
+        // Test for key components
+        assert(strpos($wrapperContent, 'class KickbackAPI') !== false);
+        assert(strpos($wrapperContent, 'get item()') !== false);
+        assert(strpos($wrapperContent, 'version:') !== false);
+        assert(strpos($wrapperContent, 'getStatus()') !== false);
+        assert(strpos($wrapperContent, 'window.kickbackApi') !== false);
         
-        echo("    ✓ Wrapper structure validated\n");
+        echo("  unittest_wrapperJavaScript()\n");
     }
     
+    /**
+     * Test core wrapper files exist and are accessible
+     */
+    private static function unittest_coreFiles(): void
+    {
+        $requiredFiles = [
+            'item-api.php',
+            'kickback-api-wrapper.js',
+            'run-wrapper-tests.php',
+            'ApiWrapperTest.php'
+        ];
+        
+        foreach ($requiredFiles as $filename) {
+            $filePath = __DIR__ . '/' . $filename;
+            assert(file_exists($filePath));
+            assert(is_readable($filePath));
+            assert(filesize($filePath) > 0);
+        }
+        
+        echo("  unittest_coreFiles()\n");
+    }
+    
+    /**
+     * Test that generated JavaScript has proper error handling
+     */
+    private static function unittest_errorHandling(): void
+    {
+        // Mock globals
+        $_SERVER['HTTP_HOST'] = 'localhost';
+        $_SERVER['REQUEST_URI'] = '/test';
+        
+        // Mock Version class
+        if (!class_exists('Kickback\Common\Version')) {
+            eval('namespace Kickback\Common { class Version { public static function formatUrl($path) { return $path; } } }');
+        }
+        
+        // Capture JavaScript output
+        ob_start();
+        include __DIR__ . '/item-api.php';
+        $jsOutput = ob_get_clean();
+        
+        // Test error handling patterns
+        assert(strpos($jsOutput, 'try {') !== false);
+        assert(strpos($jsOutput, 'catch (error)') !== false);
+        assert(strpos($jsOutput, 'throw new Error(') !== false);
+        assert(strpos($jsOutput, 'console.error') !== false);
+        
+        echo("  unittest_errorHandling()\n");
+    }
+
     /**
      * Main unit test entry point
      */
@@ -105,16 +149,17 @@ class WrapperUnitTest
     {
         echo("Running `\\Kickback\\ApiWrapper\\Tests\\WrapperUnitTest::unittest()`\n");
         
-        self::unittest_itemAPI();
-        self::unittest_itemAPIJavaScript();
+        self::unittest_itemAPIFile();
         self::unittest_backwardCompatibility();
-        self::unittest_wrapperStructure();
+        self::unittest_wrapperJavaScript();
+        self::unittest_coreFiles();
+        self::unittest_errorHandling();
         
-        echo("  ... all tests passed.\n\n");
+        echo("  ... passed.\n\n");
     }
 }
 
-// Allow running this test directly from command line or including in test suite
+// Allow running this test directly from command line
 if (basename(__FILE__) === basename($_SERVER['SCRIPT_NAME'] ?? '')) {
     WrapperUnitTest::unittest();
 }
