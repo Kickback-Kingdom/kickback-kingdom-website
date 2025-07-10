@@ -10,29 +10,29 @@ use Kickback\Backend\Views\vPageContent;
 use Kickback\Services\Session;
 
 /**
-* @phpstan-import-type vPageContent_data from vPageContent
+* @phpstan-import-type vPageContent_data_a from vPageContent
 *
-* @phpstan-type deleteContentDetailPOST array{
+* @phpstan-type deleteContentDetailPOST_a array{
 *         deleted                 : ?string,
 *         content_detail_data_id  : string|int|null
 *     }
 *
-* @phpstan-type insertContentDetailPOST array{
+* @phpstan-type insertContentDetailPOST_a array{
 *         data               : ?string,
 *         data_order         : string|int|null,
 *         media_id           : string|int|null
 *     }
 *
-* @phpstan-type updateContentDetailPOST array{
+* @phpstan-type updateContentDetailPOST_a array{
 *         content_detail_data_id  : string|int|null,
 *         data                    : ?string,
 *         data_order              : string|int|null,
 *         media_id                : string|int|null
 *     }
 *
-* @phpstan-type editContentDetailPOST  deleteContentDetailPOST|insertContentDetailPOST|updateContentDetailPOST
+* @phpstan-type editContentDetailPOST_a  deleteContentDetailPOST_a|insertContentDetailPOST_a|updateContentDetailPOST_a
 *
-* @phpstan-type deleteContentRequestPOST array{
+* @phpstan-type deleteContentRequestPOST_a array{
 *         deleted            : ?string,
 *         inserted?          : ?string,
 *         content_detail_id  : string|int|null
@@ -42,26 +42,26 @@ use Kickback\Services\Session;
 * But we must put it in the type signature so that we can check for it
 * without triggering PHPStan errors.)
 *
-* @phpstan-type insertContentRequestPOST array{
+* @phpstan-type insertContentRequestPOST_a array{
 *         inserted           : ?string,
 *         content_id         : string|int|null,
 *         content_type       : string|int|null,
 *         element_order      : string|int|null,
-*         data_items?        : ?array<insertContentDetailPOST>
+*         data_items?        : ?array<insertContentDetailPOST_a>
 *     }
 *
-* @phpstan-type updateContentRequestPOST array{
+* @phpstan-type updateContentRequestPOST_a array{
 *         updated            : ?string,
 *         inserted?          : ?string,
 *         content_detail_id  : string|int|null,
 *         content_type       : string|int|null,
 *         element_order      : string|int|null,
-*         data_items?        : ?array<editContentDetailPOST>
+*         data_items?        : ?array<editContentDetailPOST_a>
 *     }
 *
-* @phpstan-type editContentRequestPOST  deleteContentRequestPOST|insertContentRequestPOST|updateContentRequestPOST
+* @phpstan-type editContentRequestPOST_a  deleteContentRequestPOST_a|insertContentRequestPOST_a|updateContentRequestPOST_a
 *
-* @phpstan-type editContentRequestListPOST array<editContentRequestPOST>
+* @phpstan-type editContentRequestListPOST_a array<editContentRequestPOST_a>
 *
 */
 class ContentController
@@ -299,7 +299,7 @@ class ContentController
     }
 
     /**
-    * @param editContentRequestListPOST $content_data
+    * @param editContentRequestListPOST_a $content_data
     */
     private static function handleContentEditRequests(array $content_data) : Response
     {
@@ -317,7 +317,7 @@ class ContentController
     }
 
     /**
-    * @param editContentRequestPOST $contentItem
+    * @param editContentRequestPOST_a $contentItem
     */
     private static function handleContentEditRequest(\mysqli $conn, array $contentItem) : void
     {
@@ -419,11 +419,11 @@ class ContentController
     }
 
     /**
-    * @param     editContentRequestPOST         $contentItem
-    * @param     ?array<editContentDetailPOST>  $detailItems
-    * @param-out ?array<editContentDetailPOST>  $detailItems
+    * @param     editContentRequestPOST_a         $contentItem
+    * @param     ?array<editContentDetailPOST_a>  $detailItems
+    * @param-out ?array<editContentDetailPOST_a>  $detailItems
     *
-    * @phpstan-assert-if-true =array<editContentDetailPOST> $detailItems
+    * @phpstan-assert-if-true =array<editContentDetailPOST_a> $detailItems
     */
     private static function extractEditContentDetailInto(
         array  $contentItem,
@@ -440,11 +440,11 @@ class ContentController
     }
 
     /**
-    * @param     insertContentRequestPOST         $contentItem
-    * @param     ?array<insertContentDetailPOST>  $detailItems
-    * @param-out ?array<insertContentDetailPOST>  $detailItems
+    * @param     insertContentRequestPOST_a         $contentItem
+    * @param     ?array<insertContentDetailPOST_a>  $detailItems
+    * @param-out ?array<insertContentDetailPOST_a>  $detailItems
     *
-    * @phpstan-assert-if-true =array<insertContentDetailPOST> $detailItems
+    * @phpstan-assert-if-true =array<insertContentDetailPOST_a> $detailItems
     */
     private static function extractInsertContentDetailInto(
         array  $contentItem,
@@ -455,9 +455,9 @@ class ContentController
     }
 
     /**
-    * @param  editContentDetailPOST  $detailItem
+    * @param  editContentDetailPOST_a  $detailItem
     *
-    * @phpstan-assert-if-true  deleteContentDetailPOST  $detailItem
+    * @phpstan-assert-if-true  deleteContentDetailPOST_a  $detailItem
     */
     private static function editContentDetailIsDelete(array $detailItem) : bool
     {
@@ -465,9 +465,9 @@ class ContentController
     }
 
     /**
-    * @param  editContentRequestPOST  $contentItem
+    * @param  editContentRequestPOST_a  $contentItem
     *
-    * @phpstan-assert-if-true  deleteContentRequestPOST  $contentItem
+    * @phpstan-assert-if-true  deleteContentRequestPOST_a  $contentItem
     */
     private static function editContentRequestIsDelete(array $contentItem) : bool
     {
@@ -475,9 +475,9 @@ class ContentController
     }
 
     /**
-    * @param  editContentRequestPOST  $contentItem
+    * @param  editContentRequestPOST_a  $contentItem
     *
-    * @phpstan-assert-if-true  insertContentRequestPOST  $contentItem
+    * @phpstan-assert-if-true  insertContentRequestPOST_a  $contentItem
     */
     private static function editContentRequestIsInsert(array $contentItem) : bool
     {
@@ -485,9 +485,9 @@ class ContentController
     }
 
     /**
-    * @param  editContentRequestPOST  $contentItem
+    * @param  editContentRequestPOST_a  $contentItem
     *
-    * @phpstan-assert-if-true  updateContentRequestPOST  $contentItem
+    * @phpstan-assert-if-true  updateContentRequestPOST_a  $contentItem
     */
     private static function editContentRequestIsUpdate(array $contentItem) : bool
     {
@@ -496,7 +496,7 @@ class ContentController
     }
 
     /**
-    * @param  editContentRequestPOST|editContentDetailPOST  $contentOrDetailItem
+    * @param  editContentRequestPOST_a|editContentDetailPOST_a  $contentOrDetailItem
     */
     private static function editContentFlagIsTrue(array $contentOrDetailItem, string $flag) : bool
     {

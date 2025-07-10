@@ -16,7 +16,7 @@ use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Models\Response;
 use Kickback\Common\Exceptions\UnexpectedNullException;
 use Kickback\Common\Version;
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Str;
 
 class vQuest extends vRecordId
 {

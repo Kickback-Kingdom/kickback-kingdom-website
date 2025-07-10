@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Kickback\Common;
+namespace Kickback\Common\Traits;
 
 /**
 * Use this trait in classes that aren't supposed to be instantiated.

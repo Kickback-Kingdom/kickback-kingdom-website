@@ -1,9 +1,13 @@
 <?php
 
+use Kickback\Services\Database;
+use Kickback\Services\Session;
+use Kickback\Backend\Controllers\MerchantGuildController;
+use Kickback\Backend\Views\vRecordId;
 
 function SaveMerchantShareStatement($statement) {
     // Use the mysqli connection from the global scope
-    $conn = $GLOBALS["conn"];
+        $conn = Database::getConnection();
     
     // Prepare the SQL statement to call the procedure
     $stmt = mysqli_prepare($conn, "CALL SaveStatement(?, ?, ?, ?, ?, ?, ?)");
@@ -59,7 +63,7 @@ function ProcessMonthlyStatements($statement_date) {
     }
     
     // Connect to your database
-    $conn = $GLOBALS["conn"];
+        $conn = Database::getConnection();
     mysqli_begin_transaction($conn);
 
     $all_success = true;
@@ -124,7 +128,7 @@ function ProcessMonthlyStatements($statement_date) {
 
 function ProcessMerchantSharePurchase($purchaseID, $shareAmount) {
     // Use the mysqli connection from the global scope
-    $conn = $GLOBALS["conn"];
+        $conn = Database::getConnection();
     
     // Prepare the SQL statement to call the procedure
     $stmt = mysqli_prepare($conn, "CALL ProcessPurchase(?, ?)");
@@ -156,14 +160,14 @@ function ProcessMerchantSharePurchase($purchaseID, $shareAmount) {
 }
 
 
-function PreProcessPurchase($purchase, $currentStatement)
+function PreProcessPurchase($purchaseTask, $currentStatement)
 {
     $preOwnedFullShares = $currentStatement["total_shares"];
     $preOwnedPartialShares = $currentStatement["fractional_shares"];
 
-    $FullSharesPurchased = floor($purchase["SharesPurchased"]);
+    $FullSharesPurchased = floor($purchaseTask->sharePurchase->SharesPurchased);
 
-    $PartialSharesPurchased = $purchase["SharesPurchased"]-$FullSharesPurchased;
+    $PartialSharesPurchased = $purchaseTask->sharePurchase->SharesPurchased - $FullSharesPurchased;
 
     $preProcessData["fullSharesPurchased"] = $FullSharesPurchased;
     $preProcessData["partialSharesPurchased"] = $PartialSharesPurchased;
@@ -186,7 +190,7 @@ function PreProcessPurchase($purchase, $currentStatement)
     return $preProcessData;
 }
 
-function BuildStatement($accountId, $statement_date, $calc_interest = true)
+function BuildStatement2($accountId, $statement_date, $calc_interest = true)
 {
     $interestRate = 0.005;
     $interestDate = date('Y-m-d', strtotime("$statement_date -1 month"));
@@ -207,7 +211,7 @@ function BuildStatement($accountId, $statement_date, $calc_interest = true)
         //$lastStatementDate = $interestDate;
 
         $statement["last_statement_date"] = $lastStatementDate;
-        $purchases = PullPurchasesUntil($accountId, $statement_date);
+        $purchases = MerchantGuildController::PullPurchasesUntil($accountId, $statement_date)->data;
         $totalPurchases = count($purchases);
 
 
@@ -305,20 +309,22 @@ function BuildStatement($accountId, $statement_date, $calc_interest = true)
 }
 
 function PullStatementFromDB($accountId, $statement_date) {
+    $conn = Database::getConnection();
     $query = "SELECT *
               FROM v_merchant_share_interest_statement 
               WHERE accountId = $accountId AND statement_date = '$statement_date'";
-    $result = mysqli_query($GLOBALS["conn"], $query);
+    $result = mysqli_query($conn, $query);
     if (!$result) {
-        die("Error pulling statement from database: " . mysqli_error($GLOBALS["conn"]));
+        die("Error pulling statement from database: " . mysqli_error($conn));
     }
     $row = mysqli_fetch_assoc($result);
     $result->free();  // Use the object-oriented style free
-    //free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
+    //free_mysqli_resources($conn);  // Use the function to free any remaining results
     return $row;
 }
 
 function PullPeriodPurchaseInformation($accountId, $statement_date) {
+    $conn = Database::getConnection();
     // Calculate the start date (one month before targetDate).
     //$startDate = date('Y-m-d', strtotime("$statement_date -1 month"));
 
@@ -336,141 +342,45 @@ function PullPeriodPurchaseInformation($accountId, $statement_date) {
               FROM share_purchase 
               WHERE AccountId = $accountId 
               AND PurchaseDate >= '$startDate' AND PurchaseDate < '$statement_date'";
-    $result = mysqli_query($GLOBALS["conn"], $query);
+    $result = mysqli_query($conn, $query);
     if (!$result) {
-        die("Error getting fractional shares from purchases: " . mysqli_error($GLOBALS["conn"]));
+        die("Error getting fractional shares from purchases: " . mysqli_error($conn));
     }
     $row = mysqli_fetch_assoc($result);
     $result->free();  // Free the result
-    //free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
+    //free_mysqli_resources($conn);  // Use the function to free any remaining results
     return $row;
 }
 
 function PullHistoricalShares($accountId, $targetDate) {
-    $result = mysqli_query($GLOBALS["conn"], "CALL GetHistoricalLoot($accountId, '$targetDate', 16)");
+    $conn = Database::getConnection();
+    $result = mysqli_query($conn, "CALL GetHistoricalLoot($accountId, '$targetDate', 16)");
     if (!$result) {
-        die("Error getting total shares: " . mysqli_error($GLOBALS["conn"]));
+        die("Error getting total shares: " . mysqli_error($conn));
     }
     $shares = mysqli_num_rows($result);
     $historicalLoot = mysqli_fetch_all($result, MYSQLI_ASSOC);
     $result->free();  // Use the object-oriented style free
-    free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
+    free_mysqli_resources($conn);  // Use the function to free any remaining results
     return $historicalLoot;
 }
 
-function PullPurchasesUntil($accountId, $targetDate)
-{
-    $query = "SELECT Id as `purchase_id`, AccountId, Amount, Currency, SharesPurchased, PurchaseDate, ADAValue, ADA_USD_Closing 
-    FROM kickbackdb.share_purchase 
-    where accountId = $accountId and PurchaseDate < '$targetDate'";
-
-    $result = mysqli_query($GLOBALS["conn"], $query);
-
-    if (!$result) {
-        die("Error purchases: " . mysqli_error($GLOBALS["conn"]));
-    }
-    $purchases = mysqli_fetch_all($result, MYSQLI_ASSOC);
-    $result->free();  // Use the object-oriented style free
-    //free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
-    return $purchases;
-}
-
-function PullPurchasesUntilForAll($targetDate) {
-    $query = "SELECT share_purchase.Id as `purchase_id`, AccountId, Amount, Currency, SharesPurchased, PurchaseDate, ADAValue, ADA_USD_Closing, a.* 
-    FROM kickbackdb.share_purchase left join v_account_info a on share_purchase.AccountId = a.Id
-    where PurchaseDate < '$targetDate'";
-
-    $result = mysqli_query($GLOBALS["conn"], $query);
-
-    if (!$result) {
-        die("Error getting purchases: " . mysqli_error($GLOBALS["conn"]));
-    }
-    $purchases = mysqli_fetch_all($result, MYSQLI_ASSOC);
-    $result->free();  // Use the object-oriented style free
-    //free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
-    return $purchases;
-}
-
 function PullPurchasesNotProcessed() {
+    $conn = Database::getConnection();
     $query = "SELECT share_purchase.Id as `purchase_id`, AccountId, Amount, Currency, SharesPurchased, PurchaseDate, ADAValue, ADA_USD_Closing, a.* 
     FROM kickbackdb.share_purchase left join v_account_info a on share_purchase.AccountId = a.Id
     where processed = 0
     order by share_purchase.Id";
 
-    $result = mysqli_query($GLOBALS["conn"], $query);
+    $result = mysqli_query($conn, $query);
 
     if (!$result) {
-        die("Error getting purchases: " . mysqli_error($GLOBALS["conn"]));
+        die("Error getting purchases: " . mysqli_error($conn));
     }
     $purchases = mysqli_fetch_all($result, MYSQLI_ASSOC);
     $result->free();  // Use the object-oriented style free
-    //free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
+    //free_mysqli_resources($conn);  // Use the function to free any remaining results
     return $purchases;
-}
-
-function PullMerchantGuildPurchaseInformation($pid)
-{
-    // Get the global connection variable
-    $conn = $GLOBALS["conn"];
-
-    // Prepare SQL statement with placeholder
-    $stmt = $conn->prepare("SELECT * from v_merchant_guild_share_processing_tasks WHERE purchase_id = ?");
-
-    // Check if preparation is successful
-    if (!$stmt) {
-        die("Error preparing statement: " . $conn->error);
-    }
-
-    // Bind the parameter to the placeholder
-    $stmt->bind_param("i", $pid); // Assuming 'Id' is an integer
-
-    // Execute the statement
-    if (!$stmt->execute()) {
-        die("Error executing statement: " . $stmt->error);
-    }
-
-    // Fetch the result
-    $result = $stmt->get_result();
-
-    // Fetch data as an associative array
-    $task = $result->fetch_assoc();
-
-    // Free the result set
-    $result->free();
-
-    // Close the prepared statement
-    $stmt->close();
-
-    return $task;
-}
-
-function PullMerchantGuildProcessingTasks() {
-    //v_merchant_guild_share_processing_tasks
-
-    $query = "SELECT * from v_merchant_guild_share_processing_tasks where processed = 0";
-
-    $result = mysqli_query($GLOBALS["conn"], $query);
-
-    if (!$result) {
-        die("Error getting tasks: " . mysqli_error($GLOBALS["conn"]));
-    }
-    $tasks = mysqli_fetch_all($result, MYSQLI_ASSOC);
-    $result->free();  // Use the object-oriented style free
-    //free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
-    return $tasks;
-}
-
-function PullMerchantGuildShareHolders() {
-    $query = "SELECT a.*, s.shares FROM kickbackdb.v_total_owned_merchant_shares s left join v_account_info a on s.account_id = a.Id";
-    $result = mysqli_query($GLOBALS["conn"], $query);
-
-    if (!$result) {
-        die("Error getting shareholders: " . mysqli_error($GLOBALS["conn"]));
-    }
-    $shareholders = mysqli_fetch_all($result, MYSQLI_ASSOC);
-    $result->free();  // Use the object-oriented style free
-    //free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
-    return $shareholders;
 }
 
 ?>

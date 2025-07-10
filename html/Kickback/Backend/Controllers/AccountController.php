@@ -18,7 +18,7 @@ use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Backend\Views\vRaffle;
 use Kickback\Backend\Views\vGameStats;
 use Kickback\Backend\Controllers\SocialMediaController;
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Str;
 
 class AccountController
 {
@@ -438,7 +438,9 @@ class AccountController
             throw new \Exception("Failed to prepare count query.");
         }
     
-        $stmt->bind_param($countTypes, ...$countParams);
+        if (!empty($countParams)) {
+            $stmt->bind_param($countTypes, ...$countParams);
+        }
         $stmt->execute();
         $result = $stmt->get_result();
         $countStr = $result->fetch_assoc()['total'] ?? '0';
@@ -462,19 +464,16 @@ class AccountController
         : array
     {
         $conn = Database::getConnection();
-        $mainQuery = '
-            SELECT v_account_info.*, (
-                (CASE WHEN LOWER(username) LIKE ? THEN 4 ELSE 0 END) +
-                (CASE WHEN LOWER(firstname) LIKE ? THEN 3 ELSE 0 END) +
-                (CASE WHEN LOWER(lastname) LIKE ? THEN 2 ELSE 0 END) +
-                (CASE WHEN LOWER(email) LIKE ? THEN 1 ELSE 0 END)
-            ) AS relevancy_score
-            FROM v_account_info
-            $joinQuery
-            $whereClause
-            ORDER BY relevancy_score DESC, level DESC, exp_current DESC, Username
-            LIMIT ? OFFSET ?';
 
+        $mainQuery = "SELECT v_account_info.*" . 
+        ($hasSearchTerm ? ", MATCH(Username, FirstName, LastName, Email) AGAINST (?) AS relevancy_score" : "") . "
+        FROM v_account_info
+        $joinQuery
+        $whereClause
+        ORDER BY " . 
+        ($hasSearchTerm ? "relevancy_score DESC, " : "") . "level DESC, exp_current DESC, Username
+        LIMIT ? OFFSET ?";
+        
 
         $stmt = $conn->prepare($mainQuery);
         if (!$stmt) {
@@ -482,25 +481,35 @@ class AccountController
             throw new \Exception("Failed to prepare main query.");
         }
     
-        $stmt->bind_param($mainTypes, ...$mainParams);
+
+        if (!empty($mainParams)) {
+            $stmt->bind_param($mainTypes, ...$mainParams);
+        }
         $stmt->execute();
         $result = $stmt->get_result();
         $accountItems = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-    
+        
         return $accountItems;
     }
-    
+
     public static function searchForAccount(string $searchTerm, int $page, int $itemsPerPage, array $filters = []): Response
     {
-        $searchTerm = '%' . strtolower($searchTerm) . '%';
         $page = max(1, $page);
         $itemsPerPage = max(1, $itemsPerPage);
         $offset = ($page - 1) * $itemsPerPage;
-    
-        $filterConditions = ['(LOWER(username) LIKE ? OR LOWER(firstname) LIKE ? OR LOWER(lastname) LIKE ? OR LOWER(email) LIKE ?)', 'Banned = 0'];
-        $filterParams = [$searchTerm, $searchTerm, $searchTerm, $searchTerm];
-        $paramTypes = 'ssss';
+
+        $filterConditions = ["Banned = 0"];
+        $filterParams = [];
+        $paramTypes = "";
+        $hasSearchTerm = false;
+        if (trim($searchTerm) !== "") {
+            $hasSearchTerm = true;
+            $fulltextTerm = "+" . trim($searchTerm) . "*";
+            $filterConditions[] = "MATCH(Username, FirstName, LastName, Email) AGAINST (? IN BOOLEAN MODE)";
+            $filterParams[] = $fulltextTerm;
+            $paramTypes .= "s";
+        }
     
         $joinData = self::buildJoinsAndConditions($filters);
         $joinQuery = $joinData['joinQuery'];
@@ -514,14 +523,14 @@ class AccountController
         $count = self::executeCountQuery($joinQuery, $whereClause, $countParams, $countTypes);
         
         $mainParams = array_merge(
-            [$searchTerm, $searchTerm, $searchTerm, $searchTerm],
+            $filterParams,
             $filterParams,
             $joinData['params'],
             [$itemsPerPage, $offset]
         );
         $mainTypes = $paramTypes . $paramTypes . $joinData['paramTypes'].'ii';
     
-        $accountItems = self::executeMainQuery($joinQuery, $whereClause, $mainParams, $mainTypes, $itemsPerPage, $offset);
+        $accountItems = self::executeMainQuery($joinQuery, $whereClause, $mainParams, $mainTypes, $itemsPerPage, $offset, $hasSearchTerm);
     
         $newAccountItems = array_map(fn($row) => self::row_to_vAccount($row, true), $accountItems);
     
