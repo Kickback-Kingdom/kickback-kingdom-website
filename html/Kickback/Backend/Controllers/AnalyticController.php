@@ -292,7 +292,7 @@ class AnalyticController
         return $fullUrl;
     }
     
-    public static function recordPageVisit(string $url = null) : void
+    public static function recordPageVisit(?string $url = null) : void
     {
         $fullUrl = self::getCurrentPage();
         if ($url == null)
