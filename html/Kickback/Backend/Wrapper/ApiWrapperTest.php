@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace Kickback\ApiWrapper\Tests;
+namespace Kickback\Backend\Wrapper\Tests;
 
 /**
  * Unit tests for JavaScript API Wrapper components
  * Follows the project's standard unit testing pattern
  */
-class WrapperUnitTest
+class ApiWrapperTest
 {
     /**
      * Test that item-api.php file exists and generates proper JavaScript
@@ -147,7 +147,7 @@ class WrapperUnitTest
      */
     public static function unittest(): void
     {
-        echo("Running `\\Kickback\\ApiWrapper\\Tests\\WrapperUnitTest::unittest()`\n");
+        echo("Running `\\Kickback\\Backend\\Wrapper\\Tests\\ApiWrapperTest::unittest()`\n");
         
         self::unittest_itemAPIFile();
         self::unittest_backwardCompatibility();
@@ -161,6 +161,6 @@ class WrapperUnitTest
 
 // Allow running this test directly from command line
 if (basename(__FILE__) === basename($_SERVER['SCRIPT_NAME'] ?? '')) {
-    WrapperUnitTest::unittest();
+    ApiWrapperTest::unittest();
 }
 ?> 
