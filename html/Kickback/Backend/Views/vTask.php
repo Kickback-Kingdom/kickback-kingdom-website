@@ -52,9 +52,9 @@ class vTask extends vRecordId
         $createdAt = new vDateTime($this->ctime);
 
         $this->expiresAt = match($this->type) {
-            TaskType::DAILY     => $createdAt->addDays(1),
-            TaskType::WEEKLY    => $createdAt->addDays(7),
-            TaskType::MONTHLY   => $createdAt->addMonths(1),
+            TaskType::DAILY     => $createdAt->withParts(minute:0, second:0)->addDays(1),
+            TaskType::WEEKLY    => $createdAt->withParts(minute:0, second:0)->addDays(7),
+            TaskType::MONTHLY   => $createdAt->withParts(minute:0, second:0)->addMonths(1),
             default             => null,
         };
     }

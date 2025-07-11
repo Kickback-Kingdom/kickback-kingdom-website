@@ -790,6 +790,57 @@ class LootController
         return $lootStack;
     }
 
+    public static function countWropUsedByNewAccounts(int $accountId): int
+    {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT COUNT(*)
+                FROM loot
+                JOIN account ON account.passage_id = loot.Id
+                WHERE loot.item_id = 14
+                AND loot.account_id = ?
+                AND account.Id != loot.account_id";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+
+        $stmt->bind_param("i", $accountId);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+    public static function countWropUsedByNewAccountsBetween(int $accountId, string $startDate, string $endDate): int
+    {
+        $conn = Database::getConnection();
+    
+        $sql = "SELECT COUNT(*)
+                FROM loot
+                JOIN account ON account.passage_id = loot.Id
+                WHERE loot.item_id = 14
+                  AND loot.account_id = ?
+                  AND account.Id != loot.account_id
+                  AND account.DateCreated BETWEEN ? AND ?";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+    
+        $stmt->bind_param("iss", $accountId, $startDate, $endDate);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+    
+        return (int)$count;
+    }
+    
+
     private static function convertToLichRow(array $row): array {
         return [
             'ctime' => $row['_lich_card_ctime'] ?? '',

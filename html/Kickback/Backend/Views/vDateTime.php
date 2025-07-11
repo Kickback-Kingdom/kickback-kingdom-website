@@ -301,7 +301,7 @@ class vDateTime
         return vDateTime::fromDateTime($newDate);
     }
 
-    private function withParts(
+    public function withParts(
         ?int $year = null,
         ?int $month = null,
         ?int $day = null,

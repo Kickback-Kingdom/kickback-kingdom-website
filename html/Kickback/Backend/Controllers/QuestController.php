@@ -1286,6 +1286,52 @@ class QuestController
     
         return (int)$count;
     }
+    public static function countRaffleEntries(int $accountId): int
+    {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT COUNT(*) 
+                FROM raffle_submissions rs
+                JOIN loot l ON rs.loot_id = l.Id
+                WHERE l.account_id = ?";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+
+        $stmt->bind_param("i", $accountId);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+    public static function countRaffleEntriesBetween(int $accountId, string $startDate, string $endDate): int
+    {
+        $conn = Database::getConnection();
+    
+        $sql = "SELECT COUNT(*)
+                FROM raffle_submissions rs
+                JOIN loot l ON rs.loot_id = l.Id
+                JOIN quest q ON rs.raffle_id = q.raffle_id
+                WHERE l.account_id = ?
+                  AND q.end_date BETWEEN ? AND ?";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+    
+        $stmt->bind_param("iss", $accountId, $startDate, $endDate);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+    
+        return (int)$count;
+    }
     
 }
 ?>

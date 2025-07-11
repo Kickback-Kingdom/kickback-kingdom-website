@@ -125,6 +125,10 @@ class TaskController
                 $completed
             );
             $insertStmt->execute();
+
+            
+            $task->ctime = $ctime;
+            $task->crand = $crand;
         }
     }
 
@@ -146,6 +150,11 @@ class TaskController
             case TaskDefinitionCode::SPEND_PRESTIGE_TOKEN:
                 return self::countPrestigeGivenForTask($task, $account);
 
+            case TaskDefinitionCode::PLAY_RANKED_LICH:
+                return self::countRankedMatchesForTask($task, $account, 18);
+
+            case TaskDefinitionCode::WIN_RANKED_LICH:
+                return self::countRankedMatchesForTask($task, $account, 18);
 
             case TaskDefinitionCode::WIN_TOURNAMENT:
                 return self::countTournamentsWonForTask($task, $account);
@@ -159,10 +168,41 @@ class TaskController
             case TaskDefinitionCode::PARTICIPATE_QUEST:
                 return self::countQuestParticipationsForTask($task, $account);
                 
+            case TaskDefinitionCode::HAVE_WROP_USED:
+                return self::countWropUsedForTask($task, $account);
+
+            case TaskDefinitionCode::PARTICIPATE_RAFFLE:
+                return self::countRaffleEntriesForTask($task, $account);
+                
         default:
             return 0;
         }
     }
+
+    public static function countRaffleEntriesForTask(vTask $task, vAccount $account): int
+    {
+        if ($task->type === TaskType::ACHIEVEMENT) {
+            return QuestController::countRaffleEntries($account->crand);
+        }
+
+        $since = $task->ctime;
+        $till  = $task->expiresAt?->dbValue ?? (new \DateTime('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+
+        return QuestController::countRaffleEntriesBetween($account->crand, $since, $till);
+    }
+
+    public static function countWropUsedForTask(vTask $task, vAccount $account): int
+    {
+        if ($task->type === TaskType::ACHIEVEMENT) {
+            return LootController::countWropUsedByNewAccounts($account->crand);
+        }
+    
+        $since = $task->ctime;
+        $till = $task->expiresAt?->dbValue ?? (new \DateTime('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+    
+        return LootController::countWropUsedByNewAccountsBetween($account->crand, $since, $till);
+    }
+
     public static function countQuestParticipationsForTask(vTask $task, vAccount $account): int
     {
         if ($task->type === TaskType::ACHIEVEMENT) {
@@ -179,11 +219,10 @@ class TaskController
         );
     }
 
-
-    public static function countRankedWinsForTask(vTask $task, vAccount $account): int
+    public static function countRankedWinsForTask(vTask $task, vAccount $account, ?int $gameId = null): int
     {
         if ($task->type === TaskType::ACHIEVEMENT) {
-            return GameController::countRankedWins($account->crand);
+            return GameController::countRankedWins($account->crand, $gameId);
         }
     
         $since = $task->ctime;
@@ -192,25 +231,28 @@ class TaskController
         return GameController::countRankedWinsBetween(
             $account->crand,
             $since,
-            $till
+            $till,
+            $gameId
         );
     }
     
-    public static function countRankedMatchesForTask(vTask $task, vAccount $account): int
+    public static function countRankedMatchesForTask(vTask $task, vAccount $account, ?int $gameId = null): int
     {
         if ($task->type === TaskType::ACHIEVEMENT) {
-            return GameController::countRankedMatches($account->crand);
+            return GameController::countRankedMatches($account->crand, $gameId);
         }
-
+    
         $since = $task->ctime;
         $till  = $task->expiresAt?->dbValue ?? (new \DateTime('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
-
+    
         return GameController::countRankedMatchesBetween(
             $account->crand,
             $since,
-            $till
+            $till,
+            $gameId
         );
     }
+    
 
     public static function countPageVisitsForTask(vTask $task, vAccount $account): int
     {

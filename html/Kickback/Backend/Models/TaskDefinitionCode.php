@@ -17,6 +17,7 @@ enum TaskDefinitionCode: string
     case VIEW_LICH_CARD_WIKI = 'view_lich_card_wiki';
     case PARTICIPATE_RAFFLE = 'participate_raffle';
     case PLAY_RANKED_LICH = 'play_ranked_lich';
+    case WIN_RANKED_LICH = 'win_ranked_lich';
     case SPEND_PRESTIGE_TOKEN = 'spend_prestige_token';
     case CHANGE_PROFILE_PICTURE = 'change_profile_picture';
     case HAVE_WROP_USED = 'have_wrop_used';
@@ -62,7 +63,7 @@ enum TaskDefinitionCode: string
     public function getPageIdPattern(): ?string
     {
         return match($this) {
-            TaskDefinitionCode::VIEW_BLOG_POST       => '/blog/%',
+            TaskDefinitionCode::VIEW_BLOG_POST       => '/blog-post/%',
             TaskDefinitionCode::VIEW_RAFFLE          => '/raffles/%',
             TaskDefinitionCode::GO_TO_TOWN_SQUARE    => '/town-square%',
             TaskDefinitionCode::VIEW_PROFILE         => '/u/%',
