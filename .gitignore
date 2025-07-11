@@ -57,3 +57,5 @@
 /html/vendor/composer/**
 !/html/vendor/composer/.gitkeep
 
+# Local development and documentation folder
+/extra/**
