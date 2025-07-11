@@ -120,6 +120,7 @@ function init__is_running_in_cli_context() : bool
     // So we look for the REQUEST_METHOD field.
     // No web server means no REQUEST_METHOD
     // Contrapositively, "yes REQUEST_METHOD" means "yes web server".
+    // @phpstan-ignore isset.variable
     if (isset($_SERVER) && array_key_exists('REQUEST_METHOD', $_SERVER)
     &&  isset($_SERVER['REQUEST_METHOD']) && 0 < strlen($_SERVER['REQUEST_METHOD'])) {
         return false;
@@ -149,14 +150,6 @@ if (!defined('Kickback\InitializationScripts\PARENT_PROCESS_TYPE'))
     } else {
         define('Kickback\InitializationScripts\PARENT_PROCESS_TYPE', "WEB");
     }
-
-    // // @phpstan-ignore isset.variable, function.impossibleType, booleanAnd.alwaysTrue (Ignore "always set"|"never null"|"always true" errors, because they may only be true in the current environment.)
-    // if( isset($_SERVER) && (!is_null($_SERVER)) && !(0 === count($_SERVER))
-    // &&  array_key_exists("DOCUMENT_ROOT", $_SERVER) ) {
-    //     define('Kickback\InitializationScripts\PARENT_PROCESS_TYPE', "WEB");
-    // } else {
-    //     define('Kickback\InitializationScripts\PARENT_PROCESS_TYPE', "CLI");
-    // }
 }
 
 // The change_root script will handle initialization from here.
