@@ -30,8 +30,8 @@ class vTreasureHuntEvent extends vRecordId
         return $this->content->hasPageContent();
     }
 
-    public function getPageContent() : vPageContent {
-        return $this->content->pageContent;
+    public function pageContent() : vPageContent {
+        return $this->content->pageContent();
     }
 
     public function canEdit() : bool {
@@ -50,7 +50,7 @@ class vTreasureHuntEvent extends vRecordId
         $this->populateContent();
     }
 
-    public function getURL() : string {
+    public function url() : string {
         return "/treasure-hunt/".$this->locator;
     }
 }

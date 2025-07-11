@@ -24,8 +24,23 @@ class BlogPostController
         return preg_match('/^[a-zA-Z0-9_-]+$/', $str) === 1;
     }
 
-    public static function getBlogPostByLocators(string $blogLocator, string $postLocator) : Response {
-        
+    /**
+    * @phpstan-assert-if-true =vBlogPost $blogPost
+    */
+    public static function queryBlogPostByLocatorsInto(string $blogLocator, string $postLocator, ?vBlogPost &$blogPost): bool
+    {
+        $resp = self::queryBlogPostByLocatorsAsResponse($blogLocator, $postLocator);
+        if ( $resp->success ) {
+            $blogPost = $resp->data;
+            return true;
+        } else {
+            $blogPost = null;
+            return false;
+        }
+    }
+
+    public static function queryBlogPostByLocatorsAsResponse(string $blogLocator, string $postLocator) : Response
+    {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_blog_post_info WHERE Bloglocator = ? AND Postlocator = ? LIMIT 1";
 
@@ -58,7 +73,23 @@ class BlogPostController
         return (new Response(true, "Blog post retrieved successfully.", self::row_to_vBlogPost($row)));
     }
 
-    public static function getBlogPostById(vRecordId $postId): Response {
+    /**
+    * @phpstan-assert-if-true =vBlogPost $blogPost
+    */
+    public static function queryBlogPostByIdInto(vRecordId $postId, ?vBlogPost &$blogPost): bool
+    {
+        $resp = self::queryBlogPostByIdAsResponse($postId);
+        if ( $resp->success ) {
+            $blogPost = $resp->data;
+            return true;
+        } else {
+            $blogPost = null;
+            return false;
+        }
+    }
+
+    public static function queryBlogPostByIdAsResponse(vRecordId $postId): Response
+    {
         $conn = Database::getConnection();
 
         $sql = "SELECT * FROM v_blog_post_info WHERE Id = ? LIMIT 1";
@@ -97,12 +128,9 @@ class BlogPostController
         $conn = Database::getConnection();
 
         // Fetch the current blog post information
-        $currentBlogPostResp = self::getBlogPostById($postId);
-        if (!$currentBlogPostResp->success) {
+        if (!self::queryBlogPostByIdInto($postId, $currentBlogPost)) {
             return new Response(false, "Blog post not found.", null);
         }
-
-        $currentBlogPost = $currentBlogPostResp->data;
 
         // Check if the user has permissions
         if (!$currentBlogPost->isWriter()) {
@@ -110,13 +138,14 @@ class BlogPostController
         }
 
         // Fetch content data for the blog post
-        $pageContentResp = ContentController::getContentDataById($currentBlogPost->content, "BLOG-POST", $currentBlogPost->blogLocator . "/" . $currentBlogPost->postLocator);
+        $pageContentResp = ContentController::queryContentDataByIdAsResponse($currentBlogPost->content, "BLOG-POST", $currentBlogPost->blogLocator . "/" . $currentBlogPost->postLocator);
         if (!$pageContentResp->success) {
             return $pageContentResp;
         }
 
-        $pageContent = $pageContentResp->data;
-        $currentBlogPost->content->pageContent = $pageContent;
+        $convSuccess = ContentController::convertContentDataResponseInto($pageContentResp, $pageContent);
+        assert($convSuccess);
+        $currentBlogPost->content->pageContent($pageContent);
         // Check if the blog post is valid for publishing
         if (!$currentBlogPost->isValidForPublish()) {
             return new Response(false, "Your blog post isn't ready to publish.", null);
@@ -147,7 +176,8 @@ class BlogPostController
         }
     }
 
-    public static function updateBlogPost(vRecordId $postId, string $title, string $locator, string $desc, vRecordId $imageId): Response {
+    public static function updateBlogPost(vRecordId $postId, string $title, string $locator, string $desc, vRecordId $imageId): Response
+    {
         $conn = Database::getConnection();
 
         // Validate the locator string
@@ -156,12 +186,9 @@ class BlogPostController
         }
 
         // Fetch the current blog post information
-        $currentBlogPostResp = self::getBlogPostById($postId); // Assume this method is implemented
-        if (!$currentBlogPostResp->success) {
+        if (!self::queryBlogPostByIdInto($postId, $currentBlogPost)) {
             return new Response(false, "Blog post not found.", null);
         }
-
-        $currentBlogPost = $currentBlogPostResp->data;
 
         // Check if the user has permissions
         if (!$currentBlogPost->isWriter()) {
@@ -196,14 +223,12 @@ class BlogPostController
         $title = "";
         $postLocator = "new-post-" . $blogId->crand . "-" . Session::getCurrentAccount()->crand;
 
-        // Use getBlogPostByLocators to check if a blog post already exists
-        $existingPostResp = self::getBlogPostByLocators($blogLocator, $postLocator);
-        if ($existingPostResp->success) {
+        // Use queryBlogPostByLocatorsInto to check if a blog post already exists
+        if ( self::queryBlogPostByLocatorsInto($blogLocator, $postLocator, $existingBlogPost) ) {
             // If the post already exists, return it
-            return new Response(true, "Blog post already exists.", $existingPostResp->data);
+            return new Response(true, "Blog post already exists.", $existingBlogPost);
         }
 
-        
         // If no existing post, create a new one
         if (BlogController::accountIsWriter(Session::getCurrentAccount(), new vBlog('', $blogId->crand))) {
             $desc = "";
@@ -218,10 +243,8 @@ class BlogPostController
             mysqli_stmt_close($stmt);
 
             // Retrieve the newly created post
-            $postResp = self::getBlogPostByLocators($blogLocator, $postLocator);
-
-            if ($postResp->success) {
-                return new Response(true, "New blog post created.", $postResp->data);
+            if ( self::queryBlogPostByLocatorsInto($blogLocator, $postLocator, $blogPost) ) {
+                return new Response(true, "New blog post created.", $blogPost);
             } else {
                 return new Response(false, "Error retrieving the created blog post.", null);
             }
@@ -240,9 +263,9 @@ class BlogPostController
         $blogPost->postLocator = $row["Postlocator"];
         $blogPost->blogLocator = $row["Bloglocator"];
 
-        if ($blog == null)
-        {
-            $blog = BlogController::getBlogByLocator($blogPost->blogLocator)->data;
+        $blog = null;
+        if (!isset($blog)) {
+            BlogController::queryBlogByLocatorInto($blogPost->blogLocator, $blog);
         }
         $blogPost->blog = $blog;
 

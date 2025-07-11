@@ -2,7 +2,7 @@
 
 use \Kickback\Common\Version;
 use \Kickback\Services\Session;
-use \Kickback\Backend\Views\Response;
+use \Kickback\Backend\Models\Response;
 
 
 $showPopUpError = false;

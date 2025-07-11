@@ -6,7 +6,10 @@ namespace Kickback\Backend\Views;
 class vTournamentTeam
 {
     public string $name;
+
+    /** @var array<vAccount> */
     public array $players;
+
     public ?bool $champion;
     public int $seed;
 
@@ -33,8 +36,8 @@ class vTournamentTeam
         $this->players[] = $account;
     }
 
-    public function getProfilePictureURL() : string {
-        return $this->players[0]->getProfilePictureURL();
+    public function profilePictureURL() : ?string {
+        return $this->players[0]->profilePictureURL();
     }
 }
 ?>

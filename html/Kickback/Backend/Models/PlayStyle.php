@@ -12,7 +12,7 @@ enum PlayStyle: int {
     case Roleplay = 3;
 
 
-    public static function getPlayStyleJSON(): string
+    public static function getPlayStyleJSON(): ?string
     {
         $playStyles = [];
         foreach (self::cases() as $case) {
@@ -22,7 +22,8 @@ enum PlayStyle: int {
             ];
         }
 
-        return json_encode($playStyles);
+        $json = json_encode($playStyles);
+        return ($json !== false) ? $json : null;
     }
     
     public function getName(): string

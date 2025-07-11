@@ -7,8 +7,9 @@ namespace Kickback\Backend\Views;
 class vTournamentBracketRound
 {
     public int $round;
-    public array $matches;
 
+    /** @var array<vTournamentBracketRoundMatch> */
+    public array $matches;
     
     
     function __construct(int $round)

@@ -7,8 +7,7 @@ use Kickback\Backend\Controllers\TreasureHuntController;
 use Kickback\Backend\Models\NotificationType;
 use Kickback\Common\Version;
 
-$mediaDirsResp = MediaController::getMediaDirectories();
-$mediaDirs = $mediaDirsResp->data;
+$mediaDirs = MediaController::queryMediaDirectories();
 ?>
 
 <!--CONFETTI-->
@@ -200,7 +199,7 @@ $mediaDirs = $mediaDirsResp->data;
                                         <?php
 
                                             foreach($mediaDirs as $dir) {
-                                                echo "<option value='{$dir["Directory"]}'>{$dir["Directory"]}</option>";
+                                                echo "<option value='{$dir}'>{$dir}</option>";
                                             }
                                         ?>
                                     </select>
@@ -573,7 +572,7 @@ $mediaDirs = $mediaDirsResp->data;
 
 <?php if (Kickback\Services\Session::isEventOrganizer()) { 
     
-    $currentAndUpComingTreasureHunts = TreasureHuntController::getCurrentEventsAndUpcoming()->data;
+    $currentAndUpComingTreasureHunts = TreasureHuntController::queryCurrentEventsAndUpcoming();
     ?>
 <!--Treasure hunt hide object modal-->
 <div class="modal fade" id="treasureHuntHideObjectModal" tabindex="-1" aria-labelledby="treasureHuntHideObjectModalLabel" aria-hidden="true">
@@ -770,9 +769,9 @@ $mediaDirs = $mediaDirsResp->data;
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/town-square.php"><i class="nav-icon fa-regular fa-address-card"></i> Town Square <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
-            <!--<li class="nav-item">
+            <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
-            </li>-->
+            </li>
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
@@ -902,7 +901,7 @@ $mediaDirs = $mediaDirsResp->data;
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/town-square.php"><i class="nav-icon fa-regular fa-address-card"></i> Town Square</a></li>
-                        <!--<li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges</a></li>-->
+                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges</a></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs</a></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities</a></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/guild-halls.php"><i class="nav-icon fa-solid fa-landmark"></i> Guild Halls</a></li>
@@ -987,7 +986,7 @@ $mediaDirs = $mediaDirsResp->data;
                             if (Kickback\Services\Session::isLoggedIn())
                             {
                         ?>
-                        <img class="rounded-circle" style="height: 100%;width: auto;" src="<?= Kickback\Services\Session::getCurrentAccount()->getProfilePictureURL(); ?>"/>
+                        <img class="rounded-circle" style="height: 100%;width: auto;" src="<?= Kickback\Services\Session::getCurrentAccount()->profilePictureURL(); ?>"/>
                         <?php
                             }
                             else

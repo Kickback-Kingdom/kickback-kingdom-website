@@ -5,7 +5,7 @@ namespace Kickback\Common;
 
 use \SplFixedArray;
 
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Str;
 
 /**
 * Class containing version info and history for the Kickback Kingdom website, backend, and API.
@@ -55,8 +55,8 @@ final class Version
     }
     public static function isLocalhost(): bool {
         $whitelist = ['127.0.0.1', '::1', 'localhost'];
-        return in_array($_SERVER['REMOTE_ADDR'] ?? '', $whitelist) || 
-               in_array($_SERVER['SERVER_NAME'] ?? '', $whitelist);
+        return in_array($_SERVER['REMOTE_ADDR'] ?? '', $whitelist, true) ||
+               in_array($_SERVER['SERVER_NAME'] ?? '', $whitelist, true);
     }
     
 
@@ -150,7 +150,6 @@ final class Version
             // TODO: Print error message(s) if there are duplicate version numbers?
         }
 
-        // @phpstan-ignore assign.propertyType
         self::$history_ = $hist_by_index;
         self::$history_by_number_ = $hist_by_number;
         self::$history_by_blogpost_locator_ = $hist_by_locator;
