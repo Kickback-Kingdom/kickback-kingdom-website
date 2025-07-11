@@ -18,6 +18,11 @@ class vRecordId
         $this->crand = $crand;
     }
 
+    function getVRecordId() : vRecordId
+    {
+        return new vRecordId($this->ctime, $this->crand);
+    }
+
     function getForeignRecordId() : ForeignRecordId {
         return new ForeignRecordId($this->ctime, $this->crand);
     }

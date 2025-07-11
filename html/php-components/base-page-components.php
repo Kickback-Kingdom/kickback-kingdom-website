@@ -23,7 +23,7 @@ $mediaDirs = MediaController::queryMediaDirectories();
 
 <?php if(Kickback\Services\Session::isLoggedIn()) { ?>
 
-
+    <?php require(\Kickback\SCRIPT_ROOT . "/php-components/base-cart-handler.php"); ?>
 
     <?php require(\Kickback\SCRIPT_ROOT . "/php-components/league-viewer.php"); ?>
 
@@ -916,6 +916,20 @@ $mediaDirs = MediaController::queryMediaDirectories();
                 <li class="nav-item dropdown" data-bs-theme="light">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                         aria-expanded="false">
+                        <i class="nav-icon fa-solid fa-university "></i> Store
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/market.php?store-locator=kickback_market"><i class="nav-icon fa-solid fa fa-shopping-bag"></i>Kickback Market</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/market.php"><i class="nav-icon fa-solid fa fa-space-shuttle"></i>Emberwood Dashboard</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown" data-bs-theme="light">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
                         <i class="nav-icon fa-solid fa-chess"></i> About Us
                     </a>
                     <ul class="dropdown-menu">
@@ -939,19 +953,18 @@ $mediaDirs = MediaController::queryMediaDirectories();
                         <i class="fa-brands fa-discord"></i>
                     </a>
                 </li>
-                <?php if (Kickback\Services\Session::isLoggedIn()) { ?>
+                <?php if (true/*Kickback\Services\Session::isLoggedIn()*/) { ?>
                     <li class="nav-item">
-                        <button class="btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas"
-                            data-bs-target="#offcanvasMenuRightShoppingCart" aria-controls="offcanvasMenuRightShoppingCart"
-                            aria-label="Toggle navigation">
-                            <i class="fa-solid fa-cart-shopping"></i>
-                            <?php if (Kickback\Services\Session::isAdmin()) { ?>
-                            <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill">
-                                99+
-                                <span class="visually-hidden">unread messages</span>
-                            </span>
-                            <?php } ?>
-                        </button>
+                    <a class="btn btn-primary position-relative"
+                        href="<?php echo Version::urlBetaPrefix(); ?>/cart.php">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <?php if (true/*Kickback\Services\Session::isAdmin()*/) { ?>
+                        <span class="badge bg-secondary position-absolute top-0 start-100 translate-middle rounded-pill">
+                            99
+                            <span class="visually-hidden">unread messages</span>
+                        </span>
+                        <?php } ?>
+                    </a>
                     </li>
                     <li class="nav-item">
                         <button class="btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas"
