@@ -617,18 +617,6 @@ function generic_autoload_function_impl(string $class_fqn, string $namespace_to_
         return AUTOLOAD_INCOMPLETE;
     }
 
-    // Weird workaround:
-    // Sometimes using the `never` return type will cause the autoloader to be invoked.
-    // This doesn't make sense though, because `never` is not a class, it's a built-in
-    // PHP type that indicates that a function will "never" return.
-    // So we'll just... "not do this, but say we did". heh.
-    // (It got worse: Apparently PHPStan does this whenever something uses
-    // a type defined with @phpstan-type or @phpstan-type-import. Guh!
-    // Well, I have no way to predict what those are in a general way. Sadge.)
-    if ($class_fqn === 'never' || str_ends_with($class_fqn, '\\never')) {
-        return AUTOLOAD_SUCCESS;
-    }
-
     // Now we have proven that the $namespace_to_try is actually the namespace
     // mentioned in $class_fqn.
     $namespace_name = $namespace_to_try;
@@ -1064,6 +1052,22 @@ function autoload_try_vendor_folder(string $class_fqn) : int
 */
 function autoload_function_impl(string $class_fqn) : int
 {
+    // Weird workaround:
+    // Sometimes using the `never` return type will cause the autoloader to be invoked.
+    // This doesn't make sense though, because `never` is not a class, it's a built-in
+    // PHP type that indicates that a function will "never" return.
+    // So we'll just... "not do this, but say we did". heh.
+    // (It got worse: Apparently PHPStan does this whenever something uses
+    // a type defined with @phpstan-type or @phpstan-type-import. Guh!
+    // Well, I have no way to predict what those are in a general way. Sadge.)
+    // (Update 2025-07-09: @phpstan-type workaroud was implemented using '_a' suffix.)
+    // (Update 2025-07-10: PHPStan also does this with the `scalar` type.)
+    if ($class_fqn === 'never'  || str_ends_with($class_fqn, '\\never')
+    ||  $class_fqn === 'scalar' || str_ends_with($class_fqn, '\\scalar'))
+    {
+        return AUTOLOAD_IGNORED;
+    }
+
     // Ignore symbols that tell us to exclude them from autoloading.
     // Right now, this is anything in the Kickback namespace that ends
     // with the suffix `_a`. This can be used to designate PHPStan local aliases.
