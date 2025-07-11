@@ -1,0 +1,690 @@
+{
+  "GUID": "068885",
+  "Name": "Custom_Model",
+  "Transform": {
+    "posX": -0.2,
+    "posY": 0.183856875,
+    "posZ": 0.0206504613,
+    "rotX": 0,
+    "rotY": 30.0000019,
+    "rotZ": -0.0000139964159,
+    "scaleX": 1.4,
+    "scaleY": 1.4,
+    "scaleZ": 1.4
+  },
+  "Nickname": "",
+  "Description": "",
+  "GMNotes": "",
+  "AltLookAngle": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "ColorDiffuse": {
+    "r": 1,
+    "g": 1,
+    "b": 1
+  },
+  "LayoutGroupSortIndex": 0,
+  "Value": 0,
+  "Locked": true,
+  "Grid": true,
+  "Snap": true,
+  "IgnoreFoW": false,
+  "MeasureMovement": false,
+  "DragSelectable": true,
+  "Autoraise": true,
+  "Sticky": true,
+  "Tooltip": true,
+  "GridProjection": false,
+  "HideWhenFaceDown": false,
+  "Hands": false,
+  "CustomMesh": {
+    "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/61457201441341601/FD4FF8493CD0970085B83EA3B372E462154A0A34/",
+    "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/61457201446777046/66BD007D7A24AA750C4CCFA017FCE1039A0E36FA/",
+    "NormalURL": "",
+    "ColliderURL": "https://steamusercontent-a.akamaihd.net/ugc/61457201441341601/FD4FF8493CD0970085B83EA3B372E462154A0A34/",
+    "Convex": false,
+    "MaterialIndex": 3,
+    "TypeIndex": 4,
+    "CustomShader": {
+      "SpecularColor": {
+        "r": 1,
+        "g": 1,
+        "b": 1
+      },
+      "SpecularIntensity": 0,
+      "SpecularSharpness": 2,
+      "FresnelStrength": 0
+    },
+    "CastShadows": true
+  },
+  "LuaScript": "wallObjects = {}\r\nsourceStoneObjects = {}\r\nsourceStoneButtonIndexMap = {}\r\nbuttonIndexMap = {}\r\nwallsLocked = true\r\n\r\nfunction onLoad()\r\n    --spawnBoardObject(\"sourceStone\")\r\n    createWallButtons()\r\n    --createSourceStoneButtons()\r\nend\r\n\r\nfunction registerToBoard(params)\r\n    local object = params[1]\r\n    local objectType = params[2]\r\n\r\n    if(objectType == \"wall\")then\r\n        table.insert(wallObjects, object)\r\n    elseif(objectType == \"sourceStone\")then\r\n        table.insert(sourceStoneObjects, object)\r\n        refreshSourceStoneButtons() \r\n    else\r\n        print(\"object type not found! type : \"..objectType)\r\n    end\r\n    \r\nend\r\n\r\nfunction createButton(buttonName, buttonInfo, buttonType)\r\n\r\n    self.createButton(buttonInfo)\r\n\r\n    local currentIndex = self.getButtons() and #self.getButtons() - 1 or 0\r\n\r\n    table.insert(buttonIndexMap, {\r\n        name = buttonName,\r\n        object = self,\r\n        index = currentIndex,\r\n        type = buttonType\r\n    })\r\n\r\n    \r\nend\r\n\r\n--source-stones---------------------------------------------------------\r\n\r\nfunction createSourceStoneButtons()\r\n\r\n    for i, stone in ipairs(sourceStoneObjects) do\r\n\r\n\r\n        --[[local position = {stone.getPosition().x, stone.getPosition().y, stone.getPosition().z}\r\n        local rotation = stone.getRotation()\r\n\r\n        local buttonInfo = {\r\n            click_function = \"toggleLockWalls\",\r\n            function_owner = stone,\r\n            label = \"Unlock Walls\",\r\n            position = position,\r\n            rotation = rotation,\r\n            width = 1600,\r\n            height = 500,\r\n            font_size = 250,\r\n            color = {1, 0, 0, 1},\r\n            font_color = {0, 0, 0, 1}\r\n        }\r\n        \r\n\r\n        createButton(\"sourceStoneButton\"..i, buttonInfo, \"sourceStoneButton\")--]]\r\n    end\r\nend\r\n\r\nfunction refreshSourceStoneButtons() \r\n    for i, button in ipairs(sourceStoneButtonIndexMap) do\r\n        self.removeButton(button.index)\r\n    end\r\n\r\n    createSourceStoneButtons()\r\nend\r\n\r\n--Walls-----------------------------------------------------------------\r\n\r\nfunction createWallButtons()\r\n    local buttons = {\r\n        {name=\"WallButton1\", position={20, 0.5, 0}, rotation={0, -30, 0}},\r\n        {name=\"WallButton2\", position={-20, 0.5, 0}, rotation={0, 150, 0}},\r\n        {name=\"WallButton3\", position={9, 0.5, -18}, rotation={0, 150, 0}},\r\n        {name=\"WallButton4\", position={-9, 0.5, 18}, rotation={0, -30, 0}},\r\n    }\r\n\r\n    for i, btn in ipairs(buttons) do\r\n        local buttonInfo = {\r\n            click_function = \"toggleLockWalls\",\r\n            function_owner = self,\r\n            label = \"Unlock Walls\",\r\n            position = btn.position,\r\n            rotation = btn.rotation,\r\n            width = 1600,\r\n            height = 500,\r\n            font_size = 250,\r\n            color = {1, 0, 0, 1},\r\n            font_color = {0, 0, 0, 1}\r\n        }\r\n        createButton(btn.name, buttonInfo, \"wallButton\")\r\n    end\r\n\r\nend\r\n\r\nfunction toggleLockWalls(obj, player_color)\r\n    local buttonColor = {1, 0, 0, 1}\r\n    local labelString = \"Unlock Walls\"\r\n\r\n    if (wallsLocked) then\r\n        buttonColor = {0, 1, 0, 1}\r\n        wallsLocked = false\r\n        labelString = \"Lock Walls\"\r\n    elseif (wallsLocked == false) then\r\n        wallsLocked = true\r\n    end\r\n\r\n    local wallButtons = returnAllWallButtons()\r\n\r\n    for _, btn in ipairs(wallButtons) do\r\n        btn.object.editButton({\r\n            index = btn.index,\r\n            color = buttonColor,\r\n            label = labelString\r\n        })\r\n    end\r\n\r\n    for i, wall in ipairs(wallObjects) do\r\n        if(wallsLocked == true) then\r\n            wall.lock()\r\n        elseif (wallsLocked == false) then\r\n            wall.unlock()\r\n        end\r\n    end\r\nend\r\n\r\n--spawn-objects---------------------------------------------------------\r\n\r\nfunction spawnBoardObject(objectName)\r\n\r\n    local modelData = returnModelData(objectName)\r\n\r\n    if(modelData.objectType == \"customModel\") then\r\n        local objectData = {\r\n            type = \"Custom_Model\",\r\n            position = {0, 2, 0},\r\n            callback_function = function(obj)\r\n                obj.setCustomObject(modelData)\r\n                obj.setLuaScript(modelData.lua_script)\r\n                obj.setName(\"Cool 3D Object\")\r\n                obj.reload()\r\n            end\r\n        }\r\n    \r\n        spawnObject(objectData)\r\n    elseif(modelData.objectType == \"jsonClone\") then\r\n        local objectData = {\r\n            json = modelData.jsonData,\r\n            position = {0, 2, 0},\r\n            callback_function = function(obj)\r\n                log(\"Spawned saved object:\")\r\n                obj.setLuaScript(modelData.lua_script)\r\n                obj.setName(\"Cool 3D Object\")\r\n                obj.reload()\r\n            end\r\n        }\r\n\r\n        spawnObjectJSON(objectData)\r\n    else\r\n        print(\"objectType not recognized! type : \"..modelData.objectType)\r\n    end\r\n   \r\nend\r\n\r\nfunction returnModelData(objectName)\r\n\r\n    if(objectName == \"stonewall1\") then\r\n        return \r\n        {\r\n            objectType = \"customModel\",\r\n            mesh = \"https://steamusercontent-a.akamaihd.net/ugc/61457201444625903/85D6BAC104A484A17DD70710A580171BFBDB72DB/\",\r\n            collider = \"https://steamusercontent-a.akamaihd.net/ugc/61457201444625903/85D6BAC104A484A17DD70710A580171BFBDB72DB/\",\r\n            diffuse = \"https://steamusercontent-a.akamaihd.net/ugc/61457201444626681/6AA3AED17ABFC1837BAB4A618B87F13AC6978D3D/\",\r\n            type = 4,\r\n            material = 1 ,\r\n            lua_script = returnWallLuaScript()\r\n        }\r\n    elseif(objectName == \"stonewall2\")then\r\n        return \r\n        {\r\n            objectType = \"customModel\",\r\n            mesh = \"http://example.com/model.obj\",\r\n            collider = \"http://example.com/collider.obj\",\r\n            diffuse = \"http://example.com/texture.png\",\r\n            type = 4,\r\n            material = 1,\r\n            lua_script = returnWallLuaScript()\r\n        }\r\n    elseif(objectName == \"cliff\")then\r\n        return \r\n        {\r\n            objectType = \"customModel\",\r\n            mesh = \"http://example.com/model.obj\",\r\n            collider = \"http://example.com/collider.obj\",\r\n            diffuse = \"http://example.com/texture.png\",\r\n            type = 4,\r\n            material = 1,\r\n            lua_script = returnWallLuaScript()\r\n        }\r\n    elseif(objectName == \"cage\")then\r\n        return \r\n        {\r\n            objectType = \"customModel\",\r\n            mesh = \"http://example.com/model.obj\",\r\n            collider = \"http://example.com/collider.obj\",\r\n            diffuse = \"http://example.com/texture.png\",\r\n            type = 4,\r\n            material = 1,\r\n            lua_script = returnWallLuaScript()\r\n        }\r\n    elseif(objectName == \"throne\")then\r\n        return \r\n        {\r\n            objectType = \"customModel\",\r\n            mesh = \"http://example.com/model.obj\",\r\n            collider = \"http://example.com/collider.obj\",\r\n            diffuse = \"http://example.com/texture.png\",\r\n            type = 4,\r\n            material = 1,\r\n            lua_script = returnWallLuaScript()\r\n        }\r\n    elseif(objectName == \"crystal\")then\r\n        return \r\n        {\r\n            objectType = \"customModel\",\r\n            mesh = \"http://example.com/model.obj\",\r\n            collider = \"http://example.com/collider.obj\",\r\n            diffuse = \"http://example.com/texture.png\",\r\n            type = 4,\r\n            material = 1,\r\n            lua_script = returnWallLuaScript()\r\n        }\r\n    elseif(objectName == \"crystal\")then\r\n        return \r\n        {\r\n            objectType = \"customModel\",\r\n            mesh = \"http://example.com/model.obj\",\r\n            collider = \"http://example.com/collider.obj\",\r\n            diffuse = \"http://example.com/texture.png\",\r\n            type = 4,\r\n            material = 1,\r\n            lua_script = returnWallLuaScript()\r\n        }\r\n    elseif(objectName == \"sourceStone\")then\r\n        return \r\n        {\r\n            objectType = \"jsonClone\",\r\n            jsonData= returnSourceStoneJSON(),\r\n            lua_script = returnSourceStoneLuaScript()\r\n        }\r\n    else\r\n        print(\"Object name not recognized! objectName : \"..objectName)\r\n    end\r\nend\r\n\r\nfunction returnWallLuaScript()\r\n    return[[\r\n    boardGUID = \"068885\"\r\n\r\n    function onLoad()\r\n    local board = getObjectFromGUID(boardGUID)\r\n\r\n    board.call(\"registerToBoard\", { self, \"wall\" })\r\n\r\n    end\r\n    ]]\r\nend\r\n\r\nfunction returnSourceStoneLuaScript()\r\n    return[[\r\n    boardGUID = \"068885\"\r\n\r\n    function onLoad()\r\n    local board = getObjectFromGUID(boardGUID)\r\n\r\n    board.call(\"registerToBoard\", { self, \"wall\" })\r\n\r\n    end\r\n    ]]\r\nend\r\n\r\nfunction returnSourceStoneJSON()\r\n    return [[{\r\n  \"Name\": \"Tileset_Rock\",\r\n  \"Transform\": {\r\n    \"posX\": -55.9215775,\r\n    \"posY\": 2.49286842,\r\n    \"posZ\": 18.04506,\r\n    \"rotX\": -0.000147691637,\r\n    \"rotY\": 270.0003,\r\n    \"rotZ\": -4.9193266E-05,\r\n    \"scaleX\": 0.350000441,\r\n    \"scaleY\": 0.350000381,\r\n    \"scaleZ\": 0.350000441\r\n  },\r\n  \"ColorDiffuse\": {\r\n    \"r\": 0.0,\r\n    \"g\": 0.0,\r\n    \"b\": 0.0\r\n  },\r\n  \"ChildObjects\": [\r\n    {\r\n      \"Name\": \"Tileset_Rock\",\r\n      \"Transform\": {\r\n        \"posX\": -5.77858734,\r\n        \"posY\": 4.01388178E-07,\r\n        \"posZ\": 0.0654185638,\r\n        \"rotX\": -5.9467834E-06,\r\n        \"rotY\": -0.00370879285,\r\n        \"rotZ\": -4.591316E-06,\r\n        \"scaleX\": 0.99999994,\r\n        \"scaleY\": 1.0,\r\n        \"scaleZ\": 0.99999994\r\n      },\r\n      \"ColorDiffuse\": {\r\n        \"r\": 0.0,\r\n        \"g\": 0.0,\r\n        \"b\": 0.0\r\n      }\r\n    },\r\n    {\r\n      \"Name\": \"Tileset_Rock\",\r\n      \"Transform\": {\r\n        \"posX\": -3.32014251,\r\n        \"posY\": -2.179134E-07,\r\n        \"posZ\": 1.4096694,\r\n        \"rotX\": -7.620081E-06,\r\n        \"rotY\": 270.0001,\r\n        \"rotZ\": 3.17636136E-07,\r\n        \"scaleX\": 0.9999997,\r\n        \"scaleY\": 1.0,\r\n        \"scaleZ\": 0.9999997\r\n      },\r\n      \"AltLookAngle\": {\r\n        \"x\": 0.0,\r\n        \"y\": 0.0,\r\n        \"z\": 0.0\r\n      },\r\n      \"ColorDiffuse\": {\r\n        \"r\": 0.7960787,\r\n        \"g\": 0.0,\r\n        \"b\": 1.0\r\n      }\r\n    },\r\n    {\r\n      \"Name\": \"Tileset_Rock\",\r\n      \"Transform\": {\r\n        \"posX\": -3.55918121,\r\n        \"posY\": 4.65619223E-07,\r\n        \"posZ\": -0.551612,\r\n        \"rotX\": -5.55689257E-06,\r\n        \"rotY\": 89.99566,\r\n        \"rotZ\": -1.79230883E-05,\r\n        \"scaleX\": 0.9999997,\r\n        \"scaleY\": 1.0,\r\n        \"scaleZ\": 0.9999997\r\n      },\r\n      \"ColorDiffuse\": {\r\n        \"r\": 1.0,\r\n        \"g\": 0.0,\r\n        \"b\": 0.0\r\n      }\r\n    },\r\n    {\r\n      \"Name\": \"Tileset_Rock\",\r\n      \"Transform\": {\r\n        \"posX\": -5.074722,\r\n        \"posY\": 5.929691E-07,\r\n        \"posZ\": -1.910814,\r\n        \"rotX\": 1.34220782E-05,\r\n        \"rotY\": 179.999741,\r\n        \"rotZ\": 1.54189365E-07,\r\n        \"scaleX\": 0.9999999,\r\n        \"scaleY\": 1.0,\r\n        \"scaleZ\": 0.9999999\r\n      },\r\n      \"ColorDiffuse\": {\r\n        \"r\": 1.0,\r\n        \"g\": 1.0,\r\n        \"b\": 1.0\r\n      }\r\n    },\r\n    {\r\n      \"Name\": \"Tileset_Rock\",\r\n      \"Transform\": {\r\n        \"posX\": -1.54079914,\r\n        \"posY\": 1.90329757E-07,\r\n        \"posZ\": 1.18533659,\r\n        \"rotX\": -1.01766809E-05,\r\n        \"rotY\": -3.07358532E-05,\r\n        \"rotZ\": -5.927769E-07,\r\n        \"scaleX\": 0.9999999,\r\n        \"scaleY\": 1.0,\r\n        \"scaleZ\": 0.9999999\r\n      },\r\n      \"ColorDiffuse\": {\r\n        \"r\": 0.0,\r\n        \"g\": 1.0,\r\n        \"b\": 0.360784262\r\n      }\r\n    },\r\n    {\r\n      \"Name\": \"Tileset_Rock\",\r\n      \"Transform\": {\r\n        \"posX\": -1.70111012,\r\n        \"posY\": 5.01684553E-07,\r\n        \"posZ\": -1.20144808,\r\n        \"rotX\": 1.08856327E-07,\r\n        \"rotY\": 0.000368830224,\r\n        \"rotZ\": -7.506163E-06,\r\n        \"scaleX\": 0.99999994,\r\n        \"scaleY\": 1.00000012,\r\n        \"scaleZ\": 0.99999994\r\n      },\r\n      \"AltLookAngle\": {\r\n        \"x\": 0.0,\r\n        \"y\": 0.0,\r\n        \"z\": 0.0\r\n      },\r\n      \"ColorDiffuse\": {\r\n        \"r\": 0.0,\r\n        \"g\": 1.0,\r\n        \"b\": 0.360784233\r\n      }\r\n    },\r\n    {\r\n      \"Name\": \"Tileset_Rock\",\r\n      \"Transform\": {\r\n        \"posX\": -0.4043977,\r\n        \"posY\": 3.17160442E-07,\r\n        \"posZ\": -2.38428473,\r\n        \"rotX\": 1.04972719E-06,\r\n        \"rotY\": 89.9991,\r\n        \"rotZ\": -9.328487E-06,\r\n        \"scaleX\": 0.9999997,\r\n        \"scaleY\": 1.0,\r\n        \"scaleZ\": 0.9999997\r\n      },\r\n      \"ColorDiffuse\": {\r\n        \"r\": 1.0,\r\n        \"g\": 0.0,\r\n        \"b\": 0.0\r\n      }\r\n    },\r\n    {\r\n      \"Name\": \"Tileset_Rock\",\r\n      \"Transform\": {\r\n        \"posX\": -4.14332962,\r\n        \"posY\": 1.89117529E-07,\r\n        \"posZ\": -3.38780665,\r\n        \"rotX\": 1.03221E-05,\r\n        \"rotY\": 269.9988,\r\n        \"rotZ\": 8.841147E-06,\r\n        \"scaleX\": 0.99999994,\r\n        \"scaleY\": 1.0,\r\n        \"scaleZ\": 0.99999994\r\n      },\r\n      \"ColorDiffuse\": {\r\n        \"r\": 0.7960787,\r\n        \"g\": 0.0,\r\n        \"b\": 1.0\r\n      }\r\n    },\r\n    {\r\n      \"GUID\": \"f9cbad\",\r\n      \"Name\": \"Tileset_Rock\",\r\n      \"Transform\": {\r\n        \"posX\": -2.21724486,\r\n        \"posY\": 3.723779E-07,\r\n        \"posZ\": -3.46654224,\r\n        \"rotX\": -1.00394418E-05,\r\n        \"rotY\": 180.0009,\r\n        \"rotZ\": -4.155268E-06,\r\n        \"scaleX\": 0.9999999,\r\n        \"scaleY\": 1.0,\r\n        \"scaleZ\": 0.9999999\r\n      },\r\n      \"Nickname\": \"\",\r\n      \"Description\": \"\",\r\n      \"GMNotes\": \"\",\r\n      \"AltLookAngle\": {\r\n        \"x\": 0.0,\r\n        \"y\": 0.0,\r\n        \"z\": 0.0\r\n      },\r\n      \"ColorDiffuse\": {\r\n        \"r\": 1.0,\r\n        \"g\": 1.0,\r\n        \"b\": 1.0\r\n      }\r\n    },\r\n    {\r\n      \"Name\": \"Custom_Model\",\r\n      \"Transform\": {\r\n        \"posX\": -2.73127675,\r\n        \"posY\": -2.27327,\r\n        \"posZ\": -1.10570455,\r\n        \"rotX\": 1.66444934E-05,\r\n        \"rotY\": -0.00360292452,\r\n        \"rotZ\": -1.07959331E-05,\r\n        \"scaleX\": 4.33142042,\r\n        \"scaleY\": 4.331421,\r\n        \"scaleZ\": 4.33142042\r\n      },\r\n      \"ColorDiffuse\": {\r\n        \"r\": 0.0,\r\n        \"g\": 0.0,\r\n        \"b\": 0.0,\r\n        \"a\": 0.605948031\r\n      },\r\n      \"CustomMesh\": {\r\n        \"MeshURL\": \"https://steamusercontent-a.akamaihd.net/ugc/1050975298009099284/EC12429E233E4188A583AE03C7DB08B60119E1FE/\",\r\n        \"DiffuseURL\": \"\",\r\n        \"NormalURL\": \"\",\r\n        \"ColliderURL\": \"https://steamusercontent-a.akamaihd.net/ugc/1186083602260480721/31445F0BA3C03342A8BEFF2F14EBE1534FF61421/\",\r\n        \"Convex\": false,\r\n        \"MaterialIndex\": 1,\r\n        \"TypeIndex\": 0,\r\n        \"CastShadows\": true\r\n      }\r\n    }\r\n  ]\r\n}]]\r\nend\r\n\r\n\r\n--return objects--------------------------------------------------------\r\n\r\nfunction returnAllWallButtons()\r\n    local wallButtons = {}\r\n    \r\n    for i, object in ipairs(buttonIndexMap)do\r\n        if(object.type == \"wallButton\") then\r\n            table.insert(wallButtons,object)\r\n        end\r\n    end\r\n\r\n    return wallButtons\r\nend\r\n",
+  "LuaScriptState": "",
+  "XmlUI": "",
+  "AttachedSnapPoints": [
+    {
+      "Position": {
+        "x": 1.36836946,
+        "y": 1.15644634,
+        "z": -2.22805071
+      }
+    },
+    {
+      "Position": {
+        "x": 6.57421446,
+        "y": 1.15644634,
+        "z": -11.2164745
+      }
+    },
+    {
+      "Position": {
+        "x": 5.301128,
+        "y": 1.15644622,
+        "z": -9.025795
+      }
+    },
+    {
+      "Position": {
+        "x": 3.84183145,
+        "y": 1.15644634,
+        "z": -11.216198
+      }
+    },
+    {
+      "Position": {
+        "x": 9.199061,
+        "y": 1.15644634,
+        "z": -6.739009
+      }
+    },
+    {
+      "Position": {
+        "x": 5.269518,
+        "y": 1.15644634,
+        "z": -4.515204
+      }
+    },
+    {
+      "Position": {
+        "x": 7.898812,
+        "y": 1.15644622,
+        "z": -4.53131962
+      }
+    },
+    {
+      "Position": {
+        "x": 10.5106163,
+        "y": 1.15644634,
+        "z": -4.54320049
+      }
+    },
+    {
+      "Position": {
+        "x": 9.182726,
+        "y": 1.15644634,
+        "z": -2.272057
+      }
+    },
+    {
+      "Position": {
+        "x": 11.7615957,
+        "y": 1.15644622,
+        "z": -2.27148986
+      }
+    },
+    {
+      "Position": {
+        "x": 10.4362707,
+        "y": 1.15644622,
+        "z": -0.008343203
+      }
+    },
+    {
+      "Position": {
+        "x": 13.03524,
+        "y": 1.15644622,
+        "z": 0.0100891935
+      }
+    },
+    {
+      "Position": {
+        "x": 11.7569666,
+        "y": 1.15644634,
+        "z": 2.21187162
+      }
+    },
+    {
+      "Position": {
+        "x": 6.553974,
+        "y": 1.15644634,
+        "z": -6.735528
+      }
+    },
+    {
+      "Position": {
+        "x": 7.89329624,
+        "y": 1.15644634,
+        "z": -8.956727
+      }
+    },
+    {
+      "Position": {
+        "x": 6.57035446,
+        "y": 1.15644634,
+        "z": -2.26233625
+      }
+    },
+    {
+      "Position": {
+        "x": 3.945856,
+        "y": 1.15644634,
+        "z": -2.25301266
+      }
+    },
+    {
+      "Position": {
+        "x": -0.01470089,
+        "y": 1.15644634,
+        "z": -4.52336454
+      }
+    },
+    {
+      "Position": {
+        "x": -1.32215381,
+        "y": 1.15644634,
+        "z": -6.7253027
+      }
+    },
+    {
+      "Position": {
+        "x": 0.0121348249,
+        "y": 1.156446,
+        "z": -9.021495
+      }
+    },
+    {
+      "Position": {
+        "x": -1.310944,
+        "y": 1.15644622,
+        "z": -11.2128353
+      }
+    },
+    {
+      "Position": {
+        "x": -2.59027863,
+        "y": 1.15644634,
+        "z": -8.946902
+      }
+    },
+    {
+      "Position": {
+        "x": -3.95650148,
+        "y": 1.15644634,
+        "z": -11.2118063
+      }
+    },
+    {
+      "Position": {
+        "x": -5.17089,
+        "y": 1.15644622,
+        "z": -8.901377
+      }
+    },
+    {
+      "Position": {
+        "x": -6.531297,
+        "y": 1.15644622,
+        "z": -11.1648045
+      }
+    },
+    {
+      "Position": {
+        "x": -7.81772852,
+        "y": 1.15644634,
+        "z": -8.921165
+      }
+    },
+    {
+      "Position": {
+        "x": -9.140084,
+        "y": 1.15644634,
+        "z": -6.67356157
+      }
+    },
+    {
+      "Position": {
+        "x": -7.775853,
+        "y": 1.15644634,
+        "z": -4.429641
+      }
+    },
+    {
+      "Position": {
+        "x": -5.162627,
+        "y": 1.15644634,
+        "z": -4.41737032
+      }
+    },
+    {
+      "Position": {
+        "x": 2.61684,
+        "y": 1.15644634,
+        "z": -8.879207
+      }
+    },
+    {
+      "Position": {
+        "x": -3.83751225,
+        "y": 1.15644634,
+        "z": -2.187097
+      }
+    },
+    {
+      "Position": {
+        "x": -6.478699,
+        "y": 1.156446,
+        "z": -2.17095
+      }
+    },
+    {
+      "Position": {
+        "x": -2.52593684,
+        "y": 1.15644634,
+        "z": 0.07126685
+      }
+    },
+    {
+      "Position": {
+        "x": -1.28792262,
+        "y": 1.15644634,
+        "z": 2.33357
+      }
+    },
+    {
+      "Position": {
+        "x": 1.36417186,
+        "y": 1.15644634,
+        "z": 2.27818418
+      }
+    },
+    {
+      "Position": {
+        "x": 2.65405345,
+        "y": 1.1564461,
+        "z": 0.0402881429
+      }
+    },
+    {
+      "Position": {
+        "x": 3.93185973,
+        "y": 1.15644622,
+        "z": 2.28474259
+      }
+    },
+    {
+      "Position": {
+        "x": 6.58846331,
+        "y": 1.15644634,
+        "z": 2.33335066
+      }
+    },
+    {
+      "Position": {
+        "x": 7.9074316,
+        "y": 1.15644634,
+        "z": 4.54359531
+      }
+    },
+    {
+      "Position": {
+        "x": 5.236963,
+        "y": 1.15644622,
+        "z": 4.526831
+      }
+    },
+    {
+      "Position": {
+        "x": 9.176955,
+        "y": 1.15644622,
+        "z": 6.76496458
+      }
+    },
+    {
+      "Position": {
+        "x": 7.84067726,
+        "y": 1.15644634,
+        "z": 8.967417
+      }
+    },
+    {
+      "Position": {
+        "x": 6.601194,
+        "y": 1.15644622,
+        "z": 11.27293
+      }
+    },
+    {
+      "Position": {
+        "x": 5.31179667,
+        "y": 1.15644634,
+        "z": 9.040785
+      }
+    },
+    {
+      "Position": {
+        "x": 3.94719553,
+        "y": 1.15644634,
+        "z": 11.2456427
+      }
+    },
+    {
+      "Position": {
+        "x": 2.64271784,
+        "y": 1.15644634,
+        "z": 9.008636
+      }
+    },
+    {
+      "Position": {
+        "x": 1.37282765,
+        "y": 1.15644634,
+        "z": 6.757817
+      }
+    },
+    {
+      "Position": {
+        "x": 0.112517223,
+        "y": 1.15644634,
+        "z": 4.50772762
+      }
+    },
+    {
+      "Position": {
+        "x": 0.04983323,
+        "y": 1.15644622,
+        "z": 9.002493
+      }
+    },
+    {
+      "Position": {
+        "x": 1.35710716,
+        "y": 1.15644634,
+        "z": 11.2763462
+      }
+    },
+    {
+      "Position": {
+        "x": -2.608103,
+        "y": 1.15644634,
+        "z": 9.012141
+      }
+    },
+    {
+      "Position": {
+        "x": -3.85778236,
+        "y": 1.15644634,
+        "z": 2.27105427
+      }
+    },
+    {
+      "Position": {
+        "x": -5.14970064,
+        "y": 1.15644634,
+        "z": 4.53757668
+      }
+    },
+    {
+      "Position": {
+        "x": -6.42127752,
+        "y": 1.15644634,
+        "z": 2.25362062
+      }
+    },
+    {
+      "Position": {
+        "x": -9.070148,
+        "y": 1.15644634,
+        "z": 2.31504965
+      }
+    },
+    {
+      "Position": {
+        "x": -10.3789043,
+        "y": 1.15644634,
+        "z": 0.01698081
+      }
+    },
+    {
+      "Position": {
+        "x": -11.6858311,
+        "y": 1.15644634,
+        "z": 2.30571651
+      }
+    },
+    {
+      "Position": {
+        "x": -13.0106249,
+        "y": 1.15644634,
+        "z": 0.07169979
+      }
+    },
+    {
+      "Position": {
+        "x": -11.6525011,
+        "y": 1.15644634,
+        "z": -2.241559
+      }
+    },
+    {
+      "Position": {
+        "x": -10.3930759,
+        "y": 1.15644634,
+        "z": 4.55353737
+      }
+    },
+    {
+      "Position": {
+        "x": -6.43448353,
+        "y": 1.15644634,
+        "z": 6.77199125
+      }
+    },
+    {
+      "Position": {
+        "x": -5.14719534,
+        "y": 1.15644622,
+        "z": 9.011865
+      }
+    },
+    {
+      "Position": {
+        "x": -3.824554,
+        "y": 1.15644622,
+        "z": 11.3056469
+      }
+    },
+    {
+      "Position": {
+        "x": -6.49511147,
+        "y": 1.15644622,
+        "z": 11.2885275
+      }
+    },
+    {
+      "Position": {
+        "x": -7.81131649,
+        "y": 1.15644622,
+        "z": 9.077732
+      }
+    },
+    {
+      "Position": {
+        "x": -9.005856,
+        "y": 1.15644634,
+        "z": -2.18648362
+      }
+    },
+    {
+      "Position": {
+        "x": -10.3711472,
+        "y": 1.15644634,
+        "z": -4.412384
+      }
+    },
+    {
+      "Position": {
+        "x": -7.724604,
+        "y": 1.15644622,
+        "z": 0.0340515822
+      }
+    },
+    {
+      "Position": {
+        "x": -3.91299868,
+        "y": 1.15644622,
+        "z": -6.63043165
+      }
+    },
+    {
+      "Position": {
+        "x": -3.86454558,
+        "y": 1.15644634,
+        "z": 6.782206
+      }
+    },
+    {
+      "Position": {
+        "x": 3.904684,
+        "y": 1.15644622,
+        "z": 6.781262
+      }
+    },
+    {
+      "Position": {
+        "x": 7.8348,
+        "y": 1.15644634,
+        "z": 0.06619058
+      }
+    },
+    {
+      "Position": {
+        "x": 3.96713686,
+        "y": 1.15644634,
+        "z": -6.66177273
+      }
+    },
+    {
+      "Position": {
+        "x": -7.804884,
+        "y": 1.15644634,
+        "z": 4.49885941
+      }
+    },
+    {
+      "Position": {
+        "x": -9.122081,
+        "y": 1.15644634,
+        "z": 6.8101387
+      }
+    },
+    {
+      "Position": {
+        "x": 10.5615063,
+        "y": 1.15644634,
+        "z": 4.59726048
+      }
+    },
+    {
+      "Position": {
+        "x": 9.197679,
+        "y": 1.15644634,
+        "z": 2.282511
+      }
+    },
+    {
+      "Position": {
+        "x": 5.322722,
+        "y": 1.156446,
+        "z": 0.0173469745
+      }
+    },
+    {
+      "Position": {
+        "x": 2.70884323,
+        "y": 1.15644622,
+        "z": -4.4690485
+      }
+    },
+    {
+      "Position": {
+        "x": -2.51190948,
+        "y": 1.1564461,
+        "z": -4.392102
+      }
+    },
+    {
+      "Position": {
+        "x": -1.25778961,
+        "y": 1.15644634,
+        "z": -2.16691542
+      }
+    },
+    {
+      "Position": {
+        "x": -5.056319,
+        "y": 1.15644634,
+        "z": 0.0339443572
+      }
+    },
+    {
+      "Position": {
+        "x": -1.176809,
+        "y": 1.15644634,
+        "z": 6.73504639
+      }
+    },
+    {
+      "Position": {
+        "x": -2.54178762,
+        "y": 1.1564461,
+        "z": 4.4584
+      }
+    },
+    {
+      "Position": {
+        "x": 2.67896533,
+        "y": 1.15644622,
+        "z": 4.468023
+      }
+    },
+    {
+      "Position": {
+        "x": 6.657573,
+        "y": 1.15644622,
+        "z": 6.795218
+      }
+    },
+    {
+      "Position": {
+        "x": 1.43146,
+        "y": 1.15644634,
+        "z": -11.2017546
+      }
+    },
+    {
+      "Position": {
+        "x": 1.43585908,
+        "y": 1.15644622,
+        "z": -6.68626261
+      }
+    },
+    {
+      "Position": {
+        "x": 0.0567467,
+        "y": 1.15644634,
+        "z": 0.0205043927
+      }
+    }
+  ]
+}

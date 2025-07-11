@@ -1,0 +1,65 @@
+{
+  "GUID": "0de4f3",
+  "Name": "Custom_Model",
+  "Transform": {
+    "posX": -0.116851106,
+    "posY": 1.80288148,
+    "posZ": 0.005787317,
+    "rotX": -0.0000121248695,
+    "rotY": 269.985535,
+    "rotZ": 0.000007914401,
+    "scaleX": 1.3499999,
+    "scaleY": 1.3499999,
+    "scaleZ": 1.3499999
+  },
+  "Nickname": "",
+  "Description": "",
+  "GMNotes": "",
+  "AltLookAngle": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "ColorDiffuse": {
+    "r": 1,
+    "g": 1,
+    "b": 1
+  },
+  "LayoutGroupSortIndex": 0,
+  "Value": 0,
+  "Locked": true,
+  "Grid": true,
+  "Snap": true,
+  "IgnoreFoW": false,
+  "MeasureMovement": false,
+  "DragSelectable": true,
+  "Autoraise": true,
+  "Sticky": true,
+  "Tooltip": true,
+  "GridProjection": false,
+  "HideWhenFaceDown": false,
+  "Hands": false,
+  "CustomMesh": {
+    "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/61457201441851361/D9576E5C684623FBECE76A96C1F12C88A4B8298F/",
+    "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/61457201441851654/B05570C664D81A3B21952474E91121B89BB35B8D/",
+    "NormalURL": "",
+    "ColliderURL": "https://steamusercontent-a.akamaihd.net/ugc/61457201441851361/D9576E5C684623FBECE76A96C1F12C88A4B8298F/",
+    "Convex": true,
+    "MaterialIndex": 3,
+    "TypeIndex": 0,
+    "CustomShader": {
+      "SpecularColor": {
+        "r": 1,
+        "g": 1,
+        "b": 1
+      },
+      "SpecularIntensity": 0,
+      "SpecularSharpness": 2,
+      "FresnelStrength": 0
+    },
+    "CastShadows": true
+  },
+  "LuaScript": "boardGUID = \"068885\"\r\n\r\nfunction onLoad()\r\n    local board = getObjectFromGUID(boardGUID)\r\n\r\n    board.call(\"registerToBoard\", { self, \"wall\" })\r\n\r\nend\r\n",
+  "LuaScriptState": "",
+  "XmlUI": ""
+}

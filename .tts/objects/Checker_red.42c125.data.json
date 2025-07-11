@@ -1,0 +1,46 @@
+{
+  "GUID": "42c125",
+  "Name": "Checker_red",
+  "Transform": {
+    "posX": 30.6553383,
+    "posY": 1.6971941,
+    "posZ": 27.8226776,
+    "rotX": 0,
+    "rotY": 180,
+    "rotZ": 0,
+    "scaleX": 1,
+    "scaleY": 1,
+    "scaleZ": 1
+  },
+  "Nickname": "",
+  "Description": "",
+  "GMNotes": "",
+  "AltLookAngle": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "ColorDiffuse": {
+    "r": 0,
+    "g": 0,
+    "b": 0,
+    "a": 0
+  },
+  "LayoutGroupSortIndex": 0,
+  "Value": 0,
+  "Locked": true,
+  "Grid": true,
+  "Snap": true,
+  "IgnoreFoW": false,
+  "MeasureMovement": false,
+  "DragSelectable": true,
+  "Autoraise": true,
+  "Sticky": true,
+  "Tooltip": true,
+  "GridProjection": false,
+  "HideWhenFaceDown": false,
+  "Hands": false,
+  "LuaScript": "APObjectGUIDS = {\"30feb5\",\"25e06a\"}\r\n\r\nfunction returnAllObjectWithinMatArea(position)\r\n    local hits = Physics.cast({\r\n        origin       = position,\r\n        direction    = {0, 1, 0},\r\n        type         = 3,\r\n        size         = {31, 4, 19},\r\n        orientation  = {0, 0, 0},\r\n        max_distance = 0,\r\n        debug        = false\r\n    })\r\n\r\n    local objects = {}\r\n    for _, hit in ipairs(hits) do\r\n        if hit.hit_object then\r\n            table.insert(objects, hit.hit_object)\r\n        end\r\n    end\r\n    return objects\r\nend\r\n\r\nfunction untapAP(APObjects)\r\n    for i, GUID in ipairs(APObjectGUIDS) do\r\n        local object = getObjectFromGUID(GUID)\r\n\r\n        local rotation = {0,0,0}\r\n\r\n        object.setRotationSmooth(rotation, false, false)\r\n    end\r\nend\r\n\r\nfunction untapObjects(objects, untapDirection)\r\n    for i, object in ipairs(objects) do\r\n        local zRotation = object.getRotation().z\r\n\r\n        local rotation = {untapDirection[1],untapDirection[2], zRotation}\r\n\r\n        object.setRotationSmooth(rotation, false, false)\r\n    end\r\nend\r\n\r\nfunction onButtonPress()\r\n    local center = {x = 36, y = 1, z = 41}\r\n\r\n    local objects = returnAllObjectWithinMatArea(center)\r\n\r\n    untapObjects(objects,{0,0,0})\r\n    untapAP()\r\nend\r\n\r\nfunction onLoad()\r\n\r\n    self.lock()\r\n\r\n    self.createButton({\r\n        click_function = \"onButtonPress\",\r\n        function_owner = self,\r\n        label = \"Untap All\",\r\n        position = {0, 0.15, 0},\r\n        rotation = {0, 180, 0},\r\n        width = 1600,\r\n        height = 800,\r\n        font_size = 350,\r\n        color = {0.8, 0, 1, 0.8},\r\n        font_color = {0, 0, 0, 1}\r\n    })\r\n\r\n    self.setColorTint({0,0,0,0})\r\n    self.setRotation({0,180,0})\r\n    \r\nend\r\n",
+  "LuaScriptState": "",
+  "XmlUI": ""
+}

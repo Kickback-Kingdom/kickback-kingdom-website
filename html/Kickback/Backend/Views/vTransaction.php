@@ -4,37 +4,28 @@ declare(strict_types = 1);
 
 namespace Kickback\Backend\Views;
 
-use \Kickback\Backend\Models\ForeignRecordId;
-
 class vTransaction extends vRecordId
 {
-    public vPrice $price;
-    public string $firstName;
-    public string $lastName;
-    public bool $payed;
+    public ?string $description;
     public bool $complete;
     public bool $void;
-    public ForeignRecordId $accountId;
+    public array $prices;
 
-    public function __construct(
-        string $ctime, 
-        int $crand, 
-        vPrice $price, 
-        string $firstName, 
-        string $lastName, 
-        bool $payed, 
-        bool $complete, 
-        bool $void,
-        vRecordId $accountId)
+    public function __construct(string $ctime = '', int $crand ='', ?string $description = null, bool $complete = 0, bool $void = 0, string $pricesJson = [])
     {
         parent::__construct($ctime, $crand);
-        $this->price = $price;
-        $this->firstName = $firstName;
-        $this->lastName = $lastName;
-        $this->payed = $payed;
+
+        $this->description = $description;
         $this->complete = $complete;
         $this->void = $void;
-        $this->accountId = new ForeignRecordId($accountId->ctime, $accountId->crand);
+        $this->prices = json_decode($pricesJson);
+    }
+
+    private function pricesJsonToObjectArray(string $pricesJson)
+    {
+        $array = json_decode($pricesJson);
+
+        $prices = new vPrice();
     }
 }
 

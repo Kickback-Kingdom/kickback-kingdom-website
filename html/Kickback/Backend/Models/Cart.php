@@ -1,27 +1,35 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Kickback\Backend\Models;
 
-use \Kickback\Backend\Views\vRecordId;
-
-
 class Cart extends RecordId
-{  
-    public bool $checkedOut;
-    public ForeignRecordId $accountId;
-    public ForeignRecordId $storeId;
+{
+    public string $accountCtime;
+    public int $accountCrand;
+    public string $storeCtime;
+    public int $storeCrand;
+    public ?string $transactionCtime;
+    public ?int $transactionCrand;
 
-    public function __construct(vRecordId $accountId, vRecordId $storeId, bool $checkedOut = false)
+    public function __construct(
+        string $accountCtime,
+        int $accountCrand,
+        string $storeCtime,
+        int $storeCrand,
+        ?string $transactionCtime = null,
+        ?int $transactionCrand = null
+    )
     {
         parent::__construct();
 
-        $this->checkedOut = $checkedOut;
-        $this->storeId = new ForeignRecordId($storeId->ctime, $storeId->crand);
-        $this->accountId = new ForeignRecordId($accountId->ctime, $accountId->crand);
+        $this->accountCtime = $accountCtime;
+        $this->accountCrand = $accountCrand;
+        $this->storeCtime = $storeCtime;
+        $this->storeCrand = $storeCrand;
+        $this->transactionCtime = $transactionCtime;
+        $this->transactionCrand = $transactionCrand;
     }
-
 }
-
 ?>

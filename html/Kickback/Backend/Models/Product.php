@@ -1,44 +1,61 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Kickback\Backend\Models;
 
-use \Kickback\Backend\Views\vRecordId;
-use \Kickback\Backend\Views\vPrice;
-
-use \Kickback\Backend\Controllers\MediaController;
+use Exception;
+use InvalidArgumentException;
 
 class Product extends RecordId
 {
     public string $name;
-    public string $locator;
-    public ForeignRecordId $itemId;
-    public ?ForeignRecordId $currencyItem;
-    public vPrice $price;
     public string $description;
-    public ForeignRecordId $storeId;
+    public string $locator;
+    public string $ref_store_ctime;
+    public int $ref_store_crand;
+    public string $ref_item_ctime;
+    public int $ref_item_crand;
 
-    function __construct(
-        string $productName, 
-        string $locator, 
-        vRecordId $itemId,
-        ?vRecordId $currencyItem, 
-        vPrice $price, 
-        string $description, 
-        vRecordId $storeId
-        )
+    public array $prices;
+
+    public function __construct(
+        string $name,
+        string $description,
+        string $locator,
+        string $ref_store_ctime,
+        int $ref_store_crand,
+        string $ref_item_ctime,
+        int $ref_item_crand,
+        array $prices
+    )
     {
         parent::__construct();
 
-        $this->name = $productName;
-        $this->locator = $locator;
-        $this->currencyItem = is_null($currencyItem) ? null : new ForeignRecordId($currencyItem->ctime, $currencyItem->crand);
-        $this->price = $price;
+        $this->name = $name;
         $this->description = $description;
-        $this->storeId = $storeId->getForeignRecordId();
-        $this->itemId = $itemId->getForeignRecordId();
+        $this->locator = $locator;
+        $this->ref_store_ctime = $ref_store_ctime;
+        $this->ref_store_crand = $ref_store_crand;
+        $this->ref_item_ctime = $ref_item_ctime;
+        $this->ref_item_crand = $ref_item_crand;
+
+        $this->prices = static::validatePrices($prices) ? $prices : throw new InvalidArgumentException("Prices Array must contain only prices");
+    }
+
+    private static function validatePrices(array $prices) : bool
+    {
+        foreach($prices as $price)
+        {
+            if($price->get_class() != Price::class)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
+
 
 ?>
