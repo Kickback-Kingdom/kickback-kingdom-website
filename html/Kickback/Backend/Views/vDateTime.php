@@ -20,7 +20,22 @@ class vDateTime
     public function expired() : bool {
         return ($this->value < (New DateTime()));
     }
-
+    public function isBefore(vDateTime $other): bool {
+        return $this->value < $other->value;
+    }
+    
+    public function isAfter(vDateTime $other): bool {
+        return $this->value > $other->value;
+    }
+    
+    public function isSameOrBefore(vDateTime $other): bool {
+        return $this->value <= $other->value;
+    }
+    
+    public function isSameOrAfter(vDateTime $other): bool {
+        return $this->value >= $other->value;
+    }
+    
     public function setDateTime(DateTime $dateTime) : void
     {
         //change timezone to utc
@@ -33,6 +48,7 @@ class vDateTime
         $this->formattedHi = date_format($this->value,"H:i");
         $this->valueString = date_format($this->value, "Y-m-d\TH:i:s\Z");
         $this->formattedMonthYear = date_format($this->value, "F, Y");
+        $this->dbValue = $dateTime->format("Y-m-d H:i:s");
     }
 
     public static function fromDateTime(DateTime $dateTime) : vDateTime
@@ -52,6 +68,10 @@ class vDateTime
         return $dateTime;
     }
 
+    public static function now(): vDateTime {
+        return new vDateTime();
+    }
+    
     public function setDateTimeFromString(string $dateTimeString) : void
     {
         $this->dbValue = $dateTimeString;
@@ -217,7 +237,7 @@ class vDateTime
         assert($toString('P0002-02-14T02:02:02', 8) === '2 years, 2 months, 2 weeks, 2 hours, 2 minutes, 2 seconds');
         assert($toString('P0002-02-16T02:02:02', 8) === '2 years, 2 months, 2 weeks, 2 days, 2 hours, 2 minutes, 2 seconds');
 
-        echo("  unittest_timeIntervalToString()\n");
+        echo("  ".__FUNCTION__."()\n");
     }
 
     public function addYears(int $years): vDateTime {
@@ -282,7 +302,7 @@ class vDateTime
         return vDateTime::fromDateTime($newDate);
     }
 
-    private function withParts(
+    public function withParts(
         ?int $year = null,
         ?int $month = null,
         ?int $day = null,
@@ -354,10 +374,13 @@ class vDateTime
         return (int)$this->value->format("s");
     }
 
-    public static function unittest() : void
+    public static function unittests() : void
     {
-        echo("Running `\\Kickback\\Backend\\Views\\vDateTime::unittest()`\n");
+        $class_fqn = self::class;
+        echo("Running `$class_fqn::unittests()`\n");
+
         self::unittest_timeIntervalToString();
+
         echo("  ... passed.\n\n");
     }
 }

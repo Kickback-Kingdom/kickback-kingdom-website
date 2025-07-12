@@ -10,7 +10,7 @@ use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vDateTime;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Services\Session;
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Str;
 use Kickback\Common\Version;
 
 class MediaController {
@@ -194,7 +194,7 @@ class MediaController {
     /**
     * @param ?array<string> &$dirs
     *
-    * @phpstan-assert-if-true array $dirs
+    * @phpstan-assert-if-true =array<string> $dirs
     */
     public static function queryMediaDirectoriesInto(?array &$dirs) : bool
     {

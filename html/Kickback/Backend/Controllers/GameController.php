@@ -9,11 +9,51 @@ use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Models\Response;
 use Kickback\Services\Database;
-use Kickback\Common\Arr;
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Arr;
+use Kickback\Common\Primitives\Str;
 
 class GameController
 {
+    public static function getDistinctCharacters(vRecordId $gameId): Response {
+        $conn = Database::getConnection();
+    
+        $sql = "
+            SELECT DISTINCT `character`
+            FROM `game_record`
+            WHERE `character` IS NOT NULL
+              AND `character` <> ''
+              AND game_id = ?
+              order by 1
+        ";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare the SQL statement.");
+        }
+    
+        if (!$stmt->bind_param('i', $gameId->crand)) {
+            return new Response(false, "Failed to bind parameters.");
+        }
+    
+        if (!$stmt->execute()) {
+            return new Response(false, "Failed to execute the SQL statement.");
+        }
+    
+        $result = $stmt->get_result();
+        if (!$result) {
+            return new Response(false, "Failed to retrieve the result set.");
+        }
+    
+        $characters = [];
+        while ($row = $result->fetch_assoc()) {
+            $characters[] = $row['character'];
+        }
+    
+        $stmt->close();
+    
+        return new Response(true, "Characters retrieved successfully.", $characters);
+    }
+
     public static function getCurrentWinStreak(vRecordId $gameId): Response
     {
         $conn = Database::getConnection();
@@ -430,5 +470,115 @@ class GameController
     private static function insert(Game $game) : Response {
         return new Response(false, 'GameController::Insert not implemented');
     }
+
+    public static function countRankedMatches(int $accountId, ?int $gameId = null): int
+    {
+        $conn = Database::getConnection();
+
+        if ($gameId !== null) {
+            $sql = "SELECT COUNT(*) FROM v_ranked_matches 
+                    WHERE account_id = ? AND game_id = ?";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) return 0;
+            $stmt->bind_param("ii", $accountId, $gameId);
+        } else {
+            $sql = "SELECT COUNT(*) FROM v_ranked_matches 
+                    WHERE account_id = ?";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) return 0;
+            $stmt->bind_param("i", $accountId);
+        }
+
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+
+    public static function countRankedMatchesBetween(int $accountId, string $startDate, string $endDate, ?int $gameId = null): int
+    {
+        $conn = Database::getConnection();
+
+        if ($gameId !== null) {
+            $sql = "SELECT COUNT(*) FROM v_ranked_matches 
+                    WHERE account_id = ? AND game_id = ?
+                    AND Date BETWEEN ? AND ?";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) return 0;
+            $stmt->bind_param("iiss", $accountId, $gameId, $startDate, $endDate);
+        } else {
+            $sql = "SELECT COUNT(*) FROM v_ranked_matches 
+                    WHERE account_id = ?
+                    AND Date BETWEEN ? AND ?";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) return 0;
+            $stmt->bind_param("iss", $accountId, $startDate, $endDate);
+        }
+
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+
+    public static function countRankedWins(int $accountId, ?int $gameId = null): int
+    {
+        $conn = Database::getConnection();
+
+        if ($gameId !== null) {
+            $sql = "SELECT COUNT(*) FROM v_ranked_matches 
+                    WHERE account_id = ? AND win = 1 AND game_id = ?";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) return 0;
+            $stmt->bind_param("ii", $accountId, $gameId);
+        } else {
+            $sql = "SELECT COUNT(*) FROM v_ranked_matches 
+                    WHERE account_id = ? AND win = 1";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) return 0;
+            $stmt->bind_param("i", $accountId);
+        }
+
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+
+    public static function countRankedWinsBetween(int $accountId, string $startDate, string $endDate, ?int $gameId = null): int
+    {
+        $conn = Database::getConnection();
+
+        if ($gameId !== null) {
+            $sql = "SELECT COUNT(*) FROM v_ranked_matches 
+                    WHERE account_id = ? AND win = 1 AND game_id = ?
+                    AND Date BETWEEN ? AND ?";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) return 0;
+            $stmt->bind_param("iiss", $accountId, $gameId, $startDate, $endDate);
+        } else {
+            $sql = "SELECT COUNT(*) FROM v_ranked_matches 
+                    WHERE account_id = ? AND win = 1
+                    AND Date BETWEEN ? AND ?";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) return 0;
+            $stmt->bind_param("iss", $accountId, $startDate, $endDate);
+        }
+
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+
+
 }
 ?>

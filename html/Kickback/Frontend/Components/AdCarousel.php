@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Kickback\Frontend\Components;
 
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Str;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Controllers\TreasureHuntController;
 use Kickback\Backend\Views\vTreasureHuntEvent;

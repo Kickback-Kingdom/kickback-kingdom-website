@@ -22,7 +22,7 @@ use Kickback\Backend\Models\ItemRarity;
 use Kickback\Backend\Models\ItemCategory;
 use Kickback\Backend\Models\ForeignRecordId;
 
-use Kickback\Common\Arr;
+use Kickback\Common\Primitives\Arr;
 
 class LichCardController
 {
@@ -128,7 +128,22 @@ class LichCardController
         return new Response(true, "Lich Sets retrieved successfully.", $lichSets);
     }
 
-    public static function getLichSetByLocator(string $locator): Response {
+    /**
+    * @phpstan-assert-if-true =vLichSet $lichSet
+    */
+    public static function queryLichSetByLocatorInto(string $locator, ?vLichSet &$lichSet): bool
+    {
+        $resp = self::queryLichSetByLocatorAsResponse($locator);
+        if ( $resp->success ) {
+            $lichSet = $resp->data;
+            return true;
+        } else {
+            $lichSet = null;
+            return false;
+        }
+    }
+
+    public static function queryLichSetByLocatorAsResponse(string $locator): Response {
         $conn = Database::getConnection();
 
         $sql = "
@@ -662,8 +677,23 @@ class LichCardController
 
         return new Response(true, "Lich Card retrieved successfully.", $lichCard);
     }
+
+    /**
+    * @phpstan-assert-if-true =vLichCard $lichCard
+    */
+    public static function queryLichCardByLocatorInto(string $locator, ?vLichCard &$lichCard): bool
+    {
+        $resp = self::queryLichCardByLocatorAsResponse($locator);
+        if ( $resp->success ) {
+            $lichCard = $resp->data;
+            return true;
+        } else {
+            $lichCard = null;
+            return false;
+        }
+    }
    
-    public static function getLichCardByLocator(string $locator): Response {
+    public static function queryLichCardByLocatorAsResponse(string $locator): Response {
         $conn = Database::getConnection();
 
         $sql = "

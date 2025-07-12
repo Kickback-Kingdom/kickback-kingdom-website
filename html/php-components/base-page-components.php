@@ -6,8 +6,50 @@ use Kickback\Backend\Controllers\MediaController;
 use Kickback\Backend\Controllers\TreasureHuntController;
 use Kickback\Backend\Models\NotificationType;
 use Kickback\Common\Version;
+use Kickback\Backend\Controllers\TaskController;
+use Kickback\Services\Session;
 
 $mediaDirs = MediaController::queryMediaDirectories();
+
+$recurringTasks = [];
+$achievements = [];
+$unclaimedRecurringCount = 0;
+$unclaimedAchievementsCount = 0;
+
+if (Session::isLoggedIn()) {
+    $account = Session::getCurrentAccount();
+
+    TaskController::ensureRecurringTasks($account);
+    // Fetch recurring tasks (daily, weekly, monthly)
+    $recurringResponse = TaskController::getAccountTasks($account);
+    if ($recurringResponse->success) {
+        $recurringTasks = $recurringResponse->data;
+
+        foreach ($recurringTasks as $task) {
+            if ($task->isCompleted && !$task->isClaimed) {
+                $unclaimedRecurringCount++;
+            }
+        }
+    }
+
+    // Fetch all achievements (assigned + unassigned)
+    $achievementResponse = TaskController::getAchievementTasks($account);
+    if ($achievementResponse->success) {
+        $achievements = $achievementResponse->data;
+
+        foreach ($achievements as $task) {
+            if ($task->isCompleted && !$task->isClaimed) {
+                $unclaimedAchievementsCount++;
+            }
+        }
+    }
+}
+
+
+$totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
+
+
+
 ?>
 
 <!--CONFETTI-->
@@ -21,7 +63,7 @@ $mediaDirs = MediaController::queryMediaDirectories();
 
 
 
-<?php if(Kickback\Services\Session::isLoggedIn()) { ?>
+<?php if(Session::isLoggedIn()) { ?>
 
 
 
@@ -450,6 +492,22 @@ $mediaDirs = MediaController::queryMediaDirectories();
     </div>
 </div>
 
+
+<!--Tasks and Achievements-->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasMenuRightTasks" aria-labelledby="offcanvasMenuRightTasksLabel">
+    <div class="offcanvas-header bg-primary">
+        <h5 class="offcanvas-title text-white" id="offcanvasMenuRightTasksLabel">Tasks & Achievements</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+            aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+
+    
+    <?php require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-components-tasks.php"); ?>
+    
+    </div>
+</div>
+
 <?php } ?>
 
 <!--ITEM MODAL-->
@@ -769,9 +827,11 @@ $mediaDirs = MediaController::queryMediaDirectories();
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/town-square.php"><i class="nav-icon fa-regular fa-address-card"></i> Town Square <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
-            <!--<li class="nav-item">
+            <!--
+            <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
-            </li>-->
+            </li>
+            -->
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
@@ -792,7 +852,7 @@ $mediaDirs = MediaController::queryMediaDirectories();
             </li>
             <?php
 
-            if (Kickback\Services\Session::isLoggedIn())
+            if (Session::isLoggedIn())
             {
                 ?>
 
@@ -856,7 +916,7 @@ $mediaDirs = MediaController::queryMediaDirectories();
 
         <?php 
 
-            if (Kickback\Services\Session::isLoggedIn())
+            if (Session::isLoggedIn())
             {
                 ?>
 
@@ -939,7 +999,24 @@ $mediaDirs = MediaController::queryMediaDirectories();
                         <i class="fa-brands fa-discord"></i>
                     </a>
                 </li>
-                <?php if (Kickback\Services\Session::isLoggedIn()) { ?>
+
+                <?php if (Session::isLoggedIn()) { ?>
+                    
+                    <li class="nav-item">
+                        <button class="btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas"
+                            data-bs-target="#offcanvasMenuRightTasks" aria-controls="offcanvasMenuRightTasks"
+                            aria-label="Toggle navigation" style="background-color: transparent !important; border-color: transparent;">
+                            <i class="fa-solid fa-scroll"></i>
+                            <?php if ($totalUnclaimedTasks > 0) { ?>
+                            <span class="badge bg-secondary position-absolute top-0 start-100 translate-middle rounded-pill"
+                                style="z-index: 2;">
+                                <?= $totalUnclaimedTasks; ?>
+                                <span class="visually-hidden">unclaimed rewards</span>
+                            </span>
+                            <?php } ?>
+
+                        </button>
+                    </li>
                     <li class="nav-item">
                         <button class="btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas"
                             data-bs-target="#offcanvasMenuRightShoppingCart" aria-controls="offcanvasMenuRightShoppingCart"
@@ -970,7 +1047,7 @@ $mediaDirs = MediaController::queryMediaDirectories();
                     <a class="btn dropdown-toggle btn-primary" type="button" style="height: 38px;background-color: transparent !important;border-color: transparent;" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" >
                         <?php
 
-                            if (Kickback\Services\Session::isLoggedIn())
+                            if (Session::isLoggedIn())
                             {
                         ?>
                         <img class="rounded-circle" style="height: 100%;width: auto;" src="<?= Kickback\Services\Session::getCurrentAccount()->profilePictureURL(); ?>"/>
@@ -987,7 +1064,7 @@ $mediaDirs = MediaController::queryMediaDirectories();
                     <ul class="dropdown-menu dropdown-menu-end" data-bs-theme="light">
                         <?php
 
-                            if (Kickback\Services\Session::isLoggedIn())
+                            if (Session::isLoggedIn())
                             {
                         ?>
 

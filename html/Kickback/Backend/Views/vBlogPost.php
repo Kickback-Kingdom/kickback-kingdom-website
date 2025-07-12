@@ -10,7 +10,7 @@ use Kickback\Backend\Views\vDateTime;
 use Kickback\Backend\Views\vReviewStatus;
 use Kickback\Services\Session;
 use Kickback\Common\Version;
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Str;
 
 
 class vBlogPost extends vRecordId

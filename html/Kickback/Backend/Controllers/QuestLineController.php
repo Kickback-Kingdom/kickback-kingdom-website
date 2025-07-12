@@ -47,6 +47,21 @@ class QuestLineController {
         }
     }
 
+    /**
+    * @phpstan-assert-if-true =vQuestLine $questLine
+    */
+    public static function queryQuestLineByLocatorInto(string $locator, ?vQuestLine &$questLine): bool
+    {
+        $resp = self::queryQuestLineByLocatorAsResponse($locator);
+        if ( $resp->success ) {
+            $questLine = $resp->data;
+            return true;
+        } else {
+            $questLine = null;
+            return false;
+        }
+    }
+
     public static function queryQuestLineByLocator(string $locator) : vQuestLine
     {
         $resp = self::queryQuestLineByLocatorAsResponse($locator);
@@ -182,8 +197,8 @@ class QuestLineController {
         }
 
         // Check if content ID is null and handle content insertion if needed
-        if ($questLineResp->data->hasPageContent()) {
-            $newContentId = ContentController::insertNewContent(); // Assuming a ContentController method exists
+        if (!$questLineResp->data->hasPageContent()) {
+            $newContentId = ContentController::insertNewContent();
             self::updateQuestLineContent($questLineResp->data, $newContentId);
 
             // Re-fetch the quest line after inserting the content

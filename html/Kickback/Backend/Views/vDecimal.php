@@ -10,6 +10,10 @@ class vDecimal implements \JsonSerializable
 
     public function __construct(int|float|string $input, int $scale = 8)
     {
+        if (!function_exists('bcadd')) {
+            throw new \RuntimeException("BCMath extension is required for vDecimal but not installed.");
+        }
+        
         $this->scale = $scale;
 
         if (is_int($input)) {
@@ -124,7 +128,6 @@ class vDecimal implements \JsonSerializable
         return $this->div(new self($scalar, $this->scale));
     }
 
-
     public function addWhole(int $units): vDecimal
     {
         return $this->add(new self(number_format($units, $this->scale, '.', ''), $this->scale));
@@ -183,7 +186,6 @@ class vDecimal implements \JsonSerializable
         return $this->subWhole($this->toWholeUnitsInt());
     }
 
-    
     public function toFloat(): float
     {
         return $this->value / pow(10, $this->scale);
@@ -231,6 +233,5 @@ class vDecimal implements \JsonSerializable
         $rounded = (int)(round($this->value / (int)$unitScale)) * (int)$unitScale;
         return new self($rounded, $this->scale);
     }
-
 }
 ?>

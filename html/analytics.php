@@ -73,7 +73,7 @@ $mapDataJSON = json_encode($mapData);
                                             <?php foreach ($analyticsMonthly as $data) : 
                                                 // Determine classes for each condition
                                                 $growthClass = (float) number_format($data['growth_percentage'], 1, '.', '') >= 5.0 ? 'table-success' : 'table-danger';
-                                                $retentionClass = (float) number_format($data['retention_rate'], 1, '.', '') >= 20 ? 'table-success' : 'table-danger';
+                                                $retentionClass = (float) number_format($data['retention_rate'], 1, '.', '') >= 60 ? 'table-success' : 'table-danger';
 
                                                 // Determine the row class based on the cell classes
                                                 $rowClass = ($growthClass === 'table-danger' || $retentionClass === 'table-danger') ? 'table-danger' : 'table-success';

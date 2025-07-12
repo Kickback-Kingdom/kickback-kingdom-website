@@ -42,8 +42,9 @@ class RecordId extends vRecordId
     }
 
     public static function getCTime(): string {
-        return date('Y-m-d H:i:s.u');
-    }
+        return (new \DateTime('now', new \DateTimeZone('UTC')))
+            ->format('Y-m-d H:i:s.u');
+    }    
 }
 
 ?>

@@ -14,14 +14,9 @@ if (!isset($thisLichCardData))
 
     if (isset($_GET["locator"]))
     {
-        // Retrieve the Lich Card by locator
-        $response = LichCardController::getLichCardByLocator($_GET["locator"]);
-
-        if ($response->success) {
-            $thisLichCardData = $response->data;
+        if ( LichCardController::queryLichCardByLocatorInto($_GET["locator"], $thisLichCardData) ) {
             $thisLichCardData->populateEverything();
         } else {
-            // Handle error (e.g., display an error message)
             $thisLichCardData = new vLichCard(); // Default to an empty Lich Card
         }
     }

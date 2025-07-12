@@ -3,6 +3,8 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: (__DIR__ . "/..")) . "/Kickback/init.
 
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 
+use Kickback\Services\Database;
+
 $accountId = $_GET['accountId'] ?? null;
 if (isset($_GET['date'])) {
     $inputDate = $_GET['date'] . '-01'; // Append '-01' to set it to the first day of the month
@@ -22,87 +24,85 @@ $lastStatementDate = date('Y-m-d', strtotime("$targetDate -1 month"));
 $lastLastStatementDate = date('Y-m-d', strtotime("$targetDate -2 month"));
 
 
-function free_mysqli_resources($mysqli) {
-    while ($mysqli->more_results() && $mysqli->next_result()) {
-        $dummyResult = $mysqli->use_result();
-        if ($dummyResult instanceof mysqli_result) {
-            $dummyResult->free();
-        }
-    }
-}
 // Fetch interest-bearing shares
 function getInterestBearingShares($accountId, $interestDate) {
-    $result = mysqli_query($GLOBALS["conn"], "CALL GetHistoricalLoot($accountId, '$interestDate', 16)");
+    $conn = Database::getConnection();
+    $result = mysqli_query($conn, "CALL GetHistoricalLoot($accountId, '$interestDate', 16)");
     if (!$result) {
-        die("Error getting interest bearing shares: " . mysqli_error($GLOBALS["conn"]));
+        die("Error getting interest bearing shares: " . mysqli_error($conn));
     }
     $shares = mysqli_num_rows($result);
     $result->free();  // Use the object-oriented style free
-    free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
+    free_mysqli_resources($conn);  // Use the function to free any remaining results
     return $shares;
 }
 
 function getPurchasesUntil($accountId, $targetDate)
 {
+    $conn = Database::getConnection();
     $query = "SELECT Id, AccountId, Amount, Currency, SharesPurchased, PurchaseDate, ADAValue, ADA_USD_Closing 
     FROM kickbackdb.share_purchase 
     where accountId = $accountId and PurchaseDate < '$targetDate'";
 
-    $result = mysqli_query($GLOBALS["conn"], $query);
+    $result = mysqli_query($conn, $query);
 
     if (!$result) {
-        die("Error purchases: " . mysqli_error($GLOBALS["conn"]));
+        die("Error purchases: " . mysqli_error($conn));
     }
     $purchases = mysqli_fetch_all($result, MYSQLI_ASSOC);
     $result->free();  // Use the object-oriented style free
-    free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
+    free_mysqli_resources($conn);  // Use the function to free any remaining results
     return $purchases;
 }
 
 // Fetch total shares
 function getTotalShares($accountId, $targetDate) {
-    $result = mysqli_query($GLOBALS["conn"], "CALL GetHistoricalLoot($accountId, '$targetDate', 16)");
+    $conn = Database::getConnection();
+    $result = mysqli_query($conn, "CALL GetHistoricalLoot($accountId, '$targetDate', 16)");
     if (!$result) {
-        die("Error getting total shares: " . mysqli_error($GLOBALS["conn"]));
+        die("Error getting total shares: " . mysqli_error($conn));
     }
     $shares = mysqli_num_rows($result);
     $historicalLoot = mysqli_fetch_all($result, MYSQLI_ASSOC);
     $result->free();  // Use the object-oriented style free
-    free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
+    free_mysqli_resources($conn);  // Use the function to free any remaining results
     return $historicalLoot;
 }
 
 // Fetch last statement's fractional shares
 function getLastStatementFractionalShares($accountId, $lastStatementDate) {
+    $conn = Database::getConnection();
     $query = "SELECT COALESCE(fractional_shares_after_interest, fractional_shares) as fractional_shares
               FROM v_merchant_share_interest_statement 
               WHERE accountId = $accountId AND statement_date = '$lastStatementDate'";
-    $result = mysqli_query($GLOBALS["conn"], $query);
+    $result = mysqli_query($conn, $query);
     if (!$result) {
-        die("Error getting last statment fractional shares: " . mysqli_error($GLOBALS["conn"]));
+        die("Error getting last statment fractional shares: " . mysqli_error($conn));
     }
     $row = mysqli_fetch_assoc($result);
     $result->free();  // Use the object-oriented style free
-    free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
+    free_mysqli_resources($conn);  // Use the function to free any remaining results
     return $row ? $row['fractional_shares'] : 0;
 }
 
 function getLastStatement($accountId, $lastStatementDate) {
+    $conn = Database::getConnection();
     $query = "SELECT *
               FROM v_merchant_share_interest_statement 
               WHERE accountId = $accountId AND statement_date = '$lastStatementDate'";
-    $result = mysqli_query($GLOBALS["conn"], $query);
+    $result = mysqli_query($conn, $query);
     if (!$result) {
-        die("Error getting last statment fractional shares: " . mysqli_error($GLOBALS["conn"]));
+        die("Error getting last statment fractional shares: " . mysqli_error($conn));
     }
     $row = mysqli_fetch_assoc($result);
     $result->free();  // Use the object-oriented style free
-    free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
+    free_mysqli_resources($conn);  // Use the function to free any remaining results
     return $row;
 }
 
 // Fetch fractional shares since the last statement
 function getFractionFromPurchase($accountId, $targetDate) {
+    $conn = Database::getConnection();
     // Calculate the start date (one month before targetDate).
     $startDate = date('Y-m-d', strtotime("$targetDate -1 month"));
 
@@ -111,17 +111,18 @@ function getFractionFromPurchase($accountId, $targetDate) {
               FROM share_purchase 
               WHERE AccountId = $accountId 
               AND PurchaseDate BETWEEN '$startDate' AND '$targetDate'";
-    $result = mysqli_query($GLOBALS["conn"], $query);
+    $result = mysqli_query($conn, $query);
     if (!$result) {
-        die("Error getting fractional shares from purchases: " . mysqli_error($GLOBALS["conn"]));
+        die("Error getting fractional shares from purchases: " . mysqli_error($conn));
     }
     $row = mysqli_fetch_assoc($result);
     $result->free();  // Free the result
-    free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
+    free_mysqli_resources($conn);  // Use the function to free any remaining results
     return $row ? $row['fractional'] : 0;
 }
 
 function getSharesPurchasedThisPeriod($accountId, $targetDate) {
+    $conn = Database::getConnection();
     // Calculate the start date (one month before targetDate).
     $startDate = date('Y-m-d', strtotime("$targetDate -1 month"));
 
@@ -130,13 +131,13 @@ function getSharesPurchasedThisPeriod($accountId, $targetDate) {
               FROM share_purchase 
               WHERE AccountId = $accountId 
               AND PurchaseDate BETWEEN '$startDate' AND '$targetDate'";
-    $result = mysqli_query($GLOBALS["conn"], $query);
+    $result = mysqli_query($conn, $query);
     if (!$result) {
-        die("Error getting purchased shares this period: " . mysqli_error($GLOBALS["conn"]));
+        die("Error getting purchased shares this period: " . mysqli_error($conn));
     }
     $row = mysqli_fetch_assoc($result);
     $result->free();  // Free the result
-    free_mysqli_resources($GLOBALS["conn"]);  // Use the function to free any remaining results
+    free_mysqli_resources($conn);  // Use the function to free any remaining results
     return $row ? $row['SharesPurchased'] : 0;
 }
 
