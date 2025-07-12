@@ -10,6 +10,10 @@ class vDecimal implements \JsonSerializable
 
     public function __construct(int|float|string $input, int $scale = 8)
     {
+        if (!function_exists('bcadd')) {
+            throw new \RuntimeException("BCMath extension is required for vDecimal but not installed.");
+        }
+        
         $this->scale = $scale;
 
         if (is_int($input)) {
