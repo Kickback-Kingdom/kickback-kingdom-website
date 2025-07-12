@@ -728,18 +728,18 @@ $itemInformationJSON = json_encode($itemInfos);
                                                                 </div>
                                                             </div>
                                                             <div class="row" id="date-time-row">
-                                                                <input type="hidden" name="edit-quest-options-datetime" id="edit-quest-options-datetime" value="<?= vDateTime::getValueString($thisQuest->endDate()); ?>">
+                                                                <input type="hidden" name="edit-quest-options-datetime" id="edit-quest-options-datetime" value="<?= vDateTime::getValueString($thisQuest->nullableEndDate()); ?>">
 
                                                                 <div class="col-md-6 mb-3">
                                                                     <div class="form-group">
                                                                         <label for="edit-quest-options-datetime-date" class="form-label">Date:</label>
-                                                                        <input type="date" id="edit-quest-options-datetime-date" name="edit-quest-options-datetime-date" value="<?= vDateTime::getFormattedYmd($thisQuest->endDate()); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
+                                                                        <input type="date" id="edit-quest-options-datetime-date" name="edit-quest-options-datetime-date" value="<?= vDateTime::getFormattedYmd($thisQuest->nullableEndDate()); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 mb-3">
                                                                     <div class="form-group">
                                                                         <label for="edit-quest-options-datetime-time"  class="form-label">Time:</label>
-                                                                        <input type="time" id="edit-quest-options-datetime-time" name="edit-quest-options-datetime-time" value="" data-utc-time="<?= vDateTime::getFormattedYmd($thisQuest->endDate()); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
+                                                                        <input type="time" id="edit-quest-options-datetime-time" name="edit-quest-options-datetime-time" value="" data-utc-time="<?= vDateTime::getFormattedYmd($thisQuest->nullableEndDate()); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
                                                                     </div>
                                                                 </div>
 
@@ -1603,7 +1603,7 @@ $itemInformationJSON = json_encode($itemInfos);
     <!--Test 2-->
     <script>
         
-var questDate = new Date('<?= vDateTime::getValueString($thisQuest->endDate()); ?>');
+var questDate = new Date('<?= vDateTime::getValueString($thisQuest->nullableEndDate()); ?>');
 
 
 
