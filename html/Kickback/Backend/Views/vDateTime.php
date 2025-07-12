@@ -48,6 +48,7 @@ class vDateTime
         $this->formattedHi = date_format($this->value,"H:i");
         $this->valueString = date_format($this->value, "Y-m-d\TH:i:s\Z");
         $this->formattedMonthYear = date_format($this->value, "F, Y");
+        $this->dbValue = $dateTime->format("Y-m-d H:i:s");
     }
 
     public static function fromDateTime(DateTime $dateTime) : vDateTime
