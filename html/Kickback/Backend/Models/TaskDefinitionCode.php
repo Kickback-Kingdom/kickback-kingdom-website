@@ -25,6 +25,12 @@ enum TaskDefinitionCode: string
     case VISIT_ANALYTICS_PAGE = 'visit_analytics_page';
     case WIN_RANKED_MATCH = 'win_ranked_match';
 
+    case VISIT_GAMES_PAGE = 'visit_games_page';
+    case VISIT_BLOGS_PAGE = 'visit_blogs_page';
+    case VISIT_GUILD_HALLS_PAGE = 'visit_guild_halls_page';
+    case VISIT_ADVENTURERS_GUILD_PAGE = 'visit_adventurers_guild_page';
+    case VISIT_LICH_PAGE = 'visit_lich_page';
+    case SEARCH_LICH_CARD = 'search_lich_card';
 
     /**
      * Safely cast from string
@@ -56,6 +62,12 @@ enum TaskDefinitionCode: string
             self::VISIT_ANALYTICS_PAGE => 'fa-chart-line',
             self::WIN_RANKED_MATCH => 'fa-trophy',
             
+            self::VISIT_GAMES_PAGE            => 'fa-gamepad',
+            self::VISIT_BLOGS_PAGE            => 'fa-newspaper',
+            self::VISIT_GUILD_HALLS_PAGE      => 'fa-chess-rook',
+            self::VISIT_ADVENTURERS_GUILD_PAGE => 'fa-hat-cowboy',
+            self::VISIT_LICH_PAGE             => 'fa-skull-crossbones',
+            self::SEARCH_LICH_CARD            => 'fa-search', 
 
             default => 'fa-circle-question', // fallback icon
         };
@@ -64,15 +76,22 @@ enum TaskDefinitionCode: string
     public function getPageIdPattern(): ?string
     {
         return match($this) {
-            TaskDefinitionCode::VIEW_BLOG_POST       => '/blog-post/%',
-            TaskDefinitionCode::VIEW_RAFFLE          => '/raffles/%',
-            TaskDefinitionCode::GO_TO_TOWN_SQUARE    => '/town-square%',
-            TaskDefinitionCode::VIEW_PROFILE         => '/u/%',
-            TaskDefinitionCode::VIEW_QUEST           => '/q/%',
-            TaskDefinitionCode::VISIT_STORE          => '/market%',
-            TaskDefinitionCode::VIEW_LICH_CARD_WIKI  => '/lich-card/%',
-            TaskDefinitionCode::VISIT_ANALYTICS_PAGE => '/analytics%',
-            // Extend with more patterns as needed
+            self::VIEW_BLOG_POST       => '/blog-post/%',
+            self::VIEW_RAFFLE          => '/raffles/%',
+            self::GO_TO_TOWN_SQUARE    => '/town-square%',
+            self::VIEW_PROFILE         => '/u/%',
+            self::VIEW_QUEST           => '/q/%',
+            self::VISIT_STORE          => '/market%',
+            self::VIEW_LICH_CARD_WIKI  => '/lich-card/%',
+            self::VISIT_ANALYTICS_PAGE => '/analytics%',
+
+            self::VISIT_GAMES_PAGE            => '/games.php',
+            self::VISIT_BLOGS_PAGE            => 'blogs',
+            self::VISIT_GUILD_HALLS_PAGE      => '/guild-halls.php',
+            self::VISIT_ADVENTURERS_GUILD_PAGE => '/adventurers-guild.php',
+            self::VISIT_LICH_PAGE             => '/lich-landing.php',
+            self::SEARCH_LICH_CARD            => '/lich-card-search.php',
+
             default => null
         };
     }

@@ -145,6 +145,12 @@ class TaskController
             case TaskDefinitionCode::VISIT_STORE:
             case TaskDefinitionCode::VIEW_LICH_CARD_WIKI:
             case TaskDefinitionCode::VISIT_ANALYTICS_PAGE:
+            case TaskDefinitionCode::VISIT_GAMES_PAGE:
+            case TaskDefinitionCode::VISIT_BLOGS_PAGE:
+            case TaskDefinitionCode::VISIT_GUILD_HALLS_PAGE:
+            case TaskDefinitionCode::VISIT_ADVENTURERS_GUILD_PAGE:
+            case TaskDefinitionCode::VISIT_LICH_PAGE:
+            case TaskDefinitionCode::SEARCH_LICH_CARD:
                 return self::countPageVisitsForTask($task, $account);
 
             case TaskDefinitionCode::SPEND_PRESTIGE_TOKEN:
