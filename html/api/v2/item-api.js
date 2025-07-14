@@ -1,9 +1,3 @@
-<?php
-declare(strict_types=1);
-
-use Kickback\Common\Version;
-?>
-<script>
 /**
  * Item API Component
  * Handles all item-related API calls
@@ -20,7 +14,18 @@ class ItemAPI {
         }
 
         try {
-            const response = await fetch(`<?= Version::formatUrl('/api/v1/item/get.php'); ?>?id=${id}`, {
+            // TODO:
+            // * Make api/v2/server/item.php endpoint.
+            // * Replace this with sending a request to `api/v2/server/item.php?id=${id}`
+            // * Figure out how to determine if we are on the beta site or not.
+            // * Prod site:
+            //      If this script is loaded from 'api/v2/client/item-api.js',
+            //      then the request URL should be `api/v1/item/get.php?id=${id}`.
+            // * Beta site:
+            //      If this script is loaded from 'beta/api/v2/client/item-api.js',
+            //      then the request URL should be `beta/api/v1/item/get.php?id=${id}`.
+            //
+            const response = await fetch(`api/v1/item/get.php?id=${id}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -140,4 +145,3 @@ async function GetItemInformationByIdWithAPI(id, useAPI = false) {
 }
 
 console.log('ItemAPI component loaded');
-</script> 
