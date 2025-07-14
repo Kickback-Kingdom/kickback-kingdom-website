@@ -190,7 +190,7 @@ function autoload_result_name(int $result) : string
     return "Invalid value: " . strval($result);
 }
 
-function autoloader_check_eponymous_trait_classes(
+function autoloader_check_eponymous_trait_classes_impl(
     string  &$class_unqual_name,
     string  &$class_base_path,
     ?string &$class_file_path,
@@ -380,82 +380,54 @@ function autoloader_check_eponymous_trait_classes(
             return;
         }
     }
+}
 
+function autoloader_check_eponymous_trait_classes(
+    string  &$class_unqual_name,
+    string  &$class_base_path,
+    ?string &$class_file_path,
+    bool    &$use_require_once
+) : void
+{
+    autoload_debug_trace(fn() => "CALL: autoloader_check_eponymous_trait_classes(");
+    autoload_debug_trace(fn() => "CALL:     class_unqual_name:  '$class_unqual_name',");
+    autoload_debug_trace(fn() => "CALL:     class_base_path:    '$class_base_path',");
+    autoload_debug_trace(fn() => "CALL:     class_file_path:    '".($class_file_path ?? 'null')."',");
+    autoload_debug_trace(fn() => "CALL:     use_require_once:   '".strval($use_require_once)."',");
+    autoload_debug_trace(fn() => "CALL: )");
+    autoload_debug_indent_more();
 
+    $exc = null;
+    try {
+        autoloader_check_eponymous_trait_classes_impl(
+            $class_unqual_name, $class_base_path, $class_file_path, $use_require_once);
+    } catch( \Throwable $oops ) {
+        $exc = $oops;
+    }
 
+    autoload_debug_indent_less();
+    if ( true === AUTOLOAD_DO_DEBUG_ECHO() ) {
+        if ( is_null($exc) ) {
+            autoload_debug_trace(fn() => "RETURN: autoloader_check_eponymous_trait_classes(");
+            autoload_debug_trace(fn() => "RETURN:     class_unqual_name:  '$class_unqual_name',");
+            autoload_debug_trace(fn() => "RETURN:     class_base_path:    '$class_base_path',");
+            autoload_debug_trace(fn() => "RETURN:     class_file_path:    '".($class_file_path ?? 'null')."',");
+            autoload_debug_trace(fn() => "RETURN:     use_require_once:   '".strval($use_require_once)."',");
+            autoload_debug_trace(fn() => "RETURN: )");
+        } else {
+            autoload_debug_trace(fn() => "THROW: an exception was thrown from");
+            autoload_debug_trace(fn() => "THROW:  autoloader_check_eponymous_trait_classes(");
+            autoload_debug_trace(fn() => "THROW:      class_unqual_name:  '$class_unqual_name',");
+            autoload_debug_trace(fn() => "THROW:      class_base_path:    '$class_base_path',");
+            autoload_debug_trace(fn() => "THROW:      class_file_path:    '".($class_file_path ?? 'null')."',");
+            autoload_debug_trace(fn() => "THROW:      use_require_once:   '".strval($use_require_once)."',");
+            autoload_debug_trace(fn() => "THROW:  )");
+        }
+    }
 
-
-
-
-    // if (($first_try_exists  && !$second_try_exists)
-    // ||  (!$first_try_exists && $second_try_exists))
-    // {
-    //     $use_require_once = false;
-    // }
-    //
-    // if (!isset($class_file_path)
-    // && $enable_eponymous_trait_class
-    // &&  !str_ends_with($class_base_path, 'Trait') )
-    // {
-    //     $basename_stem = $input_basename;
-    //     $class_stem_path = $class_base_path;
-    //
-    //     $trait_base_path = $class_base_path . 'Trait';
-    //     $trait_file_path = $trait_base_path . '.php';
-    //
-    //     if (!file_exists($class_file_path)
-    //     &&   file_exists($trait_file_path))
-    //     {
-    //         $class_base_path = $trait_base_path;
-    //     }
-    //
-    //     // Check for 'ClassName.php' -> 'ClassNameTrait.php'
-    //     if ( str_ends_with($class_base_path, 'Trait') ) {
-    //         $basename_stem   = substr($input_basename,  0, -strlen('Trait'));
-    //         $class_base_path = substr($class_base_path, 0, -strlen('Trait'));
-    //     }
-    // }
-    //
-    //
-    //
-    // if ( str_ends_with($class_base_path, 'Trait') ) {
-    //     // NOTE: on this route, if both exist, we must prefer to load the trait.
-    //     // Remove the 'Trait' part of the file path.
-    //     $class_base_path = substr($class_base_path, 0, -strlen('Trait'));
-    //     $first_try_file_path  = $class_base_path . 'Trait.php';
-    //     $second_try_file_path = $class_base_path . '.php';
-    // } else {
-    //     // NOTE: on this route, if both exist, we must prefer to load the class.
-    //     $first_try_file_path  = $class_base_path . '.php';
-    //     $second_try_file_path = $class_base_path . 'Trait.php';
-    // }
-    // //autoload_debug_trace(fn() =>
-    // //echo(
-    // //    "\$class_base_path      = $class_base_path;\n".
-    // //    "\$first_try_file_path  = $first_try_file_path;\n".
-    // //    "\$second_try_file_path = $second_try_file_path;\n");
-    //
-    // $first_try_exists  = file_exists($first_try_file_path);
-    // $second_try_exists = file_exists($second_try_file_path);
-    //
-    // if ($first_try_exists && $second_try_exists) {
-    //     $use_require_once = false;
-    //     $class_file_path = $first_try_file_path;
-    // } else
-    // if ($first_try_exists && !$second_try_exists) {
-    //     $use_require_once = true;
-    //     $class_file_path = $first_try_file_path;
-    // } else
-    // if (!$first_try_exists && $second_try_exists) {
-    //     $use_require_once = true;
-    //     $class_file_path = $second_try_file_path;
-    // }
-    // // else {
-    // //     Just leave the $class_file_path alone.
-    // //     The autoloader was probably destined to emit an error at this point.
-    // //     And this way, it will make the error message contain the name
-    // //     of the class that was called, and not something else.
-    // // }
+    if (!is_null($exc)) {
+        throw $exc;
+    }
 }
 
 function autoloader_require_once_if_eponymous_subclasses_exist(
@@ -491,7 +463,7 @@ function autoloader_require_once_if_eponymous_subclasses_exist(
     }
 }
 
-function autoloader_check_eponymous_subclasses(
+function autoloader_check_eponymous_subclasses_impl(
     string  &$class_unqual_name,
     string  &$class_base_path,
     ?string &$class_file_path,
@@ -531,9 +503,11 @@ function autoloader_check_eponymous_subclasses(
         return;
     }
 
-    // Suppose ($class_unqual_name === 'FooBar__Qux')
-    // Then ($rpos_subclass_sep === 8)
-    $rpos_subclass_sep = strlen($class_unqual_name) - ($pos_subclass_sep + 2);
+    // Suppose ($class_unqual_name === '  FooBar__Qux  '),
+    // Then ($trimmed_name === 'FooBar__Qux')  (strlen('FooBar__Qux') === 11)
+    // And  ($pos_subclass_sep === 6)
+    // And  ($rpos_subclass_sep === (11 - 6) ===  5  === strlen('__Qux'))
+    $rpos_subclass_sep = strlen($trimmed_name) - ($pos_subclass_sep);
 
     // Note that we don't use `try_` variables for
     // `$class_unqual_name` and `$class_base_path`.
@@ -568,6 +542,55 @@ function autoloader_check_eponymous_subclasses(
     $use_require_once = $use_require_once || true;
 
     return;
+}
+
+
+function autoloader_check_eponymous_subclasses(
+    string  &$class_unqual_name,
+    string  &$class_base_path,
+    ?string &$class_file_path,
+    bool    &$use_require_once
+) : void
+{
+    autoload_debug_trace(fn() => "CALL: autoloader_check_eponymous_subclasses(");
+    autoload_debug_trace(fn() => "CALL:     class_unqual_name:  '$class_unqual_name',");
+    autoload_debug_trace(fn() => "CALL:     class_base_path:    '$class_base_path',");
+    autoload_debug_trace(fn() => "CALL:     class_file_path:    '".($class_file_path ?? 'null')."',");
+    autoload_debug_trace(fn() => "CALL:     use_require_once:   '".strval($use_require_once)."',");
+    autoload_debug_trace(fn() => "CALL: )");
+    autoload_debug_indent_more();
+
+    $exc = null;
+    try {
+        autoloader_check_eponymous_subclasses_impl(
+            $class_unqual_name, $class_base_path, $class_file_path, $use_require_once);
+    } catch( \Throwable $oops ) {
+        $exc = $oops;
+    }
+
+    autoload_debug_indent_less();
+    if ( true === AUTOLOAD_DO_DEBUG_ECHO() ) {
+        if ( is_null($exc) ) {
+            autoload_debug_trace(fn() => "RETURN: autoloader_check_eponymous_subclasses(");
+            autoload_debug_trace(fn() => "RETURN:     class_unqual_name:  '$class_unqual_name',");
+            autoload_debug_trace(fn() => "RETURN:     class_base_path:    '$class_base_path',");
+            autoload_debug_trace(fn() => "RETURN:     class_file_path:    '".($class_file_path ?? 'null')."',");
+            autoload_debug_trace(fn() => "RETURN:     use_require_once:   '".strval($use_require_once)."',");
+            autoload_debug_trace(fn() => "RETURN: )");
+        } else {
+            autoload_debug_trace(fn() => "THROW: an exception was thrown from");
+            autoload_debug_trace(fn() => "THROW:  autoloader_check_eponymous_subclasses(");
+            autoload_debug_trace(fn() => "THROW:      class_unqual_name:  '$class_unqual_name',");
+            autoload_debug_trace(fn() => "THROW:      class_base_path:    '$class_base_path',");
+            autoload_debug_trace(fn() => "THROW:      class_file_path:    '".($class_file_path ?? 'null')."',");
+            autoload_debug_trace(fn() => "THROW:      use_require_once:   '".strval($use_require_once)."',");
+            autoload_debug_trace(fn() => "THROW:  )");
+        }
+    }
+
+    if (!is_null($exc)) {
+        throw $exc;
+    }
 }
 
 /**
