@@ -2,7 +2,7 @@
  * Item API Component
  * Handles all item-related API calls
  */
-class ItemAPI {
+class Item {
     /**
      * Get item by ID
      * @param {number|string} id - Item ID
@@ -18,10 +18,10 @@ class ItemAPI {
             // * Implement api/v2/server/item endpoint. (It is currently an empty stub file.)
             // * Figure out how to dynamically adjust URL below:
             // * Prod site:
-            //      If this script is loaded from 'api/v2/client/item-api.js',
+            //      If this script is loaded from 'api/v2/client/item.js',
             //      then the request URL should be `api/v2/server/item?id=${id}`.
             // * Beta site:
-            //      If this script is loaded from 'beta/api/v2/client/item-api.js',
+            //      If this script is loaded from 'beta/api/v2/client/item.js',
             //      then the request URL should be `beta/api/v2/server/item?id=${id}`.
             //
             const response = await fetch(`api/v2/server/item?id=${id}`, {
@@ -51,7 +51,7 @@ class ItemAPI {
             return jsonData;
 
         } catch (error) {
-            console.error(`ItemAPI.getById(${id}) failed:`, error);
+            console.error(`Item.getById(${id}) failed:`, error);
             throw error;
         }
     }
@@ -78,14 +78,13 @@ class ItemAPI {
             }));
 
         } catch (error) {
-            console.error('ItemAPI.getByIds failed:', error);
+            console.error('Item.getByIds failed:', error);
             throw error;
         }
     }
 }
 
 /**
- * Enhanced version of existing GetItemInformationById function
  * Checks cache first, then calls API if not found
  */
 function GetItemInformationById(id) {
@@ -94,19 +93,18 @@ function GetItemInformationById(id) {
         for (let index = 0; index < window.itemInformation.length; index++) {
             var item = window.itemInformation[index];
             if (item.crand == id) {
-                console.log(`ItemAPI: Found item ${id} in cache`);
+                console.log(`Item: Found item ${id} in cache`);
                 return item;
             }
         }
     }
     
     // Not in cache - return null for now, could be enhanced to call API
-    console.log(`ItemAPI: Item ${id} not found in cache`);
+    console.log(`Item: Item ${id} not found in cache`);
     return null;
 }
 
 /**
- * Enhanced version that can fetch from API if not in cache
  * @param {number|string} id - Item ID
  * @param {boolean} useAPI - Whether to call API if not in cache
  * @returns {Promise<Object>|Object|null} Item data
@@ -121,8 +119,8 @@ async function GetItemInformationByIdWithAPI(id, useAPI = false) {
     // If not in cache and API is allowed, fetch from API
     if (useAPI) {
         try {
-            console.log(`ItemAPI: Fetching item ${id} from API`);
-            const response = await ItemAPI.getById(id);
+            console.log(`Item: Fetching item ${id} from API`);
+            const response = await Item.getById(id);
             
             // Add to cache for future use
             if (response.success && response.data) {
@@ -130,12 +128,12 @@ async function GetItemInformationByIdWithAPI(id, useAPI = false) {
                     window.itemInformation = [];
                 }
                 window.itemInformation.push(response.data);
-                console.log(`ItemAPI: Added item ${id} to cache`);
+                console.log(`Item: Added item ${id} to cache`);
             }
             
             return response.data;
         } catch (error) {
-            console.error(`ItemAPI: Failed to fetch item ${id}:`, error);
+            console.error(`Item: Failed to fetch item ${id}:`, error);
             return null;
         }
     }
@@ -143,4 +141,4 @@ async function GetItemInformationByIdWithAPI(id, useAPI = false) {
     return null;
 }
 
-console.log('ItemAPI component loaded');
+console.log('Item component loaded');

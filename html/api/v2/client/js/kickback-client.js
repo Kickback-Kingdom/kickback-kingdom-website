@@ -1,27 +1,27 @@
 /**
- * Kickback Kingdom API Wrapper
+ * Kickback Kingdom Client
+ * Simplifies access to Kickback Kingdom Web API
  * Main interface that delegates to modular components
  */
-class KickbackAPI {
+class KickbackClient {
     constructor() {
         this.version = '1.0.0';
         this.sessionToken = null;
         this.serviceKey = null;
-        
+
         // Lazy-initialized component classes
         this._item = null;
-        
-        console.log('KickbackAPI wrapper initialized v' + this.version);
+
+        console.log('KickbackClient wrapper initialized v' + this.version);
     }
-    
+
     // Lazy getters for component classes
     get item() {
         if (!this._item) {
-            this._item = ItemAPI; // Static class, no instantiation needed
+            this._item = Item; // Static class, no instantiation needed
         }
         return this._item;
     }
-    
 
     /**
      * Set session token for authenticated requests
@@ -29,7 +29,7 @@ class KickbackAPI {
      */
     setSessionToken(token) {
         this.sessionToken = token;
-        console.log('KickbackAPI: Session token set');
+        console.log('KickbackClient: Session token set');
     }
 
     /**
@@ -38,7 +38,7 @@ class KickbackAPI {
      */
     setServiceKey(key) {
         this.serviceKey = key;
-        console.log('KickbackAPI: Service key set');
+        console.log('KickbackClient: Service key set');
     }
 
     /**
@@ -76,12 +76,12 @@ class KickbackAPI {
             sessionToken: !!this.getSessionToken(),
             serviceKey: !!this.getServiceKey(),
             loadedComponents: {
-                item: typeof ItemAPI !== 'undefined',
-                account: typeof AccountAPI !== 'undefined',
-                media: typeof MediaAPI !== 'undefined',
-                session: typeof SessionAPI !== 'undefined',
-                lich: typeof LichAPI !== 'undefined',
-                match: typeof MatchAPI !== 'undefined'
+                item: typeof Item !== 'undefined',
+                account: typeof Account !== 'undefined',
+                media: typeof Media !== 'undefined',
+                session: typeof Session !== 'undefined',
+                lich: typeof Lich !== 'undefined',
+                match: typeof Match !== 'undefined'
             }
         };
     }
@@ -97,23 +97,23 @@ class KickbackAPI {
         if (config.serviceKey) {
             this.setServiceKey(config.serviceKey);
         }
-        
-        console.log('KickbackAPI initialized with config:', this.getStatus());
+
+        console.log('KickbackClient initialized with config:', this.getStatus());
     }
 }
 
 // Create global instance
-window.KickbackAPI = KickbackAPI;
-window.kickbackApi = new KickbackAPI();
+window.KickbackClient = KickbackClient;
+window.kickbackClient = new KickbackClient();
 
 // Auto-initialize with any existing session data
 if (typeof window.kickbackSessionToken !== 'undefined') {
-    window.kickbackApi.setSessionToken(window.kickbackSessionToken);
+    window.kickbackClient.setSessionToken(window.kickbackSessionToken);
 }
 if (typeof window.kickbackServiceKey !== 'undefined') {
-    window.kickbackApi.setServiceKey(window.kickbackServiceKey);
+    window.kickbackClient.setServiceKey(window.kickbackServiceKey);
 }
 
-console.log('KickbackAPI wrapper ready. Access via window.kickbackApi');
-console.log('Example: await kickbackApi.item.getById(123)');
-console.log('Status: kickbackApi.getStatus()'); 
+console.log('KickbackClient ready. Access via window.kickbackClient');
+console.log('Example: await kickbackClient.item.getById(123)');
+console.log('Status: kickbackClient.getStatus()');
