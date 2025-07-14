@@ -239,6 +239,31 @@ class vDecimal implements \JsonSerializable
 // =============================================================================
 // TODO: Integrate these with the whole-system unittests (or render vDecimal obsolete somehow)
 // (Also it miiiight wait until we have a test runner; ideally one capable of HTML output.)
+//
+// These are intentionally inaccessible from the web for security reasons.
+//
+// To run them, place a script in your `html/scratch-pad/` directory with these contents:
+// ```
+// // (html/)scratch-pad/foobar.php
+// declare(strict_types=1);
+//
+// require_once(($_SERVER["DOCUMENT_ROOT"] ?: (__DIR__ . "/..")) . "/Kickback/init.php");
+//
+// use Kickback\Backend\Views\vDateTime__Tests;
+// use Kickback\Backend\Views\vDecimal__Tests;
+//
+// $ret = 0;
+// $ret |= vDateTime__Tests::unittests() << 0;
+// $ret |= vDecimal__Tests::unittests()  << 1;
+// return $ret;
+// ```
+// Of course, add in the PHP start tag and optional end tag!
+// (I can't put those in the comment without breaking the file)
+//
+// Then navigate your browser to
+// https://127.0.0.1/scratch-pad/foobar.php
+// ... and the tests should run.
+//
 final class vDecimal__Tests
 {
     use \Kickback\Common\Traits\StaticClassTrait;
