@@ -232,5 +232,19 @@ final class Version
 
     // #website-only
     public static bool $client_is_viewing_blogpost_for_current_version_update = false;
+
+
+    /**
+    * System-wide hint for whether debug code should execute.
+    */
+    public static function in_debug_mode() : bool {
+        // We base this on the value of `zend.assertions` since the enabling
+        // of assertions is a clear signal that we are in an environment
+        // where "fail early" is a strategy preferred over "don't fail".
+        // This is also very likely to coincide with whether we want
+        // extra verbose output regarding program-state.
+        static $in_debug_mode = null;
+        return $in_debug_mode ??= (ini_get('zend.assertions') === '1');
+    }
 }
 ?>

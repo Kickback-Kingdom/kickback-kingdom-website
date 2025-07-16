@@ -3,11 +3,13 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Exceptions;
 
-use Kickback\Common\Exceptions\CustomExceptionTrait;
-use Kickback\Common\Exceptions\IException;
+use Kickback\Common\Exceptions\IKickbackException;
+use Kickback\Common\Exceptions\KickbackThrowableTrait;
 
-class UnexpectedNullException extends \UnexpectedValueException implements IException
+interface IUnexpectedNullException extends IKickbackException {}
+
+class UnexpectedNullException extends \UnexpectedValueException implements IUnexpectedNullException
 {
-    use CustomExceptionTrait;
+    use KickbackThrowableTrait;
 }
 ?>

@@ -3,27 +3,20 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Primitives;
 
+use Kickback\Common\Exceptions\IKickbackThrowable;
+
 /**
 * Miscellaneous functions that do useful things with PHP metadata (ex: Reflection API).
 *
-* @phpstan-type  kkdebug_frame_a  array{
-*       function? : string,
-*       line?     : int,
-*       file?     : string,
-*       class?    : string,
-*       object?   : object,
-*       type?     : string,
-*       args?     : array<int|string, mixed>
-*   }
-*
-* @phpstan-type  kkdebug_backtrace_a  kkdebug_frame_a[]
+* @phpstan-import-type  kkdebug_frame_paranoid_a      from IKickbackThrowable
+* @phpstan-import-type  kkdebug_backtrace_paranoid_a  from IKickbackThrowable
 */
 final class Meta
 {
     use \Kickback\Common\Traits\StaticClassTrait;
 
     /**
-    * @param kkdebug_backtrace_a $trace
+    * @param kkdebug_backtrace_paranoid_a $trace
     */
     private static function handle_outermost_caller_name_corner_case(array $trace, int $frame_number) : string
     {
@@ -49,8 +42,8 @@ final class Meta
     // This function is factored out so that we can specify, in phpstan,
     // the array type returned by the `\debug_backtrace` function.
     /**
-    * @param kkdebug_backtrace_a $trace
-    * @param ?class-string       $home_class_fqn
+    * @param kkdebug_backtrace_paranoid_a  $trace
+    * @param ?class-string                 $home_class_fqn
     */
     private static function outermost_caller_name_within_class_impl(array $trace, ?string $home_class_fqn) : string
     {
