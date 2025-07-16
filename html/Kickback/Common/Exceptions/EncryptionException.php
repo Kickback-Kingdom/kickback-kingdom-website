@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Exceptions;
 
-use Kickback\Common\Exceptions\CustomException;
+use Kickback\Common\Exceptions\IKickbackException;
+use Kickback\Common\Exceptions\KickbackException;
 
-class EncryptionException extends CustomException {}
+interface IEncryptionException extends IKickbackException {}
+class EncryptionException extends KickbackException implements IEncryptionException {}
 ?>

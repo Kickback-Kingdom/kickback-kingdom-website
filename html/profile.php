@@ -14,9 +14,11 @@ use Kickback\Backend\Controllers\LootController;
 use Kickback\Backend\Controllers\ItemController;
 use Kickback\Backend\Models\ItemEquipmentSlot;
 use Kickback\Common\Version;
+use Kickback\Backend\Views\vRecordId;
 
 if (isset($_GET['id'])) {
-    $profileResp = AccountController::getAccountById($_GET['id']);
+    $accountId = new vRecordId('', $_GET['delegateAccess']);
+    $profileResp = AccountController::getAccountById($accountId);
 }
 
 if (isset($_GET['u']) && !isset($profile)) {

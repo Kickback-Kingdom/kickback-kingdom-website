@@ -3,10 +3,18 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Exceptions;
 
+use Kickback\Common\Exceptions\Fatal\MethodNotImplementedError;
+
+// See KickbackThrowable for an explanation of the origins and intent of this code.
 /**
-* See `CustomException` for an explanation of the origins and intent of this code.
+* Assists with defining exceptions/errors when extending PHP or 3rd party exceptions.
+*
+* In almost all cases, you will want to use KickbackExceptionTrait
+* or Fatal\KickbackFatalErrorTrait instead.
+*
+* @see KickbackThrowable
 */
-trait CustomExceptionTrait
+trait KickbackThrowableTrait
 {
     //protected string    $message = 'Unknown exception';     // Exception message
     //private   string     $string;                            // Unknown
@@ -16,7 +24,6 @@ trait CustomExceptionTrait
     /// @var (mixed[])[]
     //private   array      $trace;                             // Unknown
     //private   ?Throwable $previous = null;
-
 
     public function __construct(?string $message = null, int $code = 0, ?\Throwable $previous = null)
     {
