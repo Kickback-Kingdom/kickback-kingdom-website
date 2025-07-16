@@ -42,22 +42,27 @@ final class Meta
     // This function is factored out so that we can specify, in phpstan,
     // the array type returned by the `\debug_backtrace` function.
     /**
-    * @param kkdebug_backtrace_paranoid_a  $trace
-    * @param ?class-string                 $home_class_fqn
+    * @param kkdebug_backtrace_paranoid_a           $trace
+    * @param class-string|array<class-string>|null  $home_class_fqns
     */
-    private static function outermost_caller_name_within_class_impl(array $trace, ?string $home_class_fqn) : string
+    private static function outermost_caller_name_within_class_impl(array $trace, string|array|null $home_class_fqns, ?string &$caller_class_name = null) : string
     {
+        $caller_class_name = null;
         $frame_count = count($trace);
         if ($frame_count <= 1) {
             return '{top-level script}';
         }
 
-        if (!isset($home_class_fqn)) {
+        if (!isset($home_class_fqns)) {
             if (array_key_exists('class',$trace[1])) {
-                $home_class_fqn = $trace[1]['class'];
+                $home_class_fqns = [$trace[1]['class']];
             } else {
                 return self::handle_outermost_caller_name_corner_case($trace, 1);
             }
+        }
+
+        if (!is_array($home_class_fqns)) {
+            $home_class_fqns = [$home_class_fqns];
         }
 
         // Initial scan for home class.
@@ -68,7 +73,7 @@ final class Meta
             if (!array_key_exists('class', $frame)) {
                 continue; // Not even in a class.
             }
-            if (0 === strcmp($home_class_fqn, $frame['class'])) {
+            if (in_array($frame['class'], $home_class_fqns, true)) {
                 $start_at = $frame_num;
                 break;
             }
@@ -93,7 +98,7 @@ final class Meta
             }
 
             if (!array_key_exists('class', $frame)
-            ||  0 !== strcmp($home_class_fqn, $frame['class'])
+            ||  !in_array($frame['class'], $home_class_fqns, true)
             ||  str_starts_with($func_name, 'unittest_'))
             {
                 $end_at = $frame_num-1;
@@ -113,30 +118,33 @@ final class Meta
             $end_at--;
         }
 
-        if ( array_key_exists('function',$trace[$end_at]) ) {
-            return $trace[$end_at]['function'];
+        $end_frame = $trace[$end_at];
+        if ( array_key_exists('function',$end_frame) ) {
+            if ( array_key_exists('class',$end_frame) ) {
+                $caller_class_name = $end_frame['class'];
+            }
+            return $end_frame['function'];
         } else {
             return self::handle_outermost_caller_name_corner_case($trace, $end_at);
         }
     }
 
-    //TODO: Allow `$home_class_fqn` to be an _array of strings_.
-    // This would then allow larger (multiple-class) systems to be covered.
+    // TODO: innermost_caller_name_outside_class
     /**
     * Uses `debug_backtrace` to determine what function/method was called
     * when the class was first entered.
     *
-    * The process, if `$home_class_fqn` is not passed:
+    * The process, if `$home_class_fqns` is not passed:
     * * Call `debug_backtrace`
     * * Start at index 1 in the backtrace. (Index 0 is just `outermost_caller_name_within_class`, which we ignore.)
     * * Note the class name at index 1.
     * * Find the next index with a different class name, call it `$outside_index`
     * * Return the (unqualified) function name at the `$outside_index - 1`.
     *
-    * The process, if `$home_class_fqn` is passed:
+    * The process, if `$home_class_fqns` is passed:
     * * Call `debug_backtrace`
-    * * Scan (starting at index 1) until the index where the function's class's name equals `$home_class_fqn`.
-    * * Find the next index with a different class name, call it `$outside_index`
+    * * Scan (starting at index 1) until the index where the function's class's name equals `(string)$home_class_fqns` or is in `(array)$home_class_fqns`.
+    * * Find the next index with a different class name (that is NOT in `(array)`$home_class_fqns`), call it `$outside_index`
     * * Return the (unqualified) function name at the `$outside_index - 1`.
     *
     * Notable exception to the above: anything where the function name begins
@@ -150,7 +158,7 @@ final class Meta
     *
     * If this is called from a class or location that is outside of the
     * "interface" or "API" class because it was called by that class, then
-    * passing that interfacing class's name into the `$home_class_fqn` parameter
+    * passing that interfacing class's name into the `$home_class_fqns` parameter
     * will allow the scanner to "skip" to that class.
     *
     * Caveats:
@@ -163,13 +171,13 @@ final class Meta
     * the scanner will still successfully find the "edge" of the class's
     * callstack.
     *
-    *
-    * @param class-string $home_class_fqn
+    * @param class-string|array<class-string>|null  $home_class_fqns
+    * @param ?class-string                          $caller_class_name
     */
-    public static function outermost_caller_name_within_class(string $home_class_fqn = null) : string
+    public static function outermost_caller_name_within_class(string|array|null $home_class_fqns = null, ?string &$caller_class_name = null) : string
     {
         $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-        return self::outermost_caller_name_within_class_impl($trace, $home_class_fqn);
+        return self::outermost_caller_name_within_class_impl($trace, $home_class_fqns, $caller_class_name);
     }
 
     private static function unittest_outermost_caller_name_within_class() : void
