@@ -43,7 +43,6 @@ class LootController
         // Get the number of affected rows *after* execution
         $affectedRows = mysqli_stmt_affected_rows($stmt);
         mysqli_stmt_close($stmt);
-    
         
         return new Response(true, "Loot nicknamed successfully.");
     }

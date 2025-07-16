@@ -1251,7 +1251,7 @@ window.onload = function() {
 <?php if (Kickback\Services\Session::isAdmin()) { ?>
     function UseDelegateAccess(accountId)
     {
-        window.location.href = "https://www.kickback-kingdom.com<?php echo Version::urlBetaPrefix(); ?>/?delegateAccess="+accountId;
+        window.location.href = "<?php echo Version::urlBetaPrefix(); ?>/?delegateAccess="+accountId;
     }
 
 <?php } ?>
