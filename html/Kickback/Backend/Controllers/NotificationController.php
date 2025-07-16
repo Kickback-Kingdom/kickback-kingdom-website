@@ -82,6 +82,9 @@ class NotificationController
 
             $not->quest = $quest;
         }
+        else{
+            $not->quest = null;
+        }
         
         if ($not->type == NotificationType::PRESTIGE)
         {

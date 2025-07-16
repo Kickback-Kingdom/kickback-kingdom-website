@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Unittesting;
 
-use Kickback\Common\Exceptions\CustomException;
+use Kickback\Common\Exceptions\IKickbackException;
+use Kickback\Common\Exceptions\KickbackException;
 
-class AssertException extends CustomException {}
+interface IAssertException extends IKickbackException {}
+class AssertException extends KickbackException implements IAssertException {}
 ?>

@@ -2,6 +2,7 @@
 require_once(__DIR__."/../../engine/engine.php");
 use Kickback\Services\Session;
 use Kickback\Backend\Controllers\AccountController;
+use Kickback\Backend\Views\vRecordId;
 if (IsPOST())
 {
     $containsFieldsResp = POSTContainsFields("sessionToken","serviceKey");
@@ -44,7 +45,8 @@ if (!$session->success) {
 
 if (Kickback\Services\Session::isAdmin()) {
     if (isset($_GET['delegateAccess'])) {
-        $delegateResp = AccountController::getAccountById($_GET['delegateAccess']);
+        $accountId = new vRecordId('', $_GET['delegateAccess']);
+        $delegateResp = AccountController::getAccountById($accountId);
         if ($delegateResp->success) {
             Session::setSessionData('delegate_account', $delegateResp->data);
             Session::setSessionData('account_using_delegate_access', Session::getSessionData('vAccount'));
