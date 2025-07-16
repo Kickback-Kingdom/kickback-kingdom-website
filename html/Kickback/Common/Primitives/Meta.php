@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Kickback\Common\Primitives;
 
 use Kickback\Common\Exceptions\IKickbackThrowable;
+use Kickback\Common\Primitives\CategoriesOfCallables;
 
 /**
 * Miscellaneous functions that do useful things with PHP metadata (ex: Reflection API).
@@ -213,6 +214,57 @@ final class Meta
     private static function test_function_for_outermost_caller_unittest_02() : string
     {
         return self::test_function_for_outermost_caller_unittest_01();
+    }
+
+    public static function callable_to_unique_name(callable $callable) : string
+    {
+        // Thanks goes to StackOverflow poster `Bigdot` for enumerating the
+        // possible `callable` types and how one might stringize them:
+        // https://stackoverflow.com/a/68113840
+        //
+        // Thanks goes to StackOverflow poster `Shizzen83` for describing
+        // how to acquire more information from Closure objects:
+        // https://stackoverflow.com/a/62722371
+        //
+        $category = CategoriesOfCallables::from_callable($callable);
+
+        switch ($category)
+        {
+            case CategoriesOfCallables::STATIC_AS_STRING:
+                assert(is_string($callable));
+                return $callable;
+            case CategoriesOfCallables::FUNCTION_AS_STRING:
+                assert(is_string($callable));
+                return $callable;
+            case CategoriesOfCallables::METHOD_AS_ARRAY:
+                assert(is_array($callable));
+                return get_class($callable[0])  . '->' . $callable[1];
+            case CategoriesOfCallables::STATIC_AS_ARRAY:
+                assert(is_array($callable));
+                return $callable[0]  . '::' . $callable[1];
+            case CategoriesOfCallables::CLOSURE_INSTANCE:
+                assert($callable instanceof \Closure);
+                // TODO: At least cache the ReflectionFunction, if not others too.
+                $reflectionClosure = new \ReflectionFunction($callable);
+                $func_name = $reflectionClosure->getName();
+                $class_refl = $reflectionClosure->getClosureScopeClass();
+                if ( !isset($class_refl) ) {
+                    return $func_name;
+                }
+                $class_fqn = $class_refl->getName();
+                if ( $reflectionClosure->isStatic() ) {
+                    return $class_fqn . '::' . $func_name;
+                } else {
+                    return $class_fqn . '->' . $func_name;
+                }
+            case CategoriesOfCallables::INVOKABLE_OBJECT:
+                assert(is_object($callable));
+                return get_class($callable);
+            default:
+                //assert($category === CategoriesOfCallables::UNKNOWN);
+                throw new \UnexpectedValueException(
+                    'Could not generate unique name for unknown callback.');
+        }
     }
 
     public static function unittests() : void
