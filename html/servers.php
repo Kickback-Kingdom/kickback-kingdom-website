@@ -627,7 +627,7 @@ require("php-components/ad-carousel.php");
                                 <div class="meta mb-2 small" style="color: #f8f9fa; text-shadow: 1px 1px 2px rgba(0,0,0,0.7);">
   <strong><?= htmlspecialchars($server->game->name) ?></strong>
   —
-  Recent players <strong><?= $server->currentPlayers ?></strong> / Max <?= $server->maxPlayers ?>
+  Recent players <strong>?<?php //echo $server->currentPlayers ?></strong> / Max <?= $server->maxPlayers ?>
 </div>
 
 
