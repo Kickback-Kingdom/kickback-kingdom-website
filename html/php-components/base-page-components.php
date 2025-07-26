@@ -839,6 +839,9 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities<i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
+                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/servers.php"><i class="nav-icon fa-regular fa-server"></i> Community Servers <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/business-plan.php"><i class="nav-icon fa-regular fa-file-lines"></i> Business Plan <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
@@ -847,9 +850,15 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/guild-halls.php"><i class="nav-icon fa-solid fa-signs-post"></i> Guild Halls <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
+            <?php
+
+            if (Session::isAdmin())
+            {
+                ?>
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/admin-dashboard.php"><i class="nav-icon fa-solid fa-shield-halved"></i> Admin Dashboard <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
+            <?php } ?>
             <?php
 
             if (Session::isLoggedIn())
@@ -964,6 +973,8 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         <!--<li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges</a></li>-->
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs</a></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities</a></li>
+                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/servers.php"><i class="nav-icon fa-solid fa-server"></i> Community Servers</a></li>
+
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/guild-halls.php"><i class="nav-icon fa-solid fa-landmark"></i> Guild Halls</a></li>
                         <!--<li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/adventurers-guild.php"><i class="nav-icon fa-solid fa-person-hiking"></i> Adventurers Guild</a></li>

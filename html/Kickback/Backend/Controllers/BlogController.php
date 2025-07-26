@@ -108,7 +108,7 @@ class BlogController
             } 
             else 
             {
-                return (new Response(false, "The account is not a writer for the blog.", false));
+                return (new Response(true, "The account is not a writer for the blog.", false));
             }
         }
     }
@@ -144,7 +144,7 @@ class BlogController
             }
             else
             {
-                return (new Response(false, "The account is not a manager for the blog.", false));
+                return (new Response(true, "The account is not a manager for the blog.", false));
             }
         }
     }
