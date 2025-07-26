@@ -646,7 +646,7 @@ require("php-components/ad-carousel.php");
 
 
                                 <div class="server-card-footer mt-3">
-                                    <a href="<?= $server->gameUrl() ?>" class="btn btn-outline-light btn-sm">View Page</a>
+                                    <a href="<?= $server->gameUrl() ?>" class="btn btn-outline-light btn-sm">View Game</a>
 
                                     <?php if (Session::isLoggedIn()): ?>
                                         <?php if ($server->joinMethod !== 'manual'): ?>
