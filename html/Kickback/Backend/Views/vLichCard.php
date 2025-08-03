@@ -137,9 +137,15 @@ class vLichCard extends vRecordId
                 break;
 
             case 'content':
-                $content = new vContent();
-                $content->pageContent($value->pageContent ?? null);
-                $this->content = $content;
+                // pageContent might be `null` during some situations,
+                // such as API endpoint calls, where it isn't necessary
+                // to display content to the user (and so we wouldn't
+                // want to spend database I/O on retrieving the content).
+                if (isset($value->pageContent)) {
+                    $content = new vContent();
+                    $content->pageContent($value->pageContent);
+                    $this->content = $content;
+                }
                 break;
 
             case 'set':
@@ -236,13 +242,13 @@ class vLichCard extends vRecordId
     }
 
     /** @param array<string,mixed> $a */
-    private static function readStrInto(array $a, string $name, string &$dest) : bool
+    private static function readStrInto(array $a, string $name, ?string &$dest) : bool
     {
         return self::readStringInto($a, $name, $dest);
     }
 
     /** @param array<string,mixed> $a */
-    private static function readStringInto(array $a, string $name, string &$dest) : bool
+    private static function readStringInto(array $a, string $name, ?string &$dest) : bool
     {
         $val = self::readNullableString($a,$name);
         if ( !is_null($val) ) {
