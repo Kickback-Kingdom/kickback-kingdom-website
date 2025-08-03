@@ -68,8 +68,7 @@ class vLichCard extends vRecordId
         $this->item = null;
     }
 
-    /** @param array<string,mixed> $value */
-    private function hydrateArrayValue(string $key, array $value) : void
+    private function hydrateMixedValue(string $key, mixed $value) : void
     {
         // This is semantically equivalent to the code that this was refactored
         // from (during PHPStan bughunt), but I am not sure if this behavior
@@ -185,7 +184,7 @@ class vLichCard extends vRecordId
             if (is_object($value)) {
                 $this->hydrateObjectValue($key,$value);
             } else {
-                $this->hydrateArrayValue($key,$value);
+                $this->hydrateMixedValue($key,$value);
             }
         }
     }
