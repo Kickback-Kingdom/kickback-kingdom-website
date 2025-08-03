@@ -7,6 +7,7 @@ require("php-components/base-page-pull-active-account-info.php");
 use Kickback\Backend\Controllers\BlogController;
 use Kickback\Backend\Controllers\FeedController;
 use Kickback\Common\Version;
+use Kickback\Services\Session;
 
 if (isset($_GET['locator'])){
         
@@ -23,13 +24,14 @@ else{
     echo "no locator!";
 }
 
-if(!isset($thisBlog)) {
+if(isset($thisBlog)) {
     $isBlogManager = $thisBlog->isManager();
     $isBlogWriter = $thisBlog->isWriter();
 } else {
     $isBlogManager = false;
     $isBlogWriter = false;
 }
+
 
 ?>
 
@@ -58,7 +60,6 @@ if(!isset($thisBlog)) {
                 
                 
                 <?php 
-                
                 
                 $activePageName = $thisBlog->title;
                 require("php-components/base-page-breadcrumbs.php"); 
