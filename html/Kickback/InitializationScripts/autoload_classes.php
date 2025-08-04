@@ -190,11 +190,92 @@ function autoload_result_name(int $result) : string
     return "Invalid value: " . strval($result);
 }
 
-function autoloader_check_eponymous_trait_classes(
+function autoloader_decl_exists(string $decl_fqn) : bool
+{
+    autoload_debug_trace(fn() => "CALL: autoloader_decl_exists($decl_fqn)");
+    autoload_debug_indent_more();
+
+    $ce = class_exists($decl_fqn, false);
+    $ie = interface_exists($decl_fqn, false);
+    $te = trait_exists($decl_fqn, false);
+    $ee = enum_exists($decl_fqn, false);
+    $decl_exists = $ce || $ie || $te || $ee;
+    if ( true === AUTOLOAD_DO_DEBUG_ECHO() ) {
+        $sce = $ce ? 'true' : 'false';
+        $sie = $ie ? 'true' : 'false';
+        $ste = $te ? 'true' : 'false';
+        $see = $ee ? 'true' : 'false';
+        $sde = $decl_exists ? 'true' : 'false';
+        autoload_debug_trace(fn() => "class_exists?      $sce");
+        autoload_debug_trace(fn() => "interface_exists?  $sie");
+        autoload_debug_trace(fn() => "trait_exists?      $ste");
+        autoload_debug_trace(fn() => "enum_exists?       $see");
+        autoload_debug_trace(fn() => "------------------------");
+        autoload_debug_trace(fn() => "decl_exists?       $sde");
+    }
+    autoload_debug_trace(fn() => "CALL: autoloader_decl_exists()");
+    autoload_debug_indent_less();
+    autoload_debug_trace(fn() => "RETURN: $decl_exists from autoloader_decl_exists()");
+    return $decl_exists;
+}
+
+/**
+* @param callable&string $autoloader_check_eponymous_fn
+*/
+function autoloader_check_eponymous_something(
+    callable  $autoloader_check_eponymous_fn,
     string  &$class_unqual_name,
+    string  &$file_main_decl_fqn,
     string  &$class_base_path,
-    ?string &$class_file_path,
-    bool    &$use_require_once
+    ?string &$class_file_path
+) : void
+{
+    autoload_debug_trace(fn() => "CALL: $autoloader_check_eponymous_fn(");
+    autoload_debug_trace(fn() => "CALL:     class_unqual_name:   '$class_unqual_name',");
+    autoload_debug_trace(fn() => "CALL:     file_main_decl_fqn:  '$file_main_decl_fqn)',");
+    autoload_debug_trace(fn() => "CALL:     class_base_path:     '$class_base_path',");
+    autoload_debug_trace(fn() => "CALL:     class_file_path:     '".($class_file_path ?? 'null')."'");
+    autoload_debug_trace(fn() => "CALL: )");
+    autoload_debug_indent_more();
+
+    $exc = null;
+    try {
+        call_user_func_array($autoloader_check_eponymous_fn,
+            [&$class_unqual_name, &$file_main_decl_fqn, &$class_base_path, &$class_file_path]);
+    } catch( \Throwable $oops ) {
+        $exc = $oops;
+    }
+
+    autoload_debug_indent_less();
+    if ( true === AUTOLOAD_DO_DEBUG_ECHO() ) {
+        if ( is_null($exc) ) {
+            autoload_debug_trace(fn() => "RETURN: $autoloader_check_eponymous_fn(");
+            autoload_debug_trace(fn() => "RETURN:     class_unqual_name:   '$class_unqual_name',");
+            autoload_debug_trace(fn() => "RETURN:     file_main_decl_fqn:  '$file_main_decl_fqn',");
+            autoload_debug_trace(fn() => "RETURN:     class_base_path:     '$class_base_path',");
+            autoload_debug_trace(fn() => "RETURN:     class_file_path:     '".($class_file_path ?? 'null')."'");
+            autoload_debug_trace(fn() => "RETURN: )");
+        } else {
+            autoload_debug_trace(fn() => "THROW: an exception was thrown from");
+            autoload_debug_trace(fn() => "THROW:  $autoloader_check_eponymous_fn(");
+            autoload_debug_trace(fn() => "THROW:      class_unqual_name:   '$class_unqual_name',");
+            autoload_debug_trace(fn() => "THROW:      file_main_decl_fqn:  '$file_main_decl_fqn',");
+            autoload_debug_trace(fn() => "THROW:      class_base_path:     '$class_base_path',");
+            autoload_debug_trace(fn() => "THROW:      class_file_path:     '".($class_file_path ?? 'null')."'");
+            autoload_debug_trace(fn() => "THROW:  )");
+        }
+    }
+
+    if (!is_null($exc)) {
+        throw $exc;
+    }
+}
+
+function autoloader_check_eponymous_trait_classes_impl(
+    string  &$class_unqual_name,
+    string  &$file_main_decl_fqn,
+    string  &$class_base_path,
+    ?string &$class_file_path
 ) : void
 {
     // -- Eponymous trait classes. --
@@ -248,10 +329,10 @@ function autoloader_check_eponymous_trait_classes(
     }
     else // $class_base_path does NOT end in 'Trait'
     {
-        $stem_unqual_name  = $class_unqual_name;
-        $stem_base_path    = $class_base_path;
-        $trait_unqual_name = $class_unqual_name . 'Trait';
-        $trait_base_path   = $class_base_path . 'Trait';
+        $stem_unqual_name   = $class_unqual_name;
+        $stem_base_path     = $class_base_path;
+        $trait_unqual_name  = $class_unqual_name . 'Trait';
+        $trait_base_path    = $class_base_path . 'Trait';
     }
 
     $stem_file_path  = $stem_base_path . '.php';
@@ -262,240 +343,32 @@ function autoloader_check_eponymous_trait_classes(
 
     $symbol_is_class = ($class_unqual_name === $stem_unqual_name);
 
-    // In the below code, note that we only set `$use_require_once`
-    // to `true` when appropriate, but never to `false`.
-    // That's because it defaults to `false`, and we don't want to mess with it,
-    // because some other feature might set it to `true` before us.
-    // And it is always safer to be too aggressive about `require_once`
-    // than not aggressive enough.
-    if ( $symbol_is_class )
+    if ( $symbol_is_class && !$stem_file_exists && $trait_file_exists )
     {
-        // Base case:
-        // The symbol is a class and there is a file for it.
-        // There's also a file for its corresponding trait symbol.
-        // So if it autoloads, then it'll require that file
-        // instead of this one, so we don't need to `require_once`.
-        if ( $trait_file_exists && $stem_file_exists )
-        {
-            /** @phpstan-ignore booleanOr.rightAlwaysFalse */
-            $use_require_once  = $use_require_once || false;
-            return;
-        }
-        else
-        // Feature activation case:
-        // There is a trait file and not a class file, and
-        // the current symbol is the class.
-        // In this situation we must look for the class
-        // in its corresponding trait file.
-        // Since this implies a 2-to-1 relationship of
-        // loadable-entities-to-files, we need to use
-        // `require_once` to avoid duplicate loads.
-        /** @phpstan-ignore booleanNot.alwaysTrue */
-        if ( $trait_file_exists && !$stem_file_exists )
-        {
-            $class_unqual_name = $trait_unqual_name;
-            $class_base_path   = $trait_base_path;
-            $class_file_path   = $trait_file_path;
-
-            /** @phpstan-ignore booleanOr.rightAlwaysTrue */
-            $use_require_once  = $use_require_once || true;
-            return;
-        }
-        else
-        // Base case:
-        // There's no trait file and the class name doesn't have trait notation.
-        // In this situation, we do nothing, and just load the class as usual.
-        // This is the "we don't look for traits in class files" logic from
-        // the class's point of view:
-        // ```
-        // When handed `ClassNameTrait`, we do not look for `ClassName.php`;
-        // the point is to find classes that are subordinate to traits, not to
-        // find traits that are subordinate to classes.
-        // ```
-        // (e.g. we know there is a 1-to-1 entity-to-file relationship
-        // because there is no trait, and if a trait attempts to autoload
-        // it should cause an error per the definition of this feature)
-        if ( !$trait_file_exists && $stem_file_exists )
-        {
-            /** @phpstan-ignore booleanOr.rightAlwaysFalse */
-            $use_require_once  = $use_require_once || false;
-            return;
-        }
-        else
-        // Nothing was found.
-        // This will just always be an error,
-        // and we can just leave $class_base_path and $class_file_path alone
-        // to get later code to emit an error for us.
-        if ( !$trait_file_exists && !$stem_file_exists ) {
-            return;
-        }
+        $file_main_decl_fqn = $file_main_decl_fqn . 'Trait';
+        $class_unqual_name  = $trait_unqual_name;
+        $class_base_path    = $trait_base_path;
+        $class_file_path    = $trait_file_path;
     }
-    else // symbol is a trait
-    {
-        // Base case:
-        // The symbol is a trait and there is a file for it.
-        // There's also a file for its corresponding class symbol.
-        // So if it autoloads, then it'll require that file
-        // instead of this one, so we don't need to `require_once`.
-        if ( $trait_file_exists && $stem_file_exists )
-        {
-            /** @phpstan-ignore booleanOr.rightAlwaysFalse */
-            $use_require_once  = $use_require_once || false;
-            return;
-        }
-        else
-        // Cautionary case:
-        // IThe symbol is a trait and only a trait file exists.
-        // This could be a simple one-to-one, but it could ALSO
-        // be that an earlier/later autoload will encounter
-        // a class symbol that belongs in the same trait file.
-        // Just to be safe, we'll use `require_once` on this.
-        /** @phpstan-ignore booleanNot.alwaysTrue */
-        if ( $trait_file_exists && !$stem_file_exists )
-        {
-            /** @phpstan-ignore booleanOr.rightAlwaysTrue */
-            $use_require_once  = $use_require_once || true;
-            return;
-        }
-        else
-        // Restricted/Error case:
-        // As above:
-        // When handed `ClassNameTrait`, we do not look for `ClassName.php`;
-        // the point is to find classes that are subordinate to traits, not to
-        // find traits that are subordinate to classes.
-        if ( !$trait_file_exists && $stem_file_exists )
-        {
-            // We don't need to DO anything because if we leave
-            // $class_base_path and $class_file_path alone, then
-            // the later autoloader code will just emit an error for us.
-            return;
-        }
-        else
-        // Error case:
-        // Nothing was found.
-        // This will just always be an error,
-        // and we can just leave $class_base_path and $class_file_path alone
-        // to get later code to emit an error for us.
-        if ( !$trait_file_exists && !$stem_file_exists ) {
-            return;
-        }
-    }
-
-
-
-
-
-
-
-    // if (($first_try_exists  && !$second_try_exists)
-    // ||  (!$first_try_exists && $second_try_exists))
-    // {
-    //     $use_require_once = false;
-    // }
-    //
-    // if (!isset($class_file_path)
-    // && $enable_eponymous_trait_class
-    // &&  !str_ends_with($class_base_path, 'Trait') )
-    // {
-    //     $basename_stem = $input_basename;
-    //     $class_stem_path = $class_base_path;
-    //
-    //     $trait_base_path = $class_base_path . 'Trait';
-    //     $trait_file_path = $trait_base_path . '.php';
-    //
-    //     if (!file_exists($class_file_path)
-    //     &&   file_exists($trait_file_path))
-    //     {
-    //         $class_base_path = $trait_base_path;
-    //     }
-    //
-    //     // Check for 'ClassName.php' -> 'ClassNameTrait.php'
-    //     if ( str_ends_with($class_base_path, 'Trait') ) {
-    //         $basename_stem   = substr($input_basename,  0, -strlen('Trait'));
-    //         $class_base_path = substr($class_base_path, 0, -strlen('Trait'));
-    //     }
-    // }
-    //
-    //
-    //
-    // if ( str_ends_with($class_base_path, 'Trait') ) {
-    //     // NOTE: on this route, if both exist, we must prefer to load the trait.
-    //     // Remove the 'Trait' part of the file path.
-    //     $class_base_path = substr($class_base_path, 0, -strlen('Trait'));
-    //     $first_try_file_path  = $class_base_path . 'Trait.php';
-    //     $second_try_file_path = $class_base_path . '.php';
-    // } else {
-    //     // NOTE: on this route, if both exist, we must prefer to load the class.
-    //     $first_try_file_path  = $class_base_path . '.php';
-    //     $second_try_file_path = $class_base_path . 'Trait.php';
-    // }
-    // //autoload_debug_trace(fn() =>
-    // //echo(
-    // //    "\$class_base_path      = $class_base_path;\n".
-    // //    "\$first_try_file_path  = $first_try_file_path;\n".
-    // //    "\$second_try_file_path = $second_try_file_path;\n");
-    //
-    // $first_try_exists  = file_exists($first_try_file_path);
-    // $second_try_exists = file_exists($second_try_file_path);
-    //
-    // if ($first_try_exists && $second_try_exists) {
-    //     $use_require_once = false;
-    //     $class_file_path = $first_try_file_path;
-    // } else
-    // if ($first_try_exists && !$second_try_exists) {
-    //     $use_require_once = true;
-    //     $class_file_path = $first_try_file_path;
-    // } else
-    // if (!$first_try_exists && $second_try_exists) {
-    //     $use_require_once = true;
-    //     $class_file_path = $second_try_file_path;
-    // }
-    // // else {
-    // //     Just leave the $class_file_path alone.
-    // //     The autoloader was probably destined to emit an error at this point.
-    // //     And this way, it will make the error message contain the name
-    // //     of the class that was called, and not something else.
-    // // }
 }
 
-function autoloader_require_once_if_eponymous_subclasses_exist(
-    string  $class_unqual_name,
-    string  $class_base_path,
-    ?string $class_file_path,
-    bool    &$use_require_once
+function autoloader_check_eponymous_trait_classes(
+    string  &$class_unqual_name,
+    string  &$file_main_decl_fqn,
+    string  &$class_base_path,
+    ?string &$class_file_path
 ) : void
 {
-    $subclass_path_possibilities_glob = $class_base_path . '__*';
-    $subclass_paths =
-        glob($subclass_path_possibilities_glob, GLOB_NOESCAPE | GLOB_NOSORT);
-    if ( $subclass_paths === false || count($subclass_paths) === 0 )
-    {
-        // There are no subclasses.
-        // We can just use `require` as normal.
-        // (It defaults to `false`, and we don't want to mess with it,
-        // just in case some other feature sets it to `true` before us.)
-        /** @phpstan-ignore booleanOr.rightAlwaysFalse */
-        $use_require_once = $use_require_once || false;
-        return;
-    }
-    else
-    {
-        // Subclasses exist.
-        // Even though we aren't loading one of them, and we're loading
-        // the main class (of the group) instead, we still want to use
-        // `require_once`, because the file will also have that called
-        // on it before or after this autoloader call.
-        /** @phpstan-ignore booleanOr.rightAlwaysTrue */
-        $use_require_once = $use_require_once || true;
-        return;
-    }
+    autoloader_check_eponymous_something(
+        'Kickback\InitializationScripts\autoloader_check_eponymous_trait_classes_impl',
+            $class_unqual_name, $file_main_decl_fqn, $class_base_path, $class_file_path);
 }
 
-function autoloader_check_eponymous_subclasses(
+function autoloader_check_eponymous_subclasses_impl(
     string  &$class_unqual_name,
+    string  &$file_main_decl_fqn,
     string  &$class_base_path,
-    ?string &$class_file_path,
-    bool    &$use_require_once
+    ?string &$class_file_path
 ) : void
 {
     // -- Eponymous Subclasses --
@@ -514,26 +387,16 @@ function autoloader_check_eponymous_subclasses(
     $pos_subclass_sep = strpos($trimmed_name, '__');
     if ( $pos_subclass_sep === false )
     {
-        // Adjust for any `_` characters trimmed from the front.
-        $pos_subclass_sep += $nchars_trimmed_front;
-
         // Base case:
         // The name given was a normal class name with no subclass notation.
-        // However, there could still be subclasses, and because subclasses
-        // call `require_once`, we too need to call `require_once` IF
-        // such subclasses exist. (If they don't, this is all a no-op.)
-        autoloader_require_once_if_eponymous_subclasses_exist(
-            $class_unqual_name,
-            $class_base_path,
-            $class_file_path,
-            $use_require_once
-        );
         return;
     }
 
-    // Suppose ($class_unqual_name === 'FooBar__Qux')
-    // Then ($rpos_subclass_sep === 8)
-    $rpos_subclass_sep = strlen($class_unqual_name) - ($pos_subclass_sep + 2);
+    // Suppose ($class_unqual_name === '__FooBar__Qux__'),
+    // Then ($trimmed_name === 'FooBar__Qux__')  (strlen('FooBar__Qux__') === 13)
+    // And  ($pos_subclass_sep === 6)
+    // And  ($rpos_subclass_sep === (13 - 6) ===  7  === strlen('__Qux__'))
+    $rpos_subclass_sep = strlen($trimmed_name) - ($pos_subclass_sep);
 
     // Note that we don't use `try_` variables for
     // `$class_unqual_name` and `$class_base_path`.
@@ -549,6 +412,9 @@ function autoloader_check_eponymous_subclasses(
     // ex: 'FooBar__Qux' -> 'FooBar'
     $class_unqual_name = substr($class_unqual_name, 0, -$rpos_subclass_sep);
 
+    // ex: 'Kickback\Something\FooBar__Qux' -> 'Kickback\Something\FooBar'
+    $try_file_main_decl_fqn = substr($file_main_decl_fqn, 0, -$rpos_subclass_sep);
+
     // ex: '${project_dir}/html/Kickback/Something/FooBar__Qux' ->
     //     '${project_dir}/html/Kickback/Something/FooBar'
     $class_base_path   = substr($class_base_path, 0, -$rpos_subclass_sep);
@@ -559,15 +425,96 @@ function autoloader_check_eponymous_subclasses(
 
     // If we have a hit, actualize it!
     if ( file_exists($try_class_file_path ) ) {
-        $class_file_path   = $try_class_file_path;
+        $file_main_decl_fqn = $try_file_main_decl_fqn;
+        $class_file_path    = $try_class_file_path;
     }
 
-    /// As there are more than one classes in a single file,
-    /// we MUST use `require_once` instead of `require`.
-    /** @phpstan-ignore booleanOr.rightAlwaysTrue */
-    $use_require_once = $use_require_once || true;
+    return;
+}
+
+function autoloader_check_eponymous_subclasses(
+    string  &$class_unqual_name,
+    string  &$file_main_decl_fqn,
+    string  &$class_base_path,
+    ?string &$class_file_path
+) : void
+{
+    autoloader_check_eponymous_something(
+        'Kickback\InitializationScripts\autoloader_check_eponymous_subclasses_impl',
+            $class_unqual_name, $file_main_decl_fqn, $class_base_path, $class_file_path);
+}
+
+function autoloader_check_eponymous_interfaces_impl(
+    string  &$class_unqual_name,
+    string  &$file_main_decl_fqn,
+    string  &$class_base_path,
+    ?string &$class_file_path
+) : void
+{
+    // -- Eponymous Subclasses --
+    //
+    // Whenever we encounter a class/declaration whose file is prefixed
+    // with 'I' and followed by an uppercase letter, ex: `Kickback\Foo\Bar\IMyClass.php`,
+    // then we also check the not-interface version: `Kickback\Foo\Bar\MyClass.php`.
+
+    assert(2 <= strlen($class_unqual_name));
+    $first_ch  = $class_unqual_name[0];
+    $second_ch = $class_unqual_name[1];
+
+    if ( $first_ch !== 'I'
+    ||  ('a' <= $second_ch && $second_ch <= 'z'))
+    {
+        // Base case:
+        // The name given was a normal class name with no interface notation.
+        return;
+    }
+
+    // Note that we don't use `try_` variables for
+    // `$class_unqual_name` and `$class_base_path`.
+    // That's because we DID find interface notation in the input symbol,
+    // so we want these variables to reflect that when other
+    // features are analyzing them.
+    //
+    // So, if `$class_unqual_name` started as 'IFooBar',
+    // then `autoloader_check_eponymous_trait_classes(...)`
+    // (which must be called later in the sequence)
+    // should be operating on 'FooBar', not 'IFooBar'.
+
+    $replace_length = strlen($class_unqual_name);
+
+    // ex: 'IFooBar' -> 'FooBar'
+    $class_unqual_name = substr($class_unqual_name, 1);
+
+    // ex: 'Kickback\Something\IFooBar' -> 'Kickback\Something\FooBar'
+    $try_file_main_decl_fqn = substr($file_main_decl_fqn, 0, -$replace_length) . $class_unqual_name;
+
+    // ex: '${project_dir}/html/Kickback/Something/IFooBar' ->
+    //     '${project_dir}/html/Kickback/Something/FooBar'
+    $class_base_path   = substr($class_base_path, 0, -$replace_length) . $class_unqual_name;
+
+    // ex: '${project_dir}/html/Kickback/Something/FooBar' ->
+    //     '${project_dir}/html/Kickback/Something/FooBar.php'
+    $try_class_file_path   = $class_base_path . '.php';
+
+    // If we have a hit, actualize it!
+    if ( file_exists($try_class_file_path ) ) {
+        $file_main_decl_fqn = $try_file_main_decl_fqn;
+        $class_file_path    = $try_class_file_path;
+    }
 
     return;
+}
+
+function autoloader_check_eponymous_interfaces(
+    string  &$class_unqual_name,
+    string  &$file_main_decl_fqn,
+    string  &$class_base_path,
+    ?string &$class_file_path
+) : void
+{
+    autoloader_check_eponymous_something(
+        'Kickback\InitializationScripts\autoloader_check_eponymous_interfaces_impl',
+            $class_unqual_name, $file_main_decl_fqn, $class_base_path, $class_file_path);
 }
 
 /**
@@ -643,10 +590,31 @@ function generic_autoload_function_impl(string $class_fqn, string $namespace_to_
     // the autoloader, hence the `starting_*` variables.)
 
     // ex: 'Something\ClassName' -> 'ClassName'
-    $starting_class_unqual_name = strrchr($relative_class_name,'\\');
-    if ( $starting_class_unqual_name === false ) {
+    $unqual_pos = strrpos($relative_class_name,'\\');
+    if ( $unqual_pos === false ) {
+        $unqual_pos = 0;
+    } else {
+        $unqual_pos++; // remove the leading '\'
+    }
+    $starting_class_unqual_name = substr($relative_class_name, $unqual_pos);
+    if ( 0 === strlen($starting_class_unqual_name) ) {
         $starting_class_unqual_name = $relative_class_name;
     }
+
+    // This will normally be the class's Fully Qualified Name.
+    // BUT.
+    // If one of the special loading features (ex: eponymous trait classes)
+    // causes a file to be loaded that isn't a direct 1-to-1 translation
+    // of the class's FQN, then this might differ.
+    //
+    // This is helpful for knowing if our target file has been loaded
+    // already or not, which allows us to avoid using `require_once`
+    // by instead using the current environment's declaration state.
+    //
+    // (We don't want to use `require_once` because it might use extra
+    // memory to remember what was "require'd" or not. And we already
+    // have that information effectively stored in our declaration state.)
+    $starting_file_main_decl_fqn = $class_fqn;
 
     // Replace the namespace prefix with the base directory, replace namespace
     // separators with directory separators in the relative class name, append
@@ -663,42 +631,22 @@ function generic_autoload_function_impl(string $class_fqn, string $namespace_to_
     // Mirror these into mutable variables that may change
     // if the "starting" class doesn't exist and bespoke
     // features find a proper successor.
-    $class_unqual_name = $starting_class_unqual_name;
-    $class_base_path   = $starting_class_base_path;
+    $class_unqual_name  = $starting_class_unqual_name;
+    $file_main_decl_fqn = $starting_file_main_decl_fqn;
+    $class_base_path    = $starting_class_base_path;
     $class_file_path = null;
     if ( file_exists($starting_class_file_path) ) {
         $class_file_path = $starting_class_file_path;
     }
 
-    // We avoid using `require_once` whenever possible:
-    //
-    // Normally autoloading is deterministic, and so `require` will only be
-    // called once anyways.
-    //
-    // AND, it's possible that `require` will be more performant than `require_once`,
-    // because `require_once` requires PHP to maintain a list of `require_once`
-    // files that have already been included. Then it would use a lookup
-    // (ex: hash) on newly seen symbols to know if they were already included or not.
-    // Meanwhile, `require` doesn't need an internal list, and it doesn't
-    // do any per-encounter lookups. This optimization might not matter, BUT,
-    // it's usually a good idea to avoid using any more memory than we need to.
-    //
-    // So we want to use `require` as much as possible.
-    //
-    // But if two different symbols load the same file, then it is possible
-    // for that file to be included multiple times, which is probably A Bad Idea.
-    //
-    // So in situations where duplicate loading _might actually happen_,
-    // we will use `require_once` instead of `require`.
-    //
-    $use_require_once = false;
-
     // Kickback-specific features:
     if ( $namespace_to_try === 'Kickback' ) {
         $enable_eponymous_subclasses  = true;
+        $enable_eponymous_interfaces  = true;
         $enable_eponymous_trait_class = true;
     } else {
         $enable_eponymous_subclasses  = false;
+        $enable_eponymous_interfaces  = false;
         $enable_eponymous_trait_class = false;
     }
 
@@ -711,18 +659,27 @@ function generic_autoload_function_impl(string $class_fqn, string $namespace_to_
     if ( $enable_eponymous_subclasses ) {
         autoloader_check_eponymous_subclasses(
             $class_unqual_name,
+            $file_main_decl_fqn,
             $class_base_path,
-            $class_file_path,
-            $use_require_once
+            $class_file_path
+        );
+    }
+
+    if ( $enable_eponymous_interfaces ) {
+        autoloader_check_eponymous_interfaces(
+            $class_unqual_name,
+            $file_main_decl_fqn,
+            $class_base_path,
+            $class_file_path
         );
     }
 
     if ( $enable_eponymous_trait_class ) {
         autoloader_check_eponymous_trait_classes(
             $class_unqual_name,
+            $file_main_decl_fqn,
             $class_base_path,
-            $class_file_path,
-            $use_require_once
+            $class_file_path
         );
     }
 
@@ -736,9 +693,10 @@ function generic_autoload_function_impl(string $class_fqn, string $namespace_to_
     // `$starting_class_file_path`.
     //
     if (!isset($class_file_path)) {
-        $class_unqual_name = $starting_class_unqual_name;
-        $class_base_path   = $starting_class_base_path;
-        $class_file_path   = $starting_class_file_path;
+        $class_unqual_name  = $starting_class_unqual_name;
+        $file_main_decl_fqn = $starting_file_main_decl_fqn;
+        $class_base_path    = $starting_class_base_path;
+        $class_file_path    = $starting_class_file_path;
     }
 
     // Modification:
@@ -762,10 +720,41 @@ function generic_autoload_function_impl(string $class_fqn, string $namespace_to_
         // Analyser/PHPStan/Tool context.
         if (file_exists($class_file_path))
         {
-            if (!$use_require_once) {
+            // Checking autoloader_decl_exists allows us to avoid calling `require`
+            // if the file containing our class/interface/trait/whatever has
+            // already been pulled in by a different class/interface/trait/whatever.
+            //
+            // The logic goes: If the main class/interface/etc in that file
+            // is already declared ("exists"), then we have already
+            // loaded that file.
+            //
+            // That said, it might not be necessary.
+            // Testing has suggested this behavior:
+            // * Code needs declaration of class FooBar__Qux.
+            // * Autoloader called to load FooBar__Qux.
+            // * It finds file FooBar.php and uses `require 'FooBar.php'`
+            // * `require 'FooBar.php'` declares both `FooBar` and `FooBar__Qux`.
+            // * Code needs declaration of class FooBar.
+            // * Autoloader is NOT called. (Like, we don't even get to the below check).
+            //
+            // This suggests that PHP is already checking for the existence
+            // of `FooBar` before it even calls the autoloader, and because it
+            // exists, it doesn't have a reason to call the autoloader in the
+            // first place.
+            //
+            // So we could probably just use `require $class_file_path;`
+            // below without `if (!autoloader_decl_exists($file_main_decl_fqn)) {...}`
+            // and everything would be fine.
+            //
+            // Right now, the if-statement is just being left in for paranoia reasons.
+            //
+            // (Ditto for the other `require` operator in
+            // the "Web and CLI contexts" branch of the logic.)
+            //
+            if (!autoloader_decl_exists($file_main_decl_fqn)) {
+                autoload_debug_trace(fn() => "Begin `require $class_file_path`");
                 require $class_file_path;
-            } else {
-                require_once $class_file_path;
+                autoload_debug_trace(fn() => "End `require $class_file_path`");
             }
         }
         else
@@ -779,10 +768,10 @@ function generic_autoload_function_impl(string $class_fqn, string $namespace_to_
         // Ex: Web and CLI contexts
         // Attempt to include the conventional class path,
         // otherwise fail.
-        if (!$use_require_once) {
+        if (!autoloader_decl_exists($file_main_decl_fqn)) {
+            autoload_debug_trace(fn() => "Begin `require $class_file_path`");
             require $class_file_path;
-        } else {
-            require_once $class_file_path;
+            autoload_debug_trace(fn() => "End `require $class_file_path`");
         }
     }
 

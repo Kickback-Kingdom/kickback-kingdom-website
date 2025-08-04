@@ -47,7 +47,6 @@ class LootController
         // Get the number of affected rows *after* execution
         $affectedRows = mysqli_stmt_affected_rows($stmt);
         mysqli_stmt_close($stmt);
-    
         
         return new Response(true, "Loot nicknamed successfully.");
     }
@@ -633,9 +632,12 @@ class LootController
         return self::giveLoot($account_id, new vRecordId('', 16), $date);
     }
 
-    public static function giveLoot(vRecordId $account_id, vRecordId $item_id, ?vDateTime $dateObtained = null) : Response
+    public static function giveLoot(vRecordId $account_id,vRecordId $item_id, ?vDateTime $dateObtained = null, ?\mysqli $conn = null) : Response
     {
-        $conn = Database::getConnection();
+        if ($conn === null) {
+            $conn = Database::getConnection();
+        }
+    
 
         // If no date given, use current UTC datetime
         if ($dateObtained === null) {
@@ -790,6 +792,57 @@ class LootController
 
         return $lootStack;
     }
+
+    public static function countWropUsedByNewAccounts(int $accountId): int
+    {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT COUNT(*)
+                FROM loot
+                JOIN account ON account.passage_id = loot.Id
+                WHERE loot.item_id = 14
+                AND loot.account_id = ?
+                AND account.Id != loot.account_id";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+
+        $stmt->bind_param("i", $accountId);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+    public static function countWropUsedByNewAccountsBetween(int $accountId, string $startDate, string $endDate): int
+    {
+        $conn = Database::getConnection();
+    
+        $sql = "SELECT COUNT(*)
+                FROM loot
+                JOIN account ON account.passage_id = loot.Id
+                WHERE loot.item_id = 14
+                  AND loot.account_id = ?
+                  AND account.Id != loot.account_id
+                  AND account.DateCreated BETWEEN ? AND ?";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+    
+        $stmt->bind_param("iss", $accountId, $startDate, $endDate);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+    
+        return (int)$count;
+    }
+    
 
     private static function convertToLichRow(array $row): array {
         return [

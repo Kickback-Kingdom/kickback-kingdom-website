@@ -18,6 +18,9 @@ class vLichSet extends vRecordId
 
     function __construct(string $ctime = '', int $crand = -1)
     {
+        $this->name = '';
+        $this->locator = '';
+        $this->description = '';
         parent::__construct($ctime, $crand);
     }
 

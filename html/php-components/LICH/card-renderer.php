@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+
+use Kickback\Common\Version;
 ?>
 <!-- Save Progress Modal -->
 <div class="modal fade" id="saveProgressModal" tabindex="-1" aria-labelledby="saveProgressModalLabel" aria-hidden="true">
@@ -825,7 +827,7 @@ function saveCardData(cardData) {
 
     const params = new URLSearchParams(data);
 
-    return fetch('/api/v1/lich/save-card.php', {
+    return fetch('<?= Version::formatUrl("/api/v1/lich/save-card.php"); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -935,7 +937,7 @@ function linkCardImageToData(lichCardData) {
 
     const params = new URLSearchParams(data);
 
-    return fetch('/api/v1/lich/link-card-image.php', {
+    return fetch('<?= Version::formatUrl("/api/v1/lich/link-card-image.php"); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -957,7 +959,7 @@ function uploadCanvas(canvas, lichCardData)
     formData.append('sessionToken', "<?php echo $_SESSION['sessionToken']; ?>");
 
     // Make POST request to the upload API
-    return fetch('/api/v1/media/upload.php', {
+    return fetch('<?= Version::formatUrl("/api/v1/media/upload.php"); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -1125,7 +1127,7 @@ function uploadBase64Image(base64Image, options = {}) {
         ...options, // Additional parameters
     });
 
-    return fetch("/api/v1/media/upload.php", {
+    return fetch('<?= Version::formatUrl("/api/v1/media/upload.php"); ?>', {
         method: "POST",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",

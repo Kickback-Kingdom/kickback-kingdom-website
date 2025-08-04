@@ -467,7 +467,56 @@ GROUP BY a.country;
         return new Response(true, "Map data retrieved successfully", $mapData);
     }
 
-    
+    public static function countPageVisits(int $accountId, string $pageIdPattern): int
+    {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT COUNT(*) FROM analytic 
+                WHERE `account_id` = ? 
+                AND `group` = 'Website Interaction' 
+                AND `action` = 'Page Visit' 
+                AND `result` LIKE ?";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+
+        $stmt->bind_param("is", $accountId, $pageIdPattern);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+
+    public static function countPageVisitsBetween(int $accountId, string $pageIdPattern, string $startDate, string $endDate): int
+    {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT COUNT(*) FROM analytic 
+                WHERE `account_id` = ? 
+                AND `group` = 'Website Interaction' 
+                AND `action` = 'Page Visit' 
+                AND `result` LIKE ? 
+                AND `ctime` BETWEEN ? AND ?";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+
+        $stmt->bind_param("isss", $accountId, $pageIdPattern, $startDate, $endDate);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+
+
 }
 
 ?>

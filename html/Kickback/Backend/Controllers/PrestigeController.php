@@ -153,5 +153,48 @@ class PrestigeController
 
         return $prestigeReview;
     }
+    
+    public static function countPrestigeGiven(int $accountId): int
+    {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT COUNT(*) FROM prestige 
+                WHERE account_id_from = ?";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+
+        $stmt->bind_param("i", $accountId);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+
+    public static function countPrestigeGivenBetween(int $accountId, string $startDate, string $endDate): int
+    {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT COUNT(*) FROM prestige 
+                WHERE account_id_from = ? AND date BETWEEN ? AND ?";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+
+        $stmt->bind_param("iss", $accountId, $startDate, $endDate);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+
 }
 ?>

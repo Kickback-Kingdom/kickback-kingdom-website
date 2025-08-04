@@ -18,6 +18,12 @@ class vMedia extends vRecordId
 
     function __construct(string $ctime = '', int $crand = -1)
     {
+        $this->name         = '';
+        $this->desc         = '';
+        $this->extension    = '';
+        $this->directory    = '';
+        $this->mediaPath    = '';
+        $this->url          = '';
         parent::__construct($ctime, $crand);
 
         if ($crand == 221)
@@ -41,6 +47,12 @@ class vMedia extends vRecordId
     {
         $this->mediaPath = $path;
         $this->url = $this->getFullPath();
+    }
+    
+    public static function fromUrl(string $url): vMedia {
+        $media = new vMedia();
+        $media->setFullPath($url);
+        return $media;
     }
     
     public static function defaultIcon() : vMedia {

@@ -3,27 +3,21 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Primitives;
 
+use Kickback\Common\Exceptions\IKickbackThrowable;
+use Kickback\Common\Primitives\CategoriesOfCallables;
+
 /**
 * Miscellaneous functions that do useful things with PHP metadata (ex: Reflection API).
 *
-* @phpstan-type  kkdebug_frame_a  array{
-*       function? : string,
-*       line?     : int,
-*       file?     : string,
-*       class?    : string,
-*       object?   : object,
-*       type?     : string,
-*       args?     : array<int|string, mixed>
-*   }
-*
-* @phpstan-type  kkdebug_backtrace_a  kkdebug_frame_a[]
+* @phpstan-import-type  kkdebug_frame_paranoid_a      from IKickbackThrowable
+* @phpstan-import-type  kkdebug_backtrace_paranoid_a  from IKickbackThrowable
 */
 final class Meta
 {
     use \Kickback\Common\Traits\StaticClassTrait;
 
     /**
-    * @param kkdebug_backtrace_a $trace
+    * @param kkdebug_backtrace_paranoid_a $trace
     */
     private static function handle_outermost_caller_name_corner_case(array $trace, int $frame_number) : string
     {
@@ -49,22 +43,27 @@ final class Meta
     // This function is factored out so that we can specify, in phpstan,
     // the array type returned by the `\debug_backtrace` function.
     /**
-    * @param kkdebug_backtrace_a $trace
-    * @param ?class-string       $home_class_fqn
+    * @param kkdebug_backtrace_paranoid_a           $trace
+    * @param class-string|array<class-string>|null  $home_class_fqns
     */
-    private static function outermost_caller_name_within_class_impl(array $trace, ?string $home_class_fqn) : string
+    private static function outermost_caller_name_within_class_impl(array $trace, string|array|null $home_class_fqns, ?string &$caller_class_name = null) : string
     {
+        $caller_class_name = null;
         $frame_count = count($trace);
         if ($frame_count <= 1) {
             return '{top-level script}';
         }
 
-        if (!isset($home_class_fqn)) {
+        if (!isset($home_class_fqns)) {
             if (array_key_exists('class',$trace[1])) {
-                $home_class_fqn = $trace[1]['class'];
+                $home_class_fqns = [$trace[1]['class']];
             } else {
                 return self::handle_outermost_caller_name_corner_case($trace, 1);
             }
+        }
+
+        if (!is_array($home_class_fqns)) {
+            $home_class_fqns = [$home_class_fqns];
         }
 
         // Initial scan for home class.
@@ -75,7 +74,7 @@ final class Meta
             if (!array_key_exists('class', $frame)) {
                 continue; // Not even in a class.
             }
-            if (0 === strcmp($home_class_fqn, $frame['class'])) {
+            if (in_array($frame['class'], $home_class_fqns, true)) {
                 $start_at = $frame_num;
                 break;
             }
@@ -100,7 +99,7 @@ final class Meta
             }
 
             if (!array_key_exists('class', $frame)
-            ||  0 !== strcmp($home_class_fqn, $frame['class'])
+            ||  !in_array($frame['class'], $home_class_fqns, true)
             ||  str_starts_with($func_name, 'unittest_'))
             {
                 $end_at = $frame_num-1;
@@ -120,30 +119,33 @@ final class Meta
             $end_at--;
         }
 
-        if ( array_key_exists('function',$trace[$end_at]) ) {
-            return $trace[$end_at]['function'];
+        $end_frame = $trace[$end_at];
+        if ( array_key_exists('function',$end_frame) ) {
+            if ( array_key_exists('class',$end_frame) ) {
+                $caller_class_name = $end_frame['class'];
+            }
+            return $end_frame['function'];
         } else {
             return self::handle_outermost_caller_name_corner_case($trace, $end_at);
         }
     }
 
-    //TODO: Allow `$home_class_fqn` to be an _array of strings_.
-    // This would then allow larger (multiple-class) systems to be covered.
+    // TODO: innermost_caller_name_outside_class
     /**
     * Uses `debug_backtrace` to determine what function/method was called
     * when the class was first entered.
     *
-    * The process, if `$home_class_fqn` is not passed:
+    * The process, if `$home_class_fqns` is not passed:
     * * Call `debug_backtrace`
     * * Start at index 1 in the backtrace. (Index 0 is just `outermost_caller_name_within_class`, which we ignore.)
     * * Note the class name at index 1.
     * * Find the next index with a different class name, call it `$outside_index`
     * * Return the (unqualified) function name at the `$outside_index - 1`.
     *
-    * The process, if `$home_class_fqn` is passed:
+    * The process, if `$home_class_fqns` is passed:
     * * Call `debug_backtrace`
-    * * Scan (starting at index 1) until the index where the function's class's name equals `$home_class_fqn`.
-    * * Find the next index with a different class name, call it `$outside_index`
+    * * Scan (starting at index 1) until the index where the function's class's name equals `(string)$home_class_fqns` or is in `(array)$home_class_fqns`.
+    * * Find the next index with a different class name (that is NOT in `(array)`$home_class_fqns`), call it `$outside_index`
     * * Return the (unqualified) function name at the `$outside_index - 1`.
     *
     * Notable exception to the above: anything where the function name begins
@@ -157,7 +159,7 @@ final class Meta
     *
     * If this is called from a class or location that is outside of the
     * "interface" or "API" class because it was called by that class, then
-    * passing that interfacing class's name into the `$home_class_fqn` parameter
+    * passing that interfacing class's name into the `$home_class_fqns` parameter
     * will allow the scanner to "skip" to that class.
     *
     * Caveats:
@@ -170,13 +172,13 @@ final class Meta
     * the scanner will still successfully find the "edge" of the class's
     * callstack.
     *
-    *
-    * @param class-string $home_class_fqn
+    * @param class-string|array<class-string>|null  $home_class_fqns
+    * @param ?class-string                          $caller_class_name
     */
-    public static function outermost_caller_name_within_class(string $home_class_fqn = null) : string
+    public static function outermost_caller_name_within_class(string|array|null $home_class_fqns = null, ?string &$caller_class_name = null) : string
     {
         $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-        return self::outermost_caller_name_within_class_impl($trace, $home_class_fqn);
+        return self::outermost_caller_name_within_class_impl($trace, $home_class_fqns, $caller_class_name);
     }
 
     private static function unittest_outermost_caller_name_within_class() : void
@@ -212,6 +214,57 @@ final class Meta
     private static function test_function_for_outermost_caller_unittest_02() : string
     {
         return self::test_function_for_outermost_caller_unittest_01();
+    }
+
+    public static function callable_to_unique_name(callable $callable) : string
+    {
+        // Thanks goes to StackOverflow poster `Bigdot` for enumerating the
+        // possible `callable` types and how one might stringize them:
+        // https://stackoverflow.com/a/68113840
+        //
+        // Thanks goes to StackOverflow poster `Shizzen83` for describing
+        // how to acquire more information from Closure objects:
+        // https://stackoverflow.com/a/62722371
+        //
+        $category = CategoriesOfCallables::from_callable($callable);
+
+        switch ($category)
+        {
+            case CategoriesOfCallables::STATIC_AS_STRING:
+                assert(is_string($callable));
+                return $callable;
+            case CategoriesOfCallables::FUNCTION_AS_STRING:
+                assert(is_string($callable));
+                return $callable;
+            case CategoriesOfCallables::METHOD_AS_ARRAY:
+                assert(is_array($callable));
+                return get_class($callable[0])  . '->' . $callable[1];
+            case CategoriesOfCallables::STATIC_AS_ARRAY:
+                assert(is_array($callable));
+                return $callable[0]  . '::' . $callable[1];
+            case CategoriesOfCallables::CLOSURE_INSTANCE:
+                assert($callable instanceof \Closure);
+                // TODO: At least cache the ReflectionFunction, if not others too.
+                $reflectionClosure = new \ReflectionFunction($callable);
+                $func_name = $reflectionClosure->getName();
+                $class_refl = $reflectionClosure->getClosureScopeClass();
+                if ( !isset($class_refl) ) {
+                    return $func_name;
+                }
+                $class_fqn = $class_refl->getName();
+                if ( $reflectionClosure->isStatic() ) {
+                    return $class_fqn . '::' . $func_name;
+                } else {
+                    return $class_fqn . '->' . $func_name;
+                }
+            case CategoriesOfCallables::INVOKABLE_OBJECT:
+                assert(is_object($callable));
+                return get_class($callable);
+            default:
+                //assert($category === CategoriesOfCallables::UNKNOWN);
+                throw new \UnexpectedValueException(
+                    'Could not generate unique name for unknown callback.');
+        }
     }
 
     public static function unittests() : void

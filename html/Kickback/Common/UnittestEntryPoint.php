@@ -20,6 +20,7 @@ class UnittestEntryPoint
         // * Alphabetic when packages are peers
 
         echo("===== Running all ".__NAMESPACE__." unittests =====\n\n");
+        \Kickback\Common\Algorithms\Freelist::unittests(); // Dependency-free, for now?
         \Kickback\Common\Primitives\Meta::unittests();
         \Kickback\Common\Primitives\Arr::unittests(); // May depend on Common\Primitives\Meta in the future?
         \Kickback\Common\Primitives\Mixed_::unittests(); // Depends on Common\Primitives\Meta.
