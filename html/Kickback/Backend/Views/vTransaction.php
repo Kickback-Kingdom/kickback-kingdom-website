@@ -11,14 +11,20 @@ class vTransaction extends vRecordId
     public bool $void;
     public array $prices;
 
-    public function __construct(string $ctime = '', int $crand ='', ?string $description = null, bool $complete = 0, bool $void = 0, string $pricesJson = [])
+    public function __construct(
+        string $ctime = '', 
+        int $crand = -1, 
+        ?string $description = null, 
+        bool $complete = false, 
+        bool $void = false, 
+        array $prices = [])
     {
         parent::__construct($ctime, $crand);
 
         $this->description = $description;
         $this->complete = $complete;
         $this->void = $void;
-        $this->prices = json_decode($pricesJson);
+        $this->prices = $prices;
     }
 
     private function pricesJsonToObjectArray(string $pricesJson)

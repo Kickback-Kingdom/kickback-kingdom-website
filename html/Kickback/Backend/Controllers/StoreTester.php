@@ -4,31 +4,189 @@ declare(strict_types =1);
 
 namespace Kickback\Backend\Controllers;
 
+use DateTime;
 use \Kickback\Backend\Models\Account;
 use \Kickback\Backend\Models\RecordId;
 use \Kickback\Backend\Models\Store;
 use \Kickback\Services\Database;
 
 use \Exception;
+use Kickback\Backend\Models\Price;
 use Kickback\Backend\Models\Product;
 use Kickback\Backend\Views\vAccount;
+use Kickback\Backend\Views\vCart;
 use Kickback\Backend\Views\vRecordId;
+use React\Dns\Model\Record;
 
 class StoreTester
 {
     public static function testStoreController()
     {
+        StoreController::runUnitTests();
+
         $database = static::createTestEnviroment();
 
-        $storeController = new StoreController;
+        try
+        {
+            $storeController = new StoreController;
 
-        $testStore = static::testAddStore($storeController);
-        static::testUpsertProduct_Insert($testStore);
-        static::testUpsertProduct_Update($testStore);
-        static::testRemoveProduct($testStore);
+            $testStore = static::testAddStore($storeController);
+            $prices = static::testSelectOrInsertPrices_Insert($testStore);
+            $prices = static::convertPriceViewArrayToModels($prices);
+            static::testUpsertProduct_Insert($testStore, $prices);
+            $product = static::testUpsertProduct_Update($testStore, $prices);
 
-        static::cleanupTestEnviroment($database);
+            $cart = static::testGetCartForAccount($testStore);
+
+            $link = static::testAddProductToCart($product, $cart);
+            static::testRemoveProductFromCart($link);
+
+            static::testRemoveProduct($testStore, $product);
+        }
+        catch(Exception $e)
+        {
+            //static::cleanupTestEnviroment($database);
+            throw $e;
+        }
+        finally
+        {
+            //static::cleanupTestEnviroment($database);
+        }
     }  
+
+    private static function buyerAccountUsername() : string
+    {
+        return "JoeDoe";
+    }
+
+    public static function testRemoveProductFromCart($link) : void
+    {
+        try
+        {
+            $resp = StoreController::removeProductFromCart($link);
+
+            if($resp->success)
+            {
+                $testSql = "SELECT removed FROM cart_product_link WHERE ctime = ? AND crand = ?;";
+
+                $result = database::executeSqlQuery($testSql, [$link->ctime, $link->crand]);
+
+                if($result->num_rows == 1)
+                {
+                    $row = $result->fetch_assoc();
+                    $removed = boolval($row["removed"]);
+
+                    if(!$removed)
+                    {
+                        $json = json_encode($row);
+                        throw new Exception("COMPONENT TEST FAILED : product was not removed while testing removeProductFromCart : $json");
+                    }
+                }
+                elseif($result->num_rows <= 0)
+                {
+                    $json = json_encode($link);
+                    throw new Exception("COMPONENT TEST FAILED : No rows returned for matching link while testing removeProductFromCart : $json");
+                }
+                else
+                {
+                    $json = json_encode($link);
+                    throw new Exception("COMPONENT TEST FAILED : More than one row returned for mathcing link while testing removeProductFromCart : $json");
+                }
+            }
+            else
+            {
+                throw new Exception("COMPONENT TEST FAILED : $resp->message");
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("COMPONENT TEST FAILED : Exception caught while testing removeProductFromCart : $e");
+        }
+        
+    }
+
+    public static function testAddProductToCart(Product $testProduct, vCart $testCart) : vRecordId
+    {
+        
+
+        try
+        {
+            $addProductToCartResp = StoreController::addProductToCart($testProduct, $testCart);
+
+            if($addProductToCartResp->success)
+            {
+                if($addProductToCartResp->data)
+                {
+                    $checkSql = "SELECT * FROM v_cart_product_link WHERE product_ctime = ? AND product_crand = ? AND cart_ctime = ? AND cart_crand = ?";
+
+                    $checkParams = [$testProduct->ctime, $testProduct->crand, $testCart->ctime, $testCart->crand];
+
+                    $checkResult = database::executeSqlQuery($checkSql, $checkParams);
+
+                    if($checkResult)
+                    {
+                        if($checkResult->num_rows == 1)
+                        {
+                            $link = StoreController::cartProductLinkToView($checkResult->fetch_assoc());
+                            
+                            if($link->product->ctime != $testProduct->ctime 
+                            || $link->product->crand != $testProduct->crand 
+                            || $link->cart->ctime != $testCart->ctime 
+                            || $link->cart->crand != $testCart->crand)
+                            {
+                                $linkIdString = "PRODUCT : ActualCtime = '".$link->product->ctime."' ExpectedCtime = '$testProduct->ctime' ActualCrand = '".$link->product->crand."' ExpectedCrand = '$testProduct->crand' | CART : ActualCtime = '".$link->cart->ctime."' ExpectedCtime = '$testCart->ctime' ActualCrand = '".$link->cart->crand."' ExpectedCrand = '$testCart->crand'";
+
+                                throw new Exception("COMPONENT TEST FAILED | added link did not match test product and cart provided to add product to cart method : $linkIdString");
+                            }
+
+                            return $link;
+                        }
+                        elseif($checkResult->num_rows > 1)
+                        {
+                            throw new Exception("COMPONENT TEST FAILED | multiple links to added product were found when 1 was expected");
+                        }
+                        else
+                        {
+                            throw new Exception("COMPONENT TEST FAILED | no links to added product were found.");
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception("Failed to check add product to cart");
+                    }
+                }
+                else
+                {
+                    throw new Exception("COMPONENT TEST FAILED | product had no stock for test : $addProductToCartResp->message");
+                }
+            }
+            else
+            {
+                throw new Exception("COMPONENT TEST FAILED | failed to add product to cart : $addProductToCartResp->message");
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("COMPONENT TEST FAILED | exception caught while testing add product to cart : $e");
+        }
+        
+    }
+    
+    public static function testGetCartForAccount(vRecordId $storeId) : vCart
+    {
+        $cartOwner = static::getTestAccount(static::buyerAccountUsername());
+
+
+        $cart = StoreController::getCartForAccount($cartOwner, $storeId);
+
+        if(!$cart->success)
+        {
+            $json = json_encode($cart);
+            throw new Exception("COMPONENT TEST FAILED : getCartForAccount : $json");
+        }
+
+        return $cart->data;
+    }
 
     public static function testAddStore(StoreController $storeController) : store
     {
@@ -46,15 +204,25 @@ class StoreTester
         return $store;
     }
 
-    private static function testUpsertProduct_Update(vRecordId $store) : void
+    private static function testUpsertProduct_Update(vRecordId $store, array $prices) : product
     {
         try
         {
-            $product = static::returnTestProduct($store);
+            $product = static::returnTestProduct($store, $prices);
 
-            StoreController::upsertProduct($product);
+            $insertResp = StoreController::upsertProduct($product);
+
+            if(!$insertResp->success)
+            {
+                throw new Exception("COMPONENT TEST FAILED | failed to insert product : $insertResp->message");
+            }
 
             $getProduct = StoreController::getProductById($product->getVRecordId());
+
+            if(!$getProduct->success)
+            {
+                throw new Exception("COMPONENT TEST FAILED | failed to get product for testing upsert product : $getProduct->message");
+            }
 
             if($getProduct->data->locator != "Test product locator")
             {
@@ -71,6 +239,8 @@ class StoreTester
             {
                 throw new Exception("Locator did not match expected after product was updated. Expected : '$product->locator' | Actual : '$getProduct->data->locator'");
             }
+
+            return $product;
         }
         catch(Exception $e)
         {
@@ -78,13 +248,31 @@ class StoreTester
         }
     }
 
-    private static function testUpsertProduct_Insert(vRecordId $store) : void
+    private static function convertPriceViewArrayToModels(array $priceViews) : array
+    {
+        $priceModels = [];
+
+        foreach($priceViews as $view)
+        {
+            $model = new Price($view->amount, $view->currencyCode, $view->item);
+
+            array_push($priceModels, $model);
+        }
+
+        return $priceModels;
+    }
+
+    private static function testUpsertProduct_Insert(vRecordId $store, array $prices) : Product
     {
         try
         {
-            $product = static::returnTestProduct($store);
+            $product = static::returnTestProduct($store, $prices);
 
-            StoreController::upsertProduct($product );
+            static::validatePriceArray($product->prices);
+
+            StoreController::upsertProduct($product);
+
+            return $product;
         }
         catch(Exception $e)
         {
@@ -92,12 +280,11 @@ class StoreTester
         }
     }
 
-    private static function testRemoveProduct(vRecordId $store) : void
+    private static function testRemoveProduct(vRecordId $store, Product $product) : void
     {
         try
         {
-            $product = static::returnTestProduct($store);
-            $product->locator = "Delete this locator";
+            $product->locator = "Remove this locator";
 
             StoreController::upsertProduct($product);
             $deleteResp = StoreController::removeProductById($product);
@@ -122,6 +309,25 @@ class StoreTester
         }
     }
 
+    private static function testSelectOrInsertPrices_Insert() : array
+    {
+        $prices = [static::returnTestPrice()];
+
+        $resp = StoreController::selectOrInsertPrices($prices);
+
+        return $resp->data;
+    }
+
+    private static function validatePriceArray(array $prices): bool
+    {
+        foreach ($prices as $price) {
+            if (!$price instanceof Price) {
+                throw new Exception("Price is not a price model : ".get_class($price));
+            }
+        }
+        return true;
+    }
+
     public static function createTestEnviroment() : string
     {
         $randomId = new RecordId;
@@ -136,8 +342,9 @@ class StoreTester
         //Account
         static::createAccountTable();
         static::createAccountView();
-        static::insertTestAccount();
-        $buyer  = static::getTestAccount();
+        $buyerAccount = static::returnTestAccount();
+        static::insertTestAccount($buyerAccount);
+        $buyer  = static::getTestAccount($buyerAccount->username);
 
         //Media
         static::createMediaTable();
@@ -160,9 +367,16 @@ class StoreTester
         static::createLootView();
         static::insertRaffleTicketsForTestAccount(5, $buyer);
 
+        //Price
+        static::createPriceTable();
+        static::createPriceView();
+
         //Product
         static::createProductTable();
         static::createProductView();
+
+        //ProductPriceLink
+        static::createProductPriceLinkTable();
 
         //Cart
         static::createCartTable();
@@ -171,6 +385,9 @@ class StoreTester
         //CartProductLink
         static::createProductCartLinkTable();
         static::createProductCartLinkView();
+
+        //CartItem
+        static::createCartItemView();
 
         return $database;
     }
@@ -188,20 +405,21 @@ class StoreTester
     private static function createProductCartLinkTable() : void
     {
         $query = "CREATE TABLE cart_product_link (
-            ctime datetime not null,
-            crand int not null,
+            ctime datetime(6) not null,
+            crand bigint not null,
             removed boolean not null default 0,
             checked_out boolean not null default 0,
-            ref_cart_ctime datetime not null,
-            ref_cart_crand int not null,
-            ref_product_ctime datetime not null,
-            ref_product_crand int not null,
+            ref_cart_ctime datetime(6) not null,
+            ref_cart_crand bigint not null,
+            ref_product_ctime datetime(6) not null,
+            ref_product_crand bigint not null,
             
-            PRIMARY KEY (ctime, crand),
-                
-            CONSTRAINT fk_cart_product_link_ref_cart_ctime_crand FOREIGN KEY (ref_cart_ctime, ref_cart_crand) REFERENCES cart(ctime, crand),
-            CONSTRAINT fk_cart_product_link_ref_product_ctime_crand FOREIGN KEY (ref_product_ctime, ref_product_crand) REFERENCES product(ctime, crand)
-        );";
+        PRIMARY KEY (ctime, crand),
+            
+        CONSTRAINT fk_cart_product_link_ref_cart_ctime_crand FOREIGN KEY (ref_cart_ctime, ref_cart_crand) REFERENCES cart(ctime, crand),
+        CONSTRAINT fk_cart_product_link_ref_product_ctime_crand FOREIGN KEY (ref_product_ctime, ref_product_crand) REFERENCES product(ctime, crand)
+        );
+        ";
 
         database::executeSqlQuery($query, []);
     }
@@ -209,33 +427,32 @@ class StoreTester
     private static function createProductCartLinkView() : void
     {
         $query = "CREATE VIEW v_cart_product_link AS (
-        SELECT
-            cplink.ctime,
-            cplink.crand,
-            vp.name,
-            vp.description,
-            vp.locator,
-            cplink.removed,
-            cplink.checked_out,
-            vc.ref_account_username,
-            vc.ref_store_name, 
-            vp.ref_store_locator,
-            cplink.ref_cart_ctime,
-            cplink.ref_cart_crand,
-            cplink.ref_product_ctime,
-            cplink.ref_product_crand,
-            vc.ref_account_ctime,
-            vc.ref_account_crand,
-            vc.ref_store_ctime,
-            vc.ref_store_crand,
-            vp.large_media_media_path,
-            vp.small_media_media_path,
-            vp.back_media_media_path
-        FROM cart_product_link cplink
-            LEFT JOIN v_product vp on cplink.ref_product_ctime = vp.ctime and cplink.ref_product_crand = vp.crand
-            LEFT JOIN v_cart vc on cplink.ref_cart_ctime = vc.ctime and cplink.ref_cart_crand = vc.crand
-        );
-        ";
+            SELECT
+                cplink.ctime,
+                cplink.crand,
+                vp.name as `product_name`,
+                vp.description as `product_description`,
+                vp.locator as `product_locator`,
+                cplink.removed,
+                cplink.checked_out,
+                vc.account_username,
+                vc.store_name,
+                vp.store_locator,
+                cplink.ref_cart_ctime as `cart_ctime`,
+                cplink.ref_cart_crand as `cart_crand`,
+                cplink.ref_product_ctime as `product_ctime`,
+                cplink.ref_product_crand as `product_crand`,
+                vc.account_ctime,
+                vc.account_crand,
+                vc.store_ctime,
+                vc.store_crand,
+                vp.large_media_media_path,
+                vp.small_media_media_path,
+                vp.back_media_media_path
+            FROM cart_product_link cplink
+                LEFT JOIN v_product vp on cplink.ref_product_ctime = vp.ctime and cplink.ref_product_crand = vp.crand
+                LEFT JOIN v_cart vc on cplink.ref_cart_ctime = vc.ctime and cplink.ref_cart_crand = vc.crand
+            );";
 
         database::executeSqlQuery($query, []);
     }
@@ -246,14 +463,14 @@ class StoreTester
     {  
         $query = "CREATE TABLE cart
         (
-            ctime datetime not null,
-            crand int not null,
+            ctime datetime(6) not null,
+            crand bigint not null,
             checked_out boolean not null default 0,
             void boolean not null default 0,
-            ref_account_ctime datetime not null,
+            ref_account_ctime datetime(6) not null,
             ref_account_crand int not null,
-            ref_store_ctime datetime not null,
-            ref_store_crand int not null,
+            ref_store_ctime datetime(6) not null,
+            ref_store_crand bigint not null,
             ref_transaction_ctime datetime,
             ref_transaction_crand int,
             
@@ -263,7 +480,8 @@ class StoreTester
             
             CONSTRAINT fk_cart_ref_account_ctime_crand_account_ctime_crand FOREIGN KEY (ref_account_crand) REFERENCES account(id),
             CONSTRAINT fk_cart_ref_store_ctime_crand_store_ctime_crand FOREIGN KEY (ref_store_ctime, ref_store_crand) REFERENCES store(ctime, crand)
-        );";
+        );
+        ";
 
         database::executeSqlQuery($query, []);
     }
@@ -271,22 +489,68 @@ class StoreTester
     private static function createCartView() : void
     {
         $query = "CREATE VIEW v_cart AS (
-        SELECT
-            c.ctime,
-            c.crand,
-            a.Username as `ref_account_username`,
-            s.name as `ref_store_name`,
-            s.locator as `ref_store_locator`,
-            a.DateCreated AS `ref_account_ctime`,
-            a.Id as `ref_account_crand`,
-            s.ctime as `ref_store_ctime`,
-            s.crand as `ref_store_crand`
+            SELECT
+                c.ctime,
+                c.crand,
+                a.Username as `account_username`,
+                s.name as `store_name`,
+                s.locator as `store_locator`,
+                c.checked_out,
+                c.void,
+                a.DateCreated AS `account_ctime`,
+                a.Id as `account_crand`,
+                s.ctime as `store_ctime`,
+                s.crand as `store_crand`,
+                c.ref_transaction_ctime as `transaction_ctime`,
+                c.ref_transaction_crand as `transaction_crand`
             FROM cart c
-            LEFT JOIN store s on c.ref_store_ctime = s.ctime AND c.ref_store_crand = s.crand
-            LEFT JOIN account a on a.id = c.ref_account_crand
-        );";
+                LEFT JOIN store s on c.ref_store_ctime = s.ctime AND c.ref_store_crand = s.crand
+                LEFT JOIN account a on a.id = c.ref_account_crand
+            );";
 
         database::executeSqlQuery($query, []);
+    }
+
+    private static function createCartItemView() : void
+    {
+        $sql = "
+        CREATE VIEW v_cart_item AS (
+        SELECT
+            cplink.ctime as 'cart_product_link_ctime',
+            cplink.crand as 'cart_product_link_crand',
+            cplink.ref_cart_ctime as 'cart_ctime',
+            cplink.ref_cart_crand as 'cart_crand',
+            cplink.removed,
+            cplink.checked_out,
+            vprod.ctime as 'product_ctime',
+            vprod.crand as 'product_crand',
+            vprod.name as 'product_name',
+            vprod.description as 'product_description',
+            vprod.locator as 'product_locator',
+            vprod.small_media_media_path as 'product_small_media_path',
+            vprod.large_media_media_path as 'product_large_media_path',
+            vprod.back_media_media_path as 'product_back_media_path',
+            vprice.ctime as 'price_ctime',
+            vprice.crand as 'price_crand',
+            vprice.amount as 'price_amount',
+            vprice.currency_code as 'price_currency_code',
+            vprice.item_name as 'price_item_name',
+            vprice.item_desc as'price_item_desc',
+            vprice.media_path_small as 'price_media_path_small',
+            vprice.media_path_large as 'price_media_path_large',
+            vprice.media_path_back as 'price_media_path_back',
+            vprice.item_ctime as 'price_item_ctime',
+            vprice.item_crand as 'price_item_crand'
+        FROM cart_product_link cplink
+            JOIN cart c ON cplink.ref_cart_ctime = c.ctime AND cplink.crand = c.crand
+            JOIN v_product vprod ON cplink.ref_product_ctime = vprod.ctime AND cplink.ref_product_crand = vprod.crand
+            JOIN product_price_link pplink ON vprod.ctime = pplink.ref_product_ctime AND vprod.crand = pplink.ref_product_crand
+            JOIN v_price vprice ON pplink.ref_price_ctime = vprice.ctime AND pplink.ref_product_crand = vprice.crand 
+        );
+
+        ";
+
+        Database::executeSqlQuery($sql, []);
     }
 
     //PRODUCT
@@ -294,22 +558,24 @@ class StoreTester
     private static function createProductTable() : void
     {
         $query = "CREATE TABLE product
-            (
-                ctime DATETIME not null,
-                crand int not null,
-                `name` varchar(50) not null,
-                `description` varchar(200),
-                locator varchar(50) not null,
-                ref_store_ctime DATETIME not null,
-                ref_store_crand int not null,
-                ref_item_ctime DATETIME not null,
-                ref_item_crand int not null,
-                
-                PRIMARY KEY (ctime, crand),
-                
-                CONSTRAINT fk_product_ref_store_ctime_crand_store_ctime_crand FOREIGN KEY (ref_store_ctime, ref_store_crand) REFERENCES store(ctime, crand),
-                CONSTRAINT fk_product_ref_item_ctime_crand FOREIGN KEY (ref_item_crand) REFERENCES item(id)
-            );";
+        (
+            ctime datetime(6) not null,
+            crand bigint not null,
+            `name` varchar(50) not null,
+            `description` varchar(200),
+            `removed` tinyint not null DEFAULT(0),
+            locator varchar(50) not null,
+            stock int not null DEFAULT (0),
+            ref_store_ctime datetime(6) not null,
+            ref_store_crand bigint not null,
+            ref_item_ctime datetime(6) not null,
+            ref_item_crand int not null,
+            
+            PRIMARY KEY (ctime, crand),
+            
+            CONSTRAINT fk_product_ref_store_ctime_crand_store_ctime_crand FOREIGN KEY (ref_store_ctime, ref_store_crand) REFERENCES store(ctime, crand),
+            CONSTRAINT fk_product_ref_item_ctime_crand FOREIGN KEY (ref_item_crand) REFERENCES item(id)
+        );";
 
         Database::executeSqlQuery($query, []);
     }
@@ -318,45 +584,119 @@ class StoreTester
     {
         $query = "
             CREATE VIEW v_product AS (
-    SELECT
-        p.ctime,
-        p.crand, 
-        p.name,
-        p.description,
-        p.locator,
-        s.name AS `ref_store_name`,
-        s.locator AS `ref_store_locator`,
-        s.description AS `ref_store_description`,
-        s.Username AS `ref_store_owner_username`,
-        s.ownerCtime AS `ref_store_owner_ctime`,
-        s.ownerCrand AS `ref_store_owner_crand`,
-    	s.ctime as `ref_store_ctime`,
-    	s.crand as `ref_store_crand`,
-    	'' as `ref_item_ctime`,
-    	i.Id as `ref_item_crand`,
-        i.equipable,
-        i.is_container,
-        i.container_size,
-        i.container_item_category,
-        vi.large_image AS `large_media_media_path`,
-        vi.small_image AS `small_media_media_path`,
-        mback.mediaPath AS `back_media_media_path`
-    FROM product p 
-    LEFT JOIN item i ON p.ref_item_crand = i.Id
-    LEFT JOIN v_store s ON s.ctime = p.ref_store_ctime AND s.crand = p.ref_store_crand
-    LEFT JOIN v_item_info vi on vi.id = p.ref_item_crand
-    LEFT JOIN v_media mback on mback.id = i.media_id_back
-);";
+                SELECT
+                    p.ctime,
+                    p.crand, 
+                    p.name,
+                    p.description,
+                    p.locator,
+                    p.stock,
+                    s.name AS `store_name`,
+                    s.locator AS `store_locator`,
+                    s.description AS `store_description`,
+                    s.Username AS `store_owner_username`,
+                    s.ownerCtime AS `store_owner_ctime`,
+                    s.ownerCrand AS `store_owner_crand`,
+                    s.ctime as `store_ctime`,
+                    s.crand as `store_crand`,
+                    '' as `item_ctime`,
+                    i.Id as `item_crand`,
+                    i.equipable,
+                    i.is_container,
+                    i.container_size,
+                    i.container_item_category,
+                    vi.large_image AS `large_media_media_path`,
+                    vi.small_image AS `small_media_media_path`,
+                    mback.mediaPath AS `back_media_media_path`
+                FROM product p 
+                LEFT JOIN item i ON p.ref_item_crand = i.Id
+                LEFT JOIN v_store s ON s.ctime = p.ref_store_ctime AND s.crand = p.ref_store_crand
+                LEFT JOIN v_item_info vi on vi.id = p.ref_item_crand
+                LEFT JOIN v_media mback on mback.id = i.media_id_back
+            );";
 
         database::executeSqlQuery($query, []);
     }
 
-    private static function returnTestProduct(vRecordId $storeId) : Product
+    private static function returnTestProduct(vRecordId $storeId, array $prices) : Product
     {
-        $testProduct = new Product("CheapTestProduct", "Test-Product-Cheap", "Test product locator", $storeId->ctime, $storeId->crand, '2024-01-09 16:58:40', 81);
-
+        $testProduct = new Product("CheapTestProduct", "Test-Product-Cheap", "Test product locator", 100, $storeId->ctime, $storeId->crand, '2024-01-09 16:58:40', 81, $prices);
 
         return $testProduct;
+    }
+
+    //PRICE 
+
+    private static function createPriceTable() : void
+    {
+        $sql = "create table price
+        (
+            ctime datetime(6) not null,
+            crand bigint not null,
+            amount int not null,
+            currency_code char(3),
+            ref_item_ctime datetime,
+            ref_item_crand int,
+            
+            primary key (ctime, crand),
+            
+            constraint fk_price_ctime_crand_item_ctime_crand FOREIGN KEY (ref_item_crand) REFERENCES item(id)
+        );";
+
+        database::executeSqlQuery($sql, []);
+    }
+
+    private static function createPriceView() : void
+    {
+        $sql = "CREATE VIEW v_price AS (
+        SELECT 
+            p.ctime,
+            p.crand,
+            p.amount,
+            p.currency_code,
+            p.ref_item_ctime as `item_ctime`,
+            p.ref_item_crand as `item_crand`,
+            vi.name as `item_name`,
+            vi.desc as `item_desc`,
+            vi.small_image as `media_path_small`,
+            vi.large_image as `media_path_large`,
+            CONCAT(vmback.directory, '/', vmback.Id, '.', vmback.extension) as `media_path_back`
+        FROM price p
+            LEFT JOIN v_item_info vi on vi.Id = p.ref_item_crand
+            LEFT JOIN item i on i.id = p.ref_item_crand
+            LEFT JOIN v_media vmback on vmback.Id = i.media_id_back
+        );
+            ";
+        
+        database::executeSqlQuery($sql, []);
+    }
+
+    private static function returnTestPrice() : Price
+    {
+        $id = new vRecordId('', 4);
+        $price = new Price(1, null, $id);
+
+        return $price;
+    }
+
+    //PRODUCT PRICE LINK
+    private static function createProductPriceLinkTable() : void
+    {
+        $sql = "create table product_price_link
+        (
+            ref_product_ctime datetime(6) not null,
+            ref_product_crand bigint not null,
+            ref_price_ctime datetime(6) not null,
+            ref_price_crand bigint not null,
+            void tinyint not null,
+            
+            primary key (ref_product_ctime, ref_product_crand, ref_price_ctime, ref_price_crand),
+            
+            CONSTRAINT fk_productPriceLink_ref_product_ctime_crand_product_ctime_crand FOREIGN KEY (ref_product_ctime, ref_product_crand) REFERENCES product(ctime, crand),
+            CONSTRAINT fk_productPriceLink_ref_price_ctime_crand_price_ctime_crand FOREIGN KEY (ref_price_ctime, ref_price_crand) REFERENCES price(ctime, crand)
+        );";
+
+        database::executeSqlQuery($sql, []);
     }
 
     //ACCOUNT
@@ -427,13 +767,12 @@ class StoreTester
         Database::executeSqlQuery($query, []);
     }
 
-    public static function insertTestAccount() : void
+    public static function insertTestAccount(Account $account) : void
     {
-        $account = static::returnTestAccount();
 
         $query = "INSERT INTO account 
         (id, email, `password`, firstName, lastName, DateCreated, Username, Banned, pass_reset, passage_id) VALUES 
-        (1, '$account->email', 'somepasswordhash', '$account->firstName', '$account->lastName', '2022-10-06 16:46:07', '$account->username', 0, 0, -1);";
+        ($account->crand, '$account->email', 'somepasswordhash', '$account->firstName', '$account->lastName', '$account->ctime', '$account->username', 0, 0, -1);";
 
         Database::executeSqlQuery($query, []);
     }
@@ -442,20 +781,22 @@ class StoreTester
     {
         $account = new Account();
 
+        $record = new RecordId();
+        $account->ctime = $record->ctime;
+
         $account->email = "testemail@gmail.com";
         $account->firstName = "Joe";
         $account->lastName = "Doe";
-        $account->username = "JoeDoe";
+        $account->username = static::buyerAccountUsername();
         $account->banned = false;
 
         return $account;
     }
 
-    public static function getTestAccount() : vAccount
+    public static function getTestAccount(string $accountUsername) : vAccount
     {
-        $account = static::returnTestAccount();
 
-        $resp = AccountController::getAccountByUsername($account->username);
+        $resp = AccountController::getAccountByUsername($accountUsername);
 
         if($resp->success)
         {
@@ -472,19 +813,19 @@ class StoreTester
     public static function createStoreTable() : void
     {
         $query = "CREATE TABLE store
-            (
-                ctime datetime not null,
-                crand int not null,
-                `name` varchar(50) not null,
-                locator varchar(50) not null,
-                `description` varchar(200) not null,
-                ref_account_ctime datetime not null,
-                ref_account_crand int not null,
-                
-                PRIMARY KEY (ctime, crand),
-                
-                CONSTRAINT fk_store_ref_account_ctime_crand_account_ctime_crand FOREIGN KEY (ref_account_crand) references account(Id) 
-            );";
+        (
+            ctime datetime(6) not null,
+            crand bigint not null,
+            name varchar(50) not null,
+            locator varchar(50) not null,
+            description varchar(200) not null,
+            ref_account_ctime datetime(6) not null,
+            ref_account_crand int not null,
+            
+            PRIMARY KEY (ctime, crand),
+            
+            CONSTRAINT fk_store_ref_account_ctime_crand_account_ctime_crand FOREIGN KEY (ref_account_crand) references account(Id) 
+        );";
 
         Database::executeSqlQuery($query, []);
     }
@@ -510,7 +851,7 @@ class StoreTester
 
     public static function returnTestStore() : Store
     {
-        $accountId = static::getTestAccount();
+        $accountId = static::getTestAccount(static::buyerAccountUsername());
 
         $store = new Store("testStore", "testLocator", "testDescription", $accountId);
 
@@ -739,6 +1080,28 @@ class StoreTester
             trade.from_account_obtain_date AS from_account_obtain_date from trade)";
 
         Database::executeSqlQuery($query, []);
+    }
+
+    //Transaction
+    private static function createTransactionTable() : void
+    {
+        $sql = "CREATE TABLE `transaction`
+        (
+            ctime datetime(6) not null,
+            crand bigint not null,
+            description varchar(200),
+            complete boolean not null default 0,
+            void boolean not null default 0,
+            ref_prices_ctime_crand LONGTEXT not null default '[]',
+            
+            PRIMARY KEY (ctime, crand),
+            
+            CONSTRAINT chk_transaction_complete_void CHECK (
+                NOT (complete = TRUE AND void = TRUE)
+            )
+        );";
+
+        Database::executeSqlQuery($sql, []);
     }
 
     

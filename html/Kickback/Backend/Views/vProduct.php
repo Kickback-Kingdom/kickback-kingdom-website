@@ -10,12 +10,17 @@ class vProduct extends vRecordId
     public vStore $store;
     public vItem $item;
 
-    public string $locator;
+    public array $prices;
+
+    public int $stock;
+
+    public ?string $locator;
 
     public function __construct(
         string $ctime = '',
         int $crand = 0,
         ?string $locator = null,
+        int $stock = -1,
         ?vItem $item = null,
         ?vAccount $owner = null,
         ?vStore $store = null
@@ -24,6 +29,7 @@ class vProduct extends vRecordId
         parent::__construct($ctime, $crand);
 
         $this->locator = $locator;
+        $this->stock = $stock;
 
         $this->item = $item ?? new vItem();
 

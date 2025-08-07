@@ -5,57 +5,635 @@ declare(strict_types = 1);
 namespace Kickback\Backend\Controllers;
 
 use BadFunctionCallException;
+use DateTime;
 use \Kickback\Backend\Models\Response;
 use \Kickback\Backend\Models\Store;
 use Kickback\Backend\Models\Product;
 
 use \Exception;
 use InvalidArgumentException;
+use Kickback\Backend\Models\Cart;
+use Kickback\Backend\Models\CartProductLink;
 use Kickback\Backend\Models\Enums\CurrencyCode;
 use Kickback\Backend\Models\ItemCategory;
 use Kickback\Backend\Models\Price;
+use Kickback\Backend\Models\RecordId;
 use Kickback\Backend\Views\vAccount;
+use Kickback\Backend\Views\vCart;
+use Kickback\Backend\Views\vCartItem;
+use Kickback\Backend\Views\vCartProductLink;
+use Kickback\Backend\Views\vDecimal;
 use Kickback\Backend\Views\vItem;
 use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vPrice;
 use Kickback\Backend\Views\vProduct;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Views\vStore;
+use Kickback\Backend\Views\vTransaction;
 use Kickback\Services\Database;
 
 class StoreController
 {
+    public static function runUnitTests() : void
+    {
+        static::unittest_constructWhereClauseForGetPricesByCurrencyAndItemAmount();
+        static::unittest_returnWhereClauseBindingArrayForGetPricesByCurrencyAndItemAmount();
+        static::unittest_returnWhereClauseForRemovingVoidLinksToProduct();
+        static::unittest_returnParamsForInsertionForNonExistingPrices();
+        static::unittest_returnWhereClauseBindingArrayForSelectPriceArrayAfterInsertion();
+        static::unittest_constructInsertionValueClauseForPrices();
+        static::unittest_returnInsertionParamsForLinkingProductToPrices();
+        static::unittest_returnParamsForRemovingOldLinksToProduct();
+        static::unittest_getNumberOfProductInCartById();
+        static::unittest_returnWhereClauseForCanAccountAffordItemPricesInCart();
+        static::unittest_returnParamsForCanAccountAffordItemPricesForCart();
+    }
 
     //CART
 
+    //check if cart has any products to check out
+    //check if account has the items needed to by it
+    //attempt stripe transaction
+    //transact items
+    //log transaction
+    //update product stock
+    public static function checkoutCart(vCart $cart, callable $completeStripeTransaction) : Response
+    {
+        $resp = new Response(false, "Unkown error checking out cart", null);
+
+        try
+        {
+            if(count($cart->cartItems) > 0)
+            {
+                $canAccountAffordItemPricesResp = static::canAccountAffordItemPricesInCart($cart);
+
+                if($canAccountAffordItemPricesResp->success)
+                {
+                    $lovelacePriceOfCart = static::returnCartLovelacePrice($cart);
+
+                    $stripeResp = new Response(false, "", null);
+
+                    if($lovelacePriceOfCart > 0)
+                    {
+                        $stripeResp = $completeStripeTransaction($lovelacePriceOfCart);
+                    }
+                    else
+                    {
+                        $stripeResp->success = true;
+                    }
+
+                    if($stripeResp->success)
+                    {
+
+                    }
+                    else
+                    {
+                        $resp->message = "Failed to complete stripe transaction : $stripeResp->message";
+                    }
+                }
+                else
+                {
+                    $resp->message = "Account cannot afford item prices to checkout cart : $canAccountAffordItemPricesResp->message";
+                }
+            }
+            else
+            {
+                $resp->message = "Cart does not have items to checkout";
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception();
+        }
+
+        return $resp;
+    }
+
+    private static function payItemPricesForCart() : response
+    {
+
+    }
+
+    private static function returnCartLovelacePrice(vCart $cart) : int
+    {
+        $lovelace = 0;
+
+        foreach($cart->totals as $total)
+        {
+            if(!is_null($total->currencyCode))
+            {
+                if($total->currencyCode === CurrencyCode::ADA)
+                {
+                    $lovelace += $total->amount;
+                }  
+                elseif($total->currencyCode === CurrencyCode::USD)
+                {
+                    $lovelace += static::convertUSDToLovelace($total->amount);
+                } 
+                else
+                throw new exception("Unrecognized currency code when returning cart lovelace amount");
+            }
+        }
+
+         return $lovelace;
+    }
+
+    /**
+     * Placeholder function for when the currency converter API is implemented
+     */
+    private static function convertUSDToLovelace(int $cents) : int
+    {
+        return 0;
+    }
+
+    private static function canAccountAffordItemPricesInCart(vCart $cart) : Response
+    {
+        $resp = new Response(false, "Unkown error in checking if account can afford item prices in cart", null);
+
+        try
+        {
+            $whereClause = static::returnWhereClauseForCanAccountAffordItemPricesInCart($cart->cartItems);
+            $params = static::returnParamsForCanAccountAffordItemPricesForCart($cart);
+
+            $sql = "SELECT item_id, COUNT(Id) AS `amount` FROM loot WHERE account_id = ? AND opened = 1 AND redeemed = 1$whereClause GROUP BY item_id;";
+
+            $result = Database::executeSqlQuery($sql, $params);
+
+            if($result)
+            {
+                if($result->num_rows > 0)
+                {
+                    $lootForCart = $result->fetch_all(MYSQLI_ASSOC);
+
+                    $canAccountAffordItems = true;
+
+                    foreach($cart->totals as $total)
+                    {
+                        $row = array_filter($lootForCart, function($obj) use ($total) {
+                            return $obj["item_id"] == $total->ctime;
+                        });
+
+                        if(empty($row) || ($row["amount"] - $total->amount < 0))
+                        {
+                            $canAccountAffordItems = false;
+                            break;
+                        }
+                    }
+
+                    if($canAccountAffordItems)
+                    {
+                        $resp->success = true;
+                        $resp->message = "Account can afford item prices";
+                        $resp->data = true;
+                    }
+                    else
+                    {
+                        $resp->success = true;
+                        $resp->message = "Account cannot afford Item Prices";
+                        $resp->data = false;
+                    }
+                }
+                else
+                {
+                    $resp->message = "no rows returned for getting if account can afford item prices in cart";
+                }
+            }
+            else
+            {
+                $resp->message = "Sql error getting if account can afford item prices in cart";
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while checking if account can afford item prices in cart : $e");
+        }
+
+        return $resp;
+    }
+
+    private static function returnParamsForCanAccountAffordItemPricesForCart(vCart $cart) : array
+    {
+        $params = [$cart->account->crand];
+
+        foreach($cart->cartItems as $item)
+        {
+            array_push($params, $item->crand);
+        }
+
+        return $params;
+    }
+
+    private static function unittest_returnParamsForCanAccountAffordItemPricesForCart() : void
+    {
+        $cart = new vCart();
+        $cart->account = new vAccount();
+        
+        $cart->cartItems = [new vRecordId('x', 1)];
+        assert(static::returnParamsForCanAccountAffordItemPricesForCart($cart) === ['',-1,'x',1], new Exception("UNIT TEST FAILED : returned params did not match expected for returnParamsForCanAccountAffordItemPricesForCart"));
+        $cart->cartItems = [new vRecordId('x', 1), new vRecordId('x', 1)];
+        assert(static::returnParamsForCanAccountAffordItemPricesForCart($cart) === ['',-1,'x',1,'x',1], new Exception("UNIT TEST FAILED : returned params did not match expected for returnParamsForCanAccountAffordItemPricesForCart"));
+        $cart->cartItems = [new vRecordId('x', 1), new vRecordId('x', 1), new vRecordId('x', 1)];        
+        assert(static::returnParamsForCanAccountAffordItemPricesForCart($cart) === ['',-1,'x',1,'x',1,'x',1], new Exception("UNIT TEST FAILED : returned params did not match expected for returnParamsForCanAccountAffordItemPricesForCart"));
+        $cart->cartItems = [new vRecordId('x', 1), new vRecordId('x', 1), new vRecordId('x', 1), new vRecordId('x', 1)];
+        assert(static::returnParamsForCanAccountAffordItemPricesForCart($cart) === ['',-1,'x',1,'x',1,'x',1,'x',1], new Exception("UNIT TEST FAILED : returned params did not match expected for returnParamsForCanAccountAffordItemPricesForCart"));   
+    }
+
+    private static function returnWhereClauseForCanAccountAffordItemPricesInCart(array $cartItems) : string
+    {
+        $whereClause = " AND (item_id = ?";
+
+        for($i = 1; $i < count($cartItems); $i++)
+        {
+            $whereClause .= " OR item_id = ?";
+        }
+
+        $whereClause .= ")";
+
+        return $whereClause;
+    }
+
+    private static function unittest_returnWhereClauseForCanAccountAffordItemPricesInCart() : void
+    {
+        assert(static::returnWhereClauseForCanAccountAffordItemPricesInCart([null]) === " AND (item_id = ?)", new Exception("UNIT TEST FAILED : returned where clause for can account afford item prices in cart did not match expected"));
+        assert(static::returnWhereClauseForCanAccountAffordItemPricesInCart([null, null]) === " AND (item_id = ? OR item_id = ?)",  new Exception("UNIT TEST FAILED : returned where clause for can account afford item prices in cart did not match expected"));
+        assert(static::returnWhereClauseForCanAccountAffordItemPricesInCart([null, null, null]) === " AND (item_id = ? OR item_id = ?) OR item_id = ?)",  new Exception("UNIT TEST FAILED : returned where clause for can account afford item prices in cart did not match expected"));
+        assert(static::returnWhereClauseForCanAccountAffordItemPricesInCart([null, null. null, null]) === " AND (item_id = ? OR item_id = ?) OR item_id = ?) OR item_id = ?)",  new Exception("UNIT TEST FAILED : returned where clause for can account afford item prices in cart did not match expected"));
+    }
+
+    public static function calculateCartTotalPrices(array $cartItems) : array
+    {
+        $totalPrices = [];
+
+        foreach($cartItems as $item)
+        {
+            $prices = $item->product->prices;
+
+            foreach($prices as $price)
+            {
+                $priceAlreadyExists = null;
+
+                foreach($totalPrices as $total)
+                {
+
+                    //Does price being checked match an already existing total
+                    if(
+                        (!is_null($price->item) && !is_null($total->item) 
+                        && $price->item->ctime == $total->item->ctime && $price->item->crand == $total->item->crand)
+                        ||
+                        (!is_null($price->currencyCode) && !is_null($total->currencyCode) &&
+                        $price->currencyCode == $total->currencyCode)
+                    )
+                    {
+                        $priceAlreadyExists == $total;
+                        break;
+                    }
+                }
+
+                //Add amount of already existing total or create new total
+                if(is_null($priceAlreadyExists))
+                {
+                    array_push($totalPrices, $price);
+                }
+                else
+                {
+                    $priceAlreadyExists->amount = $priceAlreadyExists->amount + $price->amount;
+                }
+            }
+        }
+
+        return $totalPrices;
+    }
+
+    /**
+     * Adds a product to a cart only if there are enough stock left of the product in the store
+     * 
+     * Returns a success with false data if there was not enough stock present
+     * Returns a success with true data if the product was added to cart
+    */
+    public static function addProductToCart(vRecordId $product, vCart $cart) : Response
+    {
+        $resp = new Response(false, "unkown error in adding product to cart", null);
+
+        try
+        {
+            $selectProductResp = static::getProductById($product);
+
+            if($selectProductResp->message)
+            {
+                $product = $selectProductResp->data;
+
+                $effectiveStock = $product->stock - static::getNumberOfProductInCartById($product, $cart);
+
+                if($effectiveStock > 0)
+                {
+                    $linkResp = static::linkProductToCart($product, $cart);
+
+                    if($linkResp->success)
+                    {
+                        $resp->success = true;
+                        $resp->message = "Product Added to cart";
+                        $resp->data = true;
+                    }  
+                    else
+                    {
+                        $resp->message = "Failed to link product to cart : $linkResp->message";
+                    }
+                }
+                else
+                {
+                    $resp->success = true;
+                    $resp->message = "Not enough available stock to add product to cart";
+                }
+            }
+            else
+            {
+                $resp->message = "error in getting product to add it to cart : $selectProductResp->message";
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while adding product to cart : $e");
+        }
+
+        return $resp;
+    }
+
+    public static function removeProductFromCart(vRecordId $productCartLink) : Response
+    {
+        $resp = new Response(false, "unkown error in removing product from cart", null);
+
+        try
+        {
+            $sql = "UPDATE cart_product_link SET removed = 1 WHERE ctime = ? AND crand = ?;";
+
+            $result = Database::executeSqlQuery($sql, [$productCartLink->ctime, $productCartLink->crand]);
+
+            if($result)
+            {
+                $resp->success = true;
+                $resp->message = "Product removed from cart";
+            }
+            else
+            {
+                $resp->message = "Sql error in removing product from cart";
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("exception caguth while removing product from cart : $e");
+        }
+
+        return $resp;
+    }
+
+    private static function getNumberOfProductInCartById(vRecordId $product, vCart $cart) : int
+    {
+        $quantity = 0;
+
+        foreach($cart->cartItems as $item)
+        {
+            if($item->product->ctime == $product->ctime && $item->product->crand == $product->crand) 
+                $quantity++;
+        }
+
+        return $quantity;
+    }
+
+    private static function unittest_getNumberOfProductInCartById() : void
+    {
+        $cart = new vCart();
+        $cartItem = new vCartItem();
+        $product = new RecordId();
+        $cartItem->product = new vProduct($product->ctime, $product->crand);
+
+        $otherProduct = new RecordId();
+        $otherCartItem = new vCartItem();
+        $otherCartItem->product = new vProduct($otherProduct->ctime, $otherProduct->crand);
+
+        $cart->cartItems = [];
+        $actual = static::getNumberOfProductInCartById($product, $cart);
+        $expected = 0;
+        assert($actual === $expected, new Exception("UNIT TEST FAILED | actual : $actual | expected : $expected"));
+
+        $cart->cartItems = [$otherCartItem];
+        $actual = static::getNumberOfProductInCartById($product, $cart);
+        $expected = 0;
+        assert($actual === $expected, new Exception("UNIT TEST FAILED | actual : $actual | expected : $expected"));
+
+        $cart->cartItems = [$otherCartItem,$otherCartItem,$otherCartItem];
+        $actual = static::getNumberOfProductInCartById($product, $cart);
+        $expected = 0;
+        assert($actual === $expected, new Exception("UNIT TEST FAILED | actual : $actual | expected : $expected"));
+
+        $cart->cartItems = [$cartItem];
+        $actual = static::getNumberOfProductInCartById($product, $cart);
+        $expected = 1;
+        assert($actual === $expected, new Exception("UNIT TEST FAILED | actual : $actual | expected : $expected"));
+
+        $cart->cartItems = [$cartItem, $otherCartItem, $cartItem];
+        $actual = static::getNumberOfProductInCartById($product, $cart);
+        $expected = 2;
+        assert($actual === $expected, new Exception("UNIT TEST FAILED | actual : $actual | expected : $expected"));
+
+        $cart->cartItems = [$cartItem, $cartItem];
+        $actual = static::getNumberOfProductInCartById($product, $cart);
+        $expected = 2;
+        assert($actual === $expected, new Exception("UNIT TEST FAILED | actual : $actual | expected : $expected"));  
+    }
+
+    private static function linkProductToCart(vRecordId $product, vRecordId $cart) : Response
+    {
+        $resp = new Response(false, "unkown error in linking product to cart", null);
+
+        try
+        {
+            $cartProductLink = new CartProductLink();
+            $cartProductLink->productId = $product;
+            $cartProductLink->cartId = $cart;
+            
+            $sql = "INSERT INTO cart_product_link (
+            ctime, 
+            crand, 
+            removed, 
+            checked_out, 
+            ref_cart_ctime, 
+            ref_cart_crand, 
+            ref_product_ctime, 
+            ref_product_crand)
+            VALUES 
+            (?,?,?,?,?,?,?,?)";
+
+            
+            $params = [
+                $cartProductLink->ctime, 
+                $cartProductLink->crand, 
+                $cartProductLink->removed, 
+                $cartProductLink->checkedOut, 
+                $cartProductLink->cartId->ctime, 
+                $cartProductLink->cartId->crand, 
+                $cartProductLink->productId->ctime, 
+                $cartProductLink->productId->crand
+            ];
+
+            $result = Database::executeSqlQuery($sql, $params);
+
+            if($result)
+            {
+                $resp->success = true;
+                $resp->message = "Product Linked to Cart";
+            }
+            else
+            {
+                $resp->message = "Sql error in inserting cart product link";
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Execption caught while linking product to cart : $e");
+        }
+
+        return $resp;
+    }
+
+    public static function cartProductLinkToView(array $row) : vCartProductLink
+    {
+        $store = new vStore();
+        $store->ctime = $row["store_ctime"];
+        $store->crand = $row["store_crand"];
+        $store->name = $row["store_name"];
+        $store->locator = $row["store_locator"];
+
+        $account = new vAccount();
+        $account->ctime = $row["account_ctime"];
+        $account->crand = $row["account_crand"];
+        $account->username = $row["account_username"];
+
+        $product = new vProduct();
+        $product->ctime = $row["product_ctime"];
+        $product->crand = $row["product_crand"];
+        $product->locator = $row["product_locator"];
+            $item = new vItem();
+            $item->name = $row["product_name"];
+            $item->description = $row["product_description"];
+                $smallMedia = new vMedia();
+                $smallMedia->setMediaPath($row["small_media_media_path"]);
+                $largeMedia = new vMedia();
+                $largeMedia->setMediaPath($row["large_media_media_path"]);
+                $backMedia = new vMedia();
+                $backMedia->setMediaPath($row["back_media_media_path"]);
+            $item->iconSmall = $smallMedia;
+            $item->iconBig = $largeMedia;
+            $item->iconBack = $backMedia;
+        $product->item = $item;
+        $product->store = $store;
+        
+        $cart = new vCart();
+        $cart->ctime = $row["cart_ctime"];
+        $cart->crand = $row["cart_crand"];
+        $cart->store = $store;
+        $cart->account = $account;
+
+        $link = new vCartProductLink();
+        $link->ctime = $row["ctime"];
+        $link->crand = $row["crand"];
+        $link->removed = boolval($row["removed"]);
+        $link->checkedOut = boolval($row["checked_out"]);
+        $link->cart = $cart;
+        $link->product = $product;
+
+        return $link;
+    }
+
+    /**
+     * Gets a cart for an account
+     * Either selects an already existing cart or creates a new one
+     * 
+     * Additionally gets all items in the cart
+     */
     public static function getCartForAccount(vRecordId $accountId, vRecordId $storeId) : Response
     {
         $resp = new Response(false, "unkown error in getting cart for account", null);
 
+        $cart = new Cart($accountId->ctime, $accountId->crand, $storeId->ctime, $storeId->crand);
+
         $sql = "INSERT INTO cart (
+                ctime,
+                crand,
                 ref_account_ctime, 
                 ref_account_crand,
                 ref_store_ctime, 
                 ref_store_crand
                 )VALUES(
-                ?,?,?,?
-                )ON DUPLICATE KEY UPDATE ref_account_ctime = VALUES(ref_account_ctime);
-                
-                SELECT ref_account_ctime, ref_account_crand, ref_store_ctime, ref_store_crand, ref_transaction_ctime, ref_transaction_crand";
+                ?,?,?,?,?,?
+                )ON DUPLICATE KEY UPDATE ref_account_ctime = VALUES(ref_account_ctime);";
 
-        $params = [$accountId->ctime, $accountId->crand, $storeId->ctime, $storeId->crand];
+        $params = [$cart->ctime, $cart->crand, $accountId->ctime, $accountId->crand, $storeId->ctime, $storeId->crand];
 
         try
         {
             $result = Database::executeSqlQuery($sql, $params);
 
-            if($result->num_rows > 0)
+            if($result)
             {
-                
+                $selectSql = "SELECT
+                    ctime,
+                    crand,
+                    account_username,
+                    store_name, 
+                    store_locator,
+                    checked_out,
+                    void,
+                    account_ctime,
+                    account_crand,
+                    store_ctime,
+                    store_crand,
+                    transaction_ctime,
+                    transaction_crand
+                    FROM v_cart
+                    WHERE ctime = ? AND crand = ?;
+                ";
+
+                $params = [$cart->ctime, $cart->crand];
+
+                $selectResult = Database::executeSqlQuery($selectSql, $params);
+
+                if($selectResult)
+                {   
+                    if($selectResult->num_rows > 0)
+                    {
+                        $row = $selectResult->fetch_assoc();
+
+                        $cartView = static::cartToView($row);
+
+                        $cartItemsResp = static::getItemsInCart($cartView);
+
+                        if($cartItemsResp->success)
+                        {
+                            $cartView->cartItems = $cartItemsResp->data;
+                            $cartView->totals = static::calculateCartTotalPrices($cartView->cartItems);
+
+                            $resp->success = true;
+                            $resp->message = "Cart returned for account";
+                            $resp->data = $cartView;
+                        }
+                        else
+                        {
+                            $resp->message = "Failed to get cart items";
+                        }   
+                    }
+                    else
+                    {
+                        $resp->message = "cart not found after insertion";
+                    }
+                }
+                else
+                {
+                    $resp->message = "Failed to select cart for account";
+                }
             }
             else
             {
-                $resp->message = "Failed to get cart for account store pair";
+                $resp->message = "Failed to run duplicate-tolerant insert command for inserting cart";
             }
         }
         catch(Exception $e)
@@ -64,6 +642,173 @@ class StoreController
         }
 
         return $resp;
+    }
+
+    /**
+     * gets all the matching rows from v_cart_item.
+     * It then conglomerates rows of the same cart product link into vCartItem objects 
+     * since the cart item view lists the cart items as units of the prices of the products in the cart
+     */
+    private static function getItemsInCart(vRecordId $cart) : Response
+    {
+        $resp = new Response(false, "unkown error in getting item for cart", null);
+
+        try
+        {
+            $sql = "SELECT 
+            cart_product_link_ctime, 
+            cart_product_link_crand,
+            cart_ctime, 
+            cart_crand,
+            removed,
+            checked_out,
+            product_ctime,
+            product_crand,
+            product_name,
+            product_description,
+            product_locator,
+            product_small_media_path,
+            product_large_media_path,
+            product_back_media_path,
+            price_ctime,
+            price_crand,
+            price_amount,
+            price_currency_code,
+            price_item_name,
+            price_item_desc,
+            price_media_path_small,
+            price_media_path_large,
+            price_media_path_back,
+            price_item_ctime, 
+            price_item_crand
+            FROM v_cart_item WHERE removed = 0 AND checked_out = 0 AND cart_ctime = ? AND cart_crand = ?;";
+
+            $params = [$cart->ctime, $cart->crand];
+
+            $result = Database::executeSqlQuery($sql, $params);
+
+            if($result)
+            {
+                $cartItems = []; 
+
+                if($result->num_rows > 0)
+                {
+                    while($row = $result->fetch_row())
+                    {
+                        $cartItemAlreadyProccessed = null;
+                        
+                        foreach($cartItems as $cartItem)
+                        {
+                            if($row["cart_product_link_ctime"] == $cartItem->ctime && $row["cart_product_link_crand"] == $cartItem->crand)
+                            {
+                                $cartItemAlreadyProccessed = $cartItem;
+                                break;
+                            }
+                        }
+
+                        if(!is_null($cartItemAlreadyProccessed))
+                        {
+                            $price = static::cartItemToPriceView($row);
+
+                            array_push($cartItemAlreadyProccessed->prices, $price);
+                        }
+                        else
+                        {
+                            array_push($cartItems, static::cartItemToView($row));
+                        }
+                    }
+                }
+                else
+                {
+                    $resp->success = true;
+                    $resp->message = "no items in cart";
+                    $resp->data = $cartItems;
+                }
+            }
+            else
+            {
+                $resp->message = "failed to select cart items";
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while gettig items in cart : $e");
+        }
+
+        return $resp;
+    }
+
+    private static function cartItemToView(array $row) : vCartItem
+    {
+        $cartItem = new vCartItem();
+
+        $price = static::cartItemToPriceView($row);
+
+        $product = new vProduct();
+        $product->prices = [$price];
+        $product->locator = $row["product_locator"];
+            $item = new vItem();
+            $item->name = $row["product_name"];
+            $item->description = $row["product_description"];
+                $smallMedia = new vMedia();
+                $smallMedia->setMediaPath($row["product_small_media_path"]);
+                $largeMedia = new vMedia();
+                $largeMedia->setMediaPath($row["product_large_media_path"]);
+                $backMedia = new vMedia();
+                $backMedia->setMediaPath($row["product_back_media_path"]);
+            $item->iconSmall = $smallMedia;
+            $item->iconBig = $largeMedia;
+            $item->iconBack = $backMedia;
+        $product->item = $item;
+
+        $cart = new vCart();
+        $cart->ctime = $row["cart_ctime"];
+        $cart->crand = $row["cart_crand"];
+        $cartItem->cart = $cart;
+        
+        $cartItem->ctime = $row["cart_product_link_ctime"];
+        $cartItem->crand = $row["cart_product_link_crand"];
+        $cartItem->removed = $row["removed"];
+        $cartItem->checkedOut = $row["checked_out"];
+
+        return $cartItem;
+    }
+    
+    private static function cartItemToPriceView(array $row) : vPrice
+    {
+        $price = new vPrice();
+
+        if(!is_null($row["price_item_ctime"]) && !is_null($row["price_item_crand"]))
+        {
+            $item = new vItem();
+            $item->ctime = $row["price_item_ctime"];
+            $item->crand = $row["price_item_crand"];
+            $item->name = $row["price_item_name"];
+            $item->description = $row["price_item_desc"]; 
+                $smallMedia = new vMedia();
+                $smallMedia->setMediaPath($row["price_media_path_small"]);
+                $largeMedia = new vMedia();
+                $largeMedia->setMediaPath($row["price_media_path_large"]);
+                $backMedia = new vMedia();
+                $backMedia->setMediaPath($row["price_media_path_back"]);
+            $item->iconSmall = $smallMedia;
+            $item->iconBig = $largeMedia;
+            $item->iconBack = $backMedia;
+
+            $price->item = $item;
+        }
+        
+        if(!is_null($row["price_currency_code"]))
+        {
+            $price = CurrencyCode::from($row["price_currency_code"]);
+        }
+
+        $price->ctime = $row["price_ctime"];
+        $price->crand = $row["price_crand"];
+        $price->amount = $row["price_amount"];
+
+        return $price;
+        
     }
 
     public static function doesCartExistById(vRecordId $cartId) : Response
@@ -101,11 +846,70 @@ class StoreController
 
     public static function cartToView(array $row) : vCart
     {
-        
+        $cart = new vCart();
+
+        $cart->account = new vAccount();
+        $cart->store = new vStore();
+        $cart->transaction = new vTransaction();
+
+        $cart->account->username = $row["account_username"];
+        $cart->account->ctime = $row["account_ctime"];
+        $cart->account->crand = $row["account_crand"];
+
+        $cart->store->name = $row["store_name"];
+        $cart->store->locator = $row["store_locator"];
+        $cart->store->ctime = $row["store_ctime"];
+        $cart->store->crand = $row["store_crand"];
+
+        $cart->checkedOut = boolval($row["checked_out"]);
+        $cart->void = boolval($row["void"]);
+
+        $cart->ctime = $row["ctime"];
+        $cart->crand = $row["crand"];
+
+        return $cart;
     }
 
     //PRODUCT
+    
+    /**
+     * Version of does product exist by locator that instead checks the boolean "removed" flag
+     * This change is to be compatible with keeping the products in the table rather than deleting them
+     */
+    public static function doesProductExistByLocator(string $locator) : Response
+    {
+        $resp = new Response(false, "unkown error in checking if product exist", null);
 
+        $sql = "SELECT ctime FROM product WHERE locator = ? AND removed = 0 LIMIT 1;";
+
+        $params = [$locator];
+
+        try
+        {
+            $result = database::executeSqlQuery($sql, $params);
+
+            $resp->success = true;
+
+            if($result->num_rows > 0)
+            {
+                $resp->message = "product exists";
+                $resp->data = true;
+            }
+            else
+            {
+                $resp->message = "product does not exist";
+                $resp->data = false;
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("exception caught while checking product exists : $e");
+        }
+
+        return $resp;
+    }
+
+    /*
     public static function doesProductExistByLocator(string $locator) : Response
     {
         $resp = new Response(false, "unkown error in checking if product exist", null);
@@ -137,22 +941,35 @@ class StoreController
         }
 
         return $resp;
-    }
+    }*/
 
+    /**
+     * Version of removeProdutById that doesn't delete rows but instead marks a "removed" flags
+     * this change is done to hopefully retain data for future analytics on what products were sold, even if they arn't sold anymore
+     */
     public static function removeProductById(vRecordId $productId) : Response
     {
         $resp = new Response(false, "unkown error in removing product", null);
 
-        $sql = "DELETE FROM product WHERE ctime = ? AND crand = ?;";
-
-        $params = [$productId->ctime, $productId->crand];
-
         try
         {
-            Database::executeSqlQuery($sql, $params);
+            $linkVoidResp = static::markPriceLinksAsVoid($productId);
 
-            $resp->success = true;
-            $resp->message = "product deleted";
+            if($linkVoidResp->success)
+            {
+                $sql = "UPDATE product SET removed = 1 WHERE ctime = ? AND crand = ?;";
+
+                $params = [$productId->ctime, $productId->crand];
+
+                Database::executeSqlQuery($sql, $params);
+
+                $resp->success = true;
+                $resp->message = "product deleted";
+            }
+            else
+            {
+                $resp->message = "Failed to removed price links to product before deleting product : $linkVoidResp->message";
+            }
         }
         catch(Exception $e)
         {
@@ -161,6 +978,100 @@ class StoreController
 
         return $resp;
     }
+
+    /*
+    public static function removeProductById(vRecordId $productId) : Response
+    {
+        $resp = new Response(false, "unkown error in removing product", null);
+
+        try
+        {
+            $linkDeleteResp = static::removePricesLinksToProduct($productId);
+
+            if($linkDeleteResp->success)
+            {
+                $sql = "DELETE FROM product WHERE ctime = ? AND crand = ?;";
+
+                $params = [$productId->ctime, $productId->crand];
+
+                Database::executeSqlQuery($sql, $params);
+
+                $resp->success = true;
+                $resp->message = "product deleted";
+            }
+            else
+            {
+                $resp->message = "Failed to removed price links to product before deleting product : $linkDeleteResp->message";
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("exception caught while removing product : $e");
+        }
+
+        return $resp;
+    }*/
+
+    /**
+     * Version of removePricesLinksToProduct that simply marks a boolean "void" flag instead of removing the product-price-link
+     * this change is done to hopefully preserve data for possible analytics of prices for products in the future
+     */
+    private static function markPriceLinksAsVoid(vRecordId $product) : response
+    {
+        $resp = new Response(false, "unkown error in marking price links as void", null);
+
+        try
+        {
+            $sql = "UPDATE product_price_link SET void = 1 WHERE ref_product_ctime = ? AND ref_product_crand = ?;";
+
+            $params = [$product->ctime, $product->crand];
+
+            $result = database::executeSqlQuery($sql, $params);
+
+            if(!$result)
+            {
+                throw new Exception("Failed to mark price links as void");
+            }
+
+            $resp->success = true;
+            $resp->message = "voided all price link to product";
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while marking price links as void : $e");
+        }
+
+        return $resp;
+    }
+
+    /*private static function removePricesLinksToProduct(vRecordId $product) : response
+    {
+        $resp = new Response(false, "unkown error in removing price links to product", null);
+
+        try
+        {
+            $sql = "DELETE FROM product_price_link WHERE ref_product_ctime = ? AND ref_product_crand = ?;";
+
+            $params = [$product->ctime, $product->crand];
+
+            $result = database::executeSqlQuery($sql, $params);
+
+            if(!$result)
+            {
+                throw new Exception("Failed to delete price links to product");
+            }
+
+            $resp->success = true;
+            $resp->message = "deleted all price links to product";
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while removing price links to product : $e");
+        }
+
+        return $resp;
+    }*/
+
 
     public static function upsertProduct(Product $product) : Response
     {
@@ -178,8 +1089,17 @@ class StoreController
 
                     if($updateResp->success)
                     {
-                        $resp->success = true;
-                        $resp->message = "Product was updated as it already existed";
+                        $linkPricesResp = static::linkProductToPrices($product, $product->prices);
+
+                        if($linkPricesResp->success)
+                        {
+                            $resp->success = true;
+                            $resp->message = "Product was updated as it already existed";
+                        }
+                        else
+                        {
+                            $resp->message = "product was updates however there was an error in linking the updated prices";
+                        }
                     }
                     else
                     {
@@ -192,8 +1112,17 @@ class StoreController
 
                     if($insertResp->success)
                     {
-                        $resp->success = true;
-                        $resp->message = "Product was inserted as it did not exist";
+                        $linkPricesResp = static::linkProductToPrices($product, $product->prices);
+
+                        if($linkPricesResp->success)
+                        {
+                            $resp->success = true;
+                            $resp->message = "Product was inserted as it did not exist"; 
+                        }
+                        else
+                        {
+                            $resp->message = "product was inserted however there was an error with linking the prices";
+                        }
                     }
                     else
                     {
@@ -256,16 +1185,17 @@ class StoreController
             `name`,
             `description`, 
             locator,
-            ref_store_name,
-            ref_store_locator,
-            ref_store_description,
-            ref_store_owner_username,
-            ref_store_owner_ctime,
-            ref_store_owner_crand,
-            ref_store_ctime,
-            ref_store_crand,
-            ref_item_ctime,
-            ref_item_crand,
+            stock,
+            store_name,
+            store_locator,
+            store_description,
+            store_owner_username,
+            store_owner_ctime,
+            store_owner_crand,
+            store_ctime,
+            store_crand,
+            item_ctime,
+            item_crand,
             equipable,
             is_container,
             container_size,
@@ -284,13 +1214,26 @@ class StoreController
         {
             $result = Database::executeSqlQuery($sql, $params);
 
-            if($result->num_rows)
+            if($result->num_rows > 0)
             {
                 $product = static::productToView($result->fetch_assoc());
 
-                $resp->success = true;
-                $resp->message = "Product found and returned";
-                $resp->data = $product;
+                $pricesResp = static::getPricesForProduct($product);
+
+                if($pricesResp->success)
+                {
+                    $product->prices = $pricesResp->data;
+
+                    $resp->success = true;
+                    $resp->message = "Product found and returned";
+                    $resp->data = $product;
+                }
+                else
+                {
+                    $resp->message = "failed to get prices for product by id : $pricesResp->message";
+                }
+
+                
             }
             else
             {
@@ -305,6 +1248,64 @@ class StoreController
         return $resp;
     }
 
+    private static function getPricesForProduct(vRecordId $product) : Response
+    {
+        $resp = new Response(false, "unkown error in getting prices for product");
+
+        try
+        {
+            $sql = "SELECT 
+            vp.ctime, 
+            vp.crand, 
+            vp.amount, 
+            vp.currency_code, 
+            vp.item_ctime, 
+            vp.item_crand, 
+            vp.item_name,
+            vp.item_desc, 
+            vp.media_path_small, 
+            vp.media_path_large, 
+            vp.media_path_back
+            FROM v_price vp JOIN product_price_link ppl ON ppl.ref_price_ctime = vp.ctime AND ppl.ref_price_crand = vp.crand
+            WHERE ppl.ref_product_ctime = ? AND ppl.ref_product_crand = ?;";
+
+            $params = [$product->ctime, $product->crand];
+
+            $result = Database::executeSqlQuery($sql, $params);
+
+            if($result)
+            {
+                if($result->num_rows > 0)
+                {
+                    $prices = [];
+
+                    while($row = $result->fetch_assoc())
+                    {
+                        array_push($prices, static::priceToView($row));
+                    }
+
+                    $resp->success = true;
+                    $resp->message = "prices returned for product";
+                    $resp->data = $prices;
+                }
+                else
+                {
+                    $resp->message = "No prices found for product";
+                }
+            }
+            else
+            {
+                $resp->message = "Sql error in getting prices for product";
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while getting prices for product : $e");
+        }
+
+        return $resp;
+    }
+
     private static function updateProduct(Product $product) : Response
     {
         $resp = new Response(false, "unkown error in updating product", null);
@@ -313,6 +1314,7 @@ class StoreController
         `name` = ?, 
         `description` = ?, 
         locator = ?, 
+        stock = ?,
         ref_store_ctime = ?, 
         ref_store_crand = ?,
         ref_item_ctime = ?, 
@@ -323,6 +1325,7 @@ class StoreController
             $product->name,
             $product->description,
             $product->locator,
+            $product->stock,
             $product->ref_store_ctime,
             $product->ref_store_crand,
             $product->ref_item_ctime,
@@ -350,16 +1353,38 @@ class StoreController
     {
         $resp = new Response(false, "unkown error in inserting product", null);
 
-        $sql = "INSERT INTO product (ctime, crand, `name`, `description`, locator, ref_store_ctime, ref_store_crand, ref_item_ctime, ref_item_crand)values(?,?,?,?,?,?,?,?,?)";
+        $sql = "INSERT INTO product (ctime, crand, `name`, `description`, locator, stock, ref_store_ctime, ref_store_crand, ref_item_ctime, ref_item_crand)values(?,?,?,?,?,?,?,?,?,?)";
 
-        $params = [$product->ctime, $product->crand, $product->name, $product->description, $product->locator, $product->ref_store_ctime, $product->ref_store_crand, $product->ref_item_ctime, $product->ref_item_crand];
+        $params = [$product->ctime, $product->crand, $product->name, $product->description, $product->locator, $product->stock, $product->ref_store_ctime, $product->ref_store_crand, $product->ref_item_ctime, $product->ref_item_crand];
 
         try
         {
             Database::executeSqlQuery($sql, $params);
 
-            $resp->success = true;
-            $resp->message = "Product Inserted";
+            $pricesResp = static::selectOrInsertPrices($product->prices);
+
+
+            if($pricesResp->success)
+            {
+                $prices = static::convertPriceViewArrayToModels($pricesResp->data);
+                $linkResp = static::linkProductToPrices($product, $prices);
+
+                if($linkResp->success)
+                {
+                    $resp->success = true;
+                    $resp->message = "Product Inserted";
+                }
+                else
+                {
+                    $resp->message = "failed to link prices to product after insertion";
+                }
+            }
+            else
+            {
+                $resp->message = "Failed to get prices of product during insertion";
+            }
+
+            
         }
         catch(Exception $e)
         {
@@ -369,6 +1394,81 @@ class StoreController
         return $resp;
     }
 
+    private static function convertPriceViewArrayToModels(array $priceViews) : array
+    {
+        $priceModels = [];
+
+        foreach($priceViews as $view)
+        {
+            $model = new Price($view->amount, $view->currencyCode, $view->item);
+            $model->ctime = $view->ctime;
+            $model->crand = $view->crand;
+
+            array_push($priceModels, $model);
+        }
+
+        return $priceModels;
+    }
+
+     /**
+     * Selects an existing price or creates a new one, returning the found/created price
+     */
+    public static function selectOrInsertPrices(array $prices) : Response
+    {
+        $resp = new Response(false, "unkown error in getting prices", null);
+
+        if(static::validatePriceArray($prices) == false) throw new Exception("prices array must contain only prices");
+
+        try
+        {
+            $gotResp = static::getPricesByCurrencyAndItemAmount($prices);
+
+            if($gotResp->success)
+            {
+                if(count($gotResp->data) == count($prices))
+                {
+                    $resp->success = true;
+                    $resp->message = "Prices returned";
+                    $resp->data = $gotResp->data; 
+                }
+                else
+                {
+                    $nonExistingPrices = static::returnNonExistingPrices($prices, $gotResp->data);
+
+                    $insertResp = static::insertPriceArrayAndReturnInsertion($nonExistingPrices);
+
+                    if($insertResp->success)
+                    {
+                        $allPrices = array_merge($gotResp->data, $insertResp->data) ;
+
+
+                        $resp->success = true;
+                        $resp->message = "Prices returned";
+                        $resp->data = $allPrices;
+                    }
+                    else
+                    {
+                        $resp->message = "Error in inserting and returning non existant prices : $insertResp->message";
+                    } 
+                } 
+            }
+            else
+            {
+                $resp->message = "error in getting prices : $gotResp->message";
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while getting price : $e");
+        }
+
+        return $resp;   
+    }
+
+    /**
+     * Inserts new linking record between a product and prices
+     * Removes old linking records not found in the provided prices array
+     */
     private static function linkProductToPrices(vRecordId $product, array $prices) : Response
     {
         $resp = new Response(false, "unkown error in linking products to prices", null);
@@ -379,14 +1479,32 @@ class StoreController
 
             $valueClause = static::returnValueClauseForLinkingProductToPrices($prices);
 
-            $sql  = "INSERT IGNORE INTO product_price_link (ref_product_ctime, ref_product_crand, ref_price_ctime, ref_item_crand) VALUES $valueClause";
+            $sql = "INSERT IGNORE INTO product_price_link (ref_product_ctime, ref_product_crand, ref_price_ctime, ref_price_crand) VALUES $valueClause";
 
             $params = static::returnInsertionParamsForLinkingProductToPrices($product, $prices);
 
-            Database::executeSqlQuery($sql, $params);
+            $insertResult = Database::executeSqlQuery($sql, $params);
 
-            $resp->success = true;
-            $resp->message = "Product has been linked to prices";
+            if($insertResult)
+            {
+                $removeOldResp = static::removeOldLinksToProduct($product, $prices);
+
+                if($removeOldResp->success)
+                {
+                    $resp->success = true;
+                    $resp->message = "Product has been linked to prices";
+                }
+                else
+                {
+                    $resp->message = "error in removing void product price links";
+                }
+            }
+            else
+            {
+                $resp->message = "Sql error in inserting product price links";
+            }
+
+            
         }
         catch(Exception $e)
         {
@@ -396,9 +1514,125 @@ class StoreController
         return $resp;
     }
 
-    private static function removeVoidLinksToProduct(vRecordId $product, array $prices) : void
+    private static function removeOldLinksToProduct(vRecordId $product, array $prices) : Response
     {
-        $sql = "REMOVE FROM product_price_link WHERE "
+        $resp = new Response(false, "unkown error in clearing orphan prices", null);
+
+        try
+        {
+            $whereClause = static::returnWhereClauseForRemovingOldLinksToProduct($prices);
+
+            $sql = "DELETE ppl FROM product_price_link ppl WHERE $whereClause";
+
+            $params = static::returnParamsForRemovingOldLinksToProduct($product, $prices);
+
+            $result = Database::executeSqlQuery($sql, $params);
+
+            if(!$result)
+            {
+                throw new Exception("Delete failed in clearing old price links for product");
+            }
+
+            $clearResp = static::ClearOrphanPrices();
+
+            if($clearResp->success)
+            {
+                $resp->success = true;
+                $resp->message = "Old price links cleared";
+            }
+            else
+            {
+                $resp->message = "failed to clear orphan prices after clearing links";
+            }
+
+            
+        }
+        catch(exception $e)
+        {
+            throw new Exception("Exception caught in clearing orphan prices : $e");
+        }
+
+        return $resp;
+    }
+
+    private static function ClearOrphanPrices() : Response
+    {
+        $resp = new Response(false, "unkown error in clearing orphan prices", null);
+
+        try
+        {
+            $sql = "DELETE p FROM price p WHERE NOT EXISTS ( SELECT ctime FROM product_price_link pl WHERE pl.ref_price_ctime = p.ctime AND pl.ref_price_crand = p.crand);";
+
+            Database::executeSqlQuery($sql, []);
+
+            $resp->success = true;
+            $resp->message = "Orphan prices cleared";
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("exception caught while clearing orphan prices : $e");
+        }
+
+        return $resp;
+    }
+
+    private static function returnParamsForRemovingOldLinksToProduct(vRecordId $product, array $prices) : array
+    {
+        $params = [$product->ctime, $product->crand];
+
+        foreach($prices as $price)
+        {
+            array_push($params, $price->ctime, $price->crand);
+        }
+
+        return $params;
+    }
+
+    private static function unittest_returnParamsForRemovingOldLinksToProduct() : void
+    {
+        $product = new RecordId();
+        $price = new Price();
+        $prices = [$price];
+
+        $actual = json_encode(static::returnParamsForRemovingOldLinksToProduct($product, $prices));
+        $expected = json_encode([$product->ctime, $product->crand, $price->ctime, $price->crand]);
+        assert($actual === $expected, "UNIT TEST FAILED | actual : $actual | expected : $expected");
+
+        $prices = [$price,$price];
+
+        $actual = json_encode(static::returnParamsForRemovingOldLinksToProduct($product, $prices));
+        $expected = json_encode([$product->ctime, $product->crand, $price->ctime, $price->crand, $price->ctime, $price->crand]);
+        assert($actual === $expected, "UNIT TEST FAILED | actual : $actual | expected : $expected");
+
+        $prices = [$price,$price,$price];
+
+        $actual = json_encode(static::returnParamsForRemovingOldLinksToProduct($product, $prices));
+        $expected = json_encode([$product->ctime, $product->crand, $price->ctime, $price->crand, $price->ctime, $price->crand, $price->ctime, $price->crand]);
+        assert($actual === $expected, "UNIT TEST FAILED | actual : $actual | expected : $expected");
+    }
+
+    private static function returnWhereClauseForRemovingOldLinksToProduct(array $prices) : string
+    {
+        $whereClause = "(ref_product_ctime = ? AND ref_product_crand = ?)";
+
+        foreach($prices as $price)
+        {
+            $whereClause .= " AND (ref_price_ctime <> ? AND ref_price_crand <> ?)";
+        }
+
+        $whereClause .= ";";
+
+        return $whereClause;
+    }
+
+    private static function unittest_returnWhereClauseForRemovingVoidLinksToProduct() : void
+    {
+        $prices = [1];
+
+        $clause = static::returnWhereClauseForRemovingOldLinksToProduct($prices);
+        $expected = "(ref_product_ctime = ? AND ref_product_crand = ?) AND (ref_price_ctime <> ? AND ref_price_crand <> ?);";
+
+        assert($clause ===  $expected, new Exception("UNIT TEST FAILED | Actual : '".$clause."' | Expected : '".$expected."'))"));
     }
 
     private static function returnValueClauseForLinkingProductToPrices(array $prices) : string
@@ -423,16 +1657,33 @@ class StoreController
 
         foreach($prices as $price)
         {
-            array_push($bindingArray, [$productId->ctime, $productId->crand, $price->ctime, $price->crand]);
+            array_push($bindingArray, $productId->ctime, $productId->crand, $price->ctime, $price->crand);
         }
 
         return $bindingArray;
     }
 
+    private static function unittest_returnInsertionParamsForLinkingProductToPrices() : void
+    {
+        $productId = new RecordId();
+        $price = new Price();
+        $prices = [$price];
+
+        $actual = json_encode(static::returnInsertionParamsForLinkingProductToPrices($productId, $prices));
+        $expected = json_encode([$productId->ctime, $productId->crand, $price->ctime, $price->crand]);
+        assert($actual === $expected, "UNIT TEST FAILED | actual : $actual | expected : $expected");
+
+        $prices = [$price, $price];
+
+        $actual = json_encode(static::returnInsertionParamsForLinkingProductToPrices($productId, $prices));
+        $expected = json_encode([$productId->ctime, $productId->crand, $price->ctime, $price->crand, $productId->ctime, $productId->crand, $price->ctime, $price->crand]);
+        assert($actual === $expected, "UNIT TEST FAILED | actual : $actual | expected : $expected");
+    }
+
     private static function productToView($row): vProduct
     {
-        $owner = new vAccount($row['ref_store_owner_ctime'],(int)$row['ref_store_owner_crand']);
-        $owner->username = $row['ref_store_owner_username'];
+        $owner = new vAccount($row['store_owner_ctime'],(int)$row['store_owner_crand']);
+        $owner->username = $row['store_owner_username'];
 
         $smallIcon = new vMedia();
         $smallIcon->setMediaPath($row['small_media_media_path']);
@@ -441,7 +1692,7 @@ class StoreController
         $backIcon = new vMedia();
         $backIcon->setMediaPath($row['back_media_media_path']);
 
-        $item = new vItem($row['ref_item_ctime'], (int)$row['ref_item_crand']);
+        $item = new vItem($row['item_ctime'], (int)$row['item_crand']);
         $item->name = $row['name'];
         $item->description = $row['description'];
         $item->equipable = (bool)$row['equipable'];
@@ -449,15 +1700,16 @@ class StoreController
         $item->containerSize = (int)$row['container_size'];
         $item->containerItemCategory = $row['container_item_category'] != null ? ItemCategory::from($row['container_item_category']) : null;
 
-        $store = new vStore($row['ref_item_ctime'], (int)$row['ref_item_crand']);
-        $store->name = $row['ref_store_name'];
-        $store->description = $row['ref_store_description'];
-        $store->locator = $row['ref_store_locator'];
+        $store = new vStore($row['item_ctime'], (int)$row['item_crand']);
+        $store->name = $row['store_name'];
+        $store->description = $row['store_description'];
+        $store->locator = $row['store_locator'];
 
         return new vProduct(
             $row['ctime'],
             (int)$row['crand'],
             $row['locator'],
+            $row['stock']
         );
 
     }
@@ -526,7 +1778,7 @@ class StoreController
         $nonExistingPrices = [];
         foreach ($prices as $price) 
         {
-            $key = $gotPrice->ctime."#".(string)$gotPrice->crand;
+            $key = $price->ctime."#".(string)$price->crand;
 
             if (!isset($gotPricesKeyedArray[$key])) 
             {
@@ -548,10 +1800,10 @@ class StoreController
         crand, 
         amount, 
         currency_code, 
-        ref_item_ctime, 
-        ref_item_crand, 
-        ref_item_name, 
-        ref_item_desc,  
+        item_ctime, 
+        item_crand, 
+        item_name, 
+        item_desc,  
         media_path_small, 
         media_path_large, 
         media_path_back 
@@ -568,7 +1820,7 @@ class StoreController
             
             while($row = $result->fetch_assoc())
             {
-                $gotPrices = static::priceToView($row);    
+                array_push($gotPrices, static::priceToView($row));    
             }
 
             $resp->success = true;
@@ -593,24 +1845,49 @@ class StoreController
         {
             [$refItemCtime, $refItemCrand] = is_null($price->itemId) ? [null, null] : [$price->itemId->ctime, $price->itemId->crand];
 
-            array_push($bindingArray, [$price->amount, $price->currency_code, $refItemCtime, $refItemCrand]);
+            array_push($bindingArray, $price->amount, $price->currencyCode, $refItemCtime, $refItemCrand);
         }
 
         return $bindingArray;
+    }
+
+    private static function unittest_returnWhereClauseBindingArrayForGetPricesByCurrencyAndItemAmount() : void
+    {
+        $bindingArray = static::returnWhereClauseBindingArrayForGetPricesByCurrencyAndItemAmount([new Price()]);
+        $expected = [0,null,null,null];
+
+        $expectedJson = json_encode($expected);
+        $actualJson = json_encode($bindingArray);
+        assert($bindingArray === $expected, "unit test failed : return where cluase array did not match expected. Excepted : '$expectedJson' | Actual : '$actualJson'");
     }
 
     private static function constructWhereClauseForGetPricesByCurrencyAndItemAmount(array $prices) : string
     {
         if(empty($prices)) throw new InvalidArgumentException("Prices array cannot be empty");
 
-        $whereClause = "(amount = ? AND (currency_code = ? OR (ref_item_ctime = ? AND ref_item_crand = ?)))";
+        $whereClause = "(amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?)))";
 
-        for($i = 1; $i > count($prices); $i++)
+        for($i = 1; $i < count($prices); $i++)
         {
-            $whereClause .= " OR (amount = ? AND (currency_code = ? OR (ref_item_ctime = ? AND ref_item_crand = ?)))";
+            $whereClause .= " OR (amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?)))";
         }
 
         return $whereClause;
+    }
+
+    private static function unittest_constructWhereClauseForGetPricesByCurrencyAndItemAmount() : void
+    {
+        $whereClause = static::constructWhereClauseForGetPricesByCurrencyAndItemAmount([new Price()]);
+        $expected = "(amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?)))";
+        assert($whereClause === $expected, "unit test failed : return where cluase did not match expected. Excepted : '$expected' | Actual : '$whereClause'");
+
+        $whereClause = static::constructWhereClauseForGetPricesByCurrencyAndItemAmount([new Price(), new Price()]);
+        $expected = "(amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?))) OR (amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?)))";
+        assert($whereClause === $expected, "unit test failed : return where cluase did not match expected. Excepted : '$expected' | Actual : '$whereClause'");
+
+        $whereClause = static::constructWhereClauseForGetPricesByCurrencyAndItemAmount([new Price(), new Price(), new Price()]);
+        $expected = "(amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?))) OR (amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?))) OR (amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?)))";
+        assert($whereClause === $expected, "unit test failed : return where cluase did not match expected. Excepted : '$expected' | Actual : '$whereClause'");
     }
 
     private static function insertPriceArrayAndReturnInsertion(array $prices) : Response
@@ -621,42 +1898,44 @@ class StoreController
         {
             if(static::validatePriceArray($prices) == false) throw new InvalidArgumentException("prices array must contain only prices");
 
-            $whereClause = static::constructWhereClauseForGetPricesByCurrencyAndItemAmount($prices);    
+            $insertionValueClause = static::constructInsertionValueClauseForPrices($prices);
 
-            $insertionValueClause = static::constructInsertionValueClauseForNonExistingPrices($prices);
+            $insertSql = "INSERT INTO price (ctime, crand, amount, currency_code, ref_item_ctime, ref_item_crand) VALUES $insertionValueClause;";
+            
+            $insertParams = static::returnParamsForInsertionForNonExistingPrices($prices);
 
-            $sql = "INSERT INTO price (ctime, crand, amount, currency_code, ref_item_ctime, ref_item_crand) VALUES ($insertionValueClause);
-            SELECT 
-            ctime, 
-            crand, 
-            amount, 
-            currency_code, 
-            ref_item_ctime, 
-            ref_item_crand, 
-            ref_item_name, 
-            ref_item_desc,  
-            media_path_small, 
-            media_path_large, 
-            media_path_back 
-            FROM v_price 
-            WHERE $whereClause;";
+            $insertResult = Database::executeSqlQuery($insertSql, $insertParams);
 
-            $params = static::returnParamsForInsertionForNonExistingPrices($prices);
-            $params[] = static::returnWhereClauseBindingArrayForGetPricesByCurrencyAndItemAmount($prices);
-
-            $result = Database::executeSqlQuery($sql, $params);
-           
-            if($result->num_rows > 0)
+            if($insertResult != false)
             {
-                $gotPrice = static::priceToView($result->fetch_assoc());
+                $whereClause = static::constructWhereClauseForGetPricesByCurrencyAndItemAmount($prices);    
 
-                $resp->success = true;
-                $resp->message = "Prices inserted and returned";
-                $resp->data = $gotPrice;
+                $selectSql = "SELECT ctime, crand, amount, currency_code, item_ctime, item_crand, item_name, item_desc,  media_path_small, media_path_large, media_path_back FROM v_price WHERE $whereClause;";
+                $selectParams = static::returnWhereClauseBindingArrayForSelectPriceArrayAfterInsertion($prices);
+
+                $selectResult = Database::executeSqlQuery($selectSql, $selectParams);
+
+                if($selectResult->num_rows > 0)
+                {
+                    $gotPrices = [];
+                    while($row = $selectResult->fetch_assoc())
+                    {
+                        $gotPrice = static::priceToView($row);
+                        array_push($gotPrices, $gotPrice);
+                    }
+
+                    $resp->success = true;
+                    $resp->message = "Prices inserted and returned";
+                    $resp->data = $gotPrices;
+                }
+                else
+                {
+                    $resp->message = "Prices were not found after insertion";
+                }
             }
             else
             {
-                $resp->message = "Prices were not found after insertion";
+                $resp->message = "Prices insertion failed";
             }
         }
         catch(Exception $e)
@@ -667,6 +1946,70 @@ class StoreController
         return $resp;
     }
 
+    private static function constructInsertionValueClauseForPrices(array $prices) : string
+    {
+        $insertionValueClause = "(?,?,?,?,?,?)";
+
+        for($i = 1; $i < count($prices); $i++)
+        {
+            $insertionValueClause .= ",(?,?,?,?,?,?)";
+        }
+
+        return $insertionValueClause;
+    }
+
+    private static function unittest_constructInsertionValueClauseForPrices() : void
+    {
+        $price = new Price();
+        $prices = [$price];
+
+        $actual = static::constructInsertionValueClauseForPrices($prices);
+        $expected = "(?,?,?,?,?,?)";
+        assert($actual === $expected, new Exception("UNIT TEST FAILED | actual : $actual | expected : $expected"));
+
+        $price = new Price();
+        $prices = [$price,$price];
+
+        $actual = static::constructInsertionValueClauseForPrices($prices);
+        $expected = "(?,?,?,?,?,?),(?,?,?,?,?,?)";
+        assert($actual === $expected, new Exception("UNIT TEST FAILED | actual : $actual | expected : $expected"));
+
+        $price = new Price();
+        $prices = [$price, $price, $price];
+
+        $actual = static::constructInsertionValueClauseForPrices($prices);
+        $expected = "(?,?,?,?,?,?),(?,?,?,?,?,?),(?,?,?,?,?,?)";
+        assert($actual === $expected, new Exception("UNIT TEST FAILED | actual : $actual | expected : $expected"));
+
+    }
+
+    private static function returnWhereClauseBindingArrayForSelectPriceArrayAfterInsertion(array $prices) : array
+    {
+        if(empty($prices)) throw new InvalidArgumentException("Prices array cannot be empty");
+
+        $bindingArray = [];
+
+        foreach($prices as $price)
+        {
+            [$refItemCtime, $refItemCrand] = is_null($price->itemId) ? [null, null] : [$price->itemId->ctime, $price->itemId->crand];
+
+            array_push($bindingArray, $price->amount, $price->currencyCode, $refItemCtime, $refItemCrand);
+        }
+
+        return $bindingArray;
+    }
+
+    private static function unittest_returnWhereClauseBindingArrayForSelectPriceArrayAfterInsertion() : void
+    {
+        $price = new Price();
+        $prices = [$price];
+
+        $actual = json_encode(static::returnWhereClauseBindingArrayForSelectPriceArrayAfterInsertion($prices));
+        $expected = json_encode([0,null,null,null]);
+
+        assert($actual === $expected, new Exception("UNIT TEST FAIELD | actual : $actual | expected : $expected"));
+    }
+
     private static function returnParamsForInsertionForNonExistingPrices(array $prices) : array
     {
         $params = [];
@@ -675,10 +2018,21 @@ class StoreController
         {
             [$refItemCtime, $refItemCrand] = is_null($price->itemId) ? [null, null] : [$price->itemId->ctime, $price->itemId->crand];
 
-            array_push($params, [$price->ctime, $price->crand, $price->amount, (string)$price->currency_code, $refItemCtime, $refItemCrand]);
+            array_push($params, $price->ctime, $price->crand, $price->amount, (string)$price->currencyCode, $refItemCtime, $refItemCrand);
         }
 
-        return $price;
+        return $params;
+    }
+
+    private static function unittest_returnParamsForInsertionForNonExistingPrices() : void
+    {
+        $price = new Price();
+        $prices = [$price];
+
+        $actual = json_encode(static::returnParamsForInsertionForNonExistingPrices($prices));
+        $expected = json_encode([$price->ctime, $price->crand, 0, "", null, null]);
+
+        assert($actual === $expected, new exception("UNIT TEST FAILED | actual : $actual | expected : $expected"));
     }
 
     private static function constructInsertionValueClauseForNonExistingPrices(array $prices) : string
@@ -697,7 +2051,7 @@ class StoreController
     {
         foreach($prices as $price)
         {
-            if($price->get_class() != Price::class)
+            if(!$price instanceof Price)
             {
                 return false;
             }
@@ -717,12 +2071,12 @@ class StoreController
         $iconBack = new vMedia();
         $iconBack->setMediaPath($row["media_path_back"]);
 
-        $item = new vItem($row["ref_item_ctime"], $row["ref_item_crand"]);
-        $item->name = $row["ref_item_name"];
-        $item->description = $row["ref_item_desc"];
-        $item->iconSmall = $row["media_path_small"];
-        $item->iconBig = $row["media_path_large"];
-        $item->iconBack = $row["media_path_back"];
+        $item = new vItem($row["item_ctime"], $row["item_crand"]);
+        $item->name = $row["item_name"];
+        $item->description = $row["item_desc"];
+        $item->iconSmall = $iconSmall;
+        $item->iconBig = $iconLarge;
+        $item->iconBack = $iconBack;
 
         $currencyCode = $row["currency_code"] != null ? CurrencyCode::from($row["currency_code"]) : null;
 
