@@ -4,6 +4,7 @@
   // Utility
   function clamp8(v){ return v<0?0:(v>255?255:v)|0; }
   function debounced(ms, fn){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
+  function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.now(); const remain=ms-(now-last); if(remain<=0){ last=now; fn(...a); } else { clearTimeout(timer); timer=setTimeout(()=>{ last=Date.now(); fn(...a); }, remain); } }; }
 
   // Adjustments
   function applyAdjustments(ctx, w, h, bri, con, sat){
@@ -198,9 +199,10 @@
     let zoom = 1;
 
     function status(msg){ if(statusEl) statusEl.textContent = msg; }
-    function setZoom(z){ zoom=Math.max(1,Math.floor(z)); if(wrap) wrap.style.transform=`scale(${zoom})`; }
-    function fitToViewport(){ if(!canvas.width||!canvas.height||!viewport) return; const availW=viewport.clientWidth-16; const availH=viewport.clientHeight-16; const fit=Math.max(1,Math.floor(Math.min(availW/canvas.width, availH/canvas.height))); setZoom(fit); }
+    function setZoom(z){ zoom=Math.max(0.1,z); if(wrap) wrap.style.transform=`scale(${zoom})`; }
+    function fitToViewport(){ if(!canvas.width||!canvas.height||!viewport) return; const availW=viewport.clientWidth-16; const availH=viewport.clientHeight-16; const fit=Math.min(availW/canvas.width, availH/canvas.height); setZoom(fit); }
     window.addEventListener('resize', ()=>{ if(autoFitCk?.checked) fitToViewport(); });
+    autoFitCk?.addEventListener('change', ()=>{ if(autoFitCk.checked) fitToViewport(); });
 
     function render(){
       if(!img) return;
@@ -303,7 +305,7 @@
       status('Done.');
     }
 
-    const maybeRender = debounced(120, ()=>{ if(autoRenderCk?.checked) render(); });
+    const maybeRender = throttled(120, ()=>{ if(autoRenderCk?.checked) render(); });
 
     [pixelWidth, method, paletteSize, ditherCk, bri, con, sat, enableTune, tR, tY, tG, tC, tB, tM, enableRemap, remapStrength, mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=>{ if(el) el.addEventListener('input', maybeRender); });
     [mapR,mapY,mapG,mapC,mapB,mapM].forEach(el=>{ if(el) el.addEventListener('change', maybeRender); });
