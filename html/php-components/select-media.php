@@ -190,6 +190,7 @@ function ApplyPixelation()
     const canvas = document.getElementById('pixelCanvas');
     let imgElement = document.getElementById('imagePreviewEdited');
     imgElement.src = canvas.toDataURL();
+    lastPixelEditorSrc = imgElement.src;
     mediaUploadStep = 4;
     UpdateMediaUploadModal();
 }
