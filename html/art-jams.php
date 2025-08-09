@@ -7,7 +7,7 @@ require("php-components/base-page-pull-active-account-info.php");
 
 
 // ===================== ART JAM CONFIG (themed like the raffle timer) =====================
-$scheduleString = "Saturday 11AM BRT";     // Wednesdays, 8–11pm São Paulo time
+$scheduleString = "Saturday 8AM BRT";     // Wednesdays, 8–11pm São Paulo time
 $tz = new DateTimeZone('America/Sao_Paulo');
 $jamDuration = new DateInterval('PT3H');   // 3 hours
 $subjectUnlockLead = new DateInterval('PT5M'); // subject unlocks 5 minutes before start
