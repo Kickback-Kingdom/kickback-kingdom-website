@@ -100,12 +100,13 @@ function UpdateMediaUploadModal()
 
     if (mediaUploadStep == 3)
     {
-        CropImageFromEditor();
         let container = document.getElementById('pixelEditor');
         const source = document.getElementById('imagePreviewEdited');
+        let currentSrc = source.src;
 
-        const currentSrc = source.src;
         if (currentSrc !== lastPixelEditorSrc || !pixelEditorSettings) {
+            CropImageFromEditor();
+            currentSrc = source.src;
             pixelEditorSettings = {
                 pixelWidth: 64,
                 method: 'neighbor',
