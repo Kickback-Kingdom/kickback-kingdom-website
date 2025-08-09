@@ -352,7 +352,8 @@ require("php-components/base-page-pull-active-account-info.php");
 
   let intervalId = null;
 
-  function $(id){ return document.getElementById(id); }
+  // Use an explicit helper name to avoid conflicts with libraries like jQuery
+  function getEl(id){ return document.getElementById(id); }
 
   function phase(now){
     if (now >= endAt)   return 'ended';
@@ -377,10 +378,10 @@ require("php-components/base-page-pull-active-account-info.php");
     const minutes = Math.floor((d % hour) / minute);
     const seconds = Math.floor((d % minute) / second);
 
-    if ($('aj-days'))    $('aj-days').innerText    = days;
-    if ($('aj-hours'))   $('aj-hours').innerText   = hours;
-    if ($('aj-minutes')) $('aj-minutes').innerText = minutes;
-    if ($('aj-seconds')) $('aj-seconds').innerText = seconds;
+    if (getEl('aj-days'))    getEl('aj-days').innerText    = days;
+    if (getEl('aj-hours'))   getEl('aj-hours').innerText   = hours;
+    if (getEl('aj-minutes')) getEl('aj-minutes').innerText = minutes;
+    if (getEl('aj-seconds')) getEl('aj-seconds').innerText = seconds;
   }
 
   function tick(){
@@ -403,7 +404,7 @@ require("php-components/base-page-pull-active-account-info.php");
     updateCountdown(target);
 
     // live hint text
-    const hint = $('aj-hint');
+    const hint = getEl('aj-hint');
     if (hint){
       if (p === 'pre-unlock') {
         const mins = Math.ceil((unlockAt - now)/minute);
