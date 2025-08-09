@@ -151,14 +151,14 @@ require("php-components/base-page-pull-active-account-info.php");
                 require("php-components/base-page-breadcrumbs.php"); 
                 
                 ?><div class="text-muted small">
-                Subject unlocks at <strong><?= $unlockAt->format('H:i') ?> BRT</strong>
+                Subject unlocks at <strong><?= $unlockAt->format('H:i T') ?></strong>
                 <span id="aj-hint" class="ms-1"></span>
               </div>
-              
+
 <?php
 // ===================== ART JAM CONFIG (themed like the raffle timer) =====================
-$scheduleString = "Wednesday 8PM BRA";     // Wednesdays, 8–11pm São Paulo time
 $tz = new DateTimeZone('America/Sao_Paulo');
+$scheduleString = "Wednesday 8PM " . (new DateTimeImmutable('now', $tz))->format('T');     // Wednesdays, 8–11pm São Paulo time (BRT)
 $jamDuration = new DateInterval('PT3H');   // 3 hours
 $subjectUnlockLead = new DateInterval('PT5M'); // subject unlocks 5 minutes before start
 
@@ -243,10 +243,10 @@ try {
     <div class="card mb-3">
       <div class="bg-ranked-1 card-body">
         <div class="d-flex align-items-center">
-          <h3 class="mb-0">Weekly Art Jam — <?= htmlspecialchars($scheduleString) ?> (America/São_Paulo)</h3>
+          <h3 class="mb-0">Weekly Art Jam — <?= htmlspecialchars($scheduleString) ?> (<?= $tz->getName() ?>)</h3>
           <div class="ms-auto text-end">
             <div class="small">Next Jam:</div>
-            <div class="fw-semibold"><?= $jamStart->format('l, F j, Y \a\t H:i') ?>–<?= $jamEnd->format('H:i') ?> BRT</div>
+            <div class="fw-semibold"><?= $jamStart->format('l, F j, Y \a\t H:i') ?>–<?= $jamEnd->format('H:i T') ?></div>
             <div class="text-muted">Starts in <?= aj_humanInterval($countToStart) ?></div>
           </div>
         </div>
@@ -267,7 +267,7 @@ try {
             <div class="bg-ranked-1 time-segment col-6 col-md-3"><span id="aj-seconds"></span><small>Seconds</small></div>
           </div>
           <div class="text-muted small">
-            Subject unlocks at <strong><?= $unlockAt->format('H:i') ?> BRT</strong>
+            Subject unlocks at <strong><?= $unlockAt->format('H:i T') ?></strong>
             <?php if (!empty($subjectLocked)): ?> (in <?= aj_humanInterval($countToUnlock) ?>)<?php endif; ?>
           </div>
         </div>
@@ -280,7 +280,7 @@ try {
     <div class="card shadow-sm h-100">
       <div class="card-header">
         <h5 class="mb-0">Last Week</h5>
-        <div class="small text-muted"><?= $prevJamStart->format('D, M j, Y H:i') ?>–<?= $prevJamEnd->format('H:i') ?> BRT</div>
+        <div class="small text-muted"><?= $prevJamStart->format('D, M j, Y H:i') ?>–<?= $prevJamEnd->format('H:i T') ?></div>
       </div>
       <div class="card-body">
         <div class="mb-2">
@@ -301,7 +301,7 @@ try {
     <div class="card shadow-sm h-100">
       <div class="card-header">
         <h5 class="mb-0">This Week</h5>
-        <div class="small text-muted"><?= $jamStart->format('D, M j, Y H:i') ?>–<?= $jamEnd->format('H:i') ?> BRT</div>
+        <div class="small text-muted"><?= $jamStart->format('D, M j, Y H:i') ?>–<?= $jamEnd->format('H:i T') ?></div>
       </div>
       <div class="card-body">
         <div class="mb-2">
@@ -323,7 +323,7 @@ try {
         </div>
       </div>
       <div class="card-footer text-muted small">
-        Current time: <?= $now->format('l, F j, Y \a\t H:i:s') ?> BRT
+        Current time: <?= $now->format('l, F j, Y \a\t H:i:s T') ?>
       </div>
     </div>
   </div>
@@ -332,7 +332,7 @@ try {
     <div class="card shadow-sm h-100">
       <div class="card-header">
         <h5 class="mb-0">Next Week Preview</h5>
-        <div class="small text-muted"><?= $jamStart->modify('+1 week')->format('D, M j, Y H:i') ?>–<?= $jamEnd->modify('+1 week')->format('H:i') ?> BRT</div>
+        <div class="small text-muted"><?= $jamStart->modify('+1 week')->format('D, M j, Y H:i') ?>–<?= $jamEnd->modify('+1 week')->format('H:i T') ?></div>
       </div>
       <div class="card-body">
         <div class="text-uppercase text-muted small">Medium (Next Week)</div>
