@@ -210,8 +210,25 @@ try {
     animation-duration: 1s;
 }
 
+#aj-theme {
+    background-color: #fff3cd;
+    border: 2px dashed #f77f00;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+}
+
+#aj-theme.theme-reveal {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
     </style>
-    <?php 
+    <?php
     
     require("php-components/base-page-components.php");
 
@@ -317,8 +334,10 @@ try {
             <span class="badge text-bg-secondary mb-1">Locked</span>
             <div class="fw-semibold">Subject appears 5 minutes before start.</div>
           <?php else: ?>
-            <div class="fw-semibold"><?= htmlspecialchars($thisSubject ?? '') ?></div>
-            <div class="text-muted small">Constraint: <?= htmlspecialchars($thisConstraint ?? '') ?></div>
+            <div id="aj-theme" class="d-none">
+              <div class="fw-semibold"><?= htmlspecialchars($thisSubject ?? '') ?></div>
+              <div class="text-muted small">Constraint: <?= htmlspecialchars($thisConstraint ?? '') ?></div>
+            </div>
           <?php endif; ?>
         </div>
         <div class="alert alert-info mt-3 mb-0">
@@ -374,7 +393,7 @@ $(function() {
   // Use epoch ms from PHP (server is in America/Sao_Paulo)
   const startAt  = <?= $jamStart->getTimestamp()  ?> * 1000;
   const unlockAt = <?= $unlockAt->getTimestamp() ?> * 1000;
-  const endAt    = <?= $jamEnd->getTimestamp()    ?> * 1000;
+  const endAt    = startAt + 3*hour; // exactly 3 hours after start
 
 
   let intervalId = null;
@@ -418,6 +437,10 @@ $(function() {
     const $title = $('#aj-title');
     if (p === 'in-progress') {
       $title.text('Time Remaining in Jam');
+      const $theme = $('#aj-theme');
+      if ($theme.hasClass('d-none')) {
+        $theme.removeClass('d-none').addClass('theme-reveal');
+      }
     } else if (p === 'ended') {
       $title.text('Jam Ended');
     } else {
