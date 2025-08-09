@@ -55,8 +55,9 @@ $now = new DateTimeImmutable('now', $tz);
 try {
     [$weekday,$hour,$minute] = aj_parseSchedule($scheduleString);
 
-    // This upcoming jam
-    $jamStart = aj_nextOccurrence($now,$weekday,$hour,$minute,$tz);
+    // This week's jam (or next if the previous one just ended)
+    // Subtract the duration so a jam currently in progress is recognized
+    $jamStart = aj_nextOccurrence($now->sub($jamDuration),$weekday,$hour,$minute,$tz);
     $jamEnd   = $jamStart->add($jamDuration);
     $unlockAt = $jamStart->sub($subjectUnlockLead);
 
