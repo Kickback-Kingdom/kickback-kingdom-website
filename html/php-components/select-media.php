@@ -39,6 +39,7 @@ const itemsPerSelectMediaPage = 6; // or however many you want
 
 <?php if(Kickback\Services\Session::getCurrentAccount()->canUploadImages()) { ?>
 let cropper;
+let pixelEditor;
 let mediaUploadStep = 1;
 function OpenMediaUploadModal()
 {
@@ -97,6 +98,9 @@ function UpdateMediaUploadModal()
     if (mediaUploadStep == 3)
     {
         CropImageFromEditor();
+        const container = document.getElementById('pixelEditor');
+        const source = document.getElementById('imagePreviewEdited');
+        pixelEditor = initPixelEditor(container, source);
         $("#mediaUploadButtonPrev").html("Back");
         $("#mediaUploadButtonNext").hide();
     }
@@ -132,13 +136,17 @@ function CropImageFromEditor()
 
 function SkipPixelation()
 {
-    MediaUploadNextStep();
+    mediaUploadStep = 4;
+    UpdateMediaUploadModal();
 }
 
 function ApplyPixelation()
 {
-    // Pixelation logic placeholder
-    MediaUploadNextStep();
+    const canvas = document.getElementById('pixelCanvas');
+    let imgElement = document.getElementById('imagePreviewEdited');
+    imgElement.src = canvas.toDataURL();
+    mediaUploadStep = 4;
+    UpdateMediaUploadModal();
 }
 
 function MediaUploadNextStep()
