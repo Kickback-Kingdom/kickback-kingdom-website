@@ -56,17 +56,26 @@ $now = new DateTimeImmutable('now', $tz);
 try {
     [$weekday,$hour,$minute] = aj_parseSchedule($scheduleString);
 
-    // This week's jam (or next if the previous one just ended)
+    // Determine the relevant jam week based on current time
     // Subtract the duration so a jam currently in progress is recognized
-    $jamStart = aj_nextOccurrence($now->sub($jamDuration),$weekday,$hour,$minute,$tz);
+    $jamStart = aj_nextOccurrence($now->sub($jamDuration), $weekday, $hour, $minute, $tz);
     $jamEnd   = $jamStart->add($jamDuration);
+
+    // If the jam just ended, shift to the next week's jam
+    if ($now >= $jamEnd) {
+        $prevJamStart = $jamStart;
+        $prevJamEnd   = $jamEnd;
+        $jamStart     = $jamStart->modify('+1 week');
+        $jamEnd       = $jamStart->add($jamDuration);
+    } else {
+        // Otherwise, last week is one week before the current jam
+        $prevJamStart = $jamStart->modify('-1 week');
+        $prevJamEnd   = $prevJamStart->add($jamDuration);
+    }
+
     $unlockAt = $jamStart->sub($subjectUnlockLead);
 
-    // Last week (the previous occurrence of the same weekday/time)
-    $prevJamStart = $jamStart->modify('-1 week');
-    $prevJamEnd   = $prevJamStart->add($jamDuration);
-
-    // Seeds
+    // Seeds for previous, current, and next jams
     $seedPrev = aj_weekSeed($prevJamStart);
     $seedThis = aj_weekSeed($jamStart);
     $seedNext = aj_weekSeed($jamStart->modify('+1 week'));
@@ -464,10 +473,6 @@ $(function() {
             $banner.data('scrolled', true);
           }
         }
-      } else if (p === 'ended') {
-        $title.text('Jam Ended');
-        $theme.addClass('d-none');
-        $banner.addClass('d-none');
       } else {
         $title.text('Countdown to Jam Start');
         $theme.addClass('d-none');
@@ -475,12 +480,7 @@ $(function() {
       }
 
     // crossed a boundary → hard refresh to reveal new state/subject
-    if (!target) {
-      updateCountdown(now); // show zeros
-      clearInterval(intervalId);
-      return;
-    }
-    if (target - now <= 0) {
+    if (!target || target - now <= 0) {
       location.replace(location.pathname + location.search);
       return;
     }
