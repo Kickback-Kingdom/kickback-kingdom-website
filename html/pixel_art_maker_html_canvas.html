@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pixel Art Maker</title>
+<style>
+  :root{ --bg:#1b1e24; --panel:#242833; --muted:#a7b0c0; --text:#eef2f6; --accent:#6aa9ff; --border:#2e3443; }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0; font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; color:var(--text); background:var(--bg)}
+
+  .app{display:grid; grid-template-columns:340px 1fr; height:100vh}
+  aside.controls{background:var(--panel); border-right:1px solid var(--border); padding:14px; overflow:auto}
+  aside .group{margin-bottom:14px; padding-bottom:12px; border-bottom:1px dashed #3a4154}
+  aside h3{margin:0 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted)}
+  .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  label.stack{display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--muted)}
+  .inline{display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center}
+  select, input[type="number"], input[type="color"], input[type="text"]{padding:8px; border-radius:8px; border:1px solid #3a4154; background:#0f1118; color:var(--text)}
+  input[type="range"]{width:100%}
+  .btn{appearance:none; border:1px solid #3a4154; background:#0f1118; color:var(--text); padding:9px 12px; border-radius:10px; cursor:pointer}
+  .btn.primary{border-color:#2e58a3; background:linear-gradient(180deg,#133462,#0e2546)}
+
+  main.stage{display:grid; grid-template-rows:auto 1fr; gap:10px; padding:14px}
+  .toolbar{display:flex; align-items:center; gap:8px; color:var(--muted)}
+  #viewport{position:relative; overflow:auto; width:100%; height:calc(100vh - 70px); border:1px solid var(--border); border-radius:12px; background:repeating-conic-gradient(#2d3343 0% 25%, #242938 0% 50%) 50%/20px 20px}
+  #wrap{position:relative; width:max-content; height:max-content; transform-origin: top left}
+  canvas{display:block; background:#0a0c12; image-rendering:pixelated; image-rendering:crisp-edges; border-radius:0}
+  .muted{color:var(--muted); font-size:12px}
+
+  @media (max-width: 980px){ .app{grid-template-columns:1fr} aside.controls{order:2; height:42vh} main.stage{order:1} #viewport{height:calc(58vh - 70px)} }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="controls">
+    <div class="group">
+      <h3>Image</h3>
+      <div class="row">
+        <input type="file" id="fileInput" accept="image/*">
+        <button id="save" class="btn">Save PNG</button>
+      </div>
+      <div class="muted" id="imgInfo">No image loaded</div>
+    </div>
+
+    <div class="group">
+      <h3>Pixelation</h3>
+      <label class="stack">Pixel width
+        <input type="number" id="pixelWidth" value="64" min="8" max="1024">
+      </label>
+      <label class="stack">Method
+        <select id="method">
+          <option value="neighbor">Nearest Neighbor</option>
+          <option value="average">Block Average</option>
+          <option value="palette">Palette (k‑means)</option>
+        </select>
+      </label>
+      <label class="stack">Palette size (for k‑means)
+        <input type="number" id="paletteSize" value="16" min="2" max="64">
+      </label>
+      <div class="row">
+        <label class="row muted"><input type="checkbox" id="dither"> Dither (FS)</label>
+        <label class="row muted"><input type="checkbox" id="autoRender" checked> Auto Render</label>
+        <label class="row muted"><input type="checkbox" id="autoFit" checked> Auto Fit</label>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="render" class="btn primary">Render</button>
+        <button id="reset" class="btn" title="Reset all settings to defaults">Reset</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Adjustments</h3>
+      <label class="stack">Brightness
+        <input type="range" id="brightness" min="-100" max="100" value="0">
+      </label>
+      <label class="stack">Contrast
+        <input type="range" id="contrast" min="-100" max="100" value="0">
+      </label>
+      <label class="stack">Saturation
+        <input type="range" id="saturation" min="0" max="200" value="100">
+      </label>
+    </div>
+
+    <div class="group">
+      <h3>Color tuning</h3>
+      <label class="row muted"><input type="checkbox" id="enableColorTuning"> Enable tuning</label>
+      <label class="stack">Reds<input type="range" id="tuneRed" min="-100" max="100" value="0"></label>
+      <label class="stack">Yellows<input type="range" id="tuneYellow" min="-100" max="100" value="0"></label>
+      <label class="stack">Greens<input type="range" id="tuneGreen" min="-100" max="100" value="0"></label>
+      <label class="stack">Cyans<input type="range" id="tuneCyan" min="-100" max="100" value="0"></label>
+      <label class="stack">Blues<input type="range" id="tuneBlue" min="-100" max="100" value="0"></label>
+      <label class="stack">Magentas<input type="range" id="tuneMagenta" min="-100" max="100" value="0"></label>
+    </div>
+
+    <div class="group">
+      <h3>Hue remap</h3>
+      <label class="row muted"><input type="checkbox" id="enableRemap"> Enable hue remap</label>
+      <label class="stack">Global remap strength
+        <input type="range" id="remapStrength" min="0" max="100" value="100">
+      </label>
+      <label class="stack">Reds →
+        <div class="inline">
+          <select id="mapR"></select>
+          <input type="range" id="mapRStr" min="0" max="100" value="100" title="Reds remap strength">
+        </div>
+      </label>
+      <label class="stack">Yellows →
+        <div class="inline">
+          <select id="mapY"></select>
+          <input type="range" id="mapYStr" min="0" max="100" value="100" title="Yellows remap strength">
+        </div>
+      </label>
+      <label class="stack">Greens →
+        <div class="inline">
+          <select id="mapG"></select>
+          <input type="range" id="mapGStr" min="0" max="100" value="100" title="Greens remap strength">
+        </div>
+      </label>
+      <label class="stack">Cyans →
+        <div class="inline">
+          <select id="mapC"></select>
+          <input type="range" id="mapCStr" min="0" max="100" value="100" title="Cyans remap strength">
+        </div>
+      </label>
+      <label class="stack">Blues →
+        <div class="inline">
+          <select id="mapB"></select>
+          <input type="range" id="mapBStr" min="0" max="100" value="100" title="Blues remap strength">
+        </div>
+      </label>
+      <label class="stack">Magentas →
+        <div class="inline">
+          <select id="mapM"></select>
+          <input type="range" id="mapMStr" min="0" max="100" value="100" title="Magentas remap strength">
+        </div>
+      </label>
+      <div class="muted">Tip: per‑band sliders let you push some hue families harder than others. Global strength multiplies these.</div>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="toolbar">
+      <span class="muted">Pixelated size: <span id="pixMeta">—</span></span>
+      <span class="muted" style="margin-left:auto" id="status"></span>
+    </div>
+    <div id="viewport">
+      <div id="wrap"><canvas id="out"></canvas></div>
+    </div>
+  </main>
+</div>
+
+<script>
+// Elements
+const fileInput = document.getElementById('fileInput');
+const saveBtn = document.getElementById('save');
+const imgInfo = document.getElementById('imgInfo');
+const pixelWidth = document.getElementById('pixelWidth');
+const method = document.getElementById('method');
+const paletteSize = document.getElementById('paletteSize');
+const ditherCk = document.getElementById('dither');
+const autoRenderCk = document.getElementById('autoRender');
+const autoFitCk = document.getElementById('autoFit');
+const renderBtn = document.getElementById('render');
+const resetBtn = document.getElementById('reset');
+const bri = document.getElementById('brightness');
+const con = document.getElementById('contrast');
+const sat = document.getElementById('saturation');
+const enableTune = document.getElementById('enableColorTuning');
+const tR = document.getElementById('tuneRed');
+const tY = document.getElementById('tuneYellow');
+const tG = document.getElementById('tuneGreen');
+const tC = document.getElementById('tuneCyan');
+const tB = document.getElementById('tuneBlue');
+const tM = document.getElementById('tuneMagenta');
+// hue remap
+const enableRemap = document.getElementById('enableRemap');
+const remapStrength = document.getElementById('remapStrength');
+const mapR = document.getElementById('mapR');
+const mapY = document.getElementById('mapY');
+const mapG = document.getElementById('mapG');
+const mapC = document.getElementById('mapC');
+const mapB = document.getElementById('mapB');
+const mapM = document.getElementById('mapM');
+const mapRStr = document.getElementById('mapRStr');
+const mapYStr = document.getElementById('mapYStr');
+const mapGStr = document.getElementById('mapGStr');
+const mapCStr = document.getElementById('mapCStr');
+const mapBStr = document.getElementById('mapBStr');
+const mapMStr = document.getElementById('mapMStr');
+
+const pixMeta = document.getElementById('pixMeta');
+const statusEl = document.getElementById('status');
+
+const viewport = document.getElementById('viewport');
+const wrap = document.getElementById('wrap');
+const out = document.getElementById('out');
+const octx = out.getContext('2d');
+
+// State
+let img = new Image();
+let imgLoaded = false;
+let zoom = 1; // CSS zoom (integer for crisp pixels)
+
+// Helpers
+function status(msg, err=false){ statusEl.textContent = msg; statusEl.style.color = err? '#ff8a8a' : 'var(--muted)'; }
+function clamp8(v){ return v<0?0:(v>255?255:v)|0; }
+function debounced(ms, fn){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
+
+function setZoom(z){ zoom = Math.max(1, Math.floor(z)); wrap.style.transform = `scale(${zoom})`; }
+function fitToViewport(){ if(!out.width || !out.height) return; const availW = viewport.clientWidth - 16; const availH = viewport.clientHeight - 16; const fit = Math.max(1, Math.floor(Math.min(availW/out.width, availH/out.height))); setZoom(fit); }
+window.addEventListener('resize', ()=>{ if(autoFitCk.checked) fitToViewport(); });
+
+// Auto-render wiring (now includes hue remap selects & strengths)
+const maybeRender = debounced(120, ()=>{ if(imgLoaded && autoRenderCk.checked) render(); });
+[pixelWidth, method, paletteSize, bri, con, sat, ditherCk, enableTune, tR, tY, tG, tC, tB, tM, enableRemap, remapStrength,
+ mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=> el.addEventListener('input', maybeRender));
+[mapR,mapY,mapG,mapC,mapB,mapM].forEach(sel=> sel.addEventListener('change', maybeRender));
+renderBtn.addEventListener('click', ()=> imgLoaded && render());
+
+// Fill remap dropdowns
+const remapBands = ['— keep —','Red','Yellow','Green','Cyan','Blue','Magenta'];
+function buildOptions(sel){ sel.innerHTML=''; remapBands.forEach((name,i)=>{ const opt=document.createElement('option'); opt.textContent=name; opt.value=String(i); sel.appendChild(opt); }); sel.value='0'; }
+[mapR,mapY,mapG,mapC,mapB,mapM].forEach(buildOptions);
+
+// Reset all settings
+resetBtn.addEventListener('click', ()=>{
+  pixelWidth.value = 64; method.value = 'neighbor'; paletteSize.value = 16;
+  ditherCk.checked = false; autoRenderCk.checked = true; autoFitCk.checked = true;
+  bri.value = 0; con.value = 0; sat.value = 100;
+  enableTune.checked = false; tR.value = 0; tY.value = 0; tG.value = 0; tC.value = 0; tB.value = 0; tM.value = 0;
+  enableRemap.checked = false; remapStrength.value = 100; [mapR,mapY,mapG,mapC,mapB,mapM].forEach(sel=> sel.value='0');
+  mapRStr.value = mapYStr.value = mapGStr.value = mapCStr.value = mapBStr.value = mapMStr.value = 100;
+  status('Settings reset.'); if(imgLoaded){ render(); }
+});
+
+// Load image
+fileInput.addEventListener('change', e=>{
+  const f = e.target.files?.[0]; if(!f) return; const url = URL.createObjectURL(f);
+  img = new Image();
+  img.onload = ()=>{ imgLoaded = true; URL.revokeObjectURL(url); imgInfo.textContent = `${f.name} — ${Math.round(f.size/1024)} KB (${img.naturalWidth}×${img.naturalHeight})`; render(); };
+  img.onerror = ()=> status('Could not load image', true);
+  img.src = url;
+});
+
+// Save
+saveBtn.addEventListener('click', ()=>{ const a=document.createElement('a'); a.download='pixel-art.png'; a.href=out.toDataURL('image/png'); a.click(); });
+
+// Core render
+function render(){
+  status('Rendering…');
+  const targetW = Math.max(8, Math.min(1024, Number(pixelWidth.value)));
+  const targetH = Math.round((img.naturalHeight/img.naturalWidth) * targetW);
+
+  // work canvas at pixel grid size
+  const small = document.createElement('canvas'); small.width = targetW; small.height = targetH;
+  const sctx = small.getContext('2d', { willReadFrequently:true });
+
+  const m = method.value; const k = Math.max(2, Math.min(64, Number(paletteSize.value)));
+
+  if(m==='neighbor'){
+    sctx.imageSmoothingEnabled = false; sctx.drawImage(img, 0, 0, targetW, targetH);
+  } else {
+    // sample from full-res for precise math
+    const src = document.createElement('canvas'); src.width = img.naturalWidth; src.height = img.naturalHeight;
+    const sfull = src.getContext('2d', { willReadFrequently:true }); sfull.drawImage(img,0,0);
+    const data = sfull.getImageData(0,0,src.width,src.height).data;
+
+    if(m==='average'){
+      const outImg = sctx.createImageData(targetW, targetH); const bw = src.width/targetW, bh = src.height/targetH;
+      for(let py=0; py<targetH; py++){
+        for(let px=0; px<targetW; px++){
+          const x0=Math.floor(px*bw), x1=Math.floor((px+1)*bw); const y0=Math.floor(py*bh), y1=Math.floor((py+1)*bh);
+          let r=0,g=0,b=0,c=0; for(let y=y0;y<y1;y++){ let idx=(y*src.width + x0)*4; for(let x=x0;x<x1;x++){ r+=data[idx]; g+=data[idx+1]; b+=data[idx+2]; c++; idx+=4; } }
+          if(c===0) c=1; const i=(py*targetW+px)*4; outImg.data[i]=(r/c)|0; outImg.data[i+1]=(g/c)|0; outImg.data[i+2]=(b/c)|0; outImg.data[i+3]=255;
+        }
+      }
+      sctx.putImageData(outImg,0,0);
+    } else if(m==='palette'){
+      // pre-average to grid then k-means
+      const bw = src.width/targetW, bh = src.height/targetH; const grid = new Uint8ClampedArray(targetW*targetH*4);
+      for(let py=0; py<targetH; py++){
+        for(let px=0; px<targetW; px++){
+          const x0=Math.floor(px*bw), x1=Math.floor((px+1)*bw); const y0=Math.floor(py*bh), y1=Math.floor((py+1)*bh);
+          let r=0,g=0,b=0,c=0; for(let y=y0;y<y1;y++){ let idx=(y*src.width + x0)*4; for(let x=x0;x<x1;x++){ r+=data[idx]; g+=data[idx+1]; b+=data[idx+2]; c++; idx+=4; } }
+          const i=(py*targetW+px)*4; if(c===0)c=1; grid[i]=(r/c)|0; grid[i+1]=(g/c)|0; grid[i+2]=(b/c)|0; grid[i+3]=255;
+        }
+      }
+      const {palette, labels} = kmeansRGB(grid, targetW*targetH, k); const outImg = new ImageData(targetW, targetH);
+      for(let i=0;i<labels.length;i++){ const j=i*4, p=palette[labels[i]]; outImg.data[j]=p[0]; outImg.data[j+1]=p[1]; outImg.data[j+2]=p[2]; outImg.data[j+3]=255; }
+      sctx.putImageData(outImg,0,0);
+    }
+  }
+
+  // Adjustments
+  applyAdjustments(sctx, targetW, targetH, Number(bri.value), Number(con.value), Number(sat.value));
+
+  // Optional color tuning by hue band
+  if(enableTune.checked){ const gains = {R:Number(tR.value),Y:Number(tY.value),G:Number(tG.value),C:Number(tC.value),B:Number(tB.value),M:Number(tM.value)}; applyColorTuning(sctx, targetW, targetH, gains); }
+
+  // Optional hue remap (shift source hue band toward a target hue)
+  if(enableRemap.checked){
+    const mapping = {
+      R: { t: parseInt(mapR.value,10), s: Number(mapRStr.value)/100 },
+      Y: { t: parseInt(mapY.value,10), s: Number(mapYStr.value)/100 },
+      G: { t: parseInt(mapG.value,10), s: Number(mapGStr.value)/100 },
+      C: { t: parseInt(mapC.value,10), s: Number(mapCStr.value)/100 },
+      B: { t: parseInt(mapB.value,10), s: Number(mapBStr.value)/100 },
+      M: { t: parseInt(mapM.value,10), s: Number(mapMStr.value)/100 },
+    };
+    const globalStrength = Number(remapStrength.value)/100; // 0..1
+    applyHueRemap(sctx, targetW, targetH, mapping, globalStrength);
+  }
+
+  // Optional dithering to 4-bit/channel
+  if(ditherCk.checked){ floydSteinbergQuantize(sctx, targetW, targetH, 16); }
+
+  // Paint to output (1:1 cells; CSS zoom handles viewing)
+  out.width = targetW; out.height = targetH; octx.imageSmoothingEnabled = false; octx.clearRect(0,0,out.width,out.height); octx.drawImage(small, 0, 0);
+
+  // meta + zoom
+  pixMeta.textContent = `${targetW}×${targetH}`; if(autoFitCk.checked){ fitToViewport(); }
+  status('Done.');
+}
+
+// Adjust + color helpers
+function applyAdjustments(ctx, w, h, bri, con, sat){ const img = ctx.getImageData(0,0,w,h); const d = img.data; const b = bri/100 * 255; const c = (con/100)+1; const intercept = 128*(1-c); const s = sat/100; for(let i=0;i<d.length;i+=4){ let r=d[i], g=d[i+1], bl=d[i+2]; r = c*r + intercept + b; g = c*g + intercept + b; bl = c*bl + intercept + b; const avg=(r+g+bl)/3; r = avg + (r-avg)*s; g = avg + (g-avg)*s; bl = avg + (bl-avg)*s; d[i]=clamp8(r); d[i+1]=clamp8(g); d[i+2]=clamp8(bl); } ctx.putImageData(img,0,0); }
+
+function applyColorTuning(ctx, w, h, gains){ const img = ctx.getImageData(0,0,w,h); const d=img.data; const buckets=[{k:'R',h:0},{k:'Y',h:60},{k:'G',h:120},{k:'C',h:180},{k:'B',h:240},{k:'M',h:300}]; const nearest = (hh)=>{ let bk='R',bd=1e9; for(const b of buckets){ const diff=Math.min(Math.abs(hh-b.h), 360-Math.abs(hh-b.h)); if(diff<bd){bd=diff; bk=b.k;} } return bk; }; for(let i=0;i<d.length;i+=4){ const r=d[i], g=d[i+1], bl=d[i+2]; const hsl=rgbToHsl(r,g,bl); const band=nearest(hsl.h); const gain=(gains[band]||0)/100; const sat= Math.max(0, Math.min(1, hsl.s*(1+gain))); const rgb = hslToRgb(hsl.h, sat, hsl.l); d[i]=rgb.r; d[i+1]=rgb.g; d[i+2]=rgb.b; } ctx.putImageData(img,0,0); }
+
+function applyHueRemap(ctx, w, h, mapping, globalStrength){
+  // mapping keys: R,Y,G,C,B,M each with {t: targetIndex 0..6, s: perBandStrength 0..1}
+  const bandHue=[0,0,60,120,180,240,300];
+  const img = ctx.getImageData(0,0,w,h); const d=img.data;
+  const buckets=[{k:'R',h:0},{k:'Y',h:60},{k:'G',h:120},{k:'C',h:180},{k:'B',h:240},{k:'M',h:300}];
+  const nearest = (hh)=>{ let bk='R',bd=1e9; for(const b of buckets){ const diff=Math.min(Math.abs(hh-b.h), 360-Math.abs(hh-b.h)); if(diff<bd){bd=diff; bk=b.k;} } return bk; };
+  for(let i=0;i<d.length;i+=4){
+    const r=d[i], g=d[i+1], bl=d[i+2]; const hsl=rgbToHsl(r,g,bl);
+    const srcBand = nearest(hsl.h);
+    const cfg = mapping[srcBand]; if(!cfg) continue;
+    const targetSel = cfg.t; const local = cfg.s; const eff = Math.max(0, Math.min(1, globalStrength * local));
+    if(targetSel && targetSel>0 && eff>0){
+      const tgtHue = bandHue[targetSel];
+      let dh = ((tgtHue - hsl.h + 540) % 360) - 180; // shortest-arc
+      const newH = (hsl.h + dh*eff + 360) % 360;
+      const rgb = hslToRgb(newH, hsl.s, hsl.l); d[i]=rgb.r; d[i+1]=rgb.g; d[i+2]=rgb.b;
+    }
+  }
+  ctx.putImageData(img,0,0);
+}
+
+function rgbToHsl(r,g,b){ r/=255; g/=255; b/=255; const max=Math.max(r,g,b), min=Math.min(r,g,b); let h=0,s=0; const l=(max+min)/2; if(max!==min){ const d=max-min; s = l>0.5 ? d/(2-max-min) : d/(max+min); switch(max){ case r: h=(g-b)/d+(g<b?6:0); break; case g: h=(b-r)/d+2; break; case b: h=(r-g)/d+4; break;} h*=60; } return {h, s, l}; }
+function hslToRgb(h,s,l){ const c=(1-Math.abs(2*l-1))*s, hp=h/60, x=c*(1-Math.abs((hp%2)-1)); let r1=0,g1=0,b1=0; if(0<=hp&&hp<1){r1=c;g1=x;} else if(1<=hp&&hp<2){r1=x;g1=c;} else if(2<=hp&&hp<3){g1=c;b1=x;} else if(3<=hp&&hp<4){g1=x;b1=c;} else if(4<=hp&&hp<5){r1=x;b1=c;} else if(5<=hp&&hp<6){r1=c;b1=x;} const m=l-c/2; return {r:clamp8((r1+m)*255), g:clamp8((g1+m)*255), b:clamp8((b1+m)*255)}; }
+
+// k-means
+function kmeansRGB(rgba, count, k){ const pts=new Array(count); for(let i=0;i<count;i++){ const j=i*4; pts[i]=[rgba[j],rgba[j+1],rgba[j+2]]; } const cents=[]; const rand=m=>Math.floor(Math.random()*m); cents.push(pts[rand(count)]); while(cents.length<k){ let farI=0,farV=-1; for(let i=0;i<count;i++){ const p=pts[i]; let best=Infinity; for(const c of cents){ const dx=p[0]-c[0],dy=p[1]-c[1],dz=p[2]-c[2]; const d=dx*dx+dy*dy+dz*dz; if(d<best) best=d; } if(best>farV){farV=best; farI=i;} } cents.push(pts[farI]); } const labels=new Uint16Array(count); for(let it=0; it<10; it++){ for(let i=0;i<count;i++){ const p=pts[i]; let b=0,bd=Infinity; for(let c=0;c<k;c++){ const ct=cents[c]; const dx=p[0]-ct[0],dy=p[1]-ct[1],dz=p[2]-ct[2]; const d=dx*dx+dy*dy+dz*dz; if(d<bd){bd=d;b=c;} } labels[i]=b; } const sums=new Array(k).fill(0).map(()=>[0,0,0,0]); for(let i=0;i<count;i++){ const s=sums[labels[i]], p=pts[i]; s[0]+=p[0]; s[1]+=p[1]; s[2]+=p[2]; s[3]++; } for(let c=0;c<k;c++){ const s=sums[c]; cents[c]= s[3]>0 ? [(s[0]/s[3])|0,(s[1]/s[3])|0,(s[2]/s[3])|0] : pts[rand(count)]; } } return {palette:cents, labels}; }
+
+// Dithering
+function floydSteinbergQuantize(ctx, w, h, levels){ const img = ctx.getImageData(0,0,w,h); const d=img.data; const q=v=>Math.round(v*(levels-1)/255)*(255/(levels-1)); const at=(x,y)=>(y*w+x)*4; for(let y=0;y<h;y++){ for(let x=0;x<w;x++){ const i=at(x,y); const oldR=d[i], oldG=d[i+1], oldB=d[i+2]; const newR=q(oldR), newG=q(oldG), newB=q(oldB); d[i]=newR; d[i+1]=newG; d[i+2]=newB; const er=oldR-newR, eg=oldG-newG, eb=oldB-newB; distribute(x+1,y,7/16,er,eg,eb); distribute(x-1,y+1,3/16,er,eg,eb); distribute(x,y+1,5/16,er,eg,eb); distribute(x+1,y+1,1/16,er,eg,eb); } } ctx.putImageData(img,0,0); function distribute(x,y,c,er,eg,eb){ if(x<0||x>=w||y<0||y>=h) return; const j=at(x,y); d[j]+=er*c; d[j+1]+=eg*c; d[j+2]+=eb*c; } }
+</script>
+</body>
+</html>
