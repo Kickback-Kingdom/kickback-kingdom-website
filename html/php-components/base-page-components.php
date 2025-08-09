@@ -223,123 +223,136 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                 <div class="wizard-step" id="mediaUploadStep-3">
                     <h1 class="display-6 mb-3">Step 3 - Pixelize Image</h1>
                     <div id="pixelEditor" class="row mb-3">
-                        <div class="col-md-4" style="max-height:400px; overflow-y:auto;">
-                            <h5>Pixelation</h5>
-                            <div class="mb-3">
-                                <label class="form-label">Pixel width</label>
-                                <input type="number" class="form-control" data-pixel-width value="64" min="8" max="1024">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Method</label>
-                                <select class="form-select" data-method>
-                                    <option value="neighbor">Nearest Neighbor</option>
-                                    <option value="average">Block Average</option>
-                                    <option value="palette">Palette (k-means)</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Palette size (for k-means)</label>
-                                <input type="number" class="form-control" data-palette-size value="16" min="2" max="64">
-                            </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" data-dither id="pixelDither">
-                                <label class="form-check-label" for="pixelDither">Dither (FS)</label>
-                            </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" data-auto-render id="pixelAutoRender" checked>
-                                <label class="form-check-label" for="pixelAutoRender">Auto Render</label>
-                            </div>
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" data-auto-fit id="pixelAutoFit" checked>
-                                <label class="form-check-label" for="pixelAutoFit">Auto Fit</label>
-                            </div>
-                            <div class="mb-3 d-flex gap-2">
-                                <button type="button" class="btn btn-primary" data-render>Render</button>
-                                <button type="button" class="btn btn-secondary" data-reset>Reset</button>
-                            </div>
-
-                            <h5 class="mt-4">Adjustments</h5>
-                            <div class="mb-3">
-                                <label class="form-label">Brightness</label>
-                                <input type="range" class="form-range" data-brightness min="-100" max="100" value="0">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Contrast</label>
-                                <input type="range" class="form-range" data-contrast min="-100" max="100" value="0">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Saturation</label>
-                                <input type="range" class="form-range" data-saturation min="0" max="200" value="100">
-                            </div>
-
-                            <h5 class="mt-4">Color tuning</h5>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" data-enable-tune id="pixelEnableTune">
-                                <label class="form-check-label" for="pixelEnableTune">Enable tuning</label>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Reds</label>
-                                <input type="range" class="form-range" data-tune-red min="-100" max="100" value="0">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Yellows</label>
-                                <input type="range" class="form-range" data-tune-yellow min="-100" max="100" value="0">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Greens</label>
-                                <input type="range" class="form-range" data-tune-green min="-100" max="100" value="0">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Cyans</label>
-                                <input type="range" class="form-range" data-tune-cyan min="-100" max="100" value="0">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Blues</label>
-                                <input type="range" class="form-range" data-tune-blue min="-100" max="100" value="0">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Magentas</label>
-                                <input type="range" class="form-range" data-tune-magenta min="-100" max="100" value="0">
-                            </div>
-
-                            <h5 class="mt-4">Hue remap</h5>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" data-enable-remap id="pixelEnableRemap">
-                                <label class="form-check-label" for="pixelEnableRemap">Enable hue remap</label>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Global remap strength</label>
-                                <input type="range" class="form-range" data-remap-strength min="0" max="100" value="100">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Reds →</label>
-                                <select class="form-select mb-1" data-map-r></select>
-                                <input type="range" class="form-range" data-map-r-str min="0" max="100" value="100">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Yellows →</label>
-                                <select class="form-select mb-1" data-map-y></select>
-                                <input type="range" class="form-range" data-map-y-str min="0" max="100" value="100">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Greens →</label>
-                                <select class="form-select mb-1" data-map-g></select>
-                                <input type="range" class="form-range" data-map-g-str min="0" max="100" value="100">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Cyans →</label>
-                                <select class="form-select mb-1" data-map-c></select>
-                                <input type="range" class="form-range" data-map-c-str min="0" max="100" value="100">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Blues →</label>
-                                <select class="form-select mb-1" data-map-b></select>
-                                <input type="range" class="form-range" data-map-b-str min="0" max="100" value="100">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Magentas →</label>
-                                <select class="form-select mb-1" data-map-m></select>
-                                <input type="range" class="form-range" data-map-m-str min="0" max="100" value="100">
+                        <div class="col-md-4" style="height:400px;">
+                            <div class="d-flex h-100">
+                                <div class="nav flex-column nav-pills me-2" id="pixelEditorTabs" role="tablist" aria-orientation="vertical">
+                                    <button class="nav-link active" id="pixelTabPixelation" data-bs-toggle="pill" data-bs-target="#pixelPanePixelation" type="button" role="tab" aria-controls="pixelPanePixelation" aria-selected="true" title="Pixelation"><i class="fa-solid fa-border-all"></i></button>
+                                    <button class="nav-link" id="pixelTabAdjust" data-bs-toggle="pill" data-bs-target="#pixelPaneAdjust" type="button" role="tab" aria-controls="pixelPaneAdjust" aria-selected="false" title="Adjustments"><i class="fa-solid fa-sliders"></i></button>
+                                    <button class="nav-link" id="pixelTabTune" data-bs-toggle="pill" data-bs-target="#pixelPaneTune" type="button" role="tab" aria-controls="pixelPaneTune" aria-selected="false" title="Color Tuning"><i class="fa-solid fa-palette"></i></button>
+                                    <button class="nav-link" id="pixelTabHue" data-bs-toggle="pill" data-bs-target="#pixelPaneHue" type="button" role="tab" aria-controls="pixelPaneHue" aria-selected="false" title="Hue Remap"><i class="fa-solid fa-shuffle"></i></button>
+                                </div>
+                                <div class="tab-content flex-grow-1 overflow-auto" id="pixelEditorTabContent">
+                                    <div class="tab-pane fade show active" id="pixelPanePixelation" role="tabpanel" aria-labelledby="pixelTabPixelation">
+                                        <div class="mb-2">
+                                            <label class="form-label">Pixel width</label>
+                                            <input type="number" class="form-control form-control-sm" data-pixel-width value="64" min="8" max="1024">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Method</label>
+                                            <select class="form-select form-select-sm" data-method>
+                                                <option value="neighbor">Nearest Neighbor</option>
+                                                <option value="average">Block Average</option>
+                                                <option value="palette">Palette (k-means)</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Palette size (for k-means)</label>
+                                            <input type="number" class="form-control form-control-sm" data-palette-size value="16" min="2" max="64">
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-3 mb-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" data-dither id="pixelDither">
+                                                <label class="form-check-label" for="pixelDither">Dither (FS)</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" data-auto-render id="pixelAutoRender" checked>
+                                                <label class="form-check-label" for="pixelAutoRender">Auto Render</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" data-auto-fit id="pixelAutoFit" checked>
+                                                <label class="form-check-label" for="pixelAutoFit">Auto Fit</label>
+                                            </div>
+                                        </div>
+                                        <div class="mb-2 d-flex gap-2">
+                                            <button type="button" class="btn btn-primary btn-sm" data-render>Render</button>
+                                            <button type="button" class="btn btn-secondary btn-sm" data-reset>Reset</button>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="pixelPaneAdjust" role="tabpanel" aria-labelledby="pixelTabAdjust">
+                                        <div class="mb-2">
+                                            <label class="form-label">Brightness</label>
+        <input type="range" class="form-range" data-brightness min="-100" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Contrast</label>
+                                            <input type="range" class="form-range" data-contrast min="-100" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Saturation</label>
+                                            <input type="range" class="form-range" data-saturation min="0" max="200" value="100">
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="pixelPaneTune" role="tabpanel" aria-labelledby="pixelTabTune">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" data-enable-tune id="pixelEnableTune">
+                                            <label class="form-check-label" for="pixelEnableTune">Enable tuning</label>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Reds</label>
+                                            <input type="range" class="form-range" data-tune-red min="-100" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Yellows</label>
+                                            <input type="range" class="form-range" data-tune-yellow min="-100" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Greens</label>
+                                            <input type="range" class="form-range" data-tune-green min="-100" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Cyans</label>
+                                            <input type="range" class="form-range" data-tune-cyan min="-100" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Blues</label>
+                                            <input type="range" class="form-range" data-tune-blue min="-100" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Magentas</label>
+                                            <input type="range" class="form-range" data-tune-magenta min="-100" max="100" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="pixelPaneHue" role="tabpanel" aria-labelledby="pixelTabHue">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" data-enable-remap id="pixelEnableRemap">
+                                            <label class="form-check-label" for="pixelEnableRemap">Enable hue remap</label>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Global remap strength</label>
+                                            <input type="range" class="form-range" data-remap-strength min="0" max="100" value="100">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Reds →</label>
+                                            <select class="form-select form-select-sm mb-1" data-map-r></select>
+                                            <input type="range" class="form-range" data-map-r-str min="0" max="100" value="100">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Yellows →</label>
+                                            <select class="form-select form-select-sm mb-1" data-map-y></select>
+                                            <input type="range" class="form-range" data-map-y-str min="0" max="100" value="100">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Greens →</label>
+                                            <select class="form-select form-select-sm mb-1" data-map-g></select>
+                                            <input type="range" class="form-range" data-map-g-str min="0" max="100" value="100">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Cyans →</label>
+                                            <select class="form-select form-select-sm mb-1" data-map-c></select>
+                                            <input type="range" class="form-range" data-map-c-str min="0" max="100" value="100">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Blues →</label>
+                                            <select class="form-select form-select-sm mb-1" data-map-b></select>
+                                            <input type="range" class="form-range" data-map-b-str min="0" max="100" value="100">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Magentas →</label>
+                                            <select class="form-select form-select-sm mb-1" data-map-m></select>
+                                            <input type="range" class="form-range" data-map-m-str min="0" max="100" value="100">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-8">
