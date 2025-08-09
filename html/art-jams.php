@@ -7,7 +7,7 @@ require("php-components/base-page-pull-active-account-info.php");
 
 
 // ===================== ART JAM CONFIG (themed like the raffle timer) =====================
-$scheduleString = "Wednesday 8PM BRA";     // Wednesdays, 8–11pm São Paulo time
+$scheduleString = "Friday 11PM BRT";     // Wednesdays, 8–11pm São Paulo time
 $tz = new DateTimeZone('America/Sao_Paulo');
 $jamDuration = new DateInterval('PT3H');   // 3 hours
 $subjectUnlockLead = new DateInterval('PT5M'); // subject unlocks 5 minutes before start
@@ -260,7 +260,8 @@ try {
     <div class="card mb-3">
       <div class="card-body">
         <div class="countdown-timer my-2">
-          <h4 class="mb-3">Countdown to Jam Start</h4>
+        <h4 id="aj-title" class="mb-3">Countdown to Jam Start</h4>
+
           <div id="aj-countdown" class="timer d-flex flex-wrap justify-content-center my-3">
             <div class="bg-ranked-1 time-segment col-6 col-md-3"><span id="aj-days"></span><small>Days</small></div>
             <div class="bg-ranked-1 time-segment col-6 col-md-3"><span id="aj-hours"></span><small>Hours</small></div>
@@ -367,12 +368,14 @@ try {
     <?php require("php-components/base-page-javascript.php"); ?>
 
     <script>
-$(document).ready(function() {
+$(function() {
   const second = 1000, minute = 60*second, hour = 60*minute, day = 24*hour;
 
-  const startAt  = new Date("<?= $jamStart->format('Y-m-d H:i:s') ?>").getTime();
-  const unlockAt = new Date("<?= $unlockAt->format('Y-m-d H:i:s') ?>").getTime();
-  const endAt    = new Date("<?= $jamEnd->format('Y-m-d H:i:s') ?>").getTime();
+  // Use epoch ms from PHP (server is in America/Sao_Paulo)
+  const startAt  = <?= $jamStart->getTimestamp()  ?> * 1000;
+  const unlockAt = <?= $unlockAt->getTimestamp() ?> * 1000;
+  const endAt    = <?= $jamEnd->getTimestamp()    ?> * 1000;
+
 
   let intervalId = null;
 
@@ -411,10 +414,19 @@ $(document).ready(function() {
     const p = phase(now);
     const target = nextTargetFor(p);
 
+    // Swap the title based on phase
+    const $title = $('#aj-title');
+    if (p === 'in-progress') {
+      $title.text('Time Remaining in Jam');
+    } else if (p === 'ended') {
+      $title.text('Jam Ended');
+    } else {
+      $title.text('Countdown to Jam Start');
+    }
+
     // crossed a boundary → hard refresh to reveal new state/subject
     if (!target) {
-      // we're past endAt; show 0s and stop
-      updateCountdown(now);
+      updateCountdown(now); // show zeros
       clearInterval(intervalId);
       return;
     }
@@ -431,7 +443,11 @@ $(document).ready(function() {
       const mins = Math.ceil((unlockAt - now)/minute);
       $hint.text(`(in ${mins} min)`);
     } else if (p === 'pre-start') {
-      $hint.text(`(unlocked)`);
+      const mins = Math.ceil((startAt - now)/minute);
+      $hint.text(`(starts in ${mins} min)`);
+    } else if (p === 'in-progress') {
+      const minsLeft = Math.ceil((endAt - now)/minute);
+      $hint.text(`(ends in ${minsLeft} min)`);
     } else {
       $hint.text('');
     }
