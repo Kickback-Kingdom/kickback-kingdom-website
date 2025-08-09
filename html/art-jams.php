@@ -222,46 +222,6 @@ try {
     animation-duration: 1s;
 }
 
-#aj-theme {
-    background: #3c1361;
-    border: 2px solid #d4af37;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    text-align: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    color: #fff;
-}
-
-.aj-theme-banner {
-    background: linear-gradient(135deg,#3c1361,#2a0a44);
-    border: 2px solid #d4af37;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    color: #fff;
-}
-
-.aj-theme-banner .fw-bold,
-.aj-theme-banner h1,
-.aj-theme-banner h2,
-.aj-theme-banner h3,
-.aj-theme-banner h4,
-.aj-theme-banner h5,
-.aj-theme-banner h6 {
-    font-family: 'Garamond','Times New Roman',serif;
-}
-
-#aj-theme-banner.theme-reveal {
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-#aj-theme.theme-reveal {
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-
     </style>
     <?php
     
@@ -331,7 +291,7 @@ try {
   </div>
 
   <?php if ($jamInProgress): ?>
-    <div id="aj-theme-banner" class="aj-theme-banner text-center d-none fs-4" role="alert">
+    <div id="aj-theme-banner" class="alert bg-primary text-light bg-gradient border border-warning shadow text-center d-none fs-4" role="alert">
       <div class="fw-bold"><i class="fa-solid fa-crown me-2"></i>Medium: <?= htmlspecialchars($thisMedium ?? '') ?> &mdash; Subject: <?= htmlspecialchars($thisSubject ?? '') ?></div>
       <?php if (!empty($thisConstraint)): ?>
         <div class="small">Constraint: <?= htmlspecialchars($thisConstraint ?? '') ?></div>
@@ -379,9 +339,9 @@ try {
             <span class="badge text-bg-secondary mb-1">Locked</span>
             <div class="fw-semibold">Subject appears 5 minutes before start.</div>
           <?php else: ?>
-            <div id="aj-theme" class="d-none">
+            <div id="aj-theme" class="d-none p-3 bg-primary text-light bg-gradient border border-warning rounded shadow text-center">
               <div class="fw-semibold"><?= htmlspecialchars($thisSubject ?? '') ?></div>
-              <div class="text-muted small">Constraint: <?= htmlspecialchars($thisConstraint ?? '') ?></div>
+              <div class="text-light small">Constraint: <?= htmlspecialchars($thisConstraint ?? '') ?></div>
             </div>
           <?php endif; ?>
         </div>
@@ -472,10 +432,10 @@ $(function() {
       if (p === 'in-progress') {
         $title.text('Time Remaining in Jam');
         if ($theme.hasClass('d-none')) {
-          $theme.removeClass('d-none').addClass('theme-reveal');
+          $theme.removeClass('d-none');
         }
         if ($banner.length && $banner.hasClass('d-none')) {
-          $banner.removeClass('d-none').addClass('theme-reveal');
+          $banner.removeClass('d-none');
           if (!$banner.data('scrolled')) {
             $banner[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
             $banner.data('scrolled', true);
