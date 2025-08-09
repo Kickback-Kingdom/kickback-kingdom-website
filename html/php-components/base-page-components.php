@@ -222,10 +222,166 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
 
                 <div class="wizard-step" id="mediaUploadStep-3">
                     <h1 class="display-6 mb-3">Step 3 - Pixelize Image</h1>
-                    <div class="row mb-3">
-                        <div class="col-12 d-flex justify-content-center">
-                            <div id="pixelEditor" class="w-100 d-flex justify-content-center">
-                                <canvas id="pixelCanvas"></canvas>
+                    <div id="pixelEditor" class="row mb-3">
+                        <div class="col-md-4" style="max-height:400px; overflow-y:auto;">
+                            <div class="accordion accordion-flush" id="pixelEditorAccordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="pixelAccordionPixelationHeading">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#pixelAccordionPixelation" aria-expanded="true" aria-controls="pixelAccordionPixelation">Pixelation</button>
+                                    </h2>
+                                    <div id="pixelAccordionPixelation" class="accordion-collapse collapse show" aria-labelledby="pixelAccordionPixelationHeading">
+                                        <div class="accordion-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">Pixel width</label>
+                                                <input type="number" class="form-control" data-pixel-width value="64" min="8" max="1024">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Method</label>
+                                                <select class="form-select" data-method>
+                                                    <option value="neighbor">Nearest Neighbor</option>
+                                                    <option value="average">Block Average</option>
+                                                    <option value="palette">Palette (k-means)</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Palette size (for k-means)</label>
+                                                <input type="number" class="form-control" data-palette-size value="16" min="2" max="64">
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" data-dither id="pixelDither">
+                                                <label class="form-check-label" for="pixelDither">Dither (FS)</label>
+                                            </div>
+                                        <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" data-auto-render id="pixelAutoRender" checked>
+                                                <label class="form-check-label" for="pixelAutoRender">Auto Render</label>
+                                            </div>
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" data-auto-fit id="pixelAutoFit" checked>
+                                                <label class="form-check-label" for="pixelAutoFit">Auto Fit</label>
+                                            </div>
+                                            <div class="mb-3 d-flex gap-2">
+                                                <button type="button" class="btn btn-primary" data-render>Render</button>
+                                                <button type="button" class="btn btn-secondary" data-reset>Reset</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="pixelAccordionAdjustHeading">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pixelAccordionAdjust" aria-expanded="false" aria-controls="pixelAccordionAdjust">Adjustments</button>
+                                    </h2>
+                                    <div id="pixelAccordionAdjust" class="accordion-collapse collapse" aria-labelledby="pixelAccordionAdjustHeading">
+                                        <div class="accordion-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">Brightness</label>
+                                                <input type="range" class="form-range" data-brightness min="-100" max="100" value="0">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Contrast</label>
+                                                <input type="range" class="form-range" data-contrast min="-100" max="100" value="0">
+                                            </div>
+                                        <div class="mb-3">
+                                                <label class="form-label">Saturation</label>
+                                                <input type="range" class="form-range" data-saturation min="0" max="200" value="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="pixelAccordionTuneHeading">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pixelAccordionTune" aria-expanded="false" aria-controls="pixelAccordionTune">Color tuning</button>
+                                    </h2>
+                                    <div id="pixelAccordionTune" class="accordion-collapse collapse" aria-labelledby="pixelAccordionTuneHeading">
+                                        <div class="accordion-body">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" data-enable-tune id="pixelEnableTune">
+                                                <label class="form-check-label" for="pixelEnableTune">Enable tuning</label>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Reds</label>
+                                                <input type="range" class="form-range" data-tune-red min="-100" max="100" value="0">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Yellows</label>
+                                                <input type="range" class="form-range" data-tune-yellow min="-100" max="100" value="0">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Greens</label>
+                                                <input type="range" class="form-range" data-tune-green min="-100" max="100" value="0">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Cyans</label>
+                                                <input type="range" class="form-range" data-tune-cyan min="-100" max="100" value="0">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Blues</label>
+                                                <input type="range" class="form-range" data-tune-blue min="-100" max="100" value="0">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Magentas</label>
+                                                <input type="range" class="form-range" data-tune-magenta min="-100" max="100" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="pixelAccordionHueHeading">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pixelAccordionHue" aria-expanded="false" aria-controls="pixelAccordionHue">Hue remap</button>
+                                    </h2>
+                                    <div id="pixelAccordionHue" class="accordion-collapse collapse" aria-labelledby="pixelAccordionHueHeading">
+                                        <div class="accordion-body">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" data-enable-remap id="pixelEnableRemap">
+                                                <label class="form-check-label" for="pixelEnableRemap">Enable hue remap</label>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Global remap strength</label>
+                                                <input type="range" class="form-range" data-remap-strength min="0" max="100" value="100">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Reds →</label>
+                                                <select class="form-select mb-1" data-map-r></select>
+                                                <input type="range" class="form-range" data-map-r-str min="0" max="100" value="100">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Yellows →</label>
+                                                <select class="form-select mb-1" data-map-y></select>
+                                                <input type="range" class="form-range" data-map-y-str min="0" max="100" value="100">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Greens →</label>
+                                                <select class="form-select mb-1" data-map-g></select>
+                                                <input type="range" class="form-range" data-map-g-str min="0" max="100" value="100">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Cyans →</label>
+                                                <select class="form-select mb-1" data-map-c></select>
+                                                <input type="range" class="form-range" data-map-c-str min="0" max="100" value="100">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Blues →</label>
+                                                <select class="form-select mb-1" data-map-b></select>
+                                                <input type="range" class="form-range" data-map-b-str min="0" max="100" value="100">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Magentas →</label>
+                                                <select class="form-select mb-1" data-map-m></select>
+                                                <input type="range" class="form-range" data-map-m-str min="0" max="100" value="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="mb-2 d-flex justify-content-between">
+                                <span class="text-muted">Pixelated size: <span data-pix-meta>—</span></span>
+                                <span class="text-muted" data-status></span>
+                            </div>
+                            <div data-viewport style="position:relative; overflow:auto; width:100%; height:400px; border:1px solid #dee2e6; border-radius:0.25rem;">
+                                <div data-wrap style="position:relative; width:max-content; height:max-content; transform-origin:top left;">
+                                    <canvas id="pixelCanvas" style="image-rendering:pixelated;"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>

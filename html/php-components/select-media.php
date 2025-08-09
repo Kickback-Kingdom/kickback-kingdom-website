@@ -98,9 +98,26 @@ function UpdateMediaUploadModal()
     if (mediaUploadStep == 3)
     {
         CropImageFromEditor();
-        const container = document.getElementById('pixelEditor');
+        let container = document.getElementById('pixelEditor');
         const source = document.getElementById('imagePreviewEdited');
-        pixelEditor = initPixelEditor(container, source);
+
+        if (pixelEditor) {
+            const newContainer = container.cloneNode(true);
+            container.parentNode.replaceChild(newContainer, container);
+            container = newContainer;
+            pixelEditor = null;
+        }
+
+        const initializeEditor = () => {
+            pixelEditor = initPixelEditor(container, source);
+        };
+
+        if (source.complete) {
+            initializeEditor();
+        } else {
+            source.addEventListener('load', initializeEditor, { once: true });
+        }
+
         $("#mediaUploadButtonPrev").html("Back");
         $("#mediaUploadButtonNext").hide();
     }
@@ -142,6 +159,9 @@ function SkipPixelation()
 
 function ApplyPixelation()
 {
+    if (pixelEditor) {
+        pixelEditor.render();
+    }
     const canvas = document.getElementById('pixelCanvas');
     let imgElement = document.getElementById('imagePreviewEdited');
     imgElement.src = canvas.toDataURL();
