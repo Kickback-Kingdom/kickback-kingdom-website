@@ -223,11 +223,30 @@ try {
 }
 
 #aj-theme {
-    background-color: #fff3cd;
-    border: 2px dashed #f77f00;
-    padding: 1rem;
+    background: #3c1361;
+    border: 2px solid #d4af37;
+    padding: 1.5rem;
     border-radius: 0.5rem;
     text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    color: #fff;
+}
+
+.aj-theme-banner {
+    background: linear-gradient(135deg,#3c1361,#2a0a44);
+    border: 2px solid #d4af37;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    color: #fff;
+}
+
+.aj-theme-banner .fw-bold,
+.aj-theme-banner h1,
+.aj-theme-banner h2,
+.aj-theme-banner h3,
+.aj-theme-banner h4,
+.aj-theme-banner h5,
+.aj-theme-banner h6 {
+    font-family: 'Garamond','Times New Roman',serif;
 }
 
 #aj-theme-banner.theme-reveal {
@@ -312,8 +331,8 @@ try {
   </div>
 
   <?php if ($jamInProgress): ?>
-    <div id="aj-theme-banner" class="alert alert-warning text-center d-none fs-4" role="alert">
-      <div class="fw-bold">Medium: <?= htmlspecialchars($thisMedium ?? '') ?> &mdash; Subject: <?= htmlspecialchars($thisSubject ?? '') ?></div>
+    <div id="aj-theme-banner" class="aj-theme-banner text-center d-none fs-4" role="alert">
+      <div class="fw-bold"><i class="fa-solid fa-crown me-2"></i>Medium: <?= htmlspecialchars($thisMedium ?? '') ?> &mdash; Subject: <?= htmlspecialchars($thisSubject ?? '') ?></div>
       <?php if (!empty($thisConstraint)): ?>
         <div class="small">Constraint: <?= htmlspecialchars($thisConstraint ?? '') ?></div>
       <?php endif; ?>
