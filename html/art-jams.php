@@ -49,7 +49,6 @@ if (!function_exists('aj_parseSchedule')) {
 $mediums = ['3D Prop','3D Character','Environment Concept Art','Logo Design','UI/Web Asset Set','Marketing Banner Set','Motion Graphics (Video)','Game Asset Pack','Texture/Material Study','Product Render','VFX Shot','Animation Loop','Isometric Illustration','Poster/Key Art'];
 $subjectAdj = ['bioluminescent','weathered','modular','stylized','photoreal','ceremonial','retro-futuristic','minimalist','noir','neon-lit','ornate','industrial','eco-friendly','compact','collapsible'];
 $subjectNouns = ['vending machine','ancient gate','courier drone','desert city','forest shrine','chef character','space helmet','retro console','alchemical lab','battle mech','street food cart','sailing airship','robot companion','arcane library','market stall','security camera'];
-$constraints = ['two colorways','three variations','mobile and desktop sizes','PBR textures only','looping under 6 seconds','≤ 2k tris per asset','AO + normal + roughness maps','hand-painted style','subsurface scattering','animated reveal','print-ready CMYK mockup','procedural materials only'];
 
 // ---- Time & picks ----
 $now = new DateTimeImmutable('now', $tz);
@@ -82,15 +81,13 @@ try {
     $seedNext = aj_weekSeed($jamStart->modify('+1 week'));
 
     // Picks
-    $prevMedium     = aj_pickStable($mediums,$seedPrev,'medium');
-    $prevSubject    = aj_combineStable($subjectAdj,$subjectNouns,$seedPrev,'subject');
-    $prevConstraint = aj_pickStable($constraints,$seedPrev,'constraint');
+    $prevMedium  = aj_pickStable($mediums,$seedPrev,'medium');
+    $prevSubject = aj_combineStable($subjectAdj,$subjectNouns,$seedPrev,'subject');
 
-    $thisMedium     = aj_pickStable($mediums,$seedThis,'medium');
-    $thisSubject    = aj_combineStable($subjectAdj,$subjectNouns,$seedThis,'subject');
-    $thisConstraint = aj_pickStable($constraints,$seedThis,'constraint');
+    $thisMedium  = aj_pickStable($mediums,$seedThis,'medium');
+    $thisSubject = aj_combineStable($subjectAdj,$subjectNouns,$seedThis,'subject');
 
-    $nextMedium     = aj_pickStable($mediums,$seedNext,'medium');
+    $nextMedium  = aj_pickStable($mediums,$seedNext,'medium');
 
     // Lock status for *this* week only
     $subjectLocked = $now < $unlockAt;
@@ -291,11 +288,10 @@ try {
   </div>
 
   <?php if ($jamInProgress): ?>
-    <div id="aj-theme-banner" class="alert bg-primary text-light bg-gradient border border-warning shadow text-center d-none fs-4" role="alert">
-      <div class="fw-bold"><i class="fa-solid fa-crown me-2"></i>Medium: <?= htmlspecialchars($thisMedium ?? '') ?> &mdash; Subject: <?= htmlspecialchars($thisSubject ?? '') ?></div>
-      <?php if (!empty($thisConstraint)): ?>
-        <div class="small">Constraint: <?= htmlspecialchars($thisConstraint ?? '') ?></div>
-      <?php endif; ?>
+    <div id="aj-theme-banner" class="card bg-primary text-light bg-gradient border border-warning shadow text-center d-none">
+      <div class="card-body fs-4 fw-bold">
+        <i class="fa-solid fa-crown me-2"></i>Medium: <?= htmlspecialchars($thisMedium ?? '') ?> &mdash; Subject: <?= htmlspecialchars($thisSubject ?? '') ?>
+      </div>
     </div>
   <?php endif; ?>
  
@@ -315,7 +311,6 @@ try {
         <div class="mb-2">
           <div class="text-uppercase text-muted small">Subject</div>
           <div class="fw-semibold"><?= htmlspecialchars($prevSubject ?? '') ?></div>
-          <div class="text-muted small">Constraint: <?= htmlspecialchars($prevConstraint ?? '') ?></div>
         </div>
         <!-- Optional: attach links or uploads for last week's submissions -->
       </div>
@@ -339,9 +334,8 @@ try {
             <span class="badge text-bg-secondary mb-1">Locked</span>
             <div class="fw-semibold">Subject appears 5 minutes before start.</div>
           <?php else: ?>
-            <div id="aj-theme" class="d-none p-3 bg-primary text-light bg-gradient border border-warning rounded shadow text-center">
-              <div class="fw-semibold"><?= htmlspecialchars($thisSubject ?? '') ?></div>
-              <div class="text-light small">Constraint: <?= htmlspecialchars($thisConstraint ?? '') ?></div>
+            <div id="aj-theme" class="card bg-primary text-light bg-gradient border border-warning shadow text-center d-none">
+              <div class="card-body fw-semibold"><?= htmlspecialchars($thisSubject ?? '') ?></div>
             </div>
           <?php endif; ?>
         </div>
