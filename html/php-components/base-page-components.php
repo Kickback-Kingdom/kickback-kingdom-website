@@ -167,6 +167,11 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             <span class="badge bg-primary rounded-pill" id="mediaUploadStep-3-pill" style="font-size: 20px;">3</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="mediaUploadStep-4-link" href="#">
+                            <span class="badge bg-primary rounded-pill" id="mediaUploadStep-4-pill" style="font-size: 20px;">4</span>
+                        </a>
+                    </li>
                 </ul>
                 <hr/>
                 <div class="wizard-step wizard-step-active" id="mediaUploadStep-1">
@@ -216,10 +221,27 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                 </div>
 
                 <div class="wizard-step" id="mediaUploadStep-3">
-                    <h1 class="display-6 mb-3">Step 3 - Edit Metadata</h1>
+                    <h1 class="display-6 mb-3">Step 3 - Pixelize Image</h1>
+                    <div class="row mb-3">
+                        <div class="col-12 d-flex justify-content-center">
+                            <div id="pixelEditor" class="w-100 d-flex justify-content-center">
+                                <canvas id="pixelCanvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" onclick="SkipPixelation()">Skip</button>
+                            <button type="button" class="btn btn-primary" onclick="ApplyPixelation()">Apply Pixelation</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-step" id="mediaUploadStep-4">
+                    <h1 class="display-6 mb-3">Step 4 - Edit Metadata</h1>
                     <div class="row mb-3">
                         <div class="col-12">
-                            
+
                             <div style="width: 100%;max-height: 200px;" class="d-flex flex-wrap justify-content-evenly align-items-center">
                                 <img id="imagePreviewEdited" src="" style="max-height: inherit;" class="img-fluid img-thumbnail">
                             </div>
@@ -235,7 +257,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                 <label for="mediaUploadImageFolderSelect" class="form-label">Image Folder</label>
                                 <div class="input-group">
                                     <label class="input-group-text" for="mediaUploadImageFolderSelect"><i class="fa-solid fa-folder-tree"></i></label>
-                                
+
                                     <select class="form-select" id="mediaUploadImageFolderSelect">
                                         <option value="" selected>Choose a folder...</option>
                                         <?php
@@ -273,7 +295,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             </div>
                         </div>
                         <div class="col-md-12 col-lg-6">
-                            
+
                         <div class="mb-3">
                                 <label for="mediaUploadImageDescTextbox" class="form-label">Description</label>
                                 <textarea class="form-control" id="mediaUploadImageDescTextbox" rows="5"></textarea>

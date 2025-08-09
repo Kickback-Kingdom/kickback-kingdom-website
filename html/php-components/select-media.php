@@ -56,19 +56,25 @@ function UpdateMediaUploadModal()
     $("#mediaUploadStep-1").removeClass("wizard-step-active");
     $("#mediaUploadStep-2").removeClass("wizard-step-active");
     $("#mediaUploadStep-3").removeClass("wizard-step-active");
+    $("#mediaUploadStep-4").removeClass("wizard-step-active");
 
     $("#mediaUploadStep-1-link").removeClass("active");
     $("#mediaUploadStep-2-link").removeClass("active");
     $("#mediaUploadStep-3-link").removeClass("active");
+    $("#mediaUploadStep-4-link").removeClass("active");
 
     $("#mediaUploadStep-1-pill").removeClass("bg-ranked-1");
     $("#mediaUploadStep-2-pill").removeClass("bg-ranked-1");
     $("#mediaUploadStep-3-pill").removeClass("bg-ranked-1");
+    $("#mediaUploadStep-4-pill").removeClass("bg-ranked-1");
 
     $("#mediaUploadStep-1-pill").addClass("bg-primary");
     $("#mediaUploadStep-2-pill").addClass("bg-primary");
     $("#mediaUploadStep-3-pill").addClass("bg-primary");
-    
+    $("#mediaUploadStep-4-pill").addClass("bg-primary");
+
+    $("#mediaUploadButtonNext").show();
+
     $("#mediaUploadStep-"+mediaUploadStep).addClass("wizard-step-active");
     $("#mediaUploadStep-"+mediaUploadStep+"-pill").addClass("bg-ranked-1");
     $("#mediaUploadStep-"+mediaUploadStep+"-link").addClass("active");
@@ -90,6 +96,12 @@ function UpdateMediaUploadModal()
     if (mediaUploadStep == 3)
     {
         CropImageFromEditor();
+        $("#mediaUploadButtonPrev").html("Back");
+        $("#mediaUploadButtonNext").hide();
+    }
+
+    if (mediaUploadStep == 4)
+    {
         $("#mediaUploadButtonPrev").html("Back");
         $("#mediaUploadButtonNext").html("Upload");
     }
@@ -117,9 +129,20 @@ function CropImageFromEditor()
 
 }
 
+function SkipPixelation()
+{
+    MediaUploadNextStep();
+}
+
+function ApplyPixelation()
+{
+    // Pixelation logic placeholder
+    MediaUploadNextStep();
+}
+
 function MediaUploadNextStep()
 {
-    if (mediaUploadStep<3)
+    if (mediaUploadStep<4)
     {
         mediaUploadStep++;
     }
