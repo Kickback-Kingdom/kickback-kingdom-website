@@ -342,8 +342,27 @@ require("php-components/base-page-pull-active-account-info.php");
 
 
 <!-- Countdown JS (namespaced IDs) -->
-<script>
-(function(){
+<?php else: ?>
+  <div class="alert alert-danger mt-3"><?= htmlspecialchars($ajError) ?></div>
+<?php endif; ?>
+
+
+
+
+
+
+            </div>
+            
+            <?php require("php-components/base-page-discord.php"); ?>
+        </div>
+        <?php require("php-components/base-page-footer.php"); ?>
+    </main>
+
+    
+    <?php require("php-components/base-page-javascript.php"); ?>
+
+    <script>
+$(document).ready(function() {
   const second = 1000, minute = 60*second, hour = 60*minute, day = 24*hour;
 
   const startAt  = new Date("<?= $jamStart->format('Y-m-d H:i:s') ?>").getTime();
@@ -430,27 +449,8 @@ require("php-components/base-page-pull-active-account-info.php");
   });
 
   startTicker();
-})();
+});
 </script>
-<?php else: ?>
-  <div class="alert alert-danger mt-3"><?= htmlspecialchars($ajError) ?></div>
-<?php endif; ?>
-
-
-
-
-
-
-            </div>
-            
-            <?php require("php-components/base-page-discord.php"); ?>
-        </div>
-        <?php require("php-components/base-page-footer.php"); ?>
-    </main>
-
-    
-    <?php require("php-components/base-page-javascript.php"); ?>
-
 </body>
 
 </html>
