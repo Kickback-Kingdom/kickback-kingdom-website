@@ -36,6 +36,9 @@
 let currentSelectMediaPage = 1; // default page
 const itemsPerSelectMediaPage = 6; // or however many you want
 
+var pixelEditorSettings = null;
+var lastPixelEditorSrc = '';
+
 
 <?php if(Kickback\Services\Session::getCurrentAccount()->canUploadImages()) { ?>
 let cropper;
@@ -101,6 +104,28 @@ function UpdateMediaUploadModal()
         let container = document.getElementById('pixelEditor');
         const source = document.getElementById('imagePreviewEdited');
 
+        const currentSrc = source.src;
+        if (currentSrc !== lastPixelEditorSrc || !pixelEditorSettings) {
+            pixelEditorSettings = {
+                pixelWidth: 64,
+                method: 'neighbor',
+                paletteSize: 16,
+                dither: false,
+                autoRender: true,
+                autoFit: true,
+                brightness: 0,
+                contrast: 0,
+                saturation: 100,
+                enableTune: false,
+                tune: {R:0, Y:0, G:0, C:0, B:0, M:0},
+                enableRemap: false,
+                remapStrength: 100,
+                map: {R:'0', Y:'0', G:'0', C:'0', B:'0', M:'0'},
+                mapStr: {R:100, Y:100, G:100, C:100, B:100, M:100}
+            };
+        }
+        lastPixelEditorSrc = currentSrc;
+
         if (pixelEditor) {
             const newContainer = container.cloneNode(true);
             container.parentNode.replaceChild(newContainer, container);
@@ -109,7 +134,7 @@ function UpdateMediaUploadModal()
         }
 
         const initializeEditor = () => {
-            pixelEditor = initPixelEditor(container, source);
+            pixelEditor = initPixelEditor(container, source, pixelEditorSettings);
         };
 
         if (source.complete) {
@@ -233,6 +258,8 @@ function OnPhotoUsageChanged(input)
 
 function OnUploadFileChanged(input)
 {
+    pixelEditorSettings = null;
+    lastPixelEditorSrc = '';
     const file = input.files[0];
     
     if (file) {
@@ -405,6 +432,8 @@ function SelectMedia(Id, path) {
 function AcceptSelectedMedia()
 {
     console.log(currentSelectedMediaId);
+    pixelEditorSettings = null;
+    lastPixelEditorSrc = '';
 
     $("#selectMediaModal").modal("hide");
     $("#"+selectMediaModalCallerId).modal("show");

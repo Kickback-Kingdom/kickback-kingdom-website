@@ -155,7 +155,7 @@
     }
   }
 
-  function initPixelEditor(container, sourceImage){
+  function initPixelEditor(container, sourceImage, settings){
     const pixelWidth = container.querySelector('[data-pixel-width]');
     const method = container.querySelector('[data-method]');
     const paletteSize = container.querySelector('[data-palette-size]');
@@ -195,14 +195,93 @@
     const canvas = container.querySelector('canvas');
     const ctx = canvas.getContext('2d');
 
+    const opts = settings || {};
+    if(pixelWidth && opts.pixelWidth !== undefined) pixelWidth.value = opts.pixelWidth;
+    if(method && opts.method !== undefined) method.value = opts.method;
+    if(paletteSize && opts.paletteSize !== undefined) paletteSize.value = opts.paletteSize;
+    if(ditherCk && opts.dither !== undefined) ditherCk.checked = opts.dither;
+    if(autoRenderCk && opts.autoRender !== undefined) autoRenderCk.checked = opts.autoRender;
+    if(autoFitCk && opts.autoFit !== undefined) autoFitCk.checked = opts.autoFit;
+    if(bri && opts.brightness !== undefined) bri.value = opts.brightness;
+    if(con && opts.contrast !== undefined) con.value = opts.contrast;
+    if(sat && opts.saturation !== undefined) sat.value = opts.saturation;
+    if(enableTune && opts.enableTune !== undefined) enableTune.checked = opts.enableTune;
+    if(opts.tune){
+      if(tR) tR.value = opts.tune.R;
+      if(tY) tY.value = opts.tune.Y;
+      if(tG) tG.value = opts.tune.G;
+      if(tC) tC.value = opts.tune.C;
+      if(tB) tB.value = opts.tune.B;
+      if(tM) tM.value = opts.tune.M;
+    }
+    if(enableRemap && opts.enableRemap !== undefined) enableRemap.checked = opts.enableRemap;
+    if(remapStrength && opts.remapStrength !== undefined) remapStrength.value = opts.remapStrength;
+    if(opts.map){
+      if(mapR) mapR.value = opts.map.R;
+      if(mapY) mapY.value = opts.map.Y;
+      if(mapG) mapG.value = opts.map.G;
+      if(mapC) mapC.value = opts.map.C;
+      if(mapB) mapB.value = opts.map.B;
+      if(mapM) mapM.value = opts.map.M;
+    }
+    if(opts.mapStr){
+      if(mapRStr) mapRStr.value = opts.mapStr.R;
+      if(mapYStr) mapYStr.value = opts.mapStr.Y;
+      if(mapGStr) mapGStr.value = opts.mapStr.G;
+      if(mapCStr) mapCStr.value = opts.mapStr.C;
+      if(mapBStr) mapBStr.value = opts.mapStr.B;
+      if(mapMStr) mapMStr.value = opts.mapStr.M;
+    }
+
     let img = sourceImage;
     let zoom = 1;
+
+    function collectSettings(){
+      global.pixelEditorSettings = {
+        pixelWidth: Number(pixelWidth?.value||64),
+        method: method?.value||'neighbor',
+        paletteSize: Number(paletteSize?.value||16),
+        dither: ditherCk?.checked||false,
+        autoRender: autoRenderCk?.checked||false,
+        autoFit: autoFitCk?.checked||false,
+        brightness: Number(bri?.value||0),
+        contrast: Number(con?.value||0),
+        saturation: Number(sat?.value||100),
+        enableTune: enableTune?.checked||false,
+        tune:{
+          R:Number(tR?.value||0),
+          Y:Number(tY?.value||0),
+          G:Number(tG?.value||0),
+          C:Number(tC?.value||0),
+          B:Number(tB?.value||0),
+          M:Number(tM?.value||0)
+        },
+        enableRemap: enableRemap?.checked||false,
+        remapStrength: Number(remapStrength?.value||100),
+        map:{
+          R:mapR?.value||'0',
+          Y:mapY?.value||'0',
+          G:mapG?.value||'0',
+          C:mapC?.value||'0',
+          B:mapB?.value||'0',
+          M:mapM?.value||'0'
+        },
+        mapStr:{
+          R:Number(mapRStr?.value||100),
+          Y:Number(mapYStr?.value||100),
+          G:Number(mapGStr?.value||100),
+          C:Number(mapCStr?.value||100),
+          B:Number(mapBStr?.value||100),
+          M:Number(mapMStr?.value||100)
+        }
+      };
+    }
 
     function status(msg){ if(statusEl) statusEl.textContent = msg; }
     function setZoom(z){ zoom=Math.max(0.1,z); if(wrap) wrap.style.transform=`scale(${zoom})`; }
     function fitToViewport(){ if(!canvas.width||!canvas.height||!viewport) return; const availW=viewport.clientWidth-16; const availH=viewport.clientHeight-16; const fit=Math.min(availW/canvas.width, availH/canvas.height); setZoom(fit); }
     window.addEventListener('resize', ()=>{ if(autoFitCk?.checked) fitToViewport(); });
-    autoFitCk?.addEventListener('change', ()=>{ if(autoFitCk.checked) fitToViewport(); });
+    autoFitCk?.addEventListener('change', ()=>{ if(autoFitCk.checked) fitToViewport(); onChange(); });
 
     function render(){
       if(!img) return;
@@ -307,10 +386,13 @@
 
     const maybeRender = throttled(120, ()=>{ if(autoRenderCk?.checked) render(); });
 
-    [pixelWidth, method, paletteSize, ditherCk, bri, con, sat, enableTune, tR, tY, tG, tC, tB, tM, enableRemap, remapStrength, mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=>{ if(el) el.addEventListener('input', maybeRender); });
-    [mapR,mapY,mapG,mapC,mapB,mapM].forEach(el=>{ if(el) el.addEventListener('change', maybeRender); });
+    function onInput(){ collectSettings(); maybeRender(); }
+    function onChange(){ collectSettings(); maybeRender(); }
 
-    renderBtn?.addEventListener('click', ()=>render());
+    [pixelWidth, method, paletteSize, bri, con, sat, tR, tY, tG, tC, tB, tM, remapStrength, mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=>{ if(el) el.addEventListener('input', onInput); });
+    [ditherCk, enableTune, enableRemap, mapR, mapY, mapG, mapC, mapB, mapM, autoRenderCk].forEach(el=>{ if(el) el.addEventListener('change', onChange); });
+
+    renderBtn?.addEventListener('click', ()=>{ collectSettings(); render(); });
 
     resetBtn?.addEventListener('click', ()=>{
       if(pixelWidth) pixelWidth.value=64;
@@ -329,6 +411,7 @@
       [mapR,mapY,mapG,mapC,mapB,mapM].forEach(sel=>{ if(sel) sel.value='0'; });
       [mapRStr,mapYStr,mapGStr,mapCStr,mapBStr,mapMStr].forEach(el=>{ if(el) el.value=100; });
       status('Settings reset.');
+      collectSettings();
       render();
     });
 
@@ -336,9 +419,10 @@
     function buildOptions(sel){ sel.innerHTML=''; remapBands.forEach((name,i)=>{ const opt=document.createElement('option'); opt.textContent=name; opt.value=String(i); sel.appendChild(opt); }); sel.value='0'; }
     [mapR,mapY,mapG,mapC,mapB,mapM].forEach(sel=>{ if(sel) buildOptions(sel); });
 
+    collectSettings();
     render();
 
-    return { render, setImage: (image)=>{ img=image; render(); } };
+    return { render, setImage: (image)=>{ img=image; collectSettings(); render(); } };
   }
 
   global.initPixelEditor = initPixelEditor;
