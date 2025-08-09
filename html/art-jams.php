@@ -3,6 +3,89 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("php-components/base-page-pull-active-account-info.php");
+
+
+
+// ===================== ART JAM CONFIG (themed like the raffle timer) =====================
+$scheduleString = "Wednesday 8PM BRA";     // Wednesdays, 8–11pm São Paulo time
+$tz = new DateTimeZone('America/Sao_Paulo');
+$jamDuration = new DateInterval('PT3H');   // 3 hours
+$subjectUnlockLead = new DateInterval('PT5M'); // subject unlocks 5 minutes before start
+
+// ---- Helpers (namespaced) ----
+if (!function_exists('aj_parseSchedule')) {
+    function aj_parseSchedule($str) {
+        $days = '(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Mon|Tue|Wed|Thu|Fri|Sat|Sun)';
+        $regex = '/^\s*' . $days . '\s+(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?\b/iu';
+        if (!preg_match($regex, $str, $m)) throw new InvalidArgumentException("Bad schedule string.");
+        $day = $m[1]; $hour = (int)$m[2]; $min = isset($m[3]) && $m[3] !== '' ? (int)$m[3] : 0; $ampm = isset($m[4]) ? strtoupper($m[4]) : null;
+        if ($ampm) { if ($hour === 12) $hour = 0; if ($ampm === 'PM') $hour += 12; }
+        $map = ['Mon'=>'Monday','Tue'=>'Tuesday','Wed'=>'Wednesday','Thu'=>'Thursday','Fri'=>'Friday','Sat'=>'Saturday','Sun'=>'Sunday'];
+        if (isset($map[$day])) $day = $map[$day];
+        return [$day, $hour, $min];
+    }
+    function aj_nextOccurrence(DateTimeImmutable $now, string $weekday, int $hour, int $minute, DateTimeZone $tz): DateTimeImmutable {
+        $candidate = (new DateTimeImmutable("this $weekday", $tz))->setTime($hour,$minute,0);
+        if ($candidate < $now) $candidate = (new DateTimeImmutable("next $weekday", $tz))->setTime($hour,$minute,0);
+        return $candidate;
+    }
+    function aj_weekSeed(DateTimeImmutable $dt): string { return $dt->format('o') . 'W' . $dt->format('W'); }
+    function aj_pickStable(array $list, string $seed, string $salt=''): string { $idx = crc32($seed.'|'.$salt)%count($list); return $list[$idx]; }
+    function aj_combineStable(array $a, array $b, string $seed, string $salt=''): string {
+        $p1 = $a[crc32($seed.'|'.$salt.'|a')%count($a)];
+        $p2 = $b[crc32($seed.'|'.$salt.'|b')%count($b)];
+        return ucfirst("$p1 $p2");
+    }
+    function aj_humanInterval(int $s): string {
+        if ($s<=0) return 'now';
+        $out=[]; $units=['day'=>86400,'hour'=>3600,'minute'=>60,'second'=>1];
+        foreach($units as $n=>$len){$v=intdiv($s,$len); if($v>0){$out[]=$v.' '.$n.($v>1?'s':''); $s-=$v*$len;} if(count($out)>=2)break;}
+        return implode(', ',$out);
+    }
+}
+
+// ---- Content pools (edit as you like) ----
+$mediums = ['3D Prop','3D Character','Environment Concept Art','Logo Design','UI/Web Asset Set','Marketing Banner Set','Motion Graphics (Video)','Game Asset Pack','Texture/Material Study','Product Render','VFX Shot','Animation Loop','Isometric Illustration','Poster/Key Art'];
+$subjectAdj = ['bioluminescent','weathered','modular','stylized','photoreal','ceremonial','retro-futuristic','minimalist','noir','neon-lit','ornate','industrial','eco-friendly','compact','collapsible'];
+$subjectNouns = ['vending machine','ancient gate','courier drone','desert city','forest shrine','chef character','space helmet','retro console','alchemical lab','battle mech','street food cart','sailing airship','robot companion','arcane library','market stall','security camera'];
+$constraints = ['two colorways','three variations','mobile and desktop sizes','PBR textures only','looping under 6 seconds','≤ 2k tris per asset','AO + normal + roughness maps','hand-painted style','subsurface scattering','animated reveal','print-ready CMYK mockup','procedural materials only'];
+
+// ---- Time & picks ----
+$now = new DateTimeImmutable('now', $tz);
+try {
+    [$weekday,$hour,$minute] = aj_parseSchedule($scheduleString);
+
+    // This upcoming jam
+    $jamStart = aj_nextOccurrence($now,$weekday,$hour,$minute,$tz);
+    $jamEnd   = $jamStart->add($jamDuration);
+    $unlockAt = $jamStart->sub($subjectUnlockLead);
+
+    // Last week (the previous occurrence of the same weekday/time)
+    $prevJamStart = $jamStart->modify('-1 week');
+    $prevJamEnd   = $prevJamStart->add($jamDuration);
+
+    // Seeds
+    $seedPrev = aj_weekSeed($prevJamStart);
+    $seedThis = aj_weekSeed($jamStart);
+    $seedNext = aj_weekSeed($jamStart->modify('+1 week'));
+
+    // Picks
+    $prevMedium     = aj_pickStable($mediums,$seedPrev,'medium');
+    $prevSubject    = aj_combineStable($subjectAdj,$subjectNouns,$seedPrev,'subject');
+    $prevConstraint = aj_pickStable($constraints,$seedPrev,'constraint');
+
+    $thisMedium     = aj_pickStable($mediums,$seedThis,'medium');
+    $thisSubject    = aj_combineStable($subjectAdj,$subjectNouns,$seedThis,'subject');
+    $thisConstraint = aj_pickStable($constraints,$seedThis,'constraint');
+
+    $nextMedium     = aj_pickStable($mediums,$seedNext,'medium');
+
+    // Lock status for *this* week only
+    $subjectLocked = $now < $unlockAt;
+    $countToStart  = max(0,$jamStart->getTimestamp() - $now->getTimestamp());
+    $countToUnlock = max(0,$unlockAt->getTimestamp() - $now->getTimestamp());
+} catch (Exception $e) { $ajError = $e->getMessage(); }
+
 ?>
 
 <!DOCTYPE html>
@@ -134,85 +217,7 @@ require("php-components/base-page-pull-active-account-info.php");
 
     require("php-components/ad-carousel.php");
 
-    // ===================== ART JAM CONFIG (themed like the raffle timer) =====================
-    $scheduleString = "Wednesday 8PM BRA";     // Wednesdays, 8–11pm São Paulo time
-    $tz = new DateTimeZone('America/Sao_Paulo');
-    $jamDuration = new DateInterval('PT3H');   // 3 hours
-    $subjectUnlockLead = new DateInterval('PT5M'); // subject unlocks 5 minutes before start
-
-    // ---- Helpers (namespaced) ----
-    if (!function_exists('aj_parseSchedule')) {
-        function aj_parseSchedule($str) {
-            $days = '(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Mon|Tue|Wed|Thu|Fri|Sat|Sun)';
-            $regex = '/^\s*' . $days . '\s+(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?\b/iu';
-            if (!preg_match($regex, $str, $m)) throw new InvalidArgumentException("Bad schedule string.");
-            $day = $m[1]; $hour = (int)$m[2]; $min = isset($m[3]) && $m[3] !== '' ? (int)$m[3] : 0; $ampm = isset($m[4]) ? strtoupper($m[4]) : null;
-            if ($ampm) { if ($hour === 12) $hour = 0; if ($ampm === 'PM') $hour += 12; }
-            $map = ['Mon'=>'Monday','Tue'=>'Tuesday','Wed'=>'Wednesday','Thu'=>'Thursday','Fri'=>'Friday','Sat'=>'Saturday','Sun'=>'Sunday'];
-            if (isset($map[$day])) $day = $map[$day];
-            return [$day, $hour, $min];
-        }
-        function aj_nextOccurrence(DateTimeImmutable $now, string $weekday, int $hour, int $minute, DateTimeZone $tz): DateTimeImmutable {
-            $candidate = (new DateTimeImmutable("this $weekday", $tz))->setTime($hour,$minute,0);
-            if ($candidate < $now) $candidate = (new DateTimeImmutable("next $weekday", $tz))->setTime($hour,$minute,0);
-            return $candidate;
-        }
-        function aj_weekSeed(DateTimeImmutable $dt): string { return $dt->format('o') . 'W' . $dt->format('W'); }
-        function aj_pickStable(array $list, string $seed, string $salt=''): string { $idx = crc32($seed.'|'.$salt)%count($list); return $list[$idx]; }
-        function aj_combineStable(array $a, array $b, string $seed, string $salt=''): string {
-            $p1 = $a[crc32($seed.'|'.$salt.'|a')%count($a)];
-            $p2 = $b[crc32($seed.'|'.$salt.'|b')%count($b)];
-            return ucfirst("$p1 $p2");
-        }
-        function aj_humanInterval(int $s): string {
-            if ($s<=0) return 'now';
-            $out=[]; $units=['day'=>86400,'hour'=>3600,'minute'=>60,'second'=>1];
-            foreach($units as $n=>$len){$v=intdiv($s,$len); if($v>0){$out[]=$v.' '.$n.($v>1?'s':''); $s-=$v*$len;} if(count($out)>=2)break;}
-            return implode(', ',$out);
-        }
-    }
-
-    // ---- Content pools (edit as you like) ----
-    $mediums = ['3D Prop','3D Character','Environment Concept Art','Logo Design','UI/Web Asset Set','Marketing Banner Set','Motion Graphics (Video)','Game Asset Pack','Texture/Material Study','Product Render','VFX Shot','Animation Loop','Isometric Illustration','Poster/Key Art'];
-    $subjectAdj = ['bioluminescent','weathered','modular','stylized','photoreal','ceremonial','retro-futuristic','minimalist','noir','neon-lit','ornate','industrial','eco-friendly','compact','collapsible'];
-    $subjectNouns = ['vending machine','ancient gate','courier drone','desert city','forest shrine','chef character','space helmet','retro console','alchemical lab','battle mech','street food cart','sailing airship','robot companion','arcane library','market stall','security camera'];
-    $constraints = ['two colorways','three variations','mobile and desktop sizes','PBR textures only','looping under 6 seconds','≤ 2k tris per asset','AO + normal + roughness maps','hand-painted style','subsurface scattering','animated reveal','print-ready CMYK mockup','procedural materials only'];
-
-    // ---- Time & picks ----
-    $now = new DateTimeImmutable('now', $tz);
-    try {
-        [$weekday,$hour,$minute] = aj_parseSchedule($scheduleString);
-
-        // This upcoming jam
-        $jamStart = aj_nextOccurrence($now,$weekday,$hour,$minute,$tz);
-        $jamEnd   = $jamStart->add($jamDuration);
-        $unlockAt = $jamStart->sub($subjectUnlockLead);
-
-        // Last week (the previous occurrence of the same weekday/time)
-        $prevJamStart = $jamStart->modify('-1 week');
-        $prevJamEnd   = $prevJamStart->add($jamDuration);
-
-        // Seeds
-        $seedPrev = aj_weekSeed($prevJamStart);
-        $seedThis = aj_weekSeed($jamStart);
-        $seedNext = aj_weekSeed($jamStart->modify('+1 week'));
-
-        // Picks
-        $prevMedium     = aj_pickStable($mediums,$seedPrev,'medium');
-        $prevSubject    = aj_combineStable($subjectAdj,$subjectNouns,$seedPrev,'subject');
-        $prevConstraint = aj_pickStable($constraints,$seedPrev,'constraint');
-
-        $thisMedium     = aj_pickStable($mediums,$seedThis,'medium');
-        $thisSubject    = aj_combineStable($subjectAdj,$subjectNouns,$seedThis,'subject');
-        $thisConstraint = aj_pickStable($constraints,$seedThis,'constraint');
-
-        $nextMedium     = aj_pickStable($mediums,$seedNext,'medium');
-
-        // Lock status for *this* week only
-        $subjectLocked = $now < $unlockAt;
-        $countToStart  = max(0,$jamStart->getTimestamp() - $now->getTimestamp());
-        $countToUnlock = max(0,$unlockAt->getTimestamp() - $now->getTimestamp());
-    } catch (Exception $e) { $ajError = $e->getMessage(); }
+    
 
     ?>
 
