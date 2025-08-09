@@ -60,6 +60,7 @@ try {
     // Subtract the duration so a jam currently in progress is recognized
     $jamStart = aj_nextOccurrence($now->sub($jamDuration), $weekday, $hour, $minute, $tz);
     $jamEnd   = $jamStart->add($jamDuration);
+    $jamInProgress = $now >= $jamStart && $now < $jamEnd;
 
     // If the jam just ended, shift to the next week's jam
     if ($now >= $jamEnd) {
@@ -310,7 +311,7 @@ try {
     </div>
   </div>
 
-  <?php if ($now >= $jamStart && $now < $jamEnd): ?>
+  <?php if ($jamInProgress): ?>
     <div id="aj-theme-banner" class="alert alert-warning text-center d-none fs-4" role="alert">
       <div class="fw-bold">Medium: <?= htmlspecialchars($thisMedium ?? '') ?> &mdash; Subject: <?= htmlspecialchars($thisSubject ?? '') ?></div>
       <?php if (!empty($thisConstraint)): ?>
@@ -318,9 +319,10 @@ try {
       <?php endif; ?>
     </div>
   <?php endif; ?>
-
-  <!-- Last Week / This Week / Next Week -->
-  <div class="col-12 col-lg-4">
+ 
+  <?php if (!$jamInProgress): ?>
+  <!-- Last Week / Next Jam -->
+  <div class="col-12 col-lg-6">
     <div class="card shadow-sm h-100">
       <div class="card-header">
         <h5 class="mb-0">Last Week</h5>
@@ -341,10 +343,10 @@ try {
     </div>
   </div>
 
-  <div class="col-12 col-lg-4">
+  <div class="col-12 col-lg-6">
     <div class="card shadow-sm h-100">
       <div class="card-header">
-        <h5 class="mb-0">This Week</h5>
+        <h5 class="mb-0">Next Jam</h5>
         <div class="small text-muted"><?= $jamStart->format('D, M j, Y H:i') ?>–<?= $jamEnd->format('H:i') ?> BRT</div>
       </div>
       <div class="card-body">
@@ -373,20 +375,7 @@ try {
       </div>
     </div>
   </div>
-
-  <div class="col-12 col-lg-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-header">
-        <h5 class="mb-0">Next Week Preview</h5>
-        <div class="small text-muted"><?= $jamStart->modify('+1 week')->format('D, M j, Y H:i') ?>–<?= $jamEnd->modify('+1 week')->format('H:i') ?> BRT</div>
-      </div>
-      <div class="card-body">
-        <div class="text-uppercase text-muted small">Medium (Next Week)</div>
-        <div class="fs-6 fw-semibold"><?= htmlspecialchars($nextMedium ?? '') ?></div>
-        <div class="text-muted mt-2 small">Picks are deterministic per ISO week.</div>
-      </div>
-    </div>
-  </div>
+  <?php endif; ?>
 </div>
 
 
