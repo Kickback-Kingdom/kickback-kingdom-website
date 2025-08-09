@@ -24,9 +24,10 @@ if (!function_exists('aj_parseSchedule')) {
         if (isset($map[$day])) $day = $map[$day];
         return [$day, $hour, $min];
     }
-    function aj_nextOccurrence(DateTimeImmutable $now, string $weekday, int $hour, int $minute, DateTimeZone $tz): DateTimeImmutable {
-        $candidate = (new DateTimeImmutable("this $weekday", $tz))->setTime($hour,$minute,0);
-        if ($candidate < $now) $candidate = (new DateTimeImmutable("next $weekday", $tz))->setTime($hour,$minute,0);
+    function aj_nextOccurrence(DateTimeImmutable $base, string $weekday, int $hour, int $minute, DateTimeZone $tz): DateTimeImmutable {
+        $base = $base->setTimezone($tz);
+        $candidate = $base->modify("this $weekday")->setTime($hour,$minute,0);
+        if ($candidate < $base) $candidate = $base->modify("next $weekday")->setTime($hour,$minute,0);
         return $candidate;
     }
     function aj_weekSeed(DateTimeImmutable $dt): string { return $dt->format('o') . 'W' . $dt->format('W'); }
@@ -394,7 +395,7 @@ $(function() {
   // Use epoch ms from PHP (server is in America/Sao_Paulo)
   const startAt  = <?= $jamStart->getTimestamp()  ?> * 1000;
   const unlockAt = <?= $unlockAt->getTimestamp() ?> * 1000;
-  const endAt    = startAt + 3*hour; // exactly 3 hours after start
+  const endAt    = <?= $jamEnd->getTimestamp()    ?> * 1000; // exactly 3 hours after start
 
 
   let intervalId = null;
