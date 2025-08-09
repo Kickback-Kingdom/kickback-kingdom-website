@@ -288,9 +288,14 @@ try {
   </div>
 
   <?php if ($jamInProgress): ?>
-    <div id="aj-theme-banner" class="card bg-primary text-light bg-gradient border border-warning shadow text-center d-none">
-      <div class="card-body fs-4 fw-bold">
-        <i class="fa-solid fa-crown me-2"></i>Medium: <?= htmlspecialchars($thisMedium ?? '') ?> &mdash; Subject: <?= htmlspecialchars($thisSubject ?? '') ?>
+    <div class="col-12 col-md-8 mx-auto mb-3">
+      <div id="aj-theme-banner" class="card bg-primary text-light bg-gradient border border-warning shadow d-none">
+        <div class="card-header fs-4 fw-bold text-center">
+          <i class="fa-solid fa-crown me-2"></i>Live Jam Theme
+        </div>
+        <div class="card-body text-center fs-5">
+          Medium: <?= htmlspecialchars($thisMedium ?? '') ?> &mdash; Subject: <?= htmlspecialchars($thisSubject ?? '') ?>
+        </div>
       </div>
     </div>
   <?php endif; ?>
