@@ -159,6 +159,9 @@ function SkipPixelation()
 
 function ApplyPixelation()
 {
+    if (pixelEditor) {
+        pixelEditor.render();
+    }
     const canvas = document.getElementById('pixelCanvas');
     let imgElement = document.getElementById('imagePreviewEdited');
     imgElement.src = canvas.toDataURL();

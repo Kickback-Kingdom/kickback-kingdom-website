@@ -3,6 +3,7 @@
 
   // Utility
   function clamp8(v){ return v<0?0:(v>255?255:v)|0; }
+  function debounced(ms, fn){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
 
   // Adjustments
   function applyAdjustments(ctx, w, h, bri, con, sat){
@@ -158,16 +159,52 @@
     const method = container.querySelector('[data-method]');
     const paletteSize = container.querySelector('[data-palette-size]');
     const ditherCk = container.querySelector('[data-dither]');
+    const autoRenderCk = container.querySelector('[data-auto-render]');
+    const autoFitCk = container.querySelector('[data-auto-fit]');
+    const renderBtn = container.querySelector('[data-render]');
+    const resetBtn = container.querySelector('[data-reset]');
     const bri = container.querySelector('[data-brightness]');
     const con = container.querySelector('[data-contrast]');
     const sat = container.querySelector('[data-saturation]');
+    const enableTune = container.querySelector('[data-enable-tune]');
+    const tR = container.querySelector('[data-tune-red]');
+    const tY = container.querySelector('[data-tune-yellow]');
+    const tG = container.querySelector('[data-tune-green]');
+    const tC = container.querySelector('[data-tune-cyan]');
+    const tB = container.querySelector('[data-tune-blue]');
+    const tM = container.querySelector('[data-tune-magenta]');
+    const enableRemap = container.querySelector('[data-enable-remap]');
+    const remapStrength = container.querySelector('[data-remap-strength]');
+    const mapR = container.querySelector('[data-map-r]');
+    const mapY = container.querySelector('[data-map-y]');
+    const mapG = container.querySelector('[data-map-g]');
+    const mapC = container.querySelector('[data-map-c]');
+    const mapB = container.querySelector('[data-map-b]');
+    const mapM = container.querySelector('[data-map-m]');
+    const mapRStr = container.querySelector('[data-map-r-str]');
+    const mapYStr = container.querySelector('[data-map-y-str]');
+    const mapGStr = container.querySelector('[data-map-g-str]');
+    const mapCStr = container.querySelector('[data-map-c-str]');
+    const mapBStr = container.querySelector('[data-map-b-str]');
+    const mapMStr = container.querySelector('[data-map-m-str]');
+    const pixMeta = container.querySelector('[data-pix-meta]');
+    const statusEl = container.querySelector('[data-status]');
+    const viewport = container.querySelector('[data-viewport]');
+    const wrap = container.querySelector('[data-wrap]');
     const canvas = container.querySelector('canvas');
     const ctx = canvas.getContext('2d');
 
     let img = sourceImage;
+    let zoom = 1;
+
+    function status(msg){ if(statusEl) statusEl.textContent = msg; }
+    function setZoom(z){ zoom=Math.max(1,Math.floor(z)); if(wrap) wrap.style.transform=`scale(${zoom})`; }
+    function fitToViewport(){ if(!canvas.width||!canvas.height||!viewport) return; const availW=viewport.clientWidth-16; const availH=viewport.clientHeight-16; const fit=Math.max(1,Math.floor(Math.min(availW/canvas.width, availH/canvas.height))); setZoom(fit); }
+    window.addEventListener('resize', ()=>{ if(autoFitCk?.checked) fitToViewport(); });
 
     function render(){
       if(!img) return;
+      status('Rendering…');
       const targetW = Math.max(8, Math.min(1024, Number(pixelWidth?.value)||64));
       const targetH = Math.round((img.naturalHeight/img.naturalWidth) * targetW);
 
@@ -234,6 +271,24 @@
 
       applyAdjustments(sctx, targetW, targetH, Number(bri?.value||0), Number(con?.value||0), Number(sat?.value||100));
 
+      if(enableTune?.checked){
+        const gains={R:Number(tR.value),Y:Number(tY.value),G:Number(tG.value),C:Number(tC.value),B:Number(tB.value),M:Number(tM.value)};
+        applyColorTuning(sctx,targetW,targetH,gains);
+      }
+
+      if(enableRemap?.checked){
+        const mapping={
+          R:{t:parseInt(mapR.value,10),s:Number(mapRStr.value)/100},
+          Y:{t:parseInt(mapY.value,10),s:Number(mapYStr.value)/100},
+          G:{t:parseInt(mapG.value,10),s:Number(mapGStr.value)/100},
+          C:{t:parseInt(mapC.value,10),s:Number(mapCStr.value)/100},
+          B:{t:parseInt(mapB.value,10),s:Number(mapBStr.value)/100},
+          M:{t:parseInt(mapM.value,10),s:Number(mapMStr.value)/100},
+        };
+        const globalStrength=Number(remapStrength.value)/100;
+        applyHueRemap(sctx,targetW,targetH,mapping,globalStrength);
+      }
+
       if(ditherCk?.checked){
         floydSteinbergQuantize(sctx, targetW, targetH, 16);
       }
@@ -242,11 +297,42 @@
       ctx.imageSmoothingEnabled = false;
       ctx.clearRect(0,0,canvas.width,canvas.height);
       ctx.drawImage(small,0,0);
+
+      if(pixMeta) pixMeta.textContent = `${targetW}×${targetH}`;
+      if(autoFitCk?.checked) fitToViewport();
+      status('Done.');
     }
 
-    [pixelWidth, method, paletteSize, ditherCk, bri, con, sat].forEach(el=>{
-      if(el) el.addEventListener('input', render);
+    const maybeRender = debounced(120, ()=>{ if(autoRenderCk?.checked) render(); });
+
+    [pixelWidth, method, paletteSize, ditherCk, bri, con, sat, enableTune, tR, tY, tG, tC, tB, tM, enableRemap, remapStrength, mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=>{ if(el) el.addEventListener('input', maybeRender); });
+    [mapR,mapY,mapG,mapC,mapB,mapM].forEach(el=>{ if(el) el.addEventListener('change', maybeRender); });
+
+    renderBtn?.addEventListener('click', ()=>render());
+
+    resetBtn?.addEventListener('click', ()=>{
+      if(pixelWidth) pixelWidth.value=64;
+      if(method) method.value='neighbor';
+      if(paletteSize) paletteSize.value=16;
+      if(ditherCk) ditherCk.checked=false;
+      if(autoRenderCk) autoRenderCk.checked=true;
+      if(autoFitCk) autoFitCk.checked=true;
+      if(bri) bri.value=0;
+      if(con) con.value=0;
+      if(sat) sat.value=100;
+      if(enableTune) enableTune.checked=false;
+      if(tR) tR.value=0; if(tY) tY.value=0; if(tG) tG.value=0; if(tC) tC.value=0; if(tB) tB.value=0; if(tM) tM.value=0;
+      if(enableRemap) enableRemap.checked=false;
+      if(remapStrength) remapStrength.value=100;
+      [mapR,mapY,mapG,mapC,mapB,mapM].forEach(sel=>{ if(sel) sel.value='0'; });
+      [mapRStr,mapYStr,mapGStr,mapCStr,mapBStr,mapMStr].forEach(el=>{ if(el) el.value=100; });
+      status('Settings reset.');
+      render();
     });
+
+    const remapBands=['— keep —','Red','Yellow','Green','Cyan','Blue','Magenta'];
+    function buildOptions(sel){ sel.innerHTML=''; remapBands.forEach((name,i)=>{ const opt=document.createElement('option'); opt.textContent=name; opt.value=String(i); sel.appendChild(opt); }); sel.value='0'; }
+    [mapR,mapY,mapG,mapC,mapB,mapM].forEach(sel=>{ if(sel) buildOptions(sel); });
 
     render();
 
