@@ -216,22 +216,6 @@
     }
     if(enableRemap && opts.enableRemap !== undefined) enableRemap.checked = opts.enableRemap;
     if(remapStrength && opts.remapStrength !== undefined) remapStrength.value = opts.remapStrength;
-    if(opts.map){
-      if(mapR) mapR.value = opts.map.R;
-      if(mapY) mapY.value = opts.map.Y;
-      if(mapG) mapG.value = opts.map.G;
-      if(mapC) mapC.value = opts.map.C;
-      if(mapB) mapB.value = opts.map.B;
-      if(mapM) mapM.value = opts.map.M;
-    }
-    if(opts.mapStr){
-      if(mapRStr) mapRStr.value = opts.mapStr.R;
-      if(mapYStr) mapYStr.value = opts.mapStr.Y;
-      if(mapGStr) mapGStr.value = opts.mapStr.G;
-      if(mapCStr) mapCStr.value = opts.mapStr.C;
-      if(mapBStr) mapBStr.value = opts.mapStr.B;
-      if(mapMStr) mapMStr.value = opts.mapStr.M;
-    }
 
     let img = sourceImage;
     let zoom = 1;
@@ -418,6 +402,23 @@
     const remapBands=['— keep —','Red','Yellow','Green','Cyan','Blue','Magenta'];
     function buildOptions(sel){ sel.innerHTML=''; remapBands.forEach((name,i)=>{ const opt=document.createElement('option'); opt.textContent=name; opt.value=String(i); sel.appendChild(opt); }); sel.value='0'; }
     [mapR,mapY,mapG,mapC,mapB,mapM].forEach(sel=>{ if(sel) buildOptions(sel); });
+
+    if(opts.map){
+      if(mapR) mapR.value = opts.map.R;
+      if(mapY) mapY.value = opts.map.Y;
+      if(mapG) mapG.value = opts.map.G;
+      if(mapC) mapC.value = opts.map.C;
+      if(mapB) mapB.value = opts.map.B;
+      if(mapM) mapM.value = opts.map.M;
+    }
+    if(opts.mapStr){
+      if(mapRStr) mapRStr.value = opts.mapStr.R;
+      if(mapYStr) mapYStr.value = opts.mapStr.Y;
+      if(mapGStr) mapGStr.value = opts.mapStr.G;
+      if(mapCStr) mapCStr.value = opts.mapStr.C;
+      if(mapBStr) mapBStr.value = opts.mapStr.B;
+      if(mapMStr) mapMStr.value = opts.mapStr.M;
+    }
 
     collectSettings();
     render();
