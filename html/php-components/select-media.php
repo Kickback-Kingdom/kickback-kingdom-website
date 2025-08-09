@@ -38,6 +38,8 @@ const itemsPerSelectMediaPage = 6; // or however many you want
 
 var pixelEditorSettings = null;
 var lastPixelEditorSrc = '';
+var croppedImageData = '';
+var pixelatedImageData = '';
 
 
 <?php if(Kickback\Services\Session::getCurrentAccount()->canUploadImages()) { ?>
@@ -102,10 +104,14 @@ function UpdateMediaUploadModal()
     {
         let container = document.getElementById('pixelEditor');
         const source = document.getElementById('imagePreviewEdited');
+        if (croppedImageData) {
+            source.src = croppedImageData;
+        }
         let currentSrc = source.src;
 
-        if (currentSrc !== lastPixelEditorSrc || !pixelEditorSettings) {
+        if (!croppedImageData || currentSrc !== lastPixelEditorSrc || !pixelEditorSettings) {
             CropImageFromEditor();
+            source.src = croppedImageData;
             currentSrc = source.src;
             pixelEditorSettings = {
                 pixelWidth: 64,
@@ -150,6 +156,12 @@ function UpdateMediaUploadModal()
 
     if (mediaUploadStep == 4)
     {
+        let preview = document.getElementById('imagePreviewEdited');
+        if (pixelatedImageData) {
+            preview.src = pixelatedImageData;
+        } else if (croppedImageData) {
+            preview.src = croppedImageData;
+        }
         $("#mediaUploadButtonPrev").html("Back");
         $("#mediaUploadButtonNext").html("Upload");
     }
@@ -174,11 +186,13 @@ function CropImageFromEditor()
 
     // Set the data URL as the source of the image element
     imgElement.src = dataURL;
-
+    croppedImageData = dataURL;
+    pixelatedImageData = '';
 }
 
 function SkipPixelation()
 {
+    pixelatedImageData = croppedImageData;
     mediaUploadStep = 4;
     UpdateMediaUploadModal();
 }
@@ -190,8 +204,8 @@ function ApplyPixelation()
     }
     const canvas = document.getElementById('pixelCanvas');
     let imgElement = document.getElementById('imagePreviewEdited');
-    imgElement.src = canvas.toDataURL();
-    lastPixelEditorSrc = imgElement.src;
+    pixelatedImageData = canvas.toDataURL();
+    imgElement.src = pixelatedImageData;
     mediaUploadStep = 4;
     UpdateMediaUploadModal();
 }
@@ -262,6 +276,8 @@ function OnUploadFileChanged(input)
 {
     pixelEditorSettings = null;
     lastPixelEditorSrc = '';
+    croppedImageData = '';
+    pixelatedImageData = '';
     const file = input.files[0];
     
     if (file) {
@@ -436,6 +452,8 @@ function AcceptSelectedMedia()
     console.log(currentSelectedMediaId);
     pixelEditorSettings = null;
     lastPixelEditorSrc = '';
+    croppedImageData = '';
+    pixelatedImageData = '';
 
     $("#selectMediaModal").modal("hide");
     $("#"+selectMediaModalCallerId).modal("show");
