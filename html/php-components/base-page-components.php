@@ -222,11 +222,43 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
 
                 <div class="wizard-step" id="mediaUploadStep-3">
                     <h1 class="display-6 mb-3">Step 3 - Pixelize Image</h1>
-                    <div class="row mb-3">
-                        <div class="col-12 d-flex justify-content-center">
-                            <div id="pixelEditor" class="w-100 d-flex justify-content-center">
-                                <canvas id="pixelCanvas"></canvas>
+                    <div id="pixelEditor" class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Pixel width</label>
+                                <input type="number" class="form-control" data-pixel-width value="64" min="8" max="1024">
                             </div>
+                            <div class="mb-3">
+                                <label class="form-label">Method</label>
+                                <select class="form-select" data-method>
+                                    <option value="neighbor">Nearest Neighbor</option>
+                                    <option value="average">Block Average</option>
+                                    <option value="palette">Palette (k-means)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Palette size</label>
+                                <input type="number" class="form-control" data-palette-size value="16" min="2" max="64">
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" data-dither id="pixelDither">
+                                <label class="form-check-label" for="pixelDither">Dither</label>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Brightness</label>
+                                <input type="range" class="form-range" data-brightness min="-100" max="100" value="0">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Contrast</label>
+                                <input type="range" class="form-range" data-contrast min="-100" max="100" value="0">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Saturation</label>
+                                <input type="range" class="form-range" data-saturation min="0" max="200" value="100">
+                            </div>
+                        </div>
+                        <div class="col-md-8 d-flex justify-content-center align-items-center">
+                            <canvas id="pixelCanvas"></canvas>
                         </div>
                     </div>
                     <div class="row">
