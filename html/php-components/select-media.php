@@ -30,6 +30,7 @@
 </div>
 
 
+<script src="/assets/js/pixel-editor.js"></script>
 <script>
 
 let currentSelectMediaPage = 1; // default page
