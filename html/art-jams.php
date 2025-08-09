@@ -220,6 +220,22 @@ try {
     text-align: center;
 }
 
+#aj-theme-banner {
+    background-color: #ffeb3b;
+    color: #000;
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 1rem;
+    text-align: center;
+    border: 3px solid #f77f00;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+#aj-theme-banner.theme-reveal {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
 #aj-theme.theme-reveal {
     animation: fadeIn 0.5s ease-in-out;
 }
@@ -296,6 +312,13 @@ try {
       </div>
     </div>
   </div>
+
+  <?php if ($now >= $jamStart && $now < $jamEnd): ?>
+    <div id="aj-theme-banner" class="d-none">
+      <strong><?= htmlspecialchars($thisSubject ?? '') ?></strong>
+      <span class="ms-2">Constraint: <?= htmlspecialchars($thisConstraint ?? '') ?></span>
+    </div>
+  <?php endif; ?>
 
   <!-- Last Week / This Week / Next Week -->
   <div class="col-12 col-lg-4">
@@ -436,18 +459,30 @@ $(function() {
     const target = nextTargetFor(p);
 
     // Swap the title based on phase
-    const $title = $('#aj-title');
-    if (p === 'in-progress') {
-      $title.text('Time Remaining in Jam');
+      const $title = $('#aj-title');
       const $theme = $('#aj-theme');
-      if ($theme.hasClass('d-none')) {
-        $theme.removeClass('d-none').addClass('theme-reveal');
+      const $banner = $('#aj-theme-banner');
+      if (p === 'in-progress') {
+        $title.text('Time Remaining in Jam');
+        if ($theme.hasClass('d-none')) {
+          $theme.removeClass('d-none').addClass('theme-reveal');
+        }
+        if ($banner.length && $banner.hasClass('d-none')) {
+          $banner.removeClass('d-none').addClass('theme-reveal');
+          if (!$banner.data('scrolled')) {
+            $banner[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            $banner.data('scrolled', true);
+          }
+        }
+      } else if (p === 'ended') {
+        $title.text('Jam Ended');
+        $theme.addClass('d-none');
+        $banner.addClass('d-none');
+      } else {
+        $title.text('Countdown to Jam Start');
+        $theme.addClass('d-none');
+        $banner.addClass('d-none');
       }
-    } else if (p === 'ended') {
-      $title.text('Jam Ended');
-    } else {
-      $title.text('Countdown to Jam Start');
-    }
 
     // crossed a boundary → hard refresh to reveal new state/subject
     if (!target) {
