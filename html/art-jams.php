@@ -220,18 +220,6 @@ try {
     text-align: center;
 }
 
-#aj-theme-banner {
-    background-color: #ffeb3b;
-    color: #000;
-    font-size: 1.5rem;
-    font-weight: bold;
-    padding: 1rem;
-    text-align: center;
-    border: 3px solid #f77f00;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
-}
-
 #aj-theme-banner.theme-reveal {
     animation: fadeIn 0.5s ease-in-out;
 }
@@ -314,9 +302,11 @@ try {
   </div>
 
   <?php if ($now >= $jamStart && $now < $jamEnd): ?>
-    <div id="aj-theme-banner" class="d-none">
-      <strong><?= htmlspecialchars($thisSubject ?? '') ?></strong>
-      <span class="ms-2">Constraint: <?= htmlspecialchars($thisConstraint ?? '') ?></span>
+    <div id="aj-theme-banner" class="alert alert-warning text-center d-none fs-4" role="alert">
+      <div class="fw-bold">Medium: <?= htmlspecialchars($thisMedium ?? '') ?> &mdash; Subject: <?= htmlspecialchars($thisSubject ?? '') ?></div>
+      <?php if (!empty($thisConstraint)): ?>
+        <div class="small">Constraint: <?= htmlspecialchars($thisConstraint ?? '') ?></div>
+      <?php endif; ?>
     </div>
   <?php endif; ?>
 
