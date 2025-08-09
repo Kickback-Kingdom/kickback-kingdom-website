@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="220" viewBox="0 0 400 220" font-family="serif">
-  <rect x="0" y="0" width="400" height="220" rx="12" ry="12" fill="#f8f9fa" stroke="#d4af37" stroke-width="4"/>
-  <rect x="0" y="0" width="400" height="70" rx="12" ry="12" fill="#512da8"/>
-  <text x="200" y="45" font-size="24" fill="white" text-anchor="middle">Card Header</text>
-  <text x="200" y="140" font-size="20" fill="#212529" text-anchor="middle">Card body example</text>
-</svg>
