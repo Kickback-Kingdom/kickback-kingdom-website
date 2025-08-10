@@ -363,7 +363,7 @@ class Freelist
 
 interface Freelist__Indexable
 {
-    public function freelist_index(int $new_value = null) : int;
+    public function freelist_index(?int $new_value = null) : int;
 
     public function on_free() : void;
 
@@ -379,7 +379,7 @@ class Freelist__TestElement implements Freelist__Indexable
     public function free_count()  : int { return $this->free_count_; }
     public function alloc_count() : int { return $this->alloc_count_; }
 
-    public function freelist_index(int $new_value = null) : int {
+    public function freelist_index(?int $new_value = null) : int {
         if (isset($new_value)) {
             $this->freelist_index_ = $new_value;
         }
