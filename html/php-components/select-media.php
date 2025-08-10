@@ -230,6 +230,11 @@ function MediaUploadPrevStep()
     {
         mediaUploadStep--;
     }
+    if (mediaUploadStep === 2) {
+        lastPixelEditorSrc = '';
+        pixelEditorSettings = null;
+        pixelatedImageData = '';
+    }
     UpdateMediaUploadModal();
 }
 
