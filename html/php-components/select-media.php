@@ -109,10 +109,12 @@ function UpdateMediaUploadModal()
         }
         let currentSrc = source.src;
 
-        if (!croppedImageData || currentSrc !== lastPixelEditorSrc || !pixelEditorSettings) {
+        if (!croppedImageData || currentSrc !== lastPixelEditorSrc) {
             CropImageFromEditor();
             source.src = croppedImageData;
             currentSrc = source.src;
+        }
+        if (!pixelEditorSettings) {
             pixelEditorSettings = {
                 pixelWidth: 64,
                 method: 'neighbor',
@@ -232,7 +234,6 @@ function MediaUploadPrevStep()
     }
     if (mediaUploadStep === 2) {
         lastPixelEditorSrc = '';
-        pixelEditorSettings = null;
         pixelatedImageData = '';
     }
     UpdateMediaUploadModal();
