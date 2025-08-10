@@ -8,6 +8,9 @@ use Kickback\Services\StripeService;
 // Redirects/blocks if not authenticated
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 
+// Ensure account/session-related variables used by components and JS are available
+require("php-components/base-page-pull-active-account-info.php");
+
 // Basic page shell using existing site components if available
 ?>
 <!DOCTYPE html>
@@ -136,34 +139,22 @@ document.getElementById('btnListProducts').onclick = async () => {
     const price = p.default_price;
     const amount = price ? price.unit_amount : 0;
     const cur = price ? price.currency.toUpperCase() : 'USD';
+    const id = p.id;
+    const name = p.name || 'Unnamed';
+    const desc = p.description || '';
+    const buyUrl = '<?php echo \Kickback\Common\Version::urlBetaPrefix(); ?>/api/v2/payments/connect/create-checkout.php?product_id='+encodeURIComponent(id)+'&application_fee='+fee+'&account_id='+encodeURIComponent(acct);
     const card = document.createElement('div');
     card.className = 'col';
-    card.innerHTML = `
-      <div class="card h-100">
-        <div class="card-body">
-          <h6 class="card-title">${p.name}</h6>
-          <p class="card-text small">${p.description || ''}</p>
-          <div class="d-flex justify-content-between align-items-center">
-            <span class="fw-bold">${(amount/100).toFixed(2)} ${cur}</span>
-            <button class="btn btn-sm btn-primary">Buy</button>
-          </div>
-        </div>
-      </div>`;
-    card.querySelector('button').onclick = async () => {
-      const r = await jsonPost('<?php echo \Kickback\Common\Version::urlBetaPrefix(); ?>/api/v2/payments/connect/create-checkout.php', {
-        account_id: acct,
-        product_name: p.name,
-        unit_amount: amount,
-        currency: cur,
-        quantity: 1,
-        application_fee_amount: fee
-      });
-      if (r.success) {
-        window.location.href = r.data.url;
-      } else {
-        alert(r.message);
-      }
-    };
+    card.innerHTML = '<div class="card h-100">\n' +
+      '  <div class="card-body">\n' +
+      '    <h5 class="card-title">'+name+'</h5>\n' +
+      '    <div class="text-muted">'+desc+'</div>\n' +
+      '    <div class="mt-2"><span class="badge bg-secondary">'+(amount/100).toFixed(2)+' '+cur+'</span></div>\n' +
+      '  </div>\n' +
+      '  <div class="card-footer bg-transparent border-top-0">\n' +
+      '    <a class="btn btn-sm btn-primary" href="'+buyUrl+'" target="_blank">Buy</a>\n' +
+      '  </div>\n' +
+      '</div>';
     productsEl.appendChild(card);
   });
 };
