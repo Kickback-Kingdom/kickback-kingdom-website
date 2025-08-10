@@ -4,6 +4,10 @@ require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 use Kickback\Services\Session;
 use Kickback\Services\StripeService;
 
+// Require a valid session so API calls won't return 401
+// Redirects/blocks if not authenticated
+$session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
+
 // Basic page shell using existing site components if available
 ?>
 <!DOCTYPE html>
@@ -62,11 +66,25 @@ use Kickback\Services\StripeService;
 
 <script>
 async function jsonPost(url, body) {
-  const resp = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin', // ensure session cookie is sent
+    body: JSON.stringify(body),
+  });
+  if (resp.status === 401) {
+    // Not authenticated; send user to login
+    window.location.href = '<?php echo \Kickback\Common\Version::urlBetaPrefix(); ?>/login.php';
+    return { success: false, message: 'Authentication required' };
+  }
   return resp.json();
 }
 async function jsonGet(url) {
-  const resp = await fetch(url);
+  const resp = await fetch(url, { credentials: 'same-origin' });
+  if (resp.status === 401) {
+    window.location.href = '<?php echo \Kickback\Common\Version::urlBetaPrefix(); ?>/login.php';
+    return { success: false, message: 'Authentication required' };
+  }
   return resp.json();
 }
 
