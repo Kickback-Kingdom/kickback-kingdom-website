@@ -55,15 +55,33 @@
     return {r:clamp8((r1+m)*255), g:clamp8((g1+m)*255), b:clamp8((b1+m)*255)};
   }
 
+  const BUCKETS = [
+    {k:'R',h:0},
+    {k:'Y',h:60},
+    {k:'G',h:120},
+    {k:'C',h:180},
+    {k:'B',h:240},
+    {k:'M',h:300}
+  ];
+
+  function nearestBucket(hh){
+    let bk='R', bd=1e9;
+    for(const b of BUCKETS){
+      const diff=Math.min(Math.abs(hh-b.h), 360-Math.abs(hh-b.h));
+      if(diff<bd){ bd=diff; bk=b.k; }
+    }
+    return bk;
+  }
+
+  const BAND_HUE=[0,0,60,120,180,240,300];
+
   function applyColorTuning(ctx, w, h, gains){
     const img = ctx.getImageData(0,0,w,h);
     const d=img.data;
-    const buckets=[{k:'R',h:0},{k:'Y',h:60},{k:'G',h:120},{k:'C',h:180},{k:'B',h:240},{k:'M',h:300}];
-    const nearest = (hh)=>{ let bk='R',bd=1e9; for(const b of buckets){ const diff=Math.min(Math.abs(hh-b.h), 360-Math.abs(hh-b.h)); if(diff<bd){bd=diff; bk=b.k;} } return bk; };
     for(let i=0;i<d.length;i+=4){
       const r=d[i], g=d[i+1], bl=d[i+2];
       const hsl=rgbToHsl(r,g,bl);
-      const band=nearest(hsl.h);
+      const band=nearestBucket(hsl.h);
       const gain=(gains[band]||0)/100;
       const sat= Math.max(0, Math.min(1, hsl.s*(1+gain)));
       const rgb = hslToRgb(hsl.h, sat, hsl.l);
@@ -73,21 +91,18 @@
   }
 
   function applyHueRemap(ctx, w, h, mapping, globalStrength){
-    const bandHue=[0,0,60,120,180,240,300];
     const img = ctx.getImageData(0,0,w,h);
     const d=img.data;
-    const buckets=[{k:'R',h:0},{k:'Y',h:60},{k:'G',h:120},{k:'C',h:180},{k:'B',h:240},{k:'M',h:300}];
-    const nearest = (hh)=>{ let bk='R',bd=1e9; for(const b of buckets){ const diff=Math.min(Math.abs(hh-b.h), 360-Math.abs(hh-b.h)); if(diff<bd){bd=diff; bk=b.k;} } return bk; };
     for(let i=0;i<d.length;i+=4){
       const r=d[i], g=d[i+1], bl=d[i+2];
       const hsl=rgbToHsl(r,g,bl);
-      const srcBand = nearest(hsl.h);
+      const srcBand = nearestBucket(hsl.h);
       const cfg = mapping[srcBand];
       if(!cfg) continue;
       const targetSel = cfg.t;
       const eff = Math.max(0, Math.min(1, globalStrength * cfg.s));
       if(targetSel && targetSel>0 && eff>0){
-        const tgtHue = bandHue[targetSel];
+        const tgtHue = BAND_HUE[targetSel];
         let dh = ((tgtHue - hsl.h + 540) % 360) - 180;
         const newH = (hsl.h + dh*eff + 360) % 360;
         const rgb = hslToRgb(newH, hsl.s, hsl.l);
