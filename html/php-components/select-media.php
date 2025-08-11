@@ -96,11 +96,12 @@ function GeneratePromptImage(prompt)
         HideLoadingBar();
         const errEl = document.getElementById('aiGenerateError');
         if (data && data.success) {
-            croppedImageData = data.imgBase64;
+            const generatedImage = data.data.imgBase64;
+            croppedImageData = generatedImage;
             const img = document.getElementById('imageUploadPreview');
             if (img) {
                 img.onload = function() { InitCropper(); };
-                img.src = data.imgBase64;
+                img.src = generatedImage;
             }
             mediaUploadStep = 2;
             if (typeof UpdateMediaUploadModal === 'function') {
