@@ -192,7 +192,6 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                 <select id="imagePromptTemplate" class="form-select">
                                     <option value="">Select a template...</option>
                                     <option value="lich card art">lich card art</option>
-                                    <option value="dragon card art">dragon card art</option>
                                 </select>
                             </div>
                             <div class="mb-3">

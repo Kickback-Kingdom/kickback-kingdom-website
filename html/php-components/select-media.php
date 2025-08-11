@@ -34,9 +34,17 @@
 import { initPixelEditor } from '/assets/js/pixel-editor.js';
 
 const promptTemplates = {
-    "lich card art": desc => `Pixel art L.I.C.H. card of ${desc}, 16-bit style, consistent palette`,
-    "dragon card art": desc => `Pixel art dragon card of ${desc}, 16-bit style, consistent palette`
+  "lich card art": desc =>
+    `Crisp high-res fantasy pixel art, exactly 320x180px, upscaled 5x with nearest neighbor (no smoothing). 
+    2-3x SNES detail, sharp pixel edges, dithering only for shading. 
+    Modern 2025 Earth urban backdrop with subtle gothic touches, wide 16:9 framing. 
+    Strong global light + secondary magic light. 
+    Magic in neon green (#00ff66-#66ffcc) or purple (#9933ff-#cc99ff) with white core, inner saturated glow, outer darker glow via dithering. 
+    Outlines use darkened fill tones; magic fades via dithering. 
+    4-6 shades per ramp, muted non-magic for contrast. 
+    Modern clothing & props. ${desc}`
 };
+
 
 let currentSelectMediaPage = 1; // default page
 const itemsPerSelectMediaPage = 6; // or however many you want
