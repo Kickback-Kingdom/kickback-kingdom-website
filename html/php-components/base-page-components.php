@@ -200,6 +200,10 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                 <textarea id="imagePrompt" class="form-control" rows="3"></textarea>
                             </div>
                             <div class="mb-3">
+                                <label for="imagePromptDescription" class="form-label">Description</label>
+                                <textarea id="imagePromptDescription" class="form-control" rows="2"></textarea>
+                            </div>
+                            <div class="mb-3">
                                 <label for="imageSize" class="form-label">Size</label>
                                 <select id="imageSize" class="form-select">
                                     <option value="1024x1024" selected>1024x1024</option>
