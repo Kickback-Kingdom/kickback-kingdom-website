@@ -242,6 +242,13 @@
     let img = sourceImage;
     let zoom = 1;
 
+    // Cached canvases used for processing. Reuse them instead of creating
+    // new elements on every render to cut down on DOM churn.
+    const useOffscreen = typeof OffscreenCanvas !== 'undefined';
+    const small = useOffscreen ? new OffscreenCanvas(0,0) : document.createElement('canvas');
+    const src   = useOffscreen ? new OffscreenCanvas(0,0) : document.createElement('canvas');
+    const worker = opts.worker;
+
     function collectSettings(){
       global.pixelEditorSettings = {
         pixelWidth: Number(pixelWidth?.value||64),
@@ -305,7 +312,7 @@
       const targetW = Math.max(8, Math.min(1024, Number(pixelWidth?.value)||64));
       const targetH = Math.round((img.naturalHeight/img.naturalWidth) * targetW);
 
-      const small = document.createElement('canvas');
+      // Reinitialize dimensions on the cached canvases
       small.width = targetW; small.height = targetH;
       const sctx = small.getContext('2d', { willReadFrequently:true });
 
@@ -316,7 +323,6 @@
         sctx.imageSmoothingEnabled = false;
         sctx.drawImage(img,0,0,targetW,targetH);
       } else {
-        const src = document.createElement('canvas');
         src.width = img.naturalWidth; src.height = img.naturalHeight;
         const sfull = src.getContext('2d', { willReadFrequently:true });
         sfull.drawImage(img,0,0);
@@ -364,6 +370,12 @@
           for(let i=0;i<labels.length;i++){ const j=i*4, p=palette[labels[i]]; outImg.data[j]=p[0]; outImg.data[j+1]=p[1]; outImg.data[j+2]=p[2]; outImg.data[j+3]=255; }
           sctx.putImageData(outImg,0,0);
         }
+      }
+
+      // If a worker was supplied, provide the offscreen canvases so it can
+      // operate on them without additional DOM allocations.
+      if(worker){
+        try{ worker.postMessage({small, src}); } catch(e){}
       }
 
       applyAdjustments(sctx, targetW, targetH, Number(bri?.value||0), Number(con?.value||0), Number(sat?.value||100));
