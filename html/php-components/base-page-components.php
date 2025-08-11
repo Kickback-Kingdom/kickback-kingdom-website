@@ -356,33 +356,83 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                             <label class="form-label">Bloom Range</label>
                                             <input type="range" class="form-range" data-bloom-range min="0" max="50" value="0">
                                         </div>
-                                        <div class="mb-2">
-                                            <label class="form-label">Glow Range</label>
-                                            <input type="range" class="form-range" data-glow-range min="0" max="50" value="0">
+                                        <div class="mb-3">
+                                            <label class="form-label">Reds</label>
+                                            <div class="row g-1">
+                                                <div class="col">
+                                                    <small class="text-muted">Glow</small>
+                                                    <input type="range" class="form-range" data-glow-r min="0" max="100" value="0">
+                                                </div>
+                                                <div class="col">
+                                                    <small class="text-muted">Range</small>
+                                                    <input type="range" class="form-range" data-glow-r-range min="0" max="50" value="0">
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="mb-2">
-                                            <label class="form-label">Reds Glow</label>
-                                            <input type="range" class="form-range" data-glow-r min="0" max="100" value="0">
+                                        <div class="mb-3">
+                                            <label class="form-label">Yellows</label>
+                                            <div class="row g-1">
+                                                <div class="col">
+                                                    <small class="text-muted">Glow</small>
+                                                    <input type="range" class="form-range" data-glow-y min="0" max="100" value="0">
+                                                </div>
+                                                <div class="col">
+                                                    <small class="text-muted">Range</small>
+                                                    <input type="range" class="form-range" data-glow-y-range min="0" max="50" value="0">
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="mb-2">
-                                            <label class="form-label">Yellows Glow</label>
-                                            <input type="range" class="form-range" data-glow-y min="0" max="100" value="0">
+                                        <div class="mb-3">
+                                            <label class="form-label">Greens</label>
+                                            <div class="row g-1">
+                                                <div class="col">
+                                                    <small class="text-muted">Glow</small>
+                                                    <input type="range" class="form-range" data-glow-g min="0" max="100" value="0">
+                                                </div>
+                                                <div class="col">
+                                                    <small class="text-muted">Range</small>
+                                                    <input type="range" class="form-range" data-glow-g-range min="0" max="50" value="0">
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="mb-2">
-                                            <label class="form-label">Greens Glow</label>
-                                            <input type="range" class="form-range" data-glow-g min="0" max="100" value="0">
+                                        <div class="mb-3">
+                                            <label class="form-label">Cyans</label>
+                                            <div class="row g-1">
+                                                <div class="col">
+                                                    <small class="text-muted">Glow</small>
+                                                    <input type="range" class="form-range" data-glow-c min="0" max="100" value="0">
+                                                </div>
+                                                <div class="col">
+                                                    <small class="text-muted">Range</small>
+                                                    <input type="range" class="form-range" data-glow-c-range min="0" max="50" value="0">
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="mb-2">
-                                            <label class="form-label">Cyans Glow</label>
-                                            <input type="range" class="form-range" data-glow-c min="0" max="100" value="0">
+                                        <div class="mb-3">
+                                            <label class="form-label">Blues</label>
+                                            <div class="row g-1">
+                                                <div class="col">
+                                                    <small class="text-muted">Glow</small>
+                                                    <input type="range" class="form-range" data-glow-b min="0" max="100" value="0">
+                                                </div>
+                                                <div class="col">
+                                                    <small class="text-muted">Range</small>
+                                                    <input type="range" class="form-range" data-glow-b-range min="0" max="50" value="0">
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="mb-2">
-                                            <label class="form-label">Blues Glow</label>
-                                            <input type="range" class="form-range" data-glow-b min="0" max="100" value="0">
-                                        </div>
-                                        <div class="mb-2">
-                                            <label class="form-label">Magentas Glow</label>
-                                            <input type="range" class="form-range" data-glow-m min="0" max="100" value="0">
+                                        <div class="mb-3">
+                                            <label class="form-label">Magentas</label>
+                                            <div class="row g-1">
+                                                <div class="col">
+                                                    <small class="text-muted">Glow</small>
+                                                    <input type="range" class="form-range" data-glow-m min="0" max="100" value="0">
+                                                </div>
+                                                <div class="col">
+                                                    <small class="text-muted">Range</small>
+                                                    <input type="range" class="form-range" data-glow-m-range min="0" max="50" value="0">
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="tab-pane fade" id="pixelPaneTune" role="tabpanel" aria-labelledby="pixelTabTune">
