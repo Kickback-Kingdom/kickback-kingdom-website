@@ -248,7 +248,8 @@ class MediaController {
         string $directory,
         string $name,
         string $desc,
-        string $size = '1024x1024'
+        string $size = '1024x1024',
+        string $model = 'gpt-image-1'
     ) : Response
     {
         $apiKey = \Kickback\Backend\Config\ServiceCredentials::get('openai_api_key');
@@ -263,6 +264,7 @@ class MediaController {
         try {
             $client = \OpenAI::client($apiKey);
             $result = $client->images()->create([
+                'model' => $model,
                 'prompt' => $prompt,
                 'response_format' => 'b64_json',
                 'size' => $size,

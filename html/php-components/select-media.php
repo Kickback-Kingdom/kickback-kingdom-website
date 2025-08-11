@@ -84,6 +84,7 @@ function GeneratePromptImage(prompt)
     const descEl = document.getElementById('mediaUploadImageDescTextbox');
     const promptEl = document.getElementById('imagePrompt');
     const sizeEl = document.getElementById('imageSize');
+    const modelEl = document.getElementById('imageModel');
     const sessionToken = "<?php echo $_SESSION["sessionToken"]; ?>";
 
     const formData = new URLSearchParams();
@@ -96,6 +97,9 @@ function GeneratePromptImage(prompt)
     if (descEl) { formData.append('desc', descEl.value); }
     if (sizeEl && sizeEl.value) {
         formData.append('size', sizeEl.value);
+    }
+    if (modelEl && modelEl.value) {
+        formData.append('model', modelEl.value);
     }
     formData.append('sessionToken', sessionToken);
 

@@ -208,6 +208,13 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                 </select>
                             </div>
                             <div class="mb-3">
+                                <label for="imageModel" class="form-label">Model</label>
+                                <select id="imageModel" class="form-select">
+                                    <option value="gpt-image-1" selected>gpt-image-1</option>
+                                    <option value="dall-e-2">dall-e-2</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
                                 <button class="btn btn-primary" type="button" onclick="GenerateImageFromPrompt()">Generate</button>
                             </div>
                             <div id="aiGenerateError" class="alert alert-danger mt-2 d-none" role="alert"></div>
