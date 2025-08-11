@@ -94,7 +94,9 @@ function GeneratePromptImage(prompt)
     if (directoryEl) { formData.append('directory', directoryEl.value); }
     if (nameEl) { formData.append('name', nameEl.value); }
     if (descEl) { formData.append('desc', descEl.value); }
-    if (sizeEl) { formData.append('size', sizeEl.value); }
+    if (sizeEl && sizeEl.value) {
+        formData.append('size', sizeEl.value);
+    }
     formData.append('sessionToken', sessionToken);
 
     fetch('/api/v1/media/generate.php', {

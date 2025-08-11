@@ -9,7 +9,7 @@ use Kickback\Backend\Config\ServiceCredentials;
 
 OnlyPOST();
 
-$containsFieldsResp = POSTContainsFields("prompt","directory","name","desc","sessionToken");
+$containsFieldsResp = POSTContainsFields("prompt","directory","name","desc","sessionToken","size");
 if (!$containsFieldsResp->success)
     return $containsFieldsResp;
 
@@ -20,6 +20,7 @@ $directory = Validate($_POST["directory"]);
 $name = Validate($_POST["name"]);
 $desc = Validate($_POST["desc"]);
 $sessionToken = Validate($_POST["sessionToken"]);
+$size = Validate($_POST["size"]);
 
 $loginResp = AccountController::getAccountBySession($kk_service_key, $sessionToken);
 if (!$loginResp->success)
@@ -27,5 +28,5 @@ if (!$loginResp->success)
     return $loginResp;
 }
 
-return MediaController::GenerateImage($prompt, $directory, $name, $desc);
+return MediaController::GenerateImage($prompt, $directory, $name, $desc, $size);
 ?>

@@ -247,7 +247,8 @@ class MediaController {
         string $prompt,
         string $directory,
         string $name,
-        string $desc
+        string $desc,
+        string $size = '1024x1024'
     ) : Response
     {
         $apiKey = \Kickback\Backend\Config\ServiceCredentials::get('openai_api_key');
@@ -263,7 +264,8 @@ class MediaController {
             $client = \OpenAI::client($apiKey);
             $result = $client->images()->create([
                 'prompt' => $prompt,
-                'response_format' => 'b64_json'
+                'response_format' => 'b64_json',
+                'size' => $size,
             ]);
 
             $b64 = $result['data'][0]['b64_json'] ?? '';
