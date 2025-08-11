@@ -242,6 +242,13 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     }
   }
 
+  class Layer {
+    constructor(type, options){
+      this.type = type;
+      this.options = options;
+    }
+  }
+
   /**
    * Initialize the pixel editor UI within the given container.
    *
@@ -307,47 +314,126 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     const canvas = container.querySelector('canvas');
     const ctx = canvas.getContext('2d');
 
-    const opts = settings || {};
-    if(pixelWidth && opts.pixelWidth !== undefined) pixelWidth.value = opts.pixelWidth;
-    if(method && opts.method !== undefined) method.value = opts.method;
-    if(paletteSize && opts.paletteSize !== undefined) paletteSize.value = opts.paletteSize;
-    if(ditherCk && opts.dither !== undefined) ditherCk.checked = opts.dither;
-    if(autoRenderCk && opts.autoRender !== undefined) autoRenderCk.checked = opts.autoRender;
-    if(autoFitCk && opts.autoFit !== undefined) autoFitCk.checked = opts.autoFit;
-    if(bri && opts.brightness !== undefined) bri.value = opts.brightness;
-    if(con && opts.contrast !== undefined) con.value = opts.contrast;
-    if(sat && opts.saturation !== undefined) sat.value = opts.saturation;
-    if(enableGlow && opts.enableGlow !== undefined) enableGlow.checked = opts.enableGlow;
-    if(glowThreshold && opts.glowThreshold !== undefined) glowThreshold.value = opts.glowThreshold;
-    if(bloomAlpha && opts.bloomAlpha !== undefined) bloomAlpha.value = opts.bloomAlpha;
-    if(bloomBlur && opts.bloomBlur !== undefined) bloomBlur.value = opts.bloomBlur;
-    if(bloomThreshold && opts.bloomThreshold !== undefined) bloomThreshold.value = opts.bloomThreshold;
-    if(opts.glow){
-      if(gAll) gAll.value = opts.glow.global ?? 100;
-      if(gR) gR.value = opts.glow.R?.strength ?? 0;
-      if(gY) gY.value = opts.glow.Y?.strength ?? 0;
-      if(gG) gG.value = opts.glow.G?.strength ?? 0;
-      if(gC) gC.value = opts.glow.C?.strength ?? 0;
-      if(gB) gB.value = opts.glow.B?.strength ?? 0;
-      if(gM) gM.value = opts.glow.M?.strength ?? 0;
-      if(gRRange) gRRange.value = opts.glow.R?.range ?? 0;
-      if(gYRange) gYRange.value = opts.glow.Y?.range ?? 0;
-      if(gGRange) gGRange.value = opts.glow.G?.range ?? 0;
-      if(gCRange) gCRange.value = opts.glow.C?.range ?? 0;
-      if(gBRange) gBRange.value = opts.glow.B?.range ?? 0;
-      if(gMRange) gMRange.value = opts.glow.M?.range ?? 0;
+    function legacySettingsToLayers(opts){
+      const ls = [];
+      const adj = {
+        brightness: opts.brightness ?? 0,
+        contrast: opts.contrast ?? 0,
+        saturation: opts.saturation ?? 100
+      };
+      ls.push(new Layer('adjustments', adj));
+      if(opts.enableTune || opts.tune){
+        ls.push(new Layer('tune', {
+          R: opts.tune?.R ?? 0,
+          Y: opts.tune?.Y ?? 0,
+          G: opts.tune?.G ?? 0,
+          C: opts.tune?.C ?? 0,
+          B: opts.tune?.B ?? 0,
+          M: opts.tune?.M ?? 0
+        }));
+      }
+      if(opts.enableRemap){
+        const mapping = {
+          R: {t: parseInt(opts.map?.R ?? '0',10), s: (opts.mapStr?.R ?? 100)/100},
+          Y: {t: parseInt(opts.map?.Y ?? '0',10), s: (opts.mapStr?.Y ?? 100)/100},
+          G: {t: parseInt(opts.map?.G ?? '0',10), s: (opts.mapStr?.G ?? 100)/100},
+          C: {t: parseInt(opts.map?.C ?? '0',10), s: (opts.mapStr?.C ?? 100)/100},
+          B: {t: parseInt(opts.map?.B ?? '0',10), s: (opts.mapStr?.B ?? 100)/100},
+          M: {t: parseInt(opts.map?.M ?? '0',10), s: (opts.mapStr?.M ?? 100)/100}
+        };
+        const globalStrength = (opts.remapStrength ?? 100)/100;
+        ls.push(new Layer('remap', {mapping, globalStrength}));
+      }
+      if(opts.enableGlow){
+        const glowMap = {
+          R:{s:(opts.glow?.R?.strength ?? 0)/100, r:opts.glow?.R?.range ?? 0},
+          Y:{s:(opts.glow?.Y?.strength ?? 0)/100, r:opts.glow?.Y?.range ?? 0},
+          G:{s:(opts.glow?.G?.strength ?? 0)/100, r:opts.glow?.G?.range ?? 0},
+          C:{s:(opts.glow?.C?.strength ?? 0)/100, r:opts.glow?.C?.range ?? 0},
+          B:{s:(opts.glow?.B?.strength ?? 0)/100, r:opts.glow?.B?.range ?? 0},
+          M:{s:(opts.glow?.M?.strength ?? 0)/100, r:opts.glow?.M?.range ?? 0}
+        };
+        const threshold = (opts.glowThreshold ?? 60)/100;
+        const global = (opts.glow?.global ?? 100)/100;
+        ls.push(new Layer('colorGlow', {glowMap, threshold, global}));
+        ls.push(new Layer('bloom', {
+          threshold: opts.bloomThreshold ?? 200,
+          blur: opts.bloomBlur ?? 0,
+          alpha: (opts.bloomAlpha ?? 0)/100
+        }));
+      }
+      return ls;
     }
-    if(enableTune && opts.enableTune !== undefined) enableTune.checked = opts.enableTune;
-    if(opts.tune){
-      if(tR) tR.value = opts.tune.R;
-      if(tY) tY.value = opts.tune.Y;
-      if(tG) tG.value = opts.tune.G;
-      if(tC) tC.value = opts.tune.C;
-      if(tB) tB.value = opts.tune.B;
-      if(tM) tM.value = opts.tune.M;
+
+    function applyLayersToUI(ls){
+      const adj = ls.find(l=>l.type==='adjustments');
+      if(adj){
+        if(bri) bri.value = adj.options.brightness;
+        if(con) con.value = adj.options.contrast;
+        if(sat) sat.value = adj.options.saturation;
+      }
+      const tune = ls.find(l=>l.type==='tune');
+      if(tune){
+        if(enableTune) enableTune.checked = true;
+        if(tR) tR.value = tune.options.R;
+        if(tY) tY.value = tune.options.Y;
+        if(tG) tG.value = tune.options.G;
+        if(tC) tC.value = tune.options.C;
+        if(tB) tB.value = tune.options.B;
+        if(tM) tM.value = tune.options.M;
+      }
+      const remap = ls.find(l=>l.type==='remap');
+      if(remap){
+        if(enableRemap) enableRemap.checked = true;
+        if(remapStrength) remapStrength.value = remap.options.globalStrength*100;
+        if(mapR) mapR.value = String(remap.options.mapping.R.t);
+        if(mapY) mapY.value = String(remap.options.mapping.Y.t);
+        if(mapG) mapG.value = String(remap.options.mapping.G.t);
+        if(mapC) mapC.value = String(remap.options.mapping.C.t);
+        if(mapB) mapB.value = String(remap.options.mapping.B.t);
+        if(mapM) mapM.value = String(remap.options.mapping.M.t);
+        if(mapRStr) mapRStr.value = remap.options.mapping.R.s*100;
+        if(mapYStr) mapYStr.value = remap.options.mapping.Y.s*100;
+        if(mapGStr) mapGStr.value = remap.options.mapping.G.s*100;
+        if(mapCStr) mapCStr.value = remap.options.mapping.C.s*100;
+        if(mapBStr) mapBStr.value = remap.options.mapping.B.s*100;
+        if(mapMStr) mapMStr.value = remap.options.mapping.M.s*100;
+      }
+      const glow = ls.find(l=>l.type==='colorGlow');
+      if(glow){
+        if(enableGlow) enableGlow.checked = true;
+        if(glowThreshold) glowThreshold.value = glow.options.threshold*100;
+        if(gAll) gAll.value = glow.options.global*100;
+        if(gR) gR.value = glow.options.glowMap.R.s*100;
+        if(gY) gY.value = glow.options.glowMap.Y.s*100;
+        if(gG) gG.value = glow.options.glowMap.G.s*100;
+        if(gC) gC.value = glow.options.glowMap.C.s*100;
+        if(gB) gB.value = glow.options.glowMap.B.s*100;
+        if(gM) gM.value = glow.options.glowMap.M.s*100;
+        if(gRRange) gRRange.value = glow.options.glowMap.R.r;
+        if(gYRange) gYRange.value = glow.options.glowMap.Y.r;
+        if(gGRange) gGRange.value = glow.options.glowMap.G.r;
+        if(gCRange) gCRange.value = glow.options.glowMap.C.r;
+        if(gBRange) gBRange.value = glow.options.glowMap.B.r;
+        if(gMRange) gMRange.value = glow.options.glowMap.M.r;
+      }
+      const bloom = ls.find(l=>l.type==='bloom');
+      if(bloom){
+        if(enableGlow) enableGlow.checked = true;
+        if(bloomThreshold) bloomThreshold.value = bloom.options.threshold;
+        if(bloomBlur) bloomBlur.value = bloom.options.blur;
+        if(bloomAlpha) bloomAlpha.value = bloom.options.alpha*100;
+      }
     }
-    if(enableRemap && opts.enableRemap !== undefined) enableRemap.checked = opts.enableRemap;
-    if(remapStrength && opts.remapStrength !== undefined) remapStrength.value = opts.remapStrength;
+
+    const base = settings?.baseSettings || settings || {};
+    let layers = settings?.layers ? JSON.parse(JSON.stringify(settings.layers)) : legacySettingsToLayers(settings||{});
+    if(pixelWidth && base.pixelWidth !== undefined) pixelWidth.value = base.pixelWidth;
+    if(method && base.method !== undefined) method.value = base.method;
+    if(paletteSize && base.paletteSize !== undefined) paletteSize.value = base.paletteSize;
+    if(ditherCk && base.dither !== undefined) ditherCk.checked = base.dither;
+    if(autoRenderCk && base.autoRender !== undefined) autoRenderCk.checked = base.autoRender;
+    if(autoFitCk && base.autoFit !== undefined) autoFitCk.checked = base.autoFit;
 
     let img = sourceImage;
     let zoom = 1;
@@ -357,7 +443,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     const useOffscreen = typeof OffscreenCanvas !== 'undefined';
     const small = useOffscreen ? new OffscreenCanvas(0,0) : document.createElement('canvas');
     const src   = useOffscreen ? new OffscreenCanvas(0,0) : document.createElement('canvas');
-    const worker = opts.worker;
+    const worker = settings?.worker;
 
     // Helpers for reading current UI state
     function readPixelWidth(){ return Number(pixelWidth?.value||64); }
@@ -491,16 +577,33 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       return sctx;
     }
 
-    function applyAdjustmentsStep(sctx, w, h){
-      const adj = readAdjustments();
-      applyAdjustments(sctx, w, h, adj.brightness, adj.contrast, adj.saturation);
-    }
+    let currentSettings = {};
+    function collectSettings(){
+      const baseSettings = {
+        pixelWidth: readPixelWidth(),
+        method: readMethod(),
+        paletteSize: readPaletteSize(),
+        dither: readDither(),
+        autoRender: readAutoRender(),
+        autoFit: readAutoFit()
+      };
 
-    function applyColorTuningStep(sctx, w, h){
-      const tune = readTuneSettings();
-      if(tune.enableTune){
-        applyColorTuning(sctx, w, h, tune.tune);
+      function upsert(type, options){
+        const idx = layers.findIndex(l=>l.type===type);
+        if(options){
+          if(idx>=0) layers[idx].options = options;
+          else layers.push(new Layer(type, options));
+        } else if(idx>=0){
+          layers.splice(idx,1);
+        }
       }
+
+      const adj = readAdjustments();
+      upsert('adjustments', adj);
+
+      const tune = readTuneSettings();
+      upsert('tune', tune.enableTune ? tune.tune : null);
+
       const remap = readRemapSettings();
       if(remap.enableRemap){
         const mapping={
@@ -512,44 +615,36 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
           M:{t:parseInt(remap.map.M,10),s:remap.mapStr.M/100},
         };
         const globalStrength=remap.remapStrength/100;
-        applyHueRemap(sctx, w, h, mapping, globalStrength);
+        upsert('remap', {mapping, globalStrength});
+      } else {
+        upsert('remap', null);
       }
-    }
 
-    function applyGlowBloomStep(sctx, w, h){
       const glow = readGlowSettings();
-      if(!glow.enableGlow) return;
-      const glowMap={
-        R:{s:glow.glow.R.strength/100, r:glow.glow.R.range},
-        Y:{s:glow.glow.Y.strength/100, r:glow.glow.Y.range},
-        G:{s:glow.glow.G.strength/100, r:glow.glow.G.range},
-        C:{s:glow.glow.C.strength/100, r:glow.glow.C.range},
-        B:{s:glow.glow.B.strength/100, r:glow.glow.B.range},
-        M:{s:glow.glow.M.strength/100, r:glow.glow.M.range},
-      };
-      const glowThreshVal = glow.glowThreshold/100;
-      const bloomThreshVal = glow.bloomThreshold;
-      const bloomBlurVal = glow.bloomBlur;
-      const bloomAlphaVal = glow.bloomAlpha/100;
-      const glowGlobalVal = glow.glow.global/100;
-      applyColorGlow(sctx, w, h, glowMap, glowThreshVal, glowGlobalVal);
-      applyBloom(sctx, w, h, bloomThreshVal, bloomBlurVal, bloomAlphaVal);
-    }
+      if(glow.enableGlow){
+        const glowMap={
+          R:{s:glow.glow.R.strength/100, r:glow.glow.R.range},
+          Y:{s:glow.glow.Y.strength/100, r:glow.glow.Y.range},
+          G:{s:glow.glow.G.strength/100, r:glow.glow.G.range},
+          C:{s:glow.glow.C.strength/100, r:glow.glow.C.range},
+          B:{s:glow.glow.B.strength/100, r:glow.glow.B.range},
+          M:{s:glow.glow.M.strength/100, r:glow.glow.M.range},
+        };
+        const glowThreshVal = glow.glowThreshold/100;
+        const glowGlobalVal = glow.glow.global/100;
+        upsert('colorGlow', {glowMap, threshold:glowThreshVal, global:glowGlobalVal});
+        const bloomOpts = {
+          threshold: glow.bloomThreshold,
+          blur: glow.bloomBlur,
+          alpha: glow.bloomAlpha/100
+        };
+        upsert('bloom', bloomOpts);
+      } else {
+        upsert('colorGlow', null);
+        upsert('bloom', null);
+      }
 
-    let currentSettings = {};
-    function collectSettings(){
-      currentSettings = {
-        pixelWidth: readPixelWidth(),
-        method: readMethod(),
-        paletteSize: readPaletteSize(),
-        dither: readDither(),
-        autoRender: readAutoRender(),
-        autoFit: readAutoFit(),
-        ...readAdjustments(),
-        ...readGlowSettings(),
-        ...readTuneSettings(),
-        ...readRemapSettings()
-      };
+      currentSettings = { baseSettings, layers: layers.map(l=>({type:l.type, options:{...l.options}})) };
     }
 
     function status(msg){ if(statusEl) statusEl.textContent = msg; }
@@ -572,10 +667,34 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       status('Rendering…');
       const targetW = Math.max(8, Math.min(1024, readPixelWidth()));
       const targetH = Math.round((img.naturalHeight/img.naturalWidth) * targetW);
-      const sctx = scaleImage(targetW, targetH);
-      applyAdjustmentsStep(sctx, targetW, targetH);
-      applyColorTuningStep(sctx, targetW, targetH);
-      applyGlowBloomStep(sctx, targetW, targetH);
+        const sctx = scaleImage(targetW, targetH);
+        for(const layer of layers){
+          switch(layer.type){
+            case 'adjustments':{
+              const o = layer.options;
+              applyAdjustments(sctx, targetW, targetH, o.brightness, o.contrast, o.saturation);
+              break;
+            }
+            case 'tune':
+              applyColorTuning(sctx, targetW, targetH, layer.options);
+              break;
+            case 'remap':{
+              const o = layer.options;
+              applyHueRemap(sctx, targetW, targetH, o.mapping, o.globalStrength);
+              break;
+            }
+            case 'colorGlow':{
+              const o = layer.options;
+              applyColorGlow(sctx, targetW, targetH, o.glowMap, o.threshold, o.global);
+              break;
+            }
+            case 'bloom':{
+              const o = layer.options;
+              applyBloom(sctx, targetW, targetH, o.threshold, o.blur, o.alpha);
+              break;
+            }
+          }
+        }
       if(readDither()){
         floydSteinbergQuantize(sctx, targetW, targetH, 16);
       }
@@ -628,43 +747,54 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     };
     listen(resetBtn,'click', onResetClick);
 
-    const remapBands=['— keep —','Red','Yellow','Green','Cyan','Blue','Magenta'];
-    function buildOptions(sel){ sel.innerHTML=''; remapBands.forEach((name,i)=>{ const opt=document.createElement('option'); opt.textContent=name; opt.value=String(i); sel.appendChild(opt); }); sel.value='0'; }
-    [mapR,mapY,mapG,mapC,mapB,mapM].forEach(sel=>{ if(sel) buildOptions(sel); });
+      const remapBands=['— keep —','Red','Yellow','Green','Cyan','Blue','Magenta'];
+      function buildOptions(sel){ sel.innerHTML=''; remapBands.forEach((name,i)=>{ const opt=document.createElement('option'); opt.textContent=name; opt.value=String(i); sel.appendChild(opt); }); sel.value='0'; }
+      [mapR,mapY,mapG,mapC,mapB,mapM].forEach(sel=>{ if(sel) buildOptions(sel); });
 
-    if(opts.map){
-      if(mapR) mapR.value = opts.map.R;
-      if(mapY) mapY.value = opts.map.Y;
-      if(mapG) mapG.value = opts.map.G;
-      if(mapC) mapC.value = opts.map.C;
-      if(mapB) mapB.value = opts.map.B;
-      if(mapM) mapM.value = opts.map.M;
-    }
-    if(opts.mapStr){
-      if(mapRStr) mapRStr.value = opts.mapStr.R;
-      if(mapYStr) mapYStr.value = opts.mapStr.Y;
-      if(mapGStr) mapGStr.value = opts.mapStr.G;
-      if(mapCStr) mapCStr.value = opts.mapStr.C;
-      if(mapBStr) mapBStr.value = opts.mapStr.B;
-      if(mapMStr) mapMStr.value = opts.mapStr.M;
-    }
+      applyLayersToUI(layers);
 
     collectSettings();
     render();
 
-    function destroy(){
-      listeners.forEach(({target,event,handler,options})=>{
-        target.removeEventListener(event, handler, options);
-      });
-    }
+      function destroy(){
+        listeners.forEach(({target,event,handler,options})=>{
+          target.removeEventListener(event, handler, options);
+        });
+      }
 
-    return {
-      render,
-      setImage: (image)=>{ img=image; collectSettings(); render(); },
-      destroy,
-      getSettings: () => { collectSettings(); return currentSettings; }
-    };
-  }
+      function addLayer(layer){
+        layers.push(layer instanceof Layer ? layer : new Layer(layer.type, layer.options));
+        collectSettings();
+        maybeRender();
+      }
+
+      function removeLayer(index){
+        if(index>=0 && index<layers.length){
+          layers.splice(index,1);
+          collectSettings();
+          maybeRender();
+        }
+      }
+
+      function moveLayer(from,to){
+        if(from>=0 && from<layers.length && to>=0 && to<layers.length){
+          const [l] = layers.splice(from,1);
+          layers.splice(to,0,l);
+          collectSettings();
+          maybeRender();
+        }
+      }
+
+      return {
+        render,
+        setImage: (image)=>{ img=image; collectSettings(); render(); },
+        destroy,
+        getSettings: () => { collectSettings(); return currentSettings; },
+        addLayer,
+        removeLayer,
+        moveLayer
+      };
+    }
 
 export { applyAdjustments, applyColorTuning, applyHueRemap, applyColorGlow, applyBloom, kmeansRGB, floydSteinbergQuantize };
 export const pixelEditorUtils = {
