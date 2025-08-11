@@ -357,6 +357,7 @@ function UpdateMediaUploadModal()
                 brightness: 0,
                 contrast: 0,
                 saturation: 100,
+                bloom: 0,
                 enableTune: false,
                 tune: {R:0, Y:0, G:0, C:0, B:0, M:0},
                 enableRemap: false,

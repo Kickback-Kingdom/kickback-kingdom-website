@@ -111,6 +111,28 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     ctx.putImageData(img,0,0);
   }
 
+  function applyBloom(ctx, w, h, intensity){
+    if(intensity<=0) return;
+    const off=document.createElement('canvas');
+    off.width=w; off.height=h;
+    const octx=off.getContext('2d');
+    octx.drawImage(ctx.canvas,0,0);
+    const img=octx.getImageData(0,0,w,h);
+    const d=img.data;
+    for(let i=0;i<d.length;i+=4){
+      const r=d[i], g=d[i+1], b=d[i+2];
+      const lum=0.2126*r + 0.7152*g + 0.0722*b;
+      if(lum<200){ d[i]=d[i+1]=d[i+2]=0; }
+    }
+    octx.putImageData(img,0,0);
+    ctx.save();
+    ctx.filter=`blur(${Math.max(1, intensity/10)}px)`;
+    ctx.globalCompositeOperation='lighter';
+    ctx.globalAlpha=Math.min(1, intensity/100);
+    ctx.drawImage(off,0,0);
+    ctx.restore();
+  }
+
   function kmeansRGB(rgba, count, k){
     const pts=new Array(count);
     for(let i=0;i<count;i++){ const j=i*4; pts[i]=[rgba[j],rgba[j+1],rgba[j+2]]; }
@@ -188,6 +210,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     const bri = container.querySelector('[data-brightness]');
     const con = container.querySelector('[data-contrast]');
     const sat = container.querySelector('[data-saturation]');
+    const bloom = container.querySelector('[data-bloom]');
     const enableTune = container.querySelector('[data-enable-tune]');
     const tR = container.querySelector('[data-tune-red]');
     const tY = container.querySelector('[data-tune-yellow]');
@@ -226,6 +249,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     if(bri && opts.brightness !== undefined) bri.value = opts.brightness;
     if(con && opts.contrast !== undefined) con.value = opts.contrast;
     if(sat && opts.saturation !== undefined) sat.value = opts.saturation;
+    if(bloom && opts.bloom !== undefined) bloom.value = opts.bloom;
     if(enableTune && opts.enableTune !== undefined) enableTune.checked = opts.enableTune;
     if(opts.tune){
       if(tR) tR.value = opts.tune.R;
@@ -260,6 +284,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         brightness: Number(bri?.value||0),
         contrast: Number(con?.value||0),
         saturation: Number(sat?.value||100),
+        bloom: Number(bloom?.value||0),
         enableTune: enableTune?.checked||false,
         tune:{
           R:Number(tR?.value||0),
@@ -398,6 +423,8 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         applyHueRemap(sctx,targetW,targetH,mapping,globalStrength);
       }
 
+      applyBloom(sctx, targetW, targetH, Number(bloom?.value||0));
+
       if(ditherCk?.checked){
         floydSteinbergQuantize(sctx, targetW, targetH, 16);
       }
@@ -417,7 +444,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     function onInput(){ collectSettings(); maybeRender(); }
     function onChange(){ collectSettings(); maybeRender(); }
 
-    [pixelWidth, method, paletteSize, bri, con, sat, tR, tY, tG, tC, tB, tM, remapStrength, mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=>{ listen(el,'input', onInput); });
+    [pixelWidth, method, paletteSize, bri, con, sat, bloom, tR, tY, tG, tC, tB, tM, remapStrength, mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=>{ listen(el,'input', onInput); });
     [ditherCk, enableTune, enableRemap, mapR, mapY, mapG, mapC, mapB, mapM, autoRenderCk].forEach(el=>{ listen(el,'change', onChange); });
 
     const onRenderClick = ()=>{ collectSettings(); render(); };
@@ -433,6 +460,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       if(bri) bri.value=0;
       if(con) con.value=0;
       if(sat) sat.value=100;
+      if(bloom) bloom.value=0;
       if(enableTune) enableTune.checked=false;
       if(tR) tR.value=0; if(tY) tY.value=0; if(tG) tG.value=0; if(tC) tC.value=0; if(tB) tB.value=0; if(tM) tM.value=0;
       if(enableRemap) enableRemap.checked=false;
@@ -483,11 +511,12 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     };
   }
 
-export { applyAdjustments, applyColorTuning, applyHueRemap, kmeansRGB, floydSteinbergQuantize };
+export { applyAdjustments, applyColorTuning, applyHueRemap, applyBloom, kmeansRGB, floydSteinbergQuantize };
 export const pixelEditorUtils = {
   applyAdjustments,
   applyColorTuning,
   applyHueRemap,
+  applyBloom,
   kmeansRGB,
   floydSteinbergQuantize
 };
