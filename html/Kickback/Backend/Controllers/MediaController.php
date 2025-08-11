@@ -273,11 +273,17 @@ class MediaController {
 
         try {
             $client = \OpenAI::client($apiKey);
-            $result = $client->images()->create([
+            $params = [
                 'model' => $model,
                 'prompt' => $prompt,
                 'size' => $size,
-            ]);
+            ];
+
+            if ($model === 'dall-e-2') {
+                $params['response_format'] = 'b64_json';
+            }
+
+            $result = $client->images()->create($params);
 
             $b64 = $result['data'][0]['b64_json'] ?? '';
             if (Str::empty($b64)) {
