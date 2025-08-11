@@ -35,13 +35,17 @@ import { initPixelEditor } from '/assets/js/pixel-editor.js';
 
 const promptTemplates = {
   "lich card art": (desc, scenery, faction) =>
-  `Crisp high-res fantasy pixel art,
-    sharp pixel edges, dithering only for shading.
-    Dark fantasy tone set in a ${scenery}, full wide 16:9 framing.
-    Strong lighting contrast, muted background colors, focus character highest contrast.
-    Outlines use darkened fill tones, no pure black.
-    Featuring ${faction}. No painterly or realistic textures. ${desc}`
+  `Extremely detailed fantasy pixel art in the style of high-end 1990s arcade games (SNK, Capcom).
+   Crisp, clean pixel edges with dense detailing and visible dithering for shading.
+   Heavy dramatic lighting with deep shadows and bright highlights for epic contrast.
+   Foreground, midground, and background filled with intricate elements for depth.
+   Vivid, saturated focal colors, muted background tones.
+   Dynamic, cinematic scene set in ${scenery}.
+   Featuring ${faction}. No painterly or realistic textures. ${desc}`
 };
+
+
+
 
 let promptDirty = false;
 
