@@ -46,6 +46,56 @@ var pixelatedImageData = '';
 let cropper;
 let pixelEditor;
 let mediaUploadStep = 1;
+function PromptGenerateWithAI()
+{
+    const promptText = window.prompt('Enter a prompt for the image');
+    if (promptText) {
+        GenerateImageFromPrompt(promptText);
+    }
+}
+
+function GenerateImageFromPrompt(prompt)
+{
+    ShowLoadingBar();
+
+    const directory = document.getElementById('mediaUploadImageFolderSelect').value;
+    const name = document.getElementById('mediaUploadImageNameTextbox').value;
+    const desc = document.getElementById('mediaUploadImageDescTextbox').value;
+    const sessionToken = "<?php echo $_SESSION["sessionToken"]; ?>";
+
+    const formData = new URLSearchParams();
+    formData.append('prompt', prompt);
+    formData.append('directory', directory);
+    formData.append('name', name);
+    formData.append('desc', desc);
+    formData.append('sessionToken', sessionToken);
+
+    fetch('/api/v1/media/generate.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData
+    })
+    .then(resp => resp.json())
+    .then(data => {
+        HideLoadingBar();
+        if (data && data.success) {
+            pixelEditorSettings = null;
+            lastPixelEditorSrc = '';
+            pixelatedImageData = '';
+            croppedImageData = data.imgBase64;
+            const img = document.getElementById('imageUploadPreview');
+            img.src = data.imgBase64;
+            mediaUploadStep = 2;
+            UpdateMediaUploadModal();
+        } else {
+            console.error('Generation failed', data);
+        }
+    })
+    .catch(err => {
+        HideLoadingBar();
+        console.error('Generation error', err);
+    });
+}
 function OpenMediaUploadModal()
 {
     
@@ -549,5 +599,7 @@ window.AcceptSelectedMedia = AcceptSelectedMedia;
 window.AddSearchMediaResult = AddSearchMediaResult;
 window.generatePaginationSelectMedia = generatePaginationSelectMedia;
 window.onPaginationClickSelectMedia = onPaginationClickSelectMedia;
+window.GenerateImageFromPrompt = GenerateImageFromPrompt;
+window.PromptGenerateWithAI = PromptGenerateWithAI;
 
 </script>

@@ -242,7 +242,44 @@ class MediaController {
         $dirs = array_map(fn(array $row) => $row['Directory'], $rows);
         return (new Response(true, "Media Directories",  $dirs ));
     }
-    
+
+    public static function GenerateImage(
+        string $prompt,
+        string $directory,
+        string $name,
+        string $desc
+    ) : Response
+    {
+        $apiKey = \Kickback\Backend\Config\ServiceCredentials::get('openai_api_key');
+        if (Str::empty($apiKey)) {
+            return new Response(false, 'Missing OpenAI API key.', null);
+        }
+
+        try {
+            $client = \OpenAI::client($apiKey);
+            $result = $client->images()->create([
+                'prompt' => $prompt,
+                'response_format' => 'b64_json'
+            ]);
+
+            $b64 = $result['data'][0]['b64_json'] ?? '';
+            if (Str::empty($b64)) {
+                return new Response(false, 'No image data returned from OpenAI.', null);
+            }
+
+            $imgBase64 = 'data:image/png;base64,' . $b64;
+
+            $uploadResp = self::UploadMediaImage($directory, $name, $desc, $imgBase64);
+            if (!$uploadResp->success) {
+                return $uploadResp;
+            }
+
+            return new Response(true, 'Image generated', ['imgBase64' => $imgBase64]);
+        } catch (\Exception $e) {
+            return new Response(false, $e->getMessage(), null);
+        }
+    }
+
     public static function UploadMediaImage(
         string  $directory,
         string  $name,

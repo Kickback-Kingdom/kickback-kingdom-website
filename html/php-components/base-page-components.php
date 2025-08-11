@@ -181,9 +181,10 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             <div class="input-group mb-3">
                                 <label class="input-group-text" for="inputMediaUploadPhoto"><i class="fa-solid fa-cloud-arrow-up"></i></label>
                                 <input type="file" class="form-control" id="inputMediaUploadPhoto" onchange="OnUploadFileChanged(this)">
+                                <button class="btn btn-secondary" type="button" onclick="PromptGenerateWithAI()">Generate with AI</button>
                             </div>
                         </div>
-                    </div>  
+                    </div>
                     <div class="row">
                         <div class="col-12">
                             
