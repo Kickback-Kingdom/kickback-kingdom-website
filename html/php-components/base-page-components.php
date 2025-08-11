@@ -288,6 +288,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                 <div class="nav flex-column nav-pills me-2" id="pixelEditorTabs" role="tablist" aria-orientation="vertical">
                                     <button class="nav-link active" id="pixelTabPixelation" data-bs-toggle="pill" data-bs-target="#pixelPanePixelation" type="button" role="tab" aria-controls="pixelPanePixelation" aria-selected="true" title="Pixelation"><i class="fa-solid fa-border-all"></i></button>
                                     <button class="nav-link" id="pixelTabAdjust" data-bs-toggle="pill" data-bs-target="#pixelPaneAdjust" type="button" role="tab" aria-controls="pixelPaneAdjust" aria-selected="false" title="Adjustments"><i class="fa-solid fa-sliders"></i></button>
+                                    <button class="nav-link" id="pixelTabGlow" data-bs-toggle="pill" data-bs-target="#pixelPaneGlow" type="button" role="tab" aria-controls="pixelPaneGlow" aria-selected="false" title="Bloom &amp; Glow"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
                                     <button class="nav-link" id="pixelTabTune" data-bs-toggle="pill" data-bs-target="#pixelPaneTune" type="button" role="tab" aria-controls="pixelPaneTune" aria-selected="false" title="Color Tuning"><i class="fa-solid fa-palette"></i></button>
                                     <button class="nav-link" id="pixelTabHue" data-bs-toggle="pill" data-bs-target="#pixelPaneHue" type="button" role="tab" aria-controls="pixelPaneHue" aria-selected="false" title="Hue Remap"><i class="fa-solid fa-shuffle"></i></button>
                                 </div>
@@ -340,6 +341,12 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                         <div class="mb-2">
                                             <label class="form-label">Saturation</label>
                                             <input type="range" class="form-range" data-saturation min="0" max="200" value="100">
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="pixelPaneGlow" role="tabpanel" aria-labelledby="pixelTabGlow">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" data-enable-glow id="pixelEnableGlow">
+                                            <label class="form-check-label" for="pixelEnableGlow">Enable bloom &amp; glow</label>
                                         </div>
                                         <div class="mb-2">
                                             <label class="form-label">Bloom</label>
