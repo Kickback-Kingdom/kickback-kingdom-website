@@ -120,7 +120,13 @@ function GeneratePromptImage(prompt)
     const directoryEl = document.getElementById('mediaUploadImageFolderSelect');
     const nameEl = document.getElementById('mediaUploadImageNameTextbox');
     const descEl = document.getElementById('mediaUploadImageDescTextbox');
-    const promptEl = document.getElementById('imagePrompt');
+    const templateSelect = document.getElementById('imagePromptTemplate');
+    const template = templateSelect ? templateSelect.value : '';
+    const descriptionEl = document.getElementById('imagePromptDescription');
+    const description = descriptionEl ? descriptionEl.value : '';
+    const finalPrompt = promptTemplates[template]
+        ? promptTemplates[template](description)
+        : description;
     const sizeEl = document.getElementById('imageSize');
     const modelEl = document.getElementById('imageModel');
     const sessionToken = "<?php echo $_SESSION["sessionToken"]; ?>";
@@ -128,7 +134,7 @@ function GeneratePromptImage(prompt)
     const formData = new URLSearchParams();
     const resolvedPrompt = (typeof prompt === 'string' && prompt.length > 0)
         ? prompt
-        : (promptEl ? promptEl.value : '');
+        : finalPrompt;
     formData.append('prompt', resolvedPrompt);
     if (directoryEl) { formData.append('directory', directoryEl.value); }
     if (nameEl) { formData.append('name', nameEl.value); }
