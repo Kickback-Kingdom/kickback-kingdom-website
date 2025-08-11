@@ -43,6 +43,7 @@ const promptTemplates = {
     Works for modern, military, civilian, undead, or magical subjects. No painterly or realistic textures. ${desc}`
 };
 
+let promptDirty = false;
 
 let currentSelectMediaPage = 1; // default page
 const itemsPerSelectMediaPage = 6; // or however many you want
@@ -77,7 +78,16 @@ function updatePromptPreview() {
         ? promptTemplates[template](description)
         : description;
     if (promptEl) {
-        promptEl.value = finalPrompt;
+        if (template) {
+            promptEl.value = finalPrompt;
+            promptEl.readOnly = true;
+            promptDirty = false;
+        } else {
+            promptEl.readOnly = false;
+            if (!promptDirty) {
+                promptEl.value = finalPrompt;
+            }
+        }
     }
 }
 
@@ -89,6 +99,11 @@ window.addEventListener('DOMContentLoaded', () => {
     const descriptionEl = document.getElementById('imagePromptDescription');
     if (descriptionEl) {
         descriptionEl.addEventListener('input', updatePromptPreview);
+    }
+
+    const promptEl = document.getElementById('imagePrompt');
+    if (promptEl) {
+        promptEl.addEventListener('input', () => promptDirty = true);
     }
 
     const modelSelect = document.getElementById('imageModel');
