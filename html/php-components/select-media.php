@@ -57,24 +57,33 @@ function PromptGenerateWithAI()
         info.classList.remove('d-none');
         errEl.classList.add('d-none');
         errEl.textContent = '';
-        GenerateImageFromPrompt(promptText);
+        GeneratePromptImage(promptText);
     }
 }
 
-function GenerateImageFromPrompt(prompt)
+function GeneratePromptImage(prompt)
 {
+    pixelEditorSettings = null;
+    lastPixelEditorSrc = '';
+    croppedImageData = '';
+    pixelatedImageData = '';
+
     ShowLoadingBar();
 
-    const directory = document.getElementById('mediaUploadImageFolderSelect').value;
-    const name = document.getElementById('mediaUploadImageNameTextbox').value;
-    const desc = document.getElementById('mediaUploadImageDescTextbox').value;
+    const directoryEl = document.getElementById('mediaUploadImageFolderSelect');
+    const nameEl = document.getElementById('mediaUploadImageNameTextbox');
+    const descEl = document.getElementById('mediaUploadImageDescTextbox');
+    const promptEl = document.getElementById('imagePrompt');
     const sessionToken = "<?php echo $_SESSION["sessionToken"]; ?>";
 
     const formData = new URLSearchParams();
-    formData.append('prompt', prompt);
-    formData.append('directory', directory);
-    formData.append('name', name);
-    formData.append('desc', desc);
+    const resolvedPrompt = (typeof prompt === 'string' && prompt.length > 0)
+        ? prompt
+        : (promptEl ? promptEl.value : '');
+    formData.append('prompt', resolvedPrompt);
+    if (directoryEl) { formData.append('directory', directoryEl.value); }
+    if (nameEl) { formData.append('name', nameEl.value); }
+    if (descEl) { formData.append('desc', descEl.value); }
     formData.append('sessionToken', sessionToken);
 
     fetch('/api/v1/media/generate.php', {
@@ -87,27 +96,35 @@ function GenerateImageFromPrompt(prompt)
         HideLoadingBar();
         const errEl = document.getElementById('aiGenerateError');
         if (data && data.success) {
-            pixelEditorSettings = null;
-            lastPixelEditorSrc = '';
-            pixelatedImageData = '';
             croppedImageData = data.imgBase64;
             const img = document.getElementById('imageUploadPreview');
-            img.src = data.imgBase64;
+            if (img) {
+                img.onload = function() { InitCropper(); };
+                img.src = data.imgBase64;
+            }
             mediaUploadStep = 2;
-            UpdateMediaUploadModal();
-            errEl.classList.add('d-none');
-            errEl.textContent = '';
+            if (typeof UpdateMediaUploadModal === 'function') {
+                UpdateMediaUploadModal();
+            }
+            if (errEl) {
+                errEl.classList.add('d-none');
+                errEl.textContent = '';
+            }
         } else {
-            errEl.textContent = (data && data.message) ? data.message : 'Generation failed';
-            errEl.classList.remove('d-none');
+            if (errEl) {
+                errEl.textContent = (data && data.message) ? data.message : 'Generation failed';
+                errEl.classList.remove('d-none');
+            }
             console.error('Generation failed', data);
         }
     })
     .catch(err => {
         HideLoadingBar();
         const errEl = document.getElementById('aiGenerateError');
-        errEl.textContent = 'Generation error';
-        errEl.classList.remove('d-none');
+        if (errEl) {
+            errEl.textContent = 'Generation error';
+            errEl.classList.remove('d-none');
+        }
         console.error('Generation error', err);
     });
 }
@@ -381,59 +398,17 @@ function OnUploadFileChanged(input)
         errEl.textContent = '';
     }
     const file = input.files[0];
-    
+
     if (file) {
         const reader = new FileReader();
-        
+
         reader.onload = function(event) {
             const image = document.getElementById('imageUploadPreview');
             image.src = event.target.result;
-            
+
         }
-        
+
         reader.readAsDataURL(file);
-    }
-}
-
-async function GenerateImageFromPrompt()
-{
-    pixelEditorSettings = null;
-    lastPixelEditorSrc = '';
-    croppedImageData = '';
-    pixelatedImageData = '';
-
-    ShowLoadingBar();
-
-    const prompt = document.getElementById('imagePrompt');
-    const img = document.getElementById('imageUploadPreview');
-
-    const params = new URLSearchParams();
-    if (prompt)
-    {
-        params.append('prompt', prompt.value);
-    }
-    params.append('sessionToken', "<?php echo $_SESSION["sessionToken"]; ?>");
-
-    try
-    {
-        const response = await fetch('/api/v1/media/generate.php',
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: params
-        });
-        const data = await response.json();
-
-        img.onload = function() { InitCropper(); };
-        img.src = data.imgBase64;
-    }
-    catch (error)
-    {
-        console.error('Error generating image:', error);
-    }
-    finally
-    {
-        HideLoadingBar();
     }
 }
 
@@ -666,7 +641,7 @@ window.GetAspectRatio = GetAspectRatio;
 window.InitCropper = InitCropper;
 window.OnPhotoUsageChanged = OnPhotoUsageChanged;
 window.OnUploadFileChanged = OnUploadFileChanged;
-window.GenerateImageFromPrompt = GenerateImageFromPrompt;
+window.GenerateImageFromPrompt = GeneratePromptImage;
 window.UploadImageData = UploadImageData;
 window.ReopenSelectMediaModal = ReopenSelectMediaModal;
 window.OpenSelectMediaModal = OpenSelectMediaModal;
@@ -679,7 +654,6 @@ window.AcceptSelectedMedia = AcceptSelectedMedia;
 window.AddSearchMediaResult = AddSearchMediaResult;
 window.generatePaginationSelectMedia = generatePaginationSelectMedia;
 window.onPaginationClickSelectMedia = onPaginationClickSelectMedia;
-window.GenerateImageFromPrompt = GenerateImageFromPrompt;
 window.PromptGenerateWithAI = PromptGenerateWithAI;
 
 </script>
