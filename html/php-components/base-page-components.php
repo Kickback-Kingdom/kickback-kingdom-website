@@ -194,6 +194,26 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                     <option value="lich card art">lich card art</option>
                                 </select>
                             </div>
+                            <div id="lichPromptOptions" class="d-none">
+                                <div class="mb-3">
+                                    <label for="imagePromptScenery" class="form-label">Scenery</label>
+                                    <select id="imagePromptScenery" class="form-select">
+                                        <option value="Urban setting">Urban setting</option>
+                                        <option value="Jungle">Jungle</option>
+                                        <option value="Cavern">Cavern</option>
+                                        <option value="Dungeon">Dungeon</option>
+                                        <option value="Military base">Military base</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="imagePromptFaction" class="form-label">Faction</label>
+                                    <select id="imagePromptFaction" class="form-select">
+                                        <option value="Enforcers (SWAT, police, military)">Enforcers (SWAT, police, military)</option>
+                                        <option value="Civilians (librarian, common workers)">Civilians (librarian, common workers)</option>
+                                        <option value="Minions (undead and mystical creatures of the lich)">Minions (undead and mystical creatures of the lich)</option>
+                                    </select>
+                                </div>
+                            </div>
                             <div class="mb-3">
                                 <label for="imagePrompt" class="form-label">Prompt</label>
                                 <textarea id="imagePrompt" class="form-control" rows="3"></textarea>

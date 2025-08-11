@@ -34,13 +34,13 @@
 import { initPixelEditor } from '/assets/js/pixel-editor.js';
 
 const promptTemplates = {
-  "lich card art": desc =>
+  "lich card art": (desc, scenery, faction) =>
   `Crisp high-res fantasy pixel art,
-    sharp pixel edges, dithering only for shading. 
-    Dark fantasy tone with modern 2025 urban, subtle gothic backdrops, deep liches dungeons, full wide 16:9 framing. 
-    Strong lighting contrast, muted background colors, focus character highest contrast. 
-    Outlines use darkened fill tones, no pure black. 
-    Works for modern, military, civilian, undead, or magical subjects. No painterly or realistic textures. ${desc}`
+    sharp pixel edges, dithering only for shading.
+    Dark fantasy tone set in a ${scenery}, full wide 16:9 framing.
+    Strong lighting contrast, muted background colors, focus character highest contrast.
+    Outlines use darkened fill tones, no pure black.
+    Featuring ${faction}. No painterly or realistic textures. ${desc}`
 };
 
 let promptDirty = false;
@@ -71,11 +71,15 @@ function PromptGenerateWithAI() {
 function updatePromptPreview() {
     const templateEl = document.getElementById('imagePromptTemplate');
     const descriptionEl = document.getElementById('imagePromptDescription');
+    const sceneryEl = document.getElementById('imagePromptScenery');
+    const factionEl = document.getElementById('imagePromptFaction');
     const promptEl = document.getElementById('imagePrompt');
     const template = templateEl ? templateEl.value : '';
     const description = descriptionEl ? descriptionEl.value : '';
+    const scenery = sceneryEl ? sceneryEl.value : '';
+    const faction = factionEl ? factionEl.value : '';
     const finalPrompt = promptTemplates[template]
-        ? promptTemplates[template](description)
+        ? promptTemplates[template](description, scenery, faction)
         : description;
     if (promptEl) {
         if (template) {
@@ -94,11 +98,29 @@ function updatePromptPreview() {
 window.addEventListener('DOMContentLoaded', () => {
     const templateSelect = document.getElementById('imagePromptTemplate');
     if (templateSelect) {
-        templateSelect.addEventListener('change', updatePromptPreview);
+        templateSelect.addEventListener('change', () => {
+            updatePromptPreview();
+            const optionsDiv = document.getElementById('lichPromptOptions');
+            if (optionsDiv) {
+                if (templateSelect.value === 'lich card art') {
+                    optionsDiv.classList.remove('d-none');
+                } else {
+                    optionsDiv.classList.add('d-none');
+                }
+            }
+        });
     }
     const descriptionEl = document.getElementById('imagePromptDescription');
     if (descriptionEl) {
         descriptionEl.addEventListener('input', updatePromptPreview);
+    }
+    const sceneryEl = document.getElementById('imagePromptScenery');
+    if (sceneryEl) {
+        sceneryEl.addEventListener('change', updatePromptPreview);
+    }
+    const factionEl = document.getElementById('imagePromptFaction');
+    if (factionEl) {
+        factionEl.addEventListener('change', updatePromptPreview);
     }
 
     const promptEl = document.getElementById('imagePrompt');
@@ -141,6 +163,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     updatePromptPreview();
+    if (templateSelect) {
+        const optionsDiv = document.getElementById('lichPromptOptions');
+        if (optionsDiv) {
+            if (templateSelect.value === 'lich card art') {
+                optionsDiv.classList.remove('d-none');
+            } else {
+                optionsDiv.classList.add('d-none');
+            }
+        }
+    }
 });
 
 function GeneratePromptImage(prompt)
@@ -159,8 +191,12 @@ function GeneratePromptImage(prompt)
     const template = templateSelect ? templateSelect.value : '';
     const descriptionEl = document.getElementById('imagePromptDescription');
     const description = descriptionEl ? descriptionEl.value : '';
+    const sceneryEl = document.getElementById('imagePromptScenery');
+    const factionEl = document.getElementById('imagePromptFaction');
+    const scenery = sceneryEl ? sceneryEl.value : '';
+    const faction = factionEl ? factionEl.value : '';
     const finalPrompt = promptTemplates[template]
-        ? promptTemplates[template](description)
+        ? promptTemplates[template](description, scenery, faction)
         : description;
     const sizeEl = document.getElementById('imageSize');
     const modelEl = document.getElementById('imageModel');
