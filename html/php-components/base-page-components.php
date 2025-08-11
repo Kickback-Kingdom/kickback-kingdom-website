@@ -364,6 +364,10 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                             <label class="form-label">Bloom Threshold</label>
                                             <input type="range" class="form-range" data-bloom-threshold min="0" max="255" value="200">
                                         </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Global Glow Multiplier</label>
+                                            <input type="range" class="form-range" data-glow-all min="0" max="300" value="100">
+                                        </div>
                                         <div class="mb-3">
                                             <label class="form-label">Reds</label>
                                             <div class="row g-1">

@@ -117,12 +117,13 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
    * @param {number} w - canvas width
    * @param {number} h - canvas height
    * @param {Object} glows - map of hue buckets to strength/range
-   * @param {number} [threshold=0.6] - minimum lightness [0-1] required for glow
+  * @param {number} [threshold=0.6] - minimum lightness [0-1] required for glow
+  * @param {number} [globalMult=1] - multiplier applied to all band strengths
    */
-  function applyColorGlow(ctx, w, h, glows, threshold=0.6){
+  function applyColorGlow(ctx, w, h, glows, threshold=0.6, globalMult=1){
     if(!glows || !Object.values(glows).some(v=>v.s>0)) return;
     for(const [bandKey, cfg] of Object.entries(glows)){
-      const strength=cfg.s||0;
+      const strength=(cfg.s||0)*globalMult;
       if(strength<=0) continue;
       const range=cfg.r||0;
       const off=document.createElement('canvas');
@@ -136,8 +137,9 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         const hsl=rgbToHsl(r,g,bl);
         const b=nearestBucket(hsl.h);
         if(b!==bandKey || hsl.l<=threshold){ d[i]=d[i+1]=d[i+2]=0; continue; }
-        const newL=Math.min(1, hsl.l+strength);
-        const newS=Math.min(1, hsl.s+strength);
+        const eff=strength*strength;
+        const newL=Math.min(1, hsl.l+eff);
+        const newS=Math.min(1, hsl.s+eff);
         const rgb=hslToRgb(hsl.h,newS,newL);
         d[i]=rgb.r; d[i+1]=rgb.g; d[i+2]=rgb.b;
       }
@@ -262,6 +264,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     const bloomAlpha = container.querySelector('[data-bloom-alpha]');
     const bloomBlur = container.querySelector('[data-bloom-blur]');
     const bloomThreshold = container.querySelector('[data-bloom-threshold]');
+    const gAll = container.querySelector('[data-glow-all]');
     const gR = container.querySelector('[data-glow-r]');
     const gY = container.querySelector('[data-glow-y]');
     const gG = container.querySelector('[data-glow-g]');
@@ -319,6 +322,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     if(bloomBlur && opts.bloomBlur !== undefined) bloomBlur.value = opts.bloomBlur;
     if(bloomThreshold && opts.bloomThreshold !== undefined) bloomThreshold.value = opts.bloomThreshold;
     if(opts.glow){
+      if(gAll) gAll.value = opts.glow.global ?? 100;
       if(gR) gR.value = opts.glow.R?.strength ?? 0;
       if(gY) gY.value = opts.glow.Y?.strength ?? 0;
       if(gG) gG.value = opts.glow.G?.strength ?? 0;
@@ -372,6 +376,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         bloomBlur: Number(bloomBlur?.value||0),
         bloomThreshold: Number(bloomThreshold?.value||200),
         glow:{
+          global:Number(gAll?.value||100),
           R:{strength:Number(gR?.value||0), range:Number(gRRange?.value||0)},
           Y:{strength:Number(gY?.value||0), range:Number(gYRange?.value||0)},
           G:{strength:Number(gG?.value||0), range:Number(gGRange?.value||0)},
@@ -530,7 +535,8 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         const bloomThreshVal = Number(bloomThreshold?.value||200);
         const bloomBlurVal = Number(bloomBlur?.value||0);
         const bloomAlphaVal = Number(bloomAlpha?.value||0)/100;
-        applyColorGlow(sctx, targetW, targetH, glowMap, glowThreshVal);
+        const glowGlobalVal = Number(gAll?.value||100)/100;
+        applyColorGlow(sctx, targetW, targetH, glowMap, glowThreshVal, glowGlobalVal);
         applyBloom(sctx, targetW, targetH, bloomThreshVal, bloomBlurVal, bloomAlphaVal);
       }
 
@@ -553,7 +559,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     function onInput(){ collectSettings(); maybeRender(); }
     function onChange(){ collectSettings(); maybeRender(); }
 
-    [pixelWidth, method, paletteSize, bri, con, sat, bloomAlpha, bloomBlur, bloomThreshold, glowThreshold, gR, gY, gG, gC, gB, gM, gRRange, gYRange, gGRange, gCRange, gBRange, gMRange, tR, tY, tG, tC, tB, tM, remapStrength, mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=>{ listen(el,'input', onInput); });
+    [pixelWidth, method, paletteSize, bri, con, sat, bloomAlpha, bloomBlur, bloomThreshold, glowThreshold, gAll, gR, gY, gG, gC, gB, gM, gRRange, gYRange, gGRange, gCRange, gBRange, gMRange, tR, tY, tG, tC, tB, tM, remapStrength, mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=>{ listen(el,'input', onInput); });
     [ditherCk, enableGlow, enableTune, enableRemap, mapR, mapY, mapG, mapC, mapB, mapM, autoRenderCk].forEach(el=>{ listen(el,'change', onChange); });
 
     const onRenderClick = ()=>{ collectSettings(); render(); };
@@ -574,6 +580,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       if(bloomAlpha) bloomAlpha.value=0;
       if(bloomBlur) bloomBlur.value=0;
       if(bloomThreshold) bloomThreshold.value=200;
+      if(gAll) gAll.value=100;
       [gR,gY,gG,gC,gB,gM,gRRange,gYRange,gGRange,gCRange,gBRange,gMRange].forEach(el=>{ if(el) el.value=0; });
       if(enableTune) enableTune.checked=false;
       if(tR) tR.value=0; if(tY) tY.value=0; if(tG) tG.value=0; if(tC) tC.value=0; if(tB) tB.value=0; if(tM) tM.value=0;
