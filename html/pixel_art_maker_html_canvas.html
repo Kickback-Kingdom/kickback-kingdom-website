@@ -84,6 +84,12 @@
       <label class="stack">Bloom
         <input type="range" id="bloom" min="0" max="100" value="0">
       </label>
+      <label class="stack">Glow Strength
+        <input type="range" id="glowStrength" min="0" max="100" value="0">
+      </label>
+      <label class="stack">Glow Hue
+        <input type="range" id="glowHue" min="0" max="360" value="0">
+      </label>
     </div>
 
     <div class="group">
@@ -171,6 +177,8 @@ const bri = document.getElementById('brightness');
 const con = document.getElementById('contrast');
 const sat = document.getElementById('saturation');
 const bloom = document.getElementById('bloom');
+const glowStrength = document.getElementById('glowStrength');
+const glowHue = document.getElementById('glowHue');
 const enableTune = document.getElementById('enableColorTuning');
 const tR = document.getElementById('tuneRed');
 const tY = document.getElementById('tuneYellow');
@@ -218,7 +226,7 @@ window.addEventListener('resize', ()=>{ if(autoFitCk.checked) fitToViewport(); }
 
 // Auto-render wiring (now includes hue remap selects & strengths)
 const maybeRender = debounced(120, ()=>{ if(imgLoaded && autoRenderCk.checked) render(); });
-[pixelWidth, method, paletteSize, bri, con, sat, bloom, ditherCk, enableTune, tR, tY, tG, tC, tB, tM, enableRemap, remapStrength,
+[pixelWidth, method, paletteSize, bri, con, sat, bloom, glowStrength, glowHue, ditherCk, enableTune, tR, tY, tG, tC, tB, tM, enableRemap, remapStrength,
  mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=> el.addEventListener('input', maybeRender));
 [mapR,mapY,mapG,mapC,mapB,mapM].forEach(sel=> sel.addEventListener('change', maybeRender));
 renderBtn.addEventListener('click', ()=> imgLoaded && render());
@@ -232,7 +240,7 @@ function buildOptions(sel){ sel.innerHTML=''; remapBands.forEach((name,i)=>{ con
 resetBtn.addEventListener('click', ()=>{
   pixelWidth.value = 64; method.value = 'neighbor'; paletteSize.value = 16;
   ditherCk.checked = false; autoRenderCk.checked = true; autoFitCk.checked = true;
-  bri.value = 0; con.value = 0; sat.value = 100; bloom.value = 0;
+  bri.value = 0; con.value = 0; sat.value = 100; bloom.value = 0; glowStrength.value = 0; glowHue.value = 0;
   enableTune.checked = false; tR.value = 0; tY.value = 0; tG.value = 0; tC.value = 0; tB.value = 0; tM.value = 0;
   enableRemap.checked = false; remapStrength.value = 100; [mapR,mapY,mapG,mapC,mapB,mapM].forEach(sel=> sel.value='0');
   mapRStr.value = mapYStr.value = mapGStr.value = mapCStr.value = mapBStr.value = mapMStr.value = 100;
@@ -317,6 +325,8 @@ function render(){
     applyHueRemap(sctx, targetW, targetH, mapping, globalStrength);
   }
 
+  applyColorGlow(sctx, targetW, targetH, Number(glowHue.value), Number(glowStrength.value)/100);
+
   applyBloom(sctx, targetW, targetH, Number(bloom.value));
 
   // Optional dithering to 4-bit/channel
@@ -351,6 +361,23 @@ function applyHueRemap(ctx, w, h, mapping, globalStrength){
       let dh = ((tgtHue - hsl.h + 540) % 360) - 180; // shortest-arc
       const newH = (hsl.h + dh*eff + 360) % 360;
       const rgb = hslToRgb(newH, hsl.s, hsl.l); d[i]=rgb.r; d[i+1]=rgb.g; d[i+2]=rgb.b;
+    }
+  }
+  ctx.putImageData(img,0,0);
+}
+
+function applyColorGlow(ctx, w, h, hue, strength, threshold=0.6){
+  if(strength<=0) return;
+  const img=ctx.getImageData(0,0,w,h); const d=img.data;
+  for(let i=0;i<d.length;i+=4){
+    const r=d[i], g=d[i+1], bl=d[i+2];
+    const hsl=rgbToHsl(r,g,bl);
+    let dh=Math.abs(hsl.h-hue); if(dh>180) dh=360-dh;
+    if(dh<10 && hsl.l>threshold){
+      const newL=Math.min(1, hsl.l+strength);
+      const newS=Math.min(1, hsl.s+strength);
+      const rgb=hslToRgb(hsl.h,newS,newL);
+      d[i]=rgb.r; d[i+1]=rgb.g; d[i+2]=rgb.b;
     }
   }
   ctx.putImageData(img,0,0);

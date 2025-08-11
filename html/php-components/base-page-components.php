@@ -345,6 +345,14 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                             <label class="form-label">Bloom</label>
                                             <input type="range" class="form-range" data-bloom min="0" max="100" value="0">
                                         </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Glow Strength</label>
+                                            <input type="range" class="form-range" data-glow-strength min="0" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Glow Hue</label>
+                                            <input type="range" class="form-range" data-glow-hue min="0" max="360" value="0">
+                                        </div>
                                     </div>
                                     <div class="tab-pane fade" id="pixelPaneTune" role="tabpanel" aria-labelledby="pixelTabTune">
                                         <div class="form-check mb-2">

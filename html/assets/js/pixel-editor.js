@@ -111,6 +111,25 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     ctx.putImageData(img,0,0);
   }
 
+  function applyColorGlow(ctx, w, h, hue, strength, threshold=0.6){
+    if(strength<=0) return;
+    const img = ctx.getImageData(0,0,w,h);
+    const d = img.data;
+    for(let i=0;i<d.length;i+=4){
+      const r=d[i], g=d[i+1], bl=d[i+2];
+      const hsl=rgbToHsl(r,g,bl);
+      let dh=Math.abs(hsl.h-hue);
+      dh = dh>180?360-dh:dh;
+      if(dh<10 && hsl.l>threshold){
+        const newL=Math.min(1, hsl.l+strength);
+        const newS=Math.min(1, hsl.s+strength);
+        const rgb=hslToRgb(hsl.h,newS,newL);
+        d[i]=rgb.r; d[i+1]=rgb.g; d[i+2]=rgb.b;
+      }
+    }
+    ctx.putImageData(img,0,0);
+  }
+
   function applyBloom(ctx, w, h, intensity){
     if(intensity<=0) return;
     const off=document.createElement('canvas');
@@ -211,6 +230,8 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     const con = container.querySelector('[data-contrast]');
     const sat = container.querySelector('[data-saturation]');
     const bloom = container.querySelector('[data-bloom]');
+    const glowStrength = container.querySelector('[data-glow-strength]');
+    const glowHue = container.querySelector('[data-glow-hue]');
     const enableTune = container.querySelector('[data-enable-tune]');
     const tR = container.querySelector('[data-tune-red]');
     const tY = container.querySelector('[data-tune-yellow]');
@@ -250,6 +271,8 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     if(con && opts.contrast !== undefined) con.value = opts.contrast;
     if(sat && opts.saturation !== undefined) sat.value = opts.saturation;
     if(bloom && opts.bloom !== undefined) bloom.value = opts.bloom;
+    if(glowStrength && opts.glowStrength !== undefined) glowStrength.value = opts.glowStrength;
+    if(glowHue && opts.glowHue !== undefined) glowHue.value = opts.glowHue;
     if(enableTune && opts.enableTune !== undefined) enableTune.checked = opts.enableTune;
     if(opts.tune){
       if(tR) tR.value = opts.tune.R;
@@ -285,6 +308,8 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         contrast: Number(con?.value||0),
         saturation: Number(sat?.value||100),
         bloom: Number(bloom?.value||0),
+        glowStrength: Number(glowStrength?.value||0),
+        glowHue: Number(glowHue?.value||0),
         enableTune: enableTune?.checked||false,
         tune:{
           R:Number(tR?.value||0),
@@ -423,6 +448,8 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         applyHueRemap(sctx,targetW,targetH,mapping,globalStrength);
       }
 
+      applyColorGlow(sctx, targetW, targetH, Number(glowHue?.value||0), Number(glowStrength?.value||0)/100);
+
       applyBloom(sctx, targetW, targetH, Number(bloom?.value||0));
 
       if(ditherCk?.checked){
@@ -444,7 +471,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     function onInput(){ collectSettings(); maybeRender(); }
     function onChange(){ collectSettings(); maybeRender(); }
 
-    [pixelWidth, method, paletteSize, bri, con, sat, bloom, tR, tY, tG, tC, tB, tM, remapStrength, mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=>{ listen(el,'input', onInput); });
+    [pixelWidth, method, paletteSize, bri, con, sat, bloom, glowStrength, glowHue, tR, tY, tG, tC, tB, tM, remapStrength, mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=>{ listen(el,'input', onInput); });
     [ditherCk, enableTune, enableRemap, mapR, mapY, mapG, mapC, mapB, mapM, autoRenderCk].forEach(el=>{ listen(el,'change', onChange); });
 
     const onRenderClick = ()=>{ collectSettings(); render(); };
@@ -461,6 +488,8 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       if(con) con.value=0;
       if(sat) sat.value=100;
       if(bloom) bloom.value=0;
+      if(glowStrength) glowStrength.value=0;
+      if(glowHue) glowHue.value=0;
       if(enableTune) enableTune.checked=false;
       if(tR) tR.value=0; if(tY) tY.value=0; if(tG) tG.value=0; if(tC) tC.value=0; if(tB) tB.value=0; if(tM) tM.value=0;
       if(enableRemap) enableRemap.checked=false;
@@ -511,11 +540,12 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     };
   }
 
-export { applyAdjustments, applyColorTuning, applyHueRemap, applyBloom, kmeansRGB, floydSteinbergQuantize };
+export { applyAdjustments, applyColorTuning, applyHueRemap, applyColorGlow, applyBloom, kmeansRGB, floydSteinbergQuantize };
 export const pixelEditorUtils = {
   applyAdjustments,
   applyColorTuning,
   applyHueRemap,
+  applyColorGlow,
   applyBloom,
   kmeansRGB,
   floydSteinbergQuantize
