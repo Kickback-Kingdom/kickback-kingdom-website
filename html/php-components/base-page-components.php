@@ -288,6 +288,8 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                 <div class="nav flex-column nav-pills me-2" id="pixelEditorTabs" role="tablist" aria-orientation="vertical">
                                     <button class="nav-link active" id="pixelTabPixelation" data-bs-toggle="pill" data-bs-target="#pixelPanePixelation" type="button" role="tab" aria-controls="pixelPanePixelation" aria-selected="true" title="Pixelation"><i class="fa-solid fa-border-all"></i></button>
                                     <button class="nav-link" id="pixelTabLayers" data-bs-toggle="pill" data-bs-target="#pixelPaneLayers" type="button" role="tab" aria-controls="pixelPaneLayers" aria-selected="false" title="Layers"><i class="fa-solid fa-layer-group"></i></button>
+                                    <div class="border-top my-2"></div>
+                                    <div id="pixelLayerTabs"></div>
                                 </div>
                                 <div class="tab-content flex-grow-1 overflow-auto" id="pixelEditorTabContent">
                                     <div class="tab-pane fade show active" id="pixelPanePixelation" role="tabpanel" aria-labelledby="pixelTabPixelation">
@@ -327,8 +329,6 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                         </div>
                                     </div>
                                     <div class="tab-pane fade" id="pixelPaneLayers" role="tabpanel" aria-labelledby="pixelTabLayers">
-                                        <div class="d-flex gap-2 h-100">
-                                            <div class="flex-shrink-0" style="width:160px;">
                                             <div class="mb-2 input-group input-group-sm">
                                                 <select class="form-select" data-add-layer-select>
                                                     <option value="">Select layer...</option>
@@ -341,11 +341,6 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                                 <button class="btn btn-primary" type="button" data-add-layer-btn>Add</button>
                                             </div>
                                             <ul class="list-group small" data-layer-list></ul>
-                                            </div>
-                                            <div class="flex-grow-1" data-layer-edit-panel>
-                                                <div class="text-muted">Select a layer to edit</div>
-                                            </div>
-                                        </div>
                                         <template id="tpl-layer-adjustments">
                                             <div>
                                                 <div class="mb-2">
@@ -535,6 +530,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                             </div>
                                         </template>
                                     </div>
+                                    <div id="pixelLayerTabPanes"></div>
                                 </div>
                             </div>
                         </div>
@@ -564,83 +560,54 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                     const listEl = container.querySelector('[data-layer-list]');
                     const addSelect = container.querySelector('[data-add-layer-select]');
                     const addBtn = container.querySelector('[data-add-layer-btn]');
-                    const editPanel = container.querySelector('[data-layer-edit-panel]');
+                    const layerTabs = container.querySelector('#pixelLayerTabs');
+                    const layerTabContent = container.querySelector('#pixelLayerTabPanes');
                     const remapBands=['— keep —','Red','Yellow','Green','Cyan','Blue','Magenta'];
-                    let selectedIndex=-1;
 
-                    function refreshList(){
-                        listEl.innerHTML='';
-                        const layers = window.pixelEditor.getSettings().layers || [];
-                        layers.forEach((layer,i)=>{
-                            const li=document.createElement('li');
-                            li.className='list-group-item d-flex align-items-center gap-2';
-                            li.draggable=true;
-                            li.innerHTML=`<span class="text-muted" style="cursor:grab"><i class="fa-solid fa-grip-vertical"></i></span><input class="form-check-input" type="checkbox" data-enable ${layer.enabled!==false?'checked':''}><span class="flex-grow-1">${layer.type}</span><button type="button" class="btn btn-sm btn-danger" data-remove>&times;</button>`;
-                            li.classList.toggle('opacity-50', layer.enabled===false);
-                            if(i===selectedIndex) li.classList.add('active');
-                            li.addEventListener('click',()=>selectLayer(i));
-                            li.querySelector('[data-remove]').addEventListener('click',e=>{e.stopPropagation(); window.pixelEditor.removeLayer(i); refreshList(); if(selectedIndex===i){selectedIndex=-1; renderEditor(null);} });
-                            li.querySelector('[data-enable]').addEventListener('change',e=>{e.stopPropagation(); window.pixelEditor.setLayerEnabled(i, e.target.checked); refreshList();});
-                            li.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',i);});
-                            li.addEventListener('dragover',e=>{e.preventDefault();});
-                            li.addEventListener('drop',e=>{e.preventDefault(); const from=parseInt(e.dataTransfer.getData('text/plain'),10); window.pixelEditor.moveLayer(from,i); refreshList();});
-                            listEl.appendChild(li);
-                        });
-                    }
-
-                    function selectLayer(index){
-                        selectedIndex=index;
-                        refreshList();
-                        const layers = window.pixelEditor.getSettings().layers || [];
-                        renderEditor(layers[index]);
-                    }
-
-                    function updateOption(key, el){
+                    function updateOption(index,key,el){
                         const val=el.type==='checkbox'?el.checked:parseFloat(el.value);
-                        const layer=window.pixelEditor.getSettings().layers[selectedIndex];
+                        const layer=window.pixelEditor.getSettings().layers[index];
                         const newOpts={...layer.options,[key]:val};
-                        window.pixelEditor.updateLayer(selectedIndex,newOpts);
+                        window.pixelEditor.updateLayer(index,newOpts);
                     }
 
-                    function updateGlow(band, el){
-                        const layer=window.pixelEditor.getSettings().layers[selectedIndex];
+                    function updateGlow(index,band,el){
+                        const layer=window.pixelEditor.getSettings().layers[index];
                         const gm={...(layer.options.glowMap||{})};
                         const entry={...(gm[band]||{r:0,s:0})};
                         entry.s=parseFloat(el.value)/100;
                         gm[band]=entry;
-                        window.pixelEditor.updateLayer(selectedIndex,{...layer.options,glowMap:gm});
+                        window.pixelEditor.updateLayer(index,{...layer.options,glowMap:gm});
                     }
 
-                    function updateGlowRange(band, el){
-                        const layer=window.pixelEditor.getSettings().layers[selectedIndex];
+                    function updateGlowRange(index,band,el){
+                        const layer=window.pixelEditor.getSettings().layers[index];
                         const gm={...(layer.options.glowMap||{})};
                         const entry={...(gm[band]||{r:0,s:0})};
                         entry.r=parseFloat(el.value);
                         gm[band]=entry;
-                        window.pixelEditor.updateLayer(selectedIndex,{...layer.options,glowMap:gm});
+                        window.pixelEditor.updateLayer(index,{...layer.options,glowMap:gm});
                     }
 
-                    function updateMap(band, sel){
-                        const layer=window.pixelEditor.getSettings().layers[selectedIndex];
+                    function updateMap(index,band,sel){
+                        const layer=window.pixelEditor.getSettings().layers[index];
                         const mapping={...(layer.options.mapping||{})};
                         const entry={...(mapping[band]||{t:0,s:1})};
                         entry.t=parseInt(sel.value,10);
                         mapping[band]=entry;
-                        window.pixelEditor.updateLayer(selectedIndex,{...layer.options,mapping});
+                        window.pixelEditor.updateLayer(index,{...layer.options,mapping});
                     }
 
-                    function updateMapStr(band, el){
-                        const layer=window.pixelEditor.getSettings().layers[selectedIndex];
+                    function updateMapStr(index,band,el){
+                        const layer=window.pixelEditor.getSettings().layers[index];
                         const mapping={...(layer.options.mapping||{})};
                         const entry={...(mapping[band]||{t:0,s:1})};
                         entry.s=parseFloat(el.value)/100;
                         mapping[band]=entry;
-                        window.pixelEditor.updateLayer(selectedIndex,{...layer.options,mapping});
+                        window.pixelEditor.updateLayer(index,{...layer.options,mapping});
                     }
 
-                    function renderEditor(layer){
-                        editPanel.innerHTML='';
-                        if(!layer){ editPanel.innerHTML='<div class="text-muted">Select a layer to edit</div>'; return; }
+                    function renderLayerPane(layer,index){
                         let tplId='';
                         switch(layer.type){
                             case 'adjustments': tplId='tpl-layer-adjustments'; break;
@@ -648,7 +615,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             case 'bloom': tplId='tpl-layer-bloom'; break;
                             case 'tune': tplId='tpl-layer-tune'; break;
                             case 'remap': tplId='tpl-layer-remap'; break;
-                            default: editPanel.textContent='Unknown layer'; return;
+                            default: return document.createTextNode('Unknown layer');
                         }
                         const tpl=document.getElementById(tplId);
                         const frag=tpl.content.cloneNode(true);
@@ -658,31 +625,87 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                 if(el.type==='checkbox') el.checked=layer.options[key];
                                 else el.value=layer.options[key];
                             }
-                            el.addEventListener('input',()=>updateOption(key,el));
-                            el.addEventListener('change',()=>updateOption(key,el));
+                            el.addEventListener('input',()=>updateOption(index,key,el));
+                            el.addEventListener('change',()=>updateOption(index,key,el));
                         });
                         frag.querySelectorAll('[data-glow]').forEach(el=>{
                             const band=el.getAttribute('data-glow');
                             el.value=(layer.options.glowMap?.[band]?.s||0)*100;
-                            el.addEventListener('input',()=>updateGlow(band,el));
+                            el.addEventListener('input',()=>updateGlow(index,band,el));
                         });
                         frag.querySelectorAll('[data-glow-range]').forEach(el=>{
                             const band=el.getAttribute('data-glow-range');
                             el.value=layer.options.glowMap?.[band]?.r||0;
-                            el.addEventListener('input',()=>updateGlowRange(band,el));
+                            el.addEventListener('input',()=>updateGlowRange(index,band,el));
                         });
                         frag.querySelectorAll('[data-map]').forEach(sel=>{
                             remapBands.forEach((name,i)=>{const opt=document.createElement('option'); opt.textContent=name; opt.value=String(i); sel.appendChild(opt);});
                             const band=sel.getAttribute('data-map');
                             sel.value=String(layer.options.mapping?.[band]?.t||0);
-                            sel.addEventListener('change',()=>updateMap(band,sel));
+                            sel.addEventListener('change',()=>updateMap(index,band,sel));
                         });
                         frag.querySelectorAll('[data-map-str]').forEach(el=>{
                             const band=el.getAttribute('data-map-str');
                             el.value=(layer.options.mapping?.[band]?.s||0)*100;
-                            el.addEventListener('input',()=>updateMapStr(band,el));
+                            el.addEventListener('input',()=>updateMapStr(index,band,el));
                         });
-                        editPanel.appendChild(frag);
+                        const pane=document.createElement('div');
+                        const paneId=`pixelPaneLayer${index}`;
+                        const tabId=`pixelTabLayer${index}`;
+                        pane.className='tab-pane fade';
+                        pane.id=paneId;
+                        pane.role='tabpanel';
+                        pane.setAttribute('aria-labelledby',tabId);
+                        pane.appendChild(frag);
+                        return pane;
+                    }
+
+                    function refreshUI(activeIndex=null){
+                        const currentActive=layerTabs.querySelector('.nav-link.active');
+                        if(activeIndex===null && currentActive){
+                            activeIndex=parseInt(currentActive.getAttribute('data-layer-index'),10);
+                        }
+                        listEl.innerHTML='';
+                        layerTabs.innerHTML='';
+                        layerTabContent.innerHTML='';
+                        const layers=window.pixelEditor.getSettings().layers || [];
+                        layers.forEach((layer,i)=>{
+                            const li=document.createElement('li');
+                            li.className='list-group-item d-flex align-items-center gap-2';
+                            li.draggable=true;
+                            li.innerHTML=`<span class="text-muted" style="cursor:grab"><i class=\"fa-solid fa-grip-vertical\"></i></span><input class=\"form-check-input\" type=\"checkbox\" data-enable ${layer.enabled!==false?'checked':''}><span class=\"flex-grow-1\">${layer.type}</span><button type=\"button\" class=\"btn btn-sm btn-danger\" data-remove>&times;</button>`;
+                            li.classList.toggle('opacity-50',layer.enabled===false);
+                            li.querySelector('[data-remove]').addEventListener('click',e=>{e.stopPropagation(); window.pixelEditor.removeLayer(i); refreshUI();});
+                            li.querySelector('[data-enable]').addEventListener('change',e=>{e.stopPropagation(); window.pixelEditor.setLayerEnabled(i,e.target.checked); refreshUI(i);});
+                            li.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',i);});
+                            li.addEventListener('dragover',e=>{e.preventDefault();});
+                            li.addEventListener('drop',e=>{e.preventDefault(); const from=parseInt(e.dataTransfer.getData('text/plain'),10); window.pixelEditor.moveLayer(from,i); refreshUI(i);});
+                            li.addEventListener('click',()=>{const tab=container.querySelector(`#pixelTabLayer${i}`); if(tab) bootstrap.Tab.getOrCreateInstance(tab).show();});
+                            listEl.appendChild(li);
+
+                            const tab=document.createElement('button');
+                            tab.className='nav-link';
+                            tab.id=`pixelTabLayer${i}`;
+                            tab.dataset.bsToggle='pill';
+                            tab.dataset.bsTarget=`#pixelPaneLayer${i}`;
+                            tab.type='button';
+                            tab.role='tab';
+                            tab.setAttribute('aria-controls',`pixelPaneLayer${i}`);
+                            tab.setAttribute('aria-selected','false');
+                            tab.textContent=layer.type;
+                            tab.setAttribute('data-layer-index',i);
+                            layerTabs.appendChild(tab);
+
+                            const pane=renderLayerPane(layer,i);
+                            layerTabContent.appendChild(pane);
+                        });
+                        if(activeIndex!==null && activeIndex>=0 && activeIndex<layers.length){
+                            const act=container.querySelector(`#pixelTabLayer${activeIndex}`);
+                            if(act) bootstrap.Tab.getOrCreateInstance(act).show();
+                        }else{
+                            const layersTab=container.querySelector('#pixelTabLayers');
+                            if(layersTab) bootstrap.Tab.getOrCreateInstance(layersTab).show();
+                        }
                     }
 
                     addBtn.addEventListener('click',()=>{
@@ -698,11 +721,12 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             default: return;
                         }
                         window.pixelEditor.addLayer(layer);
+                        const idx=window.pixelEditor.getSettings().layers.length-1;
                         addSelect.value='';
-                        refreshList();
+                        refreshUI(idx);
                     });
 
-                    refreshList();
+                    refreshUI();
                 }
                 window.setupPixelLayerUI = setupPixelLayerUI;
                 </script>
