@@ -113,30 +113,51 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
 
   function applyColorGlow(ctx, w, h, glows, range=0, threshold=0.6){
     if(!glows || !Object.values(glows).some(v=>v>0)) return;
+
+    // Capture the original image data once. We'll use this as the
+    // source for each band-specific glow layer.
+    const base = ctx.getImageData(0,0,w,h);
+    const baseData = base.data;
+
     const off=document.createElement('canvas');
     off.width=w; off.height=h;
     const octx=off.getContext('2d');
-    octx.drawImage(ctx.canvas,0,0);
-    const img=octx.getImageData(0,0,w,h);
-    const d = img.data;
-    for(let i=0;i<d.length;i+=4){
-      const r=d[i], g=d[i+1], bl=d[i+2];
-      const hsl=rgbToHsl(r,g,bl);
-      const band=nearestBucket(hsl.h);
-      const strength=glows[band]||0;
-      if(strength>0 && hsl.l>threshold){
-        const newL=Math.min(1, hsl.l+strength);
-        const newS=Math.min(1, hsl.s+strength);
-        const rgb=hslToRgb(hsl.h,newS,newL);
-        d[i]=rgb.r; d[i+1]=rgb.g; d[i+2]=rgb.b;
+
+    // Iterate over each configured color band individually so that the
+    // blur mixes with the original colors instead of black.
+    for(const [bandKey,strength] of Object.entries(glows)){
+      if(strength<=0) continue;
+
+      // Copy from the original data for this band.
+      const img = new ImageData(new Uint8ClampedArray(baseData), w, h);
+      const d = img.data;
+
+      // Apply the glow to only the pixels belonging to this band. Other
+      // pixels are masked out via alpha transparency.
+      for(let i=0;i<d.length;i+=4){
+        const r=d[i], g=d[i+1], bl=d[i+2];
+        const hsl=rgbToHsl(r,g,bl);
+        const band=nearestBucket(hsl.h);
+        if(band===bandKey && hsl.l>threshold){
+          const newL=Math.min(1, hsl.l+strength);
+          const newS=Math.min(1, hsl.s+strength);
+          const rgb=hslToRgb(hsl.h,newS,newL);
+          d[i]=rgb.r; d[i+1]=rgb.g; d[i+2]=rgb.b;
+        } else {
+          // Hide non-target pixels so the blur doesn't mix with black.
+          d[i+3]=0;
+        }
       }
+
+      // Draw the masked glow layer with blur and light compositing.
+      octx.clearRect(0,0,w,h);
+      octx.putImageData(img,0,0);
+      ctx.save();
+      if(range>0) ctx.filter=`blur(${range}px)`;
+      ctx.globalCompositeOperation='lighter';
+      ctx.drawImage(off,0,0);
+      ctx.restore();
     }
-    octx.putImageData(img,0,0);
-    ctx.save();
-    if(range>0) ctx.filter=`blur(${range}px)`;
-    ctx.globalCompositeOperation='lighter';
-    ctx.drawImage(off,0,0);
-    ctx.restore();
   }
 
   function applyBloom(ctx, w, h, intensity, range=0){
