@@ -266,7 +266,6 @@ class MediaController {
             $result = $client->images()->create([
                 'model' => $model,
                 'prompt' => $prompt,
-                'response_format' => 'b64_json',
                 'size' => $size,
             ]);
 
