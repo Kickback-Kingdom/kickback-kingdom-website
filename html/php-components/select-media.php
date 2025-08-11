@@ -33,6 +33,11 @@
 <script type="module">
 import { initPixelEditor } from '/assets/js/pixel-editor.js';
 
+const promptTemplates = {
+    "lich card art": desc => `Pixel art L.I.C.H. card of ${desc}, 16-bit style, consistent palette`,
+    "dragon card art": desc => `Pixel art dragon card of ${desc}, 16-bit style, consistent palette`
+};
+
 let currentSelectMediaPage = 1; // default page
 const itemsPerSelectMediaPage = 6; // or however many you want
 
@@ -40,6 +45,8 @@ var pixelEditorSettings = null;
 var lastPixelEditorSrc = '';
 var croppedImageData = '';
 var pixelatedImageData = '';
+
+let selectedPromptTemplate = '';
 
 
 <?php if(Kickback\Services\Session::getCurrentAccount()->canUploadImages()) { ?>
@@ -62,10 +69,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const templateSelect = document.getElementById('imagePromptTemplate');
     if (templateSelect) {
         templateSelect.addEventListener('change', function() {
-            const textarea = document.getElementById('imagePrompt');
-            if (textarea) {
-                textarea.value = this.value;
-            }
+            selectedPromptTemplate = this.value;
         });
     }
 
