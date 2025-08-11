@@ -329,17 +329,18 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                     <div class="tab-pane fade" id="pixelPaneLayers" role="tabpanel" aria-labelledby="pixelTabLayers">
                                         <div class="d-flex gap-2 h-100">
                                             <div class="flex-shrink-0" style="width:160px;">
-                                                <div class="mb-2">
-                                                    <select class="form-select form-select-sm" data-add-layer>
-                                                        <option value="">Add layer...</option>
-                                                        <option value="adjustments">Adjustments</option>
-                                                        <option value="colorGlow">Glow</option>
-                                                        <option value="bloom">Bloom</option>
-                                                        <option value="tune">Tune</option>
-                                                        <option value="remap">Hue Remap</option>
-                                                    </select>
-                                                </div>
-                                                <ul class="list-group small" data-layer-list></ul>
+                                            <div class="mb-2 input-group input-group-sm">
+                                                <select class="form-select" data-add-layer-select>
+                                                    <option value="">Select layer...</option>
+                                                    <option value="adjustments">Adjustments</option>
+                                                    <option value="colorGlow">Glow</option>
+                                                    <option value="bloom">Bloom</option>
+                                                    <option value="tune">Tune</option>
+                                                    <option value="remap">Hue Remap</option>
+                                                </select>
+                                                <button class="btn btn-primary" type="button" data-add-layer-btn>Add</button>
+                                            </div>
+                                            <ul class="list-group small" data-layer-list></ul>
                                             </div>
                                             <div class="flex-grow-1" data-layer-edit-panel>
                                                 <div class="text-muted">Select a layer to edit</div>
@@ -561,7 +562,8 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                     const container = document.getElementById('pixelEditor');
                     if(!container || !window.pixelEditor) return;
                     const listEl = container.querySelector('[data-layer-list]');
-                    const addSelect = container.querySelector('[data-add-layer]');
+                    const addSelect = container.querySelector('[data-add-layer-select]');
+                    const addBtn = container.querySelector('[data-add-layer-btn]');
                     const editPanel = container.querySelector('[data-layer-edit-panel]');
                     const remapBands=['— keep —','Red','Yellow','Green','Cyan','Blue','Magenta'];
                     let selectedIndex=-1;
@@ -573,9 +575,12 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             const li=document.createElement('li');
                             li.className='list-group-item d-flex align-items-center gap-2';
                             li.draggable=true;
-                            li.innerHTML=`<span class="text-muted" style="cursor:grab"><i class="fa-solid fa-grip-vertical"></i></span><span class="flex-grow-1">${layer.type}</span><button type="button" class="btn btn-sm btn-danger" data-remove>&times;</button>`;
+                            li.innerHTML=`<span class="text-muted" style="cursor:grab"><i class="fa-solid fa-grip-vertical"></i></span><input class="form-check-input" type="checkbox" data-enable ${layer.enabled!==false?'checked':''}><span class="flex-grow-1">${layer.type}</span><button type="button" class="btn btn-sm btn-danger" data-remove>&times;</button>`;
+                            li.classList.toggle('opacity-50', layer.enabled===false);
+                            if(i===selectedIndex) li.classList.add('active');
                             li.addEventListener('click',()=>selectLayer(i));
                             li.querySelector('[data-remove]').addEventListener('click',e=>{e.stopPropagation(); window.pixelEditor.removeLayer(i); refreshList(); if(selectedIndex===i){selectedIndex=-1; renderEditor(null);} });
+                            li.querySelector('[data-enable]').addEventListener('change',e=>{e.stopPropagation(); window.pixelEditor.setLayerEnabled(i, e.target.checked); refreshList();});
                             li.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',i);});
                             li.addEventListener('dragover',e=>{e.preventDefault();});
                             li.addEventListener('drop',e=>{e.preventDefault(); const from=parseInt(e.dataTransfer.getData('text/plain'),10); window.pixelEditor.moveLayer(from,i); refreshList();});
@@ -585,6 +590,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
 
                     function selectLayer(index){
                         selectedIndex=index;
+                        refreshList();
                         const layers = window.pixelEditor.getSettings().layers || [];
                         renderEditor(layers[index]);
                     }
@@ -679,7 +685,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         editPanel.appendChild(frag);
                     }
 
-                    addSelect.addEventListener('change',()=>{
+                    addBtn.addEventListener('click',()=>{
                         const type=addSelect.value;
                         if(!type) return;
                         let layer;

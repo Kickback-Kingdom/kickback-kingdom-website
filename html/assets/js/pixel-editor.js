@@ -243,9 +243,10 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
   }
 
   class Layer {
-    constructor(type, options){
+    constructor(type, options, enabled = true){
       this.type = type;
       this.options = options;
+      this.enabled = enabled;
     }
   }
 
@@ -366,13 +367,13 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     }
 
     function applyLayersToUI(ls){
-      const adj = ls.find(l=>l.type==='adjustments');
+      const adj = ls.find(l=>l.type==='adjustments' && l.enabled!==false);
       if(adj){
         if(bri) bri.value = adj.options.brightness;
         if(con) con.value = adj.options.contrast;
         if(sat) sat.value = adj.options.saturation;
       }
-      const tune = ls.find(l=>l.type==='tune');
+      const tune = ls.find(l=>l.type==='tune' && l.enabled!==false);
       if(tune){
         if(enableTune) enableTune.checked = true;
         if(tR) tR.value = tune.options.R;
@@ -382,7 +383,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         if(tB) tB.value = tune.options.B;
         if(tM) tM.value = tune.options.M;
       }
-      const remap = ls.find(l=>l.type==='remap');
+      const remap = ls.find(l=>l.type==='remap' && l.enabled!==false);
       if(remap){
         if(enableRemap) enableRemap.checked = true;
         if(remapStrength) remapStrength.value = remap.options.globalStrength*100;
@@ -399,7 +400,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         if(mapBStr) mapBStr.value = remap.options.mapping.B.s*100;
         if(mapMStr) mapMStr.value = remap.options.mapping.M.s*100;
       }
-      const glow = ls.find(l=>l.type==='colorGlow');
+      const glow = ls.find(l=>l.type==='colorGlow' && l.enabled!==false);
       if(glow){
         if(enableGlow) enableGlow.checked = true;
         if(glowThreshold) glowThreshold.value = glow.options.threshold*100;
@@ -417,7 +418,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         if(gBRange) gBRange.value = glow.options.glowMap.B.r;
         if(gMRange) gMRange.value = glow.options.glowMap.M.r;
       }
-      const bloom = ls.find(l=>l.type==='bloom');
+      const bloom = ls.find(l=>l.type==='bloom' && l.enabled!==false);
       if(bloom){
         if(enableGlow) enableGlow.checked = true;
         if(bloomThreshold) bloomThreshold.value = bloom.options.threshold;
@@ -427,7 +428,9 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     }
 
     const base = settings?.baseSettings || settings || {};
-    let layers = settings?.layers ? JSON.parse(JSON.stringify(settings.layers)) : legacySettingsToLayers(settings||{});
+    let layers = settings?.layers
+      ? settings.layers.map(l=>new Layer(l.type, {...l.options}, l.enabled!==false))
+      : legacySettingsToLayers(settings||{});
     if(pixelWidth && base.pixelWidth !== undefined) pixelWidth.value = base.pixelWidth;
     if(method && base.method !== undefined) method.value = base.method;
     if(paletteSize && base.paletteSize !== undefined) paletteSize.value = base.paletteSize;
@@ -652,7 +655,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         }
       }
 
-      currentSettings = { baseSettings, layers: layers.map(l=>({type:l.type, options:{...l.options}})) };
+      currentSettings = { baseSettings, layers: layers.map(l=>({type:l.type, options:{...l.options}, enabled:l.enabled!==false})) };
     }
 
     function status(msg){ if(statusEl) statusEl.textContent = msg; }
@@ -677,6 +680,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       const targetH = Math.round((img.naturalHeight/img.naturalWidth) * targetW);
         const sctx = scaleImage(targetW, targetH);
         for(const layer of layers){
+          if(layer.enabled===false) continue;
           switch(layer.type){
             case 'adjustments':{
               const o = layer.options;
@@ -771,7 +775,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       }
 
       function addLayer(layer){
-        layers.push(layer instanceof Layer ? layer : new Layer(layer.type, layer.options));
+        layers.push(layer instanceof Layer ? layer : new Layer(layer.type, layer.options, layer.enabled!==false));
         collectSettings();
         maybeRender();
       }
@@ -801,6 +805,14 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         }
       }
 
+      function setLayerEnabled(index, enabled){
+        if(index>=0 && index<layers.length){
+          layers[index].enabled = enabled;
+          collectSettings();
+          maybeRender();
+        }
+      }
+
       return {
         render,
         setImage: (image)=>{ img=image; collectSettings(); render(); },
@@ -809,7 +821,8 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         addLayer,
         removeLayer,
         moveLayer,
-        updateLayer
+        updateLayer,
+        setLayerEnabled
       };
     }
 
