@@ -358,18 +358,22 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     const src   = useOffscreen ? new OffscreenCanvas(0,0) : document.createElement('canvas');
     const worker = opts.worker;
 
-  let currentSettings = {};
-  function collectSettings(){
-      currentSettings = {
-        pixelWidth: Number(pixelWidth?.value||64),
-        method: method?.value||'neighbor',
-        paletteSize: Number(paletteSize?.value||16),
-        dither: ditherCk?.checked||false,
-        autoRender: autoRenderCk?.checked||false,
-        autoFit: autoFitCk?.checked||false,
-        brightness: Number(bri?.value||0),
-        contrast: Number(con?.value||0),
-        saturation: Number(sat?.value||100),
+    // Helpers for reading current UI state
+    function readPixelWidth(){ return Number(pixelWidth?.value||64); }
+    function readMethod(){ return method?.value||'neighbor'; }
+    function readPaletteSize(){ return Number(paletteSize?.value||16); }
+    function readDither(){ return ditherCk?.checked||false; }
+    function readAutoRender(){ return autoRenderCk?.checked||false; }
+    function readAutoFit(){ return autoFitCk?.checked||false; }
+    function readAdjustments(){
+      return {
+        brightness:Number(bri?.value||0),
+        contrast:Number(con?.value||0),
+        saturation:Number(sat?.value||100)
+      };
+    }
+    function readGlowSettings(){
+      return {
         enableGlow: enableGlow?.checked||false,
         glowThreshold: Number(glowThreshold?.value||60),
         bloomAlpha: Number(bloomAlpha?.value||0),
@@ -383,7 +387,11 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
           C:{strength:Number(gC?.value||0), range:Number(gCRange?.value||0)},
           B:{strength:Number(gB?.value||0), range:Number(gBRange?.value||0)},
           M:{strength:Number(gM?.value||0), range:Number(gMRange?.value||0)}
-        },
+        }
+      };
+    }
+    function readTuneSettings(){
+      return {
         enableTune: enableTune?.checked||false,
         tune:{
           R:Number(tR?.value||0),
@@ -392,7 +400,11 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
           C:Number(tC?.value||0),
           B:Number(tB?.value||0),
           M:Number(tM?.value||0)
-        },
+        }
+      };
+    }
+    function readRemapSettings(){
+      return {
         enableRemap: enableRemap?.checked||false,
         remapStrength: Number(remapStrength?.value||100),
         map:{
@@ -414,35 +426,12 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       };
     }
 
-    function status(msg){ if(statusEl) statusEl.textContent = msg; }
-    function setZoom(z){ zoom=Math.max(0.1,z); if(wrap) wrap.style.transform=`scale(${zoom})`; }
-    function fitToViewport(){ if(!canvas.width||!canvas.height||!viewport) return; const availW=viewport.clientWidth-16; const availH=viewport.clientHeight-16; const fit=Math.min(availW/canvas.width, availH/canvas.height); setZoom(fit); }
-
-    const listeners=[];
-    function listen(target, event, handler, options){
-      if(!target) return;
-      target.addEventListener(event, handler, options);
-      listeners.push({target, event, handler, options});
-    }
-
-    const onResize = ()=>{ if(autoFitCk?.checked) fitToViewport(); };
-    listen(window, 'resize', onResize);
-    const onAutoFitChange = ()=>{ if(autoFitCk.checked) fitToViewport(); onChange(); };
-    listen(autoFitCk, 'change', onAutoFitChange);
-
-    function render(){
-      if(!img) return;
-      status('Rendering…');
-      const targetW = Math.max(8, Math.min(1024, Number(pixelWidth?.value)||64));
-      const targetH = Math.round((img.naturalHeight/img.naturalWidth) * targetW);
-
-      // Reinitialize dimensions on the cached canvases
+    // Rendering helpers
+    function scaleImage(targetW, targetH){
       small.width = targetW; small.height = targetH;
       const sctx = small.getContext('2d', { willReadFrequently:true });
-
-      const m = method?.value || 'neighbor';
-      const k = Math.max(2, Math.min(64, Number(paletteSize?.value)||16));
-
+      const m = readMethod();
+      const k = Math.max(2, Math.min(64, readPaletteSize()));
       if(m==='neighbor'){
         sctx.imageSmoothingEnabled = false;
         sctx.drawImage(img,0,0,targetW,targetH);
@@ -495,66 +484,110 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
           sctx.putImageData(outImg,0,0);
         }
       }
-
-      // If a worker was supplied, provide the offscreen canvases so it can
-      // operate on them without additional DOM allocations.
       if(worker){
         try{ worker.postMessage({small, src}); } catch(e){}
       }
+      return sctx;
+    }
 
-      applyAdjustments(sctx, targetW, targetH, Number(bri?.value||0), Number(con?.value||0), Number(sat?.value||100));
+    function applyAdjustmentsStep(sctx, w, h){
+      const adj = readAdjustments();
+      applyAdjustments(sctx, w, h, adj.brightness, adj.contrast, adj.saturation);
+    }
 
-      if(enableTune?.checked){
-        const gains={R:Number(tR.value),Y:Number(tY.value),G:Number(tG.value),C:Number(tC.value),B:Number(tB.value),M:Number(tM.value)};
-        applyColorTuning(sctx,targetW,targetH,gains);
+    function applyColorTuningStep(sctx, w, h){
+      const tune = readTuneSettings();
+      if(tune.enableTune){
+        applyColorTuning(sctx, w, h, tune.tune);
       }
-
-      if(enableRemap?.checked){
+      const remap = readRemapSettings();
+      if(remap.enableRemap){
         const mapping={
-          R:{t:parseInt(mapR.value,10),s:Number(mapRStr.value)/100},
-          Y:{t:parseInt(mapY.value,10),s:Number(mapYStr.value)/100},
-          G:{t:parseInt(mapG.value,10),s:Number(mapGStr.value)/100},
-          C:{t:parseInt(mapC.value,10),s:Number(mapCStr.value)/100},
-          B:{t:parseInt(mapB.value,10),s:Number(mapBStr.value)/100},
-          M:{t:parseInt(mapM.value,10),s:Number(mapMStr.value)/100},
+          R:{t:parseInt(remap.map.R,10),s:remap.mapStr.R/100},
+          Y:{t:parseInt(remap.map.Y,10),s:remap.mapStr.Y/100},
+          G:{t:parseInt(remap.map.G,10),s:remap.mapStr.G/100},
+          C:{t:parseInt(remap.map.C,10),s:remap.mapStr.C/100},
+          B:{t:parseInt(remap.map.B,10),s:remap.mapStr.B/100},
+          M:{t:parseInt(remap.map.M,10),s:remap.mapStr.M/100},
         };
-        const globalStrength=Number(remapStrength.value)/100;
-        applyHueRemap(sctx,targetW,targetH,mapping,globalStrength);
+        const globalStrength=remap.remapStrength/100;
+        applyHueRemap(sctx, w, h, mapping, globalStrength);
       }
+    }
 
-      if(enableGlow?.checked){
-        const glowMap={
-          R:{s:Number(gR?.value||0)/100, r:Number(gRRange?.value||0)},
-          Y:{s:Number(gY?.value||0)/100, r:Number(gYRange?.value||0)},
-          G:{s:Number(gG?.value||0)/100, r:Number(gGRange?.value||0)},
-          C:{s:Number(gC?.value||0)/100, r:Number(gCRange?.value||0)},
-          B:{s:Number(gB?.value||0)/100, r:Number(gBRange?.value||0)},
-          M:{s:Number(gM?.value||0)/100, r:Number(gMRange?.value||0)},
-        };
-        const glowThreshVal = Number(glowThreshold?.value||60)/100;
-        const bloomThreshVal = Number(bloomThreshold?.value||200);
-        const bloomBlurVal = Number(bloomBlur?.value||0);
-        const bloomAlphaVal = Number(bloomAlpha?.value||0)/100;
-        const glowGlobalVal = Number(gAll?.value||100)/100;
-        applyColorGlow(sctx, targetW, targetH, glowMap, glowThreshVal, glowGlobalVal);
-        applyBloom(sctx, targetW, targetH, bloomThreshVal, bloomBlurVal, bloomAlphaVal);
-      }
+    function applyGlowBloomStep(sctx, w, h){
+      const glow = readGlowSettings();
+      if(!glow.enableGlow) return;
+      const glowMap={
+        R:{s:glow.glow.R.strength/100, r:glow.glow.R.range},
+        Y:{s:glow.glow.Y.strength/100, r:glow.glow.Y.range},
+        G:{s:glow.glow.G.strength/100, r:glow.glow.G.range},
+        C:{s:glow.glow.C.strength/100, r:glow.glow.C.range},
+        B:{s:glow.glow.B.strength/100, r:glow.glow.B.range},
+        M:{s:glow.glow.M.strength/100, r:glow.glow.M.range},
+      };
+      const glowThreshVal = glow.glowThreshold/100;
+      const bloomThreshVal = glow.bloomThreshold;
+      const bloomBlurVal = glow.bloomBlur;
+      const bloomAlphaVal = glow.bloomAlpha/100;
+      const glowGlobalVal = glow.glow.global/100;
+      applyColorGlow(sctx, w, h, glowMap, glowThreshVal, glowGlobalVal);
+      applyBloom(sctx, w, h, bloomThreshVal, bloomBlurVal, bloomAlphaVal);
+    }
 
-      if(ditherCk?.checked){
+    let currentSettings = {};
+    function collectSettings(){
+      currentSettings = {
+        pixelWidth: readPixelWidth(),
+        method: readMethod(),
+        paletteSize: readPaletteSize(),
+        dither: readDither(),
+        autoRender: readAutoRender(),
+        autoFit: readAutoFit(),
+        ...readAdjustments(),
+        ...readGlowSettings(),
+        ...readTuneSettings(),
+        ...readRemapSettings()
+      };
+    }
+
+    function status(msg){ if(statusEl) statusEl.textContent = msg; }
+    function setZoom(z){ zoom=Math.max(0.1,z); if(wrap) wrap.style.transform=`scale(${zoom})`; }
+    function fitToViewport(){ if(!canvas.width||!canvas.height||!viewport) return; const availW=viewport.clientWidth-16; const availH=viewport.clientHeight-16; const fit=Math.min(availW/canvas.width, availH/canvas.height); setZoom(fit); }
+
+    const listeners=[];
+    function listen(target, event, handler, options){
+      if(!target) return;
+      target.addEventListener(event, handler, options);
+      listeners.push({target, event, handler, options});
+    }
+
+    const onResize = ()=>{ if(readAutoFit()) fitToViewport(); };
+    listen(window, 'resize', onResize);
+    const onAutoFitChange = ()=>{ if(readAutoFit()) fitToViewport(); onChange(); };
+    listen(autoFitCk, 'change', onAutoFitChange);
+    function render(){
+      if(!img) return;
+      status('Rendering…');
+      const targetW = Math.max(8, Math.min(1024, readPixelWidth()));
+      const targetH = Math.round((img.naturalHeight/img.naturalWidth) * targetW);
+      const sctx = scaleImage(targetW, targetH);
+      applyAdjustmentsStep(sctx, targetW, targetH);
+      applyColorTuningStep(sctx, targetW, targetH);
+      applyGlowBloomStep(sctx, targetW, targetH);
+      if(readDither()){
         floydSteinbergQuantize(sctx, targetW, targetH, 16);
       }
-
       canvas.width = targetW; canvas.height = targetH;
       ctx.imageSmoothingEnabled = false;
       ctx.clearRect(0,0,canvas.width,canvas.height);
       ctx.drawImage(small,0,0);
-
       if(pixMeta) pixMeta.textContent = `${targetW}×${targetH}`;
-      if(autoFitCk?.checked) fitToViewport();
+      if(readAutoFit()) fitToViewport();
       status('Done.');
     }
 
-    const maybeRender = throttled(120, ()=>{ if(autoRenderCk?.checked) render(); });
+    const maybeRender = throttled(120, ()=>{ if(readAutoRender()) render(); });
 
     function onInput(){ collectSettings(); maybeRender(); }
     function onChange(){ collectSettings(); maybeRender(); }
