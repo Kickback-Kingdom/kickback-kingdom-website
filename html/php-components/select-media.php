@@ -45,10 +45,6 @@ var pixelEditorSettings = null;
 var lastPixelEditorSrc = '';
 var croppedImageData = '';
 var pixelatedImageData = '';
-
-let selectedPromptTemplate = '';
-
-
 <?php if(Kickback\Services\Session::getCurrentAccount()->canUploadImages()) { ?>
 let cropper;
 let pixelEditor;
@@ -65,12 +61,28 @@ function PromptGenerateWithAI() {
     }
 }
 
+function updatePromptPreview() {
+    const templateEl = document.getElementById('imagePromptTemplate');
+    const descriptionEl = document.getElementById('imagePromptDescription');
+    const promptEl = document.getElementById('imagePrompt');
+    const template = templateEl ? templateEl.value : '';
+    const description = descriptionEl ? descriptionEl.value : '';
+    const finalPrompt = promptTemplates[template]
+        ? promptTemplates[template](description)
+        : description;
+    if (promptEl) {
+        promptEl.value = finalPrompt;
+    }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     const templateSelect = document.getElementById('imagePromptTemplate');
     if (templateSelect) {
-        templateSelect.addEventListener('change', function() {
-            selectedPromptTemplate = this.value;
-        });
+        templateSelect.addEventListener('change', updatePromptPreview);
+    }
+    const descriptionEl = document.getElementById('imagePromptDescription');
+    if (descriptionEl) {
+        descriptionEl.addEventListener('input', updatePromptPreview);
     }
 
     const modelSelect = document.getElementById('imageModel');
@@ -106,6 +118,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
         renderSizeOptions(modelSelect.value);
     }
+
+    updatePromptPreview();
 });
 
 function GeneratePromptImage(prompt)
