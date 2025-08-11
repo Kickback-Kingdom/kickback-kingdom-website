@@ -185,9 +185,15 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             </div>
                         </div>
                     </div>
+                    <div class="row d-none" id="aiPromptInfo">
+                        <div class="col-12">
+                            <p class="mb-1"><strong>Prompt:</strong> <span id="aiPromptText"></span></p>
+                            <div id="aiGenerateError" class="alert alert-danger mt-2 d-none" role="alert"></div>
+                        </div>
+                    </div>
                     <div class="row">
                         <div class="col-12">
-                            
+
                             <div style="width: 100%;">
                                 <img id="imageUploadPreview" src="" class="img-fluid img-thumbnail">
                             </div>

@@ -50,6 +50,13 @@ function PromptGenerateWithAI()
 {
     const promptText = window.prompt('Enter a prompt for the image');
     if (promptText) {
+        const info = document.getElementById('aiPromptInfo');
+        const promptLabel = document.getElementById('aiPromptText');
+        const errEl = document.getElementById('aiGenerateError');
+        promptLabel.textContent = promptText;
+        info.classList.remove('d-none');
+        errEl.classList.add('d-none');
+        errEl.textContent = '';
         GenerateImageFromPrompt(promptText);
     }
 }
@@ -78,6 +85,7 @@ function GenerateImageFromPrompt(prompt)
     .then(resp => resp.json())
     .then(data => {
         HideLoadingBar();
+        const errEl = document.getElementById('aiGenerateError');
         if (data && data.success) {
             pixelEditorSettings = null;
             lastPixelEditorSrc = '';
@@ -87,12 +95,19 @@ function GenerateImageFromPrompt(prompt)
             img.src = data.imgBase64;
             mediaUploadStep = 2;
             UpdateMediaUploadModal();
+            errEl.classList.add('d-none');
+            errEl.textContent = '';
         } else {
+            errEl.textContent = (data && data.message) ? data.message : 'Generation failed';
+            errEl.classList.remove('d-none');
             console.error('Generation failed', data);
         }
     })
     .catch(err => {
         HideLoadingBar();
+        const errEl = document.getElementById('aiGenerateError');
+        errEl.textContent = 'Generation error';
+        errEl.classList.remove('d-none');
         console.error('Generation error', err);
     });
 }
@@ -343,6 +358,15 @@ function OnUploadFileChanged(input)
     lastPixelEditorSrc = '';
     croppedImageData = '';
     pixelatedImageData = '';
+    const info = document.getElementById('aiPromptInfo');
+    const errEl = document.getElementById('aiGenerateError');
+    if (info) {
+        info.classList.add('d-none');
+    }
+    if (errEl) {
+        errEl.classList.add('d-none');
+        errEl.textContent = '';
+    }
     const file = input.files[0];
     
     if (file) {
