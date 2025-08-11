@@ -364,14 +364,15 @@ function applyBloom(ctx, w, h, intensity){
   octx.drawImage(ctx.canvas,0,0);
   const img=octx.getImageData(0,0,w,h);
   const d=img.data;
+  const thresh=Math.max(0,200-intensity*1.5);
   for(let i=0;i<d.length;i+=4){
     const r=d[i], g=d[i+1], b=d[i+2];
     const lum=0.2126*r + 0.7152*g + 0.0722*b;
-    if(lum<200){ d[i]=d[i+1]=d[i+2]=0; }
+    if(lum<thresh){ d[i]=d[i+1]=d[i+2]=0; }
   }
   octx.putImageData(img,0,0);
   ctx.save();
-  ctx.filter=`blur(${Math.max(1, intensity/10)}px)`;
+  ctx.filter=`blur(${Math.max(1, intensity/5)}px)`;
   ctx.globalCompositeOperation='lighter';
   ctx.globalAlpha=Math.min(1, intensity/100);
   ctx.drawImage(off,0,0);
