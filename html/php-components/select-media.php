@@ -30,8 +30,8 @@
 </div>
 
 
-<script src="/assets/js/pixel-editor.js"></script>
-<script>
+<script type="module">
+import { initPixelEditor } from '/assets/js/pixel-editor.js';
 
 let currentSelectMediaPage = 1; // default page
 const itemsPerSelectMediaPage = 6; // or however many you want
@@ -136,7 +136,8 @@ function UpdateMediaUploadModal()
         lastPixelEditorSrc = currentSrc;
 
         if (pixelEditor) {
-            // Clean up listeners from previous editor instance
+            // Preserve current settings and clean up listeners from previous editor instance
+            pixelEditorSettings = pixelEditor.getSettings();
             pixelEditor.destroy();
             const newContainer = container.cloneNode(true);
             container.parentNode.replaceChild(newContainer, container);
@@ -178,6 +179,7 @@ function ResetMediaUploadWizardStep2()
     }
     if (pixelEditor) {
         // Ensure any event listeners from the editor are removed
+        pixelEditorSettings = pixelEditor.getSettings();
         pixelEditor.destroy();
         pixelEditor = null;
     }
@@ -520,5 +522,32 @@ function onPaginationClickSelectMedia(pageNumber) {
     currentSelectMediaPage = pageNumber; // make sure to define this variable globally or pass it around as needed
     SearchForMedia();
 }
+
+// Expose functions for inline event handlers
+window.OpenMediaUploadModal = OpenMediaUploadModal;
+window.CloseMediaUploadModal = CloseMediaUploadModal;
+window.UpdateMediaUploadModal = UpdateMediaUploadModal;
+window.ResetMediaUploadWizardStep2 = ResetMediaUploadWizardStep2;
+window.CropImageFromEditor = CropImageFromEditor;
+window.SkipPixelation = SkipPixelation;
+window.ApplyPixelation = ApplyPixelation;
+window.MediaUploadNextStep = MediaUploadNextStep;
+window.MediaUploadPrevStep = MediaUploadPrevStep;
+window.GetAspectRatio = GetAspectRatio;
+window.InitCropper = InitCropper;
+window.OnPhotoUsageChanged = OnPhotoUsageChanged;
+window.OnUploadFileChanged = OnUploadFileChanged;
+window.UploadImageData = UploadImageData;
+window.ReopenSelectMediaModal = ReopenSelectMediaModal;
+window.OpenSelectMediaModal = OpenSelectMediaModal;
+window.OnSelectMediaChangeSearchParams = OnSelectMediaChangeSearchParams;
+window.SearchForMedia = SearchForMedia;
+window.LoadSearchMediaResults = LoadSearchMediaResults;
+window.ClearSearchMediaResults = ClearSearchMediaResults;
+window.SelectMedia = SelectMedia;
+window.AcceptSelectedMedia = AcceptSelectedMedia;
+window.AddSearchMediaResult = AddSearchMediaResult;
+window.generatePaginationSelectMedia = generatePaginationSelectMedia;
+window.onPaginationClickSelectMedia = onPaginationClickSelectMedia;
 
 </script>

@@ -1,10 +1,9 @@
-(function(global){
-  'use strict';
+'use strict';
 
-  // Utility
-  function clamp8(v){ return v<0?0:(v>255?255:v)|0; }
-  function debounced(ms, fn){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
-  function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.now(); const remain=ms-(now-last); if(remain<=0){ last=now; fn(...a); } else { clearTimeout(timer); timer=setTimeout(()=>{ last=Date.now(); fn(...a); }, remain); } }; }
+// Utility
+function clamp8(v){ return v<0?0:(v>255?255:v)|0; }
+function debounced(ms, fn){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
+function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.now(); const remain=ms-(now-last); if(remain<=0){ last=now; fn(...a); } else { clearTimeout(timer); timer=setTimeout(()=>{ last=Date.now(); fn(...a); }, remain); } }; }
 
   // Adjustments
   function applyAdjustments(ctx, w, h, bri, con, sat){
@@ -177,7 +176,7 @@
    * called when the editor is no longer needed so that all event
    * listeners are removed and memory can be reclaimed.
    */
-  function initPixelEditor(container, sourceImage, settings){
+  export function initPixelEditor(container, sourceImage, settings){
     const pixelWidth = container.querySelector('[data-pixel-width]');
     const method = container.querySelector('[data-method]');
     const paletteSize = container.querySelector('[data-palette-size]');
@@ -249,8 +248,9 @@
     const src   = useOffscreen ? new OffscreenCanvas(0,0) : document.createElement('canvas');
     const worker = opts.worker;
 
-    function collectSettings(){
-      global.pixelEditorSettings = {
+  let currentSettings = {};
+  function collectSettings(){
+      currentSettings = {
         pixelWidth: Number(pixelWidth?.value||64),
         method: method?.value||'neighbor',
         paletteSize: Number(paletteSize?.value||16),
@@ -478,17 +478,17 @@
     return {
       render,
       setImage: (image)=>{ img=image; collectSettings(); render(); },
-      destroy
+      destroy,
+      getSettings: () => { collectSettings(); return currentSettings; }
     };
   }
 
-  global.initPixelEditor = initPixelEditor;
-  global.pixelEditorUtils = {
-    applyAdjustments,
-    applyColorTuning,
-    applyHueRemap,
-    kmeansRGB,
-    floydSteinbergQuantize
-  };
+export { applyAdjustments, applyColorTuning, applyHueRemap, kmeansRGB, floydSteinbergQuantize };
+export const pixelEditorUtils = {
+  applyAdjustments,
+  applyColorTuning,
+  applyHueRemap,
+  kmeansRGB,
+  floydSteinbergQuantize
+};
 
-})(window);
