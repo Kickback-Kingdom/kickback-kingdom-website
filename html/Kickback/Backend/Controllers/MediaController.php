@@ -255,6 +255,10 @@ class MediaController {
             return new Response(false, 'Missing OpenAI API key.', null);
         }
 
+        if (!class_exists('\\OpenAI')) {
+            return new Response(false, 'OpenAI client library not installed.', null);
+        }
+
         try {
             $client = \OpenAI::client($apiKey);
             $result = $client->images()->create([
