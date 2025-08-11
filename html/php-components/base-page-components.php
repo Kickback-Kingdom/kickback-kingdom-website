@@ -283,16 +283,18 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                 <div class="wizard-step" id="mediaUploadStep-3">
                     <h1 class="display-6 mb-3">Step 3 - Pixelize Image</h1>
                     <div id="pixelEditor" class="row mb-3">
-                        <div class="col-md-4" style="height:400px;">
-                            <div class="d-flex h-100">
-                                <div class="nav flex-column nav-pills me-2" id="pixelEditorTabs" role="tablist" aria-orientation="vertical">
-                                    <button class="nav-link active" id="pixelTabPixelation" data-bs-toggle="pill" data-bs-target="#pixelPanePixelation" type="button" role="tab" aria-controls="pixelPanePixelation" aria-selected="true" title="Pixelation"><i class="fa-solid fa-border-all"></i></button>
-                                    <button class="nav-link" id="pixelTabAdjust" data-bs-toggle="pill" data-bs-target="#pixelPaneAdjust" type="button" role="tab" aria-controls="pixelPaneAdjust" aria-selected="false" title="Adjustments"><i class="fa-solid fa-sliders"></i></button>
-                                    <button class="nav-link" id="pixelTabGlow" data-bs-toggle="pill" data-bs-target="#pixelPaneGlow" type="button" role="tab" aria-controls="pixelPaneGlow" aria-selected="false" title="Bloom &amp; Glow"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
-                                    <button class="nav-link" id="pixelTabTune" data-bs-toggle="pill" data-bs-target="#pixelPaneTune" type="button" role="tab" aria-controls="pixelPaneTune" aria-selected="false" title="Color Tuning"><i class="fa-solid fa-palette"></i></button>
-                                    <button class="nav-link" id="pixelTabHue" data-bs-toggle="pill" data-bs-target="#pixelPaneHue" type="button" role="tab" aria-controls="pixelPaneHue" aria-selected="false" title="Hue Remap"><i class="fa-solid fa-shuffle"></i></button>
-                                </div>
-                                <div class="tab-content flex-grow-1 overflow-auto" id="pixelEditorTabContent">
+                        <div class="col-12 col-lg-3 mb-3 mb-lg-0">
+                            <button class="btn btn-secondary d-lg-none w-100 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#pixelEditorSidebar" aria-controls="pixelEditorSidebar">Editor Controls</button>
+                            <div id="pixelEditorSidebar" class="collapse d-lg-block">
+                                <div class="d-flex flex-column h-100">
+                                    <div class="nav nav-pills mb-2" id="pixelEditorTabs" role="tablist">
+                                        <button class="nav-link active" id="pixelTabPixelation" data-bs-toggle="pill" data-bs-target="#pixelPanePixelation" type="button" role="tab" aria-controls="pixelPanePixelation" aria-selected="true" title="Pixelation"><i class="fa-solid fa-border-all"></i></button>
+                                        <button class="nav-link" id="pixelTabAdjust" data-bs-toggle="pill" data-bs-target="#pixelPaneAdjust" type="button" role="tab" aria-controls="pixelPaneAdjust" aria-selected="false" title="Adjustments"><i class="fa-solid fa-sliders"></i></button>
+                                        <button class="nav-link" id="pixelTabGlow" data-bs-toggle="pill" data-bs-target="#pixelPaneGlow" type="button" role="tab" aria-controls="pixelPaneGlow" aria-selected="false" title="Bloom &amp; Glow"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+                                        <button class="nav-link" id="pixelTabTune" data-bs-toggle="pill" data-bs-target="#pixelPaneTune" type="button" role="tab" aria-controls="pixelPaneTune" aria-selected="false" title="Color Tuning"><i class="fa-solid fa-palette"></i></button>
+                                        <button class="nav-link" id="pixelTabHue" data-bs-toggle="pill" data-bs-target="#pixelPaneHue" type="button" role="tab" aria-controls="pixelPaneHue" aria-selected="false" title="Hue Remap"><i class="fa-solid fa-shuffle"></i></button>
+                                    </div>
+                                    <div class="tab-content flex-grow-1 overflow-auto" id="pixelEditorTabContent">
                                     <div class="tab-pane fade show active" id="pixelPanePixelation" role="tabpanel" aria-labelledby="pixelTabPixelation">
                                         <div class="mb-2">
                                             <label class="form-label">Pixel width</label>
@@ -517,15 +519,16 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                             <input type="range" class="form-range" data-map-m-str min="0" max="100" value="100">
                                         </div>
                                     </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-8">
+                        <div class="col-12 col-lg-9 d-flex flex-column">
                             <div class="mb-2 d-flex justify-content-between">
                                 <span class="text-muted">Pixelated size: <span data-pix-meta>—</span></span>
                                 <span class="text-muted" data-status></span>
                             </div>
-                            <div data-viewport style="position:relative; overflow:auto; width:100%; height:400px; border:1px solid #dee2e6; border-radius:0.25rem;">
+                            <div data-viewport class="flex-grow-1" style="position:relative; overflow:auto; width:100%; border:1px solid #dee2e6; border-radius:0.25rem;">
                                 <div data-wrap style="position:relative; width:max-content; height:max-content; transform-origin:top left;">
                                     <canvas id="pixelCanvas" style="image-rendering:pixelated;"></canvas>
                                 </div>
