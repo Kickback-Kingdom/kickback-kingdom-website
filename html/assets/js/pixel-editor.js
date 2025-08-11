@@ -136,12 +136,16 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         const r=d[i], g=d[i+1], bl=d[i+2];
         const hsl=rgbToHsl(r,g,bl);
         const b=nearestBucket(hsl.h);
-        if(b!==bandKey || hsl.l<=threshold){ d[i]=d[i+1]=d[i+2]=0; continue; }
-        const eff=strength;
+        let weight=0;
+        if(b===bandKey){
+          weight=Math.min(1, Math.max(0, (hsl.l - threshold) / (1 - threshold)));
+        }
+        if(weight<=0){ d[i]=d[i+1]=d[i+2]=0; continue; }
+        const eff=strength*weight;
         const newL=Math.min(1, hsl.l+eff);
         const newS=Math.min(1, hsl.s+eff);
         const rgb=hslToRgb(hsl.h,newS,newL);
-        d[i]=rgb.r; d[i+1]=rgb.g; d[i+2]=rgb.b;
+        d[i]=rgb.r*weight; d[i+1]=rgb.g*weight; d[i+2]=rgb.b*weight;
       }
       octx.putImageData(img,0,0);
       ctx.save();
@@ -173,7 +177,8 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     for(let i=0;i<d.length;i+=4){
       const r=d[i], g=d[i+1], b=d[i+2];
       const lum=0.2126*r + 0.7152*g + 0.0722*b;
-      if(lum<threshold){ d[i]=d[i+1]=d[i+2]=0; }
+      const weight=Math.min(1, Math.max(0, (lum - threshold) / (255 - threshold)));
+      d[i]=r*weight; d[i+1]=g*weight; d[i+2]=b*weight;
     }
     octx.putImageData(img,0,0);
     ctx.save();
