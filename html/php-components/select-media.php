@@ -163,6 +163,19 @@ function UpdateMediaUploadModal()
 
         $("#mediaUploadButtonPrev").html("Back");
         $("#mediaUploadButtonNext").html("Crop");
+
+        const uploadPreview = document.getElementById('imageUploadPreview');
+        if (uploadPreview && uploadPreview.src)
+        {
+            if (uploadPreview.complete)
+            {
+                InitCropper();
+            }
+            else
+            {
+                uploadPreview.addEventListener('load', InitCropper, { once: true });
+            }
+        }
     }
 
     if (mediaUploadStep == 3)
@@ -379,6 +392,48 @@ function OnUploadFileChanged(input)
         }
         
         reader.readAsDataURL(file);
+    }
+}
+
+async function GenerateImageFromPrompt()
+{
+    pixelEditorSettings = null;
+    lastPixelEditorSrc = '';
+    croppedImageData = '';
+    pixelatedImageData = '';
+
+    ShowLoadingBar();
+
+    const prompt = document.getElementById('imagePrompt');
+    const img = document.getElementById('imageUploadPreview');
+
+    const params = new URLSearchParams();
+    if (prompt)
+    {
+        params.append('prompt', prompt.value);
+    }
+    params.append('sessionToken', "<?php echo $_SESSION["sessionToken"]; ?>");
+
+    try
+    {
+        const response = await fetch('/api/v1/media/generate.php',
+        {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params
+        });
+        const data = await response.json();
+
+        img.onload = function() { InitCropper(); };
+        img.src = data.imgBase64;
+    }
+    catch (error)
+    {
+        console.error('Error generating image:', error);
+    }
+    finally
+    {
+        HideLoadingBar();
     }
 }
 
@@ -611,6 +666,7 @@ window.GetAspectRatio = GetAspectRatio;
 window.InitCropper = InitCropper;
 window.OnPhotoUsageChanged = OnPhotoUsageChanged;
 window.OnUploadFileChanged = OnUploadFileChanged;
+window.GenerateImageFromPrompt = GenerateImageFromPrompt;
 window.UploadImageData = UploadImageData;
 window.ReopenSelectMediaModal = ReopenSelectMediaModal;
 window.OpenSelectMediaModal = OpenSelectMediaModal;
