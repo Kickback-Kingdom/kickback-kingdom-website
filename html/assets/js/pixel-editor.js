@@ -137,7 +137,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         const hsl=rgbToHsl(r,g,bl);
         const b=nearestBucket(hsl.h);
         if(b!==bandKey || hsl.l<=threshold){ d[i]=d[i+1]=d[i+2]=0; continue; }
-        const eff=strength*strength;
+        const eff=strength;
         const newL=Math.min(1, hsl.l+eff);
         const newS=Math.min(1, hsl.s+eff);
         const rgb=hslToRgb(hsl.h,newS,newL);
@@ -147,6 +147,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       ctx.save();
       if(range>0) ctx.filter=`blur(${range}px)`;
       ctx.globalCompositeOperation='lighter';
+      ctx.globalAlpha=Math.min(1, strength);
       ctx.drawImage(off,0,0);
       ctx.restore();
     }
