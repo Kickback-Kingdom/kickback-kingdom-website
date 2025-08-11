@@ -813,7 +813,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         }
       }
 
-      return {
+      const api = {
         render,
         setImage: (image)=>{ img=image; collectSettings(); render(); },
         destroy,
@@ -824,6 +824,9 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         updateLayer,
         setLayerEnabled
       };
+      // Expose the editor instance globally so other scripts can access it
+      window.pixelEditor = api;
+      return api;
     }
 
 export { applyAdjustments, applyColorTuning, applyHueRemap, applyColorGlow, applyBloom, kmeansRGB, floydSteinbergQuantize };
