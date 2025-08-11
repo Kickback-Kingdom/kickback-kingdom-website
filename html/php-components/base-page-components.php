@@ -346,12 +346,28 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                             <input type="range" class="form-range" data-bloom min="0" max="100" value="0">
                                         </div>
                                         <div class="mb-2">
-                                            <label class="form-label">Glow Strength</label>
-                                            <input type="range" class="form-range" data-glow-strength min="0" max="100" value="0">
+                                            <label class="form-label">Reds Glow</label>
+                                            <input type="range" class="form-range" data-glow-r min="0" max="100" value="0">
                                         </div>
                                         <div class="mb-2">
-                                            <label class="form-label">Glow Hue</label>
-                                            <input type="range" class="form-range" data-glow-hue min="0" max="360" value="0">
+                                            <label class="form-label">Yellows Glow</label>
+                                            <input type="range" class="form-range" data-glow-y min="0" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Greens Glow</label>
+                                            <input type="range" class="form-range" data-glow-g min="0" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Cyans Glow</label>
+                                            <input type="range" class="form-range" data-glow-c min="0" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Blues Glow</label>
+                                            <input type="range" class="form-range" data-glow-b min="0" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Magentas Glow</label>
+                                            <input type="range" class="form-range" data-glow-m min="0" max="100" value="0">
                                         </div>
                                     </div>
                                     <div class="tab-pane fade" id="pixelPaneTune" role="tabpanel" aria-labelledby="pixelTabTune">

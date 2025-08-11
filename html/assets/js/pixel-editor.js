@@ -111,16 +111,16 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     ctx.putImageData(img,0,0);
   }
 
-  function applyColorGlow(ctx, w, h, hue, strength, threshold=0.6){
-    if(strength<=0) return;
+  function applyColorGlow(ctx, w, h, glows, threshold=0.6){
+    if(!glows || !Object.values(glows).some(v=>v>0)) return;
     const img = ctx.getImageData(0,0,w,h);
     const d = img.data;
     for(let i=0;i<d.length;i+=4){
       const r=d[i], g=d[i+1], bl=d[i+2];
       const hsl=rgbToHsl(r,g,bl);
-      let dh=Math.abs(hsl.h-hue);
-      dh = dh>180?360-dh:dh;
-      if(dh<10 && hsl.l>threshold){
+      const band=nearestBucket(hsl.h);
+      const strength=glows[band]||0;
+      if(strength>0 && hsl.l>threshold){
         const newL=Math.min(1, hsl.l+strength);
         const newS=Math.min(1, hsl.s+strength);
         const rgb=hslToRgb(hsl.h,newS,newL);
@@ -230,8 +230,12 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     const con = container.querySelector('[data-contrast]');
     const sat = container.querySelector('[data-saturation]');
     const bloom = container.querySelector('[data-bloom]');
-    const glowStrength = container.querySelector('[data-glow-strength]');
-    const glowHue = container.querySelector('[data-glow-hue]');
+    const gR = container.querySelector('[data-glow-r]');
+    const gY = container.querySelector('[data-glow-y]');
+    const gG = container.querySelector('[data-glow-g]');
+    const gC = container.querySelector('[data-glow-c]');
+    const gB = container.querySelector('[data-glow-b]');
+    const gM = container.querySelector('[data-glow-m]');
     const enableTune = container.querySelector('[data-enable-tune]');
     const tR = container.querySelector('[data-tune-red]');
     const tY = container.querySelector('[data-tune-yellow]');
@@ -271,8 +275,14 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     if(con && opts.contrast !== undefined) con.value = opts.contrast;
     if(sat && opts.saturation !== undefined) sat.value = opts.saturation;
     if(bloom && opts.bloom !== undefined) bloom.value = opts.bloom;
-    if(glowStrength && opts.glowStrength !== undefined) glowStrength.value = opts.glowStrength;
-    if(glowHue && opts.glowHue !== undefined) glowHue.value = opts.glowHue;
+    if(opts.glow){
+      if(gR) gR.value = opts.glow.R;
+      if(gY) gY.value = opts.glow.Y;
+      if(gG) gG.value = opts.glow.G;
+      if(gC) gC.value = opts.glow.C;
+      if(gB) gB.value = opts.glow.B;
+      if(gM) gM.value = opts.glow.M;
+    }
     if(enableTune && opts.enableTune !== undefined) enableTune.checked = opts.enableTune;
     if(opts.tune){
       if(tR) tR.value = opts.tune.R;
@@ -308,8 +318,14 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         contrast: Number(con?.value||0),
         saturation: Number(sat?.value||100),
         bloom: Number(bloom?.value||0),
-        glowStrength: Number(glowStrength?.value||0),
-        glowHue: Number(glowHue?.value||0),
+        glow:{
+          R:Number(gR?.value||0),
+          Y:Number(gY?.value||0),
+          G:Number(gG?.value||0),
+          C:Number(gC?.value||0),
+          B:Number(gB?.value||0),
+          M:Number(gM?.value||0)
+        },
         enableTune: enableTune?.checked||false,
         tune:{
           R:Number(tR?.value||0),
@@ -448,7 +464,15 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         applyHueRemap(sctx,targetW,targetH,mapping,globalStrength);
       }
 
-      applyColorGlow(sctx, targetW, targetH, Number(glowHue?.value||0), Number(glowStrength?.value||0)/100);
+      const glowMap={
+        R:Number(gR?.value||0)/100,
+        Y:Number(gY?.value||0)/100,
+        G:Number(gG?.value||0)/100,
+        C:Number(gC?.value||0)/100,
+        B:Number(gB?.value||0)/100,
+        M:Number(gM?.value||0)/100,
+      };
+      applyColorGlow(sctx, targetW, targetH, glowMap);
 
       applyBloom(sctx, targetW, targetH, Number(bloom?.value||0));
 
@@ -471,7 +495,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     function onInput(){ collectSettings(); maybeRender(); }
     function onChange(){ collectSettings(); maybeRender(); }
 
-    [pixelWidth, method, paletteSize, bri, con, sat, bloom, glowStrength, glowHue, tR, tY, tG, tC, tB, tM, remapStrength, mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=>{ listen(el,'input', onInput); });
+    [pixelWidth, method, paletteSize, bri, con, sat, bloom, gR, gY, gG, gC, gB, gM, tR, tY, tG, tC, tB, tM, remapStrength, mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=>{ listen(el,'input', onInput); });
     [ditherCk, enableTune, enableRemap, mapR, mapY, mapG, mapC, mapB, mapM, autoRenderCk].forEach(el=>{ listen(el,'change', onChange); });
 
     const onRenderClick = ()=>{ collectSettings(); render(); };
@@ -488,8 +512,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       if(con) con.value=0;
       if(sat) sat.value=100;
       if(bloom) bloom.value=0;
-      if(glowStrength) glowStrength.value=0;
-      if(glowHue) glowHue.value=0;
+      [gR,gY,gG,gC,gB,gM].forEach(el=>{ if(el) el.value=0; });
       if(enableTune) enableTune.checked=false;
       if(tR) tR.value=0; if(tY) tY.value=0; if(tG) tG.value=0; if(tC) tC.value=0; if(tB) tB.value=0; if(tM) tM.value=0;
       if(enableRemap) enableRemap.checked=false;
