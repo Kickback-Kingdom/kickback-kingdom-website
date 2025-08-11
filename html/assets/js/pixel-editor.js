@@ -598,50 +598,58 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         }
       }
 
-      const adj = readAdjustments();
-      upsert('adjustments', adj);
-
-      const tune = readTuneSettings();
-      upsert('tune', tune.enableTune ? tune.tune : null);
-
-      const remap = readRemapSettings();
-      if(remap.enableRemap){
-        const mapping={
-          R:{t:parseInt(remap.map.R,10),s:remap.mapStr.R/100},
-          Y:{t:parseInt(remap.map.Y,10),s:remap.mapStr.Y/100},
-          G:{t:parseInt(remap.map.G,10),s:remap.mapStr.G/100},
-          C:{t:parseInt(remap.map.C,10),s:remap.mapStr.C/100},
-          B:{t:parseInt(remap.map.B,10),s:remap.mapStr.B/100},
-          M:{t:parseInt(remap.map.M,10),s:remap.mapStr.M/100},
-        };
-        const globalStrength=remap.remapStrength/100;
-        upsert('remap', {mapping, globalStrength});
-      } else {
-        upsert('remap', null);
+      if(bri || con || sat){
+        const adj = readAdjustments();
+        upsert('adjustments', adj);
       }
 
-      const glow = readGlowSettings();
-      if(glow.enableGlow){
-        const glowMap={
-          R:{s:glow.glow.R.strength/100, r:glow.glow.R.range},
-          Y:{s:glow.glow.Y.strength/100, r:glow.glow.Y.range},
-          G:{s:glow.glow.G.strength/100, r:glow.glow.G.range},
-          C:{s:glow.glow.C.strength/100, r:glow.glow.C.range},
-          B:{s:glow.glow.B.strength/100, r:glow.glow.B.range},
-          M:{s:glow.glow.M.strength/100, r:glow.glow.M.range},
-        };
-        const glowThreshVal = glow.glowThreshold/100;
-        const glowGlobalVal = glow.glow.global/100;
-        upsert('colorGlow', {glowMap, threshold:glowThreshVal, global:glowGlobalVal});
-        const bloomOpts = {
-          threshold: glow.bloomThreshold,
-          blur: glow.bloomBlur,
-          alpha: glow.bloomAlpha/100
-        };
-        upsert('bloom', bloomOpts);
-      } else {
-        upsert('colorGlow', null);
-        upsert('bloom', null);
+      if(enableTune || tR || tY || tG || tC || tB || tM){
+        const tune = readTuneSettings();
+        upsert('tune', tune.enableTune ? tune.tune : null);
+      }
+
+      if(enableRemap || remapStrength || mapR || mapY || mapG || mapC || mapB || mapM){
+        const remap = readRemapSettings();
+        if(remap.enableRemap){
+          const mapping={
+            R:{t:parseInt(remap.map.R,10),s:remap.mapStr.R/100},
+            Y:{t:parseInt(remap.map.Y,10),s:remap.mapStr.Y/100},
+            G:{t:parseInt(remap.map.G,10),s:remap.mapStr.G/100},
+            C:{t:parseInt(remap.map.C,10),s:remap.mapStr.C/100},
+            B:{t:parseInt(remap.map.B,10),s:remap.mapStr.B/100},
+            M:{t:parseInt(remap.map.M,10),s:remap.mapStr.M/100},
+          };
+          const globalStrength=remap.remapStrength/100;
+          upsert('remap', {mapping, globalStrength});
+        } else {
+          upsert('remap', null);
+        }
+      }
+
+      if(enableGlow || glowThreshold || bloomAlpha || bloomBlur || bloomThreshold || gAll || gR || gY || gG || gC || gB || gM){
+        const glow = readGlowSettings();
+        if(glow.enableGlow){
+          const glowMap={
+            R:{s:glow.glow.R.strength/100, r:glow.glow.R.range},
+            Y:{s:glow.glow.Y.strength/100, r:glow.glow.Y.range},
+            G:{s:glow.glow.G.strength/100, r:glow.glow.G.range},
+            C:{s:glow.glow.C.strength/100, r:glow.glow.C.range},
+            B:{s:glow.glow.B.strength/100, r:glow.glow.B.range},
+            M:{s:glow.glow.M.strength/100, r:glow.glow.M.range},
+          };
+          const glowThreshVal = glow.glowThreshold/100;
+          const glowGlobalVal = glow.glow.global/100;
+          upsert('colorGlow', {glowMap, threshold:glowThreshVal, global:glowGlobalVal});
+          const bloomOpts = {
+            threshold: glow.bloomThreshold,
+            blur: glow.bloomBlur,
+            alpha: glow.bloomAlpha/100
+          };
+          upsert('bloom', bloomOpts);
+        } else {
+          upsert('colorGlow', null);
+          upsert('bloom', null);
+        }
       }
 
       currentSettings = { baseSettings, layers: layers.map(l=>({type:l.type, options:{...l.options}})) };
@@ -785,6 +793,14 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         }
       }
 
+      function updateLayer(index, options){
+        if(index>=0 && index<layers.length){
+          layers[index].options = options;
+          collectSettings();
+          maybeRender();
+        }
+      }
+
       return {
         render,
         setImage: (image)=>{ img=image; collectSettings(); render(); },
@@ -792,7 +808,8 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         getSettings: () => { collectSettings(); return currentSettings; },
         addLayer,
         removeLayer,
-        moveLayer
+        moveLayer,
+        updateLayer
       };
     }
 

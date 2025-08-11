@@ -385,6 +385,9 @@ function UpdateMediaUploadModal()
 
         const initializeEditor = () => {
             pixelEditor = initPixelEditor(container, source, pixelEditorSettings);
+            if (typeof setupPixelLayerUI === 'function') {
+                setupPixelLayerUI();
+            }
         };
 
         if (source.complete) {
