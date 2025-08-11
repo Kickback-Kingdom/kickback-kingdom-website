@@ -184,10 +184,15 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     ctx.restore();
   }
 
-  function kmeansRGB(rgba, count, k){
+  function kmeansRGB(rgba, count, k, seed=0){
     const pts=new Array(count);
     for(let i=0;i<count;i++){ const j=i*4; pts[i]=[rgba[j],rgba[j+1],rgba[j+2]]; }
-    const cents=[]; const rand=m=>Math.floor(Math.random()*m);
+    let s=seed>>>0;
+    const rand=m=>{
+      s=(s*1664525+1013904223)>>>0;
+      return s% m;
+    };
+    const cents=[];
     cents.push(pts[rand(count)]);
     while(cents.length<k){
       let farI=0,farV=-1;

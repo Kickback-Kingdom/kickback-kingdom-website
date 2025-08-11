@@ -530,7 +530,6 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                             </div>
                                         </template>
                                     </div>
-                                    <div id="pixelLayerTabPanes"></div>
                                 </div>
                             </div>
                         </div>
@@ -561,7 +560,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                     const addSelect = container.querySelector('[data-add-layer-select]');
                     const addBtn = container.querySelector('[data-add-layer-btn]');
                     const layerTabs = container.querySelector('#pixelLayerTabs');
-                    const layerTabContent = container.querySelector('#pixelLayerTabPanes');
+                    const layerTabContent = container.querySelector('#pixelEditorTabContent');
                     const remapBands=['— keep —','Red','Yellow','Green','Cyan','Blue','Magenta'];
 
                     function updateOption(index,key,el){
@@ -656,6 +655,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         pane.id=paneId;
                         pane.role='tabpanel';
                         pane.setAttribute('aria-labelledby',tabId);
+                        pane.setAttribute('data-layer-pane','');
                         pane.appendChild(frag);
                         return pane;
                     }
@@ -667,7 +667,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         }
                         listEl.innerHTML='';
                         layerTabs.innerHTML='';
-                        layerTabContent.innerHTML='';
+                        layerTabContent.querySelectorAll('[data-layer-pane]').forEach(el=>el.remove());
                         const layers=window.pixelEditor.getSettings().layers || [];
                         layers.forEach((layer,i)=>{
                             const li=document.createElement('li');
