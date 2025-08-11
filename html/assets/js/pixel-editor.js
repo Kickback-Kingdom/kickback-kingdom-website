@@ -170,6 +170,13 @@
     }
   }
 
+  /**
+   * Initialize the pixel editor UI within the given container.
+   *
+   * The returned object exposes a `destroy()` function that must be
+   * called when the editor is no longer needed so that all event
+   * listeners are removed and memory can be reclaimed.
+   */
   function initPixelEditor(container, sourceImage, settings){
     const pixelWidth = container.querySelector('[data-pixel-width]');
     const method = container.querySelector('[data-method]');
@@ -279,8 +286,18 @@
     function status(msg){ if(statusEl) statusEl.textContent = msg; }
     function setZoom(z){ zoom=Math.max(0.1,z); if(wrap) wrap.style.transform=`scale(${zoom})`; }
     function fitToViewport(){ if(!canvas.width||!canvas.height||!viewport) return; const availW=viewport.clientWidth-16; const availH=viewport.clientHeight-16; const fit=Math.min(availW/canvas.width, availH/canvas.height); setZoom(fit); }
-    window.addEventListener('resize', ()=>{ if(autoFitCk?.checked) fitToViewport(); });
-    autoFitCk?.addEventListener('change', ()=>{ if(autoFitCk.checked) fitToViewport(); onChange(); });
+
+    const listeners=[];
+    function listen(target, event, handler, options){
+      if(!target) return;
+      target.addEventListener(event, handler, options);
+      listeners.push({target, event, handler, options});
+    }
+
+    const onResize = ()=>{ if(autoFitCk?.checked) fitToViewport(); };
+    listen(window, 'resize', onResize);
+    const onAutoFitChange = ()=>{ if(autoFitCk.checked) fitToViewport(); onChange(); };
+    listen(autoFitCk, 'change', onAutoFitChange);
 
     function render(){
       if(!img) return;
@@ -388,12 +405,13 @@
     function onInput(){ collectSettings(); maybeRender(); }
     function onChange(){ collectSettings(); maybeRender(); }
 
-    [pixelWidth, method, paletteSize, bri, con, sat, tR, tY, tG, tC, tB, tM, remapStrength, mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=>{ if(el) el.addEventListener('input', onInput); });
-    [ditherCk, enableTune, enableRemap, mapR, mapY, mapG, mapC, mapB, mapM, autoRenderCk].forEach(el=>{ if(el) el.addEventListener('change', onChange); });
+    [pixelWidth, method, paletteSize, bri, con, sat, tR, tY, tG, tC, tB, tM, remapStrength, mapRStr, mapYStr, mapGStr, mapCStr, mapBStr, mapMStr].forEach(el=>{ listen(el,'input', onInput); });
+    [ditherCk, enableTune, enableRemap, mapR, mapY, mapG, mapC, mapB, mapM, autoRenderCk].forEach(el=>{ listen(el,'change', onChange); });
 
-    renderBtn?.addEventListener('click', ()=>{ collectSettings(); render(); });
+    const onRenderClick = ()=>{ collectSettings(); render(); };
+    listen(renderBtn,'click', onRenderClick);
 
-    resetBtn?.addEventListener('click', ()=>{
+    const onResetClick = ()=>{
       if(pixelWidth) pixelWidth.value=64;
       if(method) method.value='neighbor';
       if(paletteSize) paletteSize.value=16;
@@ -412,7 +430,8 @@
       status('Settings reset.');
       collectSettings();
       render();
-    });
+    };
+    listen(resetBtn,'click', onResetClick);
 
     const remapBands=['— keep —','Red','Yellow','Green','Cyan','Blue','Magenta'];
     function buildOptions(sel){ sel.innerHTML=''; remapBands.forEach((name,i)=>{ const opt=document.createElement('option'); opt.textContent=name; opt.value=String(i); sel.appendChild(opt); }); sel.value='0'; }
@@ -438,7 +457,17 @@
     collectSettings();
     render();
 
-    return { render, setImage: (image)=>{ img=image; collectSettings(); render(); } };
+    function destroy(){
+      listeners.forEach(({target,event,handler,options})=>{
+        target.removeEventListener(event, handler, options);
+      });
+    }
+
+    return {
+      render,
+      setImage: (image)=>{ img=image; collectSettings(); render(); },
+      destroy
+    };
   }
 
   global.initPixelEditor = initPixelEditor;

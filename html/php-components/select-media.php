@@ -136,6 +136,8 @@ function UpdateMediaUploadModal()
         lastPixelEditorSrc = currentSrc;
 
         if (pixelEditor) {
+            // Clean up listeners from previous editor instance
+            pixelEditor.destroy();
             const newContainer = container.cloneNode(true);
             container.parentNode.replaceChild(newContainer, container);
             container = newContainer;
@@ -173,6 +175,11 @@ function ResetMediaUploadWizardStep2()
 {
     if (cropper) {
         cropper.destroy();
+    }
+    if (pixelEditor) {
+        // Ensure any event listeners from the editor are removed
+        pixelEditor.destroy();
+        pixelEditor = null;
     }
 
     $("#mediaUploadUsageSelect").val("-1");
