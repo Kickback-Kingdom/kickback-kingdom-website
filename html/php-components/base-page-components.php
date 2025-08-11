@@ -181,13 +181,35 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             <div class="input-group mb-3">
                                 <label class="input-group-text" for="inputMediaUploadPhoto"><i class="fa-solid fa-cloud-arrow-up"></i></label>
                                 <input type="file" class="form-control" id="inputMediaUploadPhoto" onchange="OnUploadFileChanged(this)">
-                                <button class="btn btn-secondary" type="button" onclick="PromptGenerateWithAI()">Generate with AI</button>
+                                <button class="btn btn-secondary" type="button" id="btnGenerateWithAI" onclick="PromptGenerateWithAI()">Generate with AI</button>
                             </div>
                         </div>
                     </div>
-                    <div class="row d-none" id="aiPromptInfo">
+                    <div class="row d-none" id="aiPromptEditor">
                         <div class="col-12">
-                            <p class="mb-1"><strong>Prompt:</strong> <span id="aiPromptText"></span></p>
+                            <div class="mb-3">
+                                <label for="imagePromptTemplate" class="form-label">Prompt Template</label>
+                                <select id="imagePromptTemplate" class="form-select">
+                                    <option value="">Select a template...</option>
+                                    <option value="lich card art">lich card art</option>
+                                    <option value="dragon card art">dragon card art</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="imagePrompt" class="form-label">Prompt</label>
+                                <textarea id="imagePrompt" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="imageSize" class="form-label">Size</label>
+                                <select id="imageSize" class="form-select">
+                                    <option value="256x256">256x256</option>
+                                    <option value="512x512" selected>512x512</option>
+                                    <option value="1024x1024">1024x1024</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <button class="btn btn-primary" type="button" onclick="GenerateImageFromPrompt()">Generate</button>
+                            </div>
                             <div id="aiGenerateError" class="alert alert-danger mt-2 d-none" role="alert"></div>
                         </div>
                     </div>

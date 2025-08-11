@@ -46,20 +46,29 @@ var pixelatedImageData = '';
 let cropper;
 let pixelEditor;
 let mediaUploadStep = 1;
-function PromptGenerateWithAI()
-{
-    const promptText = window.prompt('Enter a prompt for the image');
-    if (promptText) {
-        const info = document.getElementById('aiPromptInfo');
-        const promptLabel = document.getElementById('aiPromptText');
-        const errEl = document.getElementById('aiGenerateError');
-        promptLabel.textContent = promptText;
-        info.classList.remove('d-none');
-        errEl.classList.add('d-none');
-        errEl.textContent = '';
-        GeneratePromptImage(promptText);
+
+function PromptGenerateWithAI() {
+    const editor = document.getElementById('aiPromptEditor');
+    const btn = document.getElementById('btnGenerateWithAI');
+    if (editor) {
+        editor.classList.remove('d-none');
+    }
+    if (btn) {
+        btn.classList.add('d-none');
     }
 }
+
+window.addEventListener('DOMContentLoaded', () => {
+    const templateSelect = document.getElementById('imagePromptTemplate');
+    if (templateSelect) {
+        templateSelect.addEventListener('change', function() {
+            const textarea = document.getElementById('imagePrompt');
+            if (textarea) {
+                textarea.value = this.value;
+            }
+        });
+    }
+});
 
 function GeneratePromptImage(prompt)
 {
@@ -74,6 +83,7 @@ function GeneratePromptImage(prompt)
     const nameEl = document.getElementById('mediaUploadImageNameTextbox');
     const descEl = document.getElementById('mediaUploadImageDescTextbox');
     const promptEl = document.getElementById('imagePrompt');
+    const sizeEl = document.getElementById('imageSize');
     const sessionToken = "<?php echo $_SESSION["sessionToken"]; ?>";
 
     const formData = new URLSearchParams();
@@ -84,6 +94,7 @@ function GeneratePromptImage(prompt)
     if (directoryEl) { formData.append('directory', directoryEl.value); }
     if (nameEl) { formData.append('name', nameEl.value); }
     if (descEl) { formData.append('desc', descEl.value); }
+    if (sizeEl) { formData.append('size', sizeEl.value); }
     formData.append('sessionToken', sessionToken);
 
     fetch('/api/v1/media/generate.php', {
