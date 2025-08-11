@@ -68,6 +68,40 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    const modelSelect = document.getElementById('imageModel');
+    const sizeSelect = document.getElementById('imageSize');
+    if (modelSelect && sizeSelect) {
+        const sizeOptions = {
+            'gpt-image-1': [
+                '1024x1024',
+                '1024x1536',
+                '1536x1024',
+                'auto'
+            ],
+            'dall-e-2': [
+                '1024x1024',
+                '512x512',
+                '256x256'
+            ]
+        };
+
+        const renderSizeOptions = (model) => {
+            sizeSelect.innerHTML = '';
+            (sizeOptions[model] || []).forEach(value => {
+                const opt = document.createElement('option');
+                opt.value = value;
+                opt.textContent = value;
+                sizeSelect.appendChild(opt);
+            });
+        };
+
+        modelSelect.addEventListener('change', () => {
+            renderSizeOptions(modelSelect.value);
+        });
+
+        renderSizeOptions(modelSelect.value);
+    }
 });
 
 function GeneratePromptImage(prompt)

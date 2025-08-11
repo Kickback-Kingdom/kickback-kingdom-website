@@ -261,6 +261,16 @@ class MediaController {
             return new Response(false, 'OpenAI client library not installed.', null);
         }
 
+        $allowedSizes = [
+            'gpt-image-1' => ['1024x1024', '1024x1536', '1536x1024', 'auto'],
+            'dall-e-2'   => ['256x256', '512x512', '1024x1024'],
+        ];
+
+        if (isset($allowedSizes[$model]) && !in_array($size, $allowedSizes[$model], true)) {
+            $supported = implode("', '", $allowedSizes[$model]);
+            return new Response(false, "Invalid value: '$size'. Supported values are: '$supported'.", null);
+        }
+
         try {
             $client = \OpenAI::client($apiKey);
             $result = $client->images()->create([
