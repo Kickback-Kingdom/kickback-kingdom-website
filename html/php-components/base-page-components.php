@@ -202,9 +202,10 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             <div class="mb-3">
                                 <label for="imageSize" class="form-label">Size</label>
                                 <select id="imageSize" class="form-select">
-                                    <option value="256x256">256x256</option>
-                                    <option value="512x512" selected>512x512</option>
-                                    <option value="1024x1024">1024x1024</option>
+                                    <option value="1024x1024" selected>1024x1024</option>
+                                    <option value="1024x1536">1024x1536</option>
+                                    <option value="1536x1024">1536x1024</option>
+                                    <option value="auto">auto</option>
                                 </select>
                             </div>
                             <div class="mb-3">
