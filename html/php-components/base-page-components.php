@@ -349,12 +349,20 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                             <label class="form-check-label" for="pixelEnableGlow">Enable bloom &amp; glow</label>
                                         </div>
                                         <div class="mb-2">
-                                            <label class="form-label">Bloom</label>
-                                            <input type="range" class="form-range" data-bloom min="0" max="100" value="0">
+                                            <label class="form-label">Glow Lightness Threshold</label>
+                                            <input type="range" class="form-range" data-glow-threshold min="0" max="100" value="60">
                                         </div>
                                         <div class="mb-2">
-                                            <label class="form-label">Bloom Range</label>
-                                            <input type="range" class="form-range" data-bloom-range min="0" max="50" value="0">
+                                            <label class="form-label">Bloom Alpha</label>
+                                            <input type="range" class="form-range" data-bloom-alpha min="0" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Bloom Blur</label>
+                                            <input type="range" class="form-range" data-bloom-blur min="0" max="50" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Bloom Threshold</label>
+                                            <input type="range" class="form-range" data-bloom-threshold min="0" max="255" value="200">
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Reds</label>
