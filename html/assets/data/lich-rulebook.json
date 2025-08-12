@@ -62,94 +62,87 @@
             ],
             "subsections": [
               {
-                "title": "Board Pieces",
-                "subsections": [
-                  {
-                    "title": "Source Stones",
-                    "rules": [
-                      { "rid": "BP-SRC-001", "text": "Source Stones are placed on the board before play.", "tags": ["source-stones", "setup"] },
-                      { "rid": "BP-SRC-002", "text": "When an Avatar occupies a Source Stone tile, its controller must draw 1 pure source if able.", "tags": ["source-stones", "draw"] },
-                      { "rid": "BP-SRC-003", "text": "Summons treat Source Stones as walls except for line of sight.", "tags": ["source-stones", "walls", "line-of-sight"] },
-                      { "rid": "BP-SRC-004", "text": "Source Stones do not impede line of sight.", "tags": ["source-stones", "line-of-sight"] }
-                    ]
-                  },
-                  {
-                    "title": "Walls",
-                    "rules": [
-                      { "rid": "BP-WAL-001", "text": "Avatars and Summons may not occupy wall tiles.", "tags": ["walls"] },
-                      { "rid": "BP-WAL-002", "text": "Walls block line of sight.", "tags": ["walls", "line-of-sight"] },
-                      { "rid": "BP-WAL-003", "text": "Walls are placed according to map setup before play.", "tags": ["walls", "setup"] }
-                    ]
-                  },
-                  {
-                    "title": "Avatars",
-                    "rules": [
-                      { "rid": "BP-AVA-001", "text": "Avatars represent their controller’s hero on the board.", "tags": ["avatars"] }
-                    ]
-                  },
-                  {
-                    "title": "Summon Pieces",
-                    "rules": [
-                      { "rid": "BP-SUM-001", "text": "Summon pieces come in pairs of matching design or color.", "tags": ["summons", "components"] },
-                      { "rid": "BP-SUM-002", "text": "One piece marks the summoned target on the board and the other marks its summoning card, linking them.", "tags": ["summons", "components"] }
-                    ]
-                  },
-                  {
-                    "title": "Surface Tiles",
-                    "rules": [
-                      { "rid": "BP-SFC-001", "text": "Surface tiles are placed on the board to represent the surface occupying that tile.", "tags": ["surfaces"] }
-                    ]
-                  }
+                "title": "Source Stones",
+                "rules": [
+                  { "rid": "BP-SRC-001", "text": "Source Stones are placed on the board before play.", "tags": ["source-stones", "setup"] },
+                  { "rid": "BP-SRC-002", "text": "When an Avatar occupies a Source Stone tile, its controller must draw 1 pure source if able.", "tags": ["source-stones", "draw"] },
+                  { "rid": "BP-SRC-003", "text": "Summons treat Source Stones as walls except for line of sight.", "tags": ["source-stones", "walls", "line-of-sight"] },
+                  { "rid": "BP-SRC-004", "text": "Source Stones do not impede line of sight.", "tags": ["source-stones", "line-of-sight"] }
                 ]
               },
               {
-                "title": "Fields & Zones",
-                "body": [
-                  "Each player has a field containing their cards and deck."
-                ],
-                "subsections": [
-                  {
-                    "title": "Action Zone",
-                    "rules": [
-                      { "rid": "FZ-ACT-001", "text": "The action zone consists of 5 action slots.", "tags": ["action-zone"] },
-                      { "rid": "FZ-ACT-002", "text": "Each slot may hold one action card.", "tags": ["action-zone"] },
-                      { "rid": "FZ-ACT-003", "text": "The action zone is public knowledge at all times.", "tags": ["action-zone", "public-info"] }
-                    ]
-                  },
-                  {
-                    "title": "Deck",
-                    "rules": [
-                      { "rid": "FZ-DECK-001", "text": "The deck is where cards are drawn from, especially at the end of each turn.", "tags": ["deck"] },
-                      { "rid": "FZ-DECK-002", "text": "The deck is kept face down and not freely searchable.", "tags": ["deck", "hidden-info"] }
-                    ]
-                  },
-                  {
-                    "title": "Purgatory",
-                    "rules": [
-                      { "rid": "FZ-PUR-001", "text": "Destroyed, discarded, or attrited cards go to the controller’s Purgatory.", "tags": ["purgatory"] },
-                      { "rid": "FZ-PUR-002", "text": "All purgatories are public knowledge at all times.", "tags": ["purgatory", "public-info"] }
-                    ]
-                  },
-                  {
-                    "title": "Abyss",
-                    "rules": [
-                      { "rid": "FZ-ABY-001", "text": "Damned or offered cards go to the controller’s Abyss.", "tags": ["abyss"] },
-                      { "rid": "FZ-ABY-002", "text": "All abysses are public knowledge at all times.", "tags": ["abyss", "public-info"] }
-                    ]
-                  },
-                  {
-                    "title": "Hero Zone",
-                    "rules": [
-                      { "rid": "FZ-HRZ-001", "text": "The Hero zone holds a player's Hero card.", "tags": ["hero-zone"] },
-                      { "rid": "FZ-HRZ-002", "text": "All Hero zones are public knowledge at all times.", "tags": ["hero-zone", "public-info"] }
-                    ]
-                  },
-                  {
-                    "title": "The Hand",
-                    "rules": [
-                      { "rid": "FZ-HAND-001", "text": "Each player’s hand is private to non‑teammates.", "tags": ["hand", "hidden-info"] }
-                    ]
-                  }
+                "title": "Walls",
+                "rules": [
+                  { "rid": "BP-WAL-001", "text": "Avatars and Summons may not occupy wall tiles.", "tags": ["walls"] },
+                  { "rid": "BP-WAL-002", "text": "Walls block line of sight.", "tags": ["walls", "line-of-sight"] },
+                  { "rid": "BP-WAL-003", "text": "Walls are placed according to map setup before play.", "tags": ["walls", "setup"] }
+                ]
+              },
+              {
+                "title": "Avatars",
+                "rules": [
+                  { "rid": "BP-AVA-001", "text": "Avatars represent their controller’s hero on the board.", "tags": ["avatars"] }
+                ]
+              },
+              {
+                "title": "Summon Pieces",
+                "rules": [
+                  { "rid": "BP-SUM-001", "text": "Summon pieces come in pairs of matching design or color.", "tags": ["summons", "components"] },
+                  { "rid": "BP-SUM-002", "text": "One piece marks the summoned target on the board and the other marks its summoning card, linking them.", "tags": ["summons", "components"] }
+                ]
+              },
+              {
+                "title": "Surface Tiles",
+                "rules": [
+                  { "rid": "BP-SFC-001", "text": "Surface tiles are placed on the board to represent the surface occupying that tile.", "tags": ["surfaces"] }
+                ]
+              },
+              {
+                "title": "Fields",
+                "rules": [
+                  { "rid": "FZ-FIELD-001", "text": "Each player has a field containing their cards and deck.", "tags": ["field"] }
+                ]
+              },
+              {
+                "title": "Action Zone",
+                "rules": [
+                  { "rid": "FZ-ACT-001", "text": "The action zone consists of 5 action slots.", "tags": ["action-zone"] },
+                  { "rid": "FZ-ACT-002", "text": "Each slot may hold one action card.", "tags": ["action-zone"] },
+                  { "rid": "FZ-ACT-003", "text": "The action zone is public knowledge at all times.", "tags": ["action-zone", "public-info"] }
+                ]
+              },
+              {
+                "title": "Deck",
+                "rules": [
+                  { "rid": "FZ-DECK-001", "text": "The deck is where cards are drawn from, especially at the end of each turn.", "tags": ["deck"] },
+                  { "rid": "FZ-DECK-002", "text": "The deck is kept face down and not freely searchable.", "tags": ["deck", "hidden-info"] }
+                ]
+              },
+              {
+                "title": "Purgatory",
+                "rules": [
+                  { "rid": "FZ-PUR-001", "text": "Destroyed, discarded, or attrited cards go to the controller’s Purgatory.", "tags": ["purgatory"] },
+                  { "rid": "FZ-PUR-002", "text": "All purgatories are public knowledge at all times.", "tags": ["purgatory", "public-info"] }
+                ]
+              },
+              {
+                "title": "Abyss",
+                "rules": [
+                  { "rid": "FZ-ABY-001", "text": "Damned or offered cards go to the controller’s Abyss.", "tags": ["abyss"] },
+                  { "rid": "FZ-ABY-002", "text": "All abysses are public knowledge at all times.", "tags": ["abyss", "public-info"] }
+                ]
+              },
+              {
+                "title": "Hero Zone",
+                "rules": [
+                  { "rid": "FZ-HRZ-001", "text": "The Hero zone holds a player's Hero card.", "tags": ["hero-zone"] },
+                  { "rid": "FZ-HRZ-002", "text": "All Hero zones are public knowledge at all times.", "tags": ["hero-zone", "public-info"] }
+                ]
+              },
+              {
+                "title": "The Hand",
+                "rules": [
+                  { "rid": "FZ-HAND-001", "text": "Each player’s hand is private to non‑teammates.", "tags": ["hand", "hidden-info"] }
                 ]
               }
             ],
@@ -209,14 +202,12 @@
                 "title": "Initial Hand Draw",
                 "rules": [
                   { "rid": "DRW-001", "text": "Initial hands are drawn after Avatars are placed.", "tags": ["initial-draw"] }
-                ],
-                "subsections": [
-                  {
-                    "title": "Mulligans",
-                    "rules": [
-                      { "rid": "MUL-001", "text": "Return your entire hand to your deck, redraw that many cards, then discard 1 card for each mulligan after the first.", "tags": ["mulligan"] }
-                    ]
-                  }
+                ]
+              },
+              {
+                "title": "Mulligans",
+                "rules": [
+                  { "rid": "MUL-001", "text": "Return your entire hand to your deck, redraw that many cards, then discard 1 card for each mulligan after the first.", "tags": ["mulligan"] }
                 ]
               },
               {
