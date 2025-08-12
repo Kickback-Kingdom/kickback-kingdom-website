@@ -31,7 +31,7 @@
 
 
 <script type="module">
-import { initPixelEditor, LAYER_DEFAULTS } from '/assets/js/pixel-editor.js';
+import { initPixelEditor, LAYER_DEFAULTS } from '/assets/js/pixel-editor/index.js';
 
 const promptTemplates = {
   "lich card art": (desc, scenery, faction) =>
