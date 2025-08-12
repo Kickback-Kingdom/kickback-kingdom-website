@@ -3,7 +3,7 @@
 export const LAYER_DEFAULTS = {
   adjustments: () => ({ brightness: 0, contrast: 0, saturation: 100 }),
   colorGlow: () => ({
-    threshold: 0,
+    threshold: 60,
     global: 100,
     glowMap: {
       R: { s: 0, r: 10 },
@@ -458,6 +458,22 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         if(gCRange) gCRange.value = glow.options.glowMap.C.r;
         if(gBRange) gBRange.value = glow.options.glowMap.B.r;
         if(gMRange) gMRange.value = glow.options.glowMap.M.r;
+      } else {
+        const d = LAYER_DEFAULTS.colorGlow();
+        if(glowThreshold) glowThreshold.value = settings?.glowThreshold ?? d.threshold;
+        if(gAll) gAll.value = settings?.glow?.global ?? d.global;
+        if(gR) gR.value = settings?.glow?.R?.strength ?? 0;
+        if(gY) gY.value = settings?.glow?.Y?.strength ?? 0;
+        if(gG) gG.value = settings?.glow?.G?.strength ?? 0;
+        if(gC) gC.value = settings?.glow?.C?.strength ?? 0;
+        if(gB) gB.value = settings?.glow?.B?.strength ?? 0;
+        if(gM) gM.value = settings?.glow?.M?.strength ?? 0;
+        if(gRRange) gRRange.value = settings?.glow?.R?.range ?? d.glowMap.R.r;
+        if(gYRange) gYRange.value = settings?.glow?.Y?.range ?? d.glowMap.Y.r;
+        if(gGRange) gGRange.value = settings?.glow?.G?.range ?? d.glowMap.G.r;
+        if(gCRange) gCRange.value = settings?.glow?.C?.range ?? d.glowMap.C.r;
+        if(gBRange) gBRange.value = settings?.glow?.B?.range ?? d.glowMap.B.r;
+        if(gMRange) gMRange.value = settings?.glow?.M?.range ?? d.glowMap.M.r;
       }
       const bloom = ls.find(l=>l.type==='bloom' && l.enabled!==false);
       if(bloom){
@@ -465,6 +481,11 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         if(bloomThreshold) bloomThreshold.value = bloom.options.threshold;
         if(bloomBlur) bloomBlur.value = bloom.options.blur;
         if(bloomAlpha) bloomAlpha.value = bloom.options.alpha;
+      } else {
+        const d = LAYER_DEFAULTS.bloom();
+        if(bloomThreshold) bloomThreshold.value = settings?.bloomThreshold ?? d.threshold;
+        if(bloomBlur) bloomBlur.value = settings?.bloomBlur ?? d.blur;
+        if(bloomAlpha) bloomAlpha.value = settings?.bloomAlpha ?? d.alpha;
       }
     }
 
