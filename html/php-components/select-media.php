@@ -56,11 +56,12 @@ var pixelEditorSettings = null;
 var lastPixelEditorSrc = '';
 var croppedImageData = '';
 var pixelatedImageData = '';
-<?php if(Kickback\Services\Session::isAdmin()) { ?>
+<?php if(Kickback\Services\Session::getCurrentAccount()->canUploadImages()) { ?>
 let cropper;
 let pixelEditor;
 let mediaUploadStep = 1;
 
+<?php if (Kickback\Services\Session::isAdmin()) { ?>
 function PromptGenerateWithAI() {
     const editor = document.getElementById('aiPromptEditor');
     const btn = document.getElementById('btnGenerateWithAI');
@@ -265,6 +266,9 @@ function GeneratePromptImage(prompt)
         console.error('Generation error', err);
     });
 }
+window.GenerateImageFromPrompt = GeneratePromptImage;
+window.PromptGenerateWithAI = PromptGenerateWithAI;
+<?php } ?>
 function OpenMediaUploadModal()
 {
     
@@ -801,7 +805,6 @@ window.GetAspectRatio = GetAspectRatio;
 window.InitCropper = InitCropper;
 window.OnPhotoUsageChanged = OnPhotoUsageChanged;
 window.OnUploadFileChanged = OnUploadFileChanged;
-window.GenerateImageFromPrompt = GeneratePromptImage;
 window.UploadImageData = UploadImageData;
 window.ReopenSelectMediaModal = ReopenSelectMediaModal;
 window.OpenSelectMediaModal = OpenSelectMediaModal;
@@ -814,6 +817,5 @@ window.AcceptSelectedMedia = AcceptSelectedMedia;
 window.AddSearchMediaResult = AddSearchMediaResult;
 window.generatePaginationSelectMedia = generatePaginationSelectMedia;
 window.onPaginationClickSelectMedia = onPaginationClickSelectMedia;
-window.PromptGenerateWithAI = PromptGenerateWithAI;
 
 </script>

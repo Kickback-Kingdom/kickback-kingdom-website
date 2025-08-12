@@ -133,7 +133,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
         <?php require(\Kickback\SCRIPT_ROOT . "/php-components/select-media.php"); ?>
       </div> 
       <div class="modal-footer">
-        <?php if(Kickback\Services\Session::isAdmin()) { ?><button type="button" class="btn btn-primary" onclick="OpenMediaUploadModal()">Upload Media</button><?php } ?>
+        <?php if(Kickback\Services\Session::getCurrentAccount()->canUploadImages()) { ?><button type="button" class="btn btn-primary" onclick="OpenMediaUploadModal()">Upload Media</button><?php } ?>
         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Back</button>
         <button type="button" class="btn bg-ranked-1" onclick="AcceptSelectedMedia()">Select</button>
       </div>
@@ -141,7 +141,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
   </div>
 </div>
 
-<?php if(Kickback\Services\Session::isAdmin()) { ?>
+<?php if(Kickback\Services\Session::getCurrentAccount()->canUploadImages()) { ?>
 <!--UPLOAD MEDIA-->
 <div class="modal fade" id="uploadMediaModal" tabindex="-1" aria-labelledby="uploadMediaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
