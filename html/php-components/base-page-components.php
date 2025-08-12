@@ -613,7 +613,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         window.pixelEditor.updateLayer(index,{...layer.options,mapping});
                     }
 
-                    function renderLayerPane(layer,index){
+                    function renderLayerPane(layer,index,friendlyNameMap){
                         let tplId='';
                         switch(layer.type){
                             case 'adjustments': tplId='tpl-layer-adjustments'; break;
@@ -672,6 +672,10 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         pane.role='tabpanel';
                         pane.setAttribute('aria-labelledby',tabId);
                         pane.setAttribute('data-layer-pane','');
+                        const header = document.createElement('h6');
+                        header.className = 'mb-2';
+                        header.textContent = friendlyNameMap[layer.type] || layer.type;
+                        pane.appendChild(header);
                         pane.appendChild(frag);
                         return pane;
                     }
@@ -683,6 +687,13 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             bloom:'fa-sun',
                             tune:'fa-wrench',
                             remap:'fa-arrows-rotate'
+                        };
+                        const friendlyNameMap = {
+                            adjustments: 'Adjustments',
+                            colorGlow: 'Glow',
+                            bloom: 'Bloom',
+                            tune: 'Tune',
+                            remap: 'Remap'
                         };
                         const currentActive=layerTabs.querySelector('.nav-link.active');
                         if(activeIndex===null && currentActive){
@@ -720,7 +731,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             layerTabs.appendChild(tab);
                             bootstrap.Tab.getOrCreateInstance(tab);
 
-                            const pane=renderLayerPane(layer,i);
+                            const pane=renderLayerPane(layer,i,friendlyNameMap);
                             layerTabContent.appendChild(pane);
                         });
                         if(activeIndex!==null && activeIndex>=0 && activeIndex<layers.length){
