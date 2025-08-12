@@ -255,93 +255,427 @@
               }
             ],
             "tags": ["los", "targeting"]
-          },
-          {
-            "id": "heroes",
-            "slug": "heroes",
-            "title": "Heroes",
-            "rules": [
-              { "rid": "HRO-INT", "text": "Intelligence: equals your max hand size and max LoS targeting range.", "tags": ["intelligence", "hand-size", "range"] },
-              { "rid": "HRO-HP", "text": "Health: if a Hero’s health is ≤ 0 at any time, that player loses and is removed from play.", "tags": ["health", "loss"] },
-              { "rid": "HRO-FX", "text": "Hero Effect: may be played any time unless otherwise stated, as written on the Hero card.", "tags": ["hero-effect"] },
-              { "rid": "HRO-DEATH", "text": "On a player’s death, all of their cards are immediately removed from play, even if controlled elsewhere.", "tags": ["death"] }
-            ],
-            "tags": ["heroes"]
           }
         ]
       },
-  
+
       {
-        "id": "cards",
-        "slug": "cards",
-        "title": "Cards & Effects",
+        "id": "heroes",
+        "slug": "heroes",
+        "title": "Heroes",
         "pages": [
           {
-            "id": "effects",
-            "slug": "effects",
-            "title": "Card Effects",
+            "id": "intelligence",
+            "slug": "intelligence",
+            "title": "Intelligence",
             "rules": [
-              { "rid": "FX-001", "text": "Card effects can override written rules. Effects use keywords (see Keywords).", "tags": ["effects", "keywords"] },
-              { "rid": "COST-001", "text": "Effect cost: all actions to the left of the colon must be paid before resolving the effect (e.g., “Pay 10 Health : Deal 10 damage to target”).", "tags": ["cost", "effects"] }
+              { "rid": "HRO-INT-001", "text": "A Hero's Intelligence is shown by the number in front of the brain symbol on the Hero card.", "tags": ["intelligence"] },
+              { "rid": "HRO-INT-002", "text": "Intelligence equals the player's max hand size.", "tags": ["intelligence", "hand-size"] },
+              { "rid": "HRO-INT-003", "text": "Intelligence is the player's max range for targeting in line of sight.", "tags": ["intelligence", "range"] }
             ],
-            "tags": ["effects", "costs"]
+            "tags": ["heroes", "intelligence"]
+          },
+          {
+            "id": "health",
+            "slug": "health",
+            "title": "Health",
+            "rules": [
+              { "rid": "HRO-HP-001", "text": "A Hero’s starting Health is the number in front of the heart symbol on the Hero card.", "tags": ["health"] },
+              { "rid": "HRO-HP-002", "text": "Health decreases when damage is dealt to the Hero's Avatar.", "tags": ["health", "damage"] },
+              { "rid": "HRO-HP-003", "text": "If a Hero’s Health is 0 or less, that player loses and is removed from play.", "tags": ["health", "loss"] }
+            ],
+            "tags": ["heroes", "health"]
+          },
+          {
+            "id": "hero-effect",
+            "slug": "hero-effect",
+            "title": "Hero Effect",
+            "body": [
+              "Heroes may have an accompanying effect which may be played at any time unless otherwise stated. Their effect is described on their Hero card."
+            ],
+            "tags": ["heroes"]
+          },
+          {
+            "id": "death",
+            "slug": "death",
+            "title": "Death",
+            "body": [
+              "If a player dies, all of their cards are removed from play immediately, even if they are in play by other players or elsewhere than their field."
+            ],
+            "tags": ["heroes", "death"]
+          }
+        ]
+      },
+
+      {
+        "id": "card-effects",
+        "slug": "card-effects",
+        "title": "Card Effects",
+        "pages": [
+          {
+            "id": "overview",
+            "slug": "overview",
+            "title": "Overview",
+            "rules": [
+              { "rid": "FX-001", "text": "Card effects can override written rules.", "tags": ["effects"] },
+              { "rid": "FX-002", "text": "Card effects describe additional ways cards can influence the game state.", "tags": ["effects"] },
+              { "rid": "FX-003", "text": "Card effects use keywords to represent pre-defined actions.", "tags": ["effects", "keywords"] }
+            ],
+            "tags": ["effects"]
+          },
+          {
+            "id": "effect-cost",
+            "slug": "effect-cost",
+            "title": "Effect Cost",
+            "rules": [
+              { "rid": "COST-001", "text": "Card effects may have a cost associated with them.", "tags": ["cost"] },
+              { "rid": "COST-002", "text": "The cost is all actions to the left of the effect’s colon (e.g., 'Pay 10 Health : Deal 10 damage to target').", "tags": ["cost"] },
+              { "rid": "COST-003", "text": "The cost of an effect must be paid before the effect is performed.", "tags": ["cost"] }
+            ],
+            "tags": ["effects", "cost"]
           },
           {
             "id": "keywords",
             "slug": "keywords",
             "title": "Keywords",
-            "rules": [],
-            "tags": ["keywords"],
-            "seeAlso": ["statuses", "timing"]
-          },
-          {
-            "id": "card-types",
-            "slug": "card-types",
-            "title": "Card Types & Source",
-            "rules": [
-              { "rid": "SRC-COST", "text": "Non-source cards have a source cost shown by colored orbs. The controller must have available source to pay it before play.", "tags": ["source-cost"] },
-              { "rid": "SRC-POOL", "text": "Source Pool: source granted by effects goes into a pool that empties at the start of each turn; all source in pool is available for costs/effects.", "tags": ["source-pool"] }
-            ],
             "subsections": [
               {
-                "title": "Action Cards",
+                "title": "Tap",
                 "rules": [
-                  { "rid": "ACT-001", "text": "Action cards occupy one of five Action Zone slots and are played from hand during your Main Phase.", "tags": ["action-cards"] },
-                  { "rid": "EQP-001", "text": "Equipment: a type of action card; has a defense value (shield). Used in blocking.", "tags": ["equipment"] },
-                  { "rid": "SUM-002", "text": "Summons: place matching summon pieces on the card and the occupied tile; defense value is its Health; if Health ≤ 0, remove the summon and destroy its summoning card; summon Health regenerates during every player’s Start Phase.", "tags": ["summons"] },
-                  { "rid": "SKL-001", "text": "Skills: accumulate counters over time; unlocked effects require reaching the stated counter threshold (e.g., “[3] Tap : Deal 5 damage to target”).", "tags": ["skills"] }
+                  { "rid": "KW-TAP-001", "text": "Tap a card.", "tags": ["keyword", "tap"] },
+                  { "rid": "KW-TAP-002", "text": "Cards may either be tapped or untapped.", "tags": ["keyword", "tap"] },
+                  { "rid": "KW-TAP-003", "text": "You may not tap an already tapped card.", "tags": ["keyword", "tap"] },
+                  { "rid": "KW-TAP-004", "text": "Tapped cards untap during their controller’s Start phase.", "tags": ["keyword", "tap"] }
                 ]
               },
               {
-                "title": "Alterations & Tactics",
+                "title": "Untap",
                 "rules": [
-                  { "rid": "ALT-001", "text": "Alterations: neither Action nor Tactic; they modify other cards.", "tags": ["alterations"] },
-                  { "rid": "TEC-001", "text": "Techniques: Tactic cards playable from hand during your Main Phase.", "tags": ["techniques"] },
-                  { "rid": "REA-001", "text": "Reactions: Tactic cards playable after a reactable event within LoS; NOT reactable: source being played/tapped, Death Fog placed, statuses resolved, phase changes, drawing, targets destroyed, offering to the Lich.", "tags": ["reactions", "speeds"] }
+                  { "rid": "KW-UNTAP-001", "text": "Untap a card.", "tags": ["keyword", "untap"] }
                 ]
               },
               {
-                "title": "Source Cards",
+                "title": "Destroy",
                 "rules": [
-                  { "rid": "SRC-PR-001", "text": "Pure Sources: tap for only 1 source of 1 type.", "tags": ["pure-source"] },
-                  { "rid": "SRC-NP-001", "text": "Non‑Pure Sources: tap for more than 1 of a type or include additional effects.", "tags": ["non-pure-source"] }
+                  { "rid": "KW-DESTROY-001", "text": "Remove an in-play card from the field and send it to its controller’s Purgatory.", "tags": ["keyword", "destroy"] }
+                ]
+              },
+              {
+                "title": "Inflict",
+                "rules": [
+                  { "rid": "KW-INFLICT-001", "text": "Apply a status.", "tags": ["keyword", "inflict"] }
+                ]
+              },
+              {
+                "title": "Deal",
+                "rules": [
+                  { "rid": "KW-DEAL-001", "text": "See section 'Blocking | Dealing Damage'.", "tags": ["keyword", "deal"] }
+                ]
+              },
+              {
+                "title": "Heal",
+                "rules": [
+                  { "rid": "KW-HEAL-001", "text": "Gain an amount of Health.", "tags": ["keyword", "heal"] }
+                ]
+              },
+              {
+                "title": "Place",
+                "rules": [
+                  { "rid": "KW-PLACE-001", "text": "Put a surface on a valid tile.", "tags": ["keyword", "place"] },
+                  { "rid": "KW-PLACE-002", "text": "Invalid tiles include those occupied by walls or Death Fog.", "tags": ["keyword", "place"] }
+                ]
+              },
+              {
+                "title": "Move",
+                "rules": [
+                  { "rid": "KW-MOVE-001", "text": "Change position along adjacent, unoccupied tiles a number of times.", "tags": ["keyword", "move"] },
+                  { "rid": "KW-MOVE-002", "text": "Moving 0 tiles still creates a reactable movement event.", "tags": ["keyword", "move"] }
+                ]
+              },
+              {
+                "title": "Draw",
+                "rules": [
+                  { "rid": "KW-DRAW-001", "text": "Place the top card of your deck into your hand.", "tags": ["keyword", "draw"] }
+                ]
+              },
+              {
+                "title": "Negate",
+                "rules": [
+                  { "rid": "KW-NEGATE-001", "text": "Prevent a reactable game state change.", "tags": ["keyword", "negate"] }
+                ]
+              },
+              {
+                "title": "Attrit",
+                "rules": [
+                  { "rid": "KW-ATTRIT-001", "text": "Take the top card of a player's deck and place it into their Purgatory.", "tags": ["keyword", "attrit"] }
+                ]
+              },
+              {
+                "title": "Discard",
+                "rules": [
+                  { "rid": "KW-DISCARD-001", "text": "Take a card from the controller’s hand and place it into the Purgatory.", "tags": ["keyword", "discard"] }
+                ]
+              },
+              {
+                "title": "Damn",
+                "rules": [
+                  { "rid": "KW-DAMN-001", "text": "Send a card to the controller’s Abyss.", "tags": ["keyword", "damn"] }
                 ]
               }
             ],
-            "tags": ["cards", "source"]
+            "tags": ["keywords"],
+            "seeAlso": ["statuses", "timing"]
+          }
+        ]
+      },
+
+      {
+        "id": "card-types",
+        "slug": "card-types",
+        "title": "Card Types",
+        "pages": [
+          {
+            "id": "card-source-cost",
+            "slug": "card-source-cost",
+            "title": "Card Source Cost",
+            "body": [
+              "Non-source cards have an associated source cost to play. The source cost is shown by the numbers in front of the colored orbs at the top of a card. Players must have the available source to pay this cost before playing the card."
+            ],
+            "subsections": [
+              {
+                "title": "Source Pool | Available Source",
+                "rules": [
+                  { "rid": "SRC-POOL-001", "text": "When source is granted to a player, it is placed into their source pool.", "tags": ["source-pool"] },
+                  { "rid": "SRC-POOL-002", "text": "A player's source pool empties at the start of each turn.", "tags": ["source-pool"] },
+                  { "rid": "SRC-POOL-003", "text": "All source in the pool is available for card effects and paying source costs.", "tags": ["source-pool"] }
+                ]
+              }
+            ]
           },
           {
-            "id": "timing",
-            "slug": "timing",
-            "title": "Timing, Speeds & The Stack",
-            "rules": [
-              { "rid": "STK-001", "text": "The Stack: first-in, last-out resolution order for played/activated effects.", "tags": ["stack"] },
-              { "rid": "FIZ-001", "text": "Fizzling: if an effect cannot fully resolve, its cost is still paid but no part of the fizzled effect resolves.", "tags": ["fizzle"] },
-              { "rid": "SPD-TEC", "text": "Technique Speed: technique cards cannot add to an existing stack; they start their own stack.", "tags": ["technique-speed"] },
-              { "rid": "SPD-REA", "text": "Reaction Speed: by default, effects/cards play at reaction speed; they may add to existing stacks or create new ones.", "tags": ["reaction-speed"] },
-              { "rid": "EXM-001", "text": "Example: Player A taps equipment to deal 5 damage; Player B responds with 'negate an incoming attack'. B’s negate resolves first, so A’s effect fizzles.", "tags": ["examples"] }
+            "id": "action-cards",
+            "slug": "action-cards",
+            "title": "Action Cards",
+            "body": [
+              "All action cards occupy one of a player's five action zone slots and are played from hand during the controller's Main phase."
             ],
-            "tags": ["timing", "speeds", "stack"]
+            "subsections": [
+              {
+                "title": "Equipment",
+                "rules": [
+                  { "rid": "EQP-001", "text": "Equipment cards are a type of Action card.", "tags": ["equipment"] },
+                  { "rid": "EQP-002", "text": "Equipment cards have a defense value signified by the shield symbol.", "tags": ["equipment"] },
+                  { "rid": "EQP-003", "text": "The defense value of equipment is used when blocking.", "tags": ["equipment", "blocking"] }
+                ]
+              },
+              {
+                "title": "Summons",
+                "rules": [
+                  { "rid": "SUM-001", "text": "Summon cards are a type of Action card.", "tags": ["summons"] },
+                  { "rid": "SUM-002", "text": "When played, matching summon pieces are placed on the card and the occupied tile.", "tags": ["summons"] },
+                  { "rid": "SUM-003", "text": "The shield value of the card is the Summon's Health.", "tags": ["summons", "health"] },
+                  { "rid": "SUM-004", "text": "If a Summon's Health is 0 or less, remove the Summon and destroy its summoning card, removing both pieces from play.", "tags": ["summons", "destroy"] },
+                  { "rid": "SUM-005", "text": "A Summon's Health regenerates during every player's Start phase.", "tags": ["summons", "health"] }
+                ]
+              },
+              {
+                "title": "Skills",
+                "rules": [
+                  { "rid": "SKL-001", "text": "Skill cards are a type of Action card.", "tags": ["skills"] },
+                  { "rid": "SKL-002", "text": "Skill cards accumulate counters over time.", "tags": ["skills", "counters"] },
+                  { "rid": "SKL-003", "text": "Effects on a Skill card unlock when the required number of counters is reached (e.g., '[3] Tap : Deal 5 Damage to Target').", "tags": ["skills", "effects"] }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "alterations",
+            "slug": "alterations",
+            "title": "Alterations",
+            "rules": [
+              { "rid": "ALT-001", "text": "Alterations are neither Action cards nor Tactic cards.", "tags": ["alterations"] },
+              { "rid": "ALT-002", "text": "Alterations modify other cards.", "tags": ["alterations"] },
+              { "rid": "ALT-003", "text": "An altered card is modified based on the alteration's effect.", "tags": ["alterations"] }
+            ]
+          },
+          {
+            "id": "tactic-cards",
+            "slug": "tactic-cards",
+            "title": "Tactic Cards",
+            "subsections": [
+              {
+                "title": "Techniques",
+                "rules": [
+                  { "rid": "TEC-001", "text": "Techniques are a type of Tactic card.", "tags": ["techniques"] },
+                  { "rid": "TEC-002", "text": "Techniques may be played from hand during the player's Main phase.", "tags": ["techniques"] }
+                ]
+              },
+              {
+                "title": "Reactions",
+                "rules": [
+                  { "rid": "REA-001", "text": "Reactions are a type of Tactic card.", "tags": ["reactions"] },
+                  { "rid": "REA-002", "text": "Reactions may be played after a reactable event within line of sight.", "tags": ["reactions"] },
+                  { "rid": "REA-003", "text": "Not reactable events include: source played or tapped, Death Fog placed, statuses resolved, phase changes, drawing cards, targets destroyed, and offering to the Lich.", "tags": ["reactions"] }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "source-cards",
+            "slug": "source-cards",
+            "title": "Source Cards",
+            "subsections": [
+              {
+                "title": "Pure Sources",
+                "rules": [
+                  { "rid": "SRC-PR-001", "text": "Pure Sources tap for only one source of one type.", "tags": ["pure-source"] }
+                ]
+              },
+              {
+                "title": "Non-Pure Sources",
+                "rules": [
+                  { "rid": "SRC-NP-001", "text": "Non-Pure Sources tap for more than one of a type or include additional effects.", "tags": ["non-pure-source"] }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "timing",
+        "slug": "timing-card-speeds-stack",
+        "title": "Timing, Card Speeds & The Stack",
+        "pages": [
+          {
+            "id": "overview",
+            "slug": "overview",
+            "title": "Overview",
+            "body": [
+              "Once cards or effects are played or activated, their effects resolve on a 'first in, last out' stack order."
+            ],
+            "rules": [
+              { "rid": "STK-001", "text": "The Stack resolves effects in first-in, last-out order.", "tags": ["stack"] }
+            ]
+          },
+          {
+            "id": "fizzling",
+            "slug": "fizzling",
+            "title": "Fizzling",
+            "body": [
+              "A card 'fizzles' when its effect cannot fully resolve; the cost is still paid but no part of the fizzled effect resolves."
+            ],
+            "rules": [
+              { "rid": "FIZ-001", "text": "Fizzled effects do not resolve, but their costs remain paid.", "tags": ["fizzle"] }
+            ]
+          },
+          {
+            "id": "technique-speed",
+            "slug": "technique-speed",
+            "title": "Technique Speed",
+            "rules": [
+              { "rid": "SPD-TEC-001", "text": "Technique cards are played at technique speed by default.", "tags": ["technique-speed"] },
+              { "rid": "SPD-TEC-002", "text": "Cards played at technique speed cannot add to an existing stack and always create their own stack.", "tags": ["technique-speed"] }
+            ]
+          },
+          {
+            "id": "reaction-speed",
+            "slug": "reaction-speed",
+            "title": "Reaction Speed",
+            "rules": [
+              { "rid": "SPD-REA-001", "text": "All effects and cards are played at reaction speed by default unless otherwise specified.", "tags": ["reaction-speed"] },
+              { "rid": "SPD-REA-002", "text": "Cards played at reaction speed may add to existing stacks or create their own independent stacks.", "tags": ["reaction-speed"] }
+            ]
+          },
+          {
+            "id": "examples",
+            "slug": "examples",
+            "title": "Examples",
+            "rules": [
+              { "rid": "EXM-001", "text": "Example: Player one taps equipment to deal 5 damage; Player two responds with 'negate an incoming attack'. Player two's effect resolves first, negating the attack and causing the first effect to fizzle.", "tags": ["examples"] }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "modifiers",
+        "slug": "modifiers",
+        "title": "Modifiers",
+        "pages": [
+          {
+            "id": "overview",
+            "slug": "overview",
+            "title": "Overview",
+            "body": [
+              "Modifiers are keywords that alter the card abilities."
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "statuses",
+        "slug": "statuses",
+        "title": "Statuses",
+        "pages": [
+          {
+            "id": "overview",
+            "slug": "overview",
+            "title": "Overview",
+            "body": [
+              "Statuses are inflicted onto targets, changing their behavior. Inflicted statuses are signified by status counters placed onto the afflicted targets."
+            ]
+          },
+          {
+            "id": "status-definitions",
+            "slug": "status-definitions",
+            "title": "Status Definitions",
+            "subsections": [
+              { "title": "Penetrate", "rules": [ { "rid": "ST-PEN-001", "text": "Line of sight does not stop at Avatars or Summons.", "tags": ["status", "los"] }, { "rid": "ST-PEN-002", "text": "Multiple targets along the same line of sight may be targeted.", "tags": ["status", "los"] } ] },
+              { "title": "Reprise", "rules": [ { "rid": "ST-REP-001", "text": "Allows a card's Tap effect to resolve multiple separate consecutive times for a single AP.", "tags": ["status", "ap"] } ] },
+              { "title": "Overwhelm", "rules": [ { "rid": "ST-OVR-001", "text": "If incoming damage is blocked, any damage above the amount blocked is still dealt.", "tags": ["status", "damage"] } ] },
+              { "title": "Invisible", "rules": [ { "rid": "ST-INV-001", "text": "Invisible targets may only be targeted from adjacent tiles.", "tags": ["status", "targeting"] } ] },
+              { "title": "Blind", "rules": [ { "rid": "ST-BLD-001", "text": "A blind target may only target adjacent targets.", "tags": ["status", "targeting"] } ] },
+              { "title": "Burning", "rules": [ { "rid": "ST-BRN-001", "text": "A burning target is dealt 5 damage during its status phase.", "tags": ["status", "damage-over-time"] } ] },
+              { "title": "Ensnared", "rules": [ { "rid": "ST-ENS-001", "text": "You may not move.", "tags": ["status", "movement"] } ] },
+              { "title": "Wet", "rules": [ { "rid": "ST-WET-001", "text": "If inflicted with Burning, remove an equal number of Wet and Burning counters.", "tags": ["status", "interaction"] }, { "rid": "ST-WET-002", "text": "If inflicted with Sepsis, remove an equal number of Wet and Sepsis counters.", "tags": ["status", "interaction"] } ] },
+              { "title": "Sepsis", "rules": [ { "rid": "ST-SEP-001", "text": "You must spend 1 AP per tile moved.", "tags": ["status", "movement", "ap"] } ] },
+              { "title": "Lich’s Curse", "rules": [ { "rid": "ST-LCUR-001", "text": "On Death Fog during Status Phase, your health becomes zero and you may not heal.", "tags": ["status", "death-fog"] }, { "rid": "ST-LCUR-002", "text": "This loss of health is not damage and the status is non-removable via card effects.", "tags": ["status", "non-removable"] } ] },
+              { "title": "Impending Doom", "rules": [ { "rid": "ST-IMP-001", "text": "On Death Fog during Status Phase, lose half your remaining health, rounded up.", "tags": ["status", "death-fog"] }, { "rid": "ST-IMP-002", "text": "At the end of your status phase, remove Impending Doom and inflict Lich’s Curse.", "tags": ["status", "death-fog"] }, { "rid": "ST-IMP-003", "text": "You may not heal; this loss is not damage and is non-removable via card effects.", "tags": ["status", "non-removable"] } ] },
+              { "title": "Stunned", "rules": [ { "rid": "ST-STU-001", "text": "A stunned target may not play cards or activate abilities at reaction speed, including reactions.", "tags": ["status", "speeds"] }, { "rid": "ST-STU-002", "text": "A stunned target may activate abilities at technique speed.", "tags": ["status", "speeds"] }, { "rid": "ST-STU-003", "text": "A stunned target cannot block.", "tags": ["status", "blocking"] }, { "rid": "ST-STU-004", "text": "Tap abilities are now at technique speed.", "tags": ["status", "speeds"] } ] },
+              { "title": "Possessed", "rules": [ { "rid": "ST-POS-001", "text": "The inflicting player controls all movement of a possessed Avatar or Summon.", "tags": ["status", "control"] }, { "rid": "ST-POS-002", "text": "Possessed status is tracked with paired possession counters placed on the possessor and the possessed.", "tags": ["status", "control"] } ] }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "surfaces",
+        "slug": "surfaces",
+        "title": "Surfaces",
+        "pages": [
+          {
+            "id": "overview",
+            "slug": "overview",
+            "title": "Overview",
+            "body": [
+              "Surfaces occupy tiles, adding effects to the tile. If a surface is placed on an already surfaced tile, the preceding surface is removed unless otherwise stated. Surfaces apply their status the moment a target is within the surface."
+            ]
+          },
+          {
+            "id": "surface-definitions",
+            "slug": "surface-definitions",
+            "title": "Surface Definitions",
+            "subsections": [
+              { "title": "Death Fog", "rules": [ { "rid": "SF-DF-001", "text": "Surfaces may not be placed on Death Fog.", "tags": ["surface"] }, { "rid": "SF-DF-002", "text": "Death Fog overrides all other surfaces when placed.", "tags": ["surface"] }, { "rid": "SF-DF-003", "text": "Inflicts Impending Doom to occupying targets.", "tags": ["surface", "status"] }, { "rid": "SF-DF-004", "text": "Death Fog may not be removed or destroyed once placed.", "tags": ["surface", "non-removable"] } ] },
+              { "title": "Fire", "rules": [ { "rid": "SF-FIR-001", "text": "Inflicts Burning 1 to occupying targets during the status phase.", "tags": ["surface", "burning"] }, { "rid": "SF-FIR-002", "text": "When placed on Water, Steam is placed instead.", "tags": ["surface"] } ] },
+              { "title": "Sludge", "rules": [ { "rid": "SF-SLG-001", "text": "Inflicts Sepsis 2 to occupying target during the status phase.", "tags": ["surface", "sepsis"] } ] },
+              { "title": "Vines", "rules": [ { "rid": "SF-VIN-001", "text": "Blocks line of sight.", "tags": ["surface", "los"] }, { "rid": "SF-VIN-002", "text": "Inflicts Ensnared to occupying targets.", "tags": ["surface", "status"] }, { "rid": "SF-VIN-003", "text": "If adjacent to a fire surface at the start of a status phase, convert to a fire surface.", "tags": ["surface"] }, { "rid": "SF-VIN-004", "text": "Vines have 1 HP and are destroyed when reduced to 0.", "tags": ["surface", "destructible"] } ] },
+              { "title": "Water", "rules": [ { "rid": "SF-WAT-001", "text": "When placed on Fire, Steam is placed instead.", "tags": ["surface"] }, { "rid": "SF-WAT-002", "text": "Inflicts Wet to occupying targets.", "tags": ["surface", "status"] } ] },
+              { "title": "Steam", "rules": [ { "rid": "SF-STM-001", "text": "Steam does nothing.", "tags": ["surface"] } ] },
+              { "title": "Smoke", "rules": [ { "rid": "SF-SMK-001", "text": "Smoke blocks line of sight to preceding tiles.", "tags": ["surface", "los"] }, { "rid": "SF-SMK-002", "text": "Smoke does not block line of sight to its own tile.", "tags": ["surface", "los"] }, { "rid": "SF-SMK-003", "text": "Smoke inflicts blindness 1 to occupying targets.", "tags": ["surface", "blind"] } ] }
+            ]
           }
         ]
       }
