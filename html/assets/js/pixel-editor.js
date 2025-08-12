@@ -1,5 +1,37 @@
 'use strict';
 
+export const LAYER_DEFAULTS = {
+  adjustments: () => ({ brightness: 0, contrast: 0, saturation: 100 }),
+  colorGlow: () => ({
+    threshold: 60,
+    global: 100,
+    glowMap: {
+      R: { s: 0, r: 10 },
+      Y: { s: 0, r: 10 },
+      G: { s: 0, r: 10 },
+      C: { s: 0, r: 10 },
+      B: { s: 0, r: 10 },
+      M: { s: 0, r: 10 }
+    }
+  }),
+  bloom: () => ({ alpha: 90, blur: 4, threshold: 33 }),
+  tune: () => ({ R: 0, Y: 0, G: 0, C: 0, B: 0, M: 0 }),
+  remap: () => ({
+    globalStrength: 100,
+    mapping: {
+      R: { t: 0, s: 1 },
+      Y: { t: 0, s: 1 },
+      G: { t: 0, s: 1 },
+      C: { t: 0, s: 1 },
+      B: { t: 0, s: 1 },
+      M: { t: 0, s: 1 }
+    }
+  })
+};
+if (typeof window !== 'undefined') {
+  window.LAYER_DEFAULTS = LAYER_DEFAULTS;
+}
+
 // Utility
 function clamp8(v){ return v<0?0:(v>255?255:v)|0; }
 function debounced(ms, fn){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
@@ -353,21 +385,23 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         ls.push(new Layer('remap', {mapping, globalStrength}));
       }
       if(opts.enableGlow){
+        const glowDefaults = LAYER_DEFAULTS.colorGlow();
         const glowMap = {
-          R:{s:opts.glow?.R?.strength ?? 0, r:opts.glow?.R?.range ?? 0},
-          Y:{s:opts.glow?.Y?.strength ?? 0, r:opts.glow?.Y?.range ?? 0},
-          G:{s:opts.glow?.G?.strength ?? 0, r:opts.glow?.G?.range ?? 0},
-          C:{s:opts.glow?.C?.strength ?? 0, r:opts.glow?.C?.range ?? 0},
-          B:{s:opts.glow?.B?.strength ?? 0, r:opts.glow?.B?.range ?? 0},
-          M:{s:opts.glow?.M?.strength ?? 0, r:opts.glow?.M?.range ?? 0}
+          R:{s:opts.glow?.R?.strength ?? 0, r:opts.glow?.R?.range ?? glowDefaults.glowMap.R.r},
+          Y:{s:opts.glow?.Y?.strength ?? 0, r:opts.glow?.Y?.range ?? glowDefaults.glowMap.Y.r},
+          G:{s:opts.glow?.G?.strength ?? 0, r:opts.glow?.G?.range ?? glowDefaults.glowMap.G.r},
+          C:{s:opts.glow?.C?.strength ?? 0, r:opts.glow?.C?.range ?? glowDefaults.glowMap.C.r},
+          B:{s:opts.glow?.B?.strength ?? 0, r:opts.glow?.B?.range ?? glowDefaults.glowMap.B.r},
+          M:{s:opts.glow?.M?.strength ?? 0, r:opts.glow?.M?.range ?? glowDefaults.glowMap.M.r}
         };
-        const threshold = opts.glowThreshold ?? 60;
-        const global = opts.glow?.global ?? 100;
+        const threshold = opts.glowThreshold ?? glowDefaults.threshold;
+        const global = opts.glow?.global ?? glowDefaults.global;
         ls.push(new Layer('colorGlow', {glowMap, threshold, global}));
+        const bloomDefaults = LAYER_DEFAULTS.bloom();
         ls.push(new Layer('bloom', {
-          threshold: opts.bloomThreshold ?? 200,
-          blur: opts.bloomBlur ?? 0,
-          alpha: opts.bloomAlpha ?? 0
+          threshold: opts.bloomThreshold ?? bloomDefaults.threshold,
+          blur: opts.bloomBlur ?? bloomDefaults.blur,
+          alpha: opts.bloomAlpha ?? bloomDefaults.alpha
         }));
       }
       return ls;
@@ -470,20 +504,22 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       };
     }
     function readGlowSettings(){
+      const glowDefaults = LAYER_DEFAULTS.colorGlow();
+      const bloomDefaults = LAYER_DEFAULTS.bloom();
       return {
         enableGlow: enableGlow?.checked||false,
-        glowThreshold: Number(glowThreshold?.value||60),
-        bloomAlpha: Number(bloomAlpha?.value||0),
-        bloomBlur: Number(bloomBlur?.value||0),
-        bloomThreshold: Number(bloomThreshold?.value||200),
+        glowThreshold: Number(glowThreshold?.value||glowDefaults.threshold),
+        bloomAlpha: Number(bloomAlpha?.value||bloomDefaults.alpha),
+        bloomBlur: Number(bloomBlur?.value||bloomDefaults.blur),
+        bloomThreshold: Number(bloomThreshold?.value||bloomDefaults.threshold),
         glow:{
-          global:Number(gAll?.value||100),
-          R:{strength:Number(gR?.value||0), range:Number(gRRange?.value||0)},
-          Y:{strength:Number(gY?.value||0), range:Number(gYRange?.value||0)},
-          G:{strength:Number(gG?.value||0), range:Number(gGRange?.value||0)},
-          C:{strength:Number(gC?.value||0), range:Number(gCRange?.value||0)},
-          B:{strength:Number(gB?.value||0), range:Number(gBRange?.value||0)},
-          M:{strength:Number(gM?.value||0), range:Number(gMRange?.value||0)}
+          global:Number(gAll?.value||glowDefaults.global),
+          R:{strength:Number(gR?.value||0), range:Number(gRRange?.value||glowDefaults.glowMap.R.r)},
+          Y:{strength:Number(gY?.value||0), range:Number(gYRange?.value||glowDefaults.glowMap.Y.r)},
+          G:{strength:Number(gG?.value||0), range:Number(gGRange?.value||glowDefaults.glowMap.G.r)},
+          C:{strength:Number(gC?.value||0), range:Number(gCRange?.value||glowDefaults.glowMap.C.r)},
+          B:{strength:Number(gB?.value||0), range:Number(gBRange?.value||glowDefaults.glowMap.B.r)},
+          M:{strength:Number(gM?.value||0), range:Number(gMRange?.value||glowDefaults.glowMap.M.r)}
         }
       };
     }
@@ -752,12 +788,16 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       if(con) con.value=0;
       if(sat) sat.value=100;
       if(enableGlow) enableGlow.checked=false;
-      if(glowThreshold) glowThreshold.value=60;
-      if(bloomAlpha) bloomAlpha.value=0;
-      if(bloomBlur) bloomBlur.value=0;
-      if(bloomThreshold) bloomThreshold.value=200;
-      if(gAll) gAll.value=100;
-      [gR,gY,gG,gC,gB,gM,gRRange,gYRange,gGRange,gCRange,gBRange,gMRange].forEach(el=>{ if(el) el.value=0; });
+      const glowDefaults = LAYER_DEFAULTS.colorGlow();
+      const bloomDefaults = LAYER_DEFAULTS.bloom();
+      if(glowThreshold) glowThreshold.value=glowDefaults.threshold;
+      if(bloomAlpha) bloomAlpha.value=bloomDefaults.alpha;
+      if(bloomBlur) bloomBlur.value=bloomDefaults.blur;
+      if(bloomThreshold) bloomThreshold.value=bloomDefaults.threshold;
+      if(gAll) gAll.value=glowDefaults.global;
+      [gR,gY,gG,gC,gB,gM].forEach(el=>{ if(el) el.value=0; });
+      const glowRange=glowDefaults.glowMap.R.r;
+      [gRRange,gYRange,gGRange,gCRange,gBRange,gMRange].forEach(el=>{ if(el) el.value=glowRange; });
       if(enableTune) enableTune.checked=false;
       if(tR) tR.value=0; if(tY) tY.value=0; if(tG) tG.value=0; if(tC) tC.value=0; if(tB) tB.value=0; if(tM) tM.value=0;
       if(enableRemap) enableRemap.checked=false;

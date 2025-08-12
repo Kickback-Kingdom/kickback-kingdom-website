@@ -375,8 +375,8 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                                             <input type="range" class="form-range" data-glow="R" min="0" max="100" value="0">
                                                         </div>
                                                         <div class="col">
-                                                            <small class="text-muted">Range <span data-glow-range-display="R">0</span></small>
-                                                            <input type="range" class="form-range" data-glow-range="R" min="0" max="50" value="0">
+                                                            <small class="text-muted">Range <span data-glow-range-display="R">10</span></small>
+                                                            <input type="range" class="form-range" data-glow-range="R" min="0" max="50" value="10">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -388,8 +388,8 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                                             <input type="range" class="form-range" data-glow="Y" min="0" max="100" value="0">
                                                         </div>
                                                         <div class="col">
-                                                            <small class="text-muted">Range <span data-glow-range-display="Y">0</span></small>
-                                                            <input type="range" class="form-range" data-glow-range="Y" min="0" max="50" value="0">
+                                                            <small class="text-muted">Range <span data-glow-range-display="Y">10</span></small>
+                                                            <input type="range" class="form-range" data-glow-range="Y" min="0" max="50" value="10">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -401,8 +401,8 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                                             <input type="range" class="form-range" data-glow="G" min="0" max="100" value="0">
                                                         </div>
                                                         <div class="col">
-                                                            <small class="text-muted">Range <span data-glow-range-display="G">0</span></small>
-                                                            <input type="range" class="form-range" data-glow-range="G" min="0" max="50" value="0">
+                                                            <small class="text-muted">Range <span data-glow-range-display="G">10</span></small>
+                                                            <input type="range" class="form-range" data-glow-range="G" min="0" max="50" value="10">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -414,8 +414,8 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                                             <input type="range" class="form-range" data-glow="C" min="0" max="100" value="0">
                                                         </div>
                                                         <div class="col">
-                                                            <small class="text-muted">Range <span data-glow-range-display="C">0</span></small>
-                                                            <input type="range" class="form-range" data-glow-range="C" min="0" max="50" value="0">
+                                                            <small class="text-muted">Range <span data-glow-range-display="C">10</span></small>
+                                                            <input type="range" class="form-range" data-glow-range="C" min="0" max="50" value="10">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -427,8 +427,8 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                                             <input type="range" class="form-range" data-glow="B" min="0" max="100" value="0">
                                                         </div>
                                                         <div class="col">
-                                                            <small class="text-muted">Range <span data-glow-range-display="B">0</span></small>
-                                                            <input type="range" class="form-range" data-glow-range="B" min="0" max="50" value="0">
+                                                            <small class="text-muted">Range <span data-glow-range-display="B">10</span></small>
+                                                            <input type="range" class="form-range" data-glow-range="B" min="0" max="50" value="10">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -440,8 +440,8 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                                             <input type="range" class="form-range" data-glow="M" min="0" max="100" value="0">
                                                         </div>
                                                         <div class="col">
-                                                            <small class="text-muted">Range <span data-glow-range-display="M">0</span></small>
-                                                            <input type="range" class="form-range" data-glow-range="M" min="0" max="50" value="0">
+                                                            <small class="text-muted">Range <span data-glow-range-display="M">10</span></small>
+                                                            <input type="range" class="form-range" data-glow-range="M" min="0" max="50" value="10">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -450,16 +450,16 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                         <template id="tpl-layer-bloom">
                                             <div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Bloom Alpha <span class="text-muted" data-field-display="alpha">0</span></label>
-                                                    <input type="range" class="form-range" data-field="alpha" min="0" max="100" value="0">
+                                                    <label class="form-label">Bloom Alpha <span class="text-muted" data-field-display="alpha">90</span></label>
+                                                    <input type="range" class="form-range" data-field="alpha" min="0" max="100" value="90">
                                                 </div>
                                                 <div class="mb-2">
-                                                <label class="form-label">Bloom Blur <span class="text-muted" data-field-display="blur">0</span></label>
-                                                    <input type="range" class="form-range" data-field="blur" min="0" max="50" value="0">
+                                                <label class="form-label">Bloom Blur <span class="text-muted" data-field-display="blur">4</span></label>
+                                                    <input type="range" class="form-range" data-field="blur" min="0" max="50" value="4">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Bloom Threshold <span class="text-muted" data-field-display="threshold">200</span></label>
-                                                    <input type="range" class="form-range" data-field="threshold" min="0" max="255" value="200">
+                                                    <label class="form-label">Bloom Threshold <span class="text-muted" data-field-display="threshold">33</span></label>
+                                                    <input type="range" class="form-range" data-field="threshold" min="0" max="255" value="33">
                                                 </div>
                                             </div>
                                         </template>
@@ -553,6 +553,13 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                     </div>
                 </div>
                 <script>
+                const layerDefaults = window.LAYER_DEFAULTS || {
+                    adjustments: () => ({brightness:0, contrast:0, saturation:100}),
+                    colorGlow: () => ({threshold:60, global:100, glowMap:{R:{s:0,r:10},Y:{s:0,r:10},G:{s:0,r:10},C:{s:0,r:10},B:{s:0,r:10},M:{s:0,r:10}}}),
+                    bloom: () => ({alpha:90, blur:4, threshold:33}),
+                    tune: () => ({R:0,Y:0,G:0,C:0,B:0,M:0}),
+                    remap: () => ({globalStrength:100, mapping:{R:{t:0,s:1},Y:{t:0,s:1},G:{t:0,s:1},C:{t:0,s:1},B:{t:0,s:1},M:{t:0,s:1}}})
+                };
                 function setupPixelLayerUI(){
                     const container = document.getElementById('pixelEditor');
                     if(!container || !window.pixelEditor) return;
@@ -720,15 +727,9 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                     addBtn.addEventListener('click',()=>{
                         const type=addSelect.value;
                         if(!type) return;
-                        let layer;
-                        switch(type){
-                            case 'adjustments': layer={type:'adjustments',options:{brightness:0,contrast:0,saturation:100}}; break;
-                            case 'colorGlow': layer={type:'colorGlow',options:{threshold:60,global:100,glowMap:{R:{s:0,r:0},Y:{s:0,r:0},G:{s:0,r:0},C:{s:0,r:0},B:{s:0,r:0},M:{s:0,r:0}}}}; break;
-                            case 'bloom': layer={type:'bloom',options:{alpha:0,blur:0,threshold:200}}; break;
-                            case 'tune': layer={type:'tune',options:{R:0,Y:0,G:0,C:0,B:0,M:0}}; break;
-                            case 'remap': layer={type:'remap',options:{globalStrength:100,mapping:{R:{t:0,s:1},Y:{t:0,s:1},G:{t:0,s:1},C:{t:0,s:1},B:{t:0,s:1},M:{t:0,s:1}}}}; break;
-                            default: return;
-                        }
+                        const factory = layerDefaults[type];
+                        if(!factory) return;
+                        const layer={type,options:factory()};
                         window.pixelEditor.addLayer(layer);
                         const idx=window.pixelEditor.getSettings().layers.length-1;
                         addSelect.value='';

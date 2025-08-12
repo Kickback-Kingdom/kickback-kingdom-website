@@ -31,7 +31,7 @@
 
 
 <script type="module">
-import { initPixelEditor } from '/assets/js/pixel-editor.js';
+import { initPixelEditor, LAYER_DEFAULTS } from '/assets/js/pixel-editor.js';
 
 const promptTemplates = {
   "lich card art": (desc, scenery, faction) =>
@@ -358,17 +358,31 @@ function UpdateMediaUploadModal()
                 contrast: 0,
                 saturation: 100,
                 enableGlow: false,
-                glowThreshold: 60,
-                bloomAlpha: 90,
-                bloomBlur: 4,
-                bloomThreshold: 33,
-                glow: {R:{strength:0, range:0}, Y:{strength:0, range:0}, G:{strength:0, range:0}, C:{strength:0, range:0}, B:{strength:0, range:0}, M:{strength:0, range:0}},
-                enableTune: false,
-                tune: {R:0, Y:0, G:0, C:0, B:0, M:0},
-                enableRemap: false,
-                remapStrength: 100,
-                map: {R:'0', Y:'0', G:'0', C:'0', B:'0', M:'0'},
-                mapStr: {R:100, Y:100, G:100, C:100, B:100, M:100}
+                ...( () => {
+                    const glowDefaults = LAYER_DEFAULTS.colorGlow();
+                    const bloomDefaults = LAYER_DEFAULTS.bloom();
+                    const glowRange = glowDefaults.glowMap.R.r;
+                    return {
+                        glowThreshold: glowDefaults.threshold,
+                        bloomAlpha: bloomDefaults.alpha,
+                        bloomBlur: bloomDefaults.blur,
+                        bloomThreshold: bloomDefaults.threshold,
+                        glow: {
+                            R:{strength:0, range:glowRange},
+                            Y:{strength:0, range:glowRange},
+                            G:{strength:0, range:glowRange},
+                            C:{strength:0, range:glowRange},
+                            B:{strength:0, range:glowRange},
+                            M:{strength:0, range:glowRange}
+                        },
+                        enableTune: false,
+                        tune: {R:0, Y:0, G:0, C:0, B:0, M:0},
+                        enableRemap: false,
+                        remapStrength: 100,
+                        map: {R:'0', Y:'0', G:'0', C:'0', B:'0', M:'0'},
+                        mapStr: {R:100, Y:100, G:100, C:100, B:100, M:100}
+                    };
+                })()
             };
         }
         lastPixelEditorSrc = currentSrc;
