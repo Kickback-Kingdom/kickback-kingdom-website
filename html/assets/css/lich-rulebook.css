@@ -9,10 +9,17 @@
     margin-bottom: 2rem;
 }
 
+/* Rule cards */
 #rulebook-container article.rulebook-page {
     margin-bottom: 1.5rem;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+/* Section headers */
 #rulebook-container h2,
 #rulebook-container h3,
 #rulebook-container h4 {
@@ -21,18 +28,67 @@
     font-weight: 700;
 }
 
+#rulebook-container h2 {
+    border-bottom: 3px solid var(--bs-primary);
+    padding-bottom: 0.5rem;
+    margin-top: 2rem;
+}
+
+#rulebook-container h3 {
+    color: var(--bs-primary);
+}
+
+#rulebook-container h4 {
+    color: var(--bs-tertiary);
+}
+
 #rulebook-container p,
 #rulebook-container ol {
     margin-bottom: 1rem;
 }
 
-/* Responsive images and diagrams */
 #rulebook-container img,
 #rulebook-container svg {
     max-width: 100%;
     height: auto;
     display: block;
     margin: 1rem auto;
+    object-fit: contain;
+    image-rendering: auto;
+}
+
+/* Search and filter UI */
+#rulebook-search {
+    border: 2px solid var(--bs-primary);
+}
+
+#rulebook-search:focus {
+    box-shadow: 0 0 0 0.2rem rgba(120, 81, 169, 0.25);
+    border-color: var(--bs-primary);
+}
+
+.rulebook-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Pagination controls */
+.rulebook-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.rulebook-pagination .page-link {
+    color: var(--bs-primary);
+}
+
+.rulebook-pagination .active .page-link {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: #fff;
 }
 
 /* Highlight for search matches */

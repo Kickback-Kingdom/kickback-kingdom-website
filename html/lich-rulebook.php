@@ -12,6 +12,7 @@ use Kickback\Common\Version;
 ob_start();
 require("php-components/base-page-head.php");
 $baseHead = ob_get_clean();
+// Attach rulebook-specific stylesheet
 $cssHref = Version::urlBetaPrefix().'/assets/css/lich-rulebook.css?v='.Version::current()->number();
 $baseHead = str_replace('</head>', '<link rel="stylesheet" href="'.$cssHref.'"></head>', $baseHead);
 echo $baseHead;
