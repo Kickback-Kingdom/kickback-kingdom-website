@@ -124,3 +124,17 @@
     margin: 0 0 1rem;
 }
 
+/* Rule-level images */
+#rulebook-container .rule-icon {
+    width: 24px;
+    height: 24px;
+    margin: 0 0.5rem 0 0;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#rulebook-container .rule-diagram {
+    display: block;
+    margin: 0.5rem auto 0;
+}
+

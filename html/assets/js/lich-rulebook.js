@@ -71,6 +71,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     page.rules.forEach((rule) => {
                         const li = document.createElement('li');
                         li.innerHTML = `<strong>${rule.rid}</strong> ${rule.text}`;
+
+                        if (rule.icon) {
+                            const icon = document.createElement('img');
+                            icon.src = rule.icon;
+                            icon.alt = '';
+                            icon.classList.add('rule-icon');
+                            li.prepend(icon);
+                        }
+
+                        if (rule.diagram) {
+                            const diagram = document.createElement('img');
+                            diagram.src = rule.diagram;
+                            diagram.alt = '';
+                            diagram.classList.add('rule-diagram');
+                            li.appendChild(diagram);
+                        }
+
                         list.appendChild(li);
                         (rule.tags || []).forEach((t) => tagSet.add(t));
                     });
@@ -87,6 +104,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         sub.rules.forEach((rule) => {
                             const li = document.createElement('li');
                             li.innerHTML = `<strong>${rule.rid}</strong> ${rule.text}`;
+
+                            if (rule.icon) {
+                                const icon = document.createElement('img');
+                                icon.src = rule.icon;
+                                icon.alt = '';
+                                icon.classList.add('rule-icon');
+                                li.prepend(icon);
+                            }
+
+                            if (rule.diagram) {
+                                const diagram = document.createElement('img');
+                                diagram.src = rule.diagram;
+                                diagram.alt = '';
+                                diagram.classList.add('rule-diagram');
+                                li.appendChild(diagram);
+                            }
+
                             subList.appendChild(li);
                             (rule.tags || []).forEach((t) => tagSet.add(t));
                         });

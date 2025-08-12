@@ -56,6 +56,7 @@
             {
               "rid": "BRD-001",
               "text": "The game uses a hexagonal board with a hex grid; each side has 6 hexes.",
+              "icon": "https://imageslot.com/v1/24x24",
               "tags": [
                 "board",
                 "dimensions"
@@ -64,9 +65,20 @@
             {
               "rid": "BRD-002",
               "text": "Starting positions are the six corners of the board.",
+              "diagram": "https://imageslot.com/v1/400x200",
               "tags": [
                 "board",
                 "starting-positions"
+              ]
+            },
+            {
+              "rid": "BRD-003",
+              "text": "Placeholder rule showcasing both icon and diagram.",
+              "icon": "https://imageslot.com/v1/24x24",
+              "diagram": "https://imageslot.com/v1/400x200",
+              "tags": [
+                "board",
+                "placeholder"
               ]
             }
           ],
