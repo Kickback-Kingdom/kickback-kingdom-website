@@ -123,7 +123,8 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
   function applyColorGlow(ctx, w, h, glows, threshold=0.6, globalMult=1){
     if(!glows || !Object.values(glows).some(v=>v.s>0)) return;
     for(const [bandKey, cfg] of Object.entries(glows)){
-      const strength=(cfg.s||0)*globalMult;
+      const base=(cfg.s||0)*globalMult;
+      const strength=base*base; // ease quadratic to reduce sensitivity
       if(strength<=0) continue;
       const range=cfg.r||0;
       const off=document.createElement('canvas');
@@ -137,7 +138,8 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         const hsl=rgbToHsl(r,g,bl);
         const b=nearestBucket(hsl.h);
         if(b!==bandKey || hsl.l<=threshold){ d[i]=d[i+1]=d[i+2]=0; continue; }
-        const eff=strength;
+        const t=(hsl.l - threshold)/(1 - threshold);
+        const eff=strength*t;
         const newL=Math.min(1, hsl.l+eff);
         const newS=Math.min(1, hsl.s+eff);
         const rgb=hslToRgb(hsl.h,newS,newL);
@@ -179,7 +181,8 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     ctx.save();
     if(blurRadius>0) ctx.filter=`blur(${blurRadius}px)`;
     ctx.globalCompositeOperation='lighter';
-    ctx.globalAlpha=Math.min(1, alpha);
+    const easedAlpha=Math.pow(alpha,4); // quartic easing for finer control
+    ctx.globalAlpha=Math.min(1, easedAlpha);
     ctx.drawImage(off,0,0);
     ctx.restore();
   }
@@ -359,13 +362,16 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
           B:{s:(opts.glow?.B?.strength ?? 0)/100, r:opts.glow?.B?.range ?? 0},
           M:{s:(opts.glow?.M?.strength ?? 0)/100, r:opts.glow?.M?.range ?? 0}
         };
-        const threshold = (opts.glowThreshold ?? 60)/100;
+        const thresholdRaw = (opts.glowThreshold ?? 60)/100;
+        const threshold = thresholdRaw*thresholdRaw;
         const global = (opts.glow?.global ?? 100)/100;
         ls.push(new Layer('colorGlow', {glowMap, threshold, global}));
+        const alphaRaw = opts.bloomAlpha ?? 0;
+        const alphaNorm = alphaRaw > 1 ? alphaRaw/100 : alphaRaw;
         ls.push(new Layer('bloom', {
           threshold: opts.bloomThreshold ?? 200,
           blur: opts.bloomBlur ?? 0,
-          alpha: (opts.bloomAlpha ?? 0)/100
+          alpha: alphaNorm
         }));
       }
       return ls;
@@ -408,7 +414,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       const glow = ls.find(l=>l.type==='colorGlow' && l.enabled!==false);
       if(glow){
         if(enableGlow) enableGlow.checked = true;
-        if(glowThreshold) glowThreshold.value = glow.options.threshold*100;
+        if(glowThreshold) glowThreshold.value = Math.sqrt(glow.options.threshold)*100;
         if(gAll) gAll.value = glow.options.global*100;
         if(gR) gR.value = glow.options.glowMap.R.s*100;
         if(gY) gY.value = glow.options.glowMap.Y.s*100;
@@ -428,7 +434,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         if(enableGlow) enableGlow.checked = true;
         if(bloomThreshold) bloomThreshold.value = bloom.options.threshold;
         if(bloomBlur) bloomBlur.value = bloom.options.blur;
-        if(bloomAlpha) bloomAlpha.value = bloom.options.alpha*100;
+        if(bloomAlpha) bloomAlpha.value = bloom.options.alpha;
       }
     }
 
@@ -645,13 +651,13 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
             B:{s:glow.glow.B.strength/100, r:glow.glow.B.range},
             M:{s:glow.glow.M.strength/100, r:glow.glow.M.range},
           };
-          const glowThreshVal = glow.glowThreshold/100;
+          const glowThreshVal = Math.pow(glow.glowThreshold/100,2);
           const glowGlobalVal = glow.glow.global/100;
           upsert('colorGlow', {glowMap, threshold:glowThreshVal, global:glowGlobalVal});
           const bloomOpts = {
             threshold: glow.bloomThreshold,
             blur: glow.bloomBlur,
-            alpha: glow.bloomAlpha/100
+            alpha: glow.bloomAlpha
           };
           upsert('bloom', bloomOpts);
         } else {

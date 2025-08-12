@@ -451,7 +451,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                             <div>
                                                 <div class="mb-2">
                                                     <label class="form-label">Bloom Alpha</label>
-                                                    <input type="range" class="form-range" data-field="alpha" min="0" max="100" value="0">
+                                                    <input type="range" class="form-range" data-field="alpha" min="0" max="1" step="0.01" value="0">
                                                 </div>
                                                 <div class="mb-2">
                                                 <label class="form-label">Bloom Blur</label>
