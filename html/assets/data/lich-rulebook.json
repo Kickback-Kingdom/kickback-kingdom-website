@@ -63,66 +63,92 @@
             "subsections": [
               {
                 "title": "Board Pieces",
-                "rules": [
+                "subsections": [
                   {
-                    "rid": "SRC-001",
-                    "text": "Source Stones: When an Avatar occupies a Source Stone tile, its controller must draw 1 pure source if able. Summons treat Source Stones as walls except for line of sight; Source Stones do not block line of sight.",
-                    "tags": ["source-stones", "draw", "line-of-sight"]
+                    "title": "Source Stones",
+                    "rules": [
+                      { "rid": "BP-SRC-001", "text": "Source Stones are placed on the board before play.", "tags": ["source-stones", "setup"] },
+                      { "rid": "BP-SRC-002", "text": "When an Avatar occupies a Source Stone tile, its controller must draw 1 pure source if able.", "tags": ["source-stones", "draw"] },
+                      { "rid": "BP-SRC-003", "text": "Summons treat Source Stones as walls except for line of sight.", "tags": ["source-stones", "walls", "line-of-sight"] },
+                      { "rid": "BP-SRC-004", "text": "Source Stones do not impede line of sight.", "tags": ["source-stones", "line-of-sight"] }
+                    ]
                   },
                   {
-                    "rid": "WAL-001",
-                    "text": "Walls: Avatars and Summons cannot occupy wall tiles; walls block line of sight; maps place walls during setup.",
-                    "tags": ["walls", "line-of-sight"]
+                    "title": "Walls",
+                    "rules": [
+                      { "rid": "BP-WAL-001", "text": "Avatars and Summons may not occupy wall tiles.", "tags": ["walls"] },
+                      { "rid": "BP-WAL-002", "text": "Walls block line of sight.", "tags": ["walls", "line-of-sight"] },
+                      { "rid": "BP-WAL-003", "text": "Walls are placed according to map setup before play.", "tags": ["walls", "setup"] }
+                    ]
                   },
                   {
-                    "rid": "AVA-001",
-                    "text": "Avatars represent their controller’s hero on the board.",
-                    "tags": ["avatars"]
+                    "title": "Avatars",
+                    "rules": [
+                      { "rid": "BP-AVA-001", "text": "Avatars represent their controller’s hero on the board.", "tags": ["avatars"] }
+                    ]
                   },
                   {
-                    "rid": "SUM-001",
-                    "text": "Summon pieces come in matching pairs used as a board marker and as the marker for the summoning card.",
-                    "tags": ["summons", "components"]
+                    "title": "Summon Pieces",
+                    "rules": [
+                      { "rid": "BP-SUM-001", "text": "Summon pieces come in pairs of matching design or color.", "tags": ["summons", "components"] },
+                      { "rid": "BP-SUM-002", "text": "One piece marks the summoned target on the board and the other marks its summoning card, linking them.", "tags": ["summons", "components"] }
+                    ]
                   },
                   {
-                    "rid": "SFC-001",
-                    "text": "Surface tiles are placed to represent the surface occupying that tile.",
-                    "tags": ["surfaces"]
+                    "title": "Surface Tiles",
+                    "rules": [
+                      { "rid": "BP-SFC-001", "text": "Surface tiles are placed on the board to represent the surface occupying that tile.", "tags": ["surfaces"] }
+                    ]
                   }
                 ]
               },
               {
                 "title": "Fields & Zones",
-                "rules": [
+                "body": [
+                  "Each player has a field containing their cards and deck."
+                ],
+                "subsections": [
                   {
-                    "rid": "FLD-001",
-                    "text": "Each player has a field containing their cards and deck; Action Zone has 5 public slots (one action card each).",
-                    "tags": ["fields", "action-zone", "public-info"]
+                    "title": "Action Zone",
+                    "rules": [
+                      { "rid": "FZ-ACT-001", "text": "The action zone consists of 5 action slots.", "tags": ["action-zone"] },
+                      { "rid": "FZ-ACT-002", "text": "Each slot may hold one action card.", "tags": ["action-zone"] },
+                      { "rid": "FZ-ACT-003", "text": "The action zone is public knowledge at all times.", "tags": ["action-zone", "public-info"] }
+                    ]
                   },
                   {
-                    "rid": "DK-001",
-                    "text": "Decks are face-down and not freely searchable.",
-                    "tags": ["deck"]
+                    "title": "Deck",
+                    "rules": [
+                      { "rid": "FZ-DECK-001", "text": "The deck is where cards are drawn from, especially at the end of each turn.", "tags": ["deck"] },
+                      { "rid": "FZ-DECK-002", "text": "The deck is kept face down and not freely searchable.", "tags": ["deck", "hidden-info"] }
+                    ]
                   },
                   {
-                    "rid": "PUR-001",
-                    "text": "Purgatory: destroyed, discarded, or attrited cards go here; purgatories are public.",
-                    "tags": ["purgatory", "public-info"]
+                    "title": "Purgatory",
+                    "rules": [
+                      { "rid": "FZ-PUR-001", "text": "Destroyed, discarded, or attrited cards go to the controller’s Purgatory.", "tags": ["purgatory"] },
+                      { "rid": "FZ-PUR-002", "text": "All purgatories are public knowledge at all times.", "tags": ["purgatory", "public-info"] }
+                    ]
                   },
                   {
-                    "rid": "ABY-001",
-                    "text": "Abyss: damned or offered cards go here; abysses are public.",
-                    "tags": ["abyss", "public-info"]
+                    "title": "Abyss",
+                    "rules": [
+                      { "rid": "FZ-ABY-001", "text": "Damned or offered cards go to the controller’s Abyss.", "tags": ["abyss"] },
+                      { "rid": "FZ-ABY-002", "text": "All abysses are public knowledge at all times.", "tags": ["abyss", "public-info"] }
+                    ]
                   },
                   {
-                    "rid": "HRZ-001",
-                    "text": "Hero Zone holds a player's Hero card; it is public.",
-                    "tags": ["hero-zone", "public-info"]
+                    "title": "Hero Zone",
+                    "rules": [
+                      { "rid": "FZ-HRZ-001", "text": "The Hero zone holds a player's Hero card.", "tags": ["hero-zone"] },
+                      { "rid": "FZ-HRZ-002", "text": "All Hero zones are public knowledge at all times.", "tags": ["hero-zone", "public-info"] }
+                    ]
                   },
                   {
-                    "rid": "HAND-001",
-                    "text": "Each player’s hand is private to non‑teammates.",
-                    "tags": ["hand", "hidden-info"]
+                    "title": "The Hand",
+                    "rules": [
+                      { "rid": "FZ-HAND-001", "text": "Each player’s hand is private to non‑teammates.", "tags": ["hand", "hidden-info"] }
+                    ]
                   }
                 ]
               }
@@ -142,6 +168,12 @@
             "slug": "initialization",
             "title": "Initialization",
             "subsections": [
+              {
+                "title": "Board Setup",
+                "rules": [
+                  { "rid": "INI-SETUP-001", "text": "The board is set up according to the to-be-played map.", "tags": ["setup", "board"] }
+                ]
+              },
               {
                 "title": "Offering to the Lich",
                 "rules": [
@@ -168,23 +200,29 @@
                 ]
               },
               {
-                "title": "Starting Positions & Draw",
+                "title": "Choosing Starting Positions",
                 "rules": [
+                  { "rid": "STP-001", "text": "In turn order, each player picks an Avatar and places it on a starting corner.", "tags": ["starting-positions"] }
+                ]
+              },
+              {
+                "title": "Initial Hand Draw",
+                "rules": [
+                  { "rid": "DRW-001", "text": "Initial hands are drawn after Avatars are placed.", "tags": ["initial-draw"] }
+                ],
+                "subsections": [
                   {
-                    "rid": "STP-001",
-                    "text": "In turn order, each player picks an Avatar and places it on a starting corner.",
-                    "tags": ["starting-positions"]
-                  },
-                  {
-                    "rid": "DRW-001",
-                    "text": "Initial hands are drawn after Avatars are placed. Mulligans: Put entire hand back, redraw full hand, then discard 1 card for each mulligan after the first (e.g., third mulligan requires 2 discards).",
-                    "tags": ["initial-draw", "mulligan"]
-                  },
-                  {
-                    "rid": "INI-001",
-                    "text": "After all mulligans, the game begins.",
-                    "tags": ["start-game"]
+                    "title": "Mulligans",
+                    "rules": [
+                      { "rid": "MUL-001", "text": "Return your entire hand to your deck, redraw that many cards, then discard 1 card for each mulligan after the first.", "tags": ["mulligan"] }
+                    ]
                   }
+                ]
+              },
+              {
+                "title": "End Initialization",
+                "rules": [
+                  { "rid": "INI-END-001", "text": "After all players have drawn their hands and finished Mulligans, the game begins.", "tags": ["start-game"] }
                 ]
               }
             ],
