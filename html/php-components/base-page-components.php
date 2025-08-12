@@ -344,15 +344,15 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                         <template id="tpl-layer-adjustments">
                                             <div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Brightness</label>
+                                                    <label class="form-label">Brightness <span class="text-muted" data-field-display="brightness">0</span></label>
                                                     <input type="range" class="form-range" data-field="brightness" min="-100" max="100" value="0">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Contrast</label>
+                                                    <label class="form-label">Contrast <span class="text-muted" data-field-display="contrast">0</span></label>
                                                     <input type="range" class="form-range" data-field="contrast" min="-100" max="100" value="0">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Saturation</label>
+                                                    <label class="form-label">Saturation <span class="text-muted" data-field-display="saturation">100</span></label>
                                                     <input type="range" class="form-range" data-field="saturation" min="0" max="200" value="100">
                                                 </div>
                                             </div>
@@ -360,22 +360,22 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                         <template id="tpl-layer-colorGlow">
                                             <div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Glow Lightness Threshold</label>
+                                                    <label class="form-label">Glow Lightness Threshold <span class="text-muted" data-field-display="threshold">60</span></label>
                                                     <input type="range" class="form-range" data-field="threshold" min="0" max="100" value="60">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Global Glow Multiplier</label>
-                                                    <input type="range" class="form-range" data-field="global" min="0" max="300" value="100">
+                                                    <label class="form-label">Global Glow Multiplier <span class="text-muted" data-field-display="global">100</span></label>
+                                                    <input type="range" class="form-range" data-field="global" min="0" max="200" value="100">
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">Reds</label>
                                                     <div class="row g-1">
                                                         <div class="col">
-                                                            <small class="text-muted">Glow</small>
+                                                            <small class="text-muted">Glow <span data-glow-display="R">0</span></small>
                                                             <input type="range" class="form-range" data-glow="R" min="0" max="100" value="0">
                                                         </div>
                                                         <div class="col">
-                                                            <small class="text-muted">Range</small>
+                                                            <small class="text-muted">Range <span data-glow-range-display="R">0</span></small>
                                                             <input type="range" class="form-range" data-glow-range="R" min="0" max="50" value="0">
                                                         </div>
                                                     </div>
@@ -384,11 +384,11 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                                     <label class="form-label">Yellows</label>
                                                     <div class="row g-1">
                                                         <div class="col">
-                                                            <small class="text-muted">Glow</small>
+                                                            <small class="text-muted">Glow <span data-glow-display="Y">0</span></small>
                                                             <input type="range" class="form-range" data-glow="Y" min="0" max="100" value="0">
                                                         </div>
                                                         <div class="col">
-                                                            <small class="text-muted">Range</small>
+                                                            <small class="text-muted">Range <span data-glow-range-display="Y">0</span></small>
                                                             <input type="range" class="form-range" data-glow-range="Y" min="0" max="50" value="0">
                                                         </div>
                                                     </div>
@@ -397,11 +397,11 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                                     <label class="form-label">Greens</label>
                                                     <div class="row g-1">
                                                         <div class="col">
-                                                            <small class="text-muted">Glow</small>
+                                                            <small class="text-muted">Glow <span data-glow-display="G">0</span></small>
                                                             <input type="range" class="form-range" data-glow="G" min="0" max="100" value="0">
                                                         </div>
                                                         <div class="col">
-                                                            <small class="text-muted">Range</small>
+                                                            <small class="text-muted">Range <span data-glow-range-display="G">0</span></small>
                                                             <input type="range" class="form-range" data-glow-range="G" min="0" max="50" value="0">
                                                         </div>
                                                     </div>
@@ -410,11 +410,11 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                                     <label class="form-label">Cyans</label>
                                                     <div class="row g-1">
                                                         <div class="col">
-                                                            <small class="text-muted">Glow</small>
+                                                            <small class="text-muted">Glow <span data-glow-display="C">0</span></small>
                                                             <input type="range" class="form-range" data-glow="C" min="0" max="100" value="0">
                                                         </div>
                                                         <div class="col">
-                                                            <small class="text-muted">Range</small>
+                                                            <small class="text-muted">Range <span data-glow-range-display="C">0</span></small>
                                                             <input type="range" class="form-range" data-glow-range="C" min="0" max="50" value="0">
                                                         </div>
                                                     </div>
@@ -423,11 +423,11 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                                     <label class="form-label">Blues</label>
                                                     <div class="row g-1">
                                                         <div class="col">
-                                                            <small class="text-muted">Glow</small>
+                                                            <small class="text-muted">Glow <span data-glow-display="B">0</span></small>
                                                             <input type="range" class="form-range" data-glow="B" min="0" max="100" value="0">
                                                         </div>
                                                         <div class="col">
-                                                            <small class="text-muted">Range</small>
+                                                            <small class="text-muted">Range <span data-glow-range-display="B">0</span></small>
                                                             <input type="range" class="form-range" data-glow-range="B" min="0" max="50" value="0">
                                                         </div>
                                                     </div>
@@ -436,11 +436,11 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                                     <label class="form-label">Magentas</label>
                                                     <div class="row g-1">
                                                         <div class="col">
-                                                            <small class="text-muted">Glow</small>
+                                                            <small class="text-muted">Glow <span data-glow-display="M">0</span></small>
                                                             <input type="range" class="form-range" data-glow="M" min="0" max="100" value="0">
                                                         </div>
                                                         <div class="col">
-                                                            <small class="text-muted">Range</small>
+                                                            <small class="text-muted">Range <span data-glow-range-display="M">0</span></small>
                                                             <input type="range" class="form-range" data-glow-range="M" min="0" max="50" value="0">
                                                         </div>
                                                     </div>
@@ -450,15 +450,15 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                         <template id="tpl-layer-bloom">
                                             <div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Bloom Alpha</label>
-                                                    <input type="range" class="form-range" data-field="alpha" min="0" max="1" step="0.01" value="0">
+                                                    <label class="form-label">Bloom Alpha <span class="text-muted" data-field-display="alpha">0</span></label>
+                                                    <input type="range" class="form-range" data-field="alpha" min="0" max="100" value="0">
                                                 </div>
                                                 <div class="mb-2">
-                                                <label class="form-label">Bloom Blur</label>
+                                                <label class="form-label">Bloom Blur <span class="text-muted" data-field-display="blur">0</span></label>
                                                     <input type="range" class="form-range" data-field="blur" min="0" max="50" value="0">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Bloom Threshold</label>
+                                                    <label class="form-label">Bloom Threshold <span class="text-muted" data-field-display="threshold">200</span></label>
                                                     <input type="range" class="form-range" data-field="threshold" min="0" max="255" value="200">
                                                 </div>
                                             </div>
@@ -466,27 +466,27 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                         <template id="tpl-layer-tune">
                                             <div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Reds</label>
+                                                    <label class="form-label">Reds <span class="text-muted" data-field-display="R">0</span></label>
                                                     <input type="range" class="form-range" data-field="R" min="-100" max="100" value="0">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Yellows</label>
+                                                    <label class="form-label">Yellows <span class="text-muted" data-field-display="Y">0</span></label>
                                                     <input type="range" class="form-range" data-field="Y" min="-100" max="100" value="0">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Greens</label>
+                                                    <label class="form-label">Greens <span class="text-muted" data-field-display="G">0</span></label>
                                                     <input type="range" class="form-range" data-field="G" min="-100" max="100" value="0">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Cyans</label>
+                                                    <label class="form-label">Cyans <span class="text-muted" data-field-display="C">0</span></label>
                                                     <input type="range" class="form-range" data-field="C" min="-100" max="100" value="0">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Blues</label>
+                                                    <label class="form-label">Blues <span class="text-muted" data-field-display="B">0</span></label>
                                                     <input type="range" class="form-range" data-field="B" min="-100" max="100" value="0">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Magentas</label>
+                                                    <label class="form-label">Magentas <span class="text-muted" data-field-display="M">0</span></label>
                                                     <input type="range" class="form-range" data-field="M" min="-100" max="100" value="0">
                                                 </div>
                                             </div>
@@ -494,36 +494,36 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                         <template id="tpl-layer-remap">
                                             <div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Global remap strength</label>
+                                                    <label class="form-label">Global remap strength <span class="text-muted" data-field-display="globalStrength">100</span></label>
                                                     <input type="range" class="form-range" data-field="globalStrength" min="0" max="100" value="100">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Reds →</label>
+                                                    <label class="form-label">Reds → <span class="text-muted" data-map-str-display="R">100</span></label>
                                                     <select class="form-select form-select-sm mb-1" data-map="R"></select>
                                                     <input type="range" class="form-range" data-map-str="R" min="0" max="100" value="100">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Yellows →</label>
+                                                    <label class="form-label">Yellows → <span class="text-muted" data-map-str-display="Y">100</span></label>
                                                     <select class="form-select form-select-sm mb-1" data-map="Y"></select>
                                                     <input type="range" class="form-range" data-map-str="Y" min="0" max="100" value="100">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Greens →</label>
+                                                    <label class="form-label">Greens → <span class="text-muted" data-map-str-display="G">100</span></label>
                                                     <select class="form-select form-select-sm mb-1" data-map="G"></select>
                                                     <input type="range" class="form-range" data-map-str="G" min="0" max="100" value="100">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Cyans →</label>
+                                                    <label class="form-label">Cyans → <span class="text-muted" data-map-str-display="C">100</span></label>
                                                     <select class="form-select form-select-sm mb-1" data-map="C"></select>
                                                     <input type="range" class="form-range" data-map-str="C" min="0" max="100" value="100">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Blues →</label>
+                                                    <label class="form-label">Blues → <span class="text-muted" data-map-str-display="B">100</span></label>
                                                     <select class="form-select form-select-sm mb-1" data-map="B"></select>
                                                     <input type="range" class="form-range" data-map-str="B" min="0" max="100" value="100">
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label class="form-label">Magentas →</label>
+                                                    <label class="form-label">Magentas → <span class="text-muted" data-map-str-display="M">100</span></label>
                                                     <select class="form-select form-select-sm mb-1" data-map="M"></select>
                                                     <input type="range" class="form-range" data-map-str="M" min="0" max="100" value="100">
                                                 </div>
@@ -574,7 +574,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         const layer=window.pixelEditor.getSettings().layers[index];
                         const gm={...(layer.options.glowMap||{})};
                         const entry={...(gm[band]||{r:0,s:0})};
-                        entry.s=parseFloat(el.value)/100;
+                        entry.s=parseFloat(el.value);
                         gm[band]=entry;
                         window.pixelEditor.updateLayer(index,{...layer.options,glowMap:gm});
                     }
@@ -624,18 +624,25 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                 if(el.type==='checkbox') el.checked=layer.options[key];
                                 else el.value=layer.options[key];
                             }
-                            el.addEventListener('input',()=>updateOption(index,key,el));
-                            el.addEventListener('change',()=>updateOption(index,key,el));
+                            const disp=frag.querySelector(`[data-field-display="${key}"]`);
+                            if(disp) disp.textContent=el.type==='checkbox'? (el.checked?'on':'off') : el.value;
+                            const handler=()=>{updateOption(index,key,el); if(disp) disp.textContent=el.type==='checkbox'? (el.checked?'on':'off') : el.value;};
+                            el.addEventListener('input',handler);
+                            el.addEventListener('change',handler);
                         });
                         frag.querySelectorAll('[data-glow]').forEach(el=>{
                             const band=el.getAttribute('data-glow');
-                            el.value=(layer.options.glowMap?.[band]?.s||0)*100;
-                            el.addEventListener('input',()=>updateGlow(index,band,el));
+                            el.value=layer.options.glowMap?.[band]?.s||0;
+                            const disp=frag.querySelector(`[data-glow-display="${band}"]`);
+                            if(disp) disp.textContent=el.value;
+                            el.addEventListener('input',()=>{updateGlow(index,band,el); if(disp) disp.textContent=el.value;});
                         });
                         frag.querySelectorAll('[data-glow-range]').forEach(el=>{
                             const band=el.getAttribute('data-glow-range');
                             el.value=layer.options.glowMap?.[band]?.r||0;
-                            el.addEventListener('input',()=>updateGlowRange(index,band,el));
+                            const disp=frag.querySelector(`[data-glow-range-display="${band}"]`);
+                            if(disp) disp.textContent=el.value;
+                            el.addEventListener('input',()=>{updateGlowRange(index,band,el); if(disp) disp.textContent=el.value;});
                         });
                         frag.querySelectorAll('[data-map]').forEach(sel=>{
                             remapBands.forEach((name,i)=>{const opt=document.createElement('option'); opt.textContent=name; opt.value=String(i); sel.appendChild(opt);});
@@ -646,7 +653,9 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         frag.querySelectorAll('[data-map-str]').forEach(el=>{
                             const band=el.getAttribute('data-map-str');
                             el.value=(layer.options.mapping?.[band]?.s||0)*100;
-                            el.addEventListener('input',()=>updateMapStr(index,band,el));
+                            const disp=frag.querySelector(`[data-map-str-display="${band}"]`);
+                            if(disp) disp.textContent=el.value;
+                            el.addEventListener('input',()=>{updateMapStr(index,band,el); if(disp) disp.textContent=el.value;});
                         });
                         const pane=document.createElement('div');
                         const paneId=`pixelPaneLayer${index}`;

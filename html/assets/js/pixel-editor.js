@@ -354,20 +354,20 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       }
       if(opts.enableGlow){
         const glowMap = {
-          R:{s:(opts.glow?.R?.strength ?? 0)/100, r:opts.glow?.R?.range ?? 0},
-          Y:{s:(opts.glow?.Y?.strength ?? 0)/100, r:opts.glow?.Y?.range ?? 0},
-          G:{s:(opts.glow?.G?.strength ?? 0)/100, r:opts.glow?.G?.range ?? 0},
-          C:{s:(opts.glow?.C?.strength ?? 0)/100, r:opts.glow?.C?.range ?? 0},
-          B:{s:(opts.glow?.B?.strength ?? 0)/100, r:opts.glow?.B?.range ?? 0},
-          M:{s:(opts.glow?.M?.strength ?? 0)/100, r:opts.glow?.M?.range ?? 0}
+          R:{s:opts.glow?.R?.strength ?? 0, r:opts.glow?.R?.range ?? 0},
+          Y:{s:opts.glow?.Y?.strength ?? 0, r:opts.glow?.Y?.range ?? 0},
+          G:{s:opts.glow?.G?.strength ?? 0, r:opts.glow?.G?.range ?? 0},
+          C:{s:opts.glow?.C?.strength ?? 0, r:opts.glow?.C?.range ?? 0},
+          B:{s:opts.glow?.B?.strength ?? 0, r:opts.glow?.B?.range ?? 0},
+          M:{s:opts.glow?.M?.strength ?? 0, r:opts.glow?.M?.range ?? 0}
         };
-        const threshold = (opts.glowThreshold ?? 60)/100;
-        const global = (opts.glow?.global ?? 100)/100;
+        const threshold = opts.glowThreshold ?? 60;
+        const global = opts.glow?.global ?? 100;
         ls.push(new Layer('colorGlow', {glowMap, threshold, global}));
         ls.push(new Layer('bloom', {
           threshold: opts.bloomThreshold ?? 200,
           blur: opts.bloomBlur ?? 0,
-          alpha: (opts.bloomAlpha ?? 0)/100
+          alpha: opts.bloomAlpha ?? 0
         }));
       }
       return ls;
@@ -410,14 +410,14 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       const glow = ls.find(l=>l.type==='colorGlow' && l.enabled!==false);
       if(glow){
         if(enableGlow) enableGlow.checked = true;
-        if(glowThreshold) glowThreshold.value = glow.options.threshold*100;
-        if(gAll) gAll.value = glow.options.global*100;
-        if(gR) gR.value = glow.options.glowMap.R.s*100;
-        if(gY) gY.value = glow.options.glowMap.Y.s*100;
-        if(gG) gG.value = glow.options.glowMap.G.s*100;
-        if(gC) gC.value = glow.options.glowMap.C.s*100;
-        if(gB) gB.value = glow.options.glowMap.B.s*100;
-        if(gM) gM.value = glow.options.glowMap.M.s*100;
+        if(glowThreshold) glowThreshold.value = glow.options.threshold;
+        if(gAll) gAll.value = glow.options.global;
+        if(gR) gR.value = glow.options.glowMap.R.s;
+        if(gY) gY.value = glow.options.glowMap.Y.s;
+        if(gG) gG.value = glow.options.glowMap.G.s;
+        if(gC) gC.value = glow.options.glowMap.C.s;
+        if(gB) gB.value = glow.options.glowMap.B.s;
+        if(gM) gM.value = glow.options.glowMap.M.s;
         if(gRRange) gRRange.value = glow.options.glowMap.R.r;
         if(gYRange) gYRange.value = glow.options.glowMap.Y.r;
         if(gGRange) gGRange.value = glow.options.glowMap.G.r;
@@ -430,7 +430,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         if(enableGlow) enableGlow.checked = true;
         if(bloomThreshold) bloomThreshold.value = bloom.options.threshold;
         if(bloomBlur) bloomBlur.value = bloom.options.blur;
-        if(bloomAlpha) bloomAlpha.value = bloom.options.alpha*100;
+        if(bloomAlpha) bloomAlpha.value = bloom.options.alpha;
       }
     }
 
@@ -640,20 +640,20 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         const glow = readGlowSettings();
         if(glow.enableGlow){
           const glowMap={
-            R:{s:glow.glow.R.strength/100, r:glow.glow.R.range},
-            Y:{s:glow.glow.Y.strength/100, r:glow.glow.Y.range},
-            G:{s:glow.glow.G.strength/100, r:glow.glow.G.range},
-            C:{s:glow.glow.C.strength/100, r:glow.glow.C.range},
-            B:{s:glow.glow.B.strength/100, r:glow.glow.B.range},
-            M:{s:glow.glow.M.strength/100, r:glow.glow.M.range},
+            R:{s:glow.glow.R.strength, r:glow.glow.R.range},
+            Y:{s:glow.glow.Y.strength, r:glow.glow.Y.range},
+            G:{s:glow.glow.G.strength, r:glow.glow.G.range},
+            C:{s:glow.glow.C.strength, r:glow.glow.C.range},
+            B:{s:glow.glow.B.strength, r:glow.glow.B.range},
+            M:{s:glow.glow.M.strength, r:glow.glow.M.range},
           };
-          const glowThreshVal = glow.glowThreshold/100;
-          const glowGlobalVal = glow.glow.global/100;
+          const glowThreshVal = glow.glowThreshold;
+          const glowGlobalVal = glow.glow.global;
           upsert('colorGlow', {glowMap, threshold:glowThreshVal, global:glowGlobalVal});
           const bloomOpts = {
             threshold: glow.bloomThreshold,
             blur: glow.bloomBlur,
-            alpha: glow.bloomAlpha/100
+            alpha: glow.bloomAlpha
           };
           upsert('bloom', bloomOpts);
         } else {
@@ -704,12 +704,16 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
             }
             case 'colorGlow':{
               const o = layer.options;
-              applyColorGlow(sctx, targetW, targetH, o.glowMap, o.threshold, o.global);
+              const gm={};
+              for(const [k,v] of Object.entries(o.glowMap||{})){
+                gm[k]={s:(v.s||0)/100, r:v.r||0};
+              }
+              applyColorGlow(sctx, targetW, targetH, gm, (o.threshold||0)/100, (o.global||0)/100);
               break;
             }
             case 'bloom':{
               const o = layer.options;
-              applyBloom(sctx, targetW, targetH, o.threshold, o.blur, o.alpha);
+              applyBloom(sctx, targetW, targetH, o.threshold, o.blur, (o.alpha||0)/100);
               break;
             }
           }
