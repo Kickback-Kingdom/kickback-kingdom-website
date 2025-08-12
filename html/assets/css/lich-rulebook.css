@@ -3,3 +3,41 @@
 #rulebook-container {
     /* Rule content will be inserted dynamically */
 }
+
+/* Section and page layout */
+#rulebook-container section {
+    margin-bottom: 2rem;
+}
+
+#rulebook-container article.rulebook-page {
+    margin-bottom: 1.5rem;
+}
+
+#rulebook-container h2,
+#rulebook-container h3,
+#rulebook-container h4 {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+#rulebook-container p,
+#rulebook-container ol {
+    margin-bottom: 1rem;
+}
+
+/* Responsive images and diagrams */
+#rulebook-container img,
+#rulebook-container svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1rem auto;
+}
+
+/* Highlight for search matches */
+.search-highlight {
+    background-color: #fff3cd;
+    padding: 0 0.2em;
+}
+

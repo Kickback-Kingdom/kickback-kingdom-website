@@ -78,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 pageEl.dataset.tags = Array.from(tagSet).join(' ').toLowerCase();
+                pageEl.dataset.original = pageEl.innerHTML;
                 sectionEl.appendChild(pageEl);
             });
 
@@ -91,9 +92,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const pages = container.querySelectorAll('.rulebook-page');
 
         pages.forEach((page) => {
+            // Reset page content to original to remove previous highlights
+            page.innerHTML = page.dataset.original;
+
             const text = page.textContent.toLowerCase();
             const tags = page.dataset.tags || '';
-            page.style.display = text.includes(term) || tags.includes(term) ? '' : 'none';
+
+            if (text.includes(term) || tags.includes(term)) {
+                page.style.display = '';
+
+                if (term) {
+                    const regex = new RegExp(`(${term})`, 'gi');
+                    page.innerHTML = page.innerHTML.replace(regex, '<span class="search-highlight">$1</span>');
+                }
+            } else {
+                page.style.display = 'none';
+            }
         });
     });
 });
