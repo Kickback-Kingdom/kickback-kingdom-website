@@ -413,6 +413,11 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         if(bri) bri.value = adj.options.brightness;
         if(con) con.value = adj.options.contrast;
         if(sat) sat.value = adj.options.saturation;
+      } else {
+        const d = LAYER_DEFAULTS.adjustments();
+        if(bri) bri.value = settings?.brightness ?? d.brightness;
+        if(con) con.value = settings?.contrast ?? d.contrast;
+        if(sat) sat.value = settings?.saturation ?? d.saturation;
       }
       const tune = ls.find(l=>l.type==='tune' && l.enabled!==false);
       if(tune){
@@ -423,6 +428,15 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         if(tC) tC.value = tune.options.C;
         if(tB) tB.value = tune.options.B;
         if(tM) tM.value = tune.options.M;
+      } else {
+        const d = LAYER_DEFAULTS.tune();
+        if(enableTune) enableTune.checked = settings?.enableTune ?? false;
+        if(tR) tR.value = settings?.tune?.R ?? d.R;
+        if(tY) tY.value = settings?.tune?.Y ?? d.Y;
+        if(tG) tG.value = settings?.tune?.G ?? d.G;
+        if(tC) tC.value = settings?.tune?.C ?? d.C;
+        if(tB) tB.value = settings?.tune?.B ?? d.B;
+        if(tM) tM.value = settings?.tune?.M ?? d.M;
       }
       const remap = ls.find(l=>l.type==='remap' && l.enabled!==false);
       if(remap){
@@ -440,6 +454,22 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         if(mapCStr) mapCStr.value = remap.options.mapping.C.s*100;
         if(mapBStr) mapBStr.value = remap.options.mapping.B.s*100;
         if(mapMStr) mapMStr.value = remap.options.mapping.M.s*100;
+      } else {
+        const d = LAYER_DEFAULTS.remap();
+        if(enableRemap) enableRemap.checked = settings?.enableRemap ?? false;
+        if(remapStrength) remapStrength.value = settings?.remapStrength ?? d.globalStrength;
+        if(mapR) mapR.value = String(settings?.map?.R ?? d.mapping.R.t);
+        if(mapY) mapY.value = String(settings?.map?.Y ?? d.mapping.Y.t);
+        if(mapG) mapG.value = String(settings?.map?.G ?? d.mapping.G.t);
+        if(mapC) mapC.value = String(settings?.map?.C ?? d.mapping.C.t);
+        if(mapB) mapB.value = String(settings?.map?.B ?? d.mapping.B.t);
+        if(mapM) mapM.value = String(settings?.map?.M ?? d.mapping.M.t);
+        if(mapRStr) mapRStr.value = settings?.mapStr?.R ?? d.mapping.R.s*100;
+        if(mapYStr) mapYStr.value = settings?.mapStr?.Y ?? d.mapping.Y.s*100;
+        if(mapGStr) mapGStr.value = settings?.mapStr?.G ?? d.mapping.G.s*100;
+        if(mapCStr) mapCStr.value = settings?.mapStr?.C ?? d.mapping.C.s*100;
+        if(mapBStr) mapBStr.value = settings?.mapStr?.B ?? d.mapping.B.s*100;
+        if(mapMStr) mapMStr.value = settings?.mapStr?.M ?? d.mapping.M.s*100;
       }
       const glow = ls.find(l=>l.type==='colorGlow' && l.enabled!==false);
       if(glow){
@@ -460,6 +490,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         if(gMRange) gMRange.value = glow.options.glowMap.M.r;
       } else {
         const d = LAYER_DEFAULTS.colorGlow();
+        if(enableGlow) enableGlow.checked = settings?.enableGlow ?? false;
         if(glowThreshold) glowThreshold.value = settings?.glowThreshold ?? d.threshold;
         if(gAll) gAll.value = settings?.glow?.global ?? d.global;
         if(gR) gR.value = settings?.glow?.R?.strength ?? 0;
