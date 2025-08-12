@@ -495,6 +495,7 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       } else {
         const d = LAYER_DEFAULTS.colorGlow();
         if(enableGlow) enableGlow.checked = settings?.enableGlow ?? false;
+        if(enableGlow) enableGlow.checked = settings?.enableGlow ?? false;
         if(glowThreshold) glowThreshold.value = settings?.glowThreshold ?? d.threshold;
         if(gAll) gAll.value = settings?.glow?.global ?? d.global;
         if(gR) gR.value = settings?.glow?.R?.strength ?? d.glowMap.R.s;
