@@ -348,8 +348,8 @@ function UpdateMediaUploadModal()
         }
         if (!pixelEditorSettings) {
             pixelEditorSettings = {
-                pixelWidth: 64,
-                method: 'neighbor',
+                pixelWidth: 192,
+                method: 'palette',
                 paletteSize: 16,
                 dither: false,
                 autoRender: true,
@@ -359,9 +359,9 @@ function UpdateMediaUploadModal()
                 saturation: 100,
                 enableGlow: false,
                 glowThreshold: 60,
-                bloomAlpha: 0,
-                bloomBlur: 0,
-                bloomThreshold: 200,
+                bloomAlpha: 90,
+                bloomBlur: 4,
+                bloomThreshold: 33,
                 glow: {R:{strength:0, range:0}, Y:{strength:0, range:0}, G:{strength:0, range:0}, C:{strength:0, range:0}, B:{strength:0, range:0}, M:{strength:0, range:0}},
                 enableTune: false,
                 tune: {R:0, Y:0, G:0, C:0, B:0, M:0},
