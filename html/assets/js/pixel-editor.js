@@ -3,7 +3,7 @@
 export const LAYER_DEFAULTS = {
   adjustments: () => ({ brightness: 0, contrast: 0, saturation: 100 }),
   colorGlow: () => ({
-    threshold: 60,
+    threshold: 0,
     global: 100,
     glowMap: {
       R: { s: 0, r: 10 },
