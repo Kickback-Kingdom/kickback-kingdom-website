@@ -242,7 +242,67 @@ class MediaController {
         $dirs = array_map(fn(array $row) => $row['Directory'], $rows);
         return (new Response(true, "Media Directories",  $dirs ));
     }
-    
+
+    public static function GenerateImage(
+        string $prompt,
+        string $directory,
+        string $name,
+        string $desc,
+        string $size = '1024x1024',
+        string $model = 'gpt-image-1'
+    ) : Response
+    {
+        $apiKey = \Kickback\Backend\Config\ServiceCredentials::get('openai_api_key');
+        if (Str::empty($apiKey)) {
+            return new Response(false, 'Missing OpenAI API key.', null);
+        }
+
+        if (!class_exists('\\OpenAI')) {
+            return new Response(false, 'OpenAI client library not installed.', null);
+        }
+
+        $allowedSizes = [
+            'gpt-image-1' => ['1024x1024', '1024x1536', '1536x1024', 'auto'],
+            'dall-e-2'   => ['256x256', '512x512', '1024x1024'],
+        ];
+
+        if (isset($allowedSizes[$model]) && !in_array($size, $allowedSizes[$model], true)) {
+            $supported = implode("', '", $allowedSizes[$model]);
+            return new Response(false, "Invalid value: '$size'. Supported values are: '$supported'.", null);
+        }
+
+        try {
+            $client = \OpenAI::client($apiKey);
+            $params = [
+                'model' => $model,
+                'prompt' => $prompt,
+                'size' => $size,
+            ];
+
+            if ($model === 'dall-e-2') {
+                $params['response_format'] = 'b64_json';
+            }
+
+            $result = $client->images()->create($params);
+
+            $b64 = $result['data'][0]['b64_json'] ?? '';
+            if (Str::empty($b64)) {
+                return new Response(false, 'No image data returned from OpenAI.', null);
+            }
+
+            $imgBase64 = 'data:image/png;base64,' . $b64;
+
+            $uploadResp = self::UploadMediaImage($directory, $name, $desc, $imgBase64);
+            if (!$uploadResp->success) {
+                return $uploadResp;
+            }
+
+            return new Response(true, 'Image generated', ['imgBase64' => $imgBase64]);
+        } catch (\Exception $e) {
+            return new Response(false, $e->getMessage(), null);
+        }
+    }
+
     public static function UploadMediaImage(
         string  $directory,
         string  $name,

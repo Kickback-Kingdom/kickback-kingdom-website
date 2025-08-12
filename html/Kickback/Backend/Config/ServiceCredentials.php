@@ -182,6 +182,9 @@ final class ServiceCredentials implements \ArrayAccess
         //ipinfo_api_key used for analytics
         $error_count += (int)!$this->credential_string_exists       ("ipinfo_api_key");
 
+        // OpenAI API key for image generation
+        $error_count += (int)!$this->credential_string_exists       ("openai_api_key");
+
         return ($error_count > 0);
     }
 
