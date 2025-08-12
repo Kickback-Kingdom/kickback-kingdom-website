@@ -410,64 +410,99 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     function applyLayersToUI(ls){
       const adj = ls.find(l=>l.type==='adjustments' && l.enabled!==false);
       if(adj){
-        if(bri) bri.value = adj.options.brightness;
-        if(con) con.value = adj.options.contrast;
-        if(sat) sat.value = adj.options.saturation;
+        const d = LAYER_DEFAULTS.adjustments();
+        if(bri) bri.value = adj.options.brightness ?? d.brightness;
+        if(con) con.value = adj.options.contrast ?? d.contrast;
+        if(sat) sat.value = adj.options.saturation ?? d.saturation;
+      } else {
+        const d = LAYER_DEFAULTS.adjustments();
+        if(bri) bri.value = settings?.brightness ?? d.brightness;
+        if(con) con.value = settings?.contrast ?? d.contrast;
+        if(sat) sat.value = settings?.saturation ?? d.saturation;
       }
       const tune = ls.find(l=>l.type==='tune' && l.enabled!==false);
       if(tune){
+        const d = LAYER_DEFAULTS.tune();
         if(enableTune) enableTune.checked = true;
-        if(tR) tR.value = tune.options.R;
-        if(tY) tY.value = tune.options.Y;
-        if(tG) tG.value = tune.options.G;
-        if(tC) tC.value = tune.options.C;
-        if(tB) tB.value = tune.options.B;
-        if(tM) tM.value = tune.options.M;
+        if(tR) tR.value = tune.options.R ?? d.R;
+        if(tY) tY.value = tune.options.Y ?? d.Y;
+        if(tG) tG.value = tune.options.G ?? d.G;
+        if(tC) tC.value = tune.options.C ?? d.C;
+        if(tB) tB.value = tune.options.B ?? d.B;
+        if(tM) tM.value = tune.options.M ?? d.M;
+      } else {
+        const d = LAYER_DEFAULTS.tune();
+        if(enableTune) enableTune.checked = settings?.enableTune ?? false;
+        if(tR) tR.value = settings?.tune?.R ?? d.R;
+        if(tY) tY.value = settings?.tune?.Y ?? d.Y;
+        if(tG) tG.value = settings?.tune?.G ?? d.G;
+        if(tC) tC.value = settings?.tune?.C ?? d.C;
+        if(tB) tB.value = settings?.tune?.B ?? d.B;
+        if(tM) tM.value = settings?.tune?.M ?? d.M;
       }
       const remap = ls.find(l=>l.type==='remap' && l.enabled!==false);
       if(remap){
+        const d = LAYER_DEFAULTS.remap();
         if(enableRemap) enableRemap.checked = true;
-        if(remapStrength) remapStrength.value = remap.options.globalStrength*100;
-        if(mapR) mapR.value = String(remap.options.mapping.R.t);
-        if(mapY) mapY.value = String(remap.options.mapping.Y.t);
-        if(mapG) mapG.value = String(remap.options.mapping.G.t);
-        if(mapC) mapC.value = String(remap.options.mapping.C.t);
-        if(mapB) mapB.value = String(remap.options.mapping.B.t);
-        if(mapM) mapM.value = String(remap.options.mapping.M.t);
-        if(mapRStr) mapRStr.value = remap.options.mapping.R.s*100;
-        if(mapYStr) mapYStr.value = remap.options.mapping.Y.s*100;
-        if(mapGStr) mapGStr.value = remap.options.mapping.G.s*100;
-        if(mapCStr) mapCStr.value = remap.options.mapping.C.s*100;
-        if(mapBStr) mapBStr.value = remap.options.mapping.B.s*100;
-        if(mapMStr) mapMStr.value = remap.options.mapping.M.s*100;
+        if(remapStrength) remapStrength.value = (remap.options.globalStrength ?? d.globalStrength/100)*100;
+        if(mapR) mapR.value = String(remap.options.mapping.R.t ?? d.mapping.R.t);
+        if(mapY) mapY.value = String(remap.options.mapping.Y.t ?? d.mapping.Y.t);
+        if(mapG) mapG.value = String(remap.options.mapping.G.t ?? d.mapping.G.t);
+        if(mapC) mapC.value = String(remap.options.mapping.C.t ?? d.mapping.C.t);
+        if(mapB) mapB.value = String(remap.options.mapping.B.t ?? d.mapping.B.t);
+        if(mapM) mapM.value = String(remap.options.mapping.M.t ?? d.mapping.M.t);
+        if(mapRStr) mapRStr.value = (remap.options.mapping.R.s ?? d.mapping.R.s)*100;
+        if(mapYStr) mapYStr.value = (remap.options.mapping.Y.s ?? d.mapping.Y.s)*100;
+        if(mapGStr) mapGStr.value = (remap.options.mapping.G.s ?? d.mapping.G.s)*100;
+        if(mapCStr) mapCStr.value = (remap.options.mapping.C.s ?? d.mapping.C.s)*100;
+        if(mapBStr) mapBStr.value = (remap.options.mapping.B.s ?? d.mapping.B.s)*100;
+        if(mapMStr) mapMStr.value = (remap.options.mapping.M.s ?? d.mapping.M.s)*100;
+      } else {
+        const d = LAYER_DEFAULTS.remap();
+        if(enableRemap) enableRemap.checked = settings?.enableRemap ?? false;
+        if(remapStrength) remapStrength.value = settings?.remapStrength ?? d.globalStrength;
+        if(mapR) mapR.value = String(settings?.map?.R ?? d.mapping.R.t);
+        if(mapY) mapY.value = String(settings?.map?.Y ?? d.mapping.Y.t);
+        if(mapG) mapG.value = String(settings?.map?.G ?? d.mapping.G.t);
+        if(mapC) mapC.value = String(settings?.map?.C ?? d.mapping.C.t);
+        if(mapB) mapB.value = String(settings?.map?.B ?? d.mapping.B.t);
+        if(mapM) mapM.value = String(settings?.map?.M ?? d.mapping.M.t);
+        if(mapRStr) mapRStr.value = settings?.mapStr?.R ?? d.mapping.R.s*100;
+        if(mapYStr) mapYStr.value = settings?.mapStr?.Y ?? d.mapping.Y.s*100;
+        if(mapGStr) mapGStr.value = settings?.mapStr?.G ?? d.mapping.G.s*100;
+        if(mapCStr) mapCStr.value = settings?.mapStr?.C ?? d.mapping.C.s*100;
+        if(mapBStr) mapBStr.value = settings?.mapStr?.B ?? d.mapping.B.s*100;
+        if(mapMStr) mapMStr.value = settings?.mapStr?.M ?? d.mapping.M.s*100;
       }
       const glow = ls.find(l=>l.type==='colorGlow' && l.enabled!==false);
       if(glow){
+        const d = LAYER_DEFAULTS.colorGlow();
         if(enableGlow) enableGlow.checked = true;
-        if(glowThreshold) glowThreshold.value = glow.options.threshold;
-        if(gAll) gAll.value = glow.options.global;
-        if(gR) gR.value = glow.options.glowMap.R.s;
-        if(gY) gY.value = glow.options.glowMap.Y.s;
-        if(gG) gG.value = glow.options.glowMap.G.s;
-        if(gC) gC.value = glow.options.glowMap.C.s;
-        if(gB) gB.value = glow.options.glowMap.B.s;
-        if(gM) gM.value = glow.options.glowMap.M.s;
-        if(gRRange) gRRange.value = glow.options.glowMap.R.r;
-        if(gYRange) gYRange.value = glow.options.glowMap.Y.r;
-        if(gGRange) gGRange.value = glow.options.glowMap.G.r;
-        if(gCRange) gCRange.value = glow.options.glowMap.C.r;
-        if(gBRange) gBRange.value = glow.options.glowMap.B.r;
-        if(gMRange) gMRange.value = glow.options.glowMap.M.r;
+        if(glowThreshold) glowThreshold.value = glow.options.threshold ?? d.threshold;
+        if(gAll) gAll.value = glow.options.global ?? d.global;
+        if(gR) gR.value = glow.options.glowMap.R.s ?? d.glowMap.R.s;
+        if(gY) gY.value = glow.options.glowMap.Y.s ?? d.glowMap.Y.s;
+        if(gG) gG.value = glow.options.glowMap.G.s ?? d.glowMap.G.s;
+        if(gC) gC.value = glow.options.glowMap.C.s ?? d.glowMap.C.s;
+        if(gB) gB.value = glow.options.glowMap.B.s ?? d.glowMap.B.s;
+        if(gM) gM.value = glow.options.glowMap.M.s ?? d.glowMap.M.s;
+        if(gRRange) gRRange.value = glow.options.glowMap.R.r ?? d.glowMap.R.r;
+        if(gYRange) gYRange.value = glow.options.glowMap.Y.r ?? d.glowMap.Y.r;
+        if(gGRange) gGRange.value = glow.options.glowMap.G.r ?? d.glowMap.G.r;
+        if(gCRange) gCRange.value = glow.options.glowMap.C.r ?? d.glowMap.C.r;
+        if(gBRange) gBRange.value = glow.options.glowMap.B.r ?? d.glowMap.B.r;
+        if(gMRange) gMRange.value = glow.options.glowMap.M.r ?? d.glowMap.M.r;
       } else {
         const d = LAYER_DEFAULTS.colorGlow();
+        if(enableGlow) enableGlow.checked = settings?.enableGlow ?? false;
         if(glowThreshold) glowThreshold.value = settings?.glowThreshold ?? d.threshold;
         if(gAll) gAll.value = settings?.glow?.global ?? d.global;
-        if(gR) gR.value = settings?.glow?.R?.strength ?? 0;
-        if(gY) gY.value = settings?.glow?.Y?.strength ?? 0;
-        if(gG) gG.value = settings?.glow?.G?.strength ?? 0;
-        if(gC) gC.value = settings?.glow?.C?.strength ?? 0;
-        if(gB) gB.value = settings?.glow?.B?.strength ?? 0;
-        if(gM) gM.value = settings?.glow?.M?.strength ?? 0;
+        if(gR) gR.value = settings?.glow?.R?.strength ?? d.glowMap.R.s;
+        if(gY) gY.value = settings?.glow?.Y?.strength ?? d.glowMap.Y.s;
+        if(gG) gG.value = settings?.glow?.G?.strength ?? d.glowMap.G.s;
+        if(gC) gC.value = settings?.glow?.C?.strength ?? d.glowMap.C.s;
+        if(gB) gB.value = settings?.glow?.B?.strength ?? d.glowMap.B.s;
+        if(gM) gM.value = settings?.glow?.M?.strength ?? d.glowMap.M.s;
         if(gRRange) gRRange.value = settings?.glow?.R?.range ?? d.glowMap.R.r;
         if(gYRange) gYRange.value = settings?.glow?.Y?.range ?? d.glowMap.Y.r;
         if(gGRange) gGRange.value = settings?.glow?.G?.range ?? d.glowMap.G.r;
@@ -477,10 +512,11 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
       }
       const bloom = ls.find(l=>l.type==='bloom' && l.enabled!==false);
       if(bloom){
+        const d = LAYER_DEFAULTS.bloom();
         if(enableGlow) enableGlow.checked = true;
-        if(bloomThreshold) bloomThreshold.value = bloom.options.threshold;
-        if(bloomBlur) bloomBlur.value = bloom.options.blur;
-        if(bloomAlpha) bloomAlpha.value = bloom.options.alpha;
+        if(bloomThreshold) bloomThreshold.value = bloom.options.threshold ?? d.threshold;
+        if(bloomBlur) bloomBlur.value = bloom.options.blur ?? d.blur;
+        if(bloomAlpha) bloomAlpha.value = bloom.options.alpha ?? d.alpha;
       } else {
         const d = LAYER_DEFAULTS.bloom();
         if(bloomThreshold) bloomThreshold.value = settings?.bloomThreshold ?? d.threshold;
