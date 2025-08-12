@@ -677,6 +677,13 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                     }
 
                     function refreshUI(activeIndex=null){
+                        const layerIcons={
+                            adjustments:'fa-sliders',
+                            colorGlow:'fa-fire',
+                            bloom:'fa-sun',
+                            tune:'fa-wrench',
+                            remap:'fa-arrows-rotate'
+                        };
                         const currentActive=layerTabs.querySelector('.nav-link.active');
                         if(activeIndex===null && currentActive){
                             activeIndex=parseInt(currentActive.getAttribute('data-layer-index'),10);
@@ -708,9 +715,10 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             tab.role='tab';
                             tab.setAttribute('aria-controls',`pixelPaneLayer${i}`);
                             tab.setAttribute('aria-selected','false');
-                            tab.textContent=layer.type;
+                            tab.innerHTML=`<i class="fa-solid ${layerIcons[layer.type]}" title="${layer.type}" aria-label="${layer.type}"></i>`;
                             tab.setAttribute('data-layer-index',i);
                             layerTabs.appendChild(tab);
+                            bootstrap.Tab.getOrCreateInstance(tab);
 
                             const pane=renderLayerPane(layer,i);
                             layerTabContent.appendChild(pane);
