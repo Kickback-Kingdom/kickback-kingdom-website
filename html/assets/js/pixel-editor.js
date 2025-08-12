@@ -143,6 +143,12 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
     ctx.putImageData(img,0,0);
   }
 
+  // Shared offscreen canvas reused across operations
+  const scratchCanvas = typeof OffscreenCanvas !== 'undefined'
+    ? new OffscreenCanvas(1,1)
+    : (typeof document !== 'undefined' ? document.createElement('canvas') : null);
+  const scratchCtx = scratchCanvas ? scratchCanvas.getContext('2d') : null;
+
   /**
    * Apply hue-based glow to bright areas.
    * @param {CanvasRenderingContext2D} ctx
@@ -153,16 +159,15 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
  * @param {number} [globalMult=1] - multiplier applied to all band strengths
  */
   function applyColorGlow(ctx, w, h, glows, threshold=0, globalMult=1){
-    if(!glows || !Object.values(glows).some(v=>v.s>0)) return;
+    if(!glows || !Object.values(glows).some(v=>v.s>0) || !scratchCtx) return;
+    scratchCanvas.width = w;
+    scratchCanvas.height = h;
     for(const [bandKey, cfg] of Object.entries(glows)){
       const strength=(cfg.s||0)*globalMult;
       if(strength<=0) continue;
       const range=cfg.r||0;
-      const off=document.createElement('canvas');
-      off.width=w; off.height=h;
-      const octx=off.getContext('2d');
-      octx.drawImage(ctx.canvas,0,0);
-      const img=octx.getImageData(0,0,w,h);
+      scratchCtx.drawImage(ctx.canvas,0,0);
+      const img=scratchCtx.getImageData(0,0,w,h);
       const d=img.data;
       for(let i=0;i<d.length;i+=4){
         const r=d[i], g=d[i+1], bl=d[i+2];
@@ -176,12 +181,12 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         const rgb=hslToRgb(hsl.h,newS,newL);
         d[i]=rgb.r; d[i+1]=rgb.g; d[i+2]=rgb.b;
       }
-      octx.putImageData(img,0,0);
+      scratchCtx.putImageData(img,0,0);
       ctx.save();
       if(range>0) ctx.filter=`blur(${range}px)`;
       ctx.globalCompositeOperation='lighter';
       ctx.globalAlpha=Math.min(1, strength);
-      ctx.drawImage(off,0,0);
+      ctx.drawImage(scratchCanvas,0,0);
       ctx.restore();
     }
   }
@@ -196,25 +201,24 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
    * @param {number} [alpha=0] - output alpha [0-1] for the bloom overlay
    */
   function applyBloom(ctx, w, h, threshold=200, blurRadius=0, alpha=0){
-    if(alpha<=0) return;
-    const off=document.createElement('canvas');
-    off.width=w; off.height=h;
-    const octx=off.getContext('2d');
-    octx.drawImage(ctx.canvas,0,0);
-    const img=octx.getImageData(0,0,w,h);
+    if(alpha<=0 || !scratchCtx) return;
+    scratchCanvas.width = w;
+    scratchCanvas.height = h;
+    scratchCtx.drawImage(ctx.canvas,0,0);
+    const img=scratchCtx.getImageData(0,0,w,h);
     const d=img.data;
     for(let i=0;i<d.length;i+=4){
       const r=d[i], g=d[i+1], b=d[i+2];
       const lum=0.2126*r + 0.7152*g + 0.0722*b;
       if(lum<threshold){ d[i]=d[i+1]=d[i+2]=0; }
     }
-    octx.putImageData(img,0,0);
+    scratchCtx.putImageData(img,0,0);
     ctx.save();
     if(blurRadius>0) ctx.filter=`blur(${blurRadius}px)`;
     ctx.globalCompositeOperation='lighter';
     const easedAlpha=Math.pow(alpha,3); // cubic easing for finer control
     ctx.globalAlpha=Math.min(1, easedAlpha);
-    ctx.drawImage(off,0,0);
+    ctx.drawImage(scratchCanvas,0,0);
     ctx.restore();
   }
 
