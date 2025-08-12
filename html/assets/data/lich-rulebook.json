@@ -1,0 +1,419 @@
+{
+    "meta": {
+      "game": "L.I.C.H.",
+      "rulebookVersion": "0.5.8-alpha",
+      "schemaVersion": "1.0.0",
+      "lastUpdated": "2025-08-12",
+      "copyright": "© L.I.C.H.",
+      "license": "All rights reserved"
+    },
+    "assets": {
+      "imagesBase": "images/lich/",
+      "iconsBase": "images/icons/",
+      "diagramsBase": "images/lich/diagrams/"
+    },
+    "sections": [
+      {
+        "id": "intro",
+        "slug": "introduction",
+        "title": "Introduction",
+        "pages": [
+          {
+            "id": "welcome",
+            "slug": "welcome",
+            "title": "Welcome to the L.I.C.H. Rulebook",
+            "body": [
+              "L.I.C.H. is a tactical board & card game played on a hex grid with heroes (Avatars), summons, surfaces, and source-driven cards.",
+              "<p><strong>Readability tip:</strong> Each numbered rule is linkable; hover the link icon to copy a direct URL.</p>"
+            ],
+            "figures": [
+              {
+                "id": "fig-overview",
+                "src": "images/lich/overview.png",
+                "caption": "High-level components of L.I.C.H.",
+                "alt": "Overview diagram of board zones, avatars, and action zones"
+              }
+            ],
+            "tags": ["overview", "getting-started"]
+          }
+        ]
+      },
+  
+      {
+        "id": "game-setup",
+        "slug": "game-setup",
+        "title": "Game Setup",
+        "pages": [
+          {
+            "id": "board",
+            "slug": "the-board",
+            "title": "The Board",
+            "rules": [
+              {
+                "rid": "BRD-001",
+                "text": "The game uses a hexagonal board with a hex grid; each side has 6 hexes.",
+                "tags": ["board", "dimensions"]
+              },
+              {
+                "rid": "BRD-002",
+                "text": "Starting positions are the six corners of the board.",
+                "tags": ["board", "starting-positions"]
+              }
+            ],
+            "subsections": [
+              {
+                "title": "Board Pieces",
+                "rules": [
+                  {
+                    "rid": "SRC-001",
+                    "text": "Source Stones: When an Avatar occupies a Source Stone tile, its controller must draw 1 pure source if able. Summons treat Source Stones as walls except for line of sight; Source Stones do not block line of sight.",
+                    "tags": ["source-stones", "draw", "line-of-sight"]
+                  },
+                  {
+                    "rid": "WAL-001",
+                    "text": "Walls: Avatars and Summons cannot occupy wall tiles; walls block line of sight; maps place walls during setup.",
+                    "tags": ["walls", "line-of-sight"]
+                  },
+                  {
+                    "rid": "AVA-001",
+                    "text": "Avatars represent their controller’s hero on the board.",
+                    "tags": ["avatars"]
+                  },
+                  {
+                    "rid": "SUM-001",
+                    "text": "Summon pieces come in matching pairs used as a board marker and as the marker for the summoning card.",
+                    "tags": ["summons", "components"]
+                  },
+                  {
+                    "rid": "SFC-001",
+                    "text": "Surface tiles are placed to represent the surface occupying that tile.",
+                    "tags": ["surfaces"]
+                  }
+                ]
+              },
+              {
+                "title": "Fields & Zones",
+                "rules": [
+                  {
+                    "rid": "FLD-001",
+                    "text": "Each player has a field containing their cards and deck; Action Zone has 5 public slots (one action card each).",
+                    "tags": ["fields", "action-zone", "public-info"]
+                  },
+                  {
+                    "rid": "DK-001",
+                    "text": "Decks are face-down and not freely searchable.",
+                    "tags": ["deck"]
+                  },
+                  {
+                    "rid": "PUR-001",
+                    "text": "Purgatory: destroyed, discarded, or attrited cards go here; purgatories are public.",
+                    "tags": ["purgatory", "public-info"]
+                  },
+                  {
+                    "rid": "ABY-001",
+                    "text": "Abyss: damned or offered cards go here; abysses are public.",
+                    "tags": ["abyss", "public-info"]
+                  },
+                  {
+                    "rid": "HRZ-001",
+                    "text": "Hero Zone holds a player's Hero card; it is public.",
+                    "tags": ["hero-zone", "public-info"]
+                  },
+                  {
+                    "rid": "HAND-001",
+                    "text": "Each player’s hand is private to non‑teammates.",
+                    "tags": ["hand", "hidden-info"]
+                  }
+                ]
+              }
+            ],
+            "figures": [
+              {
+                "id": "fig-board-labeled",
+                "src": "images/lich/diagrams/board-labeled.png",
+                "caption": "Board with corners, zones, and example walls.",
+                "alt": "Hex board with marked corners and zones"
+              }
+            ],
+            "tags": ["setup", "board", "zones"]
+          },
+          {
+            "id": "initialization",
+            "slug": "initialization",
+            "title": "Initialization",
+            "subsections": [
+              {
+                "title": "Offering to the Lich",
+                "rules": [
+                  {
+                    "rid": "OFF-001",
+                    "text": "Base Offering: Each player draws 3, chooses 1 to offer (face‑down), then reveal. Highest total source cost goes first; turn order clockwise.",
+                    "tags": ["offering", "turn-order"]
+                  },
+                  {
+                    "rid": "OFF-002",
+                    "text": "Tie breaker: Tied players reshuffle, redraw 3, choose again; reveal and compare.",
+                    "tags": ["offering", "tie-breaker"]
+                  },
+                  {
+                    "rid": "OFF-003",
+                    "text": "Sudden Death: If still tied, tied players reveal cards from top of deck until a winner emerges.",
+                    "tags": ["offering", "sudden-death"]
+                  },
+                  {
+                    "rid": "OFF-004",
+                    "text": "End of Offering: The chosen card is put into its controller’s Abyss; all other cards are shuffled back. Players do not draw initial hands yet.",
+                    "tags": ["offering", "abyss"]
+                  }
+                ]
+              },
+              {
+                "title": "Starting Positions & Draw",
+                "rules": [
+                  {
+                    "rid": "STP-001",
+                    "text": "In turn order, each player picks an Avatar and places it on a starting corner.",
+                    "tags": ["starting-positions"]
+                  },
+                  {
+                    "rid": "DRW-001",
+                    "text": "Initial hands are drawn after Avatars are placed. Mulligans: Put entire hand back, redraw full hand, then discard 1 card for each mulligan after the first (e.g., third mulligan requires 2 discards).",
+                    "tags": ["initial-draw", "mulligan"]
+                  },
+                  {
+                    "rid": "INI-001",
+                    "text": "After all mulligans, the game begins.",
+                    "tags": ["start-game"]
+                  }
+                ]
+              }
+            ],
+            "tags": ["setup", "offering", "mulligan"]
+          }
+        ]
+      },
+  
+      {
+        "id": "gameplay",
+        "slug": "gameplay",
+        "title": "Gameplay",
+        "pages": [
+          {
+            "id": "turn-phases",
+            "slug": "turn-phases",
+            "title": "Turn Phases",
+            "rules": [
+              { "rid": "PH-START", "text": "Start Phase: Untap all tapped cards and used AP.", "tags": ["start-phase", "untap"] },
+              { "rid": "PH-MAIN",
+                "text": "Main Phase: In any order, multiple times—move up to 2 tiles; play/activate cards/effects as affordable; play 1 Source card. Alternatively, you may offer any number of cards to the Lich (damn them) and immediately go to Status Phase.",
+                "tags": ["main-phase", "movement", "offer"]
+              },
+              { "rid": "PH-STATUS-1", "text": "Status Phase: Resolve statuses; then resolve Death Fog.", "tags": ["status-phase"] },
+              { "rid": "PH-END",
+                "text": "End Phase: Draw up to max hand size; lose 2 health per card above max; place 1 Death Fog tile on the outermost unobstructed ring (not on walls or existing Death Fog). If walls inside a complete layer break, the opening fills with Death Fog.",
+                "tags": ["end-phase", "hand-limit", "death-fog"]
+              }
+            ],
+            "figures": [
+              {
+                "id": "fig-turn-loop",
+                "src": "images/lich/diagrams/turn-loop.png",
+                "caption": "Turn loop and Death Fog expansion.",
+                "alt": "Circular diagram of phases with a ring for Death Fog"
+              }
+            ],
+            "tags": ["phases", "death-fog"]
+          },
+          {
+            "id": "ap-and-combat",
+            "slug": "ap-combat",
+            "title": "Action Points & Combat",
+            "rules": [
+              { "rid": "AP-001", "text": "Each player has 2 AP, refreshed at the Start Phase.", "tags": ["ap"] },
+              { "rid": "AP-002", "text": "Tap effects may be used at reaction speed for 1 AP, or at technique speed during your turn for 1 AP.", "tags": ["ap", "speeds"] },
+              { "rid": "BLK-001", "text": "Blocking: Equipment with ≥1 defense can block damage to an Avatar. If incoming damage ≥ defense, all damage is prevented and the equipment is destroyed. If incoming damage < defense, no damage is dealt. Blocking requires tapping the equipment.", "tags": ["blocking", "equipment"] },
+              { "rid": "DMG-001", "text": "Damage is only 'dealt' when it successfully reduces health of a target.", "tags": ["damage"] },
+              { "rid": "ATK-001", "text": "An attack is any action that hinders movement, reduces health/defense, or applies statuses to a target.", "tags": ["attacks"] }
+            ],
+            "tags": ["ap", "combat", "blocking"]
+          },
+          {
+            "id": "targeting",
+            "slug": "line-of-sight-targeting",
+            "title": "Line of Sight & Targeting",
+            "rules": [
+              { "rid": "LOS-001", "text": "To target with a card, your Avatar must have line of sight (LoS). LoS lines start at the center of the origin tile and extend through faces/vertices.", "tags": ["los"] },
+              { "rid": "LOS-002", "text": "LoS is blocked when a line meets the center of a wall tile or the edge between consecutive wall tiles; Avatars and Summons also block LoS.", "tags": ["los", "walls"] },
+              { "rid": "TGT-001", "text": "Targets can be cards (controller must be in valid LoS), Avatars, Summons, tiles, walls, surfaces, and all field zones.", "tags": ["targets"] }
+            ],
+            "figures": [
+              {
+                "id": "fig-los",
+                "src": "images/lich/diagrams/line-of-sight.png",
+                "caption": "Line-of-sight examples with walls and units.",
+                "alt": "Hex grid with rays showing blocked vs valid LoS"
+              }
+            ],
+            "tags": ["los", "targeting"]
+          },
+          {
+            "id": "heroes",
+            "slug": "heroes",
+            "title": "Heroes",
+            "rules": [
+              { "rid": "HRO-INT", "text": "Intelligence: equals your max hand size and max LoS targeting range.", "tags": ["intelligence", "hand-size", "range"] },
+              { "rid": "HRO-HP", "text": "Health: if a Hero’s health is ≤ 0 at any time, that player loses and is removed from play.", "tags": ["health", "loss"] },
+              { "rid": "HRO-FX", "text": "Hero Effect: may be played any time unless otherwise stated, as written on the Hero card.", "tags": ["hero-effect"] },
+              { "rid": "HRO-DEATH", "text": "On a player’s death, all of their cards are immediately removed from play, even if controlled elsewhere.", "tags": ["death"] }
+            ],
+            "tags": ["heroes"]
+          }
+        ]
+      },
+  
+      {
+        "id": "cards",
+        "slug": "cards",
+        "title": "Cards & Effects",
+        "pages": [
+          {
+            "id": "effects",
+            "slug": "effects",
+            "title": "Card Effects",
+            "rules": [
+              { "rid": "FX-001", "text": "Card effects can override written rules. Effects use keywords (see Keywords).", "tags": ["effects", "keywords"] },
+              { "rid": "COST-001", "text": "Effect cost: all actions to the left of the colon must be paid before resolving the effect (e.g., “Pay 10 Health : Deal 10 damage to target”).", "tags": ["cost", "effects"] }
+            ],
+            "tags": ["effects", "costs"]
+          },
+          {
+            "id": "keywords",
+            "slug": "keywords",
+            "title": "Keywords",
+            "rules": [],
+            "tags": ["keywords"],
+            "seeAlso": ["statuses", "timing"]
+          },
+          {
+            "id": "card-types",
+            "slug": "card-types",
+            "title": "Card Types & Source",
+            "rules": [
+              { "rid": "SRC-COST", "text": "Non-source cards have a source cost shown by colored orbs. The controller must have available source to pay it before play.", "tags": ["source-cost"] },
+              { "rid": "SRC-POOL", "text": "Source Pool: source granted by effects goes into a pool that empties at the start of each turn; all source in pool is available for costs/effects.", "tags": ["source-pool"] }
+            ],
+            "subsections": [
+              {
+                "title": "Action Cards",
+                "rules": [
+                  { "rid": "ACT-001", "text": "Action cards occupy one of five Action Zone slots and are played from hand during your Main Phase.", "tags": ["action-cards"] },
+                  { "rid": "EQP-001", "text": "Equipment: a type of action card; has a defense value (shield). Used in blocking.", "tags": ["equipment"] },
+                  { "rid": "SUM-002", "text": "Summons: place matching summon pieces on the card and the occupied tile; defense value is its Health; if Health ≤ 0, remove the summon and destroy its summoning card; summon Health regenerates during every player’s Start Phase.", "tags": ["summons"] },
+                  { "rid": "SKL-001", "text": "Skills: accumulate counters over time; unlocked effects require reaching the stated counter threshold (e.g., “[3] Tap : Deal 5 damage to target”).", "tags": ["skills"] }
+                ]
+              },
+              {
+                "title": "Alterations & Tactics",
+                "rules": [
+                  { "rid": "ALT-001", "text": "Alterations: neither Action nor Tactic; they modify other cards.", "tags": ["alterations"] },
+                  { "rid": "TEC-001", "text": "Techniques: Tactic cards playable from hand during your Main Phase.", "tags": ["techniques"] },
+                  { "rid": "REA-001", "text": "Reactions: Tactic cards playable after a reactable event within LoS; NOT reactable: source being played/tapped, Death Fog placed, statuses resolved, phase changes, drawing, targets destroyed, offering to the Lich.", "tags": ["reactions", "speeds"] }
+                ]
+              },
+              {
+                "title": "Source Cards",
+                "rules": [
+                  { "rid": "SRC-PR-001", "text": "Pure Sources: tap for only 1 source of 1 type.", "tags": ["pure-source"] },
+                  { "rid": "SRC-NP-001", "text": "Non‑Pure Sources: tap for more than 1 of a type or include additional effects.", "tags": ["non-pure-source"] }
+                ]
+              }
+            ],
+            "tags": ["cards", "source"]
+          },
+          {
+            "id": "timing",
+            "slug": "timing",
+            "title": "Timing, Speeds & The Stack",
+            "rules": [
+              { "rid": "STK-001", "text": "The Stack: first-in, last-out resolution order for played/activated effects.", "tags": ["stack"] },
+              { "rid": "FIZ-001", "text": "Fizzling: if an effect cannot fully resolve, its cost is still paid but no part of the fizzled effect resolves.", "tags": ["fizzle"] },
+              { "rid": "SPD-TEC", "text": "Technique Speed: technique cards cannot add to an existing stack; they start their own stack.", "tags": ["technique-speed"] },
+              { "rid": "SPD-REA", "text": "Reaction Speed: by default, effects/cards play at reaction speed; they may add to existing stacks or create new ones.", "tags": ["reaction-speed"] },
+              { "rid": "EXM-001", "text": "Example: Player A taps equipment to deal 5 damage; Player B responds with 'negate an incoming attack'. B’s negate resolves first, so A’s effect fizzles.", "tags": ["examples"] }
+            ],
+            "tags": ["timing", "speeds", "stack"]
+          }
+        ]
+      }
+    ],
+  
+    "keywords": [
+      { "id": "KW-TAP", "name": "Tap", "definition": "Change a card to tapped; you cannot tap an already tapped card; tapped cards untap during their controller’s Start Phase.", "tags": ["keyword"] },
+      { "id": "KW-UNTAP", "name": "Untap", "definition": "Change a card to untapped.", "tags": ["keyword"] },
+      { "id": "KW-DESTROY", "name": "Destroy", "definition": "Remove an in‑play card and send it to its controller’s Purgatory.", "tags": ["keyword"] },
+      { "id": "KW-INFLICT", "name": "Inflict", "definition": "Apply a status.", "tags": ["keyword"] },
+      { "id": "KW-DEAL", "name": "Deal", "definition": "See Blocking/Dealing Damage rules for how damage is considered 'dealt'.", "tags": ["keyword"] },
+      { "id": "KW-HEAL", "name": "Heal", "definition": "Gain an amount of Health.", "tags": ["keyword"] },
+      { "id": "KW-PLACE", "name": "Place", "definition": "Put a surface on a valid tile (not walls, not Death Fog).", "tags": ["keyword"] },
+      { "id": "KW-MOVE", "name": "Move", "definition": "Change position along adjacent unoccupied tiles up to the stated amount; moving 0 still creates a reactable movement event.", "tags": ["keyword"] },
+      { "id": "KW-DRAW", "name": "Draw", "definition": "Move the top card of your deck into your hand.", "tags": ["keyword"] },
+      { "id": "KW-NEGATE", "name": "Negate", "definition": "Prevent a reactable game state change.", "tags": ["keyword"] },
+      { "id": "KW-ATTRIT", "name": "Attrit", "definition": "Put the top card of a player’s deck into their Purgatory.", "tags": ["keyword"] },
+      { "id": "KW-DISCARD", "name": "Discard", "definition": "Put a card from hand into Purgatory.", "tags": ["keyword"] },
+      { "id": "KW-DAMN", "name": "Damn", "definition": "Send a card to its controller’s Abyss.", "tags": ["keyword"] }
+    ],
+  
+    "statuses": [
+      { "id": "ST-PENETRATE", "name": "Penetrate", "effects": ["LoS does not stop at Avatars or Summons; multiple targets along one LoS line may be targeted."], "tags": ["status", "los"] },
+      { "id": "ST-REPRISE", "name": "Reprise", "effects": ["Allows a card’s Tap effect (if any) to resolve multiple separate consecutive times for a single AP."], "tags": ["status", "ap"] },
+      { "id": "ST-OVERWHELM", "name": "Overwhelm", "effects": ["If blocked, excess damage beyond the block is still dealt to the original target."], "tags": ["status", "damage"] },
+      { "id": "ST-INVISIBLE", "name": "Invisible", "effects": ["May only be targeted from adjacent tiles."], "tags": ["status", "targeting"] },
+      { "id": "ST-BLIND", "name": "Blind", "effects": ["May only target adjacent targets."], "tags": ["status", "targeting"] },
+      { "id": "ST-BURNING", "name": "Burning", "effects": ["During Status Phase, take 5 damage."], "tags": ["status", "damage-over-time"] },
+      { "id": "ST-ENSNARED", "name": "Ensnared", "effects": ["You may not move."], "tags": ["status", "movement"] },
+      { "id": "ST-WET", "name": "Wet", "effects": ["If inflicted with Burning, remove an equal number of Wet and Burning counters; if inflicted with Sepsis, remove an equal number of Wet and Sepsis counters."], "tags": ["status", "interaction"] },
+      { "id": "ST-SEPSIS", "name": "Sepsis", "effects": ["You must spend 1 AP per tile moved."], "tags": ["status", "movement", "ap"] },
+      { "id": "ST-LICHS-CURSE", "name": "Lich’s Curse", "effects": ["If on a Death Fog tile during Status Phase, health becomes 0; you may not heal; this loss is not 'damage'; cannot be removed by card effects."], "tags": ["status", "death-fog", "non-removable"] },
+      { "id": "ST-IMPENDING-DOOM", "name": "Impending Doom", "effects": ["If on Death Fog during Status Phase: lose half your remaining health (rounded up); then remove Impending Doom and inflict Lich’s Curse; you may not heal; this loss is not 'damage'; non‑removable by effects."], "tags": ["status", "death-fog", "non-removable"] },
+      { "id": "ST-STUNNED", "name": "Stunned", "effects": ["May not play/activate at reaction speed; may use technique-speed; cannot block; Tap abilities are now technique-speed."], "tags": ["status", "speeds"] },
+      { "id": "ST-POSSESSED", "name": "Possessed", "effects": ["Inflictor controls movement of the possessed Avatar or Summon; tracked via paired possession counters on the possessor/possessed."], "tags": ["status", "control"] }
+    ],
+  
+    "surfaces": [
+      {
+        "id": "SF-DEATH-FOG",
+        "name": "Death Fog",
+        "properties": ["Cannot place other surfaces on Death Fog; overrides all other surfaces; inflicts Impending Doom to occupants; cannot be removed/destroyed once placed."],
+        "inflicts": ["ST-IMPENDING-DOOM"],
+        "tags": ["surface", "non-removable"]
+      },
+      { "id": "SF-FIRE", "name": "Fire", "properties": ["When placed on Water, becomes Steam."], "inflicts": ["ST-BURNING"], "tags": ["surface"] },
+      { "id": "SF-SLUDGE", "name": "Sludge", "properties": [], "inflicts": ["ST-SEPSIS"], "intensity": 2, "tags": ["surface"] },
+      {
+        "id": "SF-VINES",
+        "name": "Vines",
+        "properties": ["Blocks LoS", "Inflicts Ensnared", "If adjacent to Fire at the start of a Status Phase, converts to Fire", "Has 1 HP and can be destroyed at 0"],
+        "inflicts": ["ST-ENSNARED"],
+        "tags": ["surface", "destructible"]
+      },
+      { "id": "SF-WATER", "name": "Water", "properties": ["When placed on Fire, becomes Steam."], "inflicts": ["ST-WET"], "tags": ["surface"] },
+      { "id": "SF-STEAM", "name": "Steam", "properties": ["No additional effect."], "inflicts": [], "tags": ["surface"] },
+      {
+        "id": "SF-SMOKE",
+        "name": "Smoke",
+        "properties": ["Blocks LoS to preceding tiles but not to its own tile."],
+        "inflicts": ["ST-BLIND"],
+        "intensity": 1,
+        "tags": ["surface"]
+      }
+    ],
+  
+    "crossrefs": [
+      { "from": "PH-END", "to": "SF-DEATH-FOG", "why": "End Phase places Death Fog" },
+      { "from": "LOS-001", "to": "SF-SMOKE", "why": "Smoke blocks LoS" },
+      { "from": "KW-PLACE", "to": "SF-DEATH-FOG", "why": "Cannot place onto Death Fog" },
+      { "from": "ST-IMPENDING-DOOM", "to": "ST-LICHS-CURSE", "why": "Automatic conversion after Status Phase" },
+      { "from": "EQP-001", "to": "BLK-001", "why": "Equipment used for blocking" }
+    ]
+  }
+  
