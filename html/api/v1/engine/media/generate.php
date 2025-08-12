@@ -6,6 +6,7 @@ require_once(\Kickback\SCRIPT_ROOT . "/api/v1/engine/engine.php");
 use Kickback\Backend\Controllers\MediaController;
 use Kickback\Backend\Controllers\AccountController;
 use Kickback\Backend\Config\ServiceCredentials;
+use Kickback\Backend\Models\Response;
 
 OnlyPOST();
 
@@ -27,6 +28,11 @@ $loginResp = AccountController::getAccountBySession($kk_service_key, $sessionTok
 if (!$loginResp->success)
 {
     return $loginResp;
+}
+
+if (!$loginResp->data->isAdmin)
+{
+    return new Response(false, "This action is admin-only.");
 }
 
 return MediaController::GenerateImage($prompt, $directory, $name, $desc, $size, $model);
