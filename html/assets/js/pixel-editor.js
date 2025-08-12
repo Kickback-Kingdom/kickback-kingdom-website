@@ -148,11 +148,11 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
    * @param {CanvasRenderingContext2D} ctx
    * @param {number} w - canvas width
    * @param {number} h - canvas height
-   * @param {Object} glows - map of hue buckets to strength/range
-  * @param {number} [threshold=0.6] - minimum lightness [0-1] required for glow
-  * @param {number} [globalMult=1] - multiplier applied to all band strengths
-   */
-  function applyColorGlow(ctx, w, h, glows, threshold=0.6, globalMult=1){
+ * @param {Object} glows - map of hue buckets to strength/range
+ * @param {number} [threshold=0] - minimum lightness [0-1] required for glow
+ * @param {number} [globalMult=1] - multiplier applied to all band strengths
+ */
+  function applyColorGlow(ctx, w, h, glows, threshold=0, globalMult=1){
     if(!glows || !Object.values(glows).some(v=>v.s>0)) return;
     for(const [bandKey, cfg] of Object.entries(glows)){
       const strength=(cfg.s||0)*globalMult;
@@ -491,12 +491,11 @@ function throttled(ms, fn){ let last=0, timer; return (...a)=>{ const now=Date.n
         if(gGRange) gGRange.value = glow.options.glowMap.G.r ?? d.glowMap.G.r;
         if(gCRange) gCRange.value = glow.options.glowMap.C.r ?? d.glowMap.C.r;
         if(gBRange) gBRange.value = glow.options.glowMap.B.r ?? d.glowMap.B.r;
-        if(gMRange) gMRange.value = glow.options.glowMap.M.r ?? d.glowMap.M.r;
-      } else {
-        const d = LAYER_DEFAULTS.colorGlow();
-        if(enableGlow) enableGlow.checked = settings?.enableGlow ?? false;
-        if(enableGlow) enableGlow.checked = settings?.enableGlow ?? false;
-        if(glowThreshold) glowThreshold.value = settings?.glowThreshold ?? d.threshold;
+      if(gMRange) gMRange.value = glow.options.glowMap.M.r ?? d.glowMap.M.r;
+    } else {
+      const d = LAYER_DEFAULTS.colorGlow();
+      if(enableGlow) enableGlow.checked = settings?.enableGlow ?? false;
+      if(glowThreshold) glowThreshold.value = settings?.glowThreshold ?? d.threshold;
         if(gAll) gAll.value = settings?.glow?.global ?? d.global;
         if(gR) gR.value = settings?.glow?.R?.strength ?? d.glowMap.R.s;
         if(gY) gY.value = settings?.glow?.Y?.strength ?? d.glowMap.Y.s;

@@ -555,7 +555,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                 <script>
                 const layerDefaults = window.LAYER_DEFAULTS || {
                     adjustments: () => ({brightness:0, contrast:0, saturation:100}),
-                    colorGlow: () => ({threshold:60, global:100, glowMap:{R:{s:0,r:10},Y:{s:0,r:10},G:{s:0,r:10},C:{s:0,r:10},B:{s:0,r:10},M:{s:0,r:10}}}),
+                    colorGlow: () => ({threshold:0, global:100, glowMap:{R:{s:0,r:10},Y:{s:0,r:10},G:{s:0,r:10},C:{s:0,r:10},B:{s:0,r:10},M:{s:0,r:10}}}),
                     bloom: () => ({alpha:90, blur:4, threshold:33}),
                     tune: () => ({R:0,Y:0,G:0,C:0,B:0,M:0}),
                     remap: () => ({globalStrength:100, mapping:{R:{t:0,s:1},Y:{t:0,s:1},G:{t:0,s:1},C:{t:0,s:1},B:{t:0,s:1},M:{t:0,s:1}}})
