@@ -22,6 +22,7 @@
           "id": "welcome",
           "slug": "welcome",
           "title": "Welcome to the L.I.C.H. Rulebook",
+          "banner": "https://imageslot.com/v1/1000x200",
           "body": [
             "L.I.C.H. is a tactical board & card game played on a hex grid with heroes (Avatars), summons, surfaces, and source-driven cards.",
             "<p><strong>Readability tip:</strong> Each numbered rule is linkable; hover the link icon to copy a direct URL.</p>"
@@ -1257,6 +1258,7 @@
           "id": "overview",
           "slug": "overview",
           "title": "Overview",
+          "banner": "https://imageslot.com/v1/1000x200",
           "body": [
             "Once cards or effects are played or activated, their effects resolve on a 'first in, last out' stack order."
           ],

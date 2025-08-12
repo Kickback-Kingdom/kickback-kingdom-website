@@ -117,3 +117,10 @@
     vertical-align: middle;
 }
 
+/* Page banner images */
+#rulebook-container .page-banner {
+    width: 100%;
+    display: block;
+    margin: 0 0 1rem;
+}
+

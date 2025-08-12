@@ -48,6 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 h3.innerHTML = `<a id="${pageId}" href="#${pageId}">${page.title}</a>`;
                 pageEl.appendChild(h3);
 
+                if (page.banner) {
+                    const banner = document.createElement('img');
+                    banner.classList.add('page-banner');
+                    banner.src = page.banner;
+                    banner.alt = '';
+                    pageEl.appendChild(banner);
+                }
+
                 const tagSet = new Set(page.tags || []);
 
                 if (page.body) {
