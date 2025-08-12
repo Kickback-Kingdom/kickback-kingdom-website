@@ -56,7 +56,7 @@ var pixelEditorSettings = null;
 var lastPixelEditorSrc = '';
 var croppedImageData = '';
 var pixelatedImageData = '';
-<?php if(Kickback\Services\Session::getCurrentAccount()->canUploadImages()) { ?>
+<?php if(Kickback\Services\Session::isAdmin()) { ?>
 let cropper;
 let pixelEditor;
 let mediaUploadStep = 1;
