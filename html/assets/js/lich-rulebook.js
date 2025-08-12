@@ -86,6 +86,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
 
+                if (page.figures) {
+                    page.figures.forEach((figure) => {
+                        const figEl = document.createElement('figure');
+
+                        if (figure.src) {
+                            const img = document.createElement('img');
+                            img.src = figure.src;
+                            img.alt = figure.alt || '';
+                            figEl.appendChild(img);
+                        }
+
+                        if (figure.caption) {
+                            const caption = document.createElement('figcaption');
+                            caption.textContent = figure.caption;
+                            figEl.appendChild(caption);
+                        }
+
+                        pageEl.appendChild(figEl);
+                    });
+                }
+
                 pageEl.dataset.tags = Array.from(tagSet).join(' ').toLowerCase();
                 pageEl.dataset.original = pageEl.innerHTML;
                 sectionEl.appendChild(pageEl);

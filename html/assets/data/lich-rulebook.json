@@ -29,7 +29,7 @@
           "figures": [
             {
               "id": "fig-overview",
-              "src": "images/lich/overview.png",
+              "src": "https://imageslot.com/v1/800x600",
               "caption": "High-level components of L.I.C.H.",
               "alt": "Overview diagram of board zones, avatars, and action zones"
             }
@@ -317,7 +317,7 @@
           "figures": [
             {
               "id": "fig-board-labeled",
-              "src": "images/lich/diagrams/board-labeled.png",
+              "src": "https://imageslot.com/v1/640x480",
               "caption": "Board with corners, zones, and example walls.",
               "alt": "Hex board with marked corners and zones"
             }
@@ -488,7 +488,7 @@
           "figures": [
             {
               "id": "fig-turn-loop",
-              "src": "images/lich/diagrams/turn-loop.png",
+              "src": "https://imageslot.com/v1/600x600",
               "caption": "Turn loop and Death Fog expansion.",
               "alt": "Circular diagram of phases with a ring for Death Fog"
             }
@@ -578,7 +578,7 @@
           "figures": [
             {
               "id": "fig-los",
-              "src": "images/lich/diagrams/line-of-sight.png",
+              "src": "https://imageslot.com/v1/700x500",
               "caption": "Line-of-sight examples with walls and units.",
               "alt": "Hex grid with rays showing blocked vs valid LoS"
             }
