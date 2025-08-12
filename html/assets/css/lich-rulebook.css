@@ -97,3 +97,11 @@
     padding: 0 0.2em;
 }
 
+/* Section icons */
+#rulebook-container .section-icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+}
+

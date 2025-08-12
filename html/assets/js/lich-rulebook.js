@@ -27,6 +27,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (section.title) {
                 const h2 = document.createElement('h2');
                 h2.textContent = section.title;
+
+                if (section.icon) {
+                    const icon = document.createElement('img');
+                    icon.src = section.icon;
+                    icon.alt = '';
+                    icon.classList.add('section-icon');
+                    h2.prepend(icon);
+                }
+
                 sectionEl.appendChild(h2);
             }
 
