@@ -16,29 +16,33 @@ class vContent extends vRecordId
 
     function __construct(string $ctime = '', int $crand = -1)
     {
+        $this->htmlContent = '';
         parent::__construct($ctime, $crand);
     }
 
+    /**
+    * @phpstan-assert-if-true  vPageContent=  $pageContent_
+    */
     public function isValid() : bool {
         return ($this->pageContent_ != null && count($this->pageContent_->data) > 0);
     }
 
+    /**
+    * @phpstan-assert-if-true  vPageContent=  $pageContent_
+    */
     public function hasPageContent() : bool {
         return $this->crand > -1;
     }
 
-    public function pageContent(?vPageContent $newValue = null) : vPageContent
+    #[KickbackGetter]
+    #[KickbackSetter]
+    public function pageContent(vPageContent ...$newValue) : ?vPageContent
     {
-        if ( !is_null($newValue) ) {
-            $this->pageContent_ = $newValue;
-        }
-
-        if ( is_null($this->pageContent_) ) {
-            throw new UnexpectedNullException(
-                'Attempt to access page content when there is none.');
-        } else {
+        if ( 1 !== \count($newValue) ) {
             return $this->pageContent_;
         }
+        $this->pageContent_ = $newValue[0];
+        return $this->pageContent_;
     }
 
     public function populateContent(string $container_type,string $container_id) : void

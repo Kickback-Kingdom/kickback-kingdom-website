@@ -167,6 +167,11 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             <span class="badge bg-primary rounded-pill" id="mediaUploadStep-3-pill" style="font-size: 20px;">3</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="mediaUploadStep-4-link" href="#">
+                            <span class="badge bg-primary rounded-pill" id="mediaUploadStep-4-pill" style="font-size: 20px;">4</span>
+                        </a>
+                    </li>
                 </ul>
                 <hr/>
                 <div class="wizard-step wizard-step-active" id="mediaUploadStep-1">
@@ -176,12 +181,72 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             <div class="input-group mb-3">
                                 <label class="input-group-text" for="inputMediaUploadPhoto"><i class="fa-solid fa-cloud-arrow-up"></i></label>
                                 <input type="file" class="form-control" id="inputMediaUploadPhoto" onchange="OnUploadFileChanged(this)">
+                                <?php if(Kickback\Services\Session::isAdmin()) { ?><button class="btn btn-secondary" type="button" id="btnGenerateWithAI" onclick="PromptGenerateWithAI()">Generate with AI</button><?php } ?>
                             </div>
                         </div>
-                    </div>  
+                    </div>
+                    <div class="row d-none" id="aiPromptEditor">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="imagePromptTemplate" class="form-label">Prompt Template</label>
+                                <select id="imagePromptTemplate" class="form-select">
+                                    <option value="">Select a template...</option>
+                                    <option value="lich card art">lich card art</option>
+                                </select>
+                            </div>
+                            <div id="lichPromptOptions" class="d-none">
+                                <div class="mb-3">
+                                    <label for="imagePromptScenery" class="form-label">Scenery</label>
+                                    <select id="imagePromptScenery" class="form-select">
+                                        <option value="Urban setting">Urban setting</option>
+                                        <option value="Jungle">Jungle</option>
+                                        <option value="Cavern">Cavern</option>
+                                        <option value="Dungeon">Dungeon</option>
+                                        <option value="Military base">Military base</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="imagePromptFaction" class="form-label">Faction</label>
+                                    <select id="imagePromptFaction" class="form-select">
+                                        <option value="Enforcers (SWAT, police, military)">Enforcers (SWAT, police, military)</option>
+                                        <option value="Civilians (librarian, common workers)">Civilians (librarian, common workers)</option>
+                                        <option value="Minions (undead and mystical creatures of the lich)">Minions (undead and mystical creatures of the lich)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="imagePrompt" class="form-label">Prompt</label>
+                                <textarea id="imagePrompt" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="imagePromptDescription" class="form-label">Description</label>
+                                <textarea id="imagePromptDescription" class="form-control" rows="2"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="imageSize" class="form-label">Size</label>
+                                <select id="imageSize" class="form-select">
+                                    <option value="1024x1024" selected>1024x1024</option>
+                                    <option value="1024x1536">1024x1536</option>
+                                    <option value="1536x1024">1536x1024</option>
+                                    <option value="auto">auto</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="imageModel" class="form-label">Model</label>
+                                <select id="imageModel" class="form-select">
+                                    <option value="gpt-image-1" selected>gpt-image-1</option>
+                                    <option value="dall-e-2">dall-e-2</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <button class="btn btn-primary" type="button" onclick="GenerateImageFromPrompt()">Generate</button>
+                            </div>
+                            <div id="aiGenerateError" class="alert alert-danger mt-2 d-none" role="alert"></div>
+                        </div>
+                    </div>
                     <div class="row">
                         <div class="col-12">
-                            
+
                             <div style="width: 100%;">
                                 <img id="imageUploadPreview" src="" class="img-fluid img-thumbnail">
                             </div>
@@ -216,10 +281,490 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                 </div>
 
                 <div class="wizard-step" id="mediaUploadStep-3">
-                    <h1 class="display-6 mb-3">Step 3 - Edit Metadata</h1>
+                    <h1 class="display-6 mb-3">Step 3 - Pixelize Image</h1>
+                    <div id="pixelEditor" class="row mb-3">
+                        <div class="col-md-4" style="height:400px;">
+                            <div class="d-flex h-100">
+                                <div class="nav flex-column nav-pills me-2" id="pixelEditorTabs" role="tablist" aria-orientation="vertical">
+                                    <button class="nav-link active" id="pixelTabPixelation" data-bs-toggle="pill" data-bs-target="#pixelPanePixelation" type="button" role="tab" aria-controls="pixelPanePixelation" aria-selected="true" title="Pixelation"><i class="fa-solid fa-border-all"></i></button>
+                                    <button class="nav-link" id="pixelTabLayers" data-bs-toggle="pill" data-bs-target="#pixelPaneLayers" type="button" role="tab" aria-controls="pixelPaneLayers" aria-selected="false" title="Layers"><i class="fa-solid fa-layer-group"></i></button>
+                                    <div class="border-top my-2"></div>
+                                    <div id="pixelLayerTabs"></div>
+                                </div>
+                                <div class="tab-content flex-grow-1 overflow-auto" id="pixelEditorTabContent">
+                                    <div class="tab-pane fade show active" id="pixelPanePixelation" role="tabpanel" aria-labelledby="pixelTabPixelation">
+                                        <div class="mb-2">
+                                            <label class="form-label">Pixel width</label>
+                                            <input type="number" class="form-control form-control-sm" data-pixel-width value="64" min="8" max="1024">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Method</label>
+                                            <select class="form-select form-select-sm" data-method>
+                                                <option value="neighbor">Nearest Neighbor</option>
+                                                <option value="average">Block Average</option>
+                                                <option value="palette">Palette (k-means)</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Palette size (for k-means)</label>
+                                            <input type="number" class="form-control form-control-sm" data-palette-size value="16" min="2" max="64">
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-3 mb-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" data-dither id="pixelDither">
+                                                <label class="form-check-label" for="pixelDither">Dither (FS)</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" data-auto-render id="pixelAutoRender" checked>
+                                                <label class="form-check-label" for="pixelAutoRender">Auto Render</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" data-auto-fit id="pixelAutoFit" checked>
+                                                <label class="form-check-label" for="pixelAutoFit">Auto Fit</label>
+                                            </div>
+                                        </div>
+                                        <div class="mb-2 d-flex gap-2">
+                                            <button type="button" class="btn btn-primary btn-sm" data-render>Render</button>
+                                            <button type="button" class="btn btn-secondary btn-sm" data-reset>Reset</button>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="pixelPaneLayers" role="tabpanel" aria-labelledby="pixelTabLayers">
+                                            <div class="mb-2 input-group input-group-sm">
+                                                <select class="form-select" data-add-layer-select>
+                                                    <option value="">Select layer...</option>
+                                                    <option value="adjustments">Adjustments</option>
+                                                    <option value="colorGlow">Glow</option>
+                                                    <option value="bloom">Bloom</option>
+                                                    <option value="tune">Tune</option>
+                                                    <option value="remap">Hue Remap</option>
+                                                </select>
+                                                <button class="btn btn-primary" type="button" data-add-layer-btn>Add</button>
+                                            </div>
+                                            <ul class="list-group small" data-layer-list></ul>
+                                        <template id="tpl-layer-adjustments">
+                                            <div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Brightness <span class="text-muted" data-field-display="brightness">0</span></label>
+                                                    <input type="range" class="form-range" data-field="brightness" min="-100" max="100" value="0">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Contrast <span class="text-muted" data-field-display="contrast">0</span></label>
+                                                    <input type="range" class="form-range" data-field="contrast" min="-100" max="100" value="0">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Saturation <span class="text-muted" data-field-display="saturation">100</span></label>
+                                                    <input type="range" class="form-range" data-field="saturation" min="0" max="200" value="100">
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template id="tpl-layer-colorGlow">
+                                            <div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Glow Lightness Threshold <span class="text-muted" data-field-display="threshold">60</span></label>
+                                                    <input type="range" class="form-range" data-field="threshold" min="0" max="100" value="60">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Global Glow Multiplier <span class="text-muted" data-field-display="global">100</span></label>
+                                                    <input type="range" class="form-range" data-field="global" min="0" max="200" value="100">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Reds</label>
+                                                    <div class="row g-1">
+                                                        <div class="col">
+                                                            <small class="text-muted">Glow <span data-glow-display="R">0</span></small>
+                                                            <input type="range" class="form-range" data-glow="R" min="0" max="100" value="0">
+                                                        </div>
+                                                        <div class="col">
+                                                            <small class="text-muted">Range <span data-glow-range-display="R">10</span></small>
+                                                            <input type="range" class="form-range" data-glow-range="R" min="0" max="50" value="10">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Yellows</label>
+                                                    <div class="row g-1">
+                                                        <div class="col">
+                                                            <small class="text-muted">Glow <span data-glow-display="Y">0</span></small>
+                                                            <input type="range" class="form-range" data-glow="Y" min="0" max="100" value="0">
+                                                        </div>
+                                                        <div class="col">
+                                                            <small class="text-muted">Range <span data-glow-range-display="Y">10</span></small>
+                                                            <input type="range" class="form-range" data-glow-range="Y" min="0" max="50" value="10">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Greens</label>
+                                                    <div class="row g-1">
+                                                        <div class="col">
+                                                            <small class="text-muted">Glow <span data-glow-display="G">0</span></small>
+                                                            <input type="range" class="form-range" data-glow="G" min="0" max="100" value="0">
+                                                        </div>
+                                                        <div class="col">
+                                                            <small class="text-muted">Range <span data-glow-range-display="G">10</span></small>
+                                                            <input type="range" class="form-range" data-glow-range="G" min="0" max="50" value="10">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Cyans</label>
+                                                    <div class="row g-1">
+                                                        <div class="col">
+                                                            <small class="text-muted">Glow <span data-glow-display="C">0</span></small>
+                                                            <input type="range" class="form-range" data-glow="C" min="0" max="100" value="0">
+                                                        </div>
+                                                        <div class="col">
+                                                            <small class="text-muted">Range <span data-glow-range-display="C">10</span></small>
+                                                            <input type="range" class="form-range" data-glow-range="C" min="0" max="50" value="10">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Blues</label>
+                                                    <div class="row g-1">
+                                                        <div class="col">
+                                                            <small class="text-muted">Glow <span data-glow-display="B">0</span></small>
+                                                            <input type="range" class="form-range" data-glow="B" min="0" max="100" value="0">
+                                                        </div>
+                                                        <div class="col">
+                                                            <small class="text-muted">Range <span data-glow-range-display="B">10</span></small>
+                                                            <input type="range" class="form-range" data-glow-range="B" min="0" max="50" value="10">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Magentas</label>
+                                                    <div class="row g-1">
+                                                        <div class="col">
+                                                            <small class="text-muted">Glow <span data-glow-display="M">0</span></small>
+                                                            <input type="range" class="form-range" data-glow="M" min="0" max="100" value="0">
+                                                        </div>
+                                                        <div class="col">
+                                                            <small class="text-muted">Range <span data-glow-range-display="M">10</span></small>
+                                                            <input type="range" class="form-range" data-glow-range="M" min="0" max="50" value="10">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template id="tpl-layer-bloom">
+                                            <div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Bloom Alpha <span class="text-muted" data-field-display="alpha">90</span></label>
+                                                    <input type="range" class="form-range" data-field="alpha" min="0" max="100" value="90">
+                                                </div>
+                                                <div class="mb-2">
+                                                <label class="form-label">Bloom Blur <span class="text-muted" data-field-display="blur">4</span></label>
+                                                    <input type="range" class="form-range" data-field="blur" min="0" max="50" value="4">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Bloom Threshold <span class="text-muted" data-field-display="threshold">33</span></label>
+                                                    <input type="range" class="form-range" data-field="threshold" min="0" max="255" value="33">
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template id="tpl-layer-tune">
+                                            <div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Reds <span class="text-muted" data-field-display="R">0</span></label>
+                                                    <input type="range" class="form-range" data-field="R" min="-100" max="100" value="0">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Yellows <span class="text-muted" data-field-display="Y">0</span></label>
+                                                    <input type="range" class="form-range" data-field="Y" min="-100" max="100" value="0">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Greens <span class="text-muted" data-field-display="G">0</span></label>
+                                                    <input type="range" class="form-range" data-field="G" min="-100" max="100" value="0">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Cyans <span class="text-muted" data-field-display="C">0</span></label>
+                                                    <input type="range" class="form-range" data-field="C" min="-100" max="100" value="0">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Blues <span class="text-muted" data-field-display="B">0</span></label>
+                                                    <input type="range" class="form-range" data-field="B" min="-100" max="100" value="0">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Magentas <span class="text-muted" data-field-display="M">0</span></label>
+                                                    <input type="range" class="form-range" data-field="M" min="-100" max="100" value="0">
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template id="tpl-layer-remap">
+                                            <div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Global remap strength <span class="text-muted" data-field-display="globalStrength">100</span></label>
+                                                    <input type="range" class="form-range" data-field="globalStrength" min="0" max="100" value="100">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Reds → <span class="text-muted" data-map-str-display="R">100</span></label>
+                                                    <select class="form-select form-select-sm mb-1" data-map="R"></select>
+                                                    <input type="range" class="form-range" data-map-str="R" min="0" max="100" value="100">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Yellows → <span class="text-muted" data-map-str-display="Y">100</span></label>
+                                                    <select class="form-select form-select-sm mb-1" data-map="Y"></select>
+                                                    <input type="range" class="form-range" data-map-str="Y" min="0" max="100" value="100">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Greens → <span class="text-muted" data-map-str-display="G">100</span></label>
+                                                    <select class="form-select form-select-sm mb-1" data-map="G"></select>
+                                                    <input type="range" class="form-range" data-map-str="G" min="0" max="100" value="100">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Cyans → <span class="text-muted" data-map-str-display="C">100</span></label>
+                                                    <select class="form-select form-select-sm mb-1" data-map="C"></select>
+                                                    <input type="range" class="form-range" data-map-str="C" min="0" max="100" value="100">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Blues → <span class="text-muted" data-map-str-display="B">100</span></label>
+                                                    <select class="form-select form-select-sm mb-1" data-map="B"></select>
+                                                    <input type="range" class="form-range" data-map-str="B" min="0" max="100" value="100">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Magentas → <span class="text-muted" data-map-str-display="M">100</span></label>
+                                                    <select class="form-select form-select-sm mb-1" data-map="M"></select>
+                                                    <input type="range" class="form-range" data-map-str="M" min="0" max="100" value="100">
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="mb-2 d-flex justify-content-between">
+                                <span class="text-muted">Pixelated size: <span data-pix-meta>—</span></span>
+                                <span class="text-muted" data-status></span>
+                            </div>
+                            <div data-viewport style="position:relative; overflow:auto; width:100%; height:400px; border:1px solid #dee2e6; border-radius:0.25rem;">
+                                <div data-wrap style="position:relative; width:max-content; height:max-content; transform-origin:top left;">
+                                    <canvas id="pixelCanvas" style="image-rendering:pixelated;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" onclick="SkipPixelation()">Skip</button>
+                            <button type="button" class="btn btn-primary" onclick="ApplyPixelation()">Apply Pixelation</button>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                const layerDefaults = window.LAYER_DEFAULTS || {
+                    adjustments: () => ({brightness:0, contrast:0, saturation:100}),
+                    colorGlow: () => ({threshold:0, global:100, glowMap:{R:{s:0,r:10},Y:{s:0,r:10},G:{s:0,r:10},C:{s:0,r:10},B:{s:0,r:10},M:{s:0,r:10}}}),
+                    bloom: () => ({alpha:90, blur:4, threshold:33}),
+                    tune: () => ({R:0,Y:0,G:0,C:0,B:0,M:0}),
+                    remap: () => ({globalStrength:100, mapping:{R:{t:0,s:1},Y:{t:0,s:1},G:{t:0,s:1},C:{t:0,s:1},B:{t:0,s:1},M:{t:0,s:1}}})
+                };
+                function setupPixelLayerUI(){
+                    const container = document.getElementById('pixelEditor');
+                    if(!container || !window.pixelEditor) return;
+                    const listEl = container.querySelector('[data-layer-list]');
+                    const addSelect = container.querySelector('[data-add-layer-select]');
+                    const addBtn = container.querySelector('[data-add-layer-btn]');
+                    const layerTabs = container.querySelector('#pixelLayerTabs');
+                    const layerTabContent = container.querySelector('#pixelEditorTabContent');
+                    const remapBands=['— keep —','Red','Yellow','Green','Cyan','Blue','Magenta'];
+
+                    function updateOption(index,key,el){
+                        const val=el.type==='checkbox'?el.checked:parseFloat(el.value);
+                        const layer=window.pixelEditor.getSettings().layers[index];
+                        const newOpts={...layer.options,[key]:val};
+                        window.pixelEditor.updateLayer(index,newOpts);
+                    }
+
+                    function updateGlow(index,band,el){
+                        const layer=window.pixelEditor.getSettings().layers[index];
+                        const gm={...(layer.options.glowMap||{})};
+                        const entry={...(gm[band]||{r:0,s:0})};
+                        entry.s=parseFloat(el.value);
+                        gm[band]=entry;
+                        window.pixelEditor.updateLayer(index,{...layer.options,glowMap:gm});
+                    }
+
+                    function updateGlowRange(index,band,el){
+                        const layer=window.pixelEditor.getSettings().layers[index];
+                        const gm={...(layer.options.glowMap||{})};
+                        const entry={...(gm[band]||{r:0,s:0})};
+                        entry.r=parseFloat(el.value);
+                        gm[band]=entry;
+                        window.pixelEditor.updateLayer(index,{...layer.options,glowMap:gm});
+                    }
+
+                    function updateMap(index,band,sel){
+                        const layer=window.pixelEditor.getSettings().layers[index];
+                        const mapping={...(layer.options.mapping||{})};
+                        const entry={...(mapping[band]||{t:0,s:1})};
+                        entry.t=parseInt(sel.value,10);
+                        mapping[band]=entry;
+                        window.pixelEditor.updateLayer(index,{...layer.options,mapping});
+                    }
+
+                    function updateMapStr(index,band,el){
+                        const layer=window.pixelEditor.getSettings().layers[index];
+                        const mapping={...(layer.options.mapping||{})};
+                        const entry={...(mapping[band]||{t:0,s:1})};
+                        entry.s=parseFloat(el.value)/100;
+                        mapping[band]=entry;
+                        window.pixelEditor.updateLayer(index,{...layer.options,mapping});
+                    }
+
+                    function renderLayerPane(layer,index,friendlyNameMap){
+                        let tplId='';
+                        switch(layer.type){
+                            case 'adjustments': tplId='tpl-layer-adjustments'; break;
+                            case 'colorGlow': tplId='tpl-layer-colorGlow'; break;
+                            case 'bloom': tplId='tpl-layer-bloom'; break;
+                            case 'tune': tplId='tpl-layer-tune'; break;
+                            case 'remap': tplId='tpl-layer-remap'; break;
+                            default: return document.createTextNode('Unknown layer');
+                        }
+                        const tpl=document.getElementById(tplId);
+                        const frag=tpl.content.cloneNode(true);
+                        frag.querySelectorAll('[data-field]').forEach(el=>{
+                            const key=el.getAttribute('data-field');
+                            if(layer.options[key]!==undefined){
+                                if(el.type==='checkbox') el.checked=layer.options[key];
+                                else el.value=layer.options[key];
+                            }
+                            const disp=frag.querySelector(`[data-field-display="${key}"]`);
+                            if(disp) disp.textContent=el.type==='checkbox'? (el.checked?'on':'off') : el.value;
+                            const handler=()=>{updateOption(index,key,el); if(disp) disp.textContent=el.type==='checkbox'? (el.checked?'on':'off') : el.value;};
+                            el.addEventListener('input',handler);
+                            el.addEventListener('change',handler);
+                        });
+                        frag.querySelectorAll('[data-glow]').forEach(el=>{
+                            const band=el.getAttribute('data-glow');
+                            el.value=layer.options.glowMap?.[band]?.s||0;
+                            const disp=frag.querySelector(`[data-glow-display="${band}"]`);
+                            if(disp) disp.textContent=el.value;
+                            el.addEventListener('input',()=>{updateGlow(index,band,el); if(disp) disp.textContent=el.value;});
+                        });
+                        frag.querySelectorAll('[data-glow-range]').forEach(el=>{
+                            const band=el.getAttribute('data-glow-range');
+                            el.value=layer.options.glowMap?.[band]?.r||0;
+                            const disp=frag.querySelector(`[data-glow-range-display="${band}"]`);
+                            if(disp) disp.textContent=el.value;
+                            el.addEventListener('input',()=>{updateGlowRange(index,band,el); if(disp) disp.textContent=el.value;});
+                        });
+                        frag.querySelectorAll('[data-map]').forEach(sel=>{
+                            remapBands.forEach((name,i)=>{const opt=document.createElement('option'); opt.textContent=name; opt.value=String(i); sel.appendChild(opt);});
+                            const band=sel.getAttribute('data-map');
+                            sel.value=String(layer.options.mapping?.[band]?.t||0);
+                            sel.addEventListener('change',()=>updateMap(index,band,sel));
+                        });
+                        frag.querySelectorAll('[data-map-str]').forEach(el=>{
+                            const band=el.getAttribute('data-map-str');
+                            el.value=(layer.options.mapping?.[band]?.s||0)*100;
+                            const disp=frag.querySelector(`[data-map-str-display="${band}"]`);
+                            if(disp) disp.textContent=el.value;
+                            el.addEventListener('input',()=>{updateMapStr(index,band,el); if(disp) disp.textContent=el.value;});
+                        });
+                        const pane=document.createElement('div');
+                        const paneId=`pixelPaneLayer${index}`;
+                        const tabId=`pixelTabLayer${index}`;
+                        pane.className='tab-pane fade';
+                        pane.id=paneId;
+                        pane.role='tabpanel';
+                        pane.setAttribute('aria-labelledby',tabId);
+                        pane.setAttribute('data-layer-pane','');
+                        const header = document.createElement('h6');
+                        header.className = 'mb-2';
+                        header.textContent = friendlyNameMap[layer.type] || layer.type;
+                        pane.appendChild(header);
+                        pane.appendChild(frag);
+                        return pane;
+                    }
+
+                    function refreshUI(activeIndex=null){
+                        const layerIcons={
+                            adjustments:'fa-sliders',
+                            colorGlow:'fa-fire',
+                            bloom:'fa-sun',
+                            tune:'fa-wrench',
+                            remap:'fa-arrows-rotate'
+                        };
+                        const friendlyNameMap = {
+                            adjustments: 'Adjustments',
+                            colorGlow: 'Glow',
+                            bloom: 'Bloom',
+                            tune: 'Tune',
+                            remap: 'Remap'
+                        };
+                        const currentActive=layerTabs.querySelector('.nav-link.active');
+                        if(activeIndex===null && currentActive){
+                            activeIndex=parseInt(currentActive.getAttribute('data-layer-index'),10);
+                        }
+                        listEl.innerHTML='';
+                        layerTabs.innerHTML='';
+                        layerTabContent.querySelectorAll('[data-layer-pane]').forEach(el=>el.remove());
+                        const layers=window.pixelEditor.getSettings().layers || [];
+                        layers.forEach((layer,i)=>{
+                            const li=document.createElement('li');
+                            li.className='list-group-item d-flex align-items-center gap-2';
+                            li.draggable=true;
+                            li.innerHTML=`<span class="text-muted" style="cursor:grab"><i class=\"fa-solid fa-grip-vertical\"></i></span><input class=\"form-check-input\" type=\"checkbox\" data-enable ${layer.enabled!==false?'checked':''}><span class=\"flex-grow-1\">${layer.type}</span><button type=\"button\" class=\"btn btn-sm btn-danger\" data-remove>&times;</button>`;
+                            li.classList.toggle('opacity-50',layer.enabled===false);
+                            li.querySelector('[data-remove]').addEventListener('click',e=>{e.stopPropagation(); window.pixelEditor.removeLayer(i); refreshUI();});
+                            li.querySelector('[data-enable]').addEventListener('change',e=>{e.stopPropagation(); window.pixelEditor.setLayerEnabled(i,e.target.checked); refreshUI(i);});
+                            li.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',i);});
+                            li.addEventListener('dragover',e=>{e.preventDefault();});
+                            li.addEventListener('drop',e=>{e.preventDefault(); const from=parseInt(e.dataTransfer.getData('text/plain'),10); window.pixelEditor.moveLayer(from,i); refreshUI(i);});
+                            li.addEventListener('click',()=>{const tab=container.querySelector(`#pixelTabLayer${i}`); if(tab) bootstrap.Tab.getOrCreateInstance(tab).show();});
+                            listEl.appendChild(li);
+
+                            const tab=document.createElement('button');
+                            tab.className='nav-link';
+                            tab.id=`pixelTabLayer${i}`;
+                            tab.dataset.bsToggle='pill';
+                            tab.dataset.bsTarget=`#pixelPaneLayer${i}`;
+                            tab.type='button';
+                            tab.role='tab';
+                            tab.setAttribute('aria-controls',`pixelPaneLayer${i}`);
+                            tab.setAttribute('aria-selected','false');
+                            tab.innerHTML=`<i class="fa-solid ${layerIcons[layer.type]}" title="${layer.type}" aria-label="${layer.type}"></i>`;
+                            tab.setAttribute('data-layer-index',i);
+                            layerTabs.appendChild(tab);
+                            bootstrap.Tab.getOrCreateInstance(tab);
+
+                            const pane=renderLayerPane(layer,i,friendlyNameMap);
+                            layerTabContent.appendChild(pane);
+                        });
+                        if(activeIndex!==null && activeIndex>=0 && activeIndex<layers.length){
+                            const act=container.querySelector(`#pixelTabLayer${activeIndex}`);
+                            if(act) bootstrap.Tab.getOrCreateInstance(act).show();
+                        }else{
+                            const layersTab=container.querySelector('#pixelTabLayers');
+                            if(layersTab) bootstrap.Tab.getOrCreateInstance(layersTab).show();
+                        }
+                    }
+
+                    addBtn.addEventListener('click',()=>{
+                        const type=addSelect.value;
+                        if(!type) return;
+                        const factory = layerDefaults[type];
+                        if(!factory) return;
+                        const layer={type,options:factory()};
+                        window.pixelEditor.addLayer(layer);
+                        const idx=window.pixelEditor.getSettings().layers.length-1;
+                        addSelect.value='';
+                        refreshUI(idx);
+                    });
+
+                    refreshUI();
+                }
+                window.setupPixelLayerUI = setupPixelLayerUI;
+                </script>
+
+                <div class="wizard-step" id="mediaUploadStep-4">
+                    <h1 class="display-6 mb-3">Step 4 - Edit Metadata</h1>
                     <div class="row mb-3">
                         <div class="col-12">
-                            
+
                             <div style="width: 100%;max-height: 200px;" class="d-flex flex-wrap justify-content-evenly align-items-center">
                                 <img id="imagePreviewEdited" src="" style="max-height: inherit;" class="img-fluid img-thumbnail">
                             </div>
@@ -235,7 +780,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                                 <label for="mediaUploadImageFolderSelect" class="form-label">Image Folder</label>
                                 <div class="input-group">
                                     <label class="input-group-text" for="mediaUploadImageFolderSelect"><i class="fa-solid fa-folder-tree"></i></label>
-                                
+
                                     <select class="form-select" id="mediaUploadImageFolderSelect">
                                         <option value="" selected>Choose a folder...</option>
                                         <?php
@@ -273,7 +818,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                             </div>
                         </div>
                         <div class="col-md-12 col-lg-6">
-                            
+
                         <div class="mb-3">
                                 <label for="mediaUploadImageDescTextbox" class="form-label">Description</label>
                                 <textarea class="form-control" id="mediaUploadImageDescTextbox" rows="5"></textarea>

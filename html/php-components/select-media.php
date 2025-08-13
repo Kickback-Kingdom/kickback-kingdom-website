@@ -30,15 +30,245 @@
 </div>
 
 
-<script>
+<script type="module">
+import { initPixelEditor, LAYER_DEFAULTS } from '/assets/js/pixel-editor/index.js';
+
+const promptTemplates = {
+  "lich card art": (desc, scenery, faction) =>
+  `Extremely detailed fantasy pixel art in the style of high-end 1990s arcade games (SNK, Capcom).
+   Crisp, clean pixel edges with dense detailing and visible dithering for shading.
+   Heavy dramatic lighting with deep shadows and bright highlights for epic contrast.
+   Foreground, midground, and background filled with intricate elements for depth.
+   Vivid, saturated focal colors, muted background tones.
+   Dynamic, cinematic scene set in ${scenery}.
+   Featuring ${faction}. No painterly or realistic textures. ${desc}`
+};
+
+
+
+
+let promptDirty = false;
 
 let currentSelectMediaPage = 1; // default page
 const itemsPerSelectMediaPage = 6; // or however many you want
 
-
+var pixelEditorSettings = null;
+var lastPixelEditorSrc = '';
+var croppedImageData = '';
+var pixelatedImageData = '';
 <?php if(Kickback\Services\Session::getCurrentAccount()->canUploadImages()) { ?>
 let cropper;
+let pixelEditor;
 let mediaUploadStep = 1;
+
+<?php if (Kickback\Services\Session::isAdmin()) { ?>
+function PromptGenerateWithAI() {
+    const editor = document.getElementById('aiPromptEditor');
+    const btn = document.getElementById('btnGenerateWithAI');
+    if (editor) {
+        editor.classList.remove('d-none');
+    }
+    if (btn) {
+        btn.classList.add('d-none');
+    }
+}
+
+function updatePromptPreview() {
+    const templateEl = document.getElementById('imagePromptTemplate');
+    const descriptionEl = document.getElementById('imagePromptDescription');
+    const sceneryEl = document.getElementById('imagePromptScenery');
+    const factionEl = document.getElementById('imagePromptFaction');
+    const promptEl = document.getElementById('imagePrompt');
+    const template = templateEl ? templateEl.value : '';
+    const description = descriptionEl ? descriptionEl.value : '';
+    const scenery = sceneryEl ? sceneryEl.value : '';
+    const faction = factionEl ? factionEl.value : '';
+    const finalPrompt = promptTemplates[template]
+        ? promptTemplates[template](description, scenery, faction)
+        : description;
+    if (promptEl) {
+        if (template) {
+            promptEl.value = finalPrompt;
+            promptEl.readOnly = true;
+            promptDirty = false;
+        } else {
+            promptEl.readOnly = false;
+            if (!promptDirty) {
+                promptEl.value = finalPrompt;
+            }
+        }
+    }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    const templateSelect = document.getElementById('imagePromptTemplate');
+    if (templateSelect) {
+        templateSelect.addEventListener('change', () => {
+            updatePromptPreview();
+            const optionsDiv = document.getElementById('lichPromptOptions');
+            if (optionsDiv) {
+                if (templateSelect.value === 'lich card art') {
+                    optionsDiv.classList.remove('d-none');
+                } else {
+                    optionsDiv.classList.add('d-none');
+                }
+            }
+        });
+    }
+    const descriptionEl = document.getElementById('imagePromptDescription');
+    if (descriptionEl) {
+        descriptionEl.addEventListener('input', updatePromptPreview);
+    }
+    const sceneryEl = document.getElementById('imagePromptScenery');
+    if (sceneryEl) {
+        sceneryEl.addEventListener('change', updatePromptPreview);
+    }
+    const factionEl = document.getElementById('imagePromptFaction');
+    if (factionEl) {
+        factionEl.addEventListener('change', updatePromptPreview);
+    }
+
+    const promptEl = document.getElementById('imagePrompt');
+    if (promptEl) {
+        promptEl.addEventListener('input', () => promptDirty = true);
+    }
+
+    const modelSelect = document.getElementById('imageModel');
+    const sizeSelect = document.getElementById('imageSize');
+    if (modelSelect && sizeSelect) {
+        const sizeOptions = {
+            'gpt-image-1': [
+                '1024x1024',
+                '1024x1536',
+                '1536x1024',
+                'auto'
+            ],
+            'dall-e-2': [
+                '1024x1024',
+                '512x512',
+                '256x256'
+            ]
+        };
+
+        const renderSizeOptions = (model) => {
+            sizeSelect.innerHTML = '';
+            (sizeOptions[model] || []).forEach(value => {
+                const opt = document.createElement('option');
+                opt.value = value;
+                opt.textContent = value;
+                sizeSelect.appendChild(opt);
+            });
+        };
+
+        modelSelect.addEventListener('change', () => {
+            renderSizeOptions(modelSelect.value);
+        });
+
+        renderSizeOptions(modelSelect.value);
+    }
+
+    updatePromptPreview();
+    if (templateSelect) {
+        const optionsDiv = document.getElementById('lichPromptOptions');
+        if (optionsDiv) {
+            if (templateSelect.value === 'lich card art') {
+                optionsDiv.classList.remove('d-none');
+            } else {
+                optionsDiv.classList.add('d-none');
+            }
+        }
+    }
+});
+
+function GeneratePromptImage(prompt)
+{
+    pixelEditorSettings = null;
+    lastPixelEditorSrc = '';
+    croppedImageData = '';
+    pixelatedImageData = '';
+
+    ShowLoadingBar();
+
+    const directoryEl = document.getElementById('mediaUploadImageFolderSelect');
+    const nameEl = document.getElementById('mediaUploadImageNameTextbox');
+    const descEl = document.getElementById('mediaUploadImageDescTextbox');
+    const templateSelect = document.getElementById('imagePromptTemplate');
+    const template = templateSelect ? templateSelect.value : '';
+    const descriptionEl = document.getElementById('imagePromptDescription');
+    const description = descriptionEl ? descriptionEl.value : '';
+    const sceneryEl = document.getElementById('imagePromptScenery');
+    const factionEl = document.getElementById('imagePromptFaction');
+    const scenery = sceneryEl ? sceneryEl.value : '';
+    const faction = factionEl ? factionEl.value : '';
+    const finalPrompt = promptTemplates[template]
+        ? promptTemplates[template](description, scenery, faction)
+        : description;
+    const sizeEl = document.getElementById('imageSize');
+    const modelEl = document.getElementById('imageModel');
+    const sessionToken = "<?php echo $_SESSION["sessionToken"]; ?>";
+
+    const formData = new URLSearchParams();
+    const resolvedPrompt = (typeof prompt === 'string' && prompt.length > 0)
+        ? prompt
+        : finalPrompt;
+    formData.append('prompt', resolvedPrompt);
+    if (directoryEl) { formData.append('directory', directoryEl.value); }
+    if (nameEl) { formData.append('name', nameEl.value); }
+    if (descEl) { formData.append('desc', descEl.value); }
+    if (sizeEl && sizeEl.value) {
+        formData.append('size', sizeEl.value);
+    }
+    if (modelEl && modelEl.value) {
+        formData.append('model', modelEl.value);
+    }
+    formData.append('sessionToken', sessionToken);
+
+    fetch('/api/v1/media/generate.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData
+    })
+    .then(resp => resp.json())
+    .then(data => {
+        HideLoadingBar();
+        const errEl = document.getElementById('aiGenerateError');
+        if (data && data.success) {
+            const generatedImage = data.data.imgBase64;
+            croppedImageData = generatedImage;
+            const img = document.getElementById('imageUploadPreview');
+            if (img) {
+                img.onload = function() { InitCropper(); };
+                img.src = generatedImage;
+            }
+            mediaUploadStep = 2;
+            if (typeof UpdateMediaUploadModal === 'function') {
+                UpdateMediaUploadModal();
+            }
+            if (errEl) {
+                errEl.classList.add('d-none');
+                errEl.textContent = '';
+            }
+        } else {
+            if (errEl) {
+                errEl.textContent = (data && data.message) ? data.message : 'Generation failed';
+                errEl.classList.remove('d-none');
+            }
+            console.error('Generation failed', data);
+        }
+    })
+    .catch(err => {
+        HideLoadingBar();
+        const errEl = document.getElementById('aiGenerateError');
+        if (errEl) {
+            errEl.textContent = 'Generation error';
+            errEl.classList.remove('d-none');
+        }
+        console.error('Generation error', err);
+    });
+}
+window.GenerateImageFromPrompt = GeneratePromptImage;
+window.PromptGenerateWithAI = PromptGenerateWithAI;
+<?php } ?>
 function OpenMediaUploadModal()
 {
     
@@ -56,19 +286,25 @@ function UpdateMediaUploadModal()
     $("#mediaUploadStep-1").removeClass("wizard-step-active");
     $("#mediaUploadStep-2").removeClass("wizard-step-active");
     $("#mediaUploadStep-3").removeClass("wizard-step-active");
+    $("#mediaUploadStep-4").removeClass("wizard-step-active");
 
     $("#mediaUploadStep-1-link").removeClass("active");
     $("#mediaUploadStep-2-link").removeClass("active");
     $("#mediaUploadStep-3-link").removeClass("active");
+    $("#mediaUploadStep-4-link").removeClass("active");
 
     $("#mediaUploadStep-1-pill").removeClass("bg-ranked-1");
     $("#mediaUploadStep-2-pill").removeClass("bg-ranked-1");
     $("#mediaUploadStep-3-pill").removeClass("bg-ranked-1");
+    $("#mediaUploadStep-4-pill").removeClass("bg-ranked-1");
 
     $("#mediaUploadStep-1-pill").addClass("bg-primary");
     $("#mediaUploadStep-2-pill").addClass("bg-primary");
     $("#mediaUploadStep-3-pill").addClass("bg-primary");
-    
+    $("#mediaUploadStep-4-pill").addClass("bg-primary");
+
+    $("#mediaUploadButtonNext").show();
+
     $("#mediaUploadStep-"+mediaUploadStep).addClass("wizard-step-active");
     $("#mediaUploadStep-"+mediaUploadStep+"-pill").addClass("bg-ranked-1");
     $("#mediaUploadStep-"+mediaUploadStep+"-link").addClass("active");
@@ -85,11 +321,111 @@ function UpdateMediaUploadModal()
 
         $("#mediaUploadButtonPrev").html("Back");
         $("#mediaUploadButtonNext").html("Crop");
+
+        const uploadPreview = document.getElementById('imageUploadPreview');
+        if (uploadPreview && uploadPreview.src)
+        {
+            if (uploadPreview.complete)
+            {
+                InitCropper();
+            }
+            else
+            {
+                uploadPreview.addEventListener('load', InitCropper, { once: true });
+            }
+        }
     }
 
     if (mediaUploadStep == 3)
     {
-        CropImageFromEditor();
+        let container = document.getElementById('pixelEditor');
+        const source = document.getElementById('imagePreviewEdited');
+        if (croppedImageData) {
+            source.src = croppedImageData;
+        }
+        let currentSrc = source.src;
+
+        if (!croppedImageData || currentSrc !== lastPixelEditorSrc) {
+            CropImageFromEditor();
+            source.src = croppedImageData;
+            currentSrc = source.src;
+        }
+        if (!pixelEditorSettings) {
+            pixelEditorSettings = {
+                pixelWidth: 192,
+                method: 'palette',
+                paletteSize: 16,
+                dither: false,
+                autoRender: true,
+                autoFit: true,
+                brightness: 0,
+                contrast: 0,
+                saturation: 100,
+                enableGlow: false,
+                ...( () => {
+                    const glowDefaults = LAYER_DEFAULTS.colorGlow();
+                    const bloomDefaults = LAYER_DEFAULTS.bloom();
+                    const glowRange = glowDefaults.glowMap.R.r;
+                    return {
+                        glowThreshold: glowDefaults.threshold,
+                        bloomAlpha: bloomDefaults.alpha,
+                        bloomBlur: bloomDefaults.blur,
+                        bloomThreshold: bloomDefaults.threshold,
+                        glow: {
+                            R:{strength:0, range:glowRange},
+                            Y:{strength:0, range:glowRange},
+                            G:{strength:0, range:glowRange},
+                            C:{strength:0, range:glowRange},
+                            B:{strength:0, range:glowRange},
+                            M:{strength:0, range:glowRange}
+                        },
+                        enableTune: false,
+                        tune: {R:0, Y:0, G:0, C:0, B:0, M:0},
+                        enableRemap: false,
+                        remapStrength: 100,
+                        map: {R:'0', Y:'0', G:'0', C:'0', B:'0', M:'0'},
+                        mapStr: {R:100, Y:100, G:100, C:100, B:100, M:100}
+                    };
+                })()
+            };
+        }
+        lastPixelEditorSrc = currentSrc;
+
+        if (pixelEditor) {
+            // Preserve current settings and clean up listeners from previous editor instance
+            pixelEditorSettings = pixelEditor.getSettings();
+            pixelEditor.destroy();
+            const newContainer = container.cloneNode(true);
+            container.parentNode.replaceChild(newContainer, container);
+            container = newContainer;
+            pixelEditor = null;
+        }
+
+        const initializeEditor = () => {
+            pixelEditor = initPixelEditor(container, source, pixelEditorSettings);
+            if (typeof setupPixelLayerUI === 'function') {
+                setupPixelLayerUI();
+            }
+        };
+
+        if (source.complete) {
+            initializeEditor();
+        } else {
+            source.addEventListener('load', initializeEditor, { once: true });
+        }
+
+        $("#mediaUploadButtonPrev").html("Back");
+        $("#mediaUploadButtonNext").hide();
+    }
+
+    if (mediaUploadStep == 4)
+    {
+        let preview = document.getElementById('imagePreviewEdited');
+        if (pixelatedImageData) {
+            preview.src = pixelatedImageData;
+        } else if (croppedImageData) {
+            preview.src = croppedImageData;
+        }
         $("#mediaUploadButtonPrev").html("Back");
         $("#mediaUploadButtonNext").html("Upload");
     }
@@ -99,6 +435,12 @@ function ResetMediaUploadWizardStep2()
 {
     if (cropper) {
         cropper.destroy();
+    }
+    if (pixelEditor) {
+        // Ensure any event listeners from the editor are removed
+        pixelEditorSettings = pixelEditor.getSettings();
+        pixelEditor.destroy();
+        pixelEditor = null;
     }
 
     $("#mediaUploadUsageSelect").val("-1");
@@ -114,12 +456,33 @@ function CropImageFromEditor()
 
     // Set the data URL as the source of the image element
     imgElement.src = dataURL;
+    croppedImageData = dataURL;
+    pixelatedImageData = '';
+}
 
+function SkipPixelation()
+{
+    pixelatedImageData = croppedImageData;
+    mediaUploadStep = 4;
+    UpdateMediaUploadModal();
+}
+
+function ApplyPixelation()
+{
+    if (pixelEditor) {
+        pixelEditor.render();
+    }
+    const canvas = document.getElementById('pixelCanvas');
+    let imgElement = document.getElementById('imagePreviewEdited');
+    pixelatedImageData = canvas.toDataURL();
+    imgElement.src = pixelatedImageData;
+    mediaUploadStep = 4;
+    UpdateMediaUploadModal();
 }
 
 function MediaUploadNextStep()
 {
-    if (mediaUploadStep<3)
+    if (mediaUploadStep<4)
     {
         mediaUploadStep++;
     }
@@ -136,6 +499,10 @@ function MediaUploadPrevStep()
     if (mediaUploadStep>1)
     {
         mediaUploadStep--;
+    }
+    if (mediaUploadStep === 2) {
+        lastPixelEditorSrc = '';
+        pixelatedImageData = '';
     }
     UpdateMediaUploadModal();
 }
@@ -181,17 +548,30 @@ function OnPhotoUsageChanged(input)
 
 function OnUploadFileChanged(input)
 {
+    pixelEditorSettings = null;
+    lastPixelEditorSrc = '';
+    croppedImageData = '';
+    pixelatedImageData = '';
+    const info = document.getElementById('aiPromptInfo');
+    const errEl = document.getElementById('aiGenerateError');
+    if (info) {
+        info.classList.add('d-none');
+    }
+    if (errEl) {
+        errEl.classList.add('d-none');
+        errEl.textContent = '';
+    }
     const file = input.files[0];
-    
+
     if (file) {
         const reader = new FileReader();
-        
+
         reader.onload = function(event) {
             const image = document.getElementById('imageUploadPreview');
             image.src = event.target.result;
-            
+
         }
-        
+
         reader.readAsDataURL(file);
     }
 }
@@ -353,6 +733,10 @@ function SelectMedia(Id, path) {
 function AcceptSelectedMedia()
 {
     console.log(currentSelectedMediaId);
+    pixelEditorSettings = null;
+    lastPixelEditorSrc = '';
+    croppedImageData = '';
+    pixelatedImageData = '';
 
     $("#selectMediaModal").modal("hide");
     $("#"+selectMediaModalCallerId).modal("show");
@@ -406,5 +790,32 @@ function onPaginationClickSelectMedia(pageNumber) {
     currentSelectMediaPage = pageNumber; // make sure to define this variable globally or pass it around as needed
     SearchForMedia();
 }
+
+// Expose functions for inline event handlers
+window.OpenMediaUploadModal = OpenMediaUploadModal;
+window.CloseMediaUploadModal = CloseMediaUploadModal;
+window.UpdateMediaUploadModal = UpdateMediaUploadModal;
+window.ResetMediaUploadWizardStep2 = ResetMediaUploadWizardStep2;
+window.CropImageFromEditor = CropImageFromEditor;
+window.SkipPixelation = SkipPixelation;
+window.ApplyPixelation = ApplyPixelation;
+window.MediaUploadNextStep = MediaUploadNextStep;
+window.MediaUploadPrevStep = MediaUploadPrevStep;
+window.GetAspectRatio = GetAspectRatio;
+window.InitCropper = InitCropper;
+window.OnPhotoUsageChanged = OnPhotoUsageChanged;
+window.OnUploadFileChanged = OnUploadFileChanged;
+window.UploadImageData = UploadImageData;
+window.ReopenSelectMediaModal = ReopenSelectMediaModal;
+window.OpenSelectMediaModal = OpenSelectMediaModal;
+window.OnSelectMediaChangeSearchParams = OnSelectMediaChangeSearchParams;
+window.SearchForMedia = SearchForMedia;
+window.LoadSearchMediaResults = LoadSearchMediaResults;
+window.ClearSearchMediaResults = ClearSearchMediaResults;
+window.SelectMedia = SelectMedia;
+window.AcceptSelectedMedia = AcceptSelectedMedia;
+window.AddSearchMediaResult = AddSearchMediaResult;
+window.generatePaginationSelectMedia = generatePaginationSelectMedia;
+window.onPaginationClickSelectMedia = onPaginationClickSelectMedia;
 
 </script>
