@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Exceptions;
 
-use Kickback\Common\Exceptions\Fatal\MethodNotImplementedError;
+use Kickback\Common\Exceptions\Internal\DefaultMethods;
 
 // See KickbackThrowable for an explanation of the origins and intent of this code.
 /**
@@ -11,6 +11,10 @@ use Kickback\Common\Exceptions\Fatal\MethodNotImplementedError;
 *
 * In almost all cases, you will want to use KickbackExceptionTrait
 * or Fatal\KickbackFatalErrorTrait instead.
+*
+* @template TThrowable of \Throwable
+*
+* @phpstan-require-implements  \Kickback\Common\Exceptions\IKickbackThrowable
 *
 * @see KickbackThrowable
 */
@@ -25,19 +29,18 @@ trait KickbackThrowableTrait
     //private   array      $trace;                             // Unknown
     //private   ?Throwable $previous = null;
 
+    /** @param TThrowable $previous */
     public function __construct(?string $message = null, int $code = 0, ?\Throwable $previous = null)
     {
         if (!isset($message)) {
-            throw new $this('Unknown '. get_class($this));
+            $message = '';
         }
         parent::__construct($message, $code, $previous);
     }
 
-    public function __toString()
+    public function __toString() : string
     {
-        return get_class($this)
-            . " '{$this->message}' in {$this->file}({$this->line})\n"
-            . "{$this->getTraceAsString()}";
+        return DefaultMethods::toString($this);
     }
 }
 ?>

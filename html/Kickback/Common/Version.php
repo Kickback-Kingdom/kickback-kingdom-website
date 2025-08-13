@@ -233,7 +233,6 @@ final class Version
     // #website-only
     public static bool $client_is_viewing_blogpost_for_current_version_update = false;
 
-
     /**
     * System-wide hint for whether debug code should execute.
     */
@@ -244,7 +243,20 @@ final class Version
         // This is also very likely to coincide with whether we want
         // extra verbose output regarding program-state.
         static $in_debug_mode = null;
-        return $in_debug_mode ??= (ini_get('zend.assertions') === '1');
+        if ( isset($in_debug_mode) ) {
+            return $in_debug_mode;
+        }
+        $in_debug_mode = \ini_get('zend.assertions') === '1';
+        return $in_debug_mode;
+
+        // Note:
+        // It's prettier to write it like this:
+        //   static $in_debug_mode = null;
+        //   return $in_debug_mode ??= (ini_get('zend.assertions') === '1');
+        // BUT
+        // that generates some uglier PHP bytecode that requires it to
+        // do the negative check first and do a jmp on the positive path.
+        // This could get called A LOT, so we want it to be fast.
     }
 }
 ?>
