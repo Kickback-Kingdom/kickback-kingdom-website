@@ -6,7 +6,7 @@ namespace Kickback\Services;
 use Kickback\Backend\Config\ServiceCredentials;
 
 /**
- * Unified Stripe service (deduplicated).
+ * Stripe service implementation.
  * - Sets API key and pins API version
  * - Exposes a StripeClient for advanced usages
  * - Provides publishable key and minimal currency helpers
