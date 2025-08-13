@@ -3,11 +3,15 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Algorithms;
 
+use Kickback\Common\Traits\ClassInvariantRecursionPreventerTrait;
+
 /**
 * @template T of object
 */
 class Freelist
 {
+    use ClassInvariantRecursionPreventerTrait;
+
     /**
     * @var array<T>
     */
@@ -26,7 +30,7 @@ class Freelist
     */
     public function allocate(string|callable $constructor) : object
     {
-        $this->debug_invariant_check('before `allocate(...)`');
+        assert($this->debug_invariant_check('before `allocate(...)`'));
         $capacity = count($this->slots);
         $nalloc = $this->num_slots_allocated;
         $nfree = $capacity - $nalloc;
@@ -40,7 +44,7 @@ class Freelist
         }
 
         $allocated = $this->allocate_lowest_indexed_free_element();
-        $this->debug_invariant_check('after `allocate(...)`');
+        assert($this->debug_invariant_check('after `allocate(...)`'));
         return $allocated;
     }
 
@@ -92,14 +96,14 @@ class Freelist
     */
     public function recycle(object &$to_recycle) : bool
     {
-        $this->debug_invariant_check('before `recycle(\$to_recycle)`');
+        assert($this->debug_invariant_check('before `recycle(\$to_recycle)`'));
         if ( $this->is_free($to_recycle) ) {
             $to_recycle = $this->allocate_lowest_indexed_free_element();
             $result = false;
         } else {
             $result = true;
         }
-        $this->debug_invariant_check('after `recycle(\$to_recycle)`');
+        assert($this->debug_invariant_check('after `recycle(\$to_recycle)`'));
         return $result;
     }
 
@@ -108,7 +112,7 @@ class Freelist
     */
     public function free(object $to_free) : void
     {
-        $this->debug_invariant_check('before `free(\$to_free)`');
+        assert($this->debug_invariant_check('before `free(\$to_free)`'));
         $capacity = count($this->slots);
         $nalloc_before = $this->num_slots_allocated;
         assert($nalloc_before <= $capacity);
@@ -134,7 +138,7 @@ class Freelist
             $this->free_by_swapping($free_at, $to_free);
         }
 
-        $this->debug_invariant_check("after `free(\$to_free with index $free_at)`");
+        assert($this->debug_invariant_check("after `free(\$to_free with index $free_at)`"));
         return;
     }
 
@@ -162,13 +166,13 @@ class Freelist
     */
     public function is_free(object $element) : bool
     {
-        $this->debug_invariant_check('before `is_free(...)`');
+        assert($this->debug_invariant_check('before `is_free(...)`'));
         $idx = $this->find_element_index($element);
         assert($idx >= 0);
         assert($idx < count($this->slots));
         assert($element === $this->slots[$idx]);
         $result = ($idx >= $this->num_slots_allocated);
-        $this->debug_invariant_check('after `is_free(...)`');
+        assert($this->debug_invariant_check('after `is_free(...)`'));
         return $result;
     }
 
@@ -200,37 +204,6 @@ class Freelist
         // But it's probably not worth it if the freelist will be small (e.g. <16 elements).
         if ( $element instanceof Freelist__Indexable ) {
             $element->freelist_index($idx);
-        }
-    }
-
-    private bool $processing_invariants = false;
-
-    private function debug_invariant_check(string $label) : void
-    {
-        if ($this->debug_mode) {
-            $this->try_assert_invariants($label);
-        }
-    }
-
-    private function try_assert_invariants(string $label) : void
-    {
-        // Avoid stack recursion when the functions called in the
-        // invariant cause the invariants to be invoked which
-        // causes those functions to be called which causes
-        // the invariants to be invoked which... you know how it goes.
-        if ( $this->processing_invariants ) {
-            return;
-        }
-
-        try {
-            $this->processing_invariants = true;
-            $this->assert_invariants($label);
-        } finally {
-            // Make REALLY sure we turn this off, because it could
-            // kill all invariant checks and invalidate testing.
-            // (Hence the `finally` clause to make sure it always
-            // gets executed, even if something throws.)
-            $this->processing_invariants = false;
         }
     }
 
@@ -269,9 +242,6 @@ class Freelist
         }
     }
 
-    /** @internal */
-    public bool $debug_mode = false;
-
     // TODO: This testing should probably be a lot better.
     // Right now, this might be more of a component test than a unit test.
     // Maybe that's OK? ¯\_(ツ)_/¯
@@ -293,7 +263,7 @@ class Freelist
     private static function unittest_freelist() : void
     {
         $fl = new Freelist();
-        $fl->debug_mode = true;
+        $fl->debug_mode(true);
 
         $a = $fl->allocate(Freelist__TestElement::class);
         $b = $fl->allocate(Freelist__TestElement::class);
@@ -347,7 +317,7 @@ class Freelist
         assert($was_allocated2 === true); // still allocated
         assert($e->alloc_count() === 3);
 
-        $fl->debug_mode = false;
+        $fl->debug_mode(false);
     }
 
     public static function unittests() : void
