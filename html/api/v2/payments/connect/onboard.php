@@ -18,6 +18,9 @@ use Kickback\Services\Session;
 
 header('Content-Type: application/json');
 
+// Make sure PHP session is initialized so $_SESSION is populated
+Session::ensureSessionStarted();
+
 // Require login for platform users creating their own connected account
 if (!Session::isLoggedIn()) {
     http_response_code(401);
