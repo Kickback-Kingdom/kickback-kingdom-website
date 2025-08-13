@@ -10,8 +10,8 @@ use Kickback\Common\Unittesting\AssertException;
 /**
 * Miscellaneous functions that do useful things with PHP metadata (ex: Reflection API).
 *
-* @phpstan-import-type  kkdebug_frame_paranoid_a      from IKickbackThrowable
-* @phpstan-import-type  kkdebug_backtrace_paranoid_a  from IKickbackThrowable
+* @phpstan-import-type  kkdebug_frame_paranoid_a      from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_paranoid_a  from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
 */
 final class Meta
 {
