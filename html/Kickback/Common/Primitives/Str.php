@@ -537,6 +537,257 @@ final class Str
         assert(!self::is_ascii_identifier('hello', 2, 0));      // ''
     }
 
+    public static function unchecked_blit_fwd(string &$dst, int $dst_offset, string $src, int $src_offset, int $nchars) : void
+    {
+        // This is needed in the autoloader, so rather than duplicate code,
+        // we simply forward calls to the autoloader's function.
+        \Kickback\InitializationScripts\autoloader_str_unchecked_blit_fwd($dst, $dst_offset, $src, $src_offset, $nchars);
+    }
+
+    private static function common_unittest_unchecked_blit(\Closure  $str_unchecked_blit) : void
+    {
+        assert($str_unchecked_blit('123.456.789',0,'abc.pqr.xyz',0,0) === '123.456.789');
+        assert($str_unchecked_blit('123.456.789',4,'abc.pqr.xyz',0,0) === '123.456.789');
+        assert($str_unchecked_blit('123.456.789',8,'abc.pqr.xyz',0,0) === '123.456.789');
+
+        assert($str_unchecked_blit('123.456.789',0,'abc.pqr.xyz',0,3) === 'abc.456.789');
+        assert($str_unchecked_blit('123.456.789',4,'abc.pqr.xyz',0,3) === '123.abc.789');
+        assert($str_unchecked_blit('123.456.789',8,'abc.pqr.xyz',0,3) === '123.456.abc');
+        assert($str_unchecked_blit('123.456.789',0,'abc.pqr.xyz',4,3) === 'pqr.456.789');
+        assert($str_unchecked_blit('123.456.789',4,'abc.pqr.xyz',4,3) === '123.pqr.789');
+        assert($str_unchecked_blit('123.456.789',8,'abc.pqr.xyz',4,3) === '123.456.pqr');
+        assert($str_unchecked_blit('123.456.789',0,'abc.pqr.xyz',8,3) === 'xyz.456.789');
+        assert($str_unchecked_blit('123.456.789',4,'abc.pqr.xyz',8,3) === '123.xyz.789');
+        assert($str_unchecked_blit('123.456.789',8,'abc.pqr.xyz',8,3) === '123.456.xyz');
+
+        assert($str_unchecked_blit('123.456.789',0,'abc.pqr.xyz',0,7) === 'abc.pqr.789');
+        assert($str_unchecked_blit('123.456.789',4,'abc.pqr.xyz',0,7) === '123.abc.pqr');
+        assert($str_unchecked_blit('123.456.789',0,'abc.pqr.xyz',4,7) === 'pqr.xyz.789');
+        assert($str_unchecked_blit('123.456.789',4,'abc.pqr.xyz',4,7) === '123.pqr.xyz');
+    }
+
+    private static function unittest_unchecked_blit_fwd() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        $str_unchecked_blit_fwd =
+            function(string $dst, int $dst_offset, string $src, int $src_offset, int $nchars) : string
+        {
+            self::unchecked_blit_fwd($dst, $dst_offset, $src, $src_offset, $nchars);
+            return $dst;
+        };
+
+        self::common_unittest_unchecked_blit($str_unchecked_blit_fwd);
+
+        $foo = 'abcdef';
+        assert($str_unchecked_blit_fwd($foo,0,$foo,6,0) === 'abcdef');
+        assert($str_unchecked_blit_fwd($foo,0,$foo,5,1) === 'fbcdef');
+        assert($str_unchecked_blit_fwd($foo,0,$foo,4,2) === 'efcdef');
+        assert($str_unchecked_blit_fwd($foo,0,$foo,3,3) === 'defdef');
+        assert($str_unchecked_blit_fwd($foo,0,$foo,2,4) === 'cdefef');
+        assert($str_unchecked_blit_fwd($foo,0,$foo,1,5) === 'bcdeff');
+        assert($str_unchecked_blit_fwd($foo,0,$foo,0,6) === 'abcdef');
+        assert($str_unchecked_blit_fwd($foo,2,$foo,6,0) === 'abcdef');
+        assert($str_unchecked_blit_fwd($foo,2,$foo,5,1) === 'abfdef');
+        assert($str_unchecked_blit_fwd($foo,2,$foo,4,2) === 'abefef');
+        assert($str_unchecked_blit_fwd($foo,2,$foo,3,3) === 'abdeff');
+        assert($str_unchecked_blit_fwd($foo,2,$foo,2,4) === 'abcdef');
+    }
+
+    public static function unchecked_blit_rev(string &$dst, int $dst_offset, string $src, int $src_offset, int $nchars) : void
+    {
+        // This is needed in the autoloader, so rather than duplicate code,
+        // we simply forward calls to the autoloader's function.
+        \Kickback\InitializationScripts\autoloader_str_unchecked_blit_rev($dst, $dst_offset, $src, $src_offset, $nchars);
+    }
+
+    private static function unittest_unchecked_blit_rev() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        $str_unchecked_blit_rev =
+            function(string $dst, int $dst_offset, string $src, int $src_offset, int $nchars) : string
+        {
+            self::unchecked_blit_rev($dst, $dst_offset, $src, $src_offset, $nchars);
+            return $dst;
+        };
+
+        self::common_unittest_unchecked_blit($str_unchecked_blit_rev);
+
+        $foo = 'abcdef';
+        assert($str_unchecked_blit_rev($foo,6,$foo,0,0) === 'abcdef');
+        assert($str_unchecked_blit_rev($foo,5,$foo,0,1) === 'abcdea');
+        assert($str_unchecked_blit_rev($foo,4,$foo,0,2) === 'abcdab');
+        assert($str_unchecked_blit_rev($foo,3,$foo,0,3) === 'abcabc');
+        assert($str_unchecked_blit_rev($foo,2,$foo,0,4) === 'ababcd');
+        assert($str_unchecked_blit_rev($foo,1,$foo,0,5) === 'aabcde');
+        assert($str_unchecked_blit_rev($foo,0,$foo,0,6) === 'abcdef');
+        assert($str_unchecked_blit_rev($foo,4,$foo,0,0) === 'abcdef');
+        assert($str_unchecked_blit_rev($foo,3,$foo,0,1) === 'abcaef');
+        assert($str_unchecked_blit_rev($foo,2,$foo,0,2) === 'ababef');
+        assert($str_unchecked_blit_rev($foo,1,$foo,0,3) === 'aabcef');
+        assert($str_unchecked_blit_rev($foo,0,$foo,0,4) === 'abcdef');
+    }
+
+    public static function unchecked_shift_by(string &$subject, int $by, int $offset, int $nchars) : void
+    {
+        // This is needed in the autoloader, so rather than duplicate code,
+        // we simply forward calls to the autoloader's function.
+        \Kickback\InitializationScripts\autoloader_str_unchecked_shift_by($subject, $by, $offset, $nchars);
+    }
+
+    public static function unchecked_blit(string &$dst, int $dst_offset, string $src, int $src_offset, int $nchars) : void
+    {
+        self::unchecked_blit_fwd($dst, $dst_offset, $src, $src_offset, $nchars);
+    }
+
+    private static function unittest_unchecked_blit() : void
+    {
+        $str_unchecked_blit =
+            function(string $dst, int $dst_offset, string $src, int $src_offset, int $nchars) : string
+        {
+            self::unchecked_blit($dst, $dst_offset, $src, $src_offset, $nchars);
+            return $dst;
+        };
+
+        self::common_unittest_unchecked_blit($str_unchecked_blit);
+    }
+
+    public static function blit(string &$dst, int $dst_offset, string $src, int $src_offset, int $limit = PHP_INT_MAX) : int
+    {
+        $nchars = \strlen($src) - $src_offset;
+        if ( $nchars > $limit ) {
+            $nchars = $limit;
+        }
+        $dst_nchars = \strlen($dst) - $dst_offset;
+        if ( $nchars > $dst_nchars ) {
+            $nchars = $dst_nchars;
+        }
+
+        self::unchecked_blit($dst, $dst_offset, $src, $src_offset, $nchars);
+        return $nchars;
+    }
+
+    /**
+    * This is similar to `\substr_replace`, except that it modifies its argument instead of return the result.
+    *
+    * The semantics of this function (and meanings of parameters) are otherwise
+    * almost identical to the PHP pre-defined `\substr_replace` function.
+    *
+    * When the replacement has a length identical to the `$length` parameter
+    * (or its implied value), then `autoloader_str_unchecked_blit` will be
+    * used instead of `\substr_replace`, thus avoiding the unnecessary memory
+    * allocations that `\substr_replace` must perform.
+    *
+    * That makes this function potentially much faster whenever the `$subject`
+    * string's length is likely to be unchanged by this operation.
+    *
+    * (In the future, this may also attempt to optimize the case where
+    * the `$subject` string is shrinking, since that can also be performed
+    * without memory allocation, though it will require potentially many
+    * more individual character assignments.)
+    */
+    public static function substr_replace_inplace(string &$subject, string $replacement, int $offset, ?int $length = null) : void
+    {
+        // This is needed in the autoloader, so rather than duplicate code,
+        // we simply forward calls to the autoloader's function.
+        \Kickback\InitializationScripts\autoloader_substr_replace_inplace($subject, $replacement, $offset, $length);
+    }
+
+    public static function unittest_substr_replace_inplace() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        $substr_replace_inplace =
+            function(string $subject, string $replacement, int $offset, ?int $length) : string
+        {
+            self::substr_replace_inplace($subject, $replacement, $offset, $length);
+            return $subject;
+        };
+
+        // Tests taken from the PHP documentation for `\substr_replace`:
+        // (This function should mirror the behavior of `\substr_replace`
+        // in every regard except for the "in-place" characteristic
+        // and its subsequent optimization opportunities.)
+        // https://www.php.net/manual/en/function.substr-replace.php
+        $var = 'ABCDEFGH:/MNRPQR/';
+        assert($substr_replace_inplace($var,'bob',0,null) === 'bob');
+        assert($substr_replace_inplace($var,'bob',0,\strlen($var)) === 'bob');
+        assert($substr_replace_inplace($var,'bob',0,0) === 'bobABCDEFGH:/MNRPQR/');
+        assert($substr_replace_inplace($var,'bob',10,-1) === 'ABCDEFGH:/bob/');
+        assert($substr_replace_inplace($var,'bob',-7,-1) === 'ABCDEFGH:/bob/');
+        assert($substr_replace_inplace($var,'',10,-1) === 'ABCDEFGH://');
+
+        // From comment by `elloromtz at gmail dot com`
+        // https://www.php.net/manual/en/function.substr-replace.php#97401
+        // "It's worth noting that when start and length are both negative
+        // -and- the length is less than or equal to start, the length
+        // will have the effect of being set as 0."
+        assert($substr_replace_inplace('eggs','x',-1,-1) === 'eggxs');
+        assert($substr_replace_inplace('eggs','x',-1,-2) === 'eggxs');
+        assert($substr_replace_inplace('eggs','x',-1, 0) === 'eggxs');
+        assert($substr_replace_inplace('huevos','x',-2,-2) === 'huevxos');
+        assert($substr_replace_inplace('huevos','x',-2,-3) === 'huevxos');
+        assert($substr_replace_inplace('huevos','x',-2, 0) === 'huevxos');
+
+        // "Another note, if length is negative and start offsets
+        // the same position as length, length (yet again) will have
+        // the effect as being set as 0."
+        assert($substr_replace_inplace('abcd', 'x', 0, -4) === 'xabcd');
+        assert($substr_replace_inplace('abcd', 'x', 0,  0) === 'xabcd');
+        assert($substr_replace_inplace('abcd', 'x', 1, -3) === 'axbcd');
+        assert($substr_replace_inplace('abcd', 'x', 1,  0) === 'axbcd');
+
+        // Homegrown tests:
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz',   0,  3) ===  'xyz bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x',   0,  3) ===    'x bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs',   0,  3) === 'pqrs bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz', -11,  3) ===  'xyz bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x', -11,  3) ===    'x bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs', -11,  3) === 'pqrs bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz',   0, -8) ===  'xyz bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x',   0, -8) ===    'x bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs',   0, -8) === 'pqrs bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz', -11, -8) ===  'xyz bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x', -11, -8) ===    'x bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs', -11, -8) === 'pqrs bbb ccc');
+
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz',  4,  3) ===  'aaa xyz ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x',  4,  3) ===    'aaa x ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs',  4,  3) === 'aaa pqrs ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz', -7,  3) ===  'aaa xyz ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x', -7,  3) ===    'aaa x ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs', -7,  3) === 'aaa pqrs ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz',  4, -4) ===  'aaa xyz ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x',  4, -4) ===    'aaa x ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs',  4, -4) === 'aaa pqrs ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz', -7, -4) ===  'aaa xyz ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x', -7, -4) ===    'aaa x ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs', -7, -4) === 'aaa pqrs ccc');
+
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz',  8,  3) ===  'aaa bbb xyz');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x',  8,  3) ===    'aaa bbb x');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs',  8,  3) === 'aaa bbb pqrs');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz', -3,  3) ===  'aaa bbb xyz');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x', -3,  3) ===    'aaa bbb x');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs', -3,  3) === 'aaa bbb pqrs');
+
+        // The last few cases demonstrate the incongruity of the '0'-length case.
+        // Going from length=-1 to length=0 causes the match to go from
+        // "possibly as long as the entire string" to "always 0" with one increment.
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz',  8,  0) ===  'aaa bbb xyzccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x',  8,  0) ===    'aaa bbb xccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs',  8,  0) === 'aaa bbb pqrsccc');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz', -3,  0) ===  'aaa bbb xyzccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x', -3,  0) ===    'aaa bbb xccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs', -3,  0) === 'aaa bbb pqrsccc');
+
+        // This was causing
+        // `Meta::unittest_eponymous_interfaces_transform`
+        // to fail an assertion.
+        assert($substr_replace_inplace('_IA', '', 1, 1) === '_A');
+    }
+
     /**
     * Runs all unittests defined in the Str class.
     */
@@ -551,6 +802,10 @@ final class Str
         self::unittest_normalize_path();
         self::unittest_next_newline();
         self::unittest_is_ascii_identifier();
+        self::unittest_unchecked_blit_fwd();
+        self::unittest_unchecked_blit_rev();
+        self::unittest_unchecked_blit();
+        self::unittest_substr_replace_inplace();
         //self::unittest_to_string($runner);
 
         // $runner->note("  ... passed.\n\n");
