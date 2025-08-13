@@ -279,45 +279,6 @@ final class PHP_BinaryOps
         if ( \strcasecmp($op_text,'XOR') === 0 ) { return 'XOR'; }
 
         return $op_text;
-
-        // // Also, if it's normalized already, don't modify the string.
-        // // (E.g. don't call `\strtoupper`)
-        // switch($op_text) {
-        //     case 'AND':
-        //     case 'OR':
-        //     case 'XOR':
-        //         return $op_text;
-        // }
-        //
-        // // Supposedly, according to ChatGPT, this is cached, so
-        // // "Repeated calls within one script execution are fast."
-        // $have_pcre = \extension_loaded('pcre');
-        //
-        // // Replace things like "and", "AnD", "aND", etc all with "AND".
-        // // We do case-insensitive comparison first before attempting
-        // // to do the lookup, because that avoids modifying the string
-        // // (avoids expensive memory allocations) whenever the string
-        // // doesn't need to be normalized.
-        // if ($have_pcre && \preg_match('/^(AND|OR|XOR)$/i', $input)) {
-        //     // Maybe-faster version if we have PCRE.
-        //     // Note that PCRE supposedly has a cache of 4096
-        //     // pre-compiled regular expressions, so we don't have to
-        //     // (and possibly _can't_) cache our regex compilation.
-        //     // Source: https://stackoverflow.com/questions/209906/compile-regex-in-php
-        //     return \strtoupper($op_text);
-        // } else // Potentially slower multiple-function-call check.
-        // if (\strcasecmp($op_text,'AND') === 0
-        // ||  \strcasecmp($op_text,'OR')  === 0
-        // ||  \strcasecmp($op_text,'XOR') === 0) {
-        //     return \strtoupper($op_text);
-        // }
-        //
-        // // Above code replaces this:
-        // //$op_text = preg_replace('/\s+/', '', $op_text);
-        // // (Because it's nice if we don't need to assume that
-        // // the PCRE extension is available on the host's PHP.)
-        //
-        // return $op_text;
     }
 
     // Could have a test to ensure that it doesn't try to strtoupper

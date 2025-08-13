@@ -3,20 +3,7 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Exceptions\Internal;
 
-//use Kickback\Common\Exceptions\Internal\MockPHPException;
 use Kickback\Common\Exceptions\Internal\IKickbackThrowableRaw;
-
-// This would have something like
-// @phpstan-require-extends \Throwable|self
-// but this leads to seemingly unresolvable PHPStan errors
-// where it complains about (\Throwable|self) or (TThrowable of \Throwable|self)
-// being a non-object type, even though it's necessarily an object. (shrug)
-//
-// TODO: Prove that there isn't a circular dep.
-//
-// but that could create a circular dependency between KickbackThrowable
-// and ThrowableContextMessageHandlingTrait via this route:
-// ThrowableWithContextMessages <- IKickbackThrowable <- KickbackThrowableRaw <- ThrowableContextMessageHandlingTrait <-
 
 /**
 * This class currently lacks a concrete implementation because it is purely

@@ -49,12 +49,6 @@ trait ThrowableContextMessageHandlingTrait
     /** @var ?array<string|\Closure():string> */
     private ?array $kk_prepend_messages_ = null;
 
-    // /** @var ?array<string> */
-    // private ?array $kk_prepend_msg_loc_path_ = null;
-    //
-    // /** @var ?array<int> */
-    // private ?array $kk_prepend_msg_loc_line_ = null;
-
     /** @var ?array<string> */
     private ?array $kk_prepend_msg_loc_full_ = null;
 
@@ -83,19 +77,11 @@ trait ThrowableContextMessageHandlingTrait
             $this, $msg, $trace,
             $this->kk_main_message_prefix_,
             $this->kk_prepend_messages_,
-            // $this->kk_prepend_msg_loc_path_,
-            // $this->kk_prepend_msg_loc_line_,
             $this->kk_prepend_msg_loc_full_);
     }
 
     /** @var ?array<string|\Closure():string> */
     private ?array $kk_append_messages_ = null;
-
-    // /** @var ?array<string> */
-    // private ?array $kk_append_msg_loc_path_ = null;
-    //
-    // /** @var ?array<int> */
-    // private ?array $kk_append_msg_loc_line_ = null;
 
     /** @var ?array<string> */
     private ?array $kk_append_msg_loc_full_ = null;
@@ -125,8 +111,6 @@ trait ThrowableContextMessageHandlingTrait
             $this, $msg, $trace,
             $this->kk_main_message_prefix_,
             $this->kk_append_messages_,
-            // $this->kk_append_msg_loc_path_,
-            // $this->kk_append_msg_loc_line_,
             $this->kk_append_msg_loc_full_);
     }
 
@@ -134,14 +118,10 @@ trait ThrowableContextMessageHandlingTrait
     {
             $this->kk_main_message_prefix_    = null;
             $this->kk_append_messages_        = null;
-            // $this->kk_append_msg_loc_path_   = null;
-            // $this->kk_append_msg_loc_line_   = null;
             $this->kk_append_msg_loc_full_    = null;
 
             $this->kk_main_message_prefix_    = null;
             $this->kk_prepend_messages_       = null;
-            // $this->kk_prepend_msg_loc_path_   = null;
-            // $this->kk_prepend_msg_loc_line_   = null;
             $this->kk_prepend_msg_loc_full_   = null;
 
             // The `getMessage()` results can't be changed on
@@ -630,17 +610,6 @@ class ThrowableContextMessageHandling
             "\n".
             "\n".
             "Trace:\n");
-
-        /*
-        $exc->trace([
-            ['file' => '/foo/bar/baz.php',  'line' => 37,  'function' => 'throw_with_message'],
-            ['file' => '/abc/xyz.php',      'line' => 531, 'function' => 'xyz_do_a_thing'],
-            ['file' => '/a/b/asdfqwer.php', 'line' => 17,  'function' => 'asdfqwer_func',
-                'class' => 'b\\asdfqwer',  'type' => '->'],
-            ['file' => '/P/Q/MyClass.php',  'line' => 78,  'function' => 'my_function',
-                'class' => 'P\\Q\\MyClass.php', 'type' => '::'],
-            ['function' => '{main}']
-        ]);*/
     }
 
     /**
@@ -679,11 +648,6 @@ class ThrowableContextMessageHandling
         return $loc_full;
     }
 
-    // * @param      ?array<string>                    $msg_loc_path
-    // * @param-out  array<string>                     $msg_loc_path
-    // * @param      ?array<int>                       $msg_loc_line
-    // * @param-out  array<int>                        $msg_loc_line
-
     /**
     * @param      IKickbackThrowableRaw             $exc
     * @param      string|\Closure():string          $msg
@@ -702,8 +666,6 @@ class ThrowableContextMessageHandling
         ?array                 $trace,
         ?string                &$main_message_prefix,
         ?array                 &$messages,
-        //?array                 &$msg_loc_path,
-        //?array                 &$msg_loc_line,
         ?array                 &$msg_loc_full
     ) : void
     {
@@ -748,10 +710,6 @@ class ThrowableContextMessageHandling
             $padding = $padding_to_test;
         }
     }
-
-    // * @param  array<string|\Closure():string>   $messages
-    // * @param  array<string>                     $msg_loc_path
-    // * @param  array<int>                        $msg_loc_line
 
     /**
     * @param  array<string>   $msg_loc_full

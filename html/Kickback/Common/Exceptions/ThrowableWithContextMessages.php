@@ -5,49 +5,6 @@ namespace Kickback\Common\Exceptions;
 
 interface ThrowableWithContextMessages
 {
-    // TODO: This comment was the original writing for `say_before_message`.
-    // It is probably quite redundant now, with an example that is probably
-    // overly verbose. Please delete it after it's been committed in git.
-    /*
-    * Set a handler that gets called whenever `getMessage` or `__toString` are called.
-    *
-    * This allows code to add contextual information to error messages
-    * whenever catching and rethrowing the exception:
-    * ```
-    * function qux() : void {
-    *     throw new KickbackThrowable('qux had an oopsie');
-    * }
-    *
-    * function bar() : void {
-    *     $baz = 'hello?';
-    *     $print_bar_context = function() use($baz) : string {
-    *         return "baz was '$baz' at time of exception";
-    *     };
-    *     try {
-    *         qux();
-    *     } catch( IKickbackThrowable $t ) {
-    *         // We can't just print the exception:
-    *         // because we don't know if `$t` will get caught.
-    *         // But if it is, we can ensure that our 2 cents
-    *         // get included by using the `on_printing` callback.
-    *         $t->say_before_message($print_bar_context);
-    *         throw $t;
-    *     }
-    * }
-    *
-    * function foo() : void {
-    *     try {
-    *         bar();
-    *     } catch( IKickbackThrowable $t ) {
-    *         echo $t->__toString() . "\n";
-    *     }
-    * }
-    * ```
-    *
-    * This method is Kickback-specific.
-    */
-    // public function say_before_message(string|\Closure $msg) : void;
-
     /**
     * Cause uncaught throwable to emit `$msg` before `getMessage()`.
     *
