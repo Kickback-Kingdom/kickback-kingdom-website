@@ -152,6 +152,17 @@ if (!defined('Kickback\InitializationScripts\PARENT_PROCESS_TYPE'))
     }
 }
 
+// This should always be defined, even when we aren't in a PHPStan context.
+//
+// This will ensure that we can use it to "herd" the analyser,
+// because expressions like `defined('MY_TRUTHY_CONSTANT')`
+// do NOT count as always-true/always-false values,
+// BUT, expressions like `\MY_TRUTHY_CONSTANT`
+// DO evaluate as always-true/always-false values.
+if (!defined('Kickback\PHPSTAN_RUNNING')) {
+    define('Kickback\PHPSTAN_RUNNING', false);
+}
+
 // The change_root script will handle initialization from here.
 // (It defines SCRIPT_ROOT and then calls the `common_init.php` in the correct SCRIPT_ROOT.)
 require_once("change_root.php");
