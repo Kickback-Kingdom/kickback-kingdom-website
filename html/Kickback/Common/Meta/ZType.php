@@ -241,6 +241,8 @@ final class ZType
             return $caller_shortqn;
         };
 
+        // // This anonymous function might be useful for debugging,
+        // // so it is left here, but commented out.
         // // @param  self::*  $ztype
         // $ztype_str = function(int $ztype):string
         // {
@@ -250,9 +252,6 @@ final class ZType
         //         return \strval($ztype);
         //     }
         // };
-        $interpolate = function(string $arg) : string {
-            return $arg;
-        };
 
         $jt = &$jumptable;
 
@@ -345,63 +344,6 @@ final class ZType
             return $jumptable[$ztype]($val,$ztype);
         }
         return $jumptable[self::E_NOT_A_ZTYPE]($val,$ztype);
-
-        // TODO: Delete the below commented-out code.
-        // $valstr = null;
-        // $class_shortname = null;
-        // $method_name = null;
-        // $populate_debug_info =
-        // function() use(&$valstr, &$class_shortname, &$method_name, $val) : void {
-        //     $valstr = \get_debug_type($val);
-        //     $class_shortname = Meta::shortname(self::class);
-        //     $method_name     = __FUNCTION__;
-        // };
-
-        // switch($ztype)
-        // {
-        //     // Note: Use `isset` instead of `is_null` because `is_null` can print warnings!
-        //     case self::_UNDEF: return !isset($val) && !array_key_exists('val',get_defined_vars());
-        //     case self::_NULL:  return !isset($val) &&  array_key_exists('val',get_defined_vars());
-        //     case self::_TRUE:
-        //     case self::_FALSE:    return is_bool($val);
-        //     case self::_INT:      return is_int($val);
-        //     case self::_FLOAT:    return is_float($val);
-        //     case self::_STRING:   return is_string($val);
-        //     case self::_ARRAY:    return is_array($val);
-        //     case self::_OBJECT:   return is_object($val);
-        //     case self::_RESOURCE: return is_resource($val);
-        //
-        //     case self::_REFERENCE:
-        //         $populate_debug_info();
-        //         throw new \UnexpectedValueException(
-        //             "The $class_shortname::$method_name function is unable to ".
-        //             "determine if an argument is a reference or not; ".
-        //             "can't determine if it's a $class_shortname::_REFERENCE.");
-        //
-        //     case self::_CONSTANT_AST:
-        //         $populate_debug_info();
-        //         throw new \UnexpectedValueException(
-        //             "The $class_shortname::$method_name function is unable to ".
-        //             "determine if an argument is a constant expression or not; ".
-        //             "can't determine if it's a $class_shortname::_CONSTANT_AST.");
-        //
-        //     case self::_CALLABLE: return is_callable($val);
-        //     case self::_ITERABLE: return is_iterable($val);
-        //     case self::_VOID:
-        //         $populate_debug_info();
-        //         throw new \UnexpectedValueException(
-        //             "The $class_shortname::$method_name function is unable to ".
-        //             "accept `void` as an argument. This constant will never ".
-        //             "match anything.");
-        //
-        //     case self::_MIXED:    return true;
-        //     case self::_NEVER:    return false;
-        // }
-
-        // // Nothing matched.
-        // $populate_debug_info();
-        // $ztypestr = self::stringize($ztype);
-        // throw new \UnexpectedValueException("Could not determine if $class_shortname::$ztypestr matches type $valstr.");
     }
 
     private static function unittest_matches() : void
