@@ -33,6 +33,10 @@ if (!defined('Kickback\InitializationScripts\PARENT_PROCESS_TYPE')) {
     define('Kickback\InitializationScripts\PARENT_PROCESS_TYPE', "PHPSTAN");
 }
 
+if (!defined('Kickback\PHPSTAN_RUNNING')) {
+    define('Kickback\PHPSTAN_RUNNING', true);
+}
+
 // The change_root script will handle initialization from here.
 // (It defines SCRIPT_ROOT and then calls the `common_init.php` in the correct SCRIPT_ROOT.)
 require_once("change_root.php");
