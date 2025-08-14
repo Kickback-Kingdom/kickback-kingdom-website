@@ -40,6 +40,11 @@ Below are some instructions for setting up a minimal copy of the server.
 1. Have the above dependencies met on the system the site is being installed to.
 2. Set up the MySQL server to have a user account that the Kickback Kingdom website can log in to.
 3. Upload the SQL schema from the `kickback-kingdom-website/schema/kickback-kingdom-schema.mysql` into the MySQL server.
+* If using MariaDB it is necessary to run the command below before uploading:
+    ```
+    sed -i 's/DEFINER=`[^`]*`@`[^`]*`//g' your_file.mysql
+    ```
+    This command removes the 'DEFINER' statements that exist in MySQL but are incompatible with MariaDB. 
 4. (WIP/TODO: Right now this step is not possible to do.) Add an admin account to the website, and any other records needed for it to function.
 5. Create a "service credentials" config file in either `/srv/kickback-kingdom/credentials.ini` or `/etc/kickback-kingdom/credentials.ini`.
 6. Fill the `credentials.ini` file with the necessary SQL account information (username+password+etc) and SMTP server information (username+password+etc, for "forgot password" feature).
