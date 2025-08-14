@@ -41,6 +41,10 @@
 # (We can add more as we encounter them.)
 **.kate-swp
 
+# Ignore files created by table top simulator
+# TTS will add files if you edit scripts within a scene with VSCode addons
+**.tts 
+
 # This exclusion is convenient for anyone that wants to run phpMyAdmin from
 # their local HTTP server while the Kickback Kingdom website is still
 # available for testing. (Ex: you'd put your phpMyAdmin folder at
