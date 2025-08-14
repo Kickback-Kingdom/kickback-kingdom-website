@@ -12,7 +12,6 @@ class vPrice extends vRecordId
     public int $amount;
     public? vItem $item;
     public? CurrencyCode $currencyCode;
-    
 
     public function __construct(
         string $ctime = '', 

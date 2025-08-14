@@ -182,9 +182,7 @@ class TradeController extends DatabaseController
         catch(Exception $e)
         {
             throw new Exception("Exception caught while trading array of loot : $e");
-        }
-
-        
+        } 
 
         return $resp;
     }
@@ -286,12 +284,12 @@ class TradeController extends DatabaseController
             }
 
             $resp->success = true;
-            $resp->message = "prepared batch insertio0n parametsr from loot id array";
+            $resp->message = "prepared batch insertion parameters from loot id array";
 
         } 
         catch (Exception $e) 
         {
-            throw new Exception("Exception caught while preparing batch insertion paraemtesr from loot id array : ".$e);
+            throw new Exception("Exception caught while preparing batch insertion parameters from loot id array : ".$e);
         }
 
         return $resp;

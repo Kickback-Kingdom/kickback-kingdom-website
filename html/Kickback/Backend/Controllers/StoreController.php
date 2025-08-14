@@ -24,13 +24,16 @@ use Kickback\Backend\Views\vCartItem;
 use Kickback\Backend\Views\vCartProductLink;
 use Kickback\Backend\Views\vDecimal;
 use Kickback\Backend\Views\vItem;
+use Kickback\Backend\Views\vLoot;
 use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vPrice;
 use Kickback\Backend\Views\vProduct;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Views\vStore;
 use Kickback\Backend\Views\vTransaction;
+use Kickback\Common\Unittesting\AssertException;
 use Kickback\Services\Database;
+use RuntimeException;
 
 class StoreController
 {
@@ -47,6 +50,9 @@ class StoreController
         static::unittest_getNumberOfProductInCartById();
         static::unittest_returnWhereClauseForCanAccountAffordItemPricesInCart();
         static::unittest_returnParamsForCanAccountAffordItemPricesForCart();
+        static::unittest_getWhereArrayClauseForGetLootForPricesForCart();
+        static::unittest_getParamsForGetLootForPricesForCart();
+        static::unittest_getWhereArrayClauseForGetStoreOwnerCartItemsLoot();
     }
 
     //CART
@@ -57,49 +63,65 @@ class StoreController
     //transact items
     //log transaction
     //update product stock
-    public static function checkoutCart(vCart $cart, callable $completeStripeTransaction) : Response
+    public static function checkoutCart(vCart $cart, ?string $stripeTransactionId = null) : Response
     {
         $resp = new Response(false, "Unkown error checking out cart", null);
 
         try
         {
-            if(count($cart->cartItems) > 0)
+
+            //Does cart have items to transact
+            if(count($cart->cartItems) < 0)
             {
-                $canAccountAffordItemPricesResp = static::canAccountAffordItemPricesInCart($cart);
+                $resp->message = "Cart does not have items to checkout";
+                return $resp;
+            }
 
-                if($canAccountAffordItemPricesResp->success)
-                {
-                    $lovelacePriceOfCart = static::returnCartLovelacePrice($cart);
+            //Can account afford transactable items
+            $canAccountAffordItemPricesResp = static::canAccountAffordItemPricesInCart($cart);
+            if(!$canAccountAffordItemPricesResp->success) 
+            {
+                $resp->message = "Error in getting if account can afford cart prices : $canAccountAffordItemPricesResp->message"; 
+                return $resp; 
+            }
 
-                    $stripeResp = new Response(false, "", null);
+            if(!$canAccountAffordItemPricesResp->data) 
+            {
+                $resp->message = "Account cannot afford item prices to checkout cart : $canAccountAffordItemPricesResp->message"; 
+                return $resp; 
+            }
+                
+            //Process lovelace transactions
+            $lovelacePriceOfCart = static::returnCartLovelacePrice($cart);
 
-                    if($lovelacePriceOfCart > 0)
-                    {
-                        $stripeResp = $completeStripeTransaction($lovelacePriceOfCart);
-                    }
-                    else
-                    {
-                        $stripeResp->success = true;
-                    }
-
-                    if($stripeResp->success)
-                    {
-
-                    }
-                    else
-                    {
-                        $resp->message = "Failed to complete stripe transaction : $stripeResp->message";
-                    }
-                }
-                else
-                {
-                    $resp->message = "Account cannot afford item prices to checkout cart : $canAccountAffordItemPricesResp->message";
-                }
+            $stripeResp = new Response(false, "", null);
+            if($lovelacePriceOfCart > 0)
+            {
+                $stripeResp = new Response(true, "Succeeded with the stripe transaction", null);
+                //$stripeResp = StripeController::TransactPrice($stripeTransactionId);
             }
             else
             {
-                $resp->message = "Cart does not have items to checkout";
+                //this is an item only transaction. Stripe isn't needed
+                $stripeResp->success = true;
             }
+
+            if(!$stripeResp->success)
+            {
+                $resp->message = "Failed to complete stripe transaction : $stripeResp->message";
+                return $resp;
+            }
+
+            $payItemsForCartResp = static::transactItemsForCart($cart);
+
+            if(!$payItemsForCartResp->success)
+            {
+                $stripeTransactionId = $stripeTransactionId ?? "null";
+                $resp->message = "Failed to complete paying for items in cart. StripeTransactionId = $stripeTransactionId";
+                return $resp;
+            }
+
+                
         }
         catch(Exception $e)
         {
@@ -109,10 +131,303 @@ class StoreController
         return $resp;
     }
 
-    private static function payItemPricesForCart() : response
+    /**
+     * Extracts all of the prices for all of the cart items, adding common prices together
+     * @param vCart $cart the cart for which the cart items and prices need to be transacted
+     * @return Response $resp the response object in which no data is returned however success is indicated
+     */
+    private static function transactItemsForCart(vCart $cart) : Response
     {
+        $resp = new Response(false, "unkown error in pay item prices for cart", null);
 
+        $conn = Database::getConnection();
+        mysqli_autocommit($conn, false);
+
+        try
+        {
+            $allLootsForPricesInCart = static::getLootForPricesForCart($cart);
+            $allLootsForCartItemsFromStoreOwner = static::getStoreOwnerCartItemsLoot($cart);
+
+            //have mysql throw exception on errors so we can rollback the transaction if one occurs
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+            $conn->begin_transaction();
+
+            static::payItemPricesForCart($cart, $allLootsForPricesInCart);
+
+            static::addPurchasedCartProductsToInventory($cart, $allLootsForCartItemsFromStoreOwner);
+
+            $conn->commit();
+        }
+        catch(Exception $e)
+        {  
+            $conn->rollback();
+            mysqli_autocommit($conn, true);
+            throw new Exception("Excpetion caught while paying for item prices for cart : $e");
+        }
+
+        mysqli_autocommit($conn, true);
+
+        return $resp;
     }
+
+    /**
+     * Gets the loot for the items in cart of the store owner's inventory
+     * @param vCart $cart the cart for which to reference the store and its owner
+     * @return array $loots the loot array of the matching loot items from the store owner of the cart items to be purchased
+     */
+    private static function getStoreOwnerCartItemsLoot(vCart $cart) : array
+    {
+        $owner = $cart->store->owner;
+
+        $whereArrayClause = static::getWhereArrayClauseForGetStoreOwnerCartItemsLoot($cart->cartItems);
+
+        $sql = "SELECT Id, opened, account_id, item_id, quest_id, media_id_small, media_id_large, media_id_back, loot_type, desc, rarity, dateObtained, container_loot_id FROM v_loot 
+        WHERE account_id = ? AND item_id IN ($whereArrayClause);";
+
+        $params = static::getParamsForGetStoreOwnerCartItemsLoot($owner, $cart->cartItems);
+
+        $loots = [];
+
+        try
+        {
+            $result = Database::executeSqlQuery($sql, $params);
+
+            if(!$result) throw new Exception("Failed to get matching loot items from store owner's inventory that matched the to be purchased cart items");
+
+            while($row = $result->fetch_assoc())
+            {
+                $loot = LootController::row_to_vLoot($row);
+                array_push($loots, $loot);
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while getting store owner cart item loots : $e");
+        }
+
+        return $loots;
+    }
+
+    private static function getParamsForGetStoreOwnerCartItemsLoot(vRecordId $accountId, array $cartItems) : array
+    {
+        $params = [$accountId];
+
+        foreach($cartItems as $item)
+        {
+            array_push($params, $item->product->crand);
+        }
+
+        return $params;
+    }
+
+    private static function unittest_getParamsForGetStoreOwnerCartItemsLoot() : void
+    {
+        $mockCartItem = new vCartItem();
+        $mockCartItem->product = new vProduct();
+        $mockCartItem->product->item = new vItem();
+        $expectedCrand = $mockCartItem->product->crand;
+        assert([new vRecordId(), $expectedCrand] === static::getParamsForGetStoreOwnerCartItemsLoot(new vRecordId(), [$mockCartItem]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([new vRecordId(), $expectedCrand, $expectedCrand] === static::getParamsForGetStoreOwnerCartItemsLoot(new vRecordId(), [$mockCartItem, $mockCartItem]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([new vRecordId(), $expectedCrand, $expectedCrand, $expectedCrand] === static::getParamsForGetStoreOwnerCartItemsLoot(new vRecordId(), [$mockCartItem, $mockCartItem, $mockCartItem]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([new vRecordId(), $expectedCrand, $expectedCrand, $expectedCrand, $expectedCrand] === static::getParamsForGetStoreOwnerCartItemsLoot(new vRecordId(), [$mockCartItem, $mockCartItem, $mockCartItem, $mockCartItem]), "UNIT TEST FAILED : returned param array did not match expected");
+    }
+
+    private static function getWhereArrayClauseForGetStoreOwnerCartItemsLoot(array $cartItems) : string
+    {
+        if(count($cartItems) <= 0) throw new Exception("CartItem array must contain at least one element");
+
+        $whereArrayClause = "?";
+
+        for($i = 1; $i < count($cartItems); $i++)
+        {
+            $whereArrayClause .= ",?";
+        }
+
+        return $whereArrayClause;
+    }
+
+    private static function unittest_getWhereArrayClauseForGetStoreOwnerCartItemsLoot() : void
+    {
+        assert("?" === static::getWhereArrayClauseForGetStoreOwnerCartItemsLoot([0]), "UNIT TEST FAILED : returned where array clause did not match expected");
+        assert("?,?" === static::getWhereArrayClauseForGetStoreOwnerCartItemsLoot([0,0]), "UNIT TEST FAILED : returned where array clause did not match expected");
+        assert("?,?,?" === static::getWhereArrayClauseForGetStoreOwnerCartItemsLoot([0,0,0]), "UNIT TEST FAILED : returned where array clause did not match expected");
+        assert("?,?,?,?" === static::getWhereArrayClauseForGetStoreOwnerCartItemsLoot([0,0,0,0]), "UNIT TEST FAILED : returned where array clause did not match expected");
+        assert("?,?,?,?,?" === static::getWhereArrayClauseForGetStoreOwnerCartItemsLoot([0,0,0,0,0]), "UNIT TEST FAILED : returned where array clause did not match expected");
+    }
+
+    /**
+     * Adds the purchased items from the store owner to the cart owner's inventory
+     * @param vCart $cart the refernced cart whose cart items are being purchased
+     * @param array $allLootsForCartItemsFromStoreOwner the loot of the store owner which matches the to be purchased items in the cart
+     */
+    private static function addPurchasedCartProductsToInventory(vCart $cart, array $allLootsForCartItemsFromStoreOwner) : void
+    {
+        foreach($cart->cartItems as $item)
+        {
+            $foundKey = null;
+
+            // Find the first matching loot item
+            foreach ($allLootsForCartItemsFromStoreOwner as $key => $item) {
+                if ($item->crand === $item->crand) {
+                    $foundKey = $key;
+                    break;
+                }
+            }
+
+            if (is_null($foundKey)) throw new RuntimeException("No loot item found for crand {$item->crand}");
+
+            $lootItem = $allLootsForCartItemsFromStoreOwner[$foundKey];
+
+            static::logTrade($lootItem, $cart->account);
+            static::reassignLoot($lootItem, $cart->account);
+
+            //unset the index of the loot that was just transacted as to not re-transact it
+            unset($allLootsForCartItemsFromStoreOwner[$foundKey]);
+        }
+    }
+
+    /**
+     * Transacts all of the prices in the cart, adding trade records as needed
+     * @param vCart $cart the cart for which to pay the total prices
+     * @param array $allLootsForPricesInCart the array of the loot held within the cart owner's inventory that match a price in their cart
+     */
+    private static function payItemPricesForCart(vCart $cart, array $allLootsForPricesInCart) : void
+    {
+        foreach($cart->totals as $total)
+        {   
+            //skip if the total is not an item total
+            if(is_null($total->item)) continue;
+
+            //trade loot and log trade for the amount in the total
+            for($amount = $total->amount; $amount > 0; $amount--)
+            {
+                $foundKey = null;
+
+                // Find the first matching loot item
+                foreach ($allLootsForPricesInCart as $key => $item) {
+                    if ($item->crand === $total->item->crand) {
+                        $foundKey = $key;
+                        break;
+                    }
+                }
+
+                if (is_null($foundKey)) throw new RuntimeException("No loot item found for crand {$total->item->crand}");
+
+                $lootItem = $allLootsForPricesInCart[$foundKey];
+
+                static::logTrade($lootItem, $cart->store->owner);
+                static::reassignLoot($lootItem, $cart->store->owner);
+
+                //unset the index of the loot that was just transacted as to not re-transact it
+                unset($allLootsForPricesInCart[$foundKey]);
+            }
+        }
+    }
+
+    /**
+     * Gets all the loots that are of the same item as the totals in the cart for later transacting
+     * @param vCart $cart the cart to get the loot from
+     * @return array the array populated with vLoot of the appropriate loot
+     */
+    private static function getLootForPricesForCart(vCart $cart) : array
+    {
+        $whereArrayClause = static::getWhereArrayClauseForGetLootForPricesForCart($cart->totals);
+
+        $sql = "SELECT Id, opened, account_id, item_id, quest_id, media_id_small, media_id_large, media_id_back, loot_type, desc, rarity, dateObtained, container_loot_id FROM v_loot 
+        WHERE account_id = ? AND item_id IN ($whereArrayClause);";
+
+        $params = static::getParamsForGetLootForPricesForCart($cart->account, $cart->totals);
+
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new Exception("result returned false for getting loot for prices for cart");
+
+        $loot = [];
+
+        while($row = $result->fetch_array(MYSQLI_ASSOC))
+        {
+            $lootRow = LootController::row_to_vLoot($row);
+            array_push($loot, $lootRow);
+        }
+
+        return $loot;
+    }
+
+    private static function getWhereArrayClauseForGetLootForPricesForCart(array $totalsItemIds) : string
+    {
+        if(count($totalsItemIds) <= 0) throw new InvalidArgumentException("totalsItemIds array must contain at least one element");
+
+        $whereClause = "?";
+
+        for($i = 1; $i < count($totalsItemIds); $i++)
+        {
+            $whereClause .= ",?";
+        }
+
+        return $whereClause;
+    }
+
+    private static function unittest_getWhereArrayClauseForGetLootForPricesForCart() : void
+    {
+        assert("?" === static::getWhereArrayClauseForGetLootForPricesForCart([0]), "UNIT TEST FAILED : returned where clause did match expected");
+        assert("?,?" === static::getWhereArrayClauseForGetLootForPricesForCart([0,0]), "UNIT TEST FAILED : returned where clause did match expected");
+        assert("?,?,?" === static::getWhereArrayClauseForGetLootForPricesForCart([0,0,0]), "UNIT TEST FAILED : returned where clause did match expected");
+        assert("?,?,?,?" === static::getWhereArrayClauseForGetLootForPricesForCart([0,0,0,0]), "UNIT TEST FAILED : returned where clause did match expected");
+        assert("?,?,?,?,?" === static::getWhereArrayClauseForGetLootForPricesForCart([0,0,0,0,0]), "UNIT TEST FAILED : returned where clause did match expected");
+    }
+
+    private static function getParamsForGetLootForPricesForCart(vRecordId $accountId, array $totals) : array
+    {
+        $params = [$accountId];
+
+        foreach($totals as $total)
+        {
+            if(is_null($total->item)) continue;
+            array_push($params, $total->item->crand);
+        }
+
+        return $params;
+    }
+
+    private static function unittest_getParamsForGetLootForPricesForCart() : void
+    {
+        $mockTotal = new vPrice();
+        $mockTotal->item = new vRecordId('x',1);
+        $mockNullTotal = new vPrice();
+        assert([new vRecordId(), $mockTotal] === static::getParamsForGetLootForPricesForCart(new vRecordId(), [$mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([new vRecordId(), $mockTotal, $mockTotal] === static::getParamsForGetLootForPricesForCart(new vRecordId(), [$mockTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([new vRecordId(), $mockTotal, $mockTotal, $mockTotal] === static::getParamsForGetLootForPricesForCart(new vRecordId(), [$mockTotal, $mockTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([new vRecordId()] === static::getParamsForGetLootForPricesForCart(new vRecordId(), [$mockNullTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([new vRecordId()] === static::getParamsForGetLootForPricesForCart(new vRecordId(), [$mockNullTotal, $mockNullTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([new vRecordId(), $mockTotal] === static::getParamsForGetLootForPricesForCart(new vRecordId(), [$mockNullTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([new vRecordId(), $mockTotal] === static::getParamsForGetLootForPricesForCart(new vRecordId(), [$mockNullTotal, $mockNullTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([new vRecordId(), $mockTotal, $mockTotal] === static::getParamsForGetLootForPricesForCart(new vRecordId(), [$mockTotal, $mockNullTotal, $mockNullTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([new vRecordId(), $mockTotal, $mockTotal, $mockTotal] === static::getParamsForGetLootForPricesForCart(new vRecordId(), [$mockTotal, $mockNullTotal, $mockTotal, $mockNullTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+    }
+
+    private static function reassignLoot(vRecordId $lootId, vRecordId $toAccount) : void
+    {
+        $sql = "UPDATE loot SET account_id = ? AND dateObtained = GETDATE() WHERE Id = ?;";
+        $params = [$toAccount, $lootId->crand];
+
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new exception("Failed to update loot to reassign");
+    }
+
+    private static function logTrade(vLoot $loot, vRecordId $toAccount) : void
+    {
+        $sql = "INSERT INTO trade (from_account_id, to_account_id, loot_id, trade_date, from_account_obtain_date)
+        VALUES (?,?,?,?,?);";
+
+        $params = [$loot->crand, $loot->ownerId->crand, $loot->crand, RecordId::getCTime(), $loot->dateObtained->value->format('Y-m-d H:i:s.u')];
+
+        $result = database::executeSqlQuery($sql, $params);
+        
+        if(!$result) throw new Exception("Error in inserting trade log");
+    }
+
 
     private static function returnCartLovelacePrice(vCart $cart) : int
     {
@@ -152,55 +467,35 @@ class StoreController
 
         try
         {
-            $whereClause = static::returnWhereClauseForCanAccountAffordItemPricesInCart($cart->cartItems);
-            $params = static::returnParamsForCanAccountAffordItemPricesForCart($cart);
+            $lootForCart = static::returnLootAmountOfPricesInCart($cart);
 
-            $sql = "SELECT item_id, COUNT(Id) AS `amount` FROM loot WHERE account_id = ? AND opened = 1 AND redeemed = 1$whereClause GROUP BY item_id;";
+            $canAccountAffordItems = true;
 
-            $result = Database::executeSqlQuery($sql, $params);
-
-            if($result)
+            foreach($cart->totals as $total)
             {
-                if($result->num_rows > 0)
+                $row = array_filter($lootForCart, function($obj) use ($total) 
                 {
-                    $lootForCart = $result->fetch_all(MYSQLI_ASSOC);
+                    return $obj["item_id"] == $total->ctime;
+                });
 
-                    $canAccountAffordItems = true;
-
-                    foreach($cart->totals as $total)
-                    {
-                        $row = array_filter($lootForCart, function($obj) use ($total) {
-                            return $obj["item_id"] == $total->ctime;
-                        });
-
-                        if(empty($row) || ($row["amount"] - $total->amount < 0))
-                        {
-                            $canAccountAffordItems = false;
-                            break;
-                        }
-                    }
-
-                    if($canAccountAffordItems)
-                    {
-                        $resp->success = true;
-                        $resp->message = "Account can afford item prices";
-                        $resp->data = true;
-                    }
-                    else
-                    {
-                        $resp->success = true;
-                        $resp->message = "Account cannot afford Item Prices";
-                        $resp->data = false;
-                    }
-                }
-                else
+                if(empty($row) || ($row["amount"] - $total->amount < 0))
                 {
-                    $resp->message = "no rows returned for getting if account can afford item prices in cart";
+                    $canAccountAffordItems = false;
+                    break;
                 }
+            }
+
+            if($canAccountAffordItems)
+            {
+                $resp->success = true;
+                $resp->message = "Account can afford item prices";
+                $resp->data = true;
             }
             else
             {
-                $resp->message = "Sql error getting if account can afford item prices in cart";
+                $resp->success = true;
+                $resp->message = "Account cannot afford Item Prices";
+                $resp->data = false;
             }
         }
         catch(Exception $e)
@@ -209,6 +504,27 @@ class StoreController
         }
 
         return $resp;
+    }
+
+    /**
+     * Returns the loots item_id and amount for each price in the cart
+     * @param vCart $cart the cart to reference the prices
+     * @return array $lootForCart the array of associative arrays returned with [ {(item_id),(amount)} ]
+     */
+    private static function returnLootAmountOfPricesInCart(vCart $cart) : array
+    {
+        $whereClause = static::returnWhereClauseForCanAccountAffordItemPricesInCart($cart->cartItems);
+        $params = static::returnParamsForCanAccountAffordItemPricesForCart($cart);
+
+        $sql = "SELECT item_id, COUNT(Id) AS `amount` FROM loot WHERE account_id = ? AND opened = 1 AND redeemed = 1$whereClause GROUP BY item_id;";
+
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new Exception("Sql error; result returned false");
+
+        $lootForCart = $result->num_rows > 0 ? $result->fetch_all(MYSQLI_ASSOC) : [];
+
+        return $lootForCart;
     }
 
     private static function returnParamsForCanAccountAffordItemPricesForCart(vCart $cart) : array
@@ -260,6 +576,11 @@ class StoreController
         assert(static::returnWhereClauseForCanAccountAffordItemPricesInCart([null, null. null, null]) === " AND (item_id = ? OR item_id = ?) OR item_id = ?) OR item_id = ?)",  new Exception("UNIT TEST FAILED : returned where clause for can account afford item prices in cart did not match expected"));
     }
 
+    /**
+     * Calculates the totals for the prices in the cart
+     * @param array $cartItems all of the items in the cart, an array of vCartItems
+     * @return array $totalPrices the returned array which contains the prices of the totals in vPrice objects
+     */
     public static function calculateCartTotalPrices(array $cartItems) : array
     {
         $totalPrices = [];
@@ -549,6 +870,9 @@ class StoreController
      * Either selects an already existing cart or creates a new one
      * 
      * Additionally gets all items in the cart
+     * @param vRecordId $accountId the account id to get the cart for
+     * @param vRecordId $storeId the store to get the cart for
+     * @return Response $resp the response containg the found vCart object in the data field
      */
     public static function getCartForAccount(vRecordId $accountId, vRecordId $storeId) : Response
     {
@@ -573,68 +897,64 @@ class StoreController
         {
             $result = Database::executeSqlQuery($sql, $params);
 
-            if($result)
-            {
-                $selectSql = "SELECT
-                    ctime,
-                    crand,
-                    account_username,
-                    store_name, 
-                    store_locator,
-                    checked_out,
-                    void,
-                    account_ctime,
-                    account_crand,
-                    store_ctime,
-                    store_crand,
-                    transaction_ctime,
-                    transaction_crand
-                    FROM v_cart
-                    WHERE ctime = ? AND crand = ?;
-                ";
-
-                $params = [$cart->ctime, $cart->crand];
-
-                $selectResult = Database::executeSqlQuery($selectSql, $params);
-
-                if($selectResult)
-                {   
-                    if($selectResult->num_rows > 0)
-                    {
-                        $row = $selectResult->fetch_assoc();
-
-                        $cartView = static::cartToView($row);
-
-                        $cartItemsResp = static::getItemsInCart($cartView);
-
-                        if($cartItemsResp->success)
-                        {
-                            $cartView->cartItems = $cartItemsResp->data;
-                            $cartView->totals = static::calculateCartTotalPrices($cartView->cartItems);
-
-                            $resp->success = true;
-                            $resp->message = "Cart returned for account";
-                            $resp->data = $cartView;
-                        }
-                        else
-                        {
-                            $resp->message = "Failed to get cart items";
-                        }   
-                    }
-                    else
-                    {
-                        $resp->message = "cart not found after insertion";
-                    }
-                }
-                else
-                {
-                    $resp->message = "Failed to select cart for account";
-                }
-            }
-            else
+            if(!$result)
             {
                 $resp->message = "Failed to run duplicate-tolerant insert command for inserting cart";
+                return $resp;
             }
+
+            $selectSql = "SELECT
+                ctime,
+                crand,
+                account_username,
+                store_name, 
+                store_locator,
+                checked_out,
+                void,
+                account_ctime,
+                account_crand,
+                store_ctime,
+                store_crand,
+                transaction_ctime,
+                transaction_crand
+                FROM v_cart
+                WHERE ctime = ? AND crand = ?;
+            ";
+
+            $params = [$cart->ctime, $cart->crand];
+
+            $selectResult = Database::executeSqlQuery($selectSql, $params);
+
+            if(!$selectResult)
+            {
+                $resp->message = "Failed to select cart for account";
+                return $resp;
+            } 
+
+            if($selectResult->num_rows > 0)
+            {
+                $resp->message = "cart not found after insertion";
+                return $resp;
+            }
+
+            $row = $selectResult->fetch_assoc();
+
+            $cartView = static::cartToView($row);
+
+            $cartItemsResp = static::getItemsInCart($cartView);
+
+            if(!$cartItemsResp->success)
+            {
+                $resp->message = "Failed to get cart items";
+                return $resp;
+            }
+
+            $cartView->cartItems = $cartItemsResp->data;
+            $cartView->totals = static::calculateCartTotalPrices($cartView->cartItems);
+
+            $resp->success = true;
+            $resp->message = "Cart returned for account";
+            $resp->data = $cartView; 
         }
         catch(Exception $e)
         {

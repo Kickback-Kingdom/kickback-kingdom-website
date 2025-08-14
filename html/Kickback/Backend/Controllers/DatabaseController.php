@@ -370,10 +370,9 @@ abstract class DatabaseController
 
     /**
      * Executes the prepared batch insertion in the controller
-     * @param string $databaseName optional explicit database assignment
      * @return Response 
      */
-    public static function executeBatchInsertion(?string $databaseName = null) : Response
+    public static function executeBatchInsertion() : Response
     {   
         $response = new Response(false, "Unknown error in executing prepared queries", null);
 
@@ -386,7 +385,7 @@ abstract class DatabaseController
             
             $stmt = static::buildInsertStmt();
             
-            Database::executeBatchInsertion($stmt, $batchInsertionParams, $databaseName);
+            Database::executeBatchInsertion($stmt, $batchInsertionParams);
             $instance->batchInsertionParams = [];
             
             $response->success = true;
@@ -402,7 +401,6 @@ abstract class DatabaseController
 
     /**
      * Adds the object to the list of batch insertions being prepared for the controller
-     * @param string $databaseName optional explicit database assignment
      * @return Response 
      */
     public static function prepInsertForBatch(object $object) : Response
