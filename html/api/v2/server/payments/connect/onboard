@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Creates (or retrieves) a connected account and generates an Account Link for onboarding.
  *

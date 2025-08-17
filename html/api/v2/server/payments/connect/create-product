@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Creates a Product and Price on a connected account using the Stripe-Account header.
  *
