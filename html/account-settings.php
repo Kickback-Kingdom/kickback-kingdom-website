@@ -110,7 +110,14 @@ $account = Session::getCurrentAccount();
                                     <i class="fa-brands fa-discord"></i>
                                     <span><?= htmlspecialchars($account->discordUsername); ?></span>
                                     <span class="badge text-bg-success">Linked</span>
-                                    <button type="button" class="btn btn-danger ms-3" id="btnUnlinkDiscord">Unlink Discord</button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-danger btn-sm ms-3 d-flex align-items-center gap-1"
+                                        id="btnUnlinkDiscord"
+                                    >
+                                        <i class="fa-solid fa-link-slash"></i>
+                                        <span>Unlink</span>
+                                    </button>
                                 </div>
                             <?php } ?>
                         </div>
