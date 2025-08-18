@@ -93,6 +93,16 @@ class vAccount extends vRecordId
         return !is_null($this->avatar) ? $this->avatar->getFullPath() : null;
     }
 
+    public function isDiscordLinked() : bool
+    {
+        return !is_null($this->discordUserId);
+    }
+
+    public function hasThirdPartyLinks() : bool
+    {
+        return $this->isDiscordLinked();
+    }
+
     private function setDefaultProfilePicture() : void
     {
         $avatarMedia = new vMedia();
