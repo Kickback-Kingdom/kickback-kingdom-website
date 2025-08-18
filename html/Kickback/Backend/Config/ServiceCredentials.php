@@ -181,6 +181,7 @@ final class ServiceCredentials implements \ArrayAccess
         $error_count += (int)!$this->credential_of_given_type_exists("discord_redirect_uri", "URL", FILTER_VALIDATE_URL);
         $error_count += (int)!$this->credential_string_exists       ("discord_guild_id");
         $error_count += (int)!$this->credential_string_exists       ("discord_bot_token");
+        $error_count += (int)!$this->credential_string_exists       ("discord_verified_role_id");
 
         // Kickback Kingdom auth info; used to establish sessions with backend API
         $error_count += (int)!$this->credential_string_exists       ("kk_service_key");
@@ -331,6 +332,13 @@ final class ServiceCredentials implements \ArrayAccess
     public static function get_discord_bot_token() : ?string
     {
         $val = self::get('discord_bot_token');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_verified_role_id() : ?string
+    {
+        $val = self::get('discord_verified_role_id');
         return is_string($val) ? $val : null;
     }
 
