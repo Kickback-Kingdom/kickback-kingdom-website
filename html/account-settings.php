@@ -139,6 +139,17 @@ $account = Session::getCurrentAccount();
 
     <?php require("php-components/base-page-javascript.php"); ?>
     <script>
+        const params = new URLSearchParams(window.location.search);
+        const discordError = params.get('discord_error');
+        if (discordError) {
+            const statusDiv = $('#discordStatus');
+            statusDiv.removeClass('d-none alert-success').addClass('alert-danger').text(discordError);
+            ShowPopError(discordError, 'Discord');
+            params.delete('discord_error');
+            const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            history.replaceState({}, '', newUrl);
+        }
+
         $('#btnLinkDiscord').on('click', function () {
             const statusDiv = $('#discordStatus');
             fetch('/api/v1/discord/link-start.php', { credentials: 'same-origin' })
