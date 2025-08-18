@@ -6,11 +6,21 @@ use Kickback\Backend\Models\Response;
 
 OnlyGET();
 
-$code = $_GET['code'] ?? null;
+$code  = $_GET['code']  ?? null;
 $state = $_GET['state'] ?? null;
+
 if (!$code || !$state) {
-    return new Response(false, 'Missing code or state', null);
+    $resp = new Response(false, 'Missing code or state', null);
+} else {
+    $resp = SocialMediaController::completeDiscordLink($code, $state);
 }
 
-return SocialMediaController::completeDiscordLink($code, $state);
+if ($resp->success) {
+    header('Location: /account-settings.php');
+    exit;
+}
+
+$msg = urlencode($resp->message);
+header('Location: /account-settings.php?discord_error=' . $msg);
+exit;
 ?>
