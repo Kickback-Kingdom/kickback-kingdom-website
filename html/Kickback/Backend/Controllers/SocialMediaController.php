@@ -4,6 +4,10 @@ declare(strict_types=1);
 namespace Kickback\Backend\Controllers;
 
 use Kickback\Backend\Config\ServiceCredentials;
+use Kickback\Backend\Models\Response;
+use Kickback\Backend\Views\vAccount;
+use Kickback\Services\Database;
+use Kickback\Services\Session;
 
 class SocialMediaController
 {
@@ -161,5 +165,178 @@ class SocialMediaController
                 curl_close($ch);
             }
         }
+    }
+
+    /**
+     * Start the Discord OAuth linking process.
+     *
+     * @return Response Contains the Discord authorization URL on success.
+     */
+    public static function startDiscordLink() : Response
+    {
+        Session::ensureSessionStarted();
+        if (!Session::isLoggedIn()) {
+            return new Response(false, 'User not logged in', null);
+        }
+
+        $clientId    = ServiceCredentials::get_discord_oauth_client_id();
+        $redirectUri = ServiceCredentials::get_discord_redirect_uri();
+        if (!$clientId || !$redirectUri) {
+            return new Response(false, 'Discord OAuth not configured', null);
+        }
+
+        $state = bin2hex(random_bytes(16));
+        Session::setSessionData('discord_oauth_state', $state);
+        $scope = urlencode('identify');
+
+        $authUrl = 'https://discord.com/api/oauth2/authorize'
+            . '?client_id=' . urlencode($clientId)
+            . '&redirect_uri=' . urlencode($redirectUri)
+            . '&response_type=code'
+            . '&scope=' . $scope
+            . '&state=' . urlencode($state);
+
+        return new Response(true, 'Discord OAuth URL', ['url' => $authUrl]);
+    }
+
+    /**
+     * Complete the Discord OAuth linking process.
+     */
+    public static function completeDiscordLink(string $code, string $state) : Response
+    {
+        Session::ensureSessionStarted();
+        if (!Session::readCurrentAccountInto($account)) {
+            return new Response(false, 'User not logged in', null);
+        }
+
+        $expectedState = Session::sessionDataString('discord_oauth_state');
+        if (!$expectedState || $expectedState !== $state) {
+            return new Response(false, 'Invalid state token', null);
+        }
+
+        $clientId     = ServiceCredentials::get_discord_oauth_client_id();
+        $clientSecret = ServiceCredentials::get_discord_oauth_client_secret();
+        $redirectUri  = ServiceCredentials::get_discord_redirect_uri();
+        if (!$clientId || !$clientSecret || !$redirectUri) {
+            return new Response(false, 'Discord OAuth not configured', null);
+        }
+
+        $tokenCh = curl_init('https://discord.com/api/oauth2/token');
+        if ($tokenCh === false) {
+            return new Response(false, 'Failed to contact Discord', null);
+        }
+        curl_setopt($tokenCh, CURLOPT_POST, true);
+        curl_setopt($tokenCh, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($tokenCh, CURLOPT_POSTFIELDS, http_build_query([
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret,
+            'grant_type' => 'authorization_code',
+            'code' => $code,
+            'redirect_uri' => $redirectUri,
+        ]));
+        $tokenResponse = curl_exec($tokenCh);
+        if ($tokenResponse === false) {
+            curl_close($tokenCh);
+            return new Response(false, 'Failed to contact Discord', null);
+        }
+        $tokenData = json_decode($tokenResponse, true);
+        curl_close($tokenCh);
+        if (!isset($tokenData['access_token'])) {
+            return new Response(false, 'Failed to retrieve access token', $tokenData);
+        }
+        $accessToken = $tokenData['access_token'];
+
+        $userCh = curl_init('https://discord.com/api/users/@me');
+        if ($userCh === false) {
+            return new Response(false, 'Failed to fetch user profile', null);
+        }
+        curl_setopt($userCh, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $accessToken,
+            'Content-Type: application/json',
+        ]);
+        curl_setopt($userCh, CURLOPT_RETURNTRANSFER, true);
+        $userResponse = curl_exec($userCh);
+        if ($userResponse === false) {
+            curl_close($userCh);
+            return new Response(false, 'Failed to fetch user profile', null);
+        }
+        $userData = json_decode($userResponse, true);
+        curl_close($userCh);
+        if (!isset($userData['id'], $userData['username'])) {
+            return new Response(false, 'Invalid user data from Discord', $userData);
+        }
+
+        $discordId       = $userData['id'];
+        $discordUsername = $userData['username'];
+
+        $conn = Database::getConnection();
+        $stmt = $conn->prepare('UPDATE account SET DiscordUserId = ?, DiscordUsername = ? WHERE Email = ?');
+        if (!$stmt) {
+            return new Response(false, 'Failed to prepare statement', null);
+        }
+        $stmt->bind_param('sss', $discordId, $discordUsername, $account->email);
+        $stmt->execute();
+        $stmt->close();
+
+        $account->discordUserId = $discordId;
+        $account->discordUsername = $discordUsername;
+        Session::setSessionData('vAccount', $account);
+
+        self::assignVerifiedRole($discordId);
+        Session::setSessionData('discord_oauth_state', null);
+
+        return new Response(true, 'Discord account linked', null);
+    }
+
+    /**
+     * Check if a Discord account is already linked.
+     */
+    public static function isDiscordLinked(string $discordId) : Response
+    {
+        Session::ensureSessionStarted();
+        $conn = Database::getConnection();
+        $stmt = $conn->prepare('SELECT 1 FROM account WHERE DiscordUserId = ? LIMIT 1');
+        if (!$stmt) {
+            return new Response(false, 'Failed to prepare statement', null);
+        }
+        $stmt->bind_param('s', $discordId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $linked = $result && $result->num_rows > 0;
+        $stmt->close();
+
+        return new Response(true, 'Discord link status', ['linked' => $linked]);
+    }
+
+    /**
+     * Unlink the given account's Discord profile.
+     */
+    public static function unlinkDiscordAccount(vAccount $account) : Response
+    {
+        Session::ensureSessionStarted();
+        if (!Session::readCurrentAccountInto($current) || $current->crand !== $account->crand) {
+            return new Response(false, 'User not logged in', null);
+        }
+
+        if (empty($account->discordUserId)) {
+            return new Response(false, 'No Discord account linked', null);
+        }
+
+        self::removeVerifiedRole($account->discordUserId);
+
+        $conn = Database::getConnection();
+        $stmt = $conn->prepare('UPDATE account SET DiscordUserId = NULL, DiscordUsername = NULL WHERE Email = ?');
+        if (!$stmt) {
+            return new Response(false, 'Failed to prepare statement', null);
+        }
+        $stmt->bind_param('s', $account->email);
+        $stmt->execute();
+        $stmt->close();
+
+        $account->discordUserId = null;
+        $account->discordUsername = null;
+        Session::setSessionData('vAccount', $account);
+
+        return new Response(true, 'Discord account unlinked', null);
     }
 }
