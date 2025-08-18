@@ -135,7 +135,7 @@ $account = Session::getCurrentAccount();
         });
 
         $('#confirmUnlinkDiscord').on('click', function () {
-            fetch('/api/v1/discord/unlink.php', { method: 'POST' })
+            fetch('/api/v1/discord/unlink.php', { method: 'POST', credentials: 'same-origin' })
                 .then(response => response.json())
                 .then(data => {
                     const statusDiv = $('#discordStatus');
