@@ -103,7 +103,7 @@ $account = Session::getCurrentAccount();
                     <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label">Discord</label><br>
-                            <?php if (empty($account->discordUserId)) { ?>
+                            <?php if (!$account->isDiscordLinked()) { ?>
                                 <button type="button" class="btn btn-primary" id="btnLinkDiscord">Link Discord</button>
                             <?php } else { ?>
                                 <div class="d-flex align-items-center gap-2">
