@@ -22,6 +22,25 @@ $account = Session::getCurrentAccount();
     require("php-components/ad-carousel.php");
     ?>
 
+    <!-- Discord Unlink Confirmation Modal -->
+    <div class="modal fade" id="unlinkDiscordModal" tabindex="-1" aria-labelledby="unlinkDiscordModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="unlinkDiscordModalLabel">Unlink Discord</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to unlink your Discord account?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmUnlinkDiscord">Unlink</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <main class="container pt-3 bg-body" style="margin-bottom: 56px;">
         <div class="row">
             <div class="col-12 col-xl-9">
@@ -79,20 +98,30 @@ $account = Session::getCurrentAccount();
                 </form>
 
                 <!-- Third-Party Linking Section -->
-                <form method="POST" class="card mb-4">
+                <div class="card mb-4">
                     <div class="card-header"><h5 class="mb-0">Third-Party Linking</h5></div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label for="discordInput" class="form-label">Discord Username</label>
-                            <input type="text" class="form-control" id="discordInput" name="discord" value="<?= isset($account->discord) ? htmlspecialchars($account->discord) : '';?>">
+                            <label class="form-label">Discord</label><br>
+                            <?php if (empty($account->discordUserId)) { ?>
+                                <a href="/api/v1/discord/link-start.php" class="btn btn-primary" id="btnLinkDiscord">Link Discord</a>
+                            <?php } else { ?>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span><?= htmlspecialchars($account->discordUsername); ?></span>
+                                    <button type="button" class="btn btn-danger" id="btnUnlinkDiscord">Unlink Discord</button>
+                                </div>
+                            <?php } ?>
                         </div>
-                        <div class="mb-3">
-                            <label for="steamInput" class="form-label">Steam ID</label>
-                            <input type="text" class="form-control" id="steamInput" name="steam" value="<?= isset($account->steam) ? htmlspecialchars($account->steam) : '';?>">
-                        </div>
-                        <button type="submit" name="submit-thirdparty" class="btn btn-primary">Link Accounts</button>
+                        <div id="discordStatus" class="alert d-none" role="alert"></div>
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label for="steamInput" class="form-label">Steam ID</label>
+                                <input type="text" class="form-control" id="steamInput" name="steam" value="<?= isset($account->steam) ? htmlspecialchars($account->steam) : '';?>">
+                            </div>
+                            <button type="submit" name="submit-thirdparty" class="btn btn-primary">Link Accounts</button>
+                        </form>
                     </div>
-                </form>
+                </div>
             </div>
             <?php require("php-components/base-page-discord.php"); ?>
         </div>
@@ -100,5 +129,32 @@ $account = Session::getCurrentAccount();
     </main>
 
     <?php require("php-components/base-page-javascript.php"); ?>
+    <script>
+        $('#btnUnlinkDiscord').on('click', function () {
+            $('#unlinkDiscordModal').modal('show');
+        });
+
+        $('#confirmUnlinkDiscord').on('click', function () {
+            fetch('/api/v1/discord/unlink.php', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    const statusDiv = $('#discordStatus');
+                    if (data.success) {
+                        statusDiv.removeClass('d-none alert-danger').addClass('alert-success').text(data.message);
+                        ShowPopSuccess(data.message, 'Discord');
+                        setTimeout(function () { location.reload(); }, 1000);
+                    } else {
+                        statusDiv.removeClass('d-none alert-success').addClass('alert-danger').text(data.message);
+                        ShowPopError(data.message, 'Discord');
+                    }
+                })
+                .catch(() => {
+                    ShowPopError('Failed to unlink Discord', 'Discord');
+                })
+                .finally(() => {
+                    $('#unlinkDiscordModal').modal('hide');
+                });
+        });
+    </script>
 </body>
 </html>
