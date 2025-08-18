@@ -101,7 +101,7 @@ class AccountController
 
         $conn = Database::getConnection();
         // Prepare the SQL statement
-        $stmt = mysqli_prepare($conn, "SELECT v_account_info.*, account.DiscordUserId, account.DiscordUsername FROM v_account_info JOIN account ON v_account_info.Id = account.Id WHERE v_account_info.Id = ?");
+        $stmt = mysqli_prepare($conn, "SELECT * FROM v_account_info WHERE Id = ?");
         if ($stmt === false) {
             return new Response(false, "failed to prepare sql statement", null);
         }
@@ -145,7 +145,7 @@ class AccountController
 
         $conn = Database::getConnection();
         // Prepare SQL statement
-        $stmt = mysqli_prepare($conn, "SELECT v_account_info.*, account.DiscordUserId, account.DiscordUsername FROM v_account_info JOIN account ON v_account_info.Id = account.Id WHERE Username = ?");
+        $stmt = mysqli_prepare($conn, "SELECT * FROM v_account_info WHERE Username = ?");
 
         // Bind the username parameters to the SQL statement
         mysqli_stmt_bind_param($stmt, "s", $username);
@@ -180,7 +180,7 @@ class AccountController
 
         $conn = Database::getConnection();
         // Prepare SQL statement
-        $stmt = mysqli_prepare($conn, "SELECT v_account_info.*, account.DiscordUserId, account.DiscordUsername FROM v_account_info JOIN account ON v_account_info.Id = account.Id WHERE Email = ?");
+        $stmt = mysqli_prepare($conn, "SELECT * FROM v_account_info WHERE Email = ?");
 
         mysqli_stmt_bind_param($stmt, "s", $email);
 
@@ -333,7 +333,7 @@ class AccountController
         try {
             $conn = Database::getConnection();
             // SQL statement with placeholders
-            $sql = 'SELECT account.*, acct.DiscordUserId, acct.DiscordUsername, service.Name as \'ServiceName\', ? as SessionToken
+            $sql = 'SELECT account.*, service.Name as \'ServiceName\', ? as SessionToken
             FROM v_account_info as account
             JOIN account as acct ON account.Id = acct.Id
             LEFT JOIN service on service.PublicKey = ?
