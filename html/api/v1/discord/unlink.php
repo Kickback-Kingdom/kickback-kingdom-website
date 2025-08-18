@@ -7,6 +7,10 @@ use Kickback\Services\Session;
 
 Session::ensureSessionStarted();
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    (new Response(false, 'Invalid request method', null))->Exit();
+}
+
 $account = Session::getCurrentAccount();
 if (is_null($account)) {
     (new Response(false, 'User not logged in', null))->Exit();
