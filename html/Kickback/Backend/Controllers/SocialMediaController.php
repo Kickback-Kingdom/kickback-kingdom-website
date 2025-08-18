@@ -12,6 +12,22 @@ use Kickback\Services\Session;
 class SocialMediaController
 {
 
+    private static function applyCaBundle($ch) : void
+    {
+        foreach ([
+            ini_get('curl.cainfo'),
+            ini_get('openssl.cafile'),
+            '/etc/ssl/certs/ca-certificates.crt',
+            '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem',
+            'C:/xampp/apache/bin/curl-ca-bundle.crt',
+        ] as $path) {
+            if (is_string($path) && $path !== '' && is_readable($path)) {
+                curl_setopt($ch, CURLOPT_CAINFO, $path);
+                break;
+            }
+        }
+    }
+
     public static function DiscordWebHook(mixed $msg) : void
     {
         $kk_credentials = ServiceCredentials::instance();
@@ -43,7 +59,7 @@ class SocialMediaController
             'Content-Type: application/json',
             'Content-Length: ' . strlen($jsonData)
         ));
-        curl_setopt($ch, CURLOPT_CAINFO, "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem");
+        self::applyCaBundle($ch);
 
         // Execute the cURL session
         $result = curl_exec($ch);
@@ -75,7 +91,7 @@ class SocialMediaController
             'Authorization: Bot ' . $botToken,
         ]);
         curl_setopt($memberCh, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($memberCh, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
+        self::applyCaBundle($memberCh);
         $memberResp = curl_exec($memberCh);
         if ($memberResp === false) {
             error_log('assignVerifiedRole member fetch failed: ' . curl_error($memberCh));
@@ -107,7 +123,7 @@ class SocialMediaController
                 'Authorization: Bot ' . $botToken,
             ]);
             curl_setopt($botCh, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($botCh, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
+            self::applyCaBundle($botCh);
             $botResp = curl_exec($botCh);
             if ($botResp !== false && curl_getinfo($botCh, CURLINFO_HTTP_CODE) === 200) {
                 $botData = json_decode($botResp, true);
@@ -128,7 +144,7 @@ class SocialMediaController
                 'Authorization: Bot ' . $botToken,
             ]);
             curl_setopt($rolesCh, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($rolesCh, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
+            self::applyCaBundle($rolesCh);
             $rolesResp = curl_exec($rolesCh);
             if ($rolesResp !== false && curl_getinfo($rolesCh, CURLINFO_HTTP_CODE) === 200) {
                 $roles = json_decode($rolesResp, true);
@@ -179,7 +195,7 @@ class SocialMediaController
         ]);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
+        self::applyCaBundle($ch);
         $result = curl_exec($ch);
         if ($result === false) {
             error_log('assignVerifiedRole curl_exec failed: ' . curl_error($ch));
@@ -412,7 +428,7 @@ class SocialMediaController
                     'Authorization: Bot ' . $botToken,
                 ]);
                 curl_setopt($checkCh, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($checkCh, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
+                self::applyCaBundle($checkCh);
                 $checkResp = curl_exec($checkCh);
                 if ($checkResp === false) {
                     $guildJoinError = 'cURL error during guild membership check: ' . curl_error($checkCh);
@@ -430,7 +446,7 @@ class SocialMediaController
                                 curl_setopt($joinCh, CURLOPT_CUSTOMREQUEST, 'PUT');
                                 curl_setopt($joinCh, CURLOPT_POSTFIELDS, $joinPayload);
                                 curl_setopt($joinCh, CURLOPT_RETURNTRANSFER, true);
-                                curl_setopt($joinCh, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
+                                self::applyCaBundle($joinCh);
                                 $joinResp = curl_exec($joinCh);
                                 $joinStatus = curl_getinfo($joinCh, CURLINFO_HTTP_CODE);
                                 if ($joinResp === false) {
