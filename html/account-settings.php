@@ -104,7 +104,7 @@ $account = Session::getCurrentAccount();
                         <div class="mb-3">
                             <label class="form-label">Discord</label><br>
                             <?php if (empty($account->discordUserId)) { ?>
-                                <a href="/api/v1/discord/link-start.php" class="btn btn-primary" id="btnLinkDiscord">Link Discord</a>
+                                <button type="button" class="btn btn-primary" id="btnLinkDiscord">Link Discord</button>
                             <?php } else { ?>
                                 <div class="d-flex align-items-center gap-2">
                                     <span><?= htmlspecialchars($account->discordUsername); ?></span>
@@ -130,6 +130,26 @@ $account = Session::getCurrentAccount();
 
     <?php require("php-components/base-page-javascript.php"); ?>
     <script>
+        $('#btnLinkDiscord').on('click', function () {
+            const statusDiv = $('#discordStatus');
+            fetch('/api/v1/discord/link-start.php', { credentials: 'same-origin' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data && data.data.url) {
+                        window.location = data.data.url;
+                    } else {
+                        const msg = data.message || 'Failed to link Discord';
+                        statusDiv.removeClass('d-none alert-success').addClass('alert-danger').text(msg);
+                        ShowPopError(msg, 'Discord');
+                    }
+                })
+                .catch(() => {
+                    const msg = 'Failed to link Discord';
+                    statusDiv.removeClass('d-none alert-success').addClass('alert-danger').text(msg);
+                    ShowPopError(msg, 'Discord');
+                });
+        });
+
         $('#btnUnlinkDiscord').on('click', function () {
             $('#unlinkDiscordModal').modal('show');
         });
