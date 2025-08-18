@@ -400,7 +400,7 @@ class SocialMediaController
         $discordId       = $userData['id'];
         $discordUsername = $userData['username'];
 
-        $guildJoinFailed = false;
+        $guildJoinError = null;
         $guildId  = ServiceCredentials::get_discord_guild_id();
         $botToken = ServiceCredentials::get_discord_bot_token();
         if ($guildId && $botToken) {
@@ -413,39 +413,47 @@ class SocialMediaController
                 ]);
                 curl_setopt($checkCh, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($checkCh, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
-                curl_exec($checkCh);
-                $checkStatus = curl_getinfo($checkCh, CURLINFO_HTTP_CODE);
-                curl_close($checkCh);
-                if ($checkStatus === 404) {
-                    $joinPayload = json_encode(['access_token' => $accessToken]);
-                    if ($joinPayload !== false) {
-                        $joinCh = curl_init($memberUrl);
-                        if ($joinCh !== false) {
-                            curl_setopt($joinCh, CURLOPT_HTTPHEADER, [
-                                'Authorization: Bot ' . $botToken,
-                                'Content-Type: application/json',
-                            ]);
-                            curl_setopt($joinCh, CURLOPT_CUSTOMREQUEST, 'PUT');
-                            curl_setopt($joinCh, CURLOPT_POSTFIELDS, $joinPayload);
-                            curl_setopt($joinCh, CURLOPT_RETURNTRANSFER, true);
-                            curl_setopt($joinCh, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
-                            $joinResp = curl_exec($joinCh);
-                            if ($joinResp === false || curl_getinfo($joinCh, CURLINFO_HTTP_CODE) >= 400) {
-                                error_log('Failed to join guild: ' . curl_error($joinCh) . ' response: ' . $joinResp);
-                                $guildJoinFailed = true;
+                $checkResp = curl_exec($checkCh);
+                if ($checkResp === false) {
+                    $guildJoinError = 'cURL error during guild membership check: ' . curl_error($checkCh);
+                } else {
+                    $checkStatus = curl_getinfo($checkCh, CURLINFO_HTTP_CODE);
+                    if ($checkStatus === 404) {
+                        $joinPayload = json_encode(['access_token' => $accessToken]);
+                        if ($joinPayload !== false) {
+                            $joinCh = curl_init($memberUrl);
+                            if ($joinCh !== false) {
+                                curl_setopt($joinCh, CURLOPT_HTTPHEADER, [
+                                    'Authorization: Bot ' . $botToken,
+                                    'Content-Type: application/json',
+                                ]);
+                                curl_setopt($joinCh, CURLOPT_CUSTOMREQUEST, 'PUT');
+                                curl_setopt($joinCh, CURLOPT_POSTFIELDS, $joinPayload);
+                                curl_setopt($joinCh, CURLOPT_RETURNTRANSFER, true);
+                                curl_setopt($joinCh, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
+                                $joinResp = curl_exec($joinCh);
+                                $joinStatus = curl_getinfo($joinCh, CURLINFO_HTTP_CODE);
+                                if ($joinResp === false) {
+                                    $guildJoinError = 'cURL error during guild join: ' . curl_error($joinCh);
+                                    error_log('Failed to join guild: ' . curl_error($joinCh));
+                                } elseif ($joinStatus >= 400) {
+                                    $guildJoinError = 'Discord API returned status ' . $joinStatus . ' when joining guild';
+                                    error_log('Failed to join guild: status ' . $joinStatus . ' response: ' . $joinResp);
+                                }
+                                curl_close($joinCh);
+                            } else {
+                                $guildJoinError = 'Failed to initialize guild join request';
                             }
-                            curl_close($joinCh);
                         } else {
-                            $guildJoinFailed = true;
+                            $guildJoinError = 'Failed to encode guild join payload';
                         }
-                    } else {
-                        $guildJoinFailed = true;
+                    } elseif ($checkStatus >= 400 && $checkStatus !== 200 && $checkStatus !== 204) {
+                        $guildJoinError = 'Discord API returned status ' . $checkStatus . ' when checking guild membership';
                     }
-                } elseif ($checkStatus >= 400 && $checkStatus !== 200 && $checkStatus !== 204) {
-                    $guildJoinFailed = true;
                 }
+                curl_close($checkCh);
             } else {
-                $guildJoinFailed = true;
+                $guildJoinError = 'Failed to initialize guild membership check';
             }
         }
 
@@ -466,8 +474,8 @@ class SocialMediaController
         Session::setSessionData('discord_oauth_state', null);
 
         $errors = [];
-        if ($guildJoinFailed) {
-            $errors[] = 'failed to join Discord guild';
+        if ($guildJoinError !== null) {
+            $errors[] = $guildJoinError ?: 'failed to join Discord guild';
         }
         if (!$roleResponse->success) {
             $errors[] = $roleResponse->message;
