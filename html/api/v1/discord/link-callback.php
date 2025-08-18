@@ -3,6 +3,7 @@ require(__DIR__.'/../engine/engine.php');
 
 use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Backend\Models\Response;
+use Kickback\Backend\Controllers\SocialMediaController;
 use Kickback\Services\Session;
 
 Session::ensureSessionStarted();
@@ -81,22 +82,7 @@ if ($stmt) {
     $stmt->close();
 }
 
-$guildId = ServiceCredentials::get_discord_guild_id();
-$botToken = ServiceCredentials::get_discord_bot_token();
-$roleId = ServiceCredentials::get('discord_verified_role_id');
-
-if ($guildId && $botToken && $roleId) {
-    $roleUrl = 'https://discord.com/api/guilds/' . urlencode($guildId) . '/members/' . urlencode($discordId) . '/roles/' . urlencode($roleId);
-    $roleCh = curl_init($roleUrl);
-    curl_setopt($roleCh, CURLOPT_HTTPHEADER, [
-        'Authorization: Bot ' . $botToken,
-        'Content-Length: 0',
-    ]);
-    curl_setopt($roleCh, CURLOPT_CUSTOMREQUEST, 'PUT');
-    curl_setopt($roleCh, CURLOPT_RETURNTRANSFER, true);
-    curl_exec($roleCh);
-    curl_close($roleCh);
-}
+SocialMediaController::assignVerifiedRole($discordId);
 
 unset($_SESSION['discord_oauth_state']);
 
