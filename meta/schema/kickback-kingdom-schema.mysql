@@ -84,9 +84,12 @@ CREATE TABLE `account` (
   `Banned` tinyint(1) NOT NULL DEFAULT 0,
   `pass_reset` int(11) DEFAULT NULL,
   `passage_id` int(11) DEFAULT NULL,
+  `DiscordUserId` varchar(32) COLLATE utf8mb4_bin DEFAULT NULL,
+  `DiscordUsername` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `Email` (`Email`),
-  UNIQUE KEY `unique_passage_id` (`passage_id`)
+  UNIQUE KEY `unique_passage_id` (`passage_id`),
+  UNIQUE KEY `unique_discord_user_id` (`DiscordUserId`)
 ) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
