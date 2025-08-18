@@ -57,19 +57,19 @@ class SocialMediaController
         curl_close($ch);
     }
 
-    public static function assignVerifiedRole(string $discordUserId) : bool
+    public static function assignVerifiedRole(string $discordUserId) : Response
     {
         $guildId  = ServiceCredentials::get_discord_guild_id();
         $botToken = ServiceCredentials::get_discord_bot_token();
         $roleId   = ServiceCredentials::get_discord_verified_role_id();
         if (!$guildId || !$botToken || !$roleId) {
-            return false;
+            return new Response(false, 'missing configuration');
         }
         $memberUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
             . '/members/' . urlencode($discordUserId);
         $memberCh = curl_init($memberUrl);
         if ($memberCh === false) {
-            return false;
+            return new Response(false, 'failed to initialize member fetch');
         }
         curl_setopt($memberCh, CURLOPT_HTTPHEADER, [
             'Authorization: Bot ' . $botToken,
@@ -80,22 +80,22 @@ class SocialMediaController
         if ($memberResp === false) {
             error_log('assignVerifiedRole member fetch failed: ' . curl_error($memberCh));
             curl_close($memberCh);
-            return false;
+            return new Response(false, 'failed to fetch member data');
         }
         $memberStatus = curl_getinfo($memberCh, CURLINFO_HTTP_CODE);
         curl_close($memberCh);
         if ($memberStatus !== 200) {
             error_log('assignVerifiedRole member fetch HTTP ' . $memberStatus . ' response: ' . $memberResp);
-            return false;
+            return new Response(false, 'member fetch HTTP ' . $memberStatus);
         }
         $memberData = json_decode($memberResp, true);
         if (!is_array($memberData)) {
             error_log('assignVerifiedRole invalid member data: ' . $memberResp);
-            return false;
+            return new Response(false, 'invalid member data');
         }
         if (!empty($memberData['pending'])) {
             error_log('assignVerifiedRole member is pending');
-            return false;
+            return new Response(false, 'member pending in guild');
         }
 
         $botMemberUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
@@ -158,12 +158,12 @@ class SocialMediaController
 
         if ($verifiedRoleManaged) {
             error_log('assignVerifiedRole verified role is managed');
-            return false;
+            return new Response(false, 'verified role is managed');
         }
 
         if ($verifiedRolePos !== null && $botHighestPos !== null && $botHighestPos <= $verifiedRolePos) {
             error_log('assignVerifiedRole bot role hierarchy insufficient');
-            return false;
+            return new Response(false, 'bot role hierarchy insufficient');
         }
 
         $roleUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
@@ -171,7 +171,7 @@ class SocialMediaController
             . '/roles/' . urlencode($roleId);
         $ch = curl_init($roleUrl);
         if ($ch === false) {
-            return false;
+            return new Response(false, 'failed to initialize role assignment');
         }
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Authorization: Bot ' . $botToken,
@@ -184,7 +184,7 @@ class SocialMediaController
         if ($result === false) {
             error_log('assignVerifiedRole curl_exec failed: ' . curl_error($ch));
             curl_close($ch);
-            return false;
+            return new Response(false, 'failed to assign verified role');
         }
         $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
@@ -196,9 +196,9 @@ class SocialMediaController
                     . ' (' . $decoded['code'] . ')';
             }
             error_log('assignVerifiedRole HTTP status ' . $status . ' error: ' . $error . ' response: ' . $result);
-            return false;
+            return new Response(false, 'Discord API error: ' . $error);
         }
-        return true;
+        return new Response(true, 'verified role assigned');
     }
 
     private static function discordErrorMessage(int $code) : string
@@ -462,15 +462,15 @@ class SocialMediaController
         $account->discordUsername = $discordUsername;
         Session::setSessionData('vAccount', $account);
 
-        $roleSuccess = self::assignVerifiedRole($discordId);
+        $roleResponse = self::assignVerifiedRole($discordId);
         Session::setSessionData('discord_oauth_state', null);
 
         $errors = [];
         if ($guildJoinFailed) {
             $errors[] = 'failed to join Discord guild';
         }
-        if (!$roleSuccess) {
-            $errors[] = 'failed to assign verified role';
+        if (!$roleResponse->success) {
+            $errors[] = $roleResponse->message;
         }
         if ($errors) {
             $msg = 'Discord account linked, but ' . implode(' and ', $errors);
