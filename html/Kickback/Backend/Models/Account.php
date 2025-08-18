@@ -11,8 +11,7 @@ class Account extends RecordId
     public string $username;
     public bool $banned;
     public ForeignRecordId $passageId;
+    public ?string $discordUserId = null;
+    public ?string $discordUsername = null;
 }
-
-
-
 ?>
