@@ -107,8 +107,10 @@ $account = Session::getCurrentAccount();
                                 <button type="button" class="btn btn-primary" id="btnLinkDiscord">Link Discord</button>
                             <?php } else { ?>
                                 <div class="d-flex align-items-center gap-2">
+                                    <i class="fa-brands fa-discord"></i>
                                     <span><?= htmlspecialchars($account->discordUsername); ?></span>
-                                    <button type="button" class="btn btn-danger" id="btnUnlinkDiscord">Unlink Discord</button>
+                                    <span class="badge text-bg-success">Linked</span>
+                                    <button type="button" class="btn btn-danger ms-3" id="btnUnlinkDiscord">Unlink Discord</button>
                                 </div>
                             <?php } ?>
                         </div>
