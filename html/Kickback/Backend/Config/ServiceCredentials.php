@@ -175,6 +175,13 @@ final class ServiceCredentials implements \ArrayAccess
         $error_count += (int)!$this->credential_string_exists       ("discord_api_url"); // https://discord.com/api/webhooks/<some_number>
         $error_count += (int)!$this->credential_string_exists       ("discord_api_key"); // Concatenated with `discord_api_url` to get the full URL for discord API access.
 
+        // Discord OAuth info; used for login and guild interactions.
+        $error_count += (int)!$this->credential_string_exists       ("discord_oauth_client_id");
+        $error_count += (int)!$this->credential_string_exists       ("discord_oauth_client_secret");
+        $error_count += (int)!$this->credential_of_given_type_exists("discord_redirect_uri", "URL", FILTER_VALIDATE_URL);
+        $error_count += (int)!$this->credential_string_exists       ("discord_guild_id");
+        $error_count += (int)!$this->credential_string_exists       ("discord_bot_token");
+
         // Kickback Kingdom auth info; used to establish sessions with backend API
         $error_count += (int)!$this->credential_string_exists       ("kk_service_key");
 
@@ -290,6 +297,41 @@ final class ServiceCredentials implements \ArrayAccess
         } else {
             return $entries[$entry_name];
         }
+    }
+
+    /** @return null|string */
+    public static function get_discord_oauth_client_id() : ?string
+    {
+        $val = self::get('discord_oauth_client_id');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_oauth_client_secret() : ?string
+    {
+        $val = self::get('discord_oauth_client_secret');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_redirect_uri() : ?string
+    {
+        $val = self::get('discord_redirect_uri');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_guild_id() : ?string
+    {
+        $val = self::get('discord_guild_id');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_bot_token() : ?string
+    {
+        $val = self::get('discord_bot_token');
+        return is_string($val) ? $val : null;
     }
 
     public static function instance() : ServiceCredentials
