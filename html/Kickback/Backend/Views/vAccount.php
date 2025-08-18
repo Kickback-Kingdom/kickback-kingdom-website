@@ -24,6 +24,9 @@ class vAccount extends vRecordId
     public int $expCurrent;
     public int $expGoal;
 
+    public ?string $discordUserId = null;
+    public ?string $discordUsername = null;
+
     public string $title;
 
     public bool $isAdmin;

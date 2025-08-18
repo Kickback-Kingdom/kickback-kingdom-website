@@ -101,7 +101,7 @@ class AccountController
 
         $conn = Database::getConnection();
         // Prepare the SQL statement
-        $stmt = mysqli_prepare($conn, "SELECT * FROM v_account_info WHERE Id = ?");
+        $stmt = mysqli_prepare($conn, "SELECT v_account_info.*, account.DiscordUserId, account.DiscordUsername FROM v_account_info JOIN account ON v_account_info.Id = account.Id WHERE v_account_info.Id = ?");
         if ($stmt === false) {
             return new Response(false, "failed to prepare sql statement", null);
         }
@@ -145,7 +145,7 @@ class AccountController
 
         $conn = Database::getConnection();
         // Prepare SQL statement
-        $stmt = mysqli_prepare($conn, "SELECT * FROM v_account_info WHERE Username = ?");
+        $stmt = mysqli_prepare($conn, "SELECT v_account_info.*, account.DiscordUserId, account.DiscordUsername FROM v_account_info JOIN account ON v_account_info.Id = account.Id WHERE Username = ?");
 
         // Bind the username parameters to the SQL statement
         mysqli_stmt_bind_param($stmt, "s", $username);
@@ -180,7 +180,7 @@ class AccountController
 
         $conn = Database::getConnection();
         // Prepare SQL statement
-        $stmt = mysqli_prepare($conn, "SELECT * FROM v_account_info WHERE Email = ?");
+        $stmt = mysqli_prepare($conn, "SELECT v_account_info.*, account.DiscordUserId, account.DiscordUsername FROM v_account_info JOIN account ON v_account_info.Id = account.Id WHERE Email = ?");
 
         mysqli_stmt_bind_param($stmt, "s", $email);
 
@@ -333,14 +333,15 @@ class AccountController
         try {
             $conn = Database::getConnection();
             // SQL statement with placeholders
-            $sql = 'SELECT account.*, service.Name as \'ServiceName\', ? as SessionToken
-            FROM v_account_info as account 
-            LEFT JOIN service on service.PublicKey = ? 
-            LEFT JOIN account_sessions on account_sessions.SessionToken = ? 
-            and account_sessions.ServiceKey = service.PublicKey 
-            and account_sessions.account_id = account.Id 
-            WHERE account.Banned = 0 
-            AND account_sessions.login_time >= (NOW() - INTERVAL 7 DAY) 
+            $sql = 'SELECT account.*, acct.DiscordUserId, acct.DiscordUsername, service.Name as \'ServiceName\', ? as SessionToken
+            FROM v_account_info as account
+            JOIN account as acct ON account.Id = acct.Id
+            LEFT JOIN service on service.PublicKey = ?
+            LEFT JOIN account_sessions on account_sessions.SessionToken = ?
+            and account_sessions.ServiceKey = service.PublicKey
+            and account_sessions.account_id = account.Id
+            WHERE account.Banned = 0
+            AND account_sessions.login_time >= (NOW() - INTERVAL 7 DAY)
             AND service.PublicKey = ?';
 
             // Prepare the SQL statement
@@ -1065,6 +1066,13 @@ class AccountController
         $account->badges = (int) $row["badges"];
         $account->expCurrent = (int) $row["exp_current"];
         $account->expGoal = (int) $row["exp_goal"];
+
+        if (array_key_exists('DiscordUserId', $row)) {
+            $account->discordUserId = $row['DiscordUserId'] !== null ? (string)$row['DiscordUserId'] : null;
+        }
+        if (array_key_exists('DiscordUsername', $row)) {
+            $account->discordUsername = $row['DiscordUsername'] !== null ? (string)$row['DiscordUsername'] : null;
+        }
 
         // Assign boolean properties
         $account->isAdmin = (bool) $row["IsAdmin"];

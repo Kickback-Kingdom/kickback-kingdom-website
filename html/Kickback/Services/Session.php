@@ -333,6 +333,24 @@ class Session {
         return false;
     }
 
+    /**
+    * Ensure the current user is logged in and has a Discord account linked.
+    *
+    * @return vAccount The current account if the check passes.
+    */
+    public static function requireDiscordLinked() : vAccount
+    {
+        if (!self::readCurrentAccountInto($account)) {
+            (new Response(false, 'User not logged in', null))->Exit();
+        }
+
+        if (empty($account->discordUserId)) {
+            (new Response(false, 'No Discord account linked', null))->Exit();
+        }
+
+        return $account;
+    }
+
     public static function setSessionData(string $key, mixed $value) : void {
         $_SESSION[$key] = $value;
     }
