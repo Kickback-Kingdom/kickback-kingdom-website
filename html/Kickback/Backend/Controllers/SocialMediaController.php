@@ -65,6 +65,106 @@ class SocialMediaController
         if (!$guildId || !$botToken || !$roleId) {
             return false;
         }
+        $memberUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
+            . '/members/' . urlencode($discordUserId);
+        $memberCh = curl_init($memberUrl);
+        if ($memberCh === false) {
+            return false;
+        }
+        curl_setopt($memberCh, CURLOPT_HTTPHEADER, [
+            'Authorization: Bot ' . $botToken,
+        ]);
+        curl_setopt($memberCh, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($memberCh, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
+        $memberResp = curl_exec($memberCh);
+        if ($memberResp === false) {
+            error_log('assignVerifiedRole member fetch failed: ' . curl_error($memberCh));
+            curl_close($memberCh);
+            return false;
+        }
+        $memberStatus = curl_getinfo($memberCh, CURLINFO_HTTP_CODE);
+        curl_close($memberCh);
+        if ($memberStatus !== 200) {
+            error_log('assignVerifiedRole member fetch HTTP ' . $memberStatus . ' response: ' . $memberResp);
+            return false;
+        }
+        $memberData = json_decode($memberResp, true);
+        if (!is_array($memberData)) {
+            error_log('assignVerifiedRole invalid member data: ' . $memberResp);
+            return false;
+        }
+        if (!empty($memberData['pending'])) {
+            error_log('assignVerifiedRole member is pending');
+            return false;
+        }
+
+        $botMemberUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
+            . '/members/@me';
+        $botRoles = [];
+        $botCh = curl_init($botMemberUrl);
+        if ($botCh !== false) {
+            curl_setopt($botCh, CURLOPT_HTTPHEADER, [
+                'Authorization: Bot ' . $botToken,
+            ]);
+            curl_setopt($botCh, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($botCh, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
+            $botResp = curl_exec($botCh);
+            if ($botResp !== false && curl_getinfo($botCh, CURLINFO_HTTP_CODE) === 200) {
+                $botData = json_decode($botResp, true);
+                if (is_array($botData) && isset($botData['roles']) && is_array($botData['roles'])) {
+                    $botRoles = $botData['roles'];
+                }
+            }
+            curl_close($botCh);
+        }
+
+        $rolesUrl = 'https://discord.com/api/guilds/' . urlencode($guildId) . '/roles';
+        $rolesCh = curl_init($rolesUrl);
+        $verifiedRolePos = null;
+        $verifiedRoleManaged = null;
+        $botHighestPos = null;
+        if ($rolesCh !== false) {
+            curl_setopt($rolesCh, CURLOPT_HTTPHEADER, [
+                'Authorization: Bot ' . $botToken,
+            ]);
+            curl_setopt($rolesCh, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($rolesCh, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
+            $rolesResp = curl_exec($rolesCh);
+            if ($rolesResp !== false && curl_getinfo($rolesCh, CURLINFO_HTTP_CODE) === 200) {
+                $roles = json_decode($rolesResp, true);
+                if (is_array($roles)) {
+                    foreach ($roles as $role) {
+                        if (!isset($role['id'], $role['position'])) {
+                            continue;
+                        }
+                        if ($role['id'] === $roleId) {
+                            $verifiedRolePos     = $role['position'];
+                            $verifiedRoleManaged = !empty($role['managed']);
+                        }
+                        if (in_array($role['id'], $botRoles, true)) {
+                            if ($botHighestPos === null || $role['position'] > $botHighestPos) {
+                                $botHighestPos = $role['position'];
+                            }
+                        }
+                    }
+                }
+            }
+            curl_close($rolesCh);
+        }
+
+        error_log('assignVerifiedRole hierarchy botHighest=' . ($botHighestPos ?? 'unknown')
+            . ' verifiedRolePos=' . ($verifiedRolePos ?? 'unknown')
+            . ' managed=' . ($verifiedRoleManaged ? 'yes' : 'no'));
+
+        if ($verifiedRoleManaged) {
+            error_log('assignVerifiedRole verified role is managed');
+            return false;
+        }
+
+        if ($verifiedRolePos !== null && $botHighestPos !== null && $botHighestPos <= $verifiedRolePos) {
+            error_log('assignVerifiedRole bot role hierarchy insufficient');
+            return false;
+        }
 
         $roleUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
             . '/members/' . urlencode($discordUserId)
@@ -89,10 +189,29 @@ class SocialMediaController
         $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         if ($status < 200 || $status >= 300) {
-            error_log('assignVerifiedRole HTTP status ' . $status . ' response: ' . $result);
+            $error = $result;
+            $decoded = json_decode($result, true);
+            if (is_array($decoded) && isset($decoded['code'])) {
+                $error = self::discordErrorMessage((int)$decoded['code'])
+                    . ' (' . $decoded['code'] . ')';
+            }
+            error_log('assignVerifiedRole HTTP status ' . $status . ' error: ' . $error . ' response: ' . $result);
             return false;
         }
         return true;
+    }
+
+    private static function discordErrorMessage(int $code) : string
+    {
+        $map = [
+            10004 => 'Unknown guild',
+            10007 => 'Unknown member',
+            10011 => 'Unknown role',
+            50001 => 'Missing access',
+            50013 => 'Missing permissions',
+            50035 => 'Invalid form body',
+        ];
+        return $map[$code] ?? 'Unknown error';
     }
 
     public static function removeVerifiedRole(string $discordUserId) : void
