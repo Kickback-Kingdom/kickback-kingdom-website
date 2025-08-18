@@ -57,13 +57,13 @@ class SocialMediaController
         curl_close($ch);
     }
 
-    public static function assignVerifiedRole(string $discordUserId) : void
+    public static function assignVerifiedRole(string $discordUserId) : bool
     {
         $guildId  = ServiceCredentials::get_discord_guild_id();
         $botToken = ServiceCredentials::get_discord_bot_token();
         $roleId   = ServiceCredentials::get_discord_verified_role_id();
         if (!$guildId || !$botToken || !$roleId) {
-            return;
+            return false;
         }
 
         $roleUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
@@ -71,7 +71,7 @@ class SocialMediaController
             . '/roles/' . urlencode($roleId);
         $ch = curl_init($roleUrl);
         if ($ch === false) {
-            return;
+            return false;
         }
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Authorization: Bot ' . $botToken,
@@ -79,8 +79,20 @@ class SocialMediaController
         ]);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_exec($ch);
+        curl_setopt($ch, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
+        $result = curl_exec($ch);
+        if ($result === false) {
+            error_log('assignVerifiedRole curl_exec failed: ' . curl_error($ch));
+            curl_close($ch);
+            return false;
+        }
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
+        if ($status < 200 || $status >= 300) {
+            error_log('assignVerifiedRole HTTP status ' . $status . ' response: ' . $result);
+            return false;
+        }
+        return true;
     }
 
     public static function removeVerifiedRole(string $discordUserId) : void
@@ -187,7 +199,7 @@ class SocialMediaController
 
         $state = bin2hex(random_bytes(16));
         Session::setSessionData('discord_oauth_state', $state);
-        $scope = urlencode('identify');
+        $scope = urlencode('identify guilds.join');
 
         $authUrl = 'https://discord.com/api/oauth2/authorize'
             . '?client_id=' . urlencode($clientId)
@@ -269,6 +281,55 @@ class SocialMediaController
         $discordId       = $userData['id'];
         $discordUsername = $userData['username'];
 
+        $guildJoinFailed = false;
+        $guildId  = ServiceCredentials::get_discord_guild_id();
+        $botToken = ServiceCredentials::get_discord_bot_token();
+        if ($guildId && $botToken) {
+            $memberUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
+                . '/members/' . urlencode($discordId);
+            $checkCh = curl_init($memberUrl);
+            if ($checkCh !== false) {
+                curl_setopt($checkCh, CURLOPT_HTTPHEADER, [
+                    'Authorization: Bot ' . $botToken,
+                ]);
+                curl_setopt($checkCh, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($checkCh, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
+                curl_exec($checkCh);
+                $checkStatus = curl_getinfo($checkCh, CURLINFO_HTTP_CODE);
+                curl_close($checkCh);
+                if ($checkStatus === 404) {
+                    $joinPayload = json_encode(['access_token' => $accessToken]);
+                    if ($joinPayload !== false) {
+                        $joinCh = curl_init($memberUrl);
+                        if ($joinCh !== false) {
+                            curl_setopt($joinCh, CURLOPT_HTTPHEADER, [
+                                'Authorization: Bot ' . $botToken,
+                                'Content-Type: application/json',
+                            ]);
+                            curl_setopt($joinCh, CURLOPT_CUSTOMREQUEST, 'PUT');
+                            curl_setopt($joinCh, CURLOPT_POSTFIELDS, $joinPayload);
+                            curl_setopt($joinCh, CURLOPT_RETURNTRANSFER, true);
+                            curl_setopt($joinCh, CURLOPT_CAINFO, '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem');
+                            $joinResp = curl_exec($joinCh);
+                            if ($joinResp === false || curl_getinfo($joinCh, CURLINFO_HTTP_CODE) >= 400) {
+                                error_log('Failed to join guild: ' . curl_error($joinCh) . ' response: ' . $joinResp);
+                                $guildJoinFailed = true;
+                            }
+                            curl_close($joinCh);
+                        } else {
+                            $guildJoinFailed = true;
+                        }
+                    } else {
+                        $guildJoinFailed = true;
+                    }
+                } elseif ($checkStatus >= 400 && $checkStatus !== 200 && $checkStatus !== 204) {
+                    $guildJoinFailed = true;
+                }
+            } else {
+                $guildJoinFailed = true;
+            }
+        }
+
         $conn = Database::getConnection();
         $stmt = $conn->prepare('UPDATE account SET DiscordUserId = ?, DiscordUsername = ? WHERE Email = ?');
         if (!$stmt) {
@@ -282,8 +343,20 @@ class SocialMediaController
         $account->discordUsername = $discordUsername;
         Session::setSessionData('vAccount', $account);
 
-        self::assignVerifiedRole($discordId);
+        $roleSuccess = self::assignVerifiedRole($discordId);
         Session::setSessionData('discord_oauth_state', null);
+
+        $errors = [];
+        if ($guildJoinFailed) {
+            $errors[] = 'failed to join Discord guild';
+        }
+        if (!$roleSuccess) {
+            $errors[] = 'failed to assign verified role';
+        }
+        if ($errors) {
+            $msg = 'Discord account linked, but ' . implode(' and ', $errors);
+            return new Response(false, $msg, null);
+        }
 
         return new Response(true, 'Discord account linked', null);
     }
