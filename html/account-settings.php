@@ -139,6 +139,8 @@ $account = Session::getCurrentAccount();
 
     <?php require("php-components/base-page-javascript.php"); ?>
     <script>
+        
+document.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
         const discordError = params.get('discord_error');
         if (discordError) {
@@ -195,6 +197,7 @@ $account = Session::getCurrentAccount();
                     $('#unlinkDiscordModal').modal('hide');
                 });
         });
+    });
     </script>
 </body>
 </html>
