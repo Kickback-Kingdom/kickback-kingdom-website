@@ -342,6 +342,20 @@ final class ServiceCredentials implements \ArrayAccess
         return is_string($val) ? $val : null;
     }
 
+    /** @return null|string */
+    public static function get_discord_link_channel_id() : ?string
+    {
+        $val = self::get('discord_link_channel_id');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_link_reward_item_id() : ?string
+    {
+        $val = self::get('discord_link_reward_item_id');
+        return is_string($val) ? $val : null;
+    }
+
     public static function instance() : ServiceCredentials
     {
         if ( !isset(self::$instance) )

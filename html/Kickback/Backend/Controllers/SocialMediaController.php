@@ -6,6 +6,7 @@ namespace Kickback\Backend\Controllers;
 use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Backend\Models\Response;
 use Kickback\Backend\Views\vAccount;
+use Kickback\Backend\Views\vRecordId;
 use Kickback\Services\Database;
 use Kickback\Services\Session;
 
@@ -70,6 +71,33 @@ class SocialMediaController
         }
     
         // Close the cURL session
+        curl_close($ch);
+    }
+
+    private static function sendChannelMessage(string $channelId, string $message) : void
+    {
+        $botToken = ServiceCredentials::get_discord_bot_token();
+        if (!$botToken) {
+            return;
+        }
+        $payload = json_encode(['content' => $message]);
+        if ($payload === false) {
+            return;
+        }
+        $url = 'https://discord.com/api/channels/' . urlencode($channelId) . '/messages';
+        $ch = curl_init($url);
+        if ($ch === false) {
+            return;
+        }
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bot ' . $botToken,
+        ]);
+        self::applyCaBundle($ch);
+        curl_exec($ch);
         curl_close($ch);
     }
 
@@ -356,6 +384,8 @@ class SocialMediaController
             return new Response(false, 'User not logged in', null);
         }
 
+        $firstLink = empty($account->discordUserId);
+
         $expectedState = Session::sessionDataString('discord_oauth_state');
         if (!$expectedState || $expectedState !== $state) {
             return new Response(false, 'Invalid state token', null);
@@ -499,6 +529,17 @@ class SocialMediaController
         if ($errors) {
             $msg = 'Discord account linked, but ' . implode(' and ', $errors);
             return new Response(false, $msg, null);
+        }
+
+        if ($firstLink) {
+            $channelId = ServiceCredentials::get_discord_link_channel_id();
+            if ($channelId) {
+                self::sendChannelMessage($channelId, $account->username . ' just linked their Discord account!');
+            }
+            $rewardItemId = ServiceCredentials::get_discord_link_reward_item_id();
+            if ($rewardItemId) {
+                LootController::giveLoot(new vRecordId('', $account->crand), new vRecordId('', (int)$rewardItemId));
+            }
         }
 
         return new Response(true, 'Discord account linked', null);
