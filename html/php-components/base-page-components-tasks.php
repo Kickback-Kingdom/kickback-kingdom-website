@@ -23,7 +23,11 @@ function renderTaskToast(\Kickback\Backend\Views\vTask $task): void {
     ?>
     <div class="<?= $toastClasses ?>" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="toast-header <?= $typeColor ?>">
-            <i class="fa-solid <?= htmlspecialchars($task->code->getFaIcon()) ?> me-2"></i>
+            <?php
+                $icon = $task->code->getFaIcon();
+                $iconStyle = in_array($icon, ['fa-discord', 'fa-steam']) ? 'fa-brands' : 'fa-solid';
+            ?>
+            <i class="<?= $iconStyle ?> <?= htmlspecialchars($icon) ?> me-2"></i>
             <strong class="me-auto"><?= htmlspecialchars($task->title) ?></strong>
             <small class=""><?= ucfirst($task->type->value) ?></small>
         </div>
