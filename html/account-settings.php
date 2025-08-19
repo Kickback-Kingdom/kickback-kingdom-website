@@ -97,7 +97,30 @@ $account = Session::getCurrentAccount();
                     background: rgba(88,101,242,.12);
                     border-color: rgba(88,101,242,.25);
                 }
-                .link-cta { background:#5865F2; border-color:#5865F2; }
+                .provider--discord .link-cta {
+                    background:#5865F2;
+                    border-color:#5865F2;
+                }
+
+                /* Steam styling */
+                .provider--steam .provider-pill {
+                    /* Steam brand vibes: deep slate + cyan accent */
+                    background: linear-gradient(135deg, rgba(23,26,33,.18), rgba(0,173,238,.10));
+                    border-color: rgba(0,173,238,.25);
+                }
+                .provider--steam .link-cta {
+                    background:#00ADEE;
+                    border-color:#00ADEE;
+                }
+                .steam-hint {
+                    font-size:.875rem; color: var(--bs-secondary-color);
+                }
+                .steam-callout {
+                    background: linear-gradient(90deg, rgba(0,173,238,.12), rgba(32,34,37,.05));
+                    border: 1px solid rgba(0,173,238,.25);
+                    border-radius: .75rem; padding: .75rem .9rem;
+                }
+
                 .link-cta:hover { filter:brightness(1.05); }
                 .unlink-cta { border-color:#dc3545; }
 
@@ -112,16 +135,6 @@ $account = Session::getCurrentAccount();
                     border-radius:999px; padding:.25rem .6rem;
                     background: var(--bs-light); border:1px dashed var(--bs-secondary-color);
                     font-size:.8rem; opacity:.9;
-                }
-
-                /* Steam styling */
-                .provider--steam .provider-pill {
-                    /* Steam brand vibes: deep slate + cyan accent */
-                    background: linear-gradient(135deg, rgba(23,26,33,.18), rgba(0,173,238,.10));
-                    border-color: rgba(0,173,238,.25);
-                }
-                .steam-hint {
-                    font-size:.875rem; color: var(--bs-secondary-color);
                 }
                 </style>
 
@@ -205,7 +218,7 @@ $account = Session::getCurrentAccount();
                             <i class="fa-brands fa-steam"></i> Steam
                         </div>
                         <div class="steam-hint">
-                            Add your Steam to show game links and let friends find you faster.
+                            Link your Steam to unlock exclusive raffles, showcase your games, and let allies find you faster.
                         </div>
                         </div>
 
@@ -237,6 +250,21 @@ $account = Session::getCurrentAccount();
                         <div class="fw-semibold"><?= htmlspecialchars($account->steamUsername); ?></div>
                         <div class="small text-muted">Steam account linked.</div>
                         </div>
+                        <div class="steam-callout mt-3 d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-scroll mt-1"></i>
+                        <div class="small">Your Steam banner now flies in the Kingdom. Watch the town board for your exclusive draws.</div>
+                        </div>
+                    <?php } else { ?>
+                        <div class="steam-callout mt-3 d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-ticket mt-1"></i>
+                        <div class="small"><strong>Steam Raffles Await</strong> — Link your Steam to earn raffle entries, flaunt your game library, and unlock surprise rewards.</div>
+                        </div>
+
+                        <ul class="mt-3 mb-0 small text-muted d-flex flex-wrap gap-2 list-unstyled">
+                        <li class="perk-chip"><i class="fa-solid fa-ticket"></i> Entry to Steam raffles</li>
+                        <li class="perk-chip"><i class="fa-solid fa-gamepad"></i> Share your game library</li>
+                        <li class="perk-chip"><i class="fa-solid fa-bolt"></i> Quick-join Kickback servers</li>
+                        </ul>
                     <?php } ?>
                     </section>
 
