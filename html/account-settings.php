@@ -5,6 +5,7 @@ $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession
 require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Services\Session;
+use Kickback\Common\Version;
 use Kickback\Backend\Controllers\FlavorTextController;
 
 if (!Session::isLoggedIn()) {
@@ -376,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         $('#btnLinkDiscord').on('click', function () {
             const statusDiv = $('#discordStatus');
-            fetch('/api/v1/discord/link-start.php', { credentials: 'same-origin' })
+            fetch('<?= Version::urlBetaPrefix(); ?>/api/v1/discord/link-start.php', { credentials: 'same-origin' })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.data && data.data.url) {
@@ -396,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         $('#btnLinkSteam').on('click', function () {
             const statusDiv = $('#steamStatus');
-            fetch('/api/v1/steam/link-start.php', { credentials: 'same-origin' })
+            fetch('<?= Version::urlBetaPrefix(); ?>/api/v1/steam/link-start.php', { credentials: 'same-origin' })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.data && data.data.url) {
@@ -423,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         $('#confirmUnlinkDiscord').on('click', function () {
-            fetch('/api/v1/discord/unlink.php', { method: 'POST', credentials: 'same-origin' })
+            fetch('<?= Version::urlBetaPrefix(); ?>/api/v1/discord/unlink.php', { method: 'POST', credentials: 'same-origin' })
                 .then(response => response.json())
                 .then(data => {
                     const statusDiv = $('#discordStatus');
@@ -445,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         $('#confirmUnlinkSteam').on('click', function () {
-            fetch('/api/v1/steam/unlink.php', { method: 'POST', credentials: 'same-origin' })
+            fetch('<?= Version::urlBetaPrefix(); ?>/api/v1/steam/unlink.php', { method: 'POST', credentials: 'same-origin' })
                 .then(response => response.json())
                 .then(data => {
                     const statusDiv = $('#steamStatus');
