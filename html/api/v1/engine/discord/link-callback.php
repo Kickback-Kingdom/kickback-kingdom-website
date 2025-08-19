@@ -16,11 +16,11 @@ if (!$code || !$state) {
 }
 
 if ($resp->success) {
-    header('Location: /account-settings.php');
+    header('Location: '.Version::urlBetaPrefix().'/account-settings.php');
     exit;
 }
 
 $msg = urlencode($resp->message);
-header('Location: /account-settings.php?discord_error=' . $msg);
+header('Location: '.Version::urlBetaPrefix().'/account-settings.php?discord_error=' . $msg);
 exit;
 ?>

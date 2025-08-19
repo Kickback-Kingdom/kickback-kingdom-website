@@ -9,7 +9,7 @@ use Kickback\Common\Version;
 use Kickback\Backend\Controllers\FlavorTextController;
 
 if (!Session::isLoggedIn()) {
-    header("Location: login.php?redirect=" . urlencode("account-settings.php"));
+    header("Location: ".Version::urlBetaPrefix()."/login.php?redirect=" . urlencode("account-settings.php"));
     exit();
 }
 
