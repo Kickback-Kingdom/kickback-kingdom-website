@@ -353,6 +353,8 @@ class Session {
 
     /**
      * Ensure the current user is logged in and has a Steam account linked.
+     * This checks the `steamUserId` field on the account and exits with a
+     * failure response if it's missing.
      *
      * @return vAccount The current account if the check passes.
      */
