@@ -1074,6 +1074,13 @@ class AccountController
             $account->discordUsername = $row['DiscordUsername'] !== null ? (string)$row['DiscordUsername'] : null;
         }
 
+        if (array_key_exists('SteamUserId', $row)) {
+            $account->steamUserId = $row['SteamUserId'] !== null ? (string)$row['SteamUserId'] : null;
+        }
+        if (array_key_exists('SteamUsername', $row)) {
+            $account->steamUsername = $row['SteamUsername'] !== null ? (string)$row['SteamUsername'] : null;
+        }
+
         // Assign boolean properties
         $account->isAdmin = (bool) $row["IsAdmin"];
         $account->isMerchant = (bool) $row["IsMerchant"];

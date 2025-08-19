@@ -101,9 +101,12 @@ class vAccount extends vRecordId
         return !is_null($this->discordUserId);
     }
 
+    /**
+     * Determine whether the account has a linked Steam profile.
+     */
     public function isSteamLinked() : bool
     {
-        return !is_null($this->steamUserId);
+        return $this->steamUserId !== null;
     }
 
     public function hasThirdPartyLinks() : bool
