@@ -351,6 +351,24 @@ class Session {
         return $account;
     }
 
+    /**
+     * Ensure the current user is logged in and has a Steam account linked.
+     *
+     * @return vAccount The current account if the check passes.
+     */
+    public static function requireSteamLinked() : vAccount
+    {
+        if (!self::readCurrentAccountInto($account)) {
+            (new Response(false, 'User not logged in', null))->Exit();
+        }
+
+        if (empty($account->steamUserId)) {
+            (new Response(false, 'No Steam account linked', null))->Exit();
+        }
+
+        return $account;
+    }
+
     public static function setSessionData(string $key, mixed $value) : void {
         $_SESSION[$key] = $value;
     }
