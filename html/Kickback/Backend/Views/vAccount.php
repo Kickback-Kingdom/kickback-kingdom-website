@@ -27,6 +27,9 @@ class vAccount extends vRecordId
     public ?string $discordUserId = null;
     public ?string $discordUsername = null;
 
+    public ?string $steamUserId = null;
+    public ?string $steamUsername = null;
+
     public string $title;
 
     public bool $isAdmin;
@@ -100,7 +103,7 @@ class vAccount extends vRecordId
 
     public function isSteamLinked() : bool
     {
-        return false;
+        return !is_null($this->steamUserId);
     }
 
     public function hasThirdPartyLinks() : bool
