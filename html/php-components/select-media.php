@@ -1,3 +1,8 @@
+<?php
+
+use Kickback\Common\Version;
+
+?>
 <div class="input-group">
   <select class="form-select" onchange="OnSelectMediaChangeSearchParams()" id="selectMediaSearchDirectory">
     <option value="" selected>All</option>
