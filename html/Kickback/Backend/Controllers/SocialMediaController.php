@@ -7,6 +7,7 @@ use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Backend\Models\Response;
 use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vRecordId;
+use Kickback\Common\Version;
 use Kickback\Services\Database;
 use Kickback\Services\Session;
 
@@ -343,6 +344,23 @@ class SocialMediaController
     }
 
     /**
+     * Build the Discord OAuth redirect callback URL from the configured base.
+     */
+    private static function discordRedirectUri() : ?string
+    {
+        $base = ServiceCredentials::get_discord_redirect_uri();
+        if (!$base) {
+            return null;
+        }
+        $base = rtrim($base, '/');
+        $beta = Version::urlBetaPrefix();
+        if ($beta !== '' && !str_ends_with($base, $beta)) {
+            $base .= $beta;
+        }
+        return $base . '/api/v1/discord/link-callback.php';
+    }
+
+    /**
      * Start the Discord OAuth linking process.
      *
      * @return Response Contains the Discord authorization URL on success.
@@ -355,7 +373,7 @@ class SocialMediaController
         }
 
         $clientId    = ServiceCredentials::get_discord_oauth_client_id();
-        $redirectUri = ServiceCredentials::get_discord_redirect_uri();
+        $redirectUri = self::discordRedirectUri();
         if (!$clientId || !$redirectUri) {
             return new Response(false, 'Discord OAuth not configured', null);
         }
@@ -393,7 +411,7 @@ class SocialMediaController
 
         $clientId     = ServiceCredentials::get_discord_oauth_client_id();
         $clientSecret = ServiceCredentials::get_discord_oauth_client_secret();
-        $redirectUri  = ServiceCredentials::get_discord_redirect_uri();
+        $redirectUri  = self::discordRedirectUri();
         if (!$clientId || !$clientSecret || !$redirectUri) {
             return new Response(false, 'Discord OAuth not configured', null);
         }

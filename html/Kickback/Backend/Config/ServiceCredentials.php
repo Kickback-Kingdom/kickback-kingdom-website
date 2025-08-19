@@ -178,7 +178,12 @@ final class ServiceCredentials implements \ArrayAccess
         // Discord OAuth info; used for login and guild interactions.
         $error_count += (int)!$this->credential_string_exists       ("discord_oauth_client_id");
         $error_count += (int)!$this->credential_string_exists       ("discord_oauth_client_secret");
-        $error_count += (int)!$this->credential_of_given_type_exists("discord_redirect_uri", "URL", FILTER_VALIDATE_URL);
+
+        $envRedirect = getenv('DISCORD_REDIRECT_URI');
+        if ($envRedirect === false || filter_var($envRedirect, FILTER_VALIDATE_URL) === false) {
+            $error_count += (int)!$this->credential_of_given_type_exists("discord_redirect_uri", "URL", FILTER_VALIDATE_URL);
+        }
+
         $error_count += (int)!$this->credential_string_exists       ("discord_guild_id");
         $error_count += (int)!$this->credential_string_exists       ("discord_bot_token");
         $error_count += (int)!$this->credential_string_exists       ("discord_verified_role_id");
@@ -325,6 +330,11 @@ final class ServiceCredentials implements \ArrayAccess
     /** @return null|string */
     public static function get_discord_redirect_uri() : ?string
     {
+        $env = getenv('DISCORD_REDIRECT_URI');
+        if (is_string($env) && $env !== '') {
+            return $env;
+        }
+
         $val = self::get('discord_redirect_uri');
         return is_string($val) ? $val : null;
     }
