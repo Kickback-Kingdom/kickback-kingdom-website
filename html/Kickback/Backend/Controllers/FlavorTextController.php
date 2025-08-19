@@ -32,12 +32,26 @@ class FlavorTextController
     public static function getDiscordLinkFlavorText(string $username) : string
     {
         $flavorTexts = [
-            "$username has forged their Discord connection—let the realms resound with celebration!",
-            "Hear ye, hear ye! $username has bound their Discord spirit to the kingdom's chorus!",
-            "Trumpets sound! $username's Discord link now echoes through the halls of Kickback Kingdom.",
-            "By royal decree, $username's voice now rings across Discord, united with our realm!",
-            "From distant servers they arrive—$username has linked Discord and joins the festivity!",
-            "$username's Discord sigil now glows alongside the banners of Kickback Kingdom!",
+            "The guild scribes record $username's Discord bond, and in return, the Kingdom grants them a gift of rare treasure.",
+            "With sails unfurled, $username links Discord to the Kickback Kingdom and receives a reward fit for adventurers.",
+            "As $username binds their spirit to Discord, the Emberwood Trading Company delivers a special reward to their satchel.",
+            "Trumpets sound across the realm—$username has linked Discord! The royal coffers open with a reward in their honor.",
+            "The nebular currents shimmer as $username links Discord, unlocking a treasure reserved for the bold.",
+            "From the Atlas starways to the Kingdom's heart, $username's Discord link shines bright—claim your earned reward!",
+            "By decree of the guilds, $username's Discord tether is sealed, and a bounty of rewards flows into their hands.",
+            "A new constellation forms as $username links Discord, and with it, a reward descends from the heavens.",
+            "Legends say those who link Discord shall be rewarded by the Kingdom's grace—today, $username proves the tale true.",
+            
+            "Whispers spread through the taverns—$username linked Discord, and the reward they found remains a closely kept secret.",
+            "When $username bound Discord to the Kingdom, a mysterious chest appeared... none dare speak what lies inside.",
+            "The archives glow as $username links Discord—within the scrolls is mention of a hidden reward, yet few have seen it.",
+            "Stars shift as $username links Discord. The reward? Cloaked in mystery, awaiting only the daring.",
+            "The Emberwood traders smile knowingly—$username has linked Discord. The nature of their reward? A mystery to all but them.",
+            "Bards already sing of $username's Discord bond, but they end their tales in hushed tones when speaking of the reward.",
+            "A hush falls over the guild hall as $username links Discord—those who have glimpsed the reward will not say what it is.",
+            "From beyond the sails of Atlas Odyssey, a strange reward follows $username's Discord link… its secrets yet untold.",
+            "The Kingdom's vault opens for $username's Discord bond. What lies within? Only the rewarded truly know.",
+            "Legends promise rewards for Discord's bond—$username now holds one, though its nature is shrouded in secrecy."
         ];
 
         $randomIndex = array_rand($flavorTexts);

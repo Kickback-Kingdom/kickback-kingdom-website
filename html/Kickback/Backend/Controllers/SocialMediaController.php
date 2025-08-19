@@ -536,10 +536,7 @@ class SocialMediaController
             if ($channelId) {
                 self::sendChannelMessage($channelId, FlavorTextController::getDiscordLinkFlavorText($account->username));
             }
-            $rewardItemId = ServiceCredentials::get_discord_link_reward_item_id();
-            if ($rewardItemId) {
-                LootController::giveLoot(new vRecordId('', $account->crand), new vRecordId('', (int)$rewardItemId));
-            }
+            LootController::giveRaffleTicket(new vRecordId('', $account->crand));
         }
 
         return new Response(true, 'Discord account linked', null);

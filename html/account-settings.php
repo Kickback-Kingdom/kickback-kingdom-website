@@ -50,91 +50,253 @@ $account = Session::getCurrentAccount();
                 require("php-components/base-page-breadcrumbs.php");
                 ?>
 
-                <!-- Username Section -->
-                <form method="POST" class="card mb-4">
-                    <div class="card-header"><h5 class="mb-0">Username</h5></div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="usernameInput" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="usernameInput" name="username" value="<?= htmlspecialchars($account->username); ?>" required>
-                        </div>
-                        <button type="submit" name="submit-username" class="btn btn-primary">Update Username</button>
-                    </div>
-                </form>
+                <style>
+                /* --- Third-Party Linking polished look (scoped) --- */
+                .providers-card { border: 0; overflow: hidden; }
+                .providers-card .card-header {
+                    background: linear-gradient(135deg, rgba(108,117,125,.12), rgba(33,37,41,.06));
+                    border-bottom: 0;
+                }
+                .providers-card .card-header h5 { margin: 0; display:flex; align-items:center; gap:.5rem; }
 
-                <!-- Password Section -->
-                <form method="POST" class="card mb-4">
-                    <div class="card-header"><h5 class="mb-0">Password</h5></div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="passwordInput" class="form-label">New Password</label>
-                            <input type="password" class="form-control" id="passwordInput" name="password" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="confirmPasswordInput" class="form-label">Confirm Password</label>
-                            <input type="password" class="form-control" id="confirmPasswordInput" name="password_confirm" required>
-                        </div>
-                        <button type="submit" name="submit-password" class="btn btn-primary">Update Password</button>
-                    </div>
-                </form>
+                .provider {
+                    border: 1px solid var(--bs-border-color);
+                    border-radius: .85rem;
+                    padding: .9rem;
+                }
+                .provider + .provider { margin-top: 1rem; }
 
-                <!-- Subscription Preferences Section -->
-                <form method="POST" class="card mb-4">
-                    <div class="card-header"><h5 class="mb-0">Subscription Preferences</h5></div>
-                    <div class="card-body">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="1" id="emailSub" name="sub-email">
-                            <label class="form-check-label" for="emailSub">
-                                Email Notifications
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="1" id="newsSub" name="sub-news">
-                            <label class="form-check-label" for="newsSub">
-                                News and Updates
-                            </label>
-                        </div>
-                        <button type="submit" name="submit-subscription" class="btn btn-primary mt-2">Save Preferences</button>
-                    </div>
-                </form>
+                .provider-head { display:flex; align-items:center; gap:.6rem; font-weight:600; }
+                .provider-pill {
+                    display:inline-flex; align-items:center; gap:.5rem;
+                    padding:.35rem .65rem; border-radius:999px;
+                    font-weight:600; font-size:.9rem; border:1px solid transparent;
+                }
 
-                <!-- Third-Party Linking Section -->
-                <div class="card mb-4">
-                    <div class="card-header"><h5 class="mb-0">Third-Party Linking</h5></div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label">Discord</label><br>
-                            <?php if (!$account->isDiscordLinked()) { ?>
-                                <button type="button" class="btn btn-primary" id="btnLinkDiscord">Link Discord</button>
-                            <?php } else { ?>
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="fa-brands fa-discord"></i>
-                                    <span><?= htmlspecialchars($account->discordUsername); ?></span>
-                                    <span class="badge text-bg-success">Linked</span>
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline-danger btn-sm ms-3 d-flex align-items-center gap-1"
-                                        id="btnUnlinkDiscord"
-                                    >
-                                        <i class="fa-solid fa-link-slash"></i>
-                                        <span>Unlink</span>
-                                    </button>
-                                </div>
-                                <div class="mt-2 small text-muted">
-                                    <?= htmlspecialchars(FlavorTextController::getDiscordLinkFlavorText($account->username)); ?>
-                                </div>
-                            <?php } ?>
-                        </div>
-                        <div id="discordStatus" class="alert d-none" role="alert"></div>
-                        <form method="POST">
-                            <div class="mb-3">
-                                <label for="steamInput" class="form-label">Steam ID</label>
-                                <input type="text" class="form-control" id="steamInput" name="steam" value="<?= isset($account->steam) ? htmlspecialchars($account->steam) : '';?>">
-                            </div>
-                            <button type="submit" name="submit-thirdparty" class="btn btn-primary">Link Accounts</button>
-                        </form>
-                    </div>
+                /* Discord styling */
+                .provider--discord .provider-pill {
+                    background: rgba(88,101,242,.12);
+                    border-color: rgba(88,101,242,.25);
+                }
+                .link-cta { background:#5865F2; border-color:#5865F2; }
+                .link-cta:hover { filter:brightness(1.05); }
+                .unlink-cta { border-color:#dc3545; }
+
+                .reward-callout {
+                    background: linear-gradient(90deg, rgba(88,101,242,.12), rgba(32,34,37,.05));
+                    border: 1px solid rgba(88,101,242,.25);
+                    border-radius: .75rem; padding: .75rem .9rem;
+                }
+
+                .perk-chip {
+                    display:inline-flex; align-items:center; gap:.4rem;
+                    border-radius:999px; padding:.25rem .6rem;
+                    background: var(--bs-light); border:1px dashed var(--bs-secondary-color);
+                    font-size:.8rem; opacity:.9;
+                }
+
+                /* Steam styling */
+                .provider--steam .provider-pill {
+                    /* Steam brand vibes: deep slate + cyan accent */
+                    background: linear-gradient(135deg, rgba(23,26,33,.18), rgba(0,173,238,.10));
+                    border-color: rgba(0,173,238,.25);
+                }
+                .steam-hint {
+                    font-size:.875rem; color: var(--bs-secondary-color);
+                }
+                .steam-status {
+                    display:inline-flex; align-items:center; gap:.4rem;
+                    border-radius:999px; padding:.25rem .6rem;
+                    border:1px solid var(--bs-border-color);
+                    font-size:.775rem;
+                }
+                .steam-status.valid { border-color: var(--bs-success-border-subtle); background: var(--bs-success-bg-subtle); }
+                .steam-status.warn  { border-color: var(--bs-warning-border-subtle); background: var(--bs-warning-bg-subtle); }
+                .steam-status.bad   { border-color: var(--bs-danger-border-subtle);  background: var(--bs-danger-bg-subtle); }
+                .steam-input .form-text { margin-top:.35rem; }
+                </style>
+
+                <div class="card mb-4 providers-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                    <i class="fa-solid fa-circle-nodes"></i>
+                    Third-Party Linking
+                    </h5>
                 </div>
+
+                <div class="card-body">
+
+                    <!-- Discord Provider -->
+                    <section class="provider provider--discord">
+                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                        <div class="d-flex align-items-start gap-3">
+                        <div class="provider-pill">
+                            <i class="fa-brands fa-discord"></i> Discord
+                        </div>
+                        <div class="small text-muted">
+                            Connect your Discord to verify account status, join events, and receive secret drops.
+                        </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                        <?php if (!$account->isDiscordLinked()) { ?>
+                            <button type="button" class="btn btn-primary link-cta" id="btnLinkDiscord">
+                            <i class="fa-solid fa-plug me-1"></i> Link Discord
+                            </button>
+                        <?php } else { ?>
+                            <span class="badge text-bg-success d-flex align-items-center">
+                            <i class="fa-solid fa-link me-1"></i> Linked
+                            </span>
+                            <button
+                            type="button"
+                            class="btn btn-outline-danger btn-sm unlink-cta d-flex align-items-center gap-2"
+                            id="btnUnlinkDiscord"
+                            data-bs-toggle="tooltip"
+                            title="Removes your Discord connection"
+                            >
+                            <i class="fa-solid fa-link-slash"></i>
+                            <span>Unlink</span>
+                            </button>
+                        <?php } ?>
+                        </div>
+                    </div>
+
+                    <?php if ($account->isDiscordLinked()) { ?>
+                        <div class="mt-2">
+                        <div class="fw-semibold"><?= htmlspecialchars($account->discordUsername); ?></div>
+                        <div class="small text-muted">
+                            <?= htmlspecialchars(\Kickback\Backend\Controllers\FlavorTextController::getDiscordLinkFlavorText($account->username)); ?>
+                        </div>
+                        </div>
+                        <div class="reward-callout mt-3 d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-scroll mt-1"></i>
+                        <div class="small">Your bond is sealed in the royal ledger. Those who linked before you whisper of a curious reward—guard it well.</div>
+                        </div>
+                    <?php } else { ?>
+                        <div class="reward-callout mt-3 d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-treasure-chest mt-1"></i>
+                        <div class="small">
+                            <strong>Mystery Reward Unlocked</strong> — Link your Discord to receive a hidden boon from the Kingdom. What is it? Only those who bind their sigil discover the truth.
+                        </div>
+                        </div>
+
+                        <ul class="mt-3 mb-0 small text-muted d-flex flex-wrap gap-2 list-unstyled">
+                        <li class="perk-chip"><i class="fa-solid fa-shield"></i> Verified Discord Role</li>
+                        <li class="perk-chip"><i class="fa-solid fa-calendar-day"></i> Event pings</li>
+                        <li class="perk-chip"><i class="fa-solid fa-gift"></i> Secret drops</li>
+                        </ul>
+                    <?php } ?>
+                    </section>
+
+                    <!-- Steam Provider -->
+                    <section class="provider provider--steam mt-4">
+                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                        <div class="d-flex align-items-start gap-3">
+                        <div class="provider-pill">
+                            <i class="fa-brands fa-steam"></i> Steam
+                        </div>
+                        <div class="steam-hint">
+                            Add your Steam to show game links and let friends find you faster.
+                        </div>
+                        </div>
+
+                        <?php
+                        $hasSteam = isset($account->steam) && $account->steam !== '';
+                        $steamDisplay = $hasSteam ? $account->steam : '';
+                        ?>
+
+                        <div class="d-flex align-items-center gap-2">
+                        <?php if ($hasSteam) { ?>
+                            <span class="badge text-bg-success d-flex align-items-center">
+                            <i class="fa-solid fa-circle-check me-1"></i> Saved
+                            </span>
+                        <?php } else { ?>
+                            <span class="badge text-bg-secondary d-flex align-items-center">
+                            <i class="fa-regular fa-circle me-1"></i> Not set
+                            </span>
+                        <?php } ?>
+                        </div>
+                    </div>
+
+                    <form method="POST" class="mt-3">
+                        <div class="row g-3">
+                        <div class="col-12 col-lg-8 steam-input">
+                            <label for="steamInput" class="form-label mb-1">Steam ID / Profile URL / Vanity</label>
+                            <input
+                            type="text"
+                            class="form-control"
+                            id="steamInput"
+                            name="steam"
+                            placeholder="e.g. 76561198000000000 or https://steamcommunity.com/id/YourName"
+                            value="<?= htmlspecialchars($steamDisplay); ?>"
+                            autocomplete="off"
+                            inputmode="text"
+                            >
+                            <div class="form-text">
+                            Accepted formats:
+                            <code>SteamID64</code> (17 digits),
+                            <code>https://steamcommunity.com/profiles/{id}</code>,
+                            <code>https://steamcommunity.com/id/{vanity}</code>,
+                            or plain vanity.
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-4 d-flex align-items-end">
+                            <div class="d-flex w-100 gap-2">
+                            <span id="steamStatusChip" class="steam-status flex-grow-1 justify-content-center">Waiting for input…</span>
+                            <button type="submit" name="submit-thirdparty" class="btn btn-outline-primary">
+                                <i class="fa-solid fa-floppy-disk me-1"></i> Save
+                            </button>
+                            </div>
+                        </div>
+                        </div>
+                    </form>
+                    </section>
+
+                    <div id="discordStatus" class="alert d-none mt-3" role="alert"></div>
+                </div>
+                </div>
+
+                <script>
+                // Bootstrap tooltips (if not globally enabled)
+                document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el){ new bootstrap.Tooltip(el); });
+
+                // Steam inline validation (client-side heuristic; no network calls)
+                (function(){
+                    const input = document.getElementById('steamInput');
+                    const chip  = document.getElementById('steamStatusChip');
+                    if (!input || !chip) return;
+
+                    const setChip = (cls, text) => {
+                    chip.classList.remove('valid','warn','bad');
+                    if (cls) chip.classList.add(cls);
+                    chip.textContent = text;
+                    };
+
+                    const isSteamID64 = v => /^[0-9]{17}$/.test(v);
+                    const isProfileURL = v => /^https?:\/\/(www\.)?steamcommunity\.com\/profiles\/[0-9]{17}\/?$/.test(v);
+                    const isVanityURL  = v => /^https?:\/\/(www\.)?steamcommunity\.com\/id\/[A-Za-z0-9_-]+\/?$/.test(v);
+                    const isLikelyVanity = v => /^[A-Za-z0-9_-]{2,32}$/.test(v);
+
+                    const update = () => {
+                    const v = (input.value || '').trim();
+                    if (!v) { setChip('', 'Waiting for input…'); return; }
+
+                    if (isSteamID64(v))         { setChip('valid', 'Looks like a SteamID64'); return; }
+                    if (isProfileURL(v))        { setChip('valid', 'Steam profile URL detected'); return; }
+                    if (isVanityURL(v))         { setChip('warn',  'Vanity URL (we’ll store it as-is)'); return; }
+                    if (isLikelyVanity(v))      { setChip('warn',  'Vanity name (ensure it’s correct)'); return; }
+
+                    setChip('bad', 'Unrecognized format — check the examples');
+                    };
+
+                    input.addEventListener('input', update);
+                    update();
+                })();
+                </script>
+
+
+
+
             </div>
             <?php require("php-components/base-page-discord.php"); ?>
         </div>

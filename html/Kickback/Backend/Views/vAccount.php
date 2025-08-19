@@ -98,9 +98,14 @@ class vAccount extends vRecordId
         return !is_null($this->discordUserId);
     }
 
+    public function isSteamLinked() : bool
+    {
+        return false;
+    }
+
     public function hasThirdPartyLinks() : bool
     {
-        return $this->isDiscordLinked();
+        return $this->isDiscordLinked() || $this->isSteamLinked();
     }
 
     private function setDefaultProfilePicture() : void
