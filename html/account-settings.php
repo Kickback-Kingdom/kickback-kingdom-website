@@ -42,6 +42,25 @@ $account = Session::getCurrentAccount();
         </div>
     </div>
 
+    <!-- Steam Unlink Confirmation Modal -->
+    <div class="modal fade" id="unlinkSteamModal" tabindex="-1" aria-labelledby="unlinkSteamModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="unlinkSteamModalLabel">Unlink Steam</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to unlink your Steam account?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmUnlinkSteam">Unlink</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <main class="container pt-3 bg-body" style="margin-bottom: 56px;">
         <div class="row">
             <div class="col-12 col-xl-9">
@@ -104,16 +123,6 @@ $account = Session::getCurrentAccount();
                 .steam-hint {
                     font-size:.875rem; color: var(--bs-secondary-color);
                 }
-                .steam-status {
-                    display:inline-flex; align-items:center; gap:.4rem;
-                    border-radius:999px; padding:.25rem .6rem;
-                    border:1px solid var(--bs-border-color);
-                    font-size:.775rem;
-                }
-                .steam-status.valid { border-color: var(--bs-success-border-subtle); background: var(--bs-success-bg-subtle); }
-                .steam-status.warn  { border-color: var(--bs-warning-border-subtle); background: var(--bs-warning-bg-subtle); }
-                .steam-status.bad   { border-color: var(--bs-danger-border-subtle);  background: var(--bs-danger-bg-subtle); }
-                .steam-input .form-text { margin-top:.35rem; }
                 </style>
 
                 <div class="card mb-4 providers-card">
@@ -200,58 +209,38 @@ $account = Session::getCurrentAccount();
                         </div>
                         </div>
 
-                        <?php
-                        $hasSteam = isset($account->steam) && $account->steam !== '';
-                        $steamDisplay = $hasSteam ? $account->steam : '';
-                        ?>
-
-                        <div class="d-flex align-items-center gap-2">
-                        <?php if ($hasSteam) { ?>
-                            <span class="badge text-bg-success d-flex align-items-center">
-                            <i class="fa-solid fa-circle-check me-1"></i> Saved
-                            </span>
+                        <div class="d-flex gap-2">
+                        <?php if (!$account->isSteamLinked()) { ?>
+                            <button type="button" class="btn btn-primary link-cta" id="btnLinkSteam">
+                            <i class="fa-solid fa-plug me-1"></i> Link Steam
+                            </button>
                         <?php } else { ?>
-                            <span class="badge text-bg-secondary d-flex align-items-center">
-                            <i class="fa-regular fa-circle me-1"></i> Not set
+                            <span class="badge text-bg-success d-flex align-items-center">
+                            <i class="fa-solid fa-link me-1"></i> Linked
                             </span>
+                            <button
+                            type="button"
+                            class="btn btn-outline-danger btn-sm unlink-cta d-flex align-items-center gap-2"
+                            id="btnUnlinkSteam"
+                            data-bs-toggle="tooltip"
+                            title="Removes your Steam connection"
+                            >
+                            <i class="fa-solid fa-link-slash"></i>
+                            <span>Unlink</span>
+                            </button>
                         <?php } ?>
                         </div>
                     </div>
 
-                    <form method="POST" class="mt-3">
-                        <div class="row g-3">
-                        <div class="col-12 col-lg-8 steam-input">
-                            <label for="steamInput" class="form-label mb-1">Steam ID / Profile URL / Vanity</label>
-                            <input
-                            type="text"
-                            class="form-control"
-                            id="steamInput"
-                            name="steam"
-                            placeholder="e.g. 76561198000000000 or https://steamcommunity.com/id/YourName"
-                            value="<?= htmlspecialchars($steamDisplay); ?>"
-                            autocomplete="off"
-                            inputmode="text"
-                            >
-                            <div class="form-text">
-                            Accepted formats:
-                            <code>SteamID64</code> (17 digits),
-                            <code>https://steamcommunity.com/profiles/{id}</code>,
-                            <code>https://steamcommunity.com/id/{vanity}</code>,
-                            or plain vanity.
-                            </div>
+                    <?php if ($account->isSteamLinked()) { ?>
+                        <div class="mt-2">
+                        <div class="fw-semibold"><?= htmlspecialchars($account->steamUsername); ?></div>
+                        <div class="small text-muted">Steam account linked.</div>
                         </div>
-                        <div class="col-12 col-lg-4 d-flex align-items-end">
-                            <div class="d-flex w-100 gap-2">
-                            <span id="steamStatusChip" class="steam-status flex-grow-1 justify-content-center">Waiting for input…</span>
-                            <button type="submit" name="submit-thirdparty" class="btn btn-outline-primary">
-                                <i class="fa-solid fa-floppy-disk me-1"></i> Save
-                            </button>
-                            </div>
-                        </div>
-                        </div>
-                    </form>
+                    <?php } ?>
                     </section>
 
+                    <div id="steamStatus" class="alert d-none mt-3" role="alert"></div>
                     <div id="discordStatus" class="alert d-none mt-3" role="alert"></div>
                 </div>
                 </div>
@@ -259,39 +248,6 @@ $account = Session::getCurrentAccount();
                 <script>
                 // Bootstrap tooltips (if not globally enabled)
                 document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el){ new bootstrap.Tooltip(el); });
-
-                // Steam inline validation (client-side heuristic; no network calls)
-                (function(){
-                    const input = document.getElementById('steamInput');
-                    const chip  = document.getElementById('steamStatusChip');
-                    if (!input || !chip) return;
-
-                    const setChip = (cls, text) => {
-                    chip.classList.remove('valid','warn','bad');
-                    if (cls) chip.classList.add(cls);
-                    chip.textContent = text;
-                    };
-
-                    const isSteamID64 = v => /^[0-9]{17}$/.test(v);
-                    const isProfileURL = v => /^https?:\/\/(www\.)?steamcommunity\.com\/profiles\/[0-9]{17}\/?$/.test(v);
-                    const isVanityURL  = v => /^https?:\/\/(www\.)?steamcommunity\.com\/id\/[A-Za-z0-9_-]+\/?$/.test(v);
-                    const isLikelyVanity = v => /^[A-Za-z0-9_-]{2,32}$/.test(v);
-
-                    const update = () => {
-                    const v = (input.value || '').trim();
-                    if (!v) { setChip('', 'Waiting for input…'); return; }
-
-                    if (isSteamID64(v))         { setChip('valid', 'Looks like a SteamID64'); return; }
-                    if (isProfileURL(v))        { setChip('valid', 'Steam profile URL detected'); return; }
-                    if (isVanityURL(v))         { setChip('warn',  'Vanity URL (we’ll store it as-is)'); return; }
-                    if (isLikelyVanity(v))      { setChip('warn',  'Vanity name (ensure it’s correct)'); return; }
-
-                    setChip('bad', 'Unrecognized format — check the examples');
-                    };
-
-                    input.addEventListener('input', update);
-                    update();
-                })();
                 </script>
 
 
@@ -318,6 +274,16 @@ document.addEventListener('DOMContentLoaded', () => {
             history.replaceState({}, '', newUrl);
         }
 
+        const steamError = params.get('steam_error');
+        if (steamError) {
+            const statusDiv = $('#steamStatus');
+            statusDiv.removeClass('d-none alert-success').addClass('alert-danger').text(steamError);
+            ShowPopError(steamError, 'Steam');
+            params.delete('steam_error');
+            const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            history.replaceState({}, '', newUrl);
+        }
+
         $('#btnLinkDiscord').on('click', function () {
             const statusDiv = $('#discordStatus');
             fetch('/api/v1/discord/link-start.php', { credentials: 'same-origin' })
@@ -338,8 +304,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
         });
 
+        $('#btnLinkSteam').on('click', function () {
+            const statusDiv = $('#steamStatus');
+            fetch('/api/v1/steam/link-start.php', { credentials: 'same-origin' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data && data.data.url) {
+                        window.location = data.data.url;
+                    } else {
+                        const msg = data.message || 'Failed to link Steam';
+                        statusDiv.removeClass('d-none alert-success').addClass('alert-danger').text(msg);
+                        ShowPopError(msg, 'Steam');
+                    }
+                })
+                .catch(() => {
+                    const msg = 'Failed to link Steam';
+                    statusDiv.removeClass('d-none alert-success').addClass('alert-danger').text(msg);
+                    ShowPopError(msg, 'Steam');
+                });
+        });
+
         $('#btnUnlinkDiscord').on('click', function () {
             $('#unlinkDiscordModal').modal('show');
+        });
+
+        $('#btnUnlinkSteam').on('click', function () {
+            $('#unlinkSteamModal').modal('show');
         });
 
         $('#confirmUnlinkDiscord').on('click', function () {
@@ -361,6 +351,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
                 .finally(() => {
                     $('#unlinkDiscordModal').modal('hide');
+                });
+        });
+
+        $('#confirmUnlinkSteam').on('click', function () {
+            fetch('/api/v1/steam/unlink.php', { method: 'POST', credentials: 'same-origin' })
+                .then(response => response.json())
+                .then(data => {
+                    const statusDiv = $('#steamStatus');
+                    if (data.success) {
+                        statusDiv.removeClass('d-none alert-danger').addClass('alert-success').text(data.message);
+                        ShowPopSuccess(data.message, 'Steam');
+                        setTimeout(function () { location.reload(); }, 1000);
+                    } else {
+                        statusDiv.removeClass('d-none alert-success').addClass('alert-danger').text(data.message);
+                        ShowPopError(data.message, 'Steam');
+                    }
+                })
+                .catch(() => {
+                    ShowPopError('Failed to unlink Steam', 'Steam');
+                })
+                .finally(() => {
+                    $('#unlinkSteamModal').modal('hide');
                 });
         });
     });
