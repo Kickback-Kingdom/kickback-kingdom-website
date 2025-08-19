@@ -537,7 +537,7 @@ class SocialMediaController
                 $mention = "<@{$account->discordUserId}>";
                 $message = FlavorTextController::getDiscordLinkFlavorText($mention);
                 //self::sendChannelMessage($channelId, $message);
-                self::DiscordWebHook($message);
+                //self::DiscordWebHook($message);
             }
         }
         
@@ -595,7 +595,7 @@ class SocialMediaController
             $mention = "<@{$account->discordUserId}>";
             $message = FlavorTextController::getDiscordUnlinkFlavorText($mention);
             //self::sendChannelMessage($channelId, $message);
-            self::DiscordWebHook($message);
+            //self::DiscordWebHook($message);
         }
 
         $account->discordUserId = null;
