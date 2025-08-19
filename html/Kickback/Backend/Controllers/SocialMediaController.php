@@ -534,7 +534,7 @@ class SocialMediaController
         if ($firstLink) {
             $channelId = ServiceCredentials::get_discord_link_channel_id();
             if ($channelId) {
-                self::sendChannelMessage($channelId, $account->username . ' just linked their Discord account!');
+                self::sendChannelMessage($channelId, FlavorTextController::getDiscordLinkFlavorText($account->username));
             }
             $rewardItemId = ServiceCredentials::get_discord_link_reward_item_id();
             if ($rewardItemId) {

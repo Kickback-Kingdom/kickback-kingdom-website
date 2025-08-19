@@ -5,6 +5,7 @@ $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession
 require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Services\Session;
+use Kickback\Backend\Controllers\FlavorTextController;
 
 if (!Session::isLoggedIn()) {
     header("Location: login.php?redirect=" . urlencode("account-settings.php"));
@@ -118,6 +119,9 @@ $account = Session::getCurrentAccount();
                                         <i class="fa-solid fa-link-slash"></i>
                                         <span>Unlink</span>
                                     </button>
+                                </div>
+                                <div class="mt-2 small text-muted">
+                                    <?= htmlspecialchars(FlavorTextController::getDiscordLinkFlavorText($account->username)); ?>
                                 </div>
                             <?php } ?>
                         </div>
