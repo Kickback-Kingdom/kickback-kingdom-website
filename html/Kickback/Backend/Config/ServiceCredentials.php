@@ -183,6 +183,14 @@ final class ServiceCredentials implements \ArrayAccess
         $error_count += (int)!$this->credential_string_exists       ("discord_bot_token");
         $error_count += (int)!$this->credential_string_exists       ("discord_verified_role_id");
 
+        // Steam OAuth info; used for login.
+        $error_count += (int)!$this->credential_string_exists       ("steam_oauth_client_id");
+        $error_count += (int)!$this->credential_string_exists       ("steam_oauth_client_secret");
+        $error_count += (int)!$this->credential_of_given_type_exists("steam_redirect_uri", "URL", FILTER_VALIDATE_URL);
+        if (array_key_exists('steam_web_api_key', $this->entries)) {
+            $error_count += (int)!$this->credential_string_exists   ("steam_web_api_key");
+        }
+
         // Kickback Kingdom auth info; used to establish sessions with backend API
         $error_count += (int)!$this->credential_string_exists       ("kk_service_key");
 
@@ -346,6 +354,34 @@ final class ServiceCredentials implements \ArrayAccess
     public static function get_discord_link_channel_id() : ?string
     {
         $val = self::get('discord_link_channel_id');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_steam_oauth_client_id() : ?string
+    {
+        $val = self::get('steam_oauth_client_id');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_steam_oauth_client_secret() : ?string
+    {
+        $val = self::get('steam_oauth_client_secret');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_steam_redirect_uri() : ?string
+    {
+        $val = self::get('steam_redirect_uri');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_steam_web_api_key() : ?string
+    {
+        $val = self::get('steam_web_api_key');
         return is_string($val) ? $val : null;
     }
 
