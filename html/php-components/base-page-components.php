@@ -1412,6 +1412,12 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
 
 
 <li class="nav-item">
+        <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/account-settings.php">
+            <i class="nav-icon fa-solid fa-gear"></i> Account Settings 
+            <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i>
+        </a>
+    </li>
+<li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/login.php"><i class="nav-icon fa-solid fa-right-from-bracket"></i> Logout <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
 <?php
@@ -1627,6 +1633,11 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         <li>
                             <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo Kickback\Services\Session::getCurrentAccount()->username; ?>">
                                 <i class="nav-icon fa-solid fa-user"></i> Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/account-settings.php">
+                                <i class="nav-icon fa-solid fa-gear"></i> Account Settings
                             </a>
                         </li>
                         <?php if (Kickback\Services\Session::isAdmin()) { ?>
