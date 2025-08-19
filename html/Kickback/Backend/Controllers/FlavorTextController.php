@@ -29,6 +29,21 @@ class FlavorTextController
         return "🎉 Exciting Announcement! 🎉 The $raffleName has come to a thrilling conclusion. Congratulations to $winnerUsername, the lucky winner! We thank everyone who participated and encourage you to stay tuned for more exciting events and opportunities in the future.";
     }
 
+    public static function getDiscordLinkFlavorText(string $username) : string
+    {
+        $flavorTexts = [
+            "$username has forged their Discord connection—let the realms resound with celebration!",
+            "Hear ye, hear ye! $username has bound their Discord spirit to the kingdom's chorus!",
+            "Trumpets sound! $username's Discord link now echoes through the halls of Kickback Kingdom.",
+            "By royal decree, $username's voice now rings across Discord, united with our realm!",
+            "From distant servers they arrive—$username has linked Discord and joins the festivity!",
+            "$username's Discord sigil now glows alongside the banners of Kickback Kingdom!",
+        ];
+
+        $randomIndex = array_rand($flavorTexts);
+        return $flavorTexts[$randomIndex];
+    }
+
     public static function getNewcomerIntroduction(string $username) : string
     {
         $introductions = [
