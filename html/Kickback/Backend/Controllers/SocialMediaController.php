@@ -742,16 +742,13 @@ class SocialMediaController
 
     /**
      * Unlink the given account's Steam profile.
-     */
+    */
     public static function unlinkSteamAccount(vAccount $account) : Response
     {
         Session::ensureSessionStarted();
-        if (!Session::readCurrentAccountInto($current) || $current->crand !== $account->crand) {
+        $current = Session::requireSteamLinked();
+        if ($current->crand !== $account->crand) {
             return new Response(false, 'User not logged in', null);
-        }
-
-        if (empty($account->steamUserId)) {
-            return new Response(false, 'No Steam account linked', null);
         }
 
         $conn = Database::getConnection();
