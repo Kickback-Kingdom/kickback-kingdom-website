@@ -28,6 +28,20 @@ class FlavorTextController
     {
         return "🎉 Exciting Announcement! 🎉 The $raffleName has come to a thrilling conclusion. Congratulations to $winnerUsername, the lucky winner! We thank everyone who participated and encourage you to stay tuned for more exciting events and opportunities in the future.";
     }
+    
+    public static function getLinkedAccountFlavorText(string $username) : string
+    {
+        $flavorTexts = [
+            "$username forges a powerful bond between realms, unlocking secret quests and rare markets.",
+            "Trumpets blare as $username links their accounts—enhanced trading and guild access are now theirs.",
+            "With accounts entwined, $username awakens new abilities and pathways across the kingdom.",
+            "A celebratory cheer rings out! $username's linked accounts reveal exclusive adventures awaiting.",
+            "$username's alliance is sealed; cross-realm privileges and hidden halls now stand open." 
+        ];
+
+        $randomIndex = array_rand($flavorTexts);
+        return $flavorTexts[$randomIndex];
+    }
 
     public static function getDiscordLinkFlavorText(string $username) : string
     {

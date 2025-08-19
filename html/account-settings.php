@@ -70,73 +70,132 @@ $account = Session::getCurrentAccount();
                 ?>
 
                 <style>
-                /* --- Third-Party Linking polished look (scoped) --- */
+                /* ---------- Layout polish ---------- */
                 .providers-card { border: 0; overflow: hidden; }
                 .providers-card .card-header {
-                    background: linear-gradient(135deg, rgba(108,117,125,.12), rgba(33,37,41,.06));
-                    border-bottom: 0;
+                background: linear-gradient(135deg, rgba(108,117,125,.12), rgba(33,37,41,.06));
+                border-bottom: 0;
                 }
                 .providers-card .card-header h5 { margin: 0; display:flex; align-items:center; gap:.5rem; }
 
+                /* Provider container */
                 .provider {
-                    border: 1px solid var(--bs-border-color);
-                    border-radius: .85rem;
-                    padding: .9rem;
+                border: 1px solid var(--bs-border-color);
+                border-radius: .9rem;
+                padding: 1rem;
+                background: var(--bs-body-bg);
                 }
                 .provider + .provider { margin-top: 1rem; }
 
-                .provider-head { display:flex; align-items:center; gap:.6rem; font-weight:600; }
+                /* Header becomes a neat grid: icon/label • hint • actions */
+                .provider-head {
+                display: grid;
+                grid-template-columns: auto 1fr auto;
+                gap: .75rem 1rem;
+                align-items: center;
+                }
+                @media (max-width: 768px) {
+                .provider-head { grid-template-columns: 1fr; }
+                }
+
+                /* Pill for provider label */
                 .provider-pill {
-                    display:inline-flex; align-items:center; gap:.5rem;
-                    padding:.35rem .65rem; border-radius:999px;
-                    font-weight:600; font-size:.9rem; border:1px solid transparent;
+                display:inline-flex; align-items:center; gap:.5rem;
+                padding:.35rem .65rem; border-radius:999px;
+                font-weight:600; font-size:.9rem; border:1px solid transparent;
+                white-space: nowrap;
                 }
 
-                /* Discord styling */
-                .provider--discord .provider-pill {
-                    background: rgba(88,101,242,.12);
-                    border-color: rgba(88,101,242,.25);
+                /* Header hint text */
+                .provider-hint { font-size:.9rem; color: var(--bs-secondary-color); }
+
+                /* Actions area keeps buttons aligned right on desktop */
+                .provider-actions { display:flex; gap:.5rem; justify-self:end; }
+
+                /* ---------- Brand tints ---------- */
+                :root{
+                --discord: #5865F2;
+                --steam:   #00ADEE;
                 }
-                .provider--discord .link-cta {
-                    background:#5865F2;
-                    border-color:#5865F2;
+                .provider--discord .provider-pill{ background: color-mix(in srgb, var(--discord) 12%, transparent); border-color: color-mix(in srgb, var(--discord) 25%, transparent); }
+                .provider--discord .link-cta{ background: var(--discord); border-color: var(--discord); }
+
+                .provider--steam .provider-pill{ background: linear-gradient(135deg, rgba(23,26,33,.18), color-mix(in srgb, var(--steam) 10%, transparent)); border-color: color-mix(in srgb, var(--steam) 25%, transparent); }
+                .provider--steam .link-cta{ background: var(--steam); border-color: var(--steam); }
+
+                .link-cta:hover{ filter: brightness(1.05); }
+                .unlink-cta{ border-color:#dc3545; }
+
+                /* ---------- Unified callout component ---------- */
+                .provider-callout{
+                display:flex; align-items:flex-start; gap:.6rem;
+                padding:.75rem .9rem; border-radius:.75rem; border:1px solid;
+                background: var(--callout-bg); border-color: var(--callout-brd);
+                }
+                .provider--discord .provider-callout{ --callout-bg: linear-gradient(90deg, color-mix(in srgb, var(--discord) 12%, transparent), rgba(32,34,37,.05)); --callout-brd: color-mix(in srgb, var(--discord) 25%, transparent); }
+                .provider--steam   .provider-callout{ --callout-bg: linear-gradient(90deg, color-mix(in srgb, var(--steam)   12%, transparent), rgba(32,34,37,.05)); --callout-brd: color-mix(in srgb, var(--steam)   25%, transparent); }
+
+                /* ---------- Linked meta (username + flavor) ---------- */
+                .linked-meta{ margin-top:.6rem; }
+                .linked-identity{
+                display:inline-flex; align-items:center; gap:.5rem;
+                padding:.35rem .65rem; border-radius:.6rem;
+                border:1px solid var(--bs-border-color); background: var(--bs-body-bg);
+                font-weight:600; font-size:.95rem; max-width:100%;
+                }
+                .linked-identity .username-text{
+                display:inline-block; max-width:32ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+                }
+                .linked-flavor{ margin-top:.3rem; font-size:.9rem; color: var(--bs-secondary-color); line-height:1.35; max-width:70ch; }
+
+                .provider--discord .linked-identity{ background: color-mix(in srgb, var(--discord) 8%, transparent);  border-color: color-mix(in srgb, var(--discord) 25%, transparent); }
+                .provider--steam   .linked-identity{ background: color-mix(in srgb, var(--steam)   8%, transparent);  border-color: color-mix(in srgb, var(--steam)   25%, transparent); }
+
+                /* ---------- Perk chips (less noisy) ---------- */
+                .perk-list{ display:flex; flex-wrap:wrap; gap:.5rem; }
+                .perk-chip{
+                display:inline-flex; align-items:center; gap:.35rem; padding:.28rem .6rem;
+                border-radius:999px; font-size:.8rem;
+                background: var(--bs-light); border:1px solid color-mix(in srgb, var(--bs-border-color) 75%, transparent);
+                opacity:.95;
+                }
+                /* ---------- Flavor card (brand-tinted) ---------- */
+                .flavor-card{
+                display:flex; align-items:flex-start; gap:.6rem;
+                padding:.75rem .9rem; border-radius:.75rem; border:1px solid;
+                background: var(--flavor-bg); border-color: var(--flavor-brd);
+                box-shadow: inset 0 1px 0 rgba(255,255,255,.25);
+                }
+                .flavor-card__icon{
+                display:inline-flex; align-items:center; justify-content:center;
+                width:1.75rem; height:1.75rem; border-radius:.5rem;
+                background: var(--flavor-ico-bg); border:1px solid var(--flavor-brd);
+                flex:0 0 1.75rem;
+                }
+                .flavor-card__body{ min-width:0; }
+                .flavor-card__eyebrow{
+                font-size:.75rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+                color: var(--bs-secondary-color); margin-bottom:.15rem;
+                }
+                .flavor-card__text{
+                font-size:.95rem; line-height:1.45; color: var(--bs-body-color);
+                max-width: 70ch; word-wrap: break-word; hyphens: auto;
                 }
 
-                /* Steam styling */
-                .provider--steam .provider-pill {
-                    /* Steam brand vibes: deep slate + cyan accent */
-                    background: linear-gradient(135deg, rgba(23,26,33,.18), rgba(0,173,238,.10));
-                    border-color: rgba(0,173,238,.25);
+                /* Brand tints */
+                .provider--discord .flavor-card{
+                --flavor-bg: linear-gradient(90deg, color-mix(in srgb, var(--discord) 12%, transparent), rgba(32,34,37,.05));
+                --flavor-brd: color-mix(in srgb, var(--discord) 25%, transparent);
+                --flavor-ico-bg: color-mix(in srgb, var(--discord) 10%, transparent);
                 }
-                .provider--steam .link-cta {
-                    background:#00ADEE;
-                    border-color:#00ADEE;
-                }
-                .steam-hint {
-                    font-size:.875rem; color: var(--bs-secondary-color);
-                }
-                .steam-callout {
-                    background: linear-gradient(90deg, rgba(0,173,238,.12), rgba(32,34,37,.05));
-                    border: 1px solid rgba(0,173,238,.25);
-                    border-radius: .75rem; padding: .75rem .9rem;
+                .provider--steam .flavor-card{
+                --flavor-bg: linear-gradient(90deg, color-mix(in srgb, var(--steam) 12%, transparent), rgba(32,34,37,.05));
+                --flavor-brd: color-mix(in srgb, var(--steam) 25%, transparent);
+                --flavor-ico-bg: color-mix(in srgb, var(--steam) 10%, transparent);
                 }
 
-                .link-cta:hover { filter:brightness(1.05); }
-                .unlink-cta { border-color:#dc3545; }
-
-                .reward-callout {
-                    background: linear-gradient(90deg, rgba(88,101,242,.12), rgba(32,34,37,.05));
-                    border: 1px solid rgba(88,101,242,.25);
-                    border-radius: .75rem; padding: .75rem .9rem;
-                }
-
-                .perk-chip {
-                    display:inline-flex; align-items:center; gap:.4rem;
-                    border-radius:999px; padding:.25rem .6rem;
-                    background: var(--bs-light); border:1px dashed var(--bs-secondary-color);
-                    font-size:.8rem; opacity:.9;
-                }
                 </style>
+
 
                 <div class="card mb-4 providers-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -150,122 +209,132 @@ $account = Session::getCurrentAccount();
 
                     <!-- Discord Provider -->
                     <section class="provider provider--discord">
-                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
-                        <div class="d-flex align-items-start gap-3">
-                        <div class="provider-pill">
-                            <i class="fa-brands fa-discord"></i> Discord
-                        </div>
-                        <div class="small text-muted">
-                            Connect your Discord to verify account status, join events, and receive secret drops.
-                        </div>
+                        <div class="provider-head">
+                            <div class="provider-pill">
+                                <i class="fa-brands fa-discord"></i> Discord
+                            </div>
+
+                            <div class="provider-hint">
+                                Connect your Discord to verify account status, join events, and receive secret drops.
+                            </div>
+
+                            <div class="provider-actions">
+                                <?php if (!$account->isDiscordLinked()) { ?>
+                                <button type="button" class="btn btn-primary link-cta" id="btnLinkDiscord">
+                                    <i class="fa-solid fa-plug me-1"></i> Link Discord
+                                </button>
+                                <?php } else { ?>
+                                <span class="badge text-bg-success d-flex align-items-center"><i class="fa-solid fa-link me-1"></i> Linked</span>
+                                <button type="button" class="btn btn-outline-danger btn-sm unlink-cta d-flex align-items-center gap-2"
+                                        id="btnUnlinkDiscord" data-bs-toggle="tooltip" title="Removes your Discord connection">
+                                    <i class="fa-solid fa-link-slash"></i><span>Unlink</span>
+                                </button>
+                                <?php } ?>
+                            </div>
                         </div>
 
-                        <div class="d-flex gap-2">
-                        <?php if (!$account->isDiscordLinked()) { ?>
-                            <button type="button" class="btn btn-primary link-cta" id="btnLinkDiscord">
-                            <i class="fa-solid fa-plug me-1"></i> Link Discord
-                            </button>
+
+                        <?php if ($account->isDiscordLinked()) { ?>
+                        <div class="linked-meta">
+                            <div class="flavor-card mt-2" role="note" aria-label="Discord flavor text">
+                                <div class="flavor-card__icon">
+                                    <i class="fa-brands fa-discord"></i>
+                                </div>
+                                <div class="flavor-card__body">
+                                    <div class="flavor-card__eyebrow"><span class="username-text text-truncate"><?= htmlspecialchars($account->discordUsername); ?> - Linked Account</span></div>
+                                    <div class="flavor-card__text">
+                                    <?= nl2br(htmlspecialchars(\Kickback\Backend\Controllers\FlavorTextController::getLinkedAccountFlavorText($account->username))); ?>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="provider-callout mt-3">
+                            <i class="fa-solid fa-scroll mt-1"></i>
+                            <div class="small">Your bond is sealed in the royal ledger. Those who linked before you whisper of a curious reward—guard it well.</div>
+                        </div>
                         <?php } else { ?>
-                            <span class="badge text-bg-success d-flex align-items-center">
-                            <i class="fa-solid fa-link me-1"></i> Linked
-                            </span>
-                            <button
-                            type="button"
-                            class="btn btn-outline-danger btn-sm unlink-cta d-flex align-items-center gap-2"
-                            id="btnUnlinkDiscord"
-                            data-bs-toggle="tooltip"
-                            title="Removes your Discord connection"
-                            >
-                            <i class="fa-solid fa-link-slash"></i>
-                            <span>Unlink</span>
-                            </button>
-                        <?php } ?>
-                        </div>
-                    </div>
-
-                    <?php if ($account->isDiscordLinked()) { ?>
-                        <div class="mt-2">
-                        <div class="fw-semibold"><?= htmlspecialchars($account->discordUsername); ?></div>
-                        <div class="small text-muted">
-                            <?= htmlspecialchars(\Kickback\Backend\Controllers\FlavorTextController::getDiscordLinkFlavorText($account->username)); ?>
-                        </div>
-                        </div>
-                        <div class="reward-callout mt-3 d-flex align-items-start gap-2">
-                        <i class="fa-solid fa-scroll mt-1"></i>
-                        <div class="small">Your bond is sealed in the royal ledger. Those who linked before you whisper of a curious reward—guard it well.</div>
-                        </div>
-                    <?php } else { ?>
-                        <div class="reward-callout mt-3 d-flex align-items-start gap-2">
-                        <i class="fa-solid fa-treasure-chest mt-1"></i>
-                        <div class="small">
+                        <div class="provider-callout mt-3">
+                            <i class="fa-solid fa-treasure-chest mt-1"></i>
+                            <div class="small">
                             <strong>Mystery Reward Unlocked</strong> — Link your Discord to receive a hidden boon from the Kingdom. What is it? Only those who bind their sigil discover the truth.
-                        </div>
+                            </div>
                         </div>
 
-                        <ul class="mt-3 mb-0 small text-muted d-flex flex-wrap gap-2 list-unstyled">
-                        <li class="perk-chip"><i class="fa-solid fa-shield"></i> Verified Discord Role</li>
-                        <li class="perk-chip"><i class="fa-solid fa-calendar-day"></i> Event pings</li>
-                        <li class="perk-chip"><i class="fa-solid fa-gift"></i> Secret drops</li>
-                        </ul>
-                    <?php } ?>
+                        <?php } ?>
+
+                        <div class="perk-list mt-3 mb-0 small text-muted">
+                            <span class="perk-chip"><i class="fa-solid fa-shield"></i> Verified Discord Role</span>
+                            <span class="perk-chip"><i class="fa-solid fa-calendar-day"></i> Event pings</span>
+                            <span class="perk-chip"><i class="fa-solid fa-gift"></i> Secret drops</span>
+                        </div>
                     </section>
 
                     <!-- Steam Provider -->
                     <section class="provider provider--steam mt-4">
-                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
-                        <div class="d-flex align-items-start gap-3">
-                        <div class="provider-pill">
-                            <i class="fa-brands fa-steam"></i> Steam
-                        </div>
-                        <div class="steam-hint">
-                            Link your Steam to unlock exclusive raffles, showcase your games, and let allies find you faster.
-                        </div>
+                        <div class="provider-head">
+                            <div class="provider-pill">
+                                <i class="fa-brands fa-steam"></i> Steam
+                            </div>
+
+                            <div class="provider-hint">
+                                Link your Steam to unlock exclusive raffles, showcase your games, and let allies find you faster.
+                            </div>
+
+                            <div class="provider-actions">
+                                <?php if (!$account->isSteamLinked()) { ?>
+                                <button type="button" class="btn btn-primary link-cta" id="btnLinkSteam">
+                                    <i class="fa-solid fa-plug me-1"></i> Link Steam
+                                </button>
+                                <?php } else { ?>
+                                <span class="badge text-bg-success d-flex align-items-center"><i class="fa-solid fa-link me-1"></i> Linked</span>
+                                <button type="button" class="btn btn-outline-danger btn-sm unlink-cta d-flex align-items-center gap-2"
+                                        id="btnUnlinkSteam" data-bs-toggle="tooltip" title="Removes your Steam connection">
+                                    <i class="fa-solid fa-link-slash"></i><span>Unlink</span>
+                                </button>
+                                <?php } ?>
+                            </div>
                         </div>
 
-                        <div class="d-flex gap-2">
-                        <?php if (!$account->isSteamLinked()) { ?>
-                            <button type="button" class="btn btn-primary link-cta" id="btnLinkSteam">
-                            <i class="fa-solid fa-plug me-1"></i> Link Steam
-                            </button>
-                        <?php } else { ?>
-                            <span class="badge text-bg-success d-flex align-items-center">
-                            <i class="fa-solid fa-link me-1"></i> Linked
+
+                        <?php if ($account->isSteamLinked()) { ?>
+                        <div class="linked-meta">
+                            <span class="linked-identity">
+                            <i class="fa-brands fa-steam"></i>
+                            <span class="username-text text-truncate"><?= htmlspecialchars($account->steamUsername); ?></span>
                             </span>
-                            <button
-                            type="button"
-                            class="btn btn-outline-danger btn-sm unlink-cta d-flex align-items-center gap-2"
-                            id="btnUnlinkSteam"
-                            data-bs-toggle="tooltip"
-                            title="Removes your Steam connection"
-                            >
-                            <i class="fa-solid fa-link-slash"></i>
-                            <span>Unlink</span>
-                            </button>
+                            <div class="flavor-card mt-2" role="note" aria-label="Steam flavor text">
+                        <div class="flavor-card__icon">
+                            <i class="fa-solid fa-sparkles"></i>
+                        </div>
+                        <div class="flavor-card__body">
+                            <div class="flavor-card__eyebrow">Linked flavor</div>
+                            <div class="flavor-card__text">
+                            <?= nl2br(htmlspecialchars(\Kickback\Backend\Controllers\FlavorTextController::getLinkedAccountFlavorText($account->username))); ?>
+                            </div>
+                        </div>
+                        </div>
+
+                        </div>
+
+                        <div class="provider-callout mt-3">
+                            <i class="fa-solid fa-scroll mt-1"></i>
+                            <div class="small">Your Steam banner now flies in the Kingdom. Watch the town board for your exclusive draws.</div>
+                        </div>
+                        <?php } else { ?>
+                        <div class="provider-callout mt-3">
+                            <i class="fa-solid fa-ticket mt-1"></i>
+                            <div class="small"><strong>Steam Raffles Await</strong> — Link your Steam to earn raffle entries, flaunt your game library, and unlock surprise rewards.</div>
+                        </div>
+
+                        <div class="perk-list mt-3 mb-0 small text-muted">
+                            <span class="perk-chip"><i class="fa-solid fa-ticket"></i> Entry to Steam raffles</span>
+                            <span class="perk-chip"><i class="fa-solid fa-gamepad"></i> Share your game library</span>
+                            <span class="perk-chip"><i class="fa-solid fa-bolt"></i> Quick‑join Kickback servers</span>
+                        </div>
                         <?php } ?>
-                        </div>
-                    </div>
 
-                    <?php if ($account->isSteamLinked()) { ?>
-                        <div class="mt-2">
-                        <div class="fw-semibold"><?= htmlspecialchars($account->steamUsername); ?></div>
-                        <div class="small text-muted">Steam account linked.</div>
-                        </div>
-                        <div class="steam-callout mt-3 d-flex align-items-start gap-2">
-                        <i class="fa-solid fa-scroll mt-1"></i>
-                        <div class="small">Your Steam banner now flies in the Kingdom. Watch the town board for your exclusive draws.</div>
-                        </div>
-                    <?php } else { ?>
-                        <div class="steam-callout mt-3 d-flex align-items-start gap-2">
-                        <i class="fa-solid fa-ticket mt-1"></i>
-                        <div class="small"><strong>Steam Raffles Await</strong> — Link your Steam to earn raffle entries, flaunt your game library, and unlock surprise rewards.</div>
-                        </div>
-
-                        <ul class="mt-3 mb-0 small text-muted d-flex flex-wrap gap-2 list-unstyled">
-                        <li class="perk-chip"><i class="fa-solid fa-ticket"></i> Entry to Steam raffles</li>
-                        <li class="perk-chip"><i class="fa-solid fa-gamepad"></i> Share your game library</li>
-                        <li class="perk-chip"><i class="fa-solid fa-bolt"></i> Quick-join Kickback servers</li>
-                        </ul>
-                    <?php } ?>
                     </section>
 
                     <div id="steamStatus" class="alert d-none mt-3" role="alert"></div>
