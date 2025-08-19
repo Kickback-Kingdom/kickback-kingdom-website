@@ -97,7 +97,30 @@ $account = Session::getCurrentAccount();
                     background: rgba(88,101,242,.12);
                     border-color: rgba(88,101,242,.25);
                 }
-                .link-cta { background:#5865F2; border-color:#5865F2; }
+                .provider--discord .link-cta {
+                    background:#5865F2;
+                    border-color:#5865F2;
+                }
+
+                /* Steam styling */
+                .provider--steam .provider-pill {
+                    /* Steam brand vibes: deep slate + cyan accent */
+                    background: linear-gradient(135deg, rgba(23,26,33,.18), rgba(0,173,238,.10));
+                    border-color: rgba(0,173,238,.25);
+                }
+                .provider--steam .link-cta {
+                    background:#00ADEE;
+                    border-color:#00ADEE;
+                }
+                .steam-hint {
+                    font-size:.875rem; color: var(--bs-secondary-color);
+                }
+                .steam-callout {
+                    background: linear-gradient(90deg, rgba(0,173,238,.12), rgba(32,34,37,.05));
+                    border: 1px solid rgba(0,173,238,.25);
+                    border-radius: .75rem; padding: .75rem .9rem;
+                }
+
                 .link-cta:hover { filter:brightness(1.05); }
                 .unlink-cta { border-color:#dc3545; }
 
@@ -112,21 +135,6 @@ $account = Session::getCurrentAccount();
                     border-radius:999px; padding:.25rem .6rem;
                     background: var(--bs-light); border:1px dashed var(--bs-secondary-color);
                     font-size:.8rem; opacity:.9;
-                }
-
-                /* Steam styling */
-                .provider--steam .provider-pill {
-                    /* Steam brand vibes: deep slate + cyan accent */
-                    background: linear-gradient(135deg, rgba(23,26,33,.18), rgba(0,173,238,.10));
-                    border-color: rgba(0,173,238,.25);
-                }
-                .steam-hint {
-                    font-size:.875rem; color: var(--bs-secondary-color);
-                }
-                .steam-callout {
-                    background: linear-gradient(90deg, rgba(0,173,238,.12), rgba(32,34,37,.05));
-                    border: 1px solid rgba(0,173,238,.25);
-                    border-radius: .75rem; padding: .75rem .9rem;
                 }
                 </style>
 
