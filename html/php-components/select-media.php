@@ -31,7 +31,7 @@
 
 
 <script type="module">
-import { initPixelEditor, LAYER_DEFAULTS } from '/assets/js/pixel-editor/index.js';
+import { initPixelEditor, LAYER_DEFAULTS } from '<?= Version::urlBetaPrefix(); ?>/assets/js/pixel-editor/index.js';
 
 const promptTemplates = {
   "lich card art": (desc, scenery, faction) =>
@@ -223,7 +223,7 @@ function GeneratePromptImage(prompt)
     }
     formData.append('sessionToken', sessionToken);
 
-    fetch('/api/v1/media/generate.php', {
+    fetch('<?= Version::urlBetaPrefix(); ?>/api/v1/media/generate.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData
