@@ -153,6 +153,12 @@ class TaskController
             case TaskDefinitionCode::SEARCH_LICH_CARD:
                 return self::countPageVisitsForTask($task, $account);
 
+            case TaskDefinitionCode::LINK_DISCORD:
+                return $account->isDiscordLinked() ? 1 : 0;
+
+            case TaskDefinitionCode::LINK_STEAM:
+                return $account->isSteamLinked() ? 1 : 0;
+
             case TaskDefinitionCode::SPEND_PRESTIGE_TOKEN:
                 return self::countPrestigeGivenForTask($task, $account);
 

@@ -32,6 +32,9 @@ enum TaskDefinitionCode: string
     case VISIT_LICH_PAGE = 'visit_lich_page';
     case SEARCH_LICH_CARD = 'search_lich_card';
 
+    case LINK_DISCORD = 'link_discord';
+    case LINK_STEAM = 'link_steam';
+
     /**
      * Safely cast from string
      */
@@ -67,7 +70,9 @@ enum TaskDefinitionCode: string
             self::VISIT_GUILD_HALLS_PAGE      => 'fa-chess-rook',
             self::VISIT_ADVENTURERS_GUILD_PAGE => 'fa-hat-cowboy',
             self::VISIT_LICH_PAGE             => 'fa-skull-crossbones',
-            self::SEARCH_LICH_CARD            => 'fa-search', 
+            self::SEARCH_LICH_CARD            => 'fa-search',
+            self::LINK_DISCORD               => 'fa-discord',
+            self::LINK_STEAM                 => 'fa-steam',
 
             default => 'fa-circle-question', // fallback icon
         };
