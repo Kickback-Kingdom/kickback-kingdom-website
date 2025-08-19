@@ -406,6 +406,15 @@ class SocialMediaController
 
         $expectedState = Session::sessionDataString('discord_oauth_state');
         if (!$expectedState || $expectedState !== $state) {
+            $sessionId = Session::getCurrentSessionId();
+            $username = $account->username ?? 'unknown';
+            error_log(
+                'completeDiscordLink invalid state token: session='
+                . ($sessionId ?? 'none')
+                . ' user=' . $username
+                . ' expected=' . ($expectedState ?? 'none')
+                . ' received=' . $state
+            );
             return new Response(false, 'Invalid state token', null);
         }
 
