@@ -214,17 +214,13 @@ $account = Session::getCurrentAccount();
                                 <i class="fa-brands fa-discord"></i> Discord
                             </div>
 
-                            <div class="provider-hint">
-                                Connect your Discord to verify account status, join events, and receive secret drops.
-                            </div>
-
                             <div class="provider-actions">
                                 <?php if (!$account->isDiscordLinked()) { ?>
-                                <button type="button" class="btn btn-primary link-cta" id="btnLinkDiscord">
+                                <button type="button" class="btn bg-ranked-1" id="btnLinkDiscord">
                                     <i class="fa-solid fa-plug me-1"></i> Link Discord
                                 </button>
                                 <?php } else { ?>
-                                <span class="badge text-bg-success d-flex align-items-center"><i class="fa-solid fa-link me-1"></i> Linked</span>
+                                <span class="badge bg-ranked-1 d-flex align-items-center"><i class="fa-solid fa-link me-1"></i> Linked</span>
                                 <button type="button" class="btn btn-outline-danger btn-sm unlink-cta d-flex align-items-center gap-2"
                                         id="btnUnlinkDiscord" data-bs-toggle="tooltip" title="Removes your Discord connection">
                                     <i class="fa-solid fa-link-slash"></i><span>Unlink</span>
@@ -256,9 +252,9 @@ $account = Session::getCurrentAccount();
                         </div>
                         <?php } else { ?>
                         <div class="provider-callout mt-3">
-                            <i class="fa-solid fa-treasure-chest mt-1"></i>
+                            <i class="fa-solid fa-badge-check mt-1"></i>
                             <div class="small">
-                            <strong>Mystery Reward Unlocked</strong> — Link your Discord to receive a hidden boon from the Kingdom. What is it? Only those who bind their sigil discover the truth.
+                            <strong>Get Discord Verified</strong> — Connect your Discord to verify account status, join special events, and receive secret drops.
                             </div>
                         </div>
 
@@ -267,28 +263,26 @@ $account = Session::getCurrentAccount();
                         <div class="perk-list mt-3 mb-0 small text-muted">
                             <span class="perk-chip"><i class="fa-solid fa-shield"></i> Verified Discord Role</span>
                             <span class="perk-chip"><i class="fa-solid fa-calendar-day"></i> Event pings</span>
+                            <span class="perk-chip"><i class="fa-solid fa-dragon"></i> Special Quests</span>
                             <span class="perk-chip"><i class="fa-solid fa-gift"></i> Secret drops</span>
                         </div>
                     </section>
 
                     <!-- Steam Provider -->
-                    <section class="provider provider--steam mt-4">
+                    <section class="provider provider--steam mt-4 d-none">
                         <div class="provider-head">
                             <div class="provider-pill">
                                 <i class="fa-brands fa-steam"></i> Steam
                             </div>
 
-                            <div class="provider-hint">
-                                Link your Steam to unlock exclusive raffles, showcase your games, and let allies find you faster.
-                            </div>
 
                             <div class="provider-actions">
                                 <?php if (!$account->isSteamLinked()) { ?>
-                                <button type="button" class="btn btn-primary link-cta" id="btnLinkSteam">
+                                <button type="button" class="btn bg-ranked-1" id="btnLinkSteam">
                                     <i class="fa-solid fa-plug me-1"></i> Link Steam
                                 </button>
                                 <?php } else { ?>
-                                <span class="badge text-bg-success d-flex align-items-center"><i class="fa-solid fa-link me-1"></i> Linked</span>
+                                <span class="badge bg-ranked-1 d-flex align-items-center"><i class="fa-solid fa-link me-1"></i> Linked</span>
                                 <button type="button" class="btn btn-outline-danger btn-sm unlink-cta d-flex align-items-center gap-2"
                                         id="btnUnlinkSteam" data-bs-toggle="tooltip" title="Removes your Steam connection">
                                     <i class="fa-solid fa-link-slash"></i><span>Unlink</span>
@@ -300,21 +294,17 @@ $account = Session::getCurrentAccount();
 
                         <?php if ($account->isSteamLinked()) { ?>
                         <div class="linked-meta">
-                            <span class="linked-identity">
-                            <i class="fa-brands fa-steam"></i>
-                            <span class="username-text text-truncate"><?= htmlspecialchars($account->steamUsername); ?></span>
-                            </span>
                             <div class="flavor-card mt-2" role="note" aria-label="Steam flavor text">
-                        <div class="flavor-card__icon">
-                            <i class="fa-solid fa-sparkles"></i>
-                        </div>
-                        <div class="flavor-card__body">
-                            <div class="flavor-card__eyebrow">Linked flavor</div>
-                            <div class="flavor-card__text">
-                            <?= nl2br(htmlspecialchars(\Kickback\Backend\Controllers\FlavorTextController::getLinkedAccountFlavorText($account->username))); ?>
+                                <div class="flavor-card__icon">
+                                    <i class="fa-brands fa-steam"></i>
+                                </div>
+                                <div class="flavor-card__body">
+                                    <div class="flavor-card__eyebrow"><span class="username-text text-truncate"><?= htmlspecialchars($account->steamUsername); ?></span> - Linked Account</div>
+                                    <div class="flavor-card__text">
+                                        <?= nl2br(htmlspecialchars(\Kickback\Backend\Controllers\FlavorTextController::getLinkedAccountFlavorText($account->username))); ?>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        </div>
 
                         </div>
 
@@ -325,16 +315,19 @@ $account = Session::getCurrentAccount();
                         <?php } else { ?>
                         <div class="provider-callout mt-3">
                             <i class="fa-solid fa-ticket mt-1"></i>
-                            <div class="small"><strong>Steam Raffles Await</strong> — Link your Steam to earn raffle entries, flaunt your game library, and unlock surprise rewards.</div>
+                            <div class="small">
+                                <strong>Steam Raffles Await</strong> — Link your Steam account to enter exclusive raffles, showcase your game library, earn surprise rewards, and make it easier for friends to find you.
+                            </div>
+
                         </div>
+
+                        <?php } ?>
 
                         <div class="perk-list mt-3 mb-0 small text-muted">
                             <span class="perk-chip"><i class="fa-solid fa-ticket"></i> Entry to Steam raffles</span>
                             <span class="perk-chip"><i class="fa-solid fa-gamepad"></i> Share your game library</span>
-                            <span class="perk-chip"><i class="fa-solid fa-bolt"></i> Quick‑join Kickback servers</span>
+                            <span class="perk-chip"><i class="fa-solid fa-bolt"></i> Quick-join Kickback servers</span>
                         </div>
-                        <?php } ?>
-
                     </section>
 
                     <div id="steamStatus" class="alert d-none mt-3" role="alert"></div>

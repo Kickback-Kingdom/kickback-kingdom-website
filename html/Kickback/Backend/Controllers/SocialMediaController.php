@@ -534,9 +534,13 @@ class SocialMediaController
         if ($firstLink) {
             $channelId = ServiceCredentials::get_discord_link_channel_id();
             if ($channelId) {
-                self::sendChannelMessage($channelId, FlavorTextController::getDiscordLinkFlavorText($account->username));
+                $mention = "<@{$account->discordUserId}>";
+                $message = FlavorTextController::getDiscordLinkFlavorText($mention);
+                //self::sendChannelMessage($channelId, $message);
+                self::DiscordWebHook($message);
             }
         }
+        
 
         return new Response(true, 'Discord account linked', null);
     }
@@ -585,6 +589,14 @@ class SocialMediaController
         $stmt->bind_param('s', $account->email);
         $stmt->execute();
         $stmt->close();
+
+        $channelId = ServiceCredentials::get_discord_link_channel_id();
+        if ($channelId) {
+            $mention = "<@{$account->discordUserId}>";
+            $message = FlavorTextController::getDiscordUnlinkFlavorText($mention);
+            //self::sendChannelMessage($channelId, $message);
+            self::DiscordWebHook($message);
+        }
 
         $account->discordUserId = null;
         $account->discordUsername = null;
