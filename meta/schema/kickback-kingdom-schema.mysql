@@ -86,10 +86,13 @@ CREATE TABLE `account` (
   `passage_id` int(11) DEFAULT NULL,
   `DiscordUserId` varchar(32) COLLATE utf8mb4_bin DEFAULT NULL,
   `DiscordUsername` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
+  `SteamUserId` varchar(32) COLLATE utf8mb4_bin DEFAULT NULL,
+  `SteamUsername` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `Email` (`Email`),
   UNIQUE KEY `unique_passage_id` (`passage_id`),
-  UNIQUE KEY `unique_discord_user_id` (`DiscordUserId`)
+  UNIQUE KEY `unique_discord_user_id` (`DiscordUserId`),
+  UNIQUE KEY `unique_steam_user_id` (`SteamUserId`)
 ) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

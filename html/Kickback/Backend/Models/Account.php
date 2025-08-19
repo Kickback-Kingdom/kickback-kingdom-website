@@ -13,5 +13,7 @@ class Account extends RecordId
     public ForeignRecordId $passageId;
     public ?string $discordUserId = null;
     public ?string $discordUsername = null;
+    public ?string $steamUserId = null;
+    public ?string $steamUsername = null;
 }
 ?>
