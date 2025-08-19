@@ -408,6 +408,10 @@ class Session {
     public static function ensureSessionStarted() : void
     {
         if (\session_status() !== PHP_SESSION_ACTIVE) {
+            \session_set_cookie_params([
+                'path' => '/',
+                'domain' => '.kickback-kingdom.com',
+            ]);
             \session_start();
         }
     }
