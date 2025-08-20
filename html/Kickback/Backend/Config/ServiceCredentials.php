@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Kickback\Backend\Config;
 
+use Kickback\Common\Version;
+
 /**
 * @implements \ArrayAccess<string,mixed>
 */
@@ -174,6 +176,12 @@ final class ServiceCredentials implements \ArrayAccess
         // Discord auth info; used for sending notifications about events and stuff.
         $error_count += (int)!$this->credential_string_exists       ("discord_api_url"); // https://discord.com/api/webhooks/<some_number>
         $error_count += (int)!$this->credential_string_exists       ("discord_api_key"); // Concatenated with `discord_api_url` to get the full URL for discord API access.
+        if (array_key_exists('discord_api_url_beta', $this->entries)) {
+            $error_count += (int)!$this->credential_string_exists('discord_api_url_beta');
+        }
+        if (array_key_exists('discord_api_key_beta', $this->entries)) {
+            $error_count += (int)!$this->credential_string_exists('discord_api_key_beta');
+        }
 
         // Discord OAuth info; used for login and guild interactions.
         $error_count += (int)!$this->credential_string_exists       ("discord_oauth_client_id");
@@ -187,6 +195,15 @@ final class ServiceCredentials implements \ArrayAccess
         $error_count += (int)!$this->credential_string_exists       ("discord_guild_id");
         $error_count += (int)!$this->credential_string_exists       ("discord_bot_token");
         $error_count += (int)!$this->credential_string_exists       ("discord_verified_role_id");
+        if (array_key_exists('discord_guild_id_beta', $this->entries)) {
+            $error_count += (int)!$this->credential_string_exists('discord_guild_id_beta');
+        }
+        if (array_key_exists('discord_verified_role_id_beta', $this->entries)) {
+            $error_count += (int)!$this->credential_string_exists('discord_verified_role_id_beta');
+        }
+        if (array_key_exists('discord_link_channel_id_beta', $this->entries)) {
+            $error_count += (int)!$this->credential_string_exists('discord_link_channel_id_beta');
+        }
 
         // Steam OAuth info; used for login.
         $error_count += (int)!$this->credential_string_exists       ("steam_oauth_client_id");
@@ -347,8 +364,40 @@ final class ServiceCredentials implements \ArrayAccess
     }
 
     /** @return null|string */
+    public static function get_discord_api_url() : ?string
+    {
+        if (Version::isBeta()) {
+            $beta = self::get('discord_api_url_beta');
+            if (is_string($beta) && $beta !== '') {
+                return $beta;
+            }
+        }
+        $val = self::get('discord_api_url');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_api_key() : ?string
+    {
+        if (Version::isBeta()) {
+            $beta = self::get('discord_api_key_beta');
+            if (is_string($beta) && $beta !== '') {
+                return $beta;
+            }
+        }
+        $val = self::get('discord_api_key');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
     public static function get_discord_guild_id() : ?string
     {
+        if (Version::isBeta()) {
+            $beta = self::get('discord_guild_id_beta');
+            if (is_string($beta) && $beta !== '') {
+                return $beta;
+            }
+        }
         $val = self::get('discord_guild_id');
         return is_string($val) ? $val : null;
     }
@@ -363,6 +412,12 @@ final class ServiceCredentials implements \ArrayAccess
     /** @return null|string */
     public static function get_discord_verified_role_id() : ?string
     {
+        if (Version::isBeta()) {
+            $beta = self::get('discord_verified_role_id_beta');
+            if (is_string($beta) && $beta !== '') {
+                return $beta;
+            }
+        }
         $val = self::get('discord_verified_role_id');
         return is_string($val) ? $val : null;
     }
@@ -370,6 +425,12 @@ final class ServiceCredentials implements \ArrayAccess
     /** @return null|string */
     public static function get_discord_link_channel_id() : ?string
     {
+        if (Version::isBeta()) {
+            $beta = self::get('discord_link_channel_id_beta');
+            if (is_string($beta) && $beta !== '') {
+                return $beta;
+            }
+        }
         $val = self::get('discord_link_channel_id');
         return is_string($val) ? $val : null;
     }

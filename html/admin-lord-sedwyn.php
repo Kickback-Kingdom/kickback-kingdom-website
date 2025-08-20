@@ -7,7 +7,6 @@ require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Services\Session;
 use Kickback\Backend\Controllers\DiscordController;
-use Kickback\Backend\Config\ServiceCredentials;
 if (!Session::isMagisterOfTheAdventurersGuild())
 {
     header('Location: index.php');
@@ -45,10 +44,6 @@ $lordSedwynMessages = [
 ];
 
 
-$kk_credentials = ServiceCredentials::instance();
-    
-// Ex: $webhookURL = "https://discord.com/api/webhooks/<some_number>/<api_key>"
-$webhookURL = $kk_credentials["discord_api_url"] . '/' . $kk_credentials["discord_api_key"];
 
 ?>
 
