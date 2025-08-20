@@ -81,7 +81,7 @@ class SocialMediaController
         return ['status' => $status, 'body' => $body, 'error' => $error];
     }
 
-    public static function DiscordWebHook(mixed $msg) : void
+    public static function DiscordWebHook(mixed $msg) : bool
     {
         $kk_credentials = ServiceCredentials::instance();
 
@@ -90,8 +90,11 @@ class SocialMediaController
 
         $result = self::discordApiRequest('POST', $webhookURL, ['content' => $msg]);
         if ($result['body'] === false) {
-            echo 'Error:' . ($result['error'] ?? 'unknown');
+            error_log('Discord webhook error: ' . ($result['error'] ?? 'unknown'));
+            return false;
         }
+
+        return true;
     }
 
     private static function sendChannelMessage(string $channelId, string $message) : void
