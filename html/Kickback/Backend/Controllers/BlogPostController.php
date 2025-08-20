@@ -14,7 +14,7 @@ use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Services\Database;
 use Kickback\Services\Session;
-use Kickback\Backend\Controllers\SocialMediaController;
+use Kickback\Backend\Controllers\DiscordController;
 
 class BlogPostController 
 {
@@ -168,7 +168,7 @@ class BlogPostController
         if ($success) {
             // Send the blog post announcement via Discord webhook
             $msg = FlavorTextController::getNewBlogPostAnnouncement($currentBlogPost);
-            SocialMediaController::sendDiscordWebhook($msg);
+            DiscordController::sendWebhook($msg);
 
             return new Response(true, "Blog post published successfully!", null);
         } else {

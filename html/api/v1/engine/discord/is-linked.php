@@ -1,7 +1,7 @@
 <?php
 require(__DIR__.'/../../engine/engine.php');
 
-use Kickback\Backend\Controllers\SocialMediaController;
+use Kickback\Backend\Controllers\DiscordController;
 use Kickback\Backend\Models\Response;
 
 OnlyGET();
@@ -11,5 +11,5 @@ if (!$discordId) {
     return new Response(false, 'Missing Discord user ID', null);
 }
 
-return SocialMediaController::isDiscordLinked($discordId);
+return DiscordController::isLinked($discordId);
 ?>

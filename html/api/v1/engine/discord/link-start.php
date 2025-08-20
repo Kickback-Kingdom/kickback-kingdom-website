@@ -1,9 +1,9 @@
 <?php
 require(__DIR__.'/../../engine/engine.php');
 
-use Kickback\Backend\Controllers\SocialMediaController;
+use Kickback\Backend\Controllers\DiscordController;
 
 OnlyGET();
 
-return SocialMediaController::startDiscordLink();
+return DiscordController::startLink();
 ?>

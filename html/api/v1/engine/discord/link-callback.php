@@ -1,7 +1,7 @@
 <?php
 require(__DIR__.'/../../engine/engine.php');
 
-use Kickback\Backend\Controllers\SocialMediaController;
+use Kickback\Backend\Controllers\DiscordController;
 use Kickback\Backend\Models\Response;
 use Kickback\Common\Version;
 
@@ -13,7 +13,7 @@ $state = $_GET['state'] ?? null;
 if (!$code || !$state) {
     $resp = new Response(false, 'Missing code or state', null);
 } else {
-    $resp = SocialMediaController::completeDiscordLink($code, $state);
+    $resp = DiscordController::completeLink($code, $state);
 }
 
 if ($resp->success) {

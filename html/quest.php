@@ -17,7 +17,7 @@ use Kickback\Backend\Models\PlayStyle;
 use Kickback\Services\Session;
 use Kickback\Backend\Views\vDateTime;
 use Kickback\Common\Version;
-use Kickback\Backend\Controllers\SocialMediaController;
+use Kickback\Backend\Controllers\DiscordController;
 use Kickback\Backend\Controllers\FlavorTextController;
 
 $newPost = false;
@@ -93,7 +93,7 @@ if (isset($_POST["submit-raffle"]))
             if ($thisQuest->reviewStatus->published)
             {
 
-                SocialMediaController::sendDiscordWebhook(FlavorTextController::getRandomGreeting().', '.Session::getCurrentAccount()->username.' just submitted a number of raffle tickets to the '.$thisQuest->title.' quest.');
+                DiscordController::sendWebhook(FlavorTextController::getRandomGreeting().', '.Session::getCurrentAccount()->username.' just submitted a number of raffle tickets to the '.$thisQuest->title.' quest.');
             }
 
             $hasSuccess = true;
