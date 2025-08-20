@@ -279,8 +279,18 @@ class DiscordController
     private static function redirectUri() : ?string
     {
         $base = ServiceCredentials::get_discord_redirect_uri();
+        $host = $_SERVER['HTTP_HOST'] ?? null;
+        if ($base) {
+            $configuredHost = parse_url($base, PHP_URL_HOST);
+            if ($host && $configuredHost && strcasecmp($configuredHost, $host) !== 0) {
+                error_log(
+                    'Discord redirect URI host mismatch: configured ' .
+                    $configuredHost . ' != current ' . $host . '; using current host'
+                );
+                $base = null;
+            }
+        }
         if (!$base) {
-            $host = $_SERVER['HTTP_HOST'] ?? null;
             if (!$host) {
                 return null;
             }
