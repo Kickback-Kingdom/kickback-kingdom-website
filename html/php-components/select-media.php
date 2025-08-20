@@ -215,14 +215,18 @@ function GeneratePromptImage(prompt)
     const finalPrompt = promptTemplates[template]
         ? promptTemplates[template](description, scenery, faction)
         : description;
+    const promptEl = document.getElementById('imagePrompt');
     const sizeEl = document.getElementById('imageSize');
     const modelEl = document.getElementById('imageModel');
     const sessionToken = "<?php echo $_SESSION["sessionToken"]; ?>";
 
     const formData = new URLSearchParams();
-    const resolvedPrompt = (typeof prompt === 'string' && prompt.length > 0)
-        ? prompt
-        : finalPrompt;
+    const resolvedPrompt =
+        (typeof prompt === 'string' && prompt.length > 0)
+            ? prompt
+            : (promptEl && promptEl.value.trim()
+                ? promptEl.value.trim()
+                : finalPrompt);
     formData.append('prompt', resolvedPrompt);
     if (directoryEl) { formData.append('directory', directoryEl.value); }
     if (nameEl) { formData.append('name', nameEl.value); }
