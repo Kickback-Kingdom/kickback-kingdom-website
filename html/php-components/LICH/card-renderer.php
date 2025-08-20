@@ -29,8 +29,8 @@ use Kickback\Common\Version;
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-info" onclick="goToWikiPage()">Go to Wiki Page</button>
-                <a type="button" class="btn btn-outline-primary" href="/lich/card-search">Go to Card Search</a>
-                <a type="button" class="btn btn-outline-success" href="/lich-card-edit.php">Create New Card</a>
+                <a type="button" class="btn btn-outline-primary" href="<?= Version::urlBetaPrefix() ?>/lich/card-search">Go to Card Search</a>
+                <a type="button" class="btn btn-outline-success" href="<?= Version::urlBetaPrefix() ?>/lich-card-edit.php">Create New Card</a>
                 <button type="button" class="btn btn-tertiary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
