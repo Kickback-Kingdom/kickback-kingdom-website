@@ -35,12 +35,14 @@ class SocialMediaController
      *
      * @param string               $method  HTTP method to use.
      * @param string               $url     Request URL.
-     * @param array<string,mixed>|null $payload Optional JSON payload to send.
+     * @param array<string,mixed>|string|null $payload Optional payload to send. Arrays
+     *                                                will be JSON-encoded while strings
+     *                                                are sent as-is.
      * @param array<int,string>    $headers Additional headers.
      *
      * @return array{status:int, body:string|false, error:?string}
      */
-    private static function discordApiRequest(string $method, string $url, ?array $payload = null, array $headers = []) : array
+    private static function discordApiRequest(string $method, string $url, array|string|null $payload = null, array $headers = []) : array
     {
         $ch = curl_init($url);
         if ($ch === false) {
@@ -48,13 +50,17 @@ class SocialMediaController
         }
 
         if ($payload !== null) {
-            $json = json_encode($payload);
-            if ($json === false) {
-                curl_close($ch);
-                return ['status' => 0, 'body' => false, 'error' => 'json_encode failed'];
+            if (is_array($payload)) {
+                $json = json_encode($payload);
+                if ($json === false) {
+                    curl_close($ch);
+                    return ['status' => 0, 'body' => false, 'error' => 'json_encode failed'];
+                }
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
+                $headers[] = 'Content-Type: application/json';
+            } else {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
             }
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
-            $headers[] = 'Content-Type: application/json';
         }
 
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
@@ -330,6 +336,145 @@ class SocialMediaController
     }
 
     /**
+     * Exchange an OAuth code for an access token.
+     */
+    private static function fetchAccessToken(string $code) : Response
+    {
+        $clientId     = ServiceCredentials::get_discord_oauth_client_id();
+        $clientSecret = ServiceCredentials::get_discord_oauth_client_secret();
+        $redirectUri  = self::discordRedirectUri();
+        if (!$clientId || !$clientSecret || !$redirectUri) {
+            return new Response(false, 'Discord OAuth not configured', null);
+        }
+
+        $payload = http_build_query([
+            'client_id'     => $clientId,
+            'client_secret' => $clientSecret,
+            'grant_type'    => 'authorization_code',
+            'code'          => $code,
+            'redirect_uri'  => $redirectUri,
+        ]);
+
+        $result = self::discordApiRequest(
+            'POST',
+            'https://discord.com/api/oauth2/token',
+            $payload,
+            ['Content-Type: application/x-www-form-urlencoded']
+        );
+        if ($result['body'] === false) {
+            return new Response(false, 'Failed to contact Discord', null);
+        }
+        $data = json_decode($result['body'], true);
+        if (!isset($data['access_token'])) {
+            return new Response(false, 'Failed to retrieve access token', $data);
+        }
+
+        return new Response(true, 'access token', ['access_token' => $data['access_token']]);
+    }
+
+    /**
+     * Fetch the Discord user profile for the given access token.
+     */
+    private static function fetchDiscordUser(string $accessToken) : Response
+    {
+        $result = self::discordApiRequest('GET', 'https://discord.com/api/users/@me', null, [
+            'Authorization: Bearer ' . $accessToken,
+            'Content-Type: application/json',
+        ]);
+        if ($result['body'] === false) {
+            return new Response(false, 'Failed to fetch user profile', null);
+        }
+        $data = json_decode($result['body'], true);
+        if (!isset($data['id'], $data['username'])) {
+            return new Response(false, 'Invalid user data from Discord', $data);
+        }
+        return new Response(true, 'user profile', $data);
+    }
+
+    /**
+     * Join the configured guild, if possible.
+     */
+    private static function joinGuild(string $discordId, string $accessToken) : Response
+    {
+        $guildId  = ServiceCredentials::get_discord_guild_id();
+        $botToken = ServiceCredentials::get_discord_bot_token();
+        if (!$guildId || !$botToken) {
+            return new Response(true, 'guild join skipped', null);
+        }
+
+        $memberUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
+            . '/members/' . urlencode($discordId);
+        $checkResp = self::discordApiRequest('GET', $memberUrl, null, [
+            'Authorization: Bot ' . $botToken,
+        ]);
+        if ($checkResp['body'] === false) {
+            return new Response(false, 'cURL error during guild membership check: ' . ($checkResp['error'] ?? 'unknown'));
+        }
+
+        $status = $checkResp['status'];
+        if ($status === 404) {
+            $joinResp = self::discordApiRequest('PUT', $memberUrl, ['access_token' => $accessToken], [
+                'Authorization: Bot ' . $botToken,
+            ]);
+            if ($joinResp['body'] === false) {
+                error_log('Failed to join guild: ' . ($joinResp['error'] ?? 'unknown'));
+                return new Response(false, 'cURL error during guild join: ' . ($joinResp['error'] ?? 'unknown'));
+            }
+            if ($joinResp['status'] >= 400) {
+                error_log('Failed to join guild: status ' . $joinResp['status'] . ' response: ' . $joinResp['body']);
+                return new Response(false, 'Discord API returned status ' . $joinResp['status'] . ' when joining guild');
+            }
+        } elseif ($status >= 400 && $status !== 200 && $status !== 204) {
+            return new Response(false, 'Discord API returned status ' . $status . ' when checking guild membership');
+        }
+
+        return new Response(true, 'guild joined', null);
+    }
+
+    /**
+     * Update the current account with Discord details and assign verified role.
+     */
+    private static function updateAccount(vAccount $account, string $discordId, string $discordUsername) : Response
+    {
+        $conn = Database::getConnection();
+        $stmt = $conn->prepare('UPDATE account SET DiscordUserId = ?, DiscordUsername = ? WHERE Email = ?');
+        if (!$stmt) {
+            return new Response(false, 'Failed to prepare statement', null);
+        }
+        $stmt->bind_param('sss', $discordId, $discordUsername, $account->email);
+        $stmt->execute();
+        $stmt->close();
+
+        $account->discordUserId  = $discordId;
+        $account->discordUsername = $discordUsername;
+        Session::setSessionData('vAccount', $account);
+
+        $roleResp = self::assignVerifiedRole($discordId);
+        if (!$roleResp->success) {
+            return new Response(false, $roleResp->message, null);
+        }
+
+        return new Response(true, 'account updated', null);
+    }
+
+    /**
+     * Notify the configured channel about a new link, if first time.
+     */
+    private static function notifyLink(vAccount $account, bool $firstLink) : void
+    {
+        if (!$firstLink) {
+            return;
+        }
+        $channelId = ServiceCredentials::get_discord_link_channel_id();
+        if ($channelId) {
+            $mention = "<@{$account->discordUserId}>";
+            $message = FlavorTextController::getDiscordLinkFlavorText($mention);
+            //self::sendChannelMessage($channelId, $message);
+            //self::DiscordWebHook($message);
+        }
+    }
+
+    /**
      * Complete the Discord OAuth linking process.
      */
     public static function completeDiscordLink(string $code, string $state) : Response
@@ -344,144 +489,47 @@ class SocialMediaController
         $expectedState = Session::sessionDataString('discord_oauth_state');
         if (!$expectedState || $expectedState !== $state) {
             $sessionId = Session::getCurrentSessionId();
-            $username = $account->username ?? 'unknown';
+            $username  = $account->username ?? 'unknown';
             $msg = 'completeDiscordLink invalid state token: session='
                 . ($sessionId ?? 'none')
                 . ' user=' . $username
                 . ' expected=' . ($expectedState ?? 'none')
                 . ' received=' . $state;
             error_log($msg);
-            // State token is single-use to prevent replay attacks.
             Session::removeSessionData('discord_oauth_state');
             return new Response(false, 'Invalid state token; please restart the Discord link process.', null);
         }
 
-        $clientId     = ServiceCredentials::get_discord_oauth_client_id();
-        $clientSecret = ServiceCredentials::get_discord_oauth_client_secret();
-        $redirectUri  = self::discordRedirectUri();
-        if (!$clientId || !$clientSecret || !$redirectUri) {
-            return new Response(false, 'Discord OAuth not configured', null);
+        $tokenResp = self::fetchAccessToken($code);
+        if (!$tokenResp->success) {
+            return $tokenResp;
         }
+        $accessToken = $tokenResp->data['access_token'];
 
-        $tokenCh = curl_init('https://discord.com/api/oauth2/token');
-        if ($tokenCh === false) {
-            return new Response(false, 'Failed to contact Discord', null);
+        $userResp = self::fetchDiscordUser($accessToken);
+        if (!$userResp->success) {
+            return $userResp;
         }
-        curl_setopt($tokenCh, CURLOPT_POST, true);
-        curl_setopt($tokenCh, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($tokenCh, CURLOPT_POSTFIELDS, http_build_query([
-            'client_id' => $clientId,
-            'client_secret' => $clientSecret,
-            'grant_type' => 'authorization_code',
-            'code' => $code,
-            'redirect_uri' => $redirectUri,
-        ]));
-        $tokenResponse = curl_exec($tokenCh);
-        if ($tokenResponse === false) {
-            curl_close($tokenCh);
-            return new Response(false, 'Failed to contact Discord', null);
-        }
-        $tokenData = json_decode($tokenResponse, true);
-        curl_close($tokenCh);
-        if (!isset($tokenData['access_token'])) {
-            return new Response(false, 'Failed to retrieve access token', $tokenData);
-        }
-        $accessToken = $tokenData['access_token'];
+        $discordId       = $userResp->data['id'];
+        $discordUsername = $userResp->data['username'];
 
-        $userCh = curl_init('https://discord.com/api/users/@me');
-        if ($userCh === false) {
-            return new Response(false, 'Failed to fetch user profile', null);
-        }
-        curl_setopt($userCh, CURLOPT_HTTPHEADER, [
-            'Authorization: Bearer ' . $accessToken,
-            'Content-Type: application/json',
-        ]);
-        curl_setopt($userCh, CURLOPT_RETURNTRANSFER, true);
-        $userResponse = curl_exec($userCh);
-        if ($userResponse === false) {
-            curl_close($userCh);
-            return new Response(false, 'Failed to fetch user profile', null);
-        }
-        $userData = json_decode($userResponse, true);
-        curl_close($userCh);
-        if (!isset($userData['id'], $userData['username'])) {
-            return new Response(false, 'Invalid user data from Discord', $userData);
-        }
-
-        $discordId       = $userData['id'];
-        $discordUsername = $userData['username'];
-
-        $guildJoinError = null;
-        $guildId  = ServiceCredentials::get_discord_guild_id();
-        $botToken = ServiceCredentials::get_discord_bot_token();
-        if ($guildId && $botToken) {
-            $memberUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
-                . '/members/' . urlencode($discordId);
-            $checkResp = self::discordApiRequest('GET', $memberUrl, null, [
-                'Authorization: Bot ' . $botToken,
-            ]);
-            if ($checkResp['body'] === false) {
-                $guildJoinError = 'cURL error during guild membership check: ' . ($checkResp['error'] ?? 'unknown');
-            } else {
-                $checkStatus = $checkResp['status'];
-                if ($checkStatus === 404) {
-                    $joinResp = self::discordApiRequest('PUT', $memberUrl, [
-                        'access_token' => $accessToken,
-                    ], [
-                        'Authorization: Bot ' . $botToken,
-                    ]);
-                    $joinStatus = $joinResp['status'];
-                    if ($joinResp['body'] === false) {
-                        $guildJoinError = 'cURL error during guild join: ' . ($joinResp['error'] ?? 'unknown');
-                        error_log('Failed to join guild: ' . ($joinResp['error'] ?? 'unknown'));
-                    } elseif ($joinStatus >= 400) {
-                        $guildJoinError = 'Discord API returned status ' . $joinStatus . ' when joining guild';
-                        error_log('Failed to join guild: status ' . $joinStatus . ' response: ' . $joinResp['body']);
-                    }
-                } elseif ($checkStatus >= 400 && $checkStatus !== 200 && $checkStatus !== 204) {
-                    $guildJoinError = 'Discord API returned status ' . $checkStatus . ' when checking guild membership';
-                }
-            }
-        }
-
-        $conn = Database::getConnection();
-        $stmt = $conn->prepare('UPDATE account SET DiscordUserId = ?, DiscordUsername = ? WHERE Email = ?');
-        if (!$stmt) {
-            return new Response(false, 'Failed to prepare statement', null);
-        }
-        $stmt->bind_param('sss', $discordId, $discordUsername, $account->email);
-        $stmt->execute();
-        $stmt->close();
-
-        $account->discordUserId = $discordId;
-        $account->discordUsername = $discordUsername;
-        Session::setSessionData('vAccount', $account);
-
-        $roleResponse = self::assignVerifiedRole($discordId);
+        $guildResp  = self::joinGuild($discordId, $accessToken);
+        $updateResp = self::updateAccount($account, $discordId, $discordUsername);
         Session::setSessionData('discord_oauth_state', null);
 
         $errors = [];
-        if ($guildJoinError !== null) {
-            $errors[] = $guildJoinError ?: 'failed to join Discord guild';
+        if (!$guildResp->success && $guildResp->message !== '') {
+            $errors[] = $guildResp->message;
         }
-        if (!$roleResponse->success) {
-            $errors[] = $roleResponse->message;
+        if (!$updateResp->success) {
+            $errors[] = $updateResp->message;
         }
         if ($errors) {
             $msg = 'Discord account linked, but ' . implode(' and ', $errors);
             return new Response(false, $msg, null);
         }
 
-        if ($firstLink) {
-            $channelId = ServiceCredentials::get_discord_link_channel_id();
-            if ($channelId) {
-                $mention = "<@{$account->discordUserId}>";
-                $message = FlavorTextController::getDiscordLinkFlavorText($mention);
-                //self::sendChannelMessage($channelId, $message);
-                //self::DiscordWebHook($message);
-            }
-        }
-        
+        self::notifyLink($account, $firstLink);
 
         return new Response(true, 'Discord account linked', null);
     }
