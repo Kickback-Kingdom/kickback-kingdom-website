@@ -678,7 +678,7 @@ function SearchForMedia()
         params.append(key, value);
     }
 
-    fetch('/api/v1/media/search.php?json', {
+    fetch('<?= Version::urlBetaPrefix() ?>/api/v1/media/search.php?json', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
