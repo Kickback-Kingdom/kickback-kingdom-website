@@ -279,8 +279,18 @@ class DiscordController
             if (!$host) {
                 return null;
             }
-            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-            $base   = $scheme . '://' . $host;
+
+            $scheme = 'http';
+            $forwarded = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '';
+            $forwarded = explode(',', (string)$forwarded)[0];
+            if (
+                (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || strcasecmp($forwarded, 'https') === 0
+            ) {
+                $scheme = 'https';
+            }
+
+            $base = $scheme . '://' . $host;
         }
         $base = rtrim($base, '/');
         $beta = Version::urlBetaPrefix();
