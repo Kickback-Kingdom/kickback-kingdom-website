@@ -497,6 +497,9 @@ class DiscordController
             return new Response(false, 'Invalid state token; please restart the Discord link process.', null);
         }
 
+        // Consume the state token to prevent re-use before any network operations.
+        Session::removeSessionData('discord_oauth_state');
+
         $tokenResp = self::fetchAccessToken($code);
         if (!$tokenResp->success) {
             return $tokenResp;
@@ -512,7 +515,6 @@ class DiscordController
 
         $guildResp  = self::joinGuild($discordId, $accessToken);
         $updateResp = self::updateAccount($account, $discordId, $discordUsername);
-        Session::setSessionData('discord_oauth_state', null);
 
         $errors = [];
         if (!$guildResp->success && $guildResp->message !== '') {
@@ -526,7 +528,8 @@ class DiscordController
             return new Response(false, $msg, null);
         }
 
-        self::notifyLink($account, $firstLink);
+        // Defer notification until after the response is sent.
+        register_shutdown_function(fn() => self::notifyLink($account, $firstLink));
 
         return new Response(true, 'Discord account linked', null);
     }
