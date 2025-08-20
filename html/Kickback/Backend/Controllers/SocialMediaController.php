@@ -414,6 +414,8 @@ class SocialMediaController
                 . ' expected=' . ($expectedState ?? 'none')
                 . ' received=' . $state;
             error_log($msg);
+            // State token is single-use to prevent replay attacks.
+            Session::removeSessionData('discord_oauth_state');
             return new Response(false, 'Invalid state token; please restart the Discord link process.', null);
         }
 
