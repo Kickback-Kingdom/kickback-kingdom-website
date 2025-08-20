@@ -271,6 +271,15 @@ function GeneratePromptImage(prompt)
         console.error('Generation error', err);
     });
 }
+function copyImagePrompt()
+{
+    const promptEl = document.getElementById('imagePrompt');
+    if (promptEl) {
+        navigator.clipboard.writeText(promptEl.value)
+            .then(() => alert('Prompt copied!'));
+    }
+}
+window.copyImagePrompt = copyImagePrompt;
 window.GenerateImageFromPrompt = GeneratePromptImage;
 window.PromptGenerateWithAI = PromptGenerateWithAI;
 <?php } ?>
