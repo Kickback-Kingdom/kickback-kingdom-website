@@ -77,7 +77,7 @@ if (!isset($thisLichCardData))
                                         </tr>
                                         <tr>
                                             <th scope="row">Set:</th>
-                                            <td><a href="/lich/set/<?= htmlspecialchars($thisLichCardData->set->locator); ?>"><?= htmlspecialchars($thisLichCardData->set->name); ?></a></td>
+                                            <td><a href="<?= Version::urlBetaPrefix() ?>/lich/set/<?= htmlspecialchars($thisLichCardData->set->locator); ?>"><?= htmlspecialchars($thisLichCardData->set->name); ?></a></td>
                                         </tr>
                                         <tr>
                                             <th scope="row">Type:</th>
