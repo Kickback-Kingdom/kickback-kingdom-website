@@ -7,6 +7,7 @@ use Kickback\Common\Primitives\Str;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Controllers\TreasureHuntController;
 use Kickback\Backend\Views\vTreasureHuntEvent;
+use Kickback\Common\Version;
 
 class AdCarousel
 {
