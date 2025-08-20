@@ -281,6 +281,7 @@ class SocialMediaController
         ]);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        self::applyCaBundle($ch);
         curl_exec($ch);
         curl_close($ch);
     }
@@ -314,6 +315,7 @@ class SocialMediaController
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $denyPayload);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                self::applyCaBundle($ch);
                 curl_exec($ch);
                 curl_close($ch);
             }
@@ -337,6 +339,7 @@ class SocialMediaController
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $allowPayload);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                self::applyCaBundle($ch);
                 curl_exec($ch);
                 curl_close($ch);
             }
