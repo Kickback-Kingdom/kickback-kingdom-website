@@ -1491,7 +1491,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
 ?>
 
 
-<a class="btn btn-lg btn-primary" type="button" href="<?php echo Version::urlBetaPrefix(); ?>/login.php">
+<a class="btn btn-lg btn-primary" type="button" href="<?php echo Version::urlBetaPrefix(); ?>/login.php?redirect=<?php echo urlencode(ltrim($_SERVER['REQUEST_URI'], '/')); ?>">
             <i class="fa-solid fa-user"></i>
         </a>
 <?php
@@ -1693,7 +1693,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         ?>
 
                         <li>
-                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/login.php">
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/login.php?redirect=<?php echo urlencode(ltrim($_SERVER['REQUEST_URI'], '/')); ?>">
                                 <i class="nav-icon fa-solid fa-right-from-bracket"></i> Login
                             </a>
                         </li>
