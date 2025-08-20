@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const discordError = params.get('discord_error');
         if (discordError) {
             const messages = {
-                'state-missing': 'Session expired. Please log in again.',
+                'state-missing': 'Unable to find session. Make sure you return to the same domain you started from and are logged in, then try linking again.',
                 'state-mismatch': 'Link process interrupted (multiple tabs or domain change). Try linking once more.'
             };
             const userMessage = messages[discordError] || discordError;
