@@ -30,49 +30,62 @@ class SocialMediaController
         }
     }
 
+    /**
+     * Perform a Discord API request with common cURL configuration.
+     *
+     * @param string               $method  HTTP method to use.
+     * @param string               $url     Request URL.
+     * @param array<string,mixed>|null $payload Optional JSON payload to send.
+     * @param array<int,string>    $headers Additional headers.
+     *
+     * @return array{status:int, body:string|false, error:?string}
+     */
+    private static function discordApiRequest(string $method, string $url, ?array $payload = null, array $headers = []) : array
+    {
+        $ch = curl_init($url);
+        if ($ch === false) {
+            return ['status' => 0, 'body' => false, 'error' => 'failed to init'];
+        }
+
+        if ($payload !== null) {
+            $json = json_encode($payload);
+            if ($json === false) {
+                curl_close($ch);
+                return ['status' => 0, 'body' => false, 'error' => 'json_encode failed'];
+            }
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
+            $headers[] = 'Content-Type: application/json';
+        }
+
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        if ($headers !== []) {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        }
+        self::applyCaBundle($ch);
+
+        $body  = curl_exec($ch);
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = null;
+        if ($body === false) {
+            $error = curl_error($ch);
+        }
+        curl_close($ch);
+
+        return ['status' => $status, 'body' => $body, 'error' => $error];
+    }
+
     public static function DiscordWebHook(mixed $msg) : void
     {
         $kk_credentials = ServiceCredentials::instance();
-    
+
         // Ex: $webhookURL = "https://discord.com/api/webhooks/<some_number>/<api_key>"
         $webhookURL = $kk_credentials["discord_api_url"] . '/' . $kk_credentials["discord_api_key"];
-    
-        $message = $msg;
-    
-        $jsonData = json_encode(array("content" => $message));
-        if ($jsonData === false) {
-            echo 'Error: `json_encode` failed to encode message in `DiscordWebHook` function.';
-            echo "Input message: $jsonData";
-            return;
-        }
-    
-        // Initialize a cURL session
-        $ch = curl_init($webhookURL);
-        if ($ch === false) {
-            echo 'Error: `curl_init` returned `false`.';
-            return;
-        }
-    
-        // Set the options for the cURL session
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-            'Content-Type: application/json',
-            'Content-Length: ' . strlen($jsonData)
-        ));
-        self::applyCaBundle($ch);
 
-        // Execute the cURL session
-        $result = curl_exec($ch);
-    
-        // Check for errors
-        if (0 < curl_errno($ch)) {
-            echo 'Error:' . curl_error($ch);
+        $result = self::discordApiRequest('POST', $webhookURL, ['content' => $msg]);
+        if ($result['body'] === false) {
+            echo 'Error:' . ($result['error'] ?? 'unknown');
         }
-    
-        // Close the cURL session
-        curl_close($ch);
     }
 
     private static function sendChannelMessage(string $channelId, string $message) : void
@@ -81,25 +94,10 @@ class SocialMediaController
         if (!$botToken) {
             return;
         }
-        $payload = json_encode(['content' => $message]);
-        if ($payload === false) {
-            return;
-        }
         $url = 'https://discord.com/api/channels/' . urlencode($channelId) . '/messages';
-        $ch = curl_init($url);
-        if ($ch === false) {
-            return;
-        }
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
+        self::discordApiRequest('POST', $url, ['content' => $message], [
             'Authorization: Bot ' . $botToken,
         ]);
-        self::applyCaBundle($ch);
-        curl_exec($ch);
-        curl_close($ch);
     }
 
     public static function assignVerifiedRole(string $discordUserId) : Response
@@ -112,30 +110,20 @@ class SocialMediaController
         }
         $memberUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
             . '/members/' . urlencode($discordUserId);
-        $memberCh = curl_init($memberUrl);
-        if ($memberCh === false) {
-            return new Response(false, 'failed to initialize member fetch');
-        }
-        curl_setopt($memberCh, CURLOPT_HTTPHEADER, [
+        $memberResp = self::discordApiRequest('GET', $memberUrl, null, [
             'Authorization: Bot ' . $botToken,
         ]);
-        curl_setopt($memberCh, CURLOPT_RETURNTRANSFER, true);
-        self::applyCaBundle($memberCh);
-        $memberResp = curl_exec($memberCh);
-        if ($memberResp === false) {
-            error_log('assignVerifiedRole member fetch failed: ' . curl_error($memberCh));
-            curl_close($memberCh);
+        if ($memberResp['body'] === false) {
+            error_log('assignVerifiedRole member fetch failed: ' . ($memberResp['error'] ?? 'unknown'));
             return new Response(false, 'failed to fetch member data');
         }
-        $memberStatus = curl_getinfo($memberCh, CURLINFO_HTTP_CODE);
-        curl_close($memberCh);
-        if ($memberStatus !== 200) {
-            error_log('assignVerifiedRole member fetch HTTP ' . $memberStatus . ' response: ' . $memberResp);
-            return new Response(false, 'member fetch HTTP ' . $memberStatus);
+        if ($memberResp['status'] !== 200) {
+            error_log('assignVerifiedRole member fetch HTTP ' . $memberResp['status'] . ' response: ' . $memberResp['body']);
+            return new Response(false, 'member fetch HTTP ' . $memberResp['status']);
         }
-        $memberData = json_decode($memberResp, true);
+        $memberData = json_decode($memberResp['body'], true);
         if (!is_array($memberData)) {
-            error_log('assignVerifiedRole invalid member data: ' . $memberResp);
+            error_log('assignVerifiedRole invalid member data: ' . $memberResp['body']);
             return new Response(false, 'invalid member data');
         }
         if (!empty($memberData['pending'])) {
@@ -146,55 +134,41 @@ class SocialMediaController
         $botMemberUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
             . '/members/@me';
         $botRoles = [];
-        $botCh = curl_init($botMemberUrl);
-        if ($botCh !== false) {
-            curl_setopt($botCh, CURLOPT_HTTPHEADER, [
-                'Authorization: Bot ' . $botToken,
-            ]);
-            curl_setopt($botCh, CURLOPT_RETURNTRANSFER, true);
-            self::applyCaBundle($botCh);
-            $botResp = curl_exec($botCh);
-            if ($botResp !== false && curl_getinfo($botCh, CURLINFO_HTTP_CODE) === 200) {
-                $botData = json_decode($botResp, true);
-                if (is_array($botData) && isset($botData['roles']) && is_array($botData['roles'])) {
-                    $botRoles = $botData['roles'];
-                }
+        $botResp = self::discordApiRequest('GET', $botMemberUrl, null, [
+            'Authorization: Bot ' . $botToken,
+        ]);
+        if ($botResp['body'] !== false && $botResp['status'] === 200) {
+            $botData = json_decode($botResp['body'], true);
+            if (is_array($botData) && isset($botData['roles']) && is_array($botData['roles'])) {
+                $botRoles = $botData['roles'];
             }
-            curl_close($botCh);
         }
 
         $rolesUrl = 'https://discord.com/api/guilds/' . urlencode($guildId) . '/roles';
-        $rolesCh = curl_init($rolesUrl);
         $verifiedRolePos = null;
         $verifiedRoleManaged = null;
         $botHighestPos = null;
-        if ($rolesCh !== false) {
-            curl_setopt($rolesCh, CURLOPT_HTTPHEADER, [
-                'Authorization: Bot ' . $botToken,
-            ]);
-            curl_setopt($rolesCh, CURLOPT_RETURNTRANSFER, true);
-            self::applyCaBundle($rolesCh);
-            $rolesResp = curl_exec($rolesCh);
-            if ($rolesResp !== false && curl_getinfo($rolesCh, CURLINFO_HTTP_CODE) === 200) {
-                $roles = json_decode($rolesResp, true);
-                if (is_array($roles)) {
-                    foreach ($roles as $role) {
-                        if (!isset($role['id'], $role['position'])) {
-                            continue;
-                        }
-                        if ($role['id'] === $roleId) {
-                            $verifiedRolePos     = $role['position'];
-                            $verifiedRoleManaged = !empty($role['managed']);
-                        }
-                        if (in_array($role['id'], $botRoles, true)) {
-                            if ($botHighestPos === null || $role['position'] > $botHighestPos) {
-                                $botHighestPos = $role['position'];
-                            }
+        $rolesResp = self::discordApiRequest('GET', $rolesUrl, null, [
+            'Authorization: Bot ' . $botToken,
+        ]);
+        if ($rolesResp['body'] !== false && $rolesResp['status'] === 200) {
+            $roles = json_decode($rolesResp['body'], true);
+            if (is_array($roles)) {
+                foreach ($roles as $role) {
+                    if (!isset($role['id'], $role['position'])) {
+                        continue;
+                    }
+                    if ($role['id'] === $roleId) {
+                        $verifiedRolePos     = $role['position'];
+                        $verifiedRoleManaged = !empty($role['managed']);
+                    }
+                    if (in_array($role['id'], $botRoles, true)) {
+                        if ($botHighestPos === null || $role['position'] > $botHighestPos) {
+                            $botHighestPos = $role['position'];
                         }
                     }
                 }
             }
-            curl_close($rolesCh);
         }
 
         error_log('assignVerifiedRole hierarchy botHighest=' . ($botHighestPos ?? 'unknown')
@@ -214,33 +188,23 @@ class SocialMediaController
         $roleUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
             . '/members/' . urlencode($discordUserId)
             . '/roles/' . urlencode($roleId);
-        $ch = curl_init($roleUrl);
-        if ($ch === false) {
-            return new Response(false, 'failed to initialize role assignment');
-        }
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        $result = self::discordApiRequest('PUT', $roleUrl, null, [
             'Authorization: Bot ' . $botToken,
             'Content-Length: 0',
         ]);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        self::applyCaBundle($ch);
-        $result = curl_exec($ch);
-        if ($result === false) {
-            error_log('assignVerifiedRole curl_exec failed: ' . curl_error($ch));
-            curl_close($ch);
+        if ($result['body'] === false) {
+            error_log('assignVerifiedRole curl_exec failed: ' . ($result['error'] ?? 'unknown'));
             return new Response(false, 'failed to assign verified role');
         }
-        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        $status = $result['status'];
         if ($status < 200 || $status >= 300) {
-            $error = $result;
-            $decoded = json_decode($result, true);
+            $error = $result['body'];
+            $decoded = json_decode($result['body'], true);
             if (is_array($decoded) && isset($decoded['code'])) {
                 $error = self::discordErrorMessage((int)$decoded['code'])
                     . ' (' . $decoded['code'] . ')';
             }
-            error_log('assignVerifiedRole HTTP status ' . $status . ' error: ' . $error . ' response: ' . $result);
+            error_log('assignVerifiedRole HTTP status ' . $status . ' error: ' . $error . ' response: ' . $result['body']);
             return new Response(false, 'Discord API error: ' . $error);
         }
         return new Response(true, 'verified role assigned');
@@ -271,19 +235,10 @@ class SocialMediaController
         $roleUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
             . '/members/' . urlencode($discordUserId)
             . '/roles/' . urlencode($roleId);
-        $ch = curl_init($roleUrl);
-        if ($ch === false) {
-            return;
-        }
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        self::discordApiRequest('DELETE', $roleUrl, null, [
             'Authorization: Bot ' . $botToken,
             'Content-Length: 0',
         ]);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        self::applyCaBundle($ch);
-        curl_exec($ch);
-        curl_close($ch);
     }
 
     public static function restrictChannelToVerified(string $channelId) : void
@@ -300,50 +255,24 @@ class SocialMediaController
         // Deny send messages for @everyone (guild id)
         $everyoneUrl = 'https://discord.com/api/channels/' . urlencode($channelId)
             . '/permissions/' . urlencode($guildId);
-        $denyPayload = json_encode([
+        self::discordApiRequest('PUT', $everyoneUrl, [
             'type'  => 0,
             'allow' => '0',
             'deny'  => (string)$sendMessages,
+        ], [
+            'Authorization: Bot ' . $botToken,
         ]);
-        if ($denyPayload !== false) {
-            $ch = curl_init($everyoneUrl);
-            if ($ch !== false) {
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Authorization: Bot ' . $botToken,
-                    'Content-Type: application/json',
-                ]);
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $denyPayload);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                self::applyCaBundle($ch);
-                curl_exec($ch);
-                curl_close($ch);
-            }
-        }
 
         // Allow send messages for verified role
         $roleUrl = 'https://discord.com/api/channels/' . urlencode($channelId)
             . '/permissions/' . urlencode($roleId);
-        $allowPayload = json_encode([
+        self::discordApiRequest('PUT', $roleUrl, [
             'type'  => 0,
             'allow' => (string)$sendMessages,
             'deny'  => '0',
+        ], [
+            'Authorization: Bot ' . $botToken,
         ]);
-        if ($allowPayload !== false) {
-            $ch = curl_init($roleUrl);
-            if ($ch !== false) {
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Authorization: Bot ' . $botToken,
-                    'Content-Type: application/json',
-                ]);
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $allowPayload);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                self::applyCaBundle($ch);
-                curl_exec($ch);
-                curl_close($ch);
-            }
-        }
     }
 
     /**
@@ -488,54 +417,30 @@ class SocialMediaController
         if ($guildId && $botToken) {
             $memberUrl = 'https://discord.com/api/guilds/' . urlencode($guildId)
                 . '/members/' . urlencode($discordId);
-            $checkCh = curl_init($memberUrl);
-            if ($checkCh !== false) {
-                curl_setopt($checkCh, CURLOPT_HTTPHEADER, [
-                    'Authorization: Bot ' . $botToken,
-                ]);
-                curl_setopt($checkCh, CURLOPT_RETURNTRANSFER, true);
-                self::applyCaBundle($checkCh);
-                $checkResp = curl_exec($checkCh);
-                if ($checkResp === false) {
-                    $guildJoinError = 'cURL error during guild membership check: ' . curl_error($checkCh);
-                } else {
-                    $checkStatus = curl_getinfo($checkCh, CURLINFO_HTTP_CODE);
-                    if ($checkStatus === 404) {
-                        $joinPayload = json_encode(['access_token' => $accessToken]);
-                        if ($joinPayload !== false) {
-                            $joinCh = curl_init($memberUrl);
-                            if ($joinCh !== false) {
-                                curl_setopt($joinCh, CURLOPT_HTTPHEADER, [
-                                    'Authorization: Bot ' . $botToken,
-                                    'Content-Type: application/json',
-                                ]);
-                                curl_setopt($joinCh, CURLOPT_CUSTOMREQUEST, 'PUT');
-                                curl_setopt($joinCh, CURLOPT_POSTFIELDS, $joinPayload);
-                                curl_setopt($joinCh, CURLOPT_RETURNTRANSFER, true);
-                                self::applyCaBundle($joinCh);
-                                $joinResp = curl_exec($joinCh);
-                                $joinStatus = curl_getinfo($joinCh, CURLINFO_HTTP_CODE);
-                                if ($joinResp === false) {
-                                    $guildJoinError = 'cURL error during guild join: ' . curl_error($joinCh);
-                                    error_log('Failed to join guild: ' . curl_error($joinCh));
-                                } elseif ($joinStatus >= 400) {
-                                    $guildJoinError = 'Discord API returned status ' . $joinStatus . ' when joining guild';
-                                    error_log('Failed to join guild: status ' . $joinStatus . ' response: ' . $joinResp);
-                                }
-                                curl_close($joinCh);
-                            } else {
-                                $guildJoinError = 'Failed to initialize guild join request';
-                            }
-                        } else {
-                            $guildJoinError = 'Failed to encode guild join payload';
-                        }
-                    } elseif ($checkStatus >= 400 && $checkStatus !== 200 && $checkStatus !== 204) {
-                        $guildJoinError = 'Discord API returned status ' . $checkStatus . ' when checking guild membership';
-                    }
-                }
-                curl_close($checkCh);
+            $checkResp = self::discordApiRequest('GET', $memberUrl, null, [
+                'Authorization: Bot ' . $botToken,
+            ]);
+            if ($checkResp['body'] === false) {
+                $guildJoinError = 'cURL error during guild membership check: ' . ($checkResp['error'] ?? 'unknown');
             } else {
-                $guildJoinError = 'Failed to initialize guild membership check';
+                $checkStatus = $checkResp['status'];
+                if ($checkStatus === 404) {
+                    $joinResp = self::discordApiRequest('PUT', $memberUrl, [
+                        'access_token' => $accessToken,
+                    ], [
+                        'Authorization: Bot ' . $botToken,
+                    ]);
+                    $joinStatus = $joinResp['status'];
+                    if ($joinResp['body'] === false) {
+                        $guildJoinError = 'cURL error during guild join: ' . ($joinResp['error'] ?? 'unknown');
+                        error_log('Failed to join guild: ' . ($joinResp['error'] ?? 'unknown'));
+                    } elseif ($joinStatus >= 400) {
+                        $guildJoinError = 'Discord API returned status ' . $joinStatus . ' when joining guild';
+                        error_log('Failed to join guild: status ' . $joinStatus . ' response: ' . $joinResp['body']);
+                    }
+                } elseif ($checkStatus >= 400 && $checkStatus !== 200 && $checkStatus !== 204) {
+                    $guildJoinError = 'Discord API returned status ' . $checkStatus . ' when checking guild membership';
+                }
             }
         }
 
