@@ -126,7 +126,7 @@ class AdCarousel
                 "/assets/images/lich-banner-mobile.jpg",
                 "L.I.C.H.",
                 "A dark force awakens and seeks to add you to its realm.",
-                "/lich",
+                Version::urlBetaPrefix()."/lich",
                 null,
                 "/assets/media/videos/lich3.mp4",
                 45000,
