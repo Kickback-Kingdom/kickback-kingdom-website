@@ -271,6 +271,11 @@ class MediaController {
             return new Response(false, "Invalid value: '$size'. Supported values are: '$supported'.", null);
         }
 
+        if (Str::empty($directory)) {
+            $date = date('Y-m-d');
+            $directory = "generated/{$date}/{$model}";
+        }
+
         try {
             $client = \OpenAI::client($apiKey);
             $params = [
