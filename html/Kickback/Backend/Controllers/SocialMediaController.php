@@ -408,14 +408,13 @@ class SocialMediaController
         if (!$expectedState || $expectedState !== $state) {
             $sessionId = Session::getCurrentSessionId();
             $username = $account->username ?? 'unknown';
-            error_log(
-                'completeDiscordLink invalid state token: session='
+            $msg = 'completeDiscordLink invalid state token: session='
                 . ($sessionId ?? 'none')
                 . ' user=' . $username
                 . ' expected=' . ($expectedState ?? 'none')
-                . ' received=' . $state
-            );
-            return new Response(false, 'Invalid state token', null);
+                . ' received=' . $state;
+            error_log($msg);
+            return new Response(false, $msg, null);
         }
 
         $clientId     = ServiceCredentials::get_discord_oauth_client_id();
