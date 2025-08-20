@@ -1175,7 +1175,7 @@ function goToWikiPage() {
     const formattedLocator = encodeURIComponent(cardLocator.trim());
 
     // Build the URL for the wiki page
-    const wikiUrl = `/lich/card/${formattedLocator}`;
+    const wikiUrl = `<?= Version::urlBetaPrefix() ?>/lich/card/${formattedLocator}`;
 
     // Redirect to the generated URL
     window.location.href = wikiUrl;
