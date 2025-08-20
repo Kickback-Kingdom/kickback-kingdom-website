@@ -24,7 +24,7 @@ if (isset($_POST["submit"]))
     if (!$hasError)
     {
         
-        header("Location: /".$redirectUrl);
+        header("Location: ".$redirectUrl);
     }
 }
 
