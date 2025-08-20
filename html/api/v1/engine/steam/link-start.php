@@ -1,9 +1,9 @@
 <?php
 require(__DIR__.'/../../engine/engine.php');
 
-use Kickback\Backend\Controllers\SocialMediaController;
+use Kickback\Backend\Controllers\SteamController;
 
 OnlyGET();
 
-return SocialMediaController::startSteamLink();
+return SteamController::startLink();
 ?>
