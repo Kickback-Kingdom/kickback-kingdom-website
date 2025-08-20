@@ -270,7 +270,7 @@ if ($betaPrefix !== '' && strncmp($redirectUri, $betaPrefix . '/', strlen($betaP
                                     <option value=".26">Desktop Banner</option>
                                     <option value=".463">Mobile Banner</option>
                                     <option value="1">Icon (Square)</option>
-                                    <option value="1.1547">Hexagon</option>
+                                    <option value="0.866">Lich Card Art (Hexagon)</option>
                                     <option value="0">Custom</option>
                                 </select>
                             </div>
