@@ -414,7 +414,7 @@ class SocialMediaController
                 . ' expected=' . ($expectedState ?? 'none')
                 . ' received=' . $state;
             error_log($msg);
-            return new Response(false, $msg, null);
+            return new Response(false, 'Invalid state token; please restart the Discord link process.', null);
         }
 
         $clientId     = ServiceCredentials::get_discord_oauth_client_id();

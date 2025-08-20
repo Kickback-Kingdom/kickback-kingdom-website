@@ -357,9 +357,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
         const discordError = params.get('discord_error');
         if (discordError) {
+            const userMessage = discordError || 'Invalid state token; please restart the Discord link process.';
             const statusDiv = $('#discordStatus');
-            statusDiv.removeClass('d-none alert-success').addClass('alert-danger').text(discordError);
-            ShowPopError(discordError, 'Discord');
+            statusDiv.removeClass('d-none alert-success').addClass('alert-danger').text(userMessage);
+            ShowPopError(userMessage, 'Discord');
             params.delete('discord_error');
             const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
             history.replaceState({}, '', newUrl);
