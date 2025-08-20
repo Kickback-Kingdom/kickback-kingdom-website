@@ -69,10 +69,10 @@ use Kickback\Common\Version;
                             <button type="button" class="btn btn-outline-info" onclick="goToWikiPage()">Go to Wiki Page</button>
                             
                             <!-- Go to Card Search -->
-                            <a type="button" class="btn btn-outline-primary" href="/lich/card-search">Go to Card Search</a>
+                            <a type="button" class="btn btn-outline-primary" href="<?= Version::urlBetaPrefix() ?>/lich/card-search">Go to Card Search</a>
                             
                             <!-- Create New Card -->
-                            <a type="button" class="btn btn-outline-success" href="/lich-card-edit.php">Create New Card</a>
+                            <a type="button" class="btn btn-outline-success" href="<?= Version::urlBetaPrefix() ?>/lich-card-edit.php">Create New Card</a>
                         </div>
                     </div>
                 </div>
