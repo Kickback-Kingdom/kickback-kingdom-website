@@ -272,7 +272,7 @@ class MediaController {
         }
 
         if (Str::empty($directory)) {
-            $date = date('Y-m-d');
+            $date = date('Y');
             $directory = "generated/{$date}/{$model}";
         }
 
