@@ -48,7 +48,12 @@ if (Session::isLoggedIn()) {
 
 $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
 
-
+// Calculate redirect path without the beta prefix so login returns to the correct page
+$redirectUri = ltrim($_SERVER['REQUEST_URI'], '/');
+$betaPrefix = ltrim(Version::urlBetaPrefix(), '/');
+if ($betaPrefix !== '' && strncmp($redirectUri, $betaPrefix . '/', strlen($betaPrefix) + 1) === 0) {
+    $redirectUri = substr($redirectUri, strlen($betaPrefix) + 1);
+}
 
 ?>
 
@@ -1491,7 +1496,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
 ?>
 
 
-<a class="btn btn-lg btn-primary" type="button" href="<?php echo Version::urlBetaPrefix(); ?>/login.php?redirect=<?php echo urlencode(ltrim($_SERVER['REQUEST_URI'], '/')); ?>">
+<a class="btn btn-lg btn-primary" type="button" href="<?php echo Version::urlBetaPrefix(); ?>/login.php?redirect=<?php echo urlencode($redirectUri); ?>">
             <i class="fa-solid fa-user"></i>
         </a>
 <?php
@@ -1693,7 +1698,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         ?>
 
                         <li>
-                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/login.php?redirect=<?php echo urlencode(ltrim($_SERVER['REQUEST_URI'], '/')); ?>">
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/login.php?redirect=<?php echo urlencode($redirectUri); ?>">
                                 <i class="nav-icon fa-solid fa-right-from-bracket"></i> Login
                             </a>
                         </li>
