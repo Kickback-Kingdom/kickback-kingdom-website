@@ -210,7 +210,7 @@ if (!isset($thisLichCardData))
                         </div>
                         
                         <?php if (Kickback\Services\Session::isServantOfTheLich()) { ?>
-                        <a href="/lich/card/edit/<?= $thisLichCardData->locator;?>" class="btn btn-primary">Edit Card</a>
+                        <a href="<?= Version::urlBetaPrefix() ?>/lich/card/edit/<?= $thisLichCardData->locator;?>" class="btn btn-primary">Edit Card</a>
                         <?php } ?>
                     </div>
 
