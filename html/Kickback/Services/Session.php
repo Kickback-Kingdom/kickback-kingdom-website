@@ -408,10 +408,30 @@ class Session {
     public static function ensureSessionStarted() : void
     {
         if (\session_status() !== PHP_SESSION_ACTIVE) {
-            \session_set_cookie_params([
+            $cookieParams = [
                 'path' => '/',
-                'domain' => '.kickback-kingdom.com',
-            ]);
+            ];
+
+            $domain = ServiceCredentials::get_session_cookie_domain();
+            if (!is_string($domain) || $domain === '') {
+                $host = $_SERVER['HTTP_HOST'] ?? '';
+                if ($host !== '') {
+                    $host = explode(':', $host)[0];
+                    $parts = explode('.', $host);
+                    if (count($parts) >= 2) {
+                        $root = implode('.', array_slice($parts, -2));
+                        if ($root === 'kickback-kingdom.com') {
+                            $domain = '.' . $root;
+                        }
+                    }
+                }
+            }
+
+            if (is_string($domain) && $domain !== '') {
+                $cookieParams['domain'] = $domain;
+            }
+
+            \session_set_cookie_params($cookieParams);
             \session_start();
         }
     }
