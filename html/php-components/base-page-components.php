@@ -224,6 +224,7 @@ if ($betaPrefix !== '' && strncmp($redirectUri, $betaPrefix . '/', strlen($betaP
                                 <div class="input-group">
                                     <textarea id="imagePrompt" class="form-control" rows="3"></textarea>
                                     <button class="btn btn-outline-secondary" type="button" onclick="copyImagePrompt()">Copy</button>
+                                    <button id="usePromptAsCustom" class="btn btn-outline-secondary d-none" type="button" onclick="usePromptAsCustom()">Use as custom</button>
                                 </div>
                             </div>
                             <div class="mb-3">
