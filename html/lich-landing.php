@@ -55,8 +55,8 @@ use Kickback\Common\Version;
                             A card game of cunning strategy, fierce battles, and survival on a dynamic hex grid.
                         </p>
                         <div class="mt-4">
-                            <a href="/quest-line/lich-arena" class="btn btn-primary btn-lg mx-2">Start Your Adventure</a>
-                            <a href="/g/LICH" class="btn btn-outline-light btn-lg mx-2">View Rankings</a>
+                            <a href="<?= Version::urlBetaPrefix(); ?>/quest-line/lich-arena" class="btn btn-primary btn-lg mx-2">Start Your Adventure</a>
+                            <a href="<?= Version::urlBetaPrefix(); ?>/g/LICH" class="btn btn-outline-light btn-lg mx-2">View Rankings</a>
                         </div>
                     </div>
                 </section>
@@ -197,7 +197,7 @@ use Kickback\Common\Version;
                 <section class="text-center bg-primary text-light py-5">
                     <h2>Think you can survive the Arena?</h2>
                     <p class="lead">Forge your destiny and take on the ultimate challenge.</p>
-                    <a href="/quest-line/lich-arena" class="btn btn-light btn-lg">Start Playing</a>
+                    <a href="<?= Version::urlBetaPrefix(); ?>/quest-line/lich-arena" class="btn btn-light btn-lg">Start Playing</a>
                 </section>
 
             </div>
