@@ -359,7 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (discordError) {
             const messages = {
                 'state-missing': 'Unable to find session. Make sure you return to the same domain you started from and are logged in, then try linking again.',
-                'state-mismatch': 'Link process interrupted (multiple tabs or domain change). Try linking once more.'
+                'state-mismatch': 'Link process interrupted (multiple tabs or domain change). Try linking once more.',
+                'state-save-failed': 'Unable to store link session. Ensure cookies are enabled and try again.'
             };
             const userMessage = messages[discordError] || discordError;
             const statusDiv = $('#discordStatus');
