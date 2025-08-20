@@ -1,6 +1,16 @@
 
 <?php
 use \Kickback\Common\Version;
+
+$shouldShowVersionPopup = (
+    (!isset($_SESSION['popupShownVersion']) || $_SESSION['popupShownVersion'] != Version::current()->number())
+    && !Version::$client_is_viewing_blogpost_for_current_version_update
+    && Version::$show_version_popup
+);
+
+if ($shouldShowVersionPopup) {
+    $_SESSION['popupShownVersion'] = Version::current()->number();
+}
 ?>
 
 <!-- VERSION CHANGELOG MODAL /blogpost.php?blogLocator=Kickback-Kingdom&postLocator=introduction&borderless -->
@@ -28,13 +38,12 @@ use \Kickback\Common\Version;
   </div>
 </div>
 <script>
-    var shouldShowVersionPopup = <?= ((!isset($_COOKIE['popupShownVersion']) || $_COOKIE['popupShownVersion'] != Version::current()->number()) && !Version::$client_is_viewing_blogpost_for_current_version_update && Version::$show_version_popup)?"true":"false"; ?>;
-    
+    var shouldShowVersionPopup = <?= $shouldShowVersionPopup ? "true" : "false"; ?>;
+
     function ShowVersionPopUp() {
         $("#versionModal").modal('show');
 
         document.getElementById('changelogIframe').src = "<?= Version::urlBetaPrefix()."/blogpost.php?borderless&blogLocator=Kickback-Kingdom&postLocator=".Version::current()->blogpost_locator();?>";
-        document.cookie = "popupShownVersion=<?= Version::current()->number() ?>; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
         shouldShowVersionPopup = false;
     }
 

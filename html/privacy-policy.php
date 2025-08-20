@@ -78,8 +78,8 @@ require("php-components/base-page-pull-active-account-info.php");
                     </ul>
                     <p>To make a request, contact us at: <a href="mailto:help@kickback-kingdom.com">help@kickback-kingdom.com</a></p>
 
-                    <h4 class="mt-5 mb-3">6. Cookies and Tracking</h4>
-                    <p>We use cookies to track basic session info and site activity. You may disable cookies in your browser, though this may affect gameplay features.</p>
+                    <h4 class="mt-5 mb-3">6. Session Tracking</h4>
+                    <p>We track basic session info and site activity using server-side sessions. No cookies are used for this purpose.</p>
 
                     <h4 class="mt-5 mb-3">7. Children's Privacy</h4>
                     <p>Our services are not directed to children under 13. If we learn that a child has provided personal info, we will delete it promptly.</p>
