@@ -604,7 +604,7 @@ function UploadImageData() {
         formData.append("desc", desc);
         formData.append("sessionToken", sessionToken);
 
-        fetch('/api/v1/media/upload.php', {
+        fetch('<?= Version::urlBetaPrefix() ?>/api/v1/media/upload.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
