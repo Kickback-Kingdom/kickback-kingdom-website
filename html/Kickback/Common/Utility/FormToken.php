@@ -15,15 +15,14 @@ namespace Kickback\Common\Utility;
 //   other people to make mistakes, and it makes the code harder to understand.)
 //   -- Lily Joan  2024-08-10
 use Kickback\Backend\Models\Response;
+use Kickback\Services\Session;
 
 class FormToken {
     /**
      * Generates a new form token and stores it in the session.
      */
     public static function generateFormToken() : void {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        Session::ensureSessionStarted();
 
         if (!isset($_SESSION['form_token']) || !is_string($_SESSION['form_token']) || strlen($_SESSION['form_token']) !== 64) {
             $_SESSION['form_token'] = bin2hex(random_bytes(32));
@@ -37,9 +36,7 @@ class FormToken {
      * @return Response Returns an Response indicating the success or failure of the token validation.
      */
     public static function useFormToken() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        Session::ensureSessionStarted();
 
         if (isset($_POST['form_token']) && isset($_SESSION['form_token']) && $_SESSION['form_token'] === $_POST['form_token']) {
             // Regenerate a new token to ensure a token is only used once
