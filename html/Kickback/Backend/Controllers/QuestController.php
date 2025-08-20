@@ -551,7 +551,7 @@ class QuestController
 
                 $raffleWinner = $raffleWinnerResp->data;
                 $msg = FlavorTextController::getRaffleWinnerAnnouncement($raffleQuest->title, $raffleWinner["Username"]);
-                SocialMediaController::DiscordWebHook($msg);
+                SocialMediaController::sendDiscordWebhook($msg);
 
                 return new Response(true, "Selected Raffle Winner!", null);
             } else {
@@ -1001,7 +1001,7 @@ class QuestController
             if (!self::queryQuestByIdInto($quest_id, $quest)) {
                 return new Response(false, "Could not find quest with that ID; failed to register for quest.", null);
             }
-            SocialMediaController::DiscordWebHook(FlavorTextController::getRandomGreeting() . ', ' . $account->username . ' just signed up for the ' . $quest->title . ' quest.');
+            SocialMediaController::sendDiscordWebhook(FlavorTextController::getRandomGreeting() . ', ' . $account->username . ' just signed up for the ' . $quest->title . ' quest.');
             mysqli_stmt_close($stmt);
             return (new Response(true, "Registered for quest successfully", null));
         } else {

@@ -1317,7 +1317,7 @@ class AccountController
     
             // Additional actions within the transaction
             LootController::giveWritOfPassage($login);
-            SocialMediaController::DiscordWebHook(FlavorTextController::getNewcomerIntroduction($username));
+            SocialMediaController::sendDiscordWebhook(FlavorTextController::getNewcomerIntroduction($username));
     
             // Commit transaction
             $conn->commit();
