@@ -358,8 +358,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const discordError = params.get('discord_error');
         if (discordError) {
             const messages = {
-                'state-missing': 'Session expired or cookies were cleared. Please log in again.',
-                'state-mismatch': 'Link process interrupted (multiple tabs or domain change). Try linking once more.'
+                'state-missing': 'We could not verify your session. Please ensure you are logged in and cookies are enabled, then try linking again.',
+                'state-mismatch': 'Link process interrupted (multiple tabs or domain change). Try linking once more.',
+                'User not logged in': 'Please sign in to link your Discord account.'
             };
             const userMessage = messages[discordError] || discordError;
             const statusDiv = $('#discordStatus');
