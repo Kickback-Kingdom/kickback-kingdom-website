@@ -1,12 +1,12 @@
 <?php
 require(__DIR__.'/../../engine/engine.php');
 
-use Kickback\Backend\Controllers\SocialMediaController;
+use Kickback\Backend\Controllers\SteamController;
 use Kickback\Common\Version;
 
 OnlyGET();
 
-$resp = SocialMediaController::completeSteamLink($_GET);
+$resp = SteamController::completeLink($_GET);
 
 if ($resp->success) {
     header('Location: '.Version::urlBetaPrefix().'/account-settings.php');

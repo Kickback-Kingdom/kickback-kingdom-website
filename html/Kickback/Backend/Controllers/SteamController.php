@@ -9,7 +9,7 @@ use Kickback\Backend\Views\vAccount;
 use Kickback\Services\Database;
 use Kickback\Services\Session;
 
-class SocialMediaController
+class SteamController
 {
     use CurlHelper;
 
@@ -18,7 +18,7 @@ class SocialMediaController
      *
      * @return Response Contains the Steam OpenID URL on success.
      */
-    public static function startSteamLink() : Response
+    public static function startLink() : Response
     {
         Session::ensureSessionStarted();
         if (!Session::isLoggedIn()) {
@@ -54,7 +54,7 @@ class SocialMediaController
      *
      * @param array<string,string> $query The OpenID response query parameters.
      */
-    public static function completeSteamLink(array $query) : Response
+    public static function completeLink(array $query) : Response
     {
         Session::ensureSessionStarted();
         if (!Session::readCurrentAccountInto($account)) {
@@ -142,7 +142,7 @@ class SocialMediaController
     /**
      * Check if a Steam account is already linked.
      */
-    public static function isSteamLinked(string $steamId) : Response
+    public static function isLinked(string $steamId) : Response
     {
         Session::ensureSessionStarted();
         $conn = Database::getConnection();
@@ -162,7 +162,7 @@ class SocialMediaController
     /**
      * Unlink the given account's Steam profile.
      */
-    public static function unlinkSteamAccount(vAccount $account) : Response
+    public static function unlink(vAccount $account) : Response
     {
         Session::ensureSessionStarted();
         $current = Session::requireSteamLinked();
