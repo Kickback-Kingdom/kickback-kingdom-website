@@ -83,7 +83,7 @@ $webhookURL = $kk_credentials["discord_api_url"] . '/' . $kk_credentials["discor
                 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["msg"])) {
                     $msg = trim($_POST["msg"]);
                     if ($msg !== "") {
-                        SocialMediaController::DiscordWebHook($msg);
+                        SocialMediaController::sendDiscordWebhook($msg);
                         echo '<div class="alert alert-success mt-3" role="alert">';
                         echo '<strong>Message sent:</strong> ' . htmlspecialchars($msg);
                         echo '</div>';

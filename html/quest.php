@@ -93,7 +93,7 @@ if (isset($_POST["submit-raffle"]))
             if ($thisQuest->reviewStatus->published)
             {
 
-                SocialMediaController::DiscordWebHook(FlavorTextController::getRandomGreeting().', '.Session::getCurrentAccount()->username.' just submitted a number of raffle tickets to the '.$thisQuest->title.' quest.');
+                SocialMediaController::sendDiscordWebhook(FlavorTextController::getRandomGreeting().', '.Session::getCurrentAccount()->username.' just submitted a number of raffle tickets to the '.$thisQuest->title.' quest.');
             }
 
             $hasSuccess = true;

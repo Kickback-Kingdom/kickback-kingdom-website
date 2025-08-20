@@ -81,7 +81,7 @@ class SocialMediaController
         return ['status' => $status, 'body' => $body, 'error' => $error];
     }
 
-    public static function DiscordWebHook(mixed $msg) : bool
+    public static function sendDiscordWebhook(mixed $msg) : bool
     {
         $kk_credentials = ServiceCredentials::instance();
 
@@ -473,7 +473,7 @@ class SocialMediaController
             $mention = "<@{$account->discordUserId}>";
             $message = FlavorTextController::getDiscordLinkFlavorText($mention);
             //self::sendChannelMessage($channelId, $message);
-            //self::DiscordWebHook($message);
+            //self::sendDiscordWebhook($message);
         }
     }
 
@@ -587,7 +587,7 @@ class SocialMediaController
             $mention = "<@{$account->discordUserId}>";
             $message = FlavorTextController::getDiscordUnlinkFlavorText($mention);
             //self::sendChannelMessage($channelId, $message);
-            //self::DiscordWebHook($message);
+            //self::sendDiscordWebhook($message);
         }
 
         $account->discordUserId = null;
