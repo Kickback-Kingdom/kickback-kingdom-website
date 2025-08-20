@@ -350,7 +350,12 @@ class SocialMediaController
     {
         $base = ServiceCredentials::get_discord_redirect_uri();
         if (!$base) {
-            return null;
+            $host = $_SERVER['HTTP_HOST'] ?? null;
+            if (!$host) {
+                return null;
+            }
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $base   = $scheme . '://' . $host;
         }
         $base = rtrim($base, '/');
         $beta = Version::urlBetaPrefix();
