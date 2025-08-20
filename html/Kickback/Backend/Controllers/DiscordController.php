@@ -457,11 +457,11 @@ class DiscordController
     /**
      * Notify the configured channel about a new link
      */
-    private static function notifyLink(vAccount $account) : void
+    private static function notifyLink(string $discordUserId, ?string $discordUsername = null) : void
     {
         $channelId = ServiceCredentials::get_discord_link_channel_id();
         if ($channelId) {
-            $mention = "<@{$account->discordUserId}>";
+            $mention = "<@{$discordUserId}>";
             $message = FlavorTextController::getDiscordLinkFlavorText($mention);
             self::sendChannelMessage($channelId, $message);
             //self::sendWebhook($message);
@@ -470,11 +470,11 @@ class DiscordController
     /**
      * Notify the configured channel about a unlink
      */
-    private static function notifyUnlink(vAccount $account) : void
+    private static function notifyUnlink(string $discordUserId, ?string $discordUsername = null) : void
     {
         $channelId = ServiceCredentials::get_discord_link_channel_id();
         if ($channelId) {
-            $mention = "<@{$account->discordUserId}>";
+            $mention = "<@{$discordUserId}>";
             $message = FlavorTextController::getDiscordUnlinkFlavorText($mention);
             self::sendChannelMessage($channelId, $message);
             //self::sendWebhook($message);
@@ -536,7 +536,9 @@ class DiscordController
         }
 
         // Defer notification until after the response is sent.
-        register_shutdown_function(fn() => self::notifyLink($account));
+        $discordUserId = $account->discordUserId;
+        $discordUsername = $account->discordUsername;
+        register_shutdown_function(fn() => self::notifyLink($discordUserId, $discordUsername));
 
         return new Response(true, 'Discord account linked', null);
     }
@@ -588,7 +590,9 @@ class DiscordController
 
         
         // Defer notification until after the response is sent.
-        register_shutdown_function(fn() => self::notifyUnlink($account));
+        $discordUserId = $account->discordUserId;
+        $discordUsername = $account->discordUsername;
+        register_shutdown_function(fn() => self::notifyUnlink($discordUserId, $discordUsername));
 
         $account->discordUserId = null;
         $account->discordUsername = null;
