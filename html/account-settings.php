@@ -357,9 +357,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
         const discordError = params.get('discord_error');
         if (discordError) {
-            const userMessage = discordError || 'Invalid state token; please restart the Discord link process.';
+            const messages = {
+                'state-missing': 'Session expired or cookies were cleared. Please log in again.',
+                'state-mismatch': 'Link process interrupted (multiple tabs or domain change). Try linking once more.'
+            };
+            const userMessage = messages[discordError] || discordError;
             const statusDiv = $('#discordStatus');
-            statusDiv.removeClass('d-none alert-success').addClass('alert-danger').text(userMessage);
+            statusDiv.removeClass('d-none alert-success').addClass('alert-danger').text(userMessage + ' ');
+            const retryBtn = $('<button type="button" class="btn btn-link p-0">Retry linking</button>');
+            retryBtn.on('click', () => { window.location = '/discord/link'; });
+            statusDiv.append(retryBtn);
             ShowPopError(userMessage, 'Discord');
             params.delete('discord_error');
             const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');

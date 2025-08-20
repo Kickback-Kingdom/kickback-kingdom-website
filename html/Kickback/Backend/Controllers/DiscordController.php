@@ -496,17 +496,27 @@ class DiscordController
         }
 
         $expectedState = Session::sessionDataString('discord_oauth_state');
-        if (!$expectedState || $expectedState !== $state) {
+        if (!$expectedState) {
             $sessionId = Session::getCurrentSessionId();
             $username  = $account->username ?? 'unknown';
-            $msg = 'completeDiscordLink invalid state token: session='
+            $msg = 'completeLink state missing: session='
+                . ($sessionId ?? 'none')
+                . ' user=' . $username;
+            error_log($msg);
+            Session::removeSessionData('discord_oauth_state');
+            return new Response(false, 'state-missing', null);
+        }
+        if ($expectedState !== $state) {
+            $sessionId = Session::getCurrentSessionId();
+            $username  = $account->username ?? 'unknown';
+            $msg = 'completeLink state mismatch: session='
                 . ($sessionId ?? 'none')
                 . ' user=' . $username
-                . ' expected=' . ($expectedState ?? 'none')
+                . ' expected=' . $expectedState
                 . ' received=' . $state;
             error_log($msg);
             Session::removeSessionData('discord_oauth_state');
-            return new Response(false, 'Invalid state token; please restart the Discord link process.', null);
+            return new Response(false, 'state-mismatch', null);
         }
 
         // Consume the state token to prevent re-use before any network operations.
