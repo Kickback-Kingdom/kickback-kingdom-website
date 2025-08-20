@@ -8,6 +8,7 @@ require("php-components/base-page-pull-active-account-info.php");
 use Kickback\Backend\Controllers\LichCardController;
 use Kickback\Backend\Models\Response;
 use Kickback\Backend\Views\vLichCard;
+use Kickback\Common\Version;
 
 if (!isset($thisLichCardData))
 {
