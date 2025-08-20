@@ -463,8 +463,8 @@ class DiscordController
         if ($channelId) {
             $mention = "<@{$discordUserId}>";
             $message = FlavorTextController::getDiscordLinkFlavorText($mention);
-            self::sendChannelMessage($channelId, $message);
-            //self::sendWebhook($message);
+            //self::sendChannelMessage($channelId, $message);
+            self::sendWebhook($message);
         }
     }
     /**
@@ -476,8 +476,8 @@ class DiscordController
         if ($channelId) {
             $mention = "<@{$discordUserId}>";
             $message = FlavorTextController::getDiscordUnlinkFlavorText($mention);
-            self::sendChannelMessage($channelId, $message);
-            //self::sendWebhook($message);
+            //self::sendChannelMessage($channelId, $message);
+            self::sendWebhook($message);
         }
     }
     /**
