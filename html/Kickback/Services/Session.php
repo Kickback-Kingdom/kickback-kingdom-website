@@ -417,11 +417,11 @@ class Session {
                 $host = $_SERVER['HTTP_HOST'] ?? '';
                 if ($host !== '') {
                     $host = explode(':', $host)[0];
-                    $parts = explode('.', $host);
-                    if (count($parts) >= 2) {
-                        $root = implode('.', array_slice($parts, -2));
-                        if ($root === 'kickback-kingdom.com') {
-                            $domain = '.' . $root;
+                    // Ignore numeric/IP and localhost hosts
+                    if (!filter_var($host, FILTER_VALIDATE_IP) && $host !== 'localhost') {
+                        $parts = explode('.', $host);
+                        if (count($parts) >= 2) {
+                            $domain = '.' . implode('.', array_slice($parts, -2));
                         }
                     }
                 }
