@@ -67,10 +67,15 @@ class DiscordController
 
     public static function sendWebhook(mixed $msg) : bool
     {
-        $kk_credentials = ServiceCredentials::instance();
+        $apiUrl = ServiceCredentials::get_discord_api_url();
+        $apiKey = ServiceCredentials::get_discord_api_key();
+        if (!$apiUrl || !$apiKey) {
+            error_log('Discord webhook not configured');
+            return false;
+        }
 
         // Ex: $webhookURL = "https://discord.com/api/webhooks/<some_number>/<api_key>"
-        $webhookURL = $kk_credentials["discord_api_url"] . '/' . $kk_credentials["discord_api_key"];
+        $webhookURL = $apiUrl . '/' . $apiKey;
 
         $result = self::apiRequest('POST', $webhookURL, ['content' => $msg]);
         if ($result['body'] === false) {
