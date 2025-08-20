@@ -84,6 +84,7 @@ function updatePromptPreview() {
     const sceneryEl = document.getElementById('imagePromptScenery');
     const factionEl = document.getElementById('imagePromptFaction');
     const promptEl = document.getElementById('imagePrompt');
+    const useCustomBtn = document.getElementById('usePromptAsCustom');
     const template = templateEl ? templateEl.value : '';
     const description = descriptionEl ? descriptionEl.value : '';
     const scenery = sceneryEl ? sceneryEl.value : '';
@@ -96,10 +97,16 @@ function updatePromptPreview() {
             promptEl.value = finalPrompt;
             promptEl.readOnly = true;
             promptDirty = false;
+            if (useCustomBtn) {
+                useCustomBtn.classList.remove('d-none');
+            }
         } else {
             promptEl.readOnly = false;
             if (!promptDirty) {
                 promptEl.value = finalPrompt;
+            }
+            if (useCustomBtn) {
+                useCustomBtn.classList.add('d-none');
             }
         }
     }
@@ -276,12 +283,39 @@ function copyImagePrompt()
     const promptEl = document.getElementById('imagePrompt');
     if (promptEl) {
         navigator.clipboard.writeText(promptEl.value)
-            .then(() => alert('Prompt copied!'));
+            .then(() => {
+                alert('Prompt copied!');
+                const templateEl = document.getElementById('imagePromptTemplate');
+                const useCustomBtn = document.getElementById('usePromptAsCustom');
+                if (templateEl && templateEl.value && useCustomBtn) {
+                    useCustomBtn.classList.remove('d-none');
+                }
+            });
+    }
+}
+function usePromptAsCustom() {
+    const templateEl = document.getElementById('imagePromptTemplate');
+    const promptEl = document.getElementById('imagePrompt');
+    const useCustomBtn = document.getElementById('usePromptAsCustom');
+    if (templateEl) {
+        templateEl.value = '';
+        promptDirty = true;
+        templateEl.dispatchEvent(new Event('change'));
+    } else {
+        promptDirty = true;
+        updatePromptPreview();
+    }
+    if (promptEl) {
+        promptEl.readOnly = false;
+    }
+    if (useCustomBtn) {
+        useCustomBtn.classList.add('d-none');
     }
 }
 window.copyImagePrompt = copyImagePrompt;
 window.GenerateImageFromPrompt = GeneratePromptImage;
 window.PromptGenerateWithAI = PromptGenerateWithAI;
+window.usePromptAsCustom = usePromptAsCustom;
 <?php } ?>
 function OpenMediaUploadModal()
 {
