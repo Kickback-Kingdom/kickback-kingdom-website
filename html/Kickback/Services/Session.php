@@ -408,30 +408,6 @@ class Session {
     public static function ensureSessionStarted() : void
     {
         if (\session_status() !== PHP_SESSION_ACTIVE) {
-            $cookieParams = [
-                'path' => '/',
-            ];
-
-            $domain = ServiceCredentials::get_session_cookie_domain();
-            if (!is_string($domain) || $domain === '') {
-                $host = $_SERVER['HTTP_HOST'] ?? '';
-                if ($host !== '') {
-                    $host = explode(':', $host)[0];
-                    // Ignore numeric/IP and localhost hosts
-                    if (!filter_var($host, FILTER_VALIDATE_IP) && $host !== 'localhost') {
-                        $parts = explode('.', $host);
-                        if (count($parts) >= 2) {
-                            $domain = '.' . implode('.', array_slice($parts, -2));
-                        }
-                    }
-                }
-            }
-
-            if (is_string($domain) && $domain !== '') {
-                $cookieParams['domain'] = $domain;
-            }
-
-            \session_set_cookie_params($cookieParams);
             \session_start();
         }
     }
