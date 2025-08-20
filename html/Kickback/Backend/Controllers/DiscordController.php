@@ -335,6 +335,16 @@ class DiscordController
 
         $state = bin2hex(random_bytes(16));
         Session::setSessionData('discord_oauth_state', $state);
+        if (Session::sessionDataString('discord_oauth_state') !== $state) {
+            $sessionId = Session::getCurrentSessionId();
+            $account   = Session::getCurrentAccount();
+            $username  = $account->username ?? 'unknown';
+            $msg = 'startLink failed to store state: session='
+                . ($sessionId ?? 'none')
+                . ' user=' . $username;
+            error_log($msg);
+            return new Response(false, 'state-save-failed', null);
+        }
         $scope = urlencode('identify guilds.join');
 
         $authUrl = 'https://discord.com/api/oauth2/authorize'
