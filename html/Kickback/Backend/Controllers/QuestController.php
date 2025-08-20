@@ -24,7 +24,7 @@ use Kickback\Backend\Views\vTournament;
 use Kickback\Backend\Views\vQuestApplicant;
 use Kickback\Backend\Views\vRaffle;
 use Kickback\Backend\Controllers\AccountController;
-use Kickback\Backend\Controllers\SocialMediaController;
+use Kickback\Backend\Controllers\DiscordController;
 use Kickback\Common\Primitives\Str;
 
 class QuestController
@@ -551,7 +551,7 @@ class QuestController
 
                 $raffleWinner = $raffleWinnerResp->data;
                 $msg = FlavorTextController::getRaffleWinnerAnnouncement($raffleQuest->title, $raffleWinner["Username"]);
-                SocialMediaController::sendDiscordWebhook($msg);
+                DiscordController::sendWebhook($msg);
 
                 return new Response(true, "Selected Raffle Winner!", null);
             } else {
@@ -1001,7 +1001,7 @@ class QuestController
             if (!self::queryQuestByIdInto($quest_id, $quest)) {
                 return new Response(false, "Could not find quest with that ID; failed to register for quest.", null);
             }
-            SocialMediaController::sendDiscordWebhook(FlavorTextController::getRandomGreeting() . ', ' . $account->username . ' just signed up for the ' . $quest->title . ' quest.');
+            DiscordController::sendWebhook(FlavorTextController::getRandomGreeting() . ', ' . $account->username . ' just signed up for the ' . $quest->title . ' quest.');
             mysqli_stmt_close($stmt);
             return (new Response(true, "Registered for quest successfully", null));
         } else {
