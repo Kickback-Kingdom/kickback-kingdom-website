@@ -314,6 +314,13 @@ final class ServiceCredentials implements \ArrayAccess
     }
 
     /** @return null|string */
+    public static function get_session_cookie_domain() : ?string
+    {
+        $val = self::get('session_cookie_domain');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
     public static function get_discord_oauth_client_id() : ?string
     {
         $val = self::get('discord_oauth_client_id');
