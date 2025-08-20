@@ -455,22 +455,31 @@ class DiscordController
     }
 
     /**
-     * Notify the configured channel about a new link, if first time.
+     * Notify the configured channel about a new link
      */
-    private static function notifyLink(vAccount $account, bool $firstLink) : void
+    private static function notifyLink(vAccount $account) : void
     {
-        if (!$firstLink) {
-            return;
-        }
         $channelId = ServiceCredentials::get_discord_link_channel_id();
         if ($channelId) {
             $mention = "<@{$account->discordUserId}>";
             $message = FlavorTextController::getDiscordLinkFlavorText($mention);
-            //self::sendChannelMessage($channelId, $message);
-            self::sendWebhook($message);
+            self::sendChannelMessage($channelId, $message);
+            //self::sendWebhook($message);
         }
     }
-
+    /**
+     * Notify the configured channel about a unlink
+     */
+    private static function notifyUnlink(vAccount $account) : void
+    {
+        $channelId = ServiceCredentials::get_discord_link_channel_id();
+        if ($channelId) {
+            $mention = "<@{$account->discordUserId}>";
+            $message = FlavorTextController::getDiscordUnlinkFlavorText($mention);
+            self::sendChannelMessage($channelId, $message);
+            //self::sendWebhook($message);
+        }
+    }
     /**
      * Complete the Discord OAuth linking process.
      */
@@ -480,8 +489,6 @@ class DiscordController
         if (!Session::readCurrentAccountInto($account)) {
             return new Response(false, 'User not logged in', null);
         }
-
-        $firstLink = empty($account->discordUserId);
 
         $expectedState = Session::sessionDataString('discord_oauth_state');
         if (!$expectedState || $expectedState !== $state) {
@@ -529,7 +536,7 @@ class DiscordController
         }
 
         // Defer notification until after the response is sent.
-        register_shutdown_function(fn() => self::notifyLink($account, $firstLink));
+        register_shutdown_function(fn() => self::notifyLink($account));
 
         return new Response(true, 'Discord account linked', null);
     }
@@ -579,13 +586,9 @@ class DiscordController
         $stmt->execute();
         $stmt->close();
 
-        $channelId = ServiceCredentials::get_discord_link_channel_id();
-        if ($channelId) {
-            $mention = "<@{$account->discordUserId}>";
-            $message = FlavorTextController::getDiscordUnlinkFlavorText($mention);
-            //self::sendChannelMessage($channelId, $message);
-            self::sendWebhook($message);
-        }
+        
+        // Defer notification until after the response is sent.
+        register_shutdown_function(fn() => self::notifyUnlink($account));
 
         $account->discordUserId = null;
         $account->discordUsername = null;
