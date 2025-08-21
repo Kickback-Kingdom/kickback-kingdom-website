@@ -40,13 +40,9 @@ import { initPixelEditor, LAYER_DEFAULTS } from '<?= Version::urlBetaPrefix(); ?
 
 const promptTemplates = {
   "lich card art": (desc, scenery, faction) =>
-  `Extremely detailed fantasy pixel art in the style of high-end 1990s arcade games (SNK, Capcom).
-   Crisp, clean pixel edges with dense detailing and visible dithering for shading.
-   Heavy dramatic lighting with deep shadows and bright highlights for epic contrast.
-   Foreground, midground, and background filled with intricate elements for depth.
-   Vivid, saturated focal colors, muted background tones.
-   Dynamic, cinematic scene set in ${scenery}.
-   Featuring ${faction}. No painterly or realistic textures. ${desc}`
+  `High-detail retro pixel art card in 1990s arcade style (SNK, Capcom).
+   Sharp pixels, purposeful dithering, dramatic contrast.
+   Layered scene set in ${scenery}, featuring ${faction}. ${desc}`
 };
 
 
