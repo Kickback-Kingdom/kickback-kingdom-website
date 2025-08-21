@@ -102,4 +102,60 @@ class RankedMatchCalculator
     {
         return 1 / (1 + pow(10, ($ratingB - $ratingA) / 400));
     }
+
+    public static function unittests() : void
+    {
+        $class_fqn = self::class;
+        echo("Running `$class_fqn::unittests()`\n");
+
+        $calc = new self();
+
+        // 1v1
+        $teams = [
+            ['players' => [1], 'rank' => 1],
+            ['players' => [2], 'rank' => 2],
+        ];
+        $ratings = [];
+        $result = $calc->calculate($teams, $ratings);
+        assert($result === [1 => 1515, 2 => 1485]);
+
+        // 1v1v1
+        $teams = [
+            ['players' => [1], 'rank' => 1],
+            ['players' => [2], 'rank' => 2],
+            ['players' => [3], 'rank' => 3],
+        ];
+        $result = $calc->calculate($teams, []);
+        assert($result === [1 => 1529, 2 => 1485, 3 => 1486]);
+
+        // 1v2v3
+        $teams = [
+            ['players' => [1], 'rank' => 1],
+            ['players' => [2, 3], 'rank' => 2],
+            ['players' => [4, 5, 6], 'rank' => 3],
+        ];
+        $result = $calc->calculate($teams, []);
+        assert($result === [1 => 1529, 2 => 1485, 3 => 1485, 4 => 1486, 5 => 1486, 6 => 1486]);
+
+        // 2v2v4
+        $teams = [
+            ['players' => [1, 2], 'rank' => 1],
+            ['players' => [3, 4], 'rank' => 2],
+            ['players' => [5, 6, 7, 8], 'rank' => 3],
+        ];
+        $result = $calc->calculate($teams, []);
+        assert($result === [1 => 1529, 2 => 1529, 3 => 1485, 4 => 1485, 5 => 1486, 6 => 1486, 7 => 1486, 8 => 1486]);
+
+        // 1v1v1v1
+        $teams = [
+            ['players' => [1], 'rank' => 1],
+            ['players' => [2], 'rank' => 2],
+            ['players' => [3], 'rank' => 3],
+            ['players' => [4], 'rank' => 4],
+        ];
+        $result = $calc->calculate($teams, []);
+        assert($result === [1 => 1543, 2 => 1485, 3 => 1486, 4 => 1486]);
+
+        echo("  ... passed.\n\n");
+    }
 }
