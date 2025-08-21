@@ -115,46 +115,108 @@ class RankedMatchCalculator
             ['players' => [1], 'rank' => 1],
             ['players' => [2], 'rank' => 2],
         ];
-        $ratings = [];
-        $result = $calc->calculate($teams, $ratings);
+        $result = $calc->calculate($teams, []);
         assert($result === [1 => 1515, 2 => 1485]);
 
-        // 1v1v1
+        // 1v1v1 (two teams tied for second)
         $teams = [
             ['players' => [1], 'rank' => 1],
             ['players' => [2], 'rank' => 2],
-            ['players' => [3], 'rank' => 3],
+            ['players' => [3], 'rank' => 2],
         ];
         $result = $calc->calculate($teams, []);
         assert($result === [1 => 1529, 2 => 1485, 3 => 1486]);
 
-        // 1v2v3
+        // 1v2v3 (two teams tied for second)
         $teams = [
             ['players' => [1], 'rank' => 1],
             ['players' => [2, 3], 'rank' => 2],
-            ['players' => [4, 5, 6], 'rank' => 3],
+            ['players' => [4, 5, 6], 'rank' => 2],
         ];
         $result = $calc->calculate($teams, []);
         assert($result === [1 => 1529, 2 => 1485, 3 => 1485, 4 => 1486, 5 => 1486, 6 => 1486]);
 
-        // 2v2v4
+        // 2v2v4 (second and third teams tied)
         $teams = [
             ['players' => [1, 2], 'rank' => 1],
             ['players' => [3, 4], 'rank' => 2],
-            ['players' => [5, 6, 7, 8], 'rank' => 3],
+            ['players' => [5, 6, 7, 8], 'rank' => 2],
         ];
         $result = $calc->calculate($teams, []);
         assert($result === [1 => 1529, 2 => 1529, 3 => 1485, 4 => 1485, 5 => 1486, 6 => 1486, 7 => 1486, 8 => 1486]);
 
-        // 1v1v1v1
+        // 1v1v1v1 (three teams tied for second)
         $teams = [
             ['players' => [1], 'rank' => 1],
             ['players' => [2], 'rank' => 2],
-            ['players' => [3], 'rank' => 3],
-            ['players' => [4], 'rank' => 4],
+            ['players' => [3], 'rank' => 2],
+            ['players' => [4], 'rank' => 2],
         ];
         $result = $calc->calculate($teams, []);
         assert($result === [1 => 1543, 2 => 1485, 3 => 1486, 4 => 1486]);
+
+        // Upset 1v1 with existing ratings
+        $teams = [
+            ['players' => [1], 'rank' => 1],
+            ['players' => [2], 'rank' => 2],
+        ];
+        $ratings = [1 => 1800, 2 => 2200];
+        $result = $calc->calculate($teams, $ratings);
+        assert($result === [1 => 1827, 2 => 2173]);
+
+        // Favorite beats underdog - no change
+        $ratings = [1 => 2400, 2 => 1500];
+        $result = $calc->calculate($teams, $ratings);
+        assert($result === [1 => 2400, 2 => 1500]);
+
+        // Team upset 2v2 with existing ratings
+        $teams = [
+            ['players' => [3, 4], 'rank' => 1],
+            ['players' => [1, 2], 'rank' => 2],
+        ];
+        $ratings = [1 => 2200, 2 => 2100, 3 => 1500, 4 => 1500];
+        $result = $calc->calculate($teams, $ratings);
+        assert($result === [1 => 2171, 2 => 2071, 3 => 1529, 4 => 1529]);
+
+        // Tie results in no changes
+        $teams = [
+            ['players' => [1], 'rank' => 1],
+            ['players' => [2], 'rank' => 1],
+            ['players' => [3], 'rank' => 2],
+        ];
+        $ratings = [1 => 1600, 2 => 1500, 3 => 1400];
+        $result = $calc->calculate($teams, $ratings);
+        assert($result === [1 => 1600, 2 => 1500, 3 => 1400]);
+
+        // Mixed rated and new player team
+        $teams = [
+            ['players' => [1, 3], 'rank' => 1],
+            ['players' => [2], 'rank' => 2],
+        ];
+        $ratings = [1 => 1600, 2 => 1700];
+        $result = $calc->calculate($teams, $ratings);
+        assert($result === [1 => 1621, 2 => 1679, 3 => 1521]);
+
+        // Five player free for all
+        $teams = [
+            ['players' => [2], 'rank' => 1],
+            ['players' => [5], 'rank' => 2],
+            ['players' => [4], 'rank' => 3],
+            ['players' => [3], 'rank' => 4],
+            ['players' => [1], 'rank' => 5],
+        ];
+        $ratings = [1 => 1200, 2 => 1500, 3 => 1800, 4 => 2100, 5 => 2400];
+        $result = $calc->calculate($teams, $ratings);
+        assert($result === [1 => 1197, 2 => 1586, 3 => 1776, 4 => 2071, 5 => 2370]);
+
+        // Custom base rating and k-factor
+        $calc = new self(1000, 50);
+        $teams = [
+            ['players' => [1], 'rank' => 1],
+            ['players' => [2], 'rank' => 2],
+        ];
+        $result = $calc->calculate($teams, []);
+        assert($result === [1 => 1025, 2 => 975]);
 
         echo("  ... passed.\n\n");
     }
