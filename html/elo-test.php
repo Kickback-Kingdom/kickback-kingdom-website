@@ -88,7 +88,52 @@ $wins = [];
 $losses = [];
 
 // Fetch all game matches and MinRankedMatches
-$result = mysqli_query($conn, 'SELECT game_match.Id, game_id, game.name as game_name, game.MinRankedMatches, game_match.bracket, game_match.round, game_match.match, game_match.set FROM game_match left join game on game_match.game_id = game.Id');
+$result = mysqli_query($conn, 'SELECT 
+    gm.Id,
+    gm.game_id,
+    gm.tournament_id,
+    g.name AS game_name,
+    g.MinRankedMatches,
+    gm.bracket,
+    gm.round,
+    gm.`match`,
+    gm.`set`,
+    (gm.`set` = (
+        SELECT MAX(s.`set`)
+        FROM game_match s
+        WHERE s.game_id       = gm.game_id
+          AND s.bracket       = gm.bracket
+          AND s.round         = gm.round
+          AND s.`match`       = gm.`match`
+          AND s.tournament_id <=> gm.tournament_id
+    )) AS is_last_set,
+    CASE
+      WHEN gm.tournament_id IS NULL
+       AND gm.bracket = 0 AND gm.round = 0 AND gm.`match` = 0
+      THEN gm.Id
+      ELSE (
+        SELECT s2.Id
+        FROM game_match s2
+        WHERE s2.game_id       = gm.game_id
+          AND s2.bracket       = gm.bracket
+          AND s2.round         = gm.round
+          AND s2.`match`       = gm.`match`
+          AND s2.tournament_id <=> gm.tournament_id
+        ORDER BY s2.`set` ASC, s2.Id ASC
+        LIMIT 1
+      )
+    END AS first_set_id
+FROM game_match gm
+LEFT JOIN game g ON g.Id = gm.game_id
+ORDER BY
+  gm.game_id,
+  gm.bracket,
+  gm.round,
+  gm.`match`,
+  gm.`set`,
+  gm.Id
+
+');
 if (!$result) {
     die("Error fetching game matches: " . mysqli_error($conn));
 }
@@ -104,12 +149,13 @@ foreach ($matches as $match) {
     $roundNum = (int)$match['round'];
     $matchNum = (int)$match['match'];
     $setNum = (int)$match['set'];
+    $isMatchComplete = ((int)$match['is_last_set'] === 1);
+    $first_set_id = (int)$match['first_set_id'];
+
     echo "<h1>$game_name</h1>";
     echo "<h2>Match $game_match_id Bracket: $bracketNum Round: $roundNum Match: $matchNum Set: $setNum</h2>";
     // Determine if this is a standalone match or part of a larger bracket
-    $isStandAlone = ($bracketNum === 0 && $roundNum === 0 && $matchNum === 0 && $setNum === 0);
 
-    $isMatchComplete = $isStandAlone || $setNum === 1;
     // Prepare and execute SQL statement
     $stmt = mysqli_prepare($conn, 'SELECT game_record.Id, account_id, win, team_name, account.Username FROM game_record left join account on game_record.account_id = account.Id WHERE game_match_id = ? AND game_id = ?');
     if (!$stmt) {
@@ -164,7 +210,7 @@ foreach ($matches as $match) {
             echo "Team: $teamName<br>";
         }
     }
-    echo "GameInstance: $game_match_id GameRecord: $game_record_id IsMatchComplete: $isMatchComplete isStandAlone: $isStandAlone setNum: $setNum<br>";
+    echo "GameInstance: $game_match_id GameRecord: $game_record_id IsMatchComplete: $isMatchComplete setNum: $setNum<br>";
     if ($isMatchComplete) {
         echo "Match is complete. lets calculate the ELO<br>";
 
@@ -279,21 +325,18 @@ foreach ($matches as $match) {
                     if (!isset($eloUpdates[$accountId])) {
                         $eloUpdates[$accountId] = [
                             'elo_change' => 0,
-                            'game_match_id' => $game_match_id,
+                            'game_match_id' => $first_set_id,
                             'account_id' => $accountId
                         ];
                     }
                     $eloUpdates[$accountId]['elo_change'] += $eloChange;
                 }
             }
-
-            
-            // Convert eloUpdates to an array suitable for batch update
-            $batchUpdates = array_values($eloUpdates);
-            batchUpdateEloChange($conn, $eloUpdates);
-
-            
         }
+            
+        // Convert eloUpdates to an array suitable for batch update
+        $batchUpdates = array_values($eloUpdates);
+        batchUpdateEloChange($conn, $eloUpdates);
     }
     else{
         
@@ -312,7 +355,8 @@ foreach ($ratings as $game_id => $game_ratings) {
         $totalMatches = $matchesPlayed[$game_id][$accountId];
         $totalWins = $wins[$game_id][$accountId];
         $totalLosses = $losses[$game_id][$accountId];
-        $winRate = $totalWins / ($totalMatches); 
+        $winRate = $totalMatches > 0 ? ($totalWins / $totalMatches) : 0.0;
+
         echo "Updating DB for Account $accountId: Elo Rating = $rating, Total Matches = $totalMatches, Wins = $totalWins, Losses = $totalLosses, Win Rate = $winRate<br>";
         updateEloScoreAndRankedStatus($conn, $accountId, $game_id, $rating, $totalMatches, $totalWins, $totalLosses, $winRate, $minRankedMatches);
 
