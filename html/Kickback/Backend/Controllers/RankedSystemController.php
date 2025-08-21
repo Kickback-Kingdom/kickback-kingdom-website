@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 namespace Kickback\Backend\Controllers;
+use Kickback\Backend\Services\RankedMatchCalculator;
 
 class RankedSystemController
 {
@@ -24,36 +25,6 @@ class RankedSystemController
     public function getKFactor() : int
     {
         return $this->kFactor;
-    }
-
-    /**
-     * Calculate the expected score between two ratings.
-     */
-    public function calculateExpectedScore(int $ratingA, int $ratingB) : float
-    {
-        return 1 / (1 + pow(10, ($ratingB - $ratingA) / 400));
-    }
-
-    /**
-     * Calculate a new rating for a player.
-     */
-    public function calculateNewRating(mixed $currentRating, mixed $expectedScore, mixed $actualScore) : int
-    {
-        return intval(round($currentRating + $this->kFactor * ($actualScore - $expectedScore)));
-    }
-
-    /**
-     * Calculate team average rating.
-     * @param array<int,int> $ratings
-     * @param array<int>     $team
-     */
-    public function calculateTeamAverage(array $ratings, array $team) : float
-    {
-        $totalRating = array_reduce($team, function ($sum, $accountId) use ($ratings) {
-            return $sum + ($ratings[$accountId] ?? $this->baseRating);
-        }, 0);
-
-        return $totalRating / count($team);
     }
 
     /**
@@ -132,69 +103,6 @@ otal_matches), total_wins = VALUES(total_wins), total_losses = VALUES(total_loss
     }
 
     /**
-     * Calculate ELO changes for group matches.
-     * @param array<int> $ratings
-     * @param array<int> $loserIds
-     * @return array<array{
-     *     winner_id:     int,
-     *     winner_change: int,
-     *     loser_id:      int,
-     *     loser_change:  int
-     * }>
-     */
-    public function calculateGroupMatchElo(array $ratings, int $winnerId, array $loserIds) : array
-    {
-        $updates = [];
-
-        foreach ($loserIds as $loserId) {
-            $expectedWin = $this->calculateExpectedScore($ratings[$winnerId], $ratings[$loserId]);
-            $expectedLose = 1 - $expectedWin;
-
-            // Winner update
-            $newWinnerRating = $this->calculateNewRating($ratings[$winnerId], $expectedWin, 1);
-            $eloChangeWinner = $newWinnerRating - $ratings[$winnerId];
-            $ratings[$winnerId] = $newWinnerRating;
-
-            // Loser update
-            $newLoserRating = $this->calculateNewRating($ratings[$loserId], $expectedLose, 0);
-            $eloChangeLoser = $newLoserRating - $ratings[$loserId];
-            $ratings[$loserId] = $newLoserRating;
-
-            // Collect changes
-            $updates[] = [
-                'winner_id' => $winnerId,
-                'winner_change' => $eloChangeWinner,
-                'loser_id' => $loserId,
-                'loser_change' => $eloChangeLoser,
-            ];
-        }
-
-        return $updates;
-    }
-
-    /**
-     * Adjust ELO for tied matches in group battles.
-     * @param array<int,int> $ratings
-     * @param array<int>     $participantIds
-     * @return array<array{account_id: int,  elo_change: int}>
-     */
-    public function calculateTieElo(array $ratings, array $participantIds) : array
-    {
-        $updates = [];
-        $averageRating = $this->calculateTeamAverage($ratings, $participantIds);
-
-        foreach ($participantIds as $accountId) {
-            $eloChange = 0; // No change in a tie
-            $updates[] = [
-                'account_id' => $accountId,
-                'elo_change' => $eloChange,
-            ];
-        }
-
-        return $updates;
-    }
-
-    /**
      * Process all pending ranked matches and update player ratings.
      */
     public function processRankedMatches() : void
@@ -217,6 +125,7 @@ otal_matches), total_wins = VALUES(total_wins), total_losses = VALUES(total_loss
         $matchesPlayed = [];
         $minRankedMatches = [];
         $eloUpdates = [];
+        $calculator = new RankedMatchCalculator($this->baseRating, $this->kFactor);
 
         foreach ($matches as $match) {
             $matchId = (int)$match['game_match_id'];
@@ -241,60 +150,51 @@ otal_matches), total_wins = VALUES(total_wins), total_losses = VALUES(total_loss
                 $win = (int)$record['win'];
 
                 $teams[$team][] = $accountId;
-                if (!isset($teamWins[$team])) {
-                    $teamWins[$team] = $win;
-                }
+                $teamWins[$team] = $win;
 
-                $ratings[$gameId][$accountId] = $ratings[$gameId][$accountId] ?? $this->getBaseRating();
+                $ratings[$gameId][$accountId] = $ratings[$gameId][$accountId] ?? $this->baseRating;
                 $wins[$gameId][$accountId] = $wins[$gameId][$accountId] ?? 0;
                 $losses[$gameId][$accountId] = $losses[$gameId][$accountId] ?? 0;
                 $matchesPlayed[$gameId][$accountId] = $matchesPlayed[$gameId][$accountId] ?? 0;
             }
 
-            $teamNames = array_keys($teams);
-            if (2 !== count($teamNames)) {
-                continue; // process only matches with exactly two teams
+            $maxWin = max($teamWins);
+            $matchTeams = [];
+            foreach ($teams as $name => $players) {
+                $rank = ($teamWins[$name] === $maxWin) ? 1 : 2;
+                $matchTeams[] = [
+                    'players' => $players,
+                    'rank' => $rank,
+                ];
             }
 
-            $teamA = $teamNames[0];
-            $teamB = $teamNames[1];
+            $currentRatings = $ratings[$gameId] ?? [];
+            $newRatings = $calculator->calculate($matchTeams, $currentRatings);
 
-            $teamAElo = $this->calculateTeamAverage($ratings[$gameId], $teams[$teamA]);
-            $teamBElo = $this->calculateTeamAverage($ratings[$gameId], $teams[$teamB]);
+            foreach ($newRatings as $accountId => $newRating) {
+                $oldRating = $ratings[$gameId][$accountId] ?? $this->baseRating;
+                $eloChange = $newRating - $oldRating;
+                $ratings[$gameId][$accountId] = $newRating;
+                $matchesPlayed[$gameId][$accountId]++;
 
-            $expectedA = $this->calculateExpectedScore((int)$teamAElo, (int)$teamBElo);
-            $expectedB = $this->calculateExpectedScore((int)$teamBElo, (int)$teamAElo);
-
-            $teamAWon = $teamWins[$teamA] > $teamWins[$teamB];
-            $teamBWon = $teamWins[$teamB] > $teamWins[$teamA];
-
-            $actualA = $teamAWon ? 1.0 : ($teamBWon ? 0.0 : 0.5);
-            $actualB = $teamBWon ? 1.0 : ($teamAWon ? 0.0 : 0.5);
-
-            foreach ([$teamA, $teamB] as $index => $teamName) {
-                $expected = $index === 0 ? $expectedA : $expectedB;
-                $actual = $index === 0 ? $actualA : $actualB;
-
-                foreach ($teams[$teamName] as $accountId) {
-                    $oldRating = $ratings[$gameId][$accountId];
-                    $newRating = $this->calculateNewRating($oldRating, $expected, $actual);
-                    $eloChange = $newRating - $oldRating;
-
-                    $ratings[$gameId][$accountId] = $newRating;
-                    $matchesPlayed[$gameId][$accountId]++;
-
-                    if (1.0 === $actual) {
-                        $wins[$gameId][$accountId]++;
-                    } elseif (0.0 === $actual) {
-                        $losses[$gameId][$accountId]++;
+                $teamRank = 0;
+                foreach ($matchTeams as $team) {
+                    if (in_array($accountId, $team['players'], true)) {
+                        $teamRank = $team['rank'];
+                        break;
                     }
-
-                    $eloUpdates[] = [
-                        'game_match_id' => $matchId,
-                        'account_id' => $accountId,
-                        'elo_change' => $eloChange,
-                    ];
                 }
+                if (1 === $teamRank) {
+                    $wins[$gameId][$accountId]++;
+                } elseif (2 === $teamRank) {
+                    $losses[$gameId][$accountId]++;
+                }
+
+                $eloUpdates[] = [
+                    'game_match_id' => $matchId,
+                    'account_id' => $accountId,
+                    'elo_change' => $eloChange,
+                ];
             }
         }
 
