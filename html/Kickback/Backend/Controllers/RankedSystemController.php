@@ -2,16 +2,104 @@
 declare(strict_types=1);
 
 namespace Kickback\Backend\Controllers;
+use Kickback\Backend\Services\RankedMatchCalculator;
 
 class RankedSystemController
 {
     private \mysqli $conn;
-    private EloController $elo;
+    private int $kFactor;
+    private int $baseRating;
 
-    public function __construct(\mysqli $conn, EloController $elo)
+    public function __construct(\mysqli $conn, int $baseRating = 1500, int $kFactor = 30)
     {
         $this->conn = $conn;
-        $this->elo = $elo;
+        $this->baseRating = $baseRating;
+        $this->kFactor = $kFactor;
+    }
+
+    public function getBaseRating() : int
+    {
+        return $this->baseRating;
+    }
+
+    public function getKFactor() : int
+    {
+        return $this->kFactor;
+    }
+
+    /**
+     * Batch update ELO changes in the database.
+     * @param array<array<string,bool|float|int|string>> $eloUpdates
+     */
+    public function batchUpdateEloChange(\mysqli $conn, array $eloUpdates) : void
+    {
+        if (0 === count($eloUpdates)) {
+            return;
+        }
+
+        $query = 'UPDATE game_record SET elo_change = CASE';
+        $ids = [];
+
+        foreach ($eloUpdates as $update) {
+            $gameMatchId = intval($update['game_match_id']);
+            $accountId = intval($update['account_id']);
+            $eloChange = intval($update['elo_change']);
+
+            $query .= " WHEN game_match_id = $gameMatchId AND account_id = $accountId THEN $eloChange";
+            $ids[] = "($gameMatchId, $accountId)";
+        }
+
+        $query .= ' END WHERE (game_match_id, account_id) IN (' . implode(',', $ids) . ')';
+
+        if (!mysqli_query($conn, $query)) {
+            die("Error batch updating elo_change: " . mysqli_error($conn));
+        }
+    }
+
+    /**
+     * Update player ranking and statistics.
+     */
+    public function updatePlayerStats(
+        \mysqli $conn,
+        int     $accountId,
+        int     $gameId,
+        int     $newRating,
+        int     $matchesPlayed,
+        int     $wins,
+        int     $losses,
+        int     $minRankedMatches
+    ) : void
+    {
+        $isRanked = $matchesPlayed >= $minRankedMatches ? 1 : 0;
+
+        $stmt = mysqli_prepare($conn, 'INSERT INTO account_game_elo (account_id, game_id, elo_rating, is_ranked, total_matches,
+total_wins, total_losses, win_rate)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE elo_rating = VALUES(elo_rating), is_ranked = VALUES(is_ranked), total_matches = VALUES(t
+otal_matches), total_wins = VALUES(total_wins), total_losses = VALUES(total_losses), win_rate = VALUES(win_rate)');
+        if (!$stmt) {
+            die("Error preparing statement: " . mysqli_error($conn));
+        }
+
+        $winRate = $matchesPlayed > 0 ? $wins / $matchesPlayed : 0;
+        mysqli_stmt_bind_param(
+            $stmt,
+            'iiidiiid',
+            $accountId,
+            $gameId,
+            $newRating,
+            $isRanked,
+            $matchesPlayed,
+            $wins,
+            $losses,
+            $winRate
+        );
+
+        if (!mysqli_stmt_execute($stmt)) {
+            die("Error executing statement: " . mysqli_stmt_error($stmt));
+        }
+
+        mysqli_stmt_close($stmt);
     }
 
     /**
@@ -37,6 +125,7 @@ class RankedSystemController
         $matchesPlayed = [];
         $minRankedMatches = [];
         $eloUpdates = [];
+        $calculator = new RankedMatchCalculator($this->baseRating, $this->kFactor);
 
         foreach ($matches as $match) {
             $matchId = (int)$match['game_match_id'];
@@ -61,68 +150,59 @@ class RankedSystemController
                 $win = (int)$record['win'];
 
                 $teams[$team][] = $accountId;
-                if (!isset($teamWins[$team])) {
-                    $teamWins[$team] = $win;
-                }
+                $teamWins[$team] = $win;
 
-                $ratings[$gameId][$accountId] = $ratings[$gameId][$accountId] ?? $this->elo->getBaseRating();
+                $ratings[$gameId][$accountId] = $ratings[$gameId][$accountId] ?? $this->baseRating;
                 $wins[$gameId][$accountId] = $wins[$gameId][$accountId] ?? 0;
                 $losses[$gameId][$accountId] = $losses[$gameId][$accountId] ?? 0;
                 $matchesPlayed[$gameId][$accountId] = $matchesPlayed[$gameId][$accountId] ?? 0;
             }
 
-            $teamNames = array_keys($teams);
-            if (2 !== count($teamNames)) {
-                continue; // process only matches with exactly two teams
+            $maxWin = max($teamWins);
+            $matchTeams = [];
+            foreach ($teams as $name => $players) {
+                $rank = ($teamWins[$name] === $maxWin) ? 1 : 2;
+                $matchTeams[] = [
+                    'players' => $players,
+                    'rank' => $rank,
+                ];
             }
 
-            $teamA = $teamNames[0];
-            $teamB = $teamNames[1];
+            $currentRatings = $ratings[$gameId] ?? [];
+            $newRatings = $calculator->calculate($matchTeams, $currentRatings);
 
-            $teamAElo = $this->elo->calculateTeamAverage($ratings[$gameId], $teams[$teamA]);
-            $teamBElo = $this->elo->calculateTeamAverage($ratings[$gameId], $teams[$teamB]);
+            foreach ($newRatings as $accountId => $newRating) {
+                $oldRating = $ratings[$gameId][$accountId] ?? $this->baseRating;
+                $eloChange = $newRating - $oldRating;
+                $ratings[$gameId][$accountId] = $newRating;
+                $matchesPlayed[$gameId][$accountId]++;
 
-            $expectedA = $this->elo->calculateExpectedScore((int)$teamAElo, (int)$teamBElo);
-            $expectedB = $this->elo->calculateExpectedScore((int)$teamBElo, (int)$teamAElo);
-
-            $teamAWon = $teamWins[$teamA] > $teamWins[$teamB];
-            $teamBWon = $teamWins[$teamB] > $teamWins[$teamA];
-
-            $actualA = $teamAWon ? 1.0 : ($teamBWon ? 0.0 : 0.5);
-            $actualB = $teamBWon ? 1.0 : ($teamAWon ? 0.0 : 0.5);
-
-            foreach ([$teamA, $teamB] as $index => $teamName) {
-                $expected = $index === 0 ? $expectedA : $expectedB;
-                $actual = $index === 0 ? $actualA : $actualB;
-
-                foreach ($teams[$teamName] as $accountId) {
-                    $oldRating = $ratings[$gameId][$accountId];
-                    $newRating = $this->elo->calculateNewRating($oldRating, $expected, $actual);
-                    $eloChange = $newRating - $oldRating;
-
-                    $ratings[$gameId][$accountId] = $newRating;
-                    $matchesPlayed[$gameId][$accountId]++;
-
-                    if (1.0 === $actual) {
-                        $wins[$gameId][$accountId]++;
-                    } elseif (0.0 === $actual) {
-                        $losses[$gameId][$accountId]++;
+                $teamRank = 0;
+                foreach ($matchTeams as $team) {
+                    if (in_array($accountId, $team['players'], true)) {
+                        $teamRank = $team['rank'];
+                        break;
                     }
-
-                    $eloUpdates[] = [
-                        'game_match_id' => $matchId,
-                        'account_id' => $accountId,
-                        'elo_change' => $eloChange,
-                    ];
                 }
+                if (1 === $teamRank) {
+                    $wins[$gameId][$accountId]++;
+                } elseif (2 === $teamRank) {
+                    $losses[$gameId][$accountId]++;
+                }
+
+                $eloUpdates[] = [
+                    'game_match_id' => $matchId,
+                    'account_id' => $accountId,
+                    'elo_change' => $eloChange,
+                ];
             }
         }
 
-        $this->elo->batchUpdateEloChange($this->conn, $eloUpdates);
+        $this->batchUpdateEloChange($this->conn, $eloUpdates);
 
         foreach ($ratings as $gameId => $players) {
             foreach ($players as $accountId => $rating) {
-                $this->elo->updatePlayerStats(
+                $this->updatePlayerStats(
                     $this->conn,
                     (int)$accountId,
                     (int)$gameId,
