@@ -8,77 +8,6 @@ use Kickback\Backend\Controllers\EloController;
 
 $conn = Database::getConnection();
 
-function updateEloScoreAndRankedStatus($conn, $accountId, $gameId, $eloScore, $totalMatches, $wins, $losses, $winRate, $minRankedMatches) {
-    $isRanked = $totalMatches >= $minRankedMatches ? 1 : 0;
-    $stmt = mysqli_prepare($conn, 'INSERT INTO account_game_elo (account_id, game_id, elo_rating, is_ranked, total_matches, total_wins, total_losses, win_rate) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE elo_rating = VALUES(elo_rating), is_ranked = VALUES(is_ranked), total_matches = VALUES(total_matches), total_wins = VALUES(total_wins), total_losses = VALUES(total_losses), win_rate = VALUES(win_rate)');
-    if (!$stmt) {
-        die("Error preparing statement: " . mysqli_error($conn));
-    }
-    mysqli_stmt_bind_param($stmt, 'iiidiiid', $accountId, $gameId, $eloScore, $isRanked, $totalMatches, $wins, $losses, $winRate);
-    if (!mysqli_stmt_execute($stmt)) {
-        die("Error executing statement: " . mysqli_stmt_error($stmt));
-    }
-    mysqli_stmt_close($stmt);
-}
-
-function updateEloChange($conn, $eloChange, $gameMatchId, $accountId) {
-    $updateStmt = mysqli_prepare($conn, 'UPDATE game_record SET elo_change = ? WHERE game_match_id = ? AND account_id = ?');
-    if (!$updateStmt) {
-        die("Error preparing statement: " . mysqli_error($conn));
-    }
-
-    mysqli_stmt_bind_param($updateStmt, 'iii', $eloChange, $gameMatchId, $accountId);
-
-    if (!mysqli_stmt_execute($updateStmt)) {
-        die("Error updating elo_change: " . mysqli_stmt_error($updateStmt));
-    }
-
-    mysqli_stmt_close($updateStmt);
-}
-
-/**
- * 
- * Batch update the elo_change column in the game_record table.
- *
- * @param mysqli $conn The MySQL database connection.
- * @param array $eloUpdates Array of updates where each entry has
- *                          'game_match_id', 'account_id', and 'elo_change'.
- * @return void
- */
-function batchUpdateEloChange(mysqli $conn, array $eloUpdates): void {
-    if (empty($eloUpdates)) {
-        return; // Nothing to update
-    }
-
-    $query = 'UPDATE game_record SET elo_change = CASE';
-    $ids = [];
-
-    foreach ($eloUpdates as $update) {
-        $gameMatchId = (int)$update['game_match_id'];
-        $accountId = (int)$update['account_id'];
-        $eloChange = (int)$update['elo_change'];
-        
-        $query .= " WHEN game_match_id = $gameMatchId AND account_id = $accountId THEN $eloChange";
-        $ids[] = "($gameMatchId, $accountId)";
-    }
-
-    $query .= ' END WHERE (game_match_id, account_id) IN (' . implode(',', $ids) . ')';
-
-    if (!mysqli_query($conn, $query)) {
-        die("Error batch updating elo_change: " . mysqli_error($conn));
-    }
-}
-
-
-function calculateTeamAverage($ratings, $team) {
-    $totalRating = 0;
-    foreach ($team as $accountId) {
-        $totalRating += $ratings[$accountId];
-    }
-    return $totalRating / count($team);
-}
-
-
 $eloController = new EloController(1500, 30);
 
 $ratings = [];
@@ -236,11 +165,7 @@ foreach ($matches as $match) {
         // Compute average ratings for each team
         $averageRatings = [];
         foreach ($teams as $teamName => $team) {
-            $sum = 0;
-            foreach ($team as $accountId) {
-                $sum += $ratings[$game_id][$accountId];
-            }
-            $averageRatings[$teamName] = $sum / count($team);
+            $averageRatings[$teamName] = $eloController->calculateTeamAverage($ratings[$game_id], $team);
         }
         echo "Average ratings for teams:<br>";
         print_r($averageRatings);
@@ -334,9 +259,8 @@ foreach ($matches as $match) {
             }
         }
             
-        // Convert eloUpdates to an array suitable for batch update
-        $batchUpdates = array_values($eloUpdates);
-        batchUpdateEloChange($conn, $eloUpdates);
+        // Apply ELO changes for this match
+        $eloController->batchUpdateEloChange($conn, $eloUpdates);
     }
     else{
         
@@ -358,7 +282,7 @@ foreach ($ratings as $game_id => $game_ratings) {
         $winRate = $totalMatches > 0 ? ($totalWins / $totalMatches) : 0.0;
 
         echo "Updating DB for Account $accountId: Elo Rating = $rating, Total Matches = $totalMatches, Wins = $totalWins, Losses = $totalLosses, Win Rate = $winRate<br>";
-        updateEloScoreAndRankedStatus($conn, $accountId, $game_id, $rating, $totalMatches, $totalWins, $totalLosses, $winRate, $minRankedMatches);
+        $eloController->updatePlayerStats($conn, $accountId, $game_id, $rating, $totalMatches, $totalWins, $totalLosses, $minRankedMatches);
 
     }
     echo "<h2>Ranked Players:</h2>";
