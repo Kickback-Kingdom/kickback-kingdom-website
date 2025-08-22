@@ -93,46 +93,6 @@ class MockPHPException implements IMockPHPException
     private string       $caller_context_func_ = '';
     private int          $caller_context_line_ = 0;
 
-
-    // TODO: Delete this after git commit.
-    // No longer needed, due to:
-    // * `ThrowableAssignableFieldsTrait_init` required in constructors.
-    // * `message_pure()`, `file()`, and `line()` no longer (possibly) call `getMessage`, `getFile`, and `getLine`.
-    // * `message_pure()`, `file()`, and `line()` not being setters (anymore).
-    //
-    // private  bool $recursion_check_ = false;
-    //
-    // /**
-    // * @template T
-    // * @param \Closure():T  $to_call
-    // * @param T             $default_value
-    // * @return T
-    // */
-    // private function prevent_infinite_recursion(\Closure $to_call, mixed $default_value) : mixed
-    // {
-    //     // This function exists because having fields like `getMessage()`
-    //     // return `ThrowableAssignableFieldsTrait::message()` will
-    //     // create a recursive relationship. The trait is still very
-    //     // useful for creating the same behavior available on other
-    //     // Kickback exceptions, so we want to be able to use it in spite
-    //     // of the possibility of undesired recursion.
-    //     //
-    //     // This is conceptually easy to deal with: just detect the recursion
-    //     // and return a default value if it occurs.
-    //     //
-    //     if ( $this->recursion_check_ ) {
-    //         return $default_value;
-    //     } else {
-    //         $this->recursion_check_ = true;
-    //         try {
-    //             $return_val = $to_call();
-    //         } finally {
-    //             $this->recursion_check_ = false;
-    //         }
-    //         return $return_val;
-    //     }
-    // }
-
     public function getMessage()  : string {
         return $this->message_pure();
     }

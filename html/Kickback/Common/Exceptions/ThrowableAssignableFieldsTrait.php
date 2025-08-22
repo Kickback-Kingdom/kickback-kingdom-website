@@ -167,20 +167,6 @@ trait ThrowableAssignableFieldsTrait
             return $this->message_pure();
         }
 
-        // // Fastpath: Getter call that just needs to return the value.
-        // if (!isset($msg) && isset($this->kk_main_message_)) {
-        //     return $this->message_pure();
-        // }
-        //
-        // // Getter call requiring default.
-        // if (!isset($msg)) {
-        //     assert(!isset($this->kk_main_message_));
-        //     // Default to `getMessage()`.
-        //     $this->kk_main_message_ = $this->getMessage();
-        //     return $this->message_pure();
-        // }
-        //assert(isset($msg)); // @phpstan-ignore function.alreadyNarrowedType, isset.variable
-
         // Handle setter call.
         $this->kk_main_message_ = $msg;
 
@@ -262,24 +248,6 @@ trait ThrowableAssignableFieldsTrait
         // we make doubled (unnecessary) invalidation very unlikely.
         //
         return $this->kk_main_message_path_;
-
-        // // Fastpath: Getter call that just needs to return the value.
-        // if (!isset($file) && isset($this->kk_main_message_path_)) {
-        //     return $this->kk_main_message_path_;
-        // }
-        //
-        // // Getter call requiring default.
-        // if (!isset($file)) {
-        //     assert(!isset($this->kk_main_message_path_));
-        //     // Default to `getFile()`.
-        //     $this->kk_main_message_path_ = $this->getFile();
-        //     return $this->kk_main_message_path_;
-        // }
-        //
-        // // Handle setter call.
-        // assert(isset($file)); // @phpstan-ignore function.alreadyNarrowedType, isset.variable
-        // $this->kk_main_message_path_ = $file;
-        // return $this->kk_main_message_path_;
     }
 
     /**
@@ -299,24 +267,6 @@ trait ThrowableAssignableFieldsTrait
         // we make doubled (unnecessary) invalidation very unlikely.
         //
         return $this->kk_main_message_line_;
-
-        // // Fastpath: Getter call that just needs to return the value.
-        // if (!isset($line) && isset($this->kk_main_message_line_)) {
-        //     return $this->kk_main_message_line_;
-        // }
-        //
-        // // Getter call requiring default.
-        // if (!isset($line)) {
-        //     assert(!isset($this->kk_main_message_line_));
-        //     // Default to `getLine()`.
-        //     $this->kk_main_message_line_ = $this->getLine();
-        //     return $this->kk_main_message_line_;
-        // }
-        //
-        // // Handle setter call.
-        // assert(isset($line)); // @phpstan-ignore function.alreadyNarrowedType, isset.variable
-        // $this->kk_main_message_line_ = $line;
-        // return $this->kk_main_message_line_;
     }
 
     /**
@@ -401,27 +351,6 @@ final class ThrowableAssignableFields
         Misc::process_location_info_into(
             $trace, $in_file_or_at_stack_depth, null, $at_line,
             $path, $func, $line);
-
-        // TODO: Delete after git commit
-        // if ( is_int($in_file_or_at_stack_depth) ) {
-        //     // Update by \debug_backtrace.
-        //     assert(isset($trace));
-        //     assert($in_file_or_at_stack_depth <= \count($trace));
-        //     $frame = $trace[\count($trace)-1];
-        //     $path = \array_key_exists('file',$frame) ? $frame['file'] : '{unknown file}';
-        //     $line = \array_key_exists('line',$frame) ? $frame['line'] : 0;
-        //     if ( $at_line !== 0 ) {
-        //         // Caller wishes to determine file dynamically,
-        //         // but override the line number with something specific.
-        //         $line = $at_line;
-        //     }
-        // } else {
-        //     // Update using arguments.
-        //     assert(!isset($trace));
-        //     assert(is_string($in_file_or_at_stack_depth)); // phpstan-ignore function.alreadyNarrowedType, function.alreadyNarrowedType
-        //     $path = $in_file_or_at_stack_depth;
-        //     $line = $at_line;
-        // }
 
         $exc->set_location($path,$line);
     }

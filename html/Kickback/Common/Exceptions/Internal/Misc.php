@@ -53,68 +53,6 @@ final class Misc
         return $loc_full;
     }
 
-    // TODO: Delete after git commit
-    // public final function msg(string|\Closure $msg, string|int $in_file_or_at_stack_depth = 0, int $at_line = 0) : void
-    // {
-    //     // Optimization:
-    //     // We only care about file+line from the caller, so we can
-    //     // avoid taking too much memory/time with debug_backtrace
-    //     // by asking it to leave arguments out, and to only grab
-    //     // the frames that we need.
-    //     // (Also, if the caller provides us with file+line info,
-    //     // we can avoid calling \debug_backtrace entirely.)
-    //     // @var kkdebug_backtrace_a
-    //     $trace = null;
-    //     if ( \is_int($in_file_or_at_stack_depth) )
-    //     {
-    //         // Capture desired frame from \debug_backtrace, if it is needed.
-    //         $stack_depth = 2 + $in_file_or_at_stack_depth;
-    //         $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $stack_depth);
-    //         $frame = $trace[$stack_depth-1];
-    //         $path = \array_key_exists('file',$frame) ? $frame['file'] : '';
-    //         $line = \array_key_exists('line',$frame) ? $frame['line'] : 0;
-    //         if ( $at_line !== 0 ) {
-    //             // Caller wishes to determine file dynamically,
-    //             // but override the line number with something specific.
-    //             $line = $at_line;
-    //         }
-    //     }
-    //     else
-    //     {
-    //         // Explicitly provided file+line.
-    //         $path = $in_file_or_at_stack_depth;
-    //         $line = $at_line;
-    //     }
-    // }
-    //
-    // public static function process_location_info(
-    //     ThrowableWithAssignableFields  $exc,
-    //     ?array                         $trace,
-    //     string|int                     $in_file_or_at_stack_depth,
-    //     int                            $at_line = 0)
-    // : void
-    // {
-    //     if ( is_int($in_file_or_at_stack_depth) ) {
-    //         // Update by \debug_backtrace.
-    //         assert(isset($trace));
-    //         assert($in_file_or_at_stack_depth <= \count($trace));
-    //         $frame = $trace[\count($trace)-1];
-    //         $path = \array_key_exists('file',$frame) ? $frame['file'] : '{unknown file}';
-    //         $line = \array_key_exists('line',$frame) ? $frame['line'] : 0;
-    //         if ( $at_line !== 0 ) {
-    //             // Caller wishes to determine file dynamically,
-    //             // but override the line number with something specific.
-    //             $line = $at_line;
-    //         }
-    //     } else {
-    //         // Update using arguments.
-    //         assert(!isset($trace));
-    //         assert(is_string($in_file_or_at_stack_depth)); // phpstan-ignore function.alreadyNarrowedType, function.alreadyNarrowedType
-    //         $path = $in_file_or_at_stack_depth;
-    //         $line = $at_line;
-    //     }
-    // }
-
     /**
     * @param      kkdebug_backtrace_paranoid_a      $trace
     * @param      string|int                        $in_file_or_at_stack_depth
