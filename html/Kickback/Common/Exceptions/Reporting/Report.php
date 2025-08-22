@@ -151,25 +151,7 @@ final class Report
             // Capture desired frame from \debug_backtrace, if it is needed.
             $stack_depth = 2 + $in_file_or_at_stack_depth;
             $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $stack_depth);
-
-            // TODO: Delete after git commit
-            // $frame = $trace[$stack_depth-1];
-            // $path = \array_key_exists('file',$frame) ? $frame['file'] : '';
-            // $line = \array_key_exists('line',$frame) ? $frame['line'] : 0;
-            // if ( $at_line !== 0 ) {
-            //     // Caller wishes to determine file dynamically,
-            //     // but override the line number with something specific.
-            //     $line = $at_line;
-            // }
         }
-
-        // TODO: Delete after git commit
-        // else
-        // {
-        //     // Explicitly provided file+line.
-        //     $path = $in_file_or_at_stack_depth;
-        //     $line = $at_line;
-        // }
 
         // The $in_function parameter is mandatory/required if an explicit
         // file name/path is provided. (As opposed to a stack depth number
@@ -267,13 +249,6 @@ final class Report
         int              $at_line = 0
     ) : void
     {
-        // TODO: If we allow KickbackThrowable to have a `message()` property-function
-        // that can replace the value returned by `getMessage()` (e.g.
-        // whenever __toString() is called), then it becomes possible to
-        // lift the no-closure constraint on `$msg` when greedily allocating
-        // the exception object (because, presumably, we'd allow the
-        // exception to accept a string-returning closure for its message).
-        // As of this writing, such a property-function does not exist.
         if ( $condition ) {
             return;
         }

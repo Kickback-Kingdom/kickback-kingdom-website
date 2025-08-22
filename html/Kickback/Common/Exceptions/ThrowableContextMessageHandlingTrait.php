@@ -875,43 +875,6 @@ class ThrowableContextMessageHandling
                 $path, $func, $line);
         }
 
-        // TODO: Delete after git commit
-        // if (isset($trace)) {
-        //     // Process results of \debug_backtrace, if it was needed.
-        //     $frame = $trace[\count($trace)-1];
-        //     $path = \array_key_exists('file',    $frame) ? $frame['file']     : null;
-        //     $func = \array_key_exists('function',$frame) ? $frame['function'] : null;
-        //     $line = \array_key_exists('line',    $frame) ? $frame['line']     : null;
-        //     if ( isset($in_function) ) {
-        //         // Caller wishes to determine file dynamically,
-        //         // but override the function name with something specific.
-        //         $func = $in_function;
-        //     }
-        //     if ( $at_line !== 0 ) {
-        //         // Caller wishes to determine file dynamically,
-        //         // but override the line number with something specific.
-        //         $line = $at_line;
-        //     }
-        // } else
-        // if (is_string($in_file_or_at_stack_depth)) {
-        //     // If the caller provided a file+line, then
-        //     // we didn't need to call \debug_backtrace.
-        //     // We'll just assign those here.
-        //     $path = $in_file_or_at_stack_depth; // file name/path
-        //     $func = $in_function;
-        //     $line = $at_line;
-        //     // Note: `if (is_int($in_file_or_at_stack_depth)) {...}` is handled
-        //     // by the \debug_backtrace case, because the integer version
-        //     // specifies a stack depth to query with \debug_backtrace.
-        // } else {
-        //     // During testing, `caller_context_file` and `caller_context_line`
-        //     // are convenient because they retain state between multiple
-        //     // tests which allows us to use the same file+line as a reference.
-        //     $path = $exc->caller_context_file();
-        //     $func = $exc->caller_context_func();
-        //     $line = $exc->caller_context_line();
-        // }
-
         $full = Misc::calculate_message_line_prefix($path, $line);
 
         // Logic to ensure that `say_before_message` lines from the
