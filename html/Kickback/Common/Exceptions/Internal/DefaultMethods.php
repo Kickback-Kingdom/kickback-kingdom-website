@@ -14,6 +14,8 @@ final class DefaultMethods
 {
     use StaticClassTrait;
 
+    // TODO: Where would it print \Throwable->getCode()? Does it print that at all? (untested)
+
     // Some notes about `Exception::__toString()`
     // and how exceptions are printed by PHP:
     //
@@ -101,16 +103,31 @@ final class DefaultMethods
         return $strbuf;
     }
 
-    public static function toString(IKickbackThrowableRaw $exc, string $mock_class_fqn = null) : string
+    public static function toString(IKickbackThrowableRaw $exc, ?string $mock_class_fqn = null, ?string $msg_override = null) : string
     {
         if (isset($mock_class_fqn)) {
             $class_fqn = $mock_class_fqn;
         } else {
             $class_fqn = \get_class($exc);
         }
-        $message = $exc->getMessage();
-        $file = $exc->getFile();
-        $line = \strval($exc->getLine());
+
+        // Optimization: The `$msg_override` field allows us to avoid
+        // calling $exc->message() more than once if the caller _also_
+        // needed to call it already. This is especially notable when
+        // $exc has a `message()` value that is a string-returning-closure,
+        // because each call to $exc->message() may call that closure
+        // an additional time. If either `->__toString()` or `->message()`
+        // ever guarantee that the $msg closure will never be called more
+        // than once, then the $msg_override argument, and the below
+        // if-else code, are essential to providing such a guarantee.
+        if ( isset($msg_override) ) {
+            $message = $msg_override;
+        } else {
+            $message = $exc->message();
+        }
+
+        $file = $exc->file();
+        $line = \strval($exc->line());
         $trace = $exc->getTraceAsString();
         return $class_fqn
             . " $message in $file($line)\n"

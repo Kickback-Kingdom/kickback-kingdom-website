@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Exceptions\Internal;
 
+use Kickback\Common\Exceptions\ThrowableWithAssignableFields;
+
 //use Kickback\Common\Exceptions\Internal\MockPHPException;
 /**
 * Alternative to \Throwable for classes that can't extend \Exception|\Error.
@@ -41,7 +43,7 @@ namespace Kickback\Common\Exceptions\Internal;
 * @phpstan-import-type  kkdebug_frame_a      from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
 * @phpstan-import-type  kkdebug_backtrace_a  from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
 */
-interface IKickbackThrowableRaw
+interface IKickbackThrowableRaw extends ThrowableWithAssignableFields
 {
     // Credit:
     // This interface was taken from a comment written by `ask at nilpo dot com`

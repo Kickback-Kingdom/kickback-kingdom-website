@@ -3,12 +3,14 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Exceptions;
 
+use Kickback\Common\Exceptions\ThrowableWithAssignableFields;
 use Kickback\Common\Exceptions\ThrowableWithContextMessages;
 use Kickback\Common\Exceptions\Internal\DefaultMethods;
 use Kickback\Common\Exceptions\Internal\IKickbackThrowableRaw;
 use Kickback\Common\Exceptions\Internal\MockPHPException;
 use Kickback\Common\Exceptions\Internal\IMockPHPException;
 use Kickback\Common\Exceptions\Internal\IMockPHPException__ConfigAccessors;
+use Kickback\Common\Exceptions\Internal\Misc;
 
 // Implementation note:
 //
@@ -38,16 +40,24 @@ use Kickback\Common\Exceptions\Internal\IMockPHPException__ConfigAccessors;
 
 /**
 * @phpstan-require-implements  \Kickback\Common\Exceptions\ThrowableWithContextMessages
+* @phpstan-require-implements  \Kickback\Common\Exceptions\ThrowableWithAssignableFields
 */
 trait ThrowableContextMessageHandlingTrait
 {
     // NOTE: Kickback\Common\Exceptions\Internal\DefaultMethods
     // contains a comment that explains PHP's exception printing.
 
-    private ?string  $kk_main_message_prefix_ = null;
-
     /** @var ?array<string|\Closure():string> */
     private ?array $kk_prepend_messages_ = null;
+
+    /** @var ?array<string> */
+    private ?array $kk_prepend_msg_path_ = null;
+
+    /** @var ?array<string> */
+    private ?array $kk_prepend_msg_func_ = null;
+
+    /** @var ?array<int> */
+    private ?array $kk_prepend_msg_line_ = null;
 
     /** @var ?array<string> */
     private ?array $kk_prepend_msg_loc_full_ = null;
@@ -56,32 +66,57 @@ trait ThrowableContextMessageHandlingTrait
     * @see  ThrowableWithContextMessages::say_before_message
     * @see  ThrowableWithContextMessages::say_after_message
     *
-    * @param      string|\Closure():string          $msg
+    * @param  string|\Closure():string   $msg
+    * @param  string|int                 $in_file_or_at_stack_depth
+    * @param  ($in_file_or_at_stack_depth is string ? string : (?string)
+    *         )                          $in_function
+    * @param  int                        $at_line
     *
     * @phpstan-impure
     * @throws void
     */
-    public function say_before_message(string|\Closure $msg) : void
+    public function say_before_message(
+        string|\Closure   $msg,
+        string|int        $in_file_or_at_stack_depth = 0,
+        ?string           $in_function = null,
+        int               $at_line = 0) : void
     {
         // Optimization:
         // We only care about file+line from the caller, so we can
         // avoid taking too much memory/time with debug_backtrace
         // by asking it to leave arguments out, and to only grab
         // the frames that we need.
+        // (Also, if the caller provides us with file+line info,
+        // we can avoid calling \debug_backtrace entirely.)
         // @var kkdebug_backtrace_a
         $trace = null;
-        if ( !($this instanceof IMockPHPException) ) {
-            $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        if (!($this instanceof IMockPHPException)
+        &&  is_int($in_file_or_at_stack_depth) )
+        {
+            $stack_depth = 2 + $in_file_or_at_stack_depth;
+            $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $stack_depth);
         }
         ThrowableContextMessageHandling::add_context_message(
-            $this, $msg, $trace,
-            $this->kk_main_message_prefix_,
+            $this,
             $this->kk_prepend_messages_,
-            $this->kk_prepend_msg_loc_full_);
+            $this->kk_prepend_msg_path_,
+            $this->kk_prepend_msg_func_,
+            $this->kk_prepend_msg_line_,
+            $this->kk_prepend_msg_loc_full_,
+            $msg, true, $trace, $in_file_or_at_stack_depth, $in_function, $at_line);
     }
 
     /** @var ?array<string|\Closure():string> */
     private ?array $kk_append_messages_ = null;
+
+    /** @var ?array<string> */
+    private ?array $kk_append_msg_path_ = null;
+
+    /** @var ?array<string> */
+    private ?array $kk_append_msg_func_ = null;
+
+    /** @var ?array<int> */
+    private ?array $kk_append_msg_line_ = null;
 
     /** @var ?array<string> */
     private ?array $kk_append_msg_loc_full_ = null;
@@ -90,66 +125,103 @@ trait ThrowableContextMessageHandlingTrait
     * @see ThrowableWithContextMessages::say_before_message
     * @see ThrowableWithContextMessages::say_after_message
     *
-    * @param      string|\Closure():string          $msg
+    * @param  string|\Closure():string   $msg
+    * @param  string|int                 $in_file_or_at_stack_depth
+    * @param  ($in_file_or_at_stack_depth is string ? string : (?string)
+    *         )                          $in_function
+    * @param  int                        $at_line
     *
     * @phpstan-impure
     * @throws void
     */
-    public function say_after_message(string|\Closure $msg) : void
+    public function say_after_message(
+        string|\Closure   $msg,
+        string|int        $in_file_or_at_stack_depth = 0,
+        ?string           $in_function = null,
+        int               $at_line = 0) : void
     {
         // Optimization:
         // We only care about file+line from the caller, so we can
         // avoid taking too much memory/time with debug_backtrace
         // by asking it to leave arguments out, and to only grab
         // the frames that we need.
+        // (Also, if the caller provides us with file+line info,
+        // we can avoid calling \debug_backtrace entirely.)
         // @var kkdebug_backtrace_a
         $trace = null;
-        if ( !($this instanceof IMockPHPException) ) {
-            $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        if (!($this instanceof IMockPHPException)
+        &&  is_int($in_file_or_at_stack_depth) )
+        {
+            $stack_depth = 2 + $in_file_or_at_stack_depth;
+            $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $stack_depth);
         }
         ThrowableContextMessageHandling::add_context_message(
-            $this, $msg, $trace,
-            $this->kk_main_message_prefix_,
+            $this,
             $this->kk_append_messages_,
-            $this->kk_append_msg_loc_full_);
+            $this->kk_append_msg_path_,
+            $this->kk_append_msg_func_,
+            $this->kk_append_msg_line_,
+            $this->kk_append_msg_loc_full_,
+            $msg, false, $trace, $in_file_or_at_stack_depth, $in_function, $at_line);
     }
 
     public final function clear_context_messages() : void
     {
-            $this->kk_main_message_prefix_    = null;
-            $this->kk_append_messages_        = null;
-            $this->kk_append_msg_loc_full_    = null;
+        $this->kk_prepend_messages_       = null;
+        $this->kk_prepend_msg_path_       = null;
+        $this->kk_prepend_msg_func_       = null;
+        $this->kk_prepend_msg_line_       = null;
+        $this->kk_prepend_msg_loc_full_   = null;
 
-            $this->kk_main_message_prefix_    = null;
-            $this->kk_prepend_messages_       = null;
-            $this->kk_prepend_msg_loc_full_   = null;
-
-            // The `getMessage()` results can't be changed on
-            // things inheriting from `\Exception`, so we can
-            // just assume that this won't change.
-            //
-            // However, the mock exception doesn't need to be
-            // _actually_ throwable/catchable, so it can have
-            // its message changed repeatedly. So it's a good
-            // idea to reset this metadata while reseting
-            // everything else, as it will provide more
-            // accurate testing.
-            if ( $this instanceof MockPHPException ) {
-                $this->kk_main_message_prefix_ = null;
-            }
+        $this->kk_append_messages_        = null;
+        $this->kk_append_msg_path_        = null;
+        $this->kk_append_msg_func_        = null;
+        $this->kk_append_msg_line_        = null;
+        $this->kk_append_msg_loc_full_    = null;
     }
 
-    // Perhaps this would be better as a `public` function,
-    // but right now we'll wait to see if there's a good use-case
-    // for it, and also wait for the code to mature a bit,
-    // before we make that promise.
     /**
+    * @see ThrowableWithContextMessages::have_context_messages
+    *
     * @phpstan-pure
     * @throws void
     */
-    protected final function have_context_messages() : bool {
-        return (isset($this->kk_prepend_messages_) && 0 < \count($this->kk_prepend_messages_))
-            || (isset($this->kk_append_messages_)  && 0 < \count($this->kk_append_messages_));
+    public final function have_context_messages() : bool {
+        return (0 < $this->context_message_count());
+    }
+
+    // These methods are helpful for other abstractions to be able to
+    // use the `say_after`/`say_before` feature programmatically.
+    // One example is in `Kickback\Common\Exceptions\Reporting\Report`.
+
+    /**
+    * @see ThrowableWithContextMessages::say_before_message_count
+    *
+    * @phpstan-pure
+    * @throws void
+    */
+    public final function say_before_message_count() : int {
+        return isset($this->kk_prepend_messages_) ? \count($this->kk_prepend_messages_) : 0;
+    }
+
+    /**
+    * @see ThrowableWithContextMessages::say_after_message_count
+    *
+    * @phpstan-pure
+    * @throws void
+    */
+    public final function say_after_message_count() : int {
+        return isset($this->kk_append_messages_) ? \count($this->kk_append_messages_) : 0;
+    }
+
+    /**
+    * @see ThrowableWithContextMessages::context_message_count
+    *
+    * @phpstan-pure
+    * @throws void
+    */
+    public final function context_message_count() : int {
+        return $this->say_before_message_count() + $this->say_after_message_count();
     }
 
     /**
@@ -163,39 +235,60 @@ trait ThrowableContextMessageHandlingTrait
         // }
         // $c = $this->text_colorizer;
 
-        $this_msg = $this->getMessage();
+        $this_msg = $this->message_pure();
         $is_multiline_msg = \str_contains($this_msg, "\n");
         $have_context_messages = $this->have_context_messages();
         if (!$have_context_messages && !$is_multiline_msg)
         {
             if ( $this instanceof IMockPHPException ) {
-                return DefaultMethods::toString($this, $this->mock_class_fqn());
-            }
-
-            $parent = \get_parent_class($this);
-            if ( $parent !== false ) {
-                return parent::__toString();
+                return DefaultMethods::toString($this, $this->mock_class_fqn(), $this_msg);
             } else {
-                return DefaultMethods::toString($this);
+                // We used to attempt to call `parent::__toString()`
+                // if `\get_parent_class($this)` returned something,
+                // but that was before the `ThrowableWithAssignableFields->message()`
+                // was implemented. If we call `parent::__toString()`, then
+                // `message()` might not be used instead of `getMessage()`,
+                // which could violate promises made by the
+                // `ThrowableWithAssignableFields` interface.
+                // So instead, we just unconditionally use
+                // `DefaultMethods::toString(...)` because it WILL
+                // use the correct `message()` property-method.
+                return DefaultMethods::toString($this, null, $this_msg);
             }
         }
 
-        // This is possible if `say_*_message` methods are never called,
-        // yet the exception just has a multi-line `$this->getMessage()`.
-        // The multi-line situation will still trigger context printing,
-        // even if we don't have other context messages.
+        // We can always have a `message_prefix`, even if the
+        // `say_*_message` methods are never called.
+        //
+        // There are a few different ways this can go:
+        // (1) The exception has a single-line message and no context messages.
+        // (2) The exception has a multi-line message and zero or more context messages.
+        // (3) The exception has a single-line message and one or more context messages.
+        // (4) The exxeption has a multi-line message and one or more context messages.
+        //
+        // In case 1, we wouldn't have a prefix, but this is also the case
+        // that just calls `DefaultMethods::toString`.
+        //
+        // Cases 2-4 all would have already executed operations that
+        // populate the `$this->message_prefix()` property-method.
+        //
+        // And yes, a multi-line main message will still trigger context
+        // printing, even if we don't have other context messages.
         // (Because this printer is MUCH better at handling multi-line!)
-        if (!isset($this->kk_main_message_prefix_)) {
-            // It'd be nice to assign this to `$this->kk_main_message_prefix_`
+        $main_message_prefix = $this->message_prefix();
+
+        // The below can happen if the main message is a closure AND multi-line.
+        // In that case, the detection logic in `ThrowableAssignableFieldsTrait`
+        // would not be able to call `$this->populate_message_prefix()`
+        // on itself earlier, because that would call the closure prematurely.
+        if (!isset($main_message_prefix)) {
+            // It'd be nice to be able to call $this->populate_message_prefix()
             // so that it doesn't have to be recalculated, but
             // we don't want to invalidate the promise that this
-            // method is `pure`.
+            // method is `pure` (and doesn't modify the exception object).
             $main_message_prefix =
-                ThrowableContextMessageHandling::
-                    calculate_context_message_line_prefix(
-                        $this->getFile(), $this->getLine());
-        } else {
-            $main_message_prefix = $this->kk_main_message_prefix_;
+                Misc::calculate_message_line_prefix(
+                        $this->file(), $this->line());
         }
 
         $padding =
@@ -219,7 +312,7 @@ trait ThrowableContextMessageHandlingTrait
         $indent_str = '  ';
         $blank_prefix = \str_repeat(' ', $padding+2);
 
-        // Context messages that go BEFORE $this->getMessage().
+        // Context messages that go BEFORE $this->message().
         $len = isset($this->kk_prepend_messages_) ? \count($this->kk_prepend_messages_) : 0;
         for ($i = $len-1; $i >= 0; $i--) {
             assert(isset($this->kk_prepend_msg_loc_full_));
@@ -258,7 +351,7 @@ trait ThrowableContextMessageHandlingTrait
             $strbuf .= "  (thrown from here)\n";
         }
 
-        // Context messages that go AFTER $this->getMessage().
+        // Context messages that go AFTER $this->message().
         $len = isset($this->kk_append_messages_) ? \count($this->kk_append_messages_) : 0;
         for ($i = 0; $i < $len; $i++) {
             assert(isset($this->kk_append_msg_loc_full_));
@@ -307,8 +400,7 @@ class ThrowableContextMessageHandling
         // otherwise just be confounding elements in our tests.
         $exc->trace([]); // We aren't testing trace output, so just don't emit it.
         $exc->mock_class_fqn('MockException'); // Shorter, and by forcing it, it's more predictable.
-        $exc->file('my_file.php');
-        $exc->line(42);
+        $exc->set_location('my_file.php', 42);
 
         $to_string =
             function(string $msg) use(&$exc) : string
@@ -346,6 +438,7 @@ class ThrowableContextMessageHandling
             "Trace:\n");
 
         $exc->caller_context_file('foo.php');
+        $exc->caller_context_func('a');
         $exc->caller_context_line(137);
         $exc->say_before_message("Pre-message context.");
 
@@ -395,6 +488,7 @@ class ThrowableContextMessageHandling
 
 
         $exc->caller_context_file('bar.php');
+        $exc->caller_context_func('b');
         $exc->caller_context_line(23);
         $exc->say_after_message("Post-message context.");
 
@@ -449,6 +543,7 @@ class ThrowableContextMessageHandling
         $exc->clear_context_messages();
 
         $exc->caller_context_file('bar.php');
+        $exc->caller_context_func('b');
         $exc->caller_context_line(23);
         $exc->say_after_message("Post-message context.");
 
@@ -497,6 +592,7 @@ class ThrowableContextMessageHandling
             "Trace:\n");
 
         $exc->caller_context_file('foo.php');
+        $exc->caller_context_func('a');
         $exc->caller_context_line(137);
         $exc->say_before_message("Pre-message context.");
 
@@ -549,6 +645,7 @@ class ThrowableContextMessageHandling
             "Trace:\n");
 
         $exc->caller_context_file('abc.php');
+        $exc->caller_context_func('c');
         $exc->caller_context_line(4990);
         $exc->say_before_message(fn() => "More pre-message context.");
 
@@ -566,6 +663,7 @@ class ThrowableContextMessageHandling
             "Trace:\n");
 
         $exc->caller_context_file('asdf/qwer.php');
+        $exc->caller_context_func('d');
         $exc->caller_context_line(47);
         $exc->say_after_message(fn() => "More\npost-message\ncontext.\n");
 
@@ -587,6 +685,7 @@ class ThrowableContextMessageHandling
             "Trace:\n");
 
         $exc->caller_context_file('P/Q/MyClass.php');
+        $exc->caller_context_func('e');
         $exc->caller_context_line(420);
         $exc->say_before_message(fn() => "More\npre-message\ncontext.\n");
 
@@ -610,94 +709,242 @@ class ThrowableContextMessageHandling
             "\n".
             "\n".
             "Trace:\n");
-    }
 
-    /**
-    * @phpstan-pure
-    * @throws void
-    */
-    public static function calculate_context_message_line_prefix(
-        ?string $path,  ?int $line
-    ) : string
-    {
-        if ( isset($path) && 0 < \strlen($path) ) {
-            $sep_pos = \strrpos($path, '/');
-            if ( $sep_pos !== false ) {
-                $basename = \substr($path, $sep_pos+1);
-            } else {
-                $basename = $path;
-            }
-        } else {
-            $basename = null;
-        }
+        $exc->clear_context_messages();
 
-        $line_str = ((isset($line) && $line !== 0) ? \strval($line) : null);
-        if ( isset($basename) && isset($line_str) ) {
-            $loc_full = "$basename($line_str): ";
-        } else
-        if ( isset($basename) /* && !isset($line_str) */ ) {
-            $loc_full = "$basename: ";
-        } else
-        if ( /*!isset($basename) && */ isset($line_str) ) {
-            $loc_full = "($line_str): ";
-        } else
-        { // !isset($basename) && !isset($line_str)
-            $loc_full = '';
-        }
+        $exc->set_location('pitcher.php',42);
+        $exc->caller_context_file('batter.php');
+        $exc->caller_context_func('C');
+        $exc->caller_context_line(67);
+        $exc->say_before_message("Function C (4)");
 
-        return $loc_full;
+        // @phpstan-ignore function.impossibleType, identical.alwaysFalse
+        assert($to_string("Hello World!")    ===
+            "MockException\n".
+            "Messages:\n".
+            "  batter.php(67):  Function C (4)\n".
+            "  pitcher.php(42): Hello World!  (thrown from here)\n".
+            "\n".
+            "Trace:\n");
+
+        $exc->caller_context_file('batter.php');
+        $exc->caller_context_func('C');
+        $exc->caller_context_line(82);
+        $exc->say_before_message("Function C (5)");
+
+        // @phpstan-ignore function.impossibleType, identical.alwaysFalse
+        assert($to_string("Hello World!")    ===
+            "MockException\n".
+            "Messages:\n".
+            "  batter.php(67):  Function C (4)\n".
+            "  batter.php(82):  Function C (5)\n".
+            "  pitcher.php(42): Hello World!  (thrown from here)\n".
+            "\n".
+            "Trace:\n");
+
+        $exc->caller_context_file('catcher.php');
+        $exc->caller_context_func('B');
+        $exc->caller_context_line(537);
+        $exc->say_before_message("Function B (3)");
+
+        // @phpstan-ignore function.impossibleType, identical.alwaysFalse
+        assert($to_string("Hello World!")    ===
+            "MockException\n".
+            "Messages:\n".
+            "  catcher.php(537): Function B (3)\n".
+            "  batter.php(67):   Function C (4)\n".
+            "  batter.php(82):   Function C (5)\n".
+            "  pitcher.php(42):  Hello World!  (thrown from here)\n".
+            "\n".
+            "Trace:\n");
+
+        $exc->caller_context_file('catcher.php');
+        $exc->caller_context_func('A');
+        $exc->caller_context_line(589);
+        $exc->say_before_message("Function A (2)");
+
+        // @phpstan-ignore function.impossibleType, identical.alwaysFalse
+        assert($to_string("Hello World!")    ===
+            "MockException\n".
+            "Messages:\n".
+            "  catcher.php(589): Function A (2)\n".
+            "  catcher.php(537): Function B (3)\n".
+            "  batter.php(67):   Function C (4)\n".
+            "  batter.php(82):   Function C (5)\n".
+            "  pitcher.php(42):  Hello World!  (thrown from here)\n".
+            "\n".
+            "Trace:\n");
+
+        $exc->caller_context_file('catcher.php');
+        $exc->caller_context_func('A');
+        $exc->caller_context_line(556);
+        $exc->say_before_message("Function A (1)");
+
+        // @phpstan-ignore function.impossibleType, identical.alwaysFalse
+        assert($to_string("Hello World!")    ===
+            "MockException\n".
+            "Messages:\n".
+            "  catcher.php(556): Function A (1)\n".
+            "  catcher.php(589): Function A (2)\n".
+            "  catcher.php(537): Function B (3)\n".
+            "  batter.php(67):   Function C (4)\n".
+            "  batter.php(82):   Function C (5)\n".
+            "  pitcher.php(42):  Hello World!  (thrown from here)\n".
+            "\n".
+            "Trace:\n");
     }
 
     /**
     * @param      IKickbackThrowableRaw             $exc
-    * @param      string|\Closure():string          $msg
-    * @param      kkdebug_backtrace_a               $trace
     * @param      ?array<string|\Closure():string>  $messages
     * @param-out  array<string|\Closure():string>   $messages
+    * @param      ?array<string>                    $msg_loc_path
+    * @param-out  array<string>                     $msg_loc_path
+    * @param      ?array<string>                    $msg_loc_func
+    * @param-out  array<string>                     $msg_loc_func
+    * @param      ?array<int>                       $msg_loc_line
+    * @param-out  array<int>                        $msg_loc_line
     * @param      ?array<string>                    $msg_loc_full
     * @param-out  array<string>                     $msg_loc_full
+    * @param      string|\Closure():string          $msg
+    * @param      bool                              $prepend
+    * @param      kkdebug_backtrace_a               $trace
+    * @param      string|int                        $in_file_or_at_stack_depth
+    * @param      ($in_file_or_at_stack_depth is string ? string : (?string)
+    *             )                                 $in_function
+    * @param      int                               $at_line
     *
     * @phpstan-impure
     * @throws void
     */
     public static function add_context_message(
         IKickbackThrowableRaw  $exc,
-        string|\Closure        $msg,
-        ?array                 $trace,
-        ?string                &$main_message_prefix,
         ?array                 &$messages,
-        ?array                 &$msg_loc_full
+        ?array                 &$msg_loc_path,
+        ?array                 &$msg_loc_func,
+        ?array                 &$msg_loc_line,
+        ?array                 &$msg_loc_full,
+        string|\Closure        $msg,
+        bool                   $prepend,
+        ?array                 $trace,
+        string|int             $in_file_or_at_stack_depth,
+        ?string                $in_function,
+        int                    $at_line
     ) : void
     {
-
         if ( !isset($messages) ) {
             $messages     = [];
-            //$msg_loc_path = [];
-            //$msg_loc_line = [];
+            $msg_loc_path = [];
+            $msg_loc_func = [];
+            $msg_loc_line = [];
             $msg_loc_full = [];
 
-            if ( !isset($main_message_prefix) ) {
-                $main_message_prefix =
-                    self::calculate_context_message_line_prefix(
-                        $exc->getFile(), $exc->getLine());
+            $exc->populate_message_prefix();
+        }
+        assert(isset($msg_loc_path));
+        assert(isset($msg_loc_func));
+        assert(isset($msg_loc_line));
+        assert(isset($msg_loc_full));
+
+        // This if-condition means the following:
+        // If the caller hasn't explicitly specified the file/func/line
+        // information (or specified that it be acquired from \debug_backtrace),
+        // AND the exception is an IMockPHPException (we're unittesting),
+        // then use the `caller_context_*()` functions to get file/func/line
+        // information.
+        if (($exc instanceof IMockPHPException__ConfigAccessors)
+        &&  !isset($trace) && !\is_string($in_file_or_at_stack_depth)) {
+            // During testing, `caller_context_file` and `caller_context_line`
+            // are convenient because they retain state between multiple
+            // tests which allows us to use the same file+line as a reference.
+            $path = $exc->caller_context_file();
+            $func = $exc->caller_context_func();
+            $line = $exc->caller_context_line();
+        } else {
+            // Normal path.
+
+            // The $in_function parameter is mandatory/required if an explicit
+            // file name/path is provided. (As opposed to a stack depth number
+            // being provided, which is the default.)
+            // @phpstan-ignore isset.variable
+            assert((\is_string($in_file_or_at_stack_depth) && isset($in_function))
+            || !\is_string($in_file_or_at_stack_depth));
+
+            Misc::process_location_info_into(
+                $trace, $in_file_or_at_stack_depth, $in_function, $at_line,
+                $path, $func, $line);
+        }
+
+        // TODO: Delete after git commit
+        // if (isset($trace)) {
+        //     // Process results of \debug_backtrace, if it was needed.
+        //     $frame = $trace[\count($trace)-1];
+        //     $path = \array_key_exists('file',    $frame) ? $frame['file']     : null;
+        //     $func = \array_key_exists('function',$frame) ? $frame['function'] : null;
+        //     $line = \array_key_exists('line',    $frame) ? $frame['line']     : null;
+        //     if ( isset($in_function) ) {
+        //         // Caller wishes to determine file dynamically,
+        //         // but override the function name with something specific.
+        //         $func = $in_function;
+        //     }
+        //     if ( $at_line !== 0 ) {
+        //         // Caller wishes to determine file dynamically,
+        //         // but override the line number with something specific.
+        //         $line = $at_line;
+        //     }
+        // } else
+        // if (is_string($in_file_or_at_stack_depth)) {
+        //     // If the caller provided a file+line, then
+        //     // we didn't need to call \debug_backtrace.
+        //     // We'll just assign those here.
+        //     $path = $in_file_or_at_stack_depth; // file name/path
+        //     $func = $in_function;
+        //     $line = $at_line;
+        //     // Note: `if (is_int($in_file_or_at_stack_depth)) {...}` is handled
+        //     // by the \debug_backtrace case, because the integer version
+        //     // specifies a stack depth to query with \debug_backtrace.
+        // } else {
+        //     // During testing, `caller_context_file` and `caller_context_line`
+        //     // are convenient because they retain state between multiple
+        //     // tests which allows us to use the same file+line as a reference.
+        //     $path = $exc->caller_context_file();
+        //     $func = $exc->caller_context_func();
+        //     $line = $exc->caller_context_line();
+        // }
+
+        $full = Misc::calculate_message_line_prefix($path, $line);
+
+        // Logic to ensure that `say_before_message` lines from the
+        // same function will be printed in the same order as they appear
+        // (top-to-bottom) within that function.
+        $insert_at = \PHP_INT_MAX;
+        $len = \count($messages);
+        if ($prepend && (0 < $len)) {
+            $prev = $len-1;
+            while( ($prev >= 0)
+            &&  ($msg_loc_path[$prev] === $path)
+            &&  ($msg_loc_func[$prev] === $func)
+            &&  ($msg_loc_line[$prev]  <  $line)
+            )
+            {
+                $insert_at = $prev;
+                $prev--;
             }
         }
 
-        $messages[] = $msg;
-
-        if (isset($trace)) {
-            assert(2 <= \count($trace));
-            $frame = $trace[1];
-            $path = \array_key_exists('file',$frame) ? $frame['file'] : null;
-            $line = \array_key_exists('line',$frame) ? $frame['line'] : null;
+        if($insert_at < \PHP_INT_MAX) {
+            \array_splice($messages,     $insert_at, 0, $msg);
+            \array_splice($msg_loc_path, $insert_at, 0, $path);
+            \array_splice($msg_loc_func, $insert_at, 0, $func);
+            \array_splice($msg_loc_line, $insert_at, 0, $line);
+            \array_splice($msg_loc_full, $insert_at, 0, $full);
         } else {
-            assert($exc instanceof IMockPHPException__ConfigAccessors);
-            $path = $exc->caller_context_file();
-            $line = $exc->caller_context_line();
+            $messages[]     = $msg;
+            $msg_loc_path[] = $path;
+            $msg_loc_func[] = $func;
+            $msg_loc_line[] = $line;
+            $msg_loc_full[] = $full;
         }
-
-        $msg_loc_full[] =
-            self::calculate_context_message_line_prefix($path, $line);
     }
 
     /**
