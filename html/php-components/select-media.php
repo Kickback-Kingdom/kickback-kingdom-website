@@ -39,10 +39,33 @@ use Kickback\Common\Version;
 import { initPixelEditor, LAYER_DEFAULTS } from '<?= Version::urlBetaPrefix(); ?>/assets/js/pixel-editor/index.js';
 
 const promptTemplates = {
-  "lich card art": (desc, scenery, faction) =>
-  `High-detail retro pixel art card in 1990s arcade style (SNK, Capcom).
-   Sharp pixels, purposeful dithering, dramatic contrast.
-   Layered scene set in ${scenery}, featuring ${faction}. ${desc}`
+  "lich card art": {
+    build: (sceneType, scenery, mainSubject, action, extraDetails) =>
+      `Dark fantasy pixel art scene in a ${sceneType} — ${scenery}, featuring ${mainSubject} ${action}. ${extraDetails} High detail, dramatic lighting, and an ominous, mystical atmosphere.`,
+    presets: {
+      "Haunted Forest": {
+        sceneType: "haunted forest at night",
+        scenery: "twisted, leafless trees and mist swirling around cobblestone ground",
+        mainSubject: "skeletal necromancer in a tattered black robe",
+        action: "raising an undead mummy from a pile of skulls",
+        extraDetails: "A ghostly spirit floats above, casting eerie blue light."
+      },
+      "Abandoned Hospital": {
+        sceneType: "ruined, abandoned hospital",
+        scenery: "broken beds, rusted medical tools, and flickering lanterns",
+        mainSubject: "plague doctor with glowing eyes",
+        action: "summoning a swarm of ghostly patients from the shadows",
+        extraDetails: "Pale blue-green light seeps through cracked windows."
+      },
+      "Ice Cavern": {
+        sceneType: "icy cavern deep underground",
+        scenery: "jagged ice pillars and glowing frost crystals",
+        mainSubject: "armored lich with a frozen crown",
+        action: "casting a frost storm spell",
+        extraDetails: "Snow swirls through the air under dim, ethereal light."
+      }
+    }
+  }
 };
 
 
@@ -76,18 +99,23 @@ function PromptGenerateWithAI() {
 
 function updatePromptPreview() {
     const templateEl = document.getElementById('imagePromptTemplate');
-    const descriptionEl = document.getElementById('imagePromptDescription');
+    const sceneTypeEl = document.getElementById('imagePromptSceneType');
     const sceneryEl = document.getElementById('imagePromptScenery');
-    const factionEl = document.getElementById('imagePromptFaction');
+    const mainSubjectEl = document.getElementById('imagePromptMainSubject');
+    const actionEl = document.getElementById('imagePromptAction');
+    const extraEl = document.getElementById('imagePromptExtraDetails');
     const promptEl = document.getElementById('imagePrompt');
     const useCustomBtn = document.getElementById('usePromptAsCustom');
     const template = templateEl ? templateEl.value : '';
-    const description = descriptionEl ? descriptionEl.value : '';
+    const sceneType = sceneTypeEl ? sceneTypeEl.value : '';
     const scenery = sceneryEl ? sceneryEl.value : '';
-    const faction = factionEl ? factionEl.value : '';
-    const finalPrompt = promptTemplates[template]
-        ? promptTemplates[template](description, scenery, faction)
-        : description;
+    const mainSubject = mainSubjectEl ? mainSubjectEl.value : '';
+    const action = actionEl ? actionEl.value : '';
+    const extraDetails = extraEl ? extraEl.value : '';
+    const templateDef = promptTemplates[template];
+    const finalPrompt = templateDef
+        ? templateDef.build(sceneType, scenery, mainSubject, action, extraDetails)
+        : extraDetails;
     if (promptEl) {
         if (template) {
             promptEl.value = finalPrompt;
@@ -110,8 +138,35 @@ function updatePromptPreview() {
 
 window.addEventListener('DOMContentLoaded', () => {
     const templateSelect = document.getElementById('imagePromptTemplate');
+    const presetSelect = document.getElementById('imagePromptPreset');
+    const sceneTypeEl = document.getElementById('imagePromptSceneType');
+    const sceneryEl = document.getElementById('imagePromptScenery');
+    const mainSubjectEl = document.getElementById('imagePromptMainSubject');
+    const actionEl = document.getElementById('imagePromptAction');
+    const extraEl = document.getElementById('imagePromptExtraDetails');
+
+    const renderPresetOptions = () => {
+        if (!presetSelect) return;
+        presetSelect.innerHTML = '<option value="">Custom...</option>';
+        const template = templateSelect ? templateSelect.value : '';
+        const presets = template && promptTemplates[template] ? promptTemplates[template].presets : {};
+        Object.keys(presets || {}).forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            presetSelect.appendChild(opt);
+        });
+    };
+
     if (templateSelect) {
         templateSelect.addEventListener('change', () => {
+            renderPresetOptions();
+            if (presetSelect) presetSelect.value = '';
+            if (sceneTypeEl) sceneTypeEl.value = '';
+            if (sceneryEl) sceneryEl.value = '';
+            if (mainSubjectEl) mainSubjectEl.value = '';
+            if (actionEl) actionEl.value = '';
+            if (extraEl) extraEl.value = '';
             updatePromptPreview();
             const optionsDiv = document.getElementById('lichPromptOptions');
             if (optionsDiv) {
@@ -123,17 +178,44 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    const descriptionEl = document.getElementById('imagePromptDescription');
-    if (descriptionEl) {
-        descriptionEl.addEventListener('input', updatePromptPreview);
+
+    if (presetSelect) {
+        presetSelect.addEventListener('change', () => {
+            const template = templateSelect ? templateSelect.value : '';
+            const preset = template && promptTemplates[template]
+                ? promptTemplates[template].presets[presetSelect.value]
+                : null;
+            if (preset) {
+                if (sceneTypeEl) sceneTypeEl.value = preset.sceneType || '';
+                if (sceneryEl) sceneryEl.value = preset.scenery || '';
+                if (mainSubjectEl) mainSubjectEl.value = preset.mainSubject || '';
+                if (actionEl) actionEl.value = preset.action || '';
+                if (extraEl) extraEl.value = preset.extraDetails || '';
+            } else {
+                if (sceneTypeEl) sceneTypeEl.value = '';
+                if (sceneryEl) sceneryEl.value = '';
+                if (mainSubjectEl) mainSubjectEl.value = '';
+                if (actionEl) actionEl.value = '';
+                if (extraEl) extraEl.value = '';
+            }
+            updatePromptPreview();
+        });
     }
-    const sceneryEl = document.getElementById('imagePromptScenery');
+
+    if (sceneTypeEl) {
+        sceneTypeEl.addEventListener('input', updatePromptPreview);
+    }
     if (sceneryEl) {
-        sceneryEl.addEventListener('change', updatePromptPreview);
+        sceneryEl.addEventListener('input', updatePromptPreview);
     }
-    const factionEl = document.getElementById('imagePromptFaction');
-    if (factionEl) {
-        factionEl.addEventListener('change', updatePromptPreview);
+    if (mainSubjectEl) {
+        mainSubjectEl.addEventListener('input', updatePromptPreview);
+    }
+    if (actionEl) {
+        actionEl.addEventListener('input', updatePromptPreview);
+    }
+    if (extraEl) {
+        extraEl.addEventListener('input', updatePromptPreview);
     }
 
     const promptEl = document.getElementById('imagePrompt');
@@ -176,6 +258,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     updatePromptPreview();
+    renderPresetOptions();
     if (templateSelect) {
         const optionsDiv = document.getElementById('lichPromptOptions');
         if (optionsDiv) {
@@ -202,15 +285,20 @@ function GeneratePromptImage(prompt)
     const descEl = document.getElementById('mediaUploadImageDescTextbox');
     const templateSelect = document.getElementById('imagePromptTemplate');
     const template = templateSelect ? templateSelect.value : '';
-    const descriptionEl = document.getElementById('imagePromptDescription');
-    const description = descriptionEl ? descriptionEl.value : '';
+    const sceneTypeEl = document.getElementById('imagePromptSceneType');
     const sceneryEl = document.getElementById('imagePromptScenery');
-    const factionEl = document.getElementById('imagePromptFaction');
+    const mainSubjectEl = document.getElementById('imagePromptMainSubject');
+    const actionEl = document.getElementById('imagePromptAction');
+    const extraEl = document.getElementById('imagePromptExtraDetails');
+    const sceneType = sceneTypeEl ? sceneTypeEl.value : '';
     const scenery = sceneryEl ? sceneryEl.value : '';
-    const faction = factionEl ? factionEl.value : '';
-    const finalPrompt = promptTemplates[template]
-        ? promptTemplates[template](description, scenery, faction)
-        : description;
+    const mainSubject = mainSubjectEl ? mainSubjectEl.value : '';
+    const actionVal = actionEl ? actionEl.value : '';
+    const extraDetails = extraEl ? extraEl.value : '';
+    const templateDef = promptTemplates[template];
+    const finalPrompt = templateDef
+        ? templateDef.build(sceneType, scenery, mainSubject, actionVal, extraDetails)
+        : extraDetails;
     const promptEl = document.getElementById('imagePrompt');
     const sizeEl = document.getElementById('imageSize');
     const modelEl = document.getElementById('imageModel');
