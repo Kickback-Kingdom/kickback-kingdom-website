@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Kickback\Common\Exceptions;
 
 use Kickback\Common\Exceptions\Internal\DefaultMethods;
+use Kickback\Common\Exceptions\ThrowableAssignableFieldsTrait;
 
 // See KickbackThrowable for an explanation of the origins and intent of this code.
 /**
@@ -20,14 +21,7 @@ use Kickback\Common\Exceptions\Internal\DefaultMethods;
 */
 trait KickbackThrowableTrait
 {
-    //protected string    $message = 'Unknown exception';     // Exception message
-    //private   string     $string;                            // Unknown
-    //protected int        $code    = 0;                       // User-defined exception code
-    //protected string     $file;                              // Source filename of exception
-    //protected int        $line;                              // Source line of exception
-    /// @var (mixed[])[]
-    //private   array      $trace;                             // Unknown
-    //private   ?Throwable $previous = null;
+    use ThrowableAssignableFieldsTrait;
 
     /** @param TThrowable $previous */
     public function __construct(?string $message = null, int $code = 0, ?\Throwable $previous = null)
@@ -36,6 +30,7 @@ trait KickbackThrowableTrait
             $message = '';
         }
         parent::__construct($message, $code, $previous);
+        $this->ThrowableAssignableFieldsTrait_init($message, $this->getFile(), $this->getLine());
     }
 
     public function __toString() : string

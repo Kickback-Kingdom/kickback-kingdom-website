@@ -23,6 +23,7 @@ class UnittestEntryPoint
         \Kickback\Common\Algorithms\Freelist::unittests(); // Dependency-free, for now?
         \Kickback\Common\Primitives\Meta::unittests();
         \Kickback\Common\Exceptions\ThrowableContextMessageHandling::unittests();
+        \Kickback\Common\Exceptions\Reporting\Report::unittests();
         \Kickback\Common\Meta\ZType::unittests(); // Depends on Common\Primitives\Meta.
         \Kickback\Common\Meta\PHP_BinaryOps::unittests(); // Depends on Common\Primitives\Meta.
         \Kickback\Common\Primitives\Arr::unittests(); // May depend on Common\Primitives\Meta in the future?
