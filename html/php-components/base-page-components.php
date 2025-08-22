@@ -201,22 +201,30 @@ if ($betaPrefix !== '' && strncmp($redirectUri, $betaPrefix . '/', strlen($betaP
                             </div>
                             <div id="lichPromptOptions" class="d-none">
                                 <div class="mb-3">
-                                    <label for="imagePromptScenery" class="form-label">Scenery</label>
-                                    <select id="imagePromptScenery" class="form-select">
-                                        <option value="Urban setting">Urban setting</option>
-                                        <option value="Jungle">Jungle</option>
-                                        <option value="Cavern">Cavern</option>
-                                        <option value="Dungeon">Dungeon</option>
-                                        <option value="Military base">Military base</option>
+                                    <label for="imagePromptPreset" class="form-label">Preset</label>
+                                    <select id="imagePromptPreset" class="form-select">
+                                        <option value="">Custom...</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="imagePromptFaction" class="form-label">Faction</label>
-                                    <select id="imagePromptFaction" class="form-select">
-                                        <option value="Enforcers (SWAT, police, military)">Enforcers (SWAT, police, military)</option>
-                                        <option value="Civilians (librarian, common workers)">Civilians (librarian, common workers)</option>
-                                        <option value="Minions (undead and mystical creatures of the lich)">Minions (undead and mystical creatures of the lich)</option>
-                                    </select>
+                                    <label for="imagePromptSceneType" class="form-label">Scene Type</label>
+                                    <input id="imagePromptSceneType" class="form-control" type="text">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="imagePromptScenery" class="form-label">Scenery</label>
+                                    <input id="imagePromptScenery" class="form-control" type="text">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="imagePromptMainSubject" class="form-label">Main Subject</label>
+                                    <input id="imagePromptMainSubject" class="form-control" type="text">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="imagePromptAction" class="form-label">Action</label>
+                                    <input id="imagePromptAction" class="form-control" type="text">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="imagePromptExtraDetails" class="form-label">Extra Details</label>
+                                    <textarea id="imagePromptExtraDetails" class="form-control" rows="2"></textarea>
                                 </div>
                             </div>
                             <div class="mb-3">
@@ -226,10 +234,6 @@ if ($betaPrefix !== '' && strncmp($redirectUri, $betaPrefix . '/', strlen($betaP
                                     <button class="btn btn-outline-secondary" type="button" onclick="copyImagePrompt()">Copy</button>
                                     <button id="usePromptAsCustom" class="btn btn-outline-secondary d-none" type="button" onclick="usePromptAsCustom()">Use as custom</button>
                                 </div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="imagePromptDescription" class="form-label">Description</label>
-                                <textarea id="imagePromptDescription" class="form-control" rows="2"></textarea>
                             </div>
                             <div class="mb-3">
                                 <label for="imageSize" class="form-label">Size</label>
