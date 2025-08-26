@@ -11,6 +11,7 @@ use Kickback\Common\Exceptions\Internal\MockPHPException;
 use Kickback\Common\Exceptions\Internal\IMockPHPException;
 use Kickback\Common\Exceptions\Internal\IMockPHPException__ConfigAccessors;
 use Kickback\Common\Exceptions\Internal\Misc;
+use Kickback\Common\Meta\Location;
 
 // Implementation note:
 //
@@ -39,6 +40,11 @@ use Kickback\Common\Exceptions\Internal\Misc;
 //   actually, given how cryptic exceptions and stack traces can look!)
 
 /**
+* @phpstan-import-type  kkdebug_frame_a               from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_a           from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_frame_paranoid_a      from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_paranoid_a  from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+*
 * @phpstan-require-implements  \Kickback\Common\Exceptions\ThrowableWithContextMessages
 * @phpstan-require-implements  \Kickback\Common\Exceptions\ThrowableWithAssignableFields
 */
@@ -66,20 +72,25 @@ trait ThrowableContextMessageHandlingTrait
     * @see  ThrowableWithContextMessages::say_before_message
     * @see  ThrowableWithContextMessages::say_after_message
     *
-    * @param  string|\Closure():string   $msg
-    * @param  string|int                 $in_file_or_at_stack_depth
-    * @param  ($in_file_or_at_stack_depth is string ? string : (?string)
-    *         )                          $in_function
-    * @param  int                        $at_line
+    * @param  string|\Closure():string          $msg
+    * @param ?string                            $in_file
+    * @param  ($in_file is string ? string : (?string)
+    *         )                                 $in_function
+    * @param int                                $at_line
+    * @param int<0,max>                         $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a      $trace
     *
     * @phpstan-impure
     * @throws void
     */
     public function say_before_message(
         string|\Closure   $msg,
-        string|int        $in_file_or_at_stack_depth = 0,
+        ?string           $in_file = null,
         ?string           $in_function = null,
-        int               $at_line = 0) : void
+        int               $at_line = \PHP_INT_MIN,
+        int               $at_trace_depth = 0,
+        ?array            $trace = null
+    ) : void
     {
         // Optimization:
         // We only care about file+line from the caller, so we can
@@ -89,13 +100,15 @@ trait ThrowableContextMessageHandlingTrait
         // (Also, if the caller provides us with file+line info,
         // we can avoid calling \debug_backtrace entirely.)
         // @var kkdebug_backtrace_a
-        $trace = null;
-        if (!($this instanceof IMockPHPException)
-        &&  is_int($in_file_or_at_stack_depth) )
+        if (!($this instanceof IMockPHPException__ConfigAccessors)
+        &&  Location::need_backtrace(
+            $in_file, $in_function, $at_line, $at_trace_depth, $trace))
         {
-            $stack_depth = 2 + $in_file_or_at_stack_depth;
-            $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $stack_depth);
+            $at_trace_depth = 2 + $at_trace_depth;
+            $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $at_trace_depth);
         }
+        // `Location::process_info` is handled in `ThrowableContextMessageHandling::add_context_message`
+
         ThrowableContextMessageHandling::add_context_message(
             $this,
             $this->kk_prepend_messages_,
@@ -103,7 +116,7 @@ trait ThrowableContextMessageHandlingTrait
             $this->kk_prepend_msg_func_,
             $this->kk_prepend_msg_line_,
             $this->kk_prepend_msg_loc_full_,
-            $msg, true, $trace, $in_file_or_at_stack_depth, $in_function, $at_line);
+            $msg, true, $in_file, $in_function, $at_line, $at_trace_depth, $trace);
     }
 
     /** @var ?array<string|\Closure():string> */
@@ -125,20 +138,25 @@ trait ThrowableContextMessageHandlingTrait
     * @see ThrowableWithContextMessages::say_before_message
     * @see ThrowableWithContextMessages::say_after_message
     *
-    * @param  string|\Closure():string   $msg
-    * @param  string|int                 $in_file_or_at_stack_depth
-    * @param  ($in_file_or_at_stack_depth is string ? string : (?string)
-    *         )                          $in_function
-    * @param  int                        $at_line
+    * @param  string|\Closure():string          $msg
+    * @param ?string                            $in_file
+    * @param  ($in_file is string ? string : (?string)
+    *         )                                 $in_function
+    * @param int                                $at_line
+    * @param int<0,max>                         $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a      $trace
     *
     * @phpstan-impure
     * @throws void
     */
     public function say_after_message(
         string|\Closure   $msg,
-        string|int        $in_file_or_at_stack_depth = 0,
+        ?string           $in_file = null,
         ?string           $in_function = null,
-        int               $at_line = 0) : void
+        int               $at_line = \PHP_INT_MIN,
+        int               $at_trace_depth = 0,
+        ?array            $trace = null
+    ) : void
     {
         // Optimization:
         // We only care about file+line from the caller, so we can
@@ -148,13 +166,15 @@ trait ThrowableContextMessageHandlingTrait
         // (Also, if the caller provides us with file+line info,
         // we can avoid calling \debug_backtrace entirely.)
         // @var kkdebug_backtrace_a
-        $trace = null;
-        if (!($this instanceof IMockPHPException)
-        &&  is_int($in_file_or_at_stack_depth) )
+        if (!($this instanceof IMockPHPException__ConfigAccessors)
+        &&  Location::need_backtrace(
+            $in_file, $in_function, $at_line, $at_trace_depth, $trace))
         {
-            $stack_depth = 2 + $in_file_or_at_stack_depth;
-            $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $stack_depth);
+            $at_trace_depth = 2 + $at_trace_depth;
+            $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $at_trace_depth);
         }
+        // `Location::process_info` is handled in `ThrowableContextMessageHandling::add_context_message`
+
         ThrowableContextMessageHandling::add_context_message(
             $this,
             $this->kk_append_messages_,
@@ -162,7 +182,7 @@ trait ThrowableContextMessageHandlingTrait
             $this->kk_append_msg_func_,
             $this->kk_append_msg_line_,
             $this->kk_append_msg_loc_full_,
-            $msg, false, $trace, $in_file_or_at_stack_depth, $in_function, $at_line);
+            $msg, false, $in_file, $in_function, $at_line, $at_trace_depth, $trace);
     }
 
     public final function clear_context_messages() : void
@@ -383,8 +403,10 @@ class ThrowableContextMessageHandlingTrait__Mock extends MockPHPException implem
 }
 
 /**
-* @phpstan-import-type  kkdebug_frame_a      from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
-* @phpstan-import-type  kkdebug_backtrace_a  from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_frame_a               from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_a           from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_frame_paranoid_a      from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_paranoid_a  from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
 */
 class ThrowableContextMessageHandling
 {
@@ -400,7 +422,7 @@ class ThrowableContextMessageHandling
         // otherwise just be confounding elements in our tests.
         $exc->trace([]); // We aren't testing trace output, so just don't emit it.
         $exc->mock_class_fqn('MockException'); // Shorter, and by forcing it, it's more predictable.
-        $exc->set_location('my_file.php', 42);
+        $exc->set_location('my_file.php', '{unknown function}', 42);
 
         $to_string =
             function(string $msg) use(&$exc) : string
@@ -712,7 +734,7 @@ class ThrowableContextMessageHandling
 
         $exc->clear_context_messages();
 
-        $exc->set_location('pitcher.php',42);
+        $exc->set_location('pitcher.php', '{unknown function}', 42);
         $exc->caller_context_file('batter.php');
         $exc->caller_context_func('C');
         $exc->caller_context_line(67);
@@ -808,11 +830,12 @@ class ThrowableContextMessageHandling
     * @param-out  array<string>                     $msg_loc_full
     * @param      string|\Closure():string          $msg
     * @param      bool                              $prepend
-    * @param      kkdebug_backtrace_a               $trace
-    * @param      string|int                        $in_file_or_at_stack_depth
-    * @param      ($in_file_or_at_stack_depth is string ? string : (?string)
+    * @param      ?string                           $in_file
+    * @param      ($in_file is string ? string : (?string)
     *             )                                 $in_function
     * @param      int                               $at_line
+    * @param      int<0,max>                        $at_trace_depth
+    * @param      ?kkdebug_backtrace_paranoid_a     $trace
     *
     * @phpstan-impure
     * @throws void
@@ -826,10 +849,11 @@ class ThrowableContextMessageHandling
         ?array                 &$msg_loc_full,
         string|\Closure        $msg,
         bool                   $prepend,
-        ?array                 $trace,
-        string|int             $in_file_or_at_stack_depth,
+        ?string                $in_file,
         ?string                $in_function,
-        int                    $at_line
+        int                    $at_line,
+        int                    $at_trace_depth,
+        ?array                 $trace
     ) : void
     {
         if ( !isset($messages) ) {
@@ -853,7 +877,7 @@ class ThrowableContextMessageHandling
         // then use the `caller_context_*()` functions to get file/func/line
         // information.
         if (($exc instanceof IMockPHPException__ConfigAccessors)
-        &&  !isset($trace) && !\is_string($in_file_or_at_stack_depth)) {
+        && !isset($trace) && !isset($in_file) && $at_line === \PHP_INT_MIN) {
             // During testing, `caller_context_file` and `caller_context_line`
             // are convenient because they retain state between multiple
             // tests which allows us to use the same file+line as a reference.
@@ -864,15 +888,16 @@ class ThrowableContextMessageHandling
             // Normal path.
 
             // The $in_function parameter is mandatory/required if an explicit
-            // file name/path is provided. (As opposed to a stack depth number
-            // being provided, which is the default.)
+            // file name/path is provided.
             // @phpstan-ignore isset.variable
-            assert((\is_string($in_file_or_at_stack_depth) && isset($in_function))
-            || !\is_string($in_file_or_at_stack_depth));
+            assert((isset($in_file) && isset($in_function)) || !isset($in_file));
 
-            Misc::process_location_info_into(
-                $trace, $in_file_or_at_stack_depth, $in_function, $at_line,
-                $path, $func, $line);
+            Location::process_info(
+                $in_file, $in_function, $at_line, $at_trace_depth, $trace);
+
+            $path = $in_file;
+            $func = $in_function;
+            $line = $at_line;
         }
 
         $full = Misc::calculate_message_line_prefix($path, $line);

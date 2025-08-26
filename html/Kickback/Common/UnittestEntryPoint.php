@@ -21,6 +21,7 @@ class UnittestEntryPoint
 
         echo("===== Running all ".__NAMESPACE__." unittests =====\n\n");
         \Kickback\Common\Algorithms\Freelist::unittests(); // Dependency-free, for now?
+        \Kickback\Common\Meta\Location::unittests();
         \Kickback\Common\Primitives\Meta::unittests();
         \Kickback\Common\Exceptions\ThrowableContextMessageHandling::unittests();
         \Kickback\Common\Exceptions\Reporting\Report::unittests();

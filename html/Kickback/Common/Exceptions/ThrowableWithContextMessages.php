@@ -3,6 +3,12 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Exceptions;
 
+/**
+* @phpstan-import-type  kkdebug_frame_a               from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_a           from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_frame_paranoid_a      from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_paranoid_a  from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+*/
 interface ThrowableWithContextMessages
 {
     /**
@@ -67,22 +73,31 @@ interface ThrowableWithContextMessages
     *     calls to `say_before_message` as part of the "message",
     *     so earlier calls will print closer to the "main" message.
     *
-    * @see say_after_message
+    * The location parameters are defined by the `Uniform Transitive Source Location Parameters`
+    * convention which is currently documented in the class-level documentation
+    * of the `\Kickback\Common\Meta\Location` class.
     *
-    * @param  string|\Closure():string   $msg
-    * @param  string|int                 $in_file_or_at_stack_depth
-    * @param  ($in_file_or_at_stack_depth is string ? string : (?string)
-    *         )                          $in_function
-    * @param  int                        $at_line
+    * @see say_after_message
+    * @see \Kickback\Common\Meta\Location
+    *
+    * @param  string|\Closure():string          $msg
+    * @param ?string                            $in_file
+    * @param  ($in_file is string ? string : (?string)
+    *         )                                 $in_function
+    * @param int                                $at_line
+    * @param int<0,max>                         $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a      $trace
     *
     * @phpstan-impure
     * @throws void
     */
     public function say_before_message(
         string|\Closure   $msg,
-        string|int        $in_file_or_at_stack_depth = 0,
+        ?string           $in_file = null,
         ?string           $in_function = null,
-        int               $at_line = 0) : void;
+        int               $at_line = \PHP_INT_MIN,
+        int               $at_trace_depth = 0,
+        ?array            $trace = null) : void;
 
     /**
     * Cause uncaught exception to emit `$msg` after `getMessage()`.
@@ -114,20 +129,24 @@ interface ThrowableWithContextMessages
     * corresponding `say_before_message` is required or optional,
     * respectively.)
     *
-    * @param  string|\Closure():string   $msg
-    * @param  string|int                 $in_file_or_at_stack_depth
-    * @param  ($in_file_or_at_stack_depth is string ? string : (?string)
-    *         )                          $in_function
-    * @param  int                        $at_line
+    * @param  string|\Closure():string          $msg
+    * @param ?string                            $in_file
+    * @param  ($in_file is string ? string : (?string)
+    *         )                                 $in_function
+    * @param int                                $at_line
+    * @param int<0,max>                         $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a      $trace
     *
     * @phpstan-impure
     * @throws void
     */
     public function say_after_message(
         string|\Closure   $msg,
-        string|int        $in_file_or_at_stack_depth = 0,
+        ?string           $in_file = null,
         ?string           $in_function = null,
-        int               $at_line = 0) : void;
+        int               $at_line = \PHP_INT_MIN,
+        int               $at_trace_depth = 0,
+        ?array            $trace = null) : void;
 
     /**
     * Whether or not either of `say_before_message` or `say_after_message` have been called.

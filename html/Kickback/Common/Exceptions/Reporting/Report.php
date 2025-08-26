@@ -11,10 +11,13 @@ use Kickback\Common\Exceptions\IKickbackThrowable;
 use Kickback\Common\Exceptions\KickbackThrowable;
 use Kickback\Common\Exceptions\IMockException;
 use Kickback\Common\Exceptions\MockException;
+use Kickback\Common\Meta\Location;
 
 /**
-* @phpstan-import-type  kkdebug_frame_a      from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
-* @phpstan-import-type  kkdebug_backtrace_a  from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_frame_a               from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_a           from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_frame_paranoid_a      from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_paranoid_a  from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
 */
 final class Report
 {
@@ -122,64 +125,53 @@ final class Report
     * This method allows us to still provide useful fact-by-fact information
     * in such a list-like situation.
     *
-    * @param  string|\Closure():string   $msg
-    * @param  string|int                 $in_file_or_at_stack_depth
-    * @param  ($in_file_or_at_stack_depth is string ? string : (?string)
-    *         )                          $in_function
-    * @param  int                        $at_line
+    * @param  string|\Closure():string          $msg
+    * @param ?string                            $in_file
+    * @param  ($in_file is string ? string : (?string)
+    *         )                                 $in_function
+    * @param int                                $at_line
+    * @param int<0,max>                         $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a      $trace
     *
     * @phpstan-impure
     * @throws void
     */
     public final function msg(
         string|\Closure     $msg,
-        string|int          $in_file_or_at_stack_depth = 0,
+        ?string             $in_file = null,
         ?string             $in_function = null,
-        int                 $at_line = 0) : void
+        int                 $at_line = \PHP_INT_MIN,
+        int                 $at_trace_depth = 0,
+        ?array              $trace = null) : void
     {
-        // Optimization:
-        // We only care about file+line from the caller, so we can
-        // avoid taking too much memory/time with debug_backtrace
-        // by asking it to leave arguments out, and to only grab
-        // the frames that we need.
-        // (Also, if the caller provides us with file+line info,
-        // we can avoid calling \debug_backtrace entirely.)
-        // @var kkdebug_backtrace_a
-        $trace = null;
-        if ( \is_int($in_file_or_at_stack_depth) )
+        if (Location::need_backtrace(
+            $in_file, $in_function, $at_line, $at_trace_depth, $trace))
         {
-            // Capture desired frame from \debug_backtrace, if it is needed.
-            $stack_depth = 2 + $in_file_or_at_stack_depth;
-            $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $stack_depth);
+            $at_trace_depth = 2 + $at_trace_depth;
+            $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $at_trace_depth);
         }
 
         // The $in_function parameter is mandatory/required if an explicit
-        // file name/path is provided. (As opposed to a stack depth number
-        // being provided, which is the default.)
+        // file name/path is provided.
         // @phpstan-ignore isset.variable
-        assert((\is_string($in_file_or_at_stack_depth) && isset($in_function))
-        || !\is_string($in_file_or_at_stack_depth));
+        assert((isset($in_file) && isset($in_function)) || !isset($in_file));
 
-        Misc::process_location_info_into(
-            $trace, $in_file_or_at_stack_depth, $in_function, $at_line,
-            $path, $func, $line);
+        Location::process_info(
+            $in_file, $in_function, $at_line, $at_trace_depth, $trace);
 
-        assert(isset($func));
+        // @phpstan-ignore function.alreadyNarrowedType, isset.variable
+        assert(isset($in_function));
 
         // Grow the list.
         if (isset($this->exception_)) {
-            $this->exception_->say_before_message($msg, $path, $func, $line);
+            $this->exception_->say_before_message($msg, $in_file, $in_function, $at_line);
         } else {
             $this->messages_[] = $msg;
-            $this->files_[] = $path;
-            $this->funcs_[] = $func;
-            $this->lines_[] = $line;
+            $this->files_[] = $in_file;
+            $this->funcs_[] = $in_function;
+            $this->lines_[] = $at_line;
         }
     }
-    /*
-    * @param  (self|string)&  $report
-    * @param  ($report is string ? string : string|(\Closure():string))  $msg
-    */
 
     /**
     * Conditionally place a generic message into the report.
@@ -233,9 +225,11 @@ final class Report
     * @param  (self|class-string<KickbackThrowable|MockException>)&        $report
     * @param  bool                                                         $condition
     * @param  string|\Closure():string                                     $msg
-    * @param  string|int                                                   $in_file_or_at_stack_depth
-    * @param  ($in_file_or_at_stack_depth is string ? string : (?string))  $in_function
-    * @param  int                                                          $at_line
+    * @param ?string                                                       $in_file
+    * @param  ($in_file is string ? string : (?string))                    $in_function
+    * @param int                                                           $at_line
+    * @param int<0,max>                                                    $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a                                 $trace
     *
     * @phpstan-impure
     * @throws void
@@ -244,9 +238,11 @@ final class Report
         self|string      &$report,
         bool             $condition,
         string|\Closure  $msg,
-        string|int       $in_file_or_at_stack_depth = 0,
+        ?string          $in_file = null,
         ?string          $in_function = null,
-        int              $at_line = 0
+        int              $at_line = \PHP_INT_MIN,
+        int              $at_trace_depth = 0,
+        ?array           $trace = null
     ) : void
     {
         if ( $condition ) {
@@ -260,7 +256,7 @@ final class Report
         if ($report === self::blank()) {
             $report = new Report();
         }
-        $report->msg($msg, $in_file_or_at_stack_depth, $in_function, $at_line);
+        $report->msg($msg, $in_file, $in_function, $at_line, $at_trace_depth + 1, $trace);
     }
 
     // Future directions?
@@ -361,7 +357,7 @@ final class Report
         {
             $mock_exception->trace([]); // We aren't testing trace output, so just don't emit it.
             $mock_exception->mock_class_fqn('MockException');
-            $mock_exception->set_location('path/exc.php', 42);
+            $mock_exception->set_location('path/exc.php', '{unknown function}', 42);
         };
 
         // As of this writing, the `ThrowableWithAssignableFields`
@@ -491,7 +487,7 @@ final class Report
         {
             $mock_exception->trace([]); // We aren't testing trace output, so just don't emit it.
             $mock_exception->mock_class_fqn('MockException');
-            $mock_exception->set_location('path/exc.php', 42);
+            $mock_exception->set_location('path/exc.php', '{unknown function}', 42);
         };
 
         // As of this writing, the `ThrowableWithAssignableFields`

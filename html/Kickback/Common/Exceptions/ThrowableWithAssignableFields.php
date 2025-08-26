@@ -3,6 +3,14 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Exceptions;
 
+use Kickback\Common\Exceptions\DebugBacktraceAliasTypes;
+
+/**
+* @phpstan-import-type  kkdebug_frame_a               from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_a           from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_frame_paranoid_a      from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_paranoid_a  from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+*/
 interface ThrowableWithAssignableFields
 {
     /**
@@ -76,27 +84,34 @@ interface ThrowableWithAssignableFields
     * the Throwable object. Calling `__toString()` will cause `$msg` to
     * be called _at least_ once.
     *
-    * If `$in_file_or_at_stack_depth` is provided and is an integer,
-    * then this will call \debug_backtrace to figure out the file and line
-    * number from the backtrace. If `$in_file_or_at_stack_depth` is `0`,
-    * then this will be the file and line number of the location where
-    * the `message()` method is called.
+    * It is possible to change the source location for the message
+    * at the same time as changing the message. The location parameters
+    * are defined by the `Uniform Transitive Source Location Parameters`
+    * convention which is currently documented in the class-level documentation
+    * of the `\Kickback\Common\Meta\Location` class.
     *
-    * If `$in_file_or_at_stack_depth` is provided and is a string,
-    * then it will provide the file/path and `$at_line` will provide
-    * the line number. This is similar to calling
-    * `set_location($in_file_or_at_stack_depth, $at_line)`
-    * and then calling `message($msg)`. (The other order would be
-    * semantically equivalent too, but may cause file/line invalidation
-    * to be performed twice (unnecessarily) instead of once).
+    * If the source location parameters are not provided, then the location
+    * associated with the message will not be changed.
+    *
+    * @see \Kickback\Common\Meta\Location
     *
     * @param  string|(\Closure():string)|null   $msg
-    * @param  string|int|null                   $in_file_or_at_stack_depth
-    * @param  int                               $at_line
+    * @param ?string                            $in_file
+    * @param ?string                            $in_function
+    * @param int                                $at_line
+    * @param ?int<0,max>                        $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a      $trace
     *
     * @throws void
     */
-    public function message(string|\Closure|null $msg = null, string|int|null $in_file_or_at_stack_depth = null, int $at_line = 0) : string;
+    public function message(
+        string|\Closure|null   $msg = null,
+        ?string                $in_file = null,
+        ?string                $in_function = null,
+        int                    $at_line = \PHP_INT_MIN,
+        ?int                   $at_trace_depth = null,
+        ?array                 $trace = null
+    ) : string;
 
     /**
     * Invoked instead of `getFile()` when `__toString()` is called.
@@ -107,6 +122,20 @@ interface ThrowableWithAssignableFields
     public function file() : string;
 
     /**
+    * The (fully qualified) name of the function that threw the exception.
+    *
+    * This can be modified with location-setting methods such as
+    * `set_location`, `calculate_location_from`, and `message`.
+    *
+    * By default, this is derived from the first stack frame
+    * in the trace returned by `getTrace()`.
+    *
+    * @phpstan-pure
+    * @throws void
+    */
+    public function func() : string;
+
+    /**
     * Invoked instead of `getLine()` when `__toString()` is called.
     *
     * @phpstan-pure
@@ -115,33 +144,50 @@ interface ThrowableWithAssignableFields
     public function line() : int;
 
     /**
-    * Explicitly set the file and line location for the exception.
+    * Explicitly set the file, function, and line location for the exception.
+    *
+    * As of this writing, the `$function` information isn't used by the
+    * exception object itself (e.g. it won't get printed if the exception
+    * is thrown and not caught), but it does make the information available
+    * via the `function()` getter.
+    *
+    * @param string                             $in_file
+    * @param string                             $in_function
+    * @param int<0,max>                         $at_line
     *
     * @phpstan-impure
     * @throws void
     */
-    public function set_location(string $file_path, int $at_line) : void;
+    public function set_location(
+        string    $in_file,
+        string    $in_function,
+        int       $at_line
+    ) : void;
 
     /**
     * Sets the exception's location based on either the current backtrace, or explicit values.
     *
-    * If `$in_file_or_at_stack_depth` is given as an integer,
-    * then this will call \debug_backtrace to figure out the file and line
-    * number from the backtrace. If `$in_file_or_at_stack_depth` is `0`,
-    * then this will be the file and line number of the location where
-    * the `message()` method is called.
+    * These parameters are defined by the `Uniform Transitive Source Location Parameters`
+    * convention which is currently documented in the class-level documentation
+    * of the `\Kickback\Common\Meta\Location` class.
     *
-    * If `$in_file_or_at_stack_depth` is given as a string,
-    * then it will provide the file/path and `$at_line` will provide
-    * the line number. This is similar to calling
-    * `set_location($in_file_or_at_stack_depth, $at_line)`.
+    * @see \Kickback\Common\Meta\Location
     *
-    * @param  string|int       $in_file_or_at_stack_depth
-    * @param  int              $at_line
+    * @param ?string                            $in_file
+    * @param ?string                            $in_function
+    * @param int                                $at_line
+    * @param int<0,max>                         $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a      $trace
     *
     * @phpstan-impure
     * @throws void
     */
-    public function calculate_location_from(string|int $in_file_or_at_stack_depth, int $at_line = 0) : void;
+    public function calculate_location_from(
+        ?string               $in_file = null,
+        ?string               $in_function = null,
+        int                   $at_line = \PHP_INT_MIN,
+        int                   $at_trace_depth = 0,
+        ?array                $trace = null
+    ) : void;
 }
 ?>

@@ -30,7 +30,15 @@ trait KickbackThrowableTrait
             $message = '';
         }
         parent::__construct($message, $code, $previous);
-        $this->ThrowableAssignableFieldsTrait_init($message, $this->getFile(), $this->getLine());
+
+        $trace = $this->getTrace();
+        // @phpstan-ignore  function.alreadyNarrowedType
+        if ( 0 < \count($trace) && \array_key_exists('function', $trace[0]) ) {
+            $func = $trace[0]['function'];
+        } else {
+            $func = '{unknown function}';
+        }
+        $this->ThrowableAssignableFieldsTrait_init($message, $this->getFile(), $func, $this->getLine());
     }
 
     public function __toString() : string

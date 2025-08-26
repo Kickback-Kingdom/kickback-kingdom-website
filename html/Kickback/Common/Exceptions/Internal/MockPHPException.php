@@ -28,7 +28,8 @@ interface IMockPHPException__ConfigAccessors
     public function             message(string|\Closure|null $msg = null) : string;
     public function                file() : string;
     public function                line() : int;
-    public function        set_location(string  $file,  int $line) : void;
+    /** @param int<0,max> $line */
+    public function        set_location(string  $file,  string $func,  int $line) : void;
     public function                code(?int    $new_value = null) : int;
     public function caller_context_file(?string $new_value = null) : string;
     public function caller_context_func(?string $new_value = null) : string;
@@ -118,25 +119,29 @@ class MockPHPException implements IMockPHPException
     }
 
     /**
-    * @param      ?string   $path
-    * @param-out  string    $path
-    * @param      ?int      $line
-    * @param-out  int       $line
+    * @param      ?string    $path
+    * @param-out  string     $path
+    * @param      ?string    $func
+    * @param-out  string     $func
+    * @param      ?int       $line
+    * @param-out  int<0,max> $line
     */
-    private function infer_file_and_line_into(?string &$path, ?int &$line) : void {
+    private function infer_location_into(?string &$path, ?string &$func, ?int &$line) : void {
         if(\count($this->trace_) < 2) {
             $path = '{unknown file}';
+            $func = '{unknown function}';
             $line = 0;
             return;
         }
         $frame = $this->trace_[1];
-        $path = \array_key_exists('file',$frame) ? $frame['file'] : '{unknown file}';
-        $line = \array_key_exists('line',$frame) ? $frame['line'] : 0;
+        $path = \array_key_exists('file',    $frame) ? $frame['file']     : '{unknown file}';
+        $func = \array_key_exists('function',$frame) ? $frame['function'] : '{unknown function}'; // @phpstan-ignore function.alreadyNarrowedType, ternary.elseUnreachable
+        $line = \array_key_exists('line',    $frame) ? $frame['line']     : 0;
     }
 
-    private function infer_file_and_line() : void {
-        $this->infer_file_and_line_into($path, $line);
-        $this->set_location($path,$line);
+    private function infer_location() : void {
+        $this->infer_location_into($path, $func, $line);
+        $this->set_location($path, $func, $line);
     }
 
     public function code(?int $new_value = null) : int {
@@ -192,7 +197,7 @@ class MockPHPException implements IMockPHPException
             return $this->trace_;
         }
         $this->trace_ = $new_value;
-        $this->infer_file_and_line();
+        $this->infer_location();
         return $this->trace_;
     }
 
@@ -245,14 +250,15 @@ class MockPHPException implements IMockPHPException
         $this->previous_ = $previous;
         if ( $do_backtrace ) {
             $this->trace_    = \debug_backtrace();
-            $this->infer_file_and_line_into($path, $line);
+            $this->infer_location_into($path, $func, $line);
         } else {
             $this->trace_ = [];
             $path = '{unknown file}';
+            $func = '{unknown function}';
             $line = 0;
         }
         $this->mock_class_fqn_ = \get_class($this);
-        $this->ThrowableAssignableFieldsTrait_init($message, $path, $line);
+        $this->ThrowableAssignableFieldsTrait_init($message, $path, $func, $line);
     }
 }
 ?>
