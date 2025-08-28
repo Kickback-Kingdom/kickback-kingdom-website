@@ -63,7 +63,7 @@ class StoreController
     //transact items
     //log transaction
     //update product stock
-    public static function checkoutCart(vCart $cart, ?string $stripeTransactionId = null) : Response
+    public static function checkoutCart(vCart $cart, ?callable $moneyMerchantIsTransactionCompleteMethod = null) : Response 
     {
         $resp = new Response(false, "Unkown error checking out cart", null);
 
@@ -98,7 +98,7 @@ class StoreController
             if($lovelacePriceOfCart > 0)
             {
                 $stripeResp = new Response(true, "Succeeded with the stripe transaction", null);
-                //$stripeResp = StripeController::TransactPrice($stripeTransactionId);
+                //$stripeResp = StripeController::IsTransactionComplete($stripeTransactionId);
             }
             else
             {
