@@ -9,6 +9,11 @@ use Kickback\Common\Traits\StaticClassTrait;
 use Kickback\Common\Traits\ClassOfConstantIntegersTrait;
 
 /**
+* @phpstan-import-type  kkdebug_frame_a               from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_a           from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_frame_paranoid_a      from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_paranoid_a  from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+*
 * Extended functionality for the `array` type.
 *
 * This class originally existed to silence the PHPStan error about `empty` being not allowed.
@@ -301,11 +306,11 @@ final class Arr
     }
 
     /**
-    * @param      array<mixed>|\ArrayAccess<mixed>  $to_validate
-    * @param      string|int                        $key
-    * @param      null|array<string>|(\Closure(int):string) $int_key_to_name
-    * @param      ?(Arr__IndexType::*)              $index_type
-    * @param-out  Arr__IndexType::*                 $index_type
+    * @param      array<array-key,mixed>|\ArrayAccess<array-key,mixed>  $to_validate
+    * @param      array-key                                   $key
+    * @param      null|array<string>|(\Closure(int):string)   $int_key_to_name
+    * @param      ?(Arr__IndexType::*)                        $index_type
+    * @param-out  Arr__IndexType::*                           $index_type
     */
     private static function lookup_index_name(
         array|\ArrayAccess    $to_validate,
@@ -323,6 +328,7 @@ final class Arr
                 $index_type = Arr__IndexType::NAME;
                 return $int_key_to_name[$key];
             } else {
+                // @phpstan-ignore function.alreadyNarrowedType, instanceof.alwaysTrue
                 assert($int_key_to_name instanceof \Closure);
                 $index_type = Arr__IndexType::NAME;
                 return $int_key_to_name($key);
@@ -331,6 +337,18 @@ final class Arr
             $index_type = Arr__IndexType::INDEX;
             return \strval($key);
         }
+    }
+
+    /**
+    * Similar to `\array_key_exists`, except that it accepts `\ArrayAccess` too.
+    *
+    * @param  array-key  $key
+    * @param  array<array-key,mixed>|\ArrayAccess<array-key,mixed>  $array
+    */
+    public static function key_exists(string|int $key, array|\ArrayAccess $array) : bool
+    {
+        return (is_array($array) && \array_key_exists($key, $array))
+        ||  ($array instanceof \ArrayAccess && $array->offsetExists($key));
     }
 
         // TODO: Delete this comment when git commit or confident
@@ -357,16 +375,16 @@ final class Arr
     /**
     * Validate that `$to_validate[$key]` exists.
     *
-    * @param array<mixed>|\ArrayAccess<mixed>  $to_validate
-    * @param string|int                        $key
-    * @param Report|string                     $errors
+    * @param array<array-key,mixed>|\ArrayAccess<array-key,mixed>  $to_validate
+    * @param array-key                                   $key
+    * @param Report|string                               $errors
     * @param ($key is int ? null|array<string>|(\Closure(int):string) : null
-    *        )                                 $int_key_to_name
-    * @param ?string                           $in_file
-    * @param ?string                           $in_function
-    * @param int                               $at_line
-    * @param int<0,max>                        $at_trace_depth
-    * @param ?kkdebug_backtrace_paranoid_a     $trace
+    *        )                                           $int_key_to_name
+    * @param ?string                                     $in_file
+    * @param ?string                                     $in_function
+    * @param int                                         $at_line
+    * @param int<0,max>                                  $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a               $trace
     *
     * @phpstan-impure
     * @throws void
@@ -383,7 +401,7 @@ final class Arr
         ?array                $trace = null
     ) : bool
     {
-        if ( \array_key_exists($key, $to_validate) ) {
+        if (self::key_exists($key, $to_validate)) {
             return true;
         }
 
@@ -406,6 +424,7 @@ final class Arr
             default:
                 $noun_for_index = Arr__IndexType::name_of($index_type);
                 $msg = "Required $noun_for_index '$name' not found.";
+                // @phpstan-ignore function.impossibleType
                 assert(false); // Should trigger if there's ever another index type, for some reason.
         }
         Report::enforce($errors, false, $msg, $in_file, $in_function, $at_line);
@@ -440,28 +459,29 @@ final class Arr
     }
 
     /**
-    * @param array<mixed>|\ArrayAccess<mixed>  $to_validate
-    * @param string|int                        $key
-    * @param Report|string                     $errors
-    * @param null|array<string>|(\Closure(int):string) $int_key_to_name
-    * @param ?string                           $in_file
-    * @param ?string                           $in_function
-    * @param int                               $at_line
-    * @param int<0,max>                        $at_trace_depth
-    * @param ?kkdebug_backtrace_paranoid_a     $trace
+    * @param array<array-key,mixed>|\ArrayAccess<array-key,mixed>  $to_validate
+    * @param array-key                                   $key
+    * @param Report|string                               $errors
+    * @param string                                      $error_msg
+    * @param null|array<string>|(\Closure(int):string)   $int_key_to_name
+    * @param ?string                                     $in_file
+    * @param ?string                                     $in_function
+    * @param int                                         $at_line
+    * @param int<0,max>                                  $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a               $trace
     *
     * @phpstan-impure
-    * @throws voidd
+    * @throws void
     */
-    private static function type_validation_error(
+    private static function validation_error(
         array|\ArrayAccess    $to_validate,
         string|int            $key,
         Report|string         &$errors,
+        string                $error_msg,
         array|\Closure|null   $int_key_to_name,
-        string                $expected_type,
         ?string               $in_file,
         ?string               $in_function,
-        int                   $at_line = \PHP_INT_MIN,
+        int                   $at_line,
         int                   $at_trace_depth,
         ?array                $trace
     ) : void
@@ -478,19 +498,53 @@ final class Arr
         }
         Location::process_info($in_file, $in_function, $at_line, $at_trace_depth, $trace);
 
-        $value = $to_validate[$key];
         $name = self::lookup_index_name($to_validate, $key, $int_key_to_name, $index_type);
-        $got_type = \get_debug_type($value);
         switch($index_type) {
             case Arr__IndexType::NAME:  $noun_for_index = 'Field'; break;
             case Arr__IndexType::INDEX: $noun_for_index = 'Index'; break;
             default:
                 $noun_for_index = Arr__IndexType::name_of($index_type);
+                // @phpstan-ignore function.impossibleType
                 assert(false); // Should trigger if there's ever another index type, for some reason.
         }
         Report::enforce($errors, false,
-            "$noun_for_index '$name' must have type `$expected_type`, but `$got_type` was given.",
+            "$noun_for_index '$name': $error_msg",
             $in_file, $in_function, $at_line);
+    }
+
+    /**
+    * @param array<array-key,mixed>|\ArrayAccess<array-key,mixed>  $to_validate
+    * @param array-key                                   $key
+    * @param Report|string                               $errors
+    * @param null|array<string>|(\Closure(int):string)   $int_key_to_name
+    * @param ?string                                     $in_file
+    * @param ?string                                     $in_function
+    * @param int                                         $at_line
+    * @param int<0,max>                                  $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a               $trace
+    *
+    * @phpstan-impure
+    * @throws void
+    */
+    private static function type_validation_error(
+        array|\ArrayAccess    $to_validate,
+        string|int            $key,
+        Report|string         &$errors,
+        array|\Closure|null   $int_key_to_name,
+        string                $expected_type,
+        ?string               $in_file,
+        ?string               $in_function,
+        int                   $at_line,
+        int                   $at_trace_depth,
+        ?array                $trace
+    ) : void
+    {
+        $value = $to_validate[$key];
+        $got_type = \get_debug_type($value);
+        self::validation_error($to_validate, $key, $errors,
+            "Must have type `$expected_type`, but `$got_type` was given.",
+            $int_key_to_name,
+            $in_file, $in_function, $at_line, $at_trace_depth+1, $trace);
     }
 
     /**
@@ -526,16 +580,16 @@ final class Arr
     * an existence validation, we wouldn't want to add the error again
     * and end up with unnecessarily redundant error messages.)
     *
-    * @param array<mixed>|\ArrayAccess<mixed>  $to_validate
-    * @param string|int                        $key
-    * @param Report|string                     $errors
+    * @param array<array-key,mixed>|\ArrayAccess<array-key,mixed>  $to_validate
+    * @param array-key                                   $key
+    * @param Report|string                               $errors
     * @param ($key is int ? null|array<string>|(\Closure(int):string) : null
-    *        )                                 $int_key_to_name
-    * @param ?string                           $in_file
-    * @param ?string                           $in_function
-    * @param int                               $at_line
-    * @param int<0,max>                        $at_trace_depth
-    * @param ?kkdebug_backtrace_paranoid_a     $trace
+    *        )                                           $int_key_to_name
+    * @param ?string                                     $in_file
+    * @param ?string                                     $in_function
+    * @param int                                         $at_line
+    * @param int<0,max>                                  $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a               $trace
     *
     * @phpstan-impure
     * @throws void
@@ -553,7 +607,7 @@ final class Arr
     ) : bool
     {
         // Only check this on fields that exist.
-        if ( !\array_key_exists($key, $to_validate) ) {
+        if (!self::key_exists($key, $to_validate)) {
             return false;
         }
 
@@ -602,22 +656,151 @@ final class Arr
     }
 
     /**
+    * Validate that `$to_validate[$key]` is a non-empty string or array.
+    *
+    * The `validate_is_string` or `validate_is_array` checks
+    * should be performed before this one.
+    *
+    * Semantics are otherwise identical to `validate_is_string`.
+    *
+    * @see Arr::validate_is_string
+    *
+    * @param array<array-key,mixed>|\ArrayAccess<array-key,mixed>  $to_validate
+    * @param array-key                                   $key
+    * @param Report|string                               $errors
+    * @param ($key is int ? null|array<string>|(\Closure(int):string) : null
+    *        )                                           $int_key_to_name
+    * @param ?string                                     $in_file
+    * @param ?string                                     $in_function
+    * @param int                                         $at_line
+    * @param int<0,max>                                  $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a               $trace
+    *
+    * @phpstan-impure
+    * @throws void
+    */
+    public static function validate_is_nonempty(
+        array|\ArrayAccess    $to_validate,
+        string|int            $key,
+        Report|string         &$errors,
+        array|\Closure|null   $int_key_to_name = null,
+        ?string               $in_file = null,
+        ?string               $in_function = null,
+        int                   $at_line = \PHP_INT_MIN,
+        int                   $at_trace_depth = 0,
+        ?array                $trace = null
+    ) : bool
+    {
+        // Only check this on fields that exist.
+        if (!self::key_exists($key, $to_validate)) {
+            return false;
+        }
+
+        // Only check on string and array fields.
+        $value = $to_validate[$key];
+        if ( !is_string($value) && !is_array($value) ) {
+            return false;
+        }
+
+        // Return as early as possible if it's valid.
+        if ( is_string($value) && 0 < \strlen($value) ) {
+            return true;
+        } else {
+            assert(is_array($value));
+            if ( 0 < \count($value) ) {
+                return true;
+            }
+        }
+
+        // It was empty. Error handling time.
+        self::validation_error($to_validate, $key, $errors,
+            "Must be non-empty, but it's empty.",
+            $int_key_to_name,
+            $in_file, $in_function, $at_line, $at_trace_depth+1, $trace);
+        return false;
+    }
+
+    /**
+    * Validate that `$to_validate[$key]` is a non-empty and non-blank string.
+    *
+    * The `validate_is_string` checks should be performed before this one.
+    *
+    * This is an alternative to the `validate_is_nonempty` validator,
+    * though only for strings.
+    *
+    * Semantics are otherwise identical to `validate_is_string`.
+    *
+    * @see Arr::validate_is_string
+    *
+    * @param array<array-key,mixed>|\ArrayAccess<array-key,mixed>  $to_validate
+    * @param array-key                                   $key
+    * @param Report|string                               $errors
+    * @param ($key is int ? null|array<string>|(\Closure(int):string) : null
+    *        )                                           $int_key_to_name
+    * @param ?string                                     $in_file
+    * @param ?string                                     $in_function
+    * @param int                                         $at_line
+    * @param int<0,max>                                  $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a               $trace
+    *
+    * @phpstan-impure
+    * @throws void
+    */
+    public static function validate_is_nonblank(
+        array|\ArrayAccess    $to_validate,
+        string|int            $key,
+        Report|string         &$errors,
+        array|\Closure|null   $int_key_to_name = null,
+        ?string               $in_file = null,
+        ?string               $in_function = null,
+        int                   $at_line = \PHP_INT_MIN,
+        int                   $at_trace_depth = 0,
+        ?array                $trace = null
+    ) : bool
+    {
+        // Only check this on fields that exist.
+        if (!self::key_exists($key, $to_validate)) {
+            return false;
+        }
+
+        // Only check on string and array fields.
+        $value = $to_validate[$key];
+        if ( !is_string($value) ) {
+            return false;
+        }
+
+        // Return as early as possible if it's valid.
+        $trimmed = trim($value);
+        if ( 0 < \strlen($trimmed) ) {
+            return true;
+        }
+
+        // It was empty or blank. Error handling time.
+        $got = (0 < \strlen($value)) ? 'blank' : 'empty';
+        self::validation_error($to_validate, $key, $errors,
+            "Must be non-empty and not blank, but it is $got.",
+            $int_key_to_name,
+            $in_file, $in_function, $at_line, $at_trace_depth+1, $trace);
+        return false;
+    }
+
+    /**
     * Validate that `$to_validate[$key]` is an `int` type.
     *
     * Semantics are otherwise identical to `validate_is_string`.
     *
     * @see Arr::validate_is_string
     *
-    * @param array<mixed>|\ArrayAccess<mixed>  $to_validate
-    * @param string|int                        $key
-    * @param Report|string                     $errors
+    * @param array<array-key,mixed>|\ArrayAccess<array-key,mixed>  $to_validate
+    * @param array-key                                   $key
+    * @param Report|string                               $errors
     * @param ($key is int ? null|array<string>|(\Closure(int):string) : null
-    *        )                                 $int_key_to_name
-    * @param ?string                           $in_file
-    * @param ?string                           $in_function
-    * @param int                               $at_line
-    * @param int<0,max>                        $at_trace_depth
-    * @param ?kkdebug_backtrace_paranoid_a     $trace
+    *        )                                           $int_key_to_name
+    * @param ?string                                     $in_file
+    * @param ?string                                     $in_function
+    * @param int                                         $at_line
+    * @param int<0,max>                                  $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a               $trace
     *
     * @phpstan-impure
     * @throws void
@@ -635,7 +818,7 @@ final class Arr
     ) : bool
     {
         // Only check this on fields that exist.
-        if ( !\array_key_exists($key, $to_validate) ) {
+        if (!self::key_exists($key, $to_validate)) {
             return false;
         }
 
@@ -653,22 +836,141 @@ final class Arr
     }
 
     /**
+    * Validate that `$to_validate[$key]` is a positive (or zero) integer.
+    *
+    * The `validate_is_int` check should be performed before this one.
+    *
+    * Semantics are otherwise identical to `validate_is_string`.
+    *
+    * @see Arr::validate_is_string
+    *
+    * @param array<array-key,mixed>|\ArrayAccess<array-key,mixed>  $to_validate
+    * @param array-key                                   $key
+    * @param Report|string                               $errors
+    * @param ($key is int ? null|array<string>|(\Closure(int):string) : null
+    *        )                                           $int_key_to_name
+    * @param ?string                                     $in_file
+    * @param ?string                                     $in_function
+    * @param int                                         $at_line
+    * @param int<0,max>                                  $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a               $trace
+    *
+    * @phpstan-impure
+    * @throws void
+    */
+    public static function validate_is_int_and_pos_or_zero(
+        array|\ArrayAccess    $to_validate,
+        string|int            $key,
+        Report|string         &$errors,
+        array|\Closure|null   $int_key_to_name = null,
+        ?string               $in_file = null,
+        ?string               $in_function = null,
+        int                   $at_line = \PHP_INT_MIN,
+        int                   $at_trace_depth = 0,
+        ?array                $trace = null
+    ) : bool
+    {
+        // Only check this on fields that exist.
+        if (!self::key_exists($key, $to_validate)) {
+            return false;
+        }
+
+        // Only check on integer fields.
+        $value = $to_validate[$key];
+        if ( !is_int($value) ) {
+            return false;
+        }
+
+        // Return as early as possible if it's valid.
+        if ( 0 <= $value ) {
+            return true;
+        }
+
+        // It wasn't positive or zero. Error handling time.
+        self::validation_error($to_validate, $key, $errors,
+            'Must be positive or zero; but given value is negative.',
+            $int_key_to_name,
+            $in_file, $in_function, $at_line, $at_trace_depth+1, $trace);
+        return false;
+    }
+
+    /**
+    * Validate that `$to_validate[$key]` is a positive non-zero integer.
+    *
+    * The `validate_is_int` check should be performed before this one.
+    *
+    * Semantics are otherwise identical to `validate_is_string`.
+    *
+    * @see Arr::validate_is_string
+    *
+    * @param array<array-key,mixed>|\ArrayAccess<array-key,mixed>  $to_validate
+    * @param array-key                                   $key
+    * @param Report|string                               $errors
+    * @param ($key is int ? null|array<string>|(\Closure(int):string) : null
+    *        )                                           $int_key_to_name
+    * @param ?string                                     $in_file
+    * @param ?string                                     $in_function
+    * @param int                                         $at_line
+    * @param int<0,max>                                  $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a               $trace
+    *
+    * @phpstan-impure
+    * @throws void
+    */
+    public static function validate_is_int_and_pos_nonzero(
+        array|\ArrayAccess    $to_validate,
+        string|int            $key,
+        Report|string         &$errors,
+        array|\Closure|null   $int_key_to_name = null,
+        ?string               $in_file = null,
+        ?string               $in_function = null,
+        int                   $at_line = \PHP_INT_MIN,
+        int                   $at_trace_depth = 0,
+        ?array                $trace = null
+    ) : bool
+    {
+        // Only check this on fields that exist.
+        if (!self::key_exists($key, $to_validate)) {
+            return false;
+        }
+
+        // Only check on integer fields.
+        $value = $to_validate[$key];
+        if ( !is_int($value) ) {
+            return false;
+        }
+
+        // Return as early as possible if it's valid.
+        if ( 0 < $value ) {
+            return true;
+        }
+
+        // It wasn't positive and nonzero. Error handling time.
+        $got = ($value === 0) ? 'zero' : 'negative';
+        self::validation_error($to_validate, $key, $errors,
+            "Must be positive and nonzero; but given value is $got.",
+            $int_key_to_name,
+            $in_file, $in_function, $at_line, $at_trace_depth+1, $trace);
+        return false;
+    }
+
+    /**
     * Validate that `$to_validate[$key]` is an `array` type.
     *
     * Semantics are otherwise identical to `validate_is_string`.
     *
     * @see Arr::validate_is_string
     *
-    * @param array<mixed>|\ArrayAccess<mixed>  $to_validate
-    * @param string|int                        $key
-    * @param Report|string                     $errors
+    * @param array<array-key,mixed>|\ArrayAccess<array-key,mixed>  $to_validate
+    * @param array-key                                   $key
+    * @param Report|string                               $errors
     * @param ($key is int ? null|array<string>|(\Closure(int):string) : null
-    *        )                                 $int_key_to_name
-    * @param ?string                           $in_file
-    * @param ?string                           $in_function
-    * @param int                               $at_line
-    * @param int<0,max>                        $at_trace_depth
-    * @param ?kkdebug_backtrace_paranoid_a     $trace
+    *        )                                           $int_key_to_name
+    * @param ?string                                     $in_file
+    * @param ?string                                     $in_function
+    * @param int                                         $at_line
+    * @param int<0,max>                                  $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a               $trace
     *
     * @phpstan-impure
     * @throws void
@@ -686,7 +988,7 @@ final class Arr
     ) : bool
     {
         // Only check this on fields that exist.
-        if ( !\array_key_exists($key, $to_validate) ) {
+        if (!self::key_exists($key, $to_validate)) {
             return false;
         }
 
@@ -720,17 +1022,17 @@ final class Arr
     *
     * @see Arr::validate_is_string
     *
-    * @param array<mixed>|\ArrayAccess<mixed>  $to_validate
-    * @param string|int                        $key
-    * @param Report|string                     $errors
-    * @param string                            $expected_type
+    * @param array<array-key,mixed>|\ArrayAccess<array-key,mixed>  $to_validate
+    * @param array-key                                   $key
+    * @param Report|string                               $errors
+    * @param string                                      $expected_type
     * @param ($key is int ? null|array<string>|(\Closure(int):string) : null
-    *        )                                 $int_key_to_name
-    * @param ?string                           $in_file
-    * @param ?string                           $in_function
-    * @param int                               $at_line
-    * @param int<0,max>                        $at_trace_depth
-    * @param ?kkdebug_backtrace_paranoid_a     $trace
+    *        )                                           $int_key_to_name
+    * @param ?string                                     $in_file
+    * @param ?string                                     $in_function
+    * @param int                                         $at_line
+    * @param int<0,max>                                  $at_trace_depth
+    * @param ?kkdebug_backtrace_paranoid_a               $trace
     *
     * @phpstan-impure
     * @throws void
@@ -749,7 +1051,7 @@ final class Arr
     ) : bool
     {
         // Only check this on fields that exist.
-        if ( !\array_key_exists($key, $to_validate) ) {
+        if (!self::key_exists($key, $to_validate)) {
             return false;
         }
 
