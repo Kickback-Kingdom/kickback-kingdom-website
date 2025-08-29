@@ -8,6 +8,11 @@ use Kickback\Common\Traits\StaticClassTrait;
 use Kickback\Common\Exceptions\Internal\IKickbackThrowableRaw;
 
 /**
+* @phpstan-import-type  kkdebug_frame_a               from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_a           from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_frame_paranoid_a      from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+* @phpstan-import-type  kkdebug_backtrace_paranoid_a  from \Kickback\Common\Exceptions\DebugBacktraceAliasTypes
+*
 * @internal
 */
 final class DefaultMethods
@@ -132,6 +137,47 @@ final class DefaultMethods
         return $class_fqn
             . " $message in $file($line)\n"
             . "$trace";
+    }
+
+    public const UNKNOWN_FUNCTION_NAME = '{unknown function}';
+
+    /**
+    * @param  kkdebug_frame_paranoid_a  $frame
+    */
+    private static function file_line_mismatch_info(\Throwable $exc, array $frame) : string
+    {
+        $getFile = $exc->getFile();
+        $getLine = $exc->getLine();
+        $frameFile = \array_key_exists('file', $frame) ? $frame['file'] : '{unknown file}';
+        $frameLine = \array_key_exists('line', $frame) ? $frame['line'] : 0;
+        return "\n".
+            "exc->getFile and exc->getLine:   $getFile($getLine)\n".
+            "frame['file'] and frame['line']: $frameFile($frameLine)\n";
+    }
+
+    /**
+    * Attempt to determine the function name that would correspond to `getFile` and `getLine`.
+    * @param  kkdebug_backtrace_paranoid_a  $trace
+    */
+    public static function getFunc(
+        \Throwable $exc,
+        array      $trace
+    ) : string
+    {
+        // $exc->getTrace() was returning the caller's caller's frame instead of the caller's frame.
+        //$trace = $exc->getTrace();
+        if ( 0 === \count($trace) ) {
+            return self::UNKNOWN_FUNCTION_NAME;
+        }
+
+        $frame = $trace[0];
+        if ( \array_key_exists('function', $frame) ) {
+            assert(!\array_key_exists('file', $frame) || $frame['file'] === $exc->getFile(), self::file_line_mismatch_info($exc, $frame));
+            assert(!\array_key_exists('line', $frame) || $frame['line'] === $exc->getLine(), self::file_line_mismatch_info($exc, $frame));
+            return $frame['function'];
+        } else {
+            return self::UNKNOWN_FUNCTION_NAME;
+        }
     }
 }
 ?>

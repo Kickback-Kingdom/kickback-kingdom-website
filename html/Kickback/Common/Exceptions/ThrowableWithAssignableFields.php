@@ -114,6 +114,37 @@ interface ThrowableWithAssignableFields
     ) : string;
 
     /**
+    * Alternative to `getCode()`.
+    *
+    * This is a `pure` version of the `code` method, and is getter-only.
+    * These will both access the same underlying variable.
+    *
+    * @see `code`
+    *
+    * @phpstan-pure
+    * @throws void
+    */
+    public function code_pure() : int;
+
+    /**
+    * Alternative to `getCode()`.
+    *
+    * `__toString()` is not known to call this.
+    *
+    * `getCode()` could potentially be used to return a status code if the
+    * exception is uncaught, and the value of `code()` would be lost.
+    * However, as of this writing, testing suggests that PHP does not
+    * return `getCode()` for the process's status when an exception
+    * is thrown and not caught.
+    *
+    * As such, this is a handy way to pass error code information along
+    * the exception handling path (ex: HTTP response codes).
+    *
+    * @throws void
+    */
+    public function code(?int $new_code = null) : int;
+
+    /**
     * Invoked instead of `getFile()` when `__toString()` is called.
     *
     * @phpstan-pure

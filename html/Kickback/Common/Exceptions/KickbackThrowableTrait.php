@@ -31,14 +31,11 @@ trait KickbackThrowableTrait
         }
         parent::__construct($message, $code, $previous);
 
-        $trace = $this->getTrace();
-        // @phpstan-ignore  function.alreadyNarrowedType
-        if ( 0 < \count($trace) && \array_key_exists('function', $trace[0]) ) {
-            $func = $trace[0]['function'];
-        } else {
-            $func = '{unknown function}';
-        }
-        $this->ThrowableAssignableFieldsTrait_init($message, $this->getFile(), $func, $this->getLine());
+        $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
+        $func = DefaultMethods::getFunc($this, $trace);
+        $this->ThrowableAssignableFieldsTrait_init(
+            $message, $code,
+            $this->getFile(), $func, $this->getLine());
     }
 
     public function __toString() : string

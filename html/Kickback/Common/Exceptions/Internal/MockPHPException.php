@@ -81,8 +81,6 @@ class MockPHPException implements IMockPHPException
     // will cause an error stating that we should extend \Exception or \Error,
     // which we can't because those don't allow us to override all of the
     // getMessage, getFile, getLine, getTrace, etc. functions.
-    private int                      $code_ = 0;
-
     private ?IMockPHPException       $previous_ = null;
 
     /** @var  kkdebug_backtrace_a */
@@ -101,15 +99,9 @@ class MockPHPException implements IMockPHPException
     public function getPrevious() : ?IMockPHPException { return $this->previous_; }
 
     /** @return int */
-    public function getCode() : int    { return $this->code_; }
-
-    public function getLine() : int {
-        return $this->line();
-    }
-
-    public function getFile() : string {
-        return $this->file();
-    }
+    public function getCode() : int    { return $this->code_pure(); }
+    public function getLine() : int    { return $this->line(); }
+    public function getFile() : string { return $this->file(); }
 
     /** @return kkdebug_backtrace_a */
     public function getTrace() : array { return $this->trace_; }
@@ -142,14 +134,6 @@ class MockPHPException implements IMockPHPException
     private function infer_location() : void {
         $this->infer_location_into($path, $func, $line);
         $this->set_location($path, $func, $line);
-    }
-
-    public function code(?int $new_value = null) : int {
-        if (!isset($new_value)) {
-            return $this->code_;
-        }
-        $this->code_ = $new_value;
-        return $this->code_;
     }
 
     public function caller_context_file(?string $new_value = null) : string {
@@ -246,7 +230,6 @@ class MockPHPException implements IMockPHPException
     public function __construct(?string $message = null, int $code = 0, ?IMockPHPException $previous = null, bool $do_backtrace = true)
     {
         if (!isset($message)) { $message = ''; }
-        $this->code_     = $code;
         $this->previous_ = $previous;
         if ( $do_backtrace ) {
             $this->trace_    = \debug_backtrace();
@@ -258,7 +241,7 @@ class MockPHPException implements IMockPHPException
             $line = 0;
         }
         $this->mock_class_fqn_ = \get_class($this);
-        $this->ThrowableAssignableFieldsTrait_init($message, $path, $func, $line);
+        $this->ThrowableAssignableFieldsTrait_init($message, $code, $path, $func, $line);
     }
 }
 ?>

@@ -22,6 +22,7 @@ use Kickback\Common\Meta\Location;
 */
 trait ThrowableAssignableFieldsTrait
 {
+    private int                $kk_code_;
     private string             $kk_main_message_path_;
     private string             $kk_main_message_func_;
     /** @var int<0,max> */
@@ -132,11 +133,13 @@ trait ThrowableAssignableFieldsTrait
     */
     protected function ThrowableAssignableFieldsTrait_init(
         string|\Closure|null   $msg = null,
+        int                    $code,
         string                 $in_file,
         string                 $in_function,
         int                    $at_line = 0
     ) : void
     {
+        $this->code($code);
         $this->message($msg, $in_file, $in_function, $at_line);
     }
 
@@ -262,6 +265,31 @@ trait ThrowableAssignableFieldsTrait
 
         // Return the message.
         return $this->message_pure();
+    }
+
+    /**
+    * @see ThrowableWithAssignableFields::code_pure
+    *
+    * @phpstan-pure
+    * @throws void
+    */
+    public function code_pure() : int
+    {
+        return $this->kk_code_;
+    }
+
+    /**
+    * @see ThrowableWithAssignableFields::code
+    *
+    * @throws void
+    */
+    public function code(?int $new_code = null) : int
+    {
+        if(!isset($new_code)) {
+            return $this->kk_code_;
+        }
+        $this->kk_code_ = $new_code;
+        return $this->kk_code_;
     }
 
     /**
