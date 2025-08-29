@@ -5,10 +5,7 @@ namespace Kickback\Common\Exceptions\Reporting;
 
 use Kickback\Common\Exceptions\Internal\Misc; // process_location_info_into
 
-use Kickback\Common\Exceptions\IKickbackException;
-use Kickback\Common\Exceptions\KickbackException;
 use Kickback\Common\Exceptions\IKickbackThrowable;
-use Kickback\Common\Exceptions\KickbackThrowable;
 use Kickback\Common\Exceptions\IMockException;
 use Kickback\Common\Exceptions\MockException;
 use Kickback\Common\Meta\Location;
@@ -67,7 +64,7 @@ final class Report
     // Given how the `enforce` function works, this does
     // limit the caller's ability to provide arguments to
     // the exception's constructor.
-    private IKickbackThrowable|IMockException|null  $exception_ = null;
+    private (IKickbackThrowable&\Throwable)|IMockException|null  $exception_ = null;
 
     /**
     * Returns the Report's exception object.
@@ -77,7 +74,7 @@ final class Report
     * function was provided with an exception class name when
     * its condition evaluated to false.
     */
-    public function exception() : IKickbackThrowable|IMockException|null {
+    public function exception() : (IKickbackThrowable&\Throwable)|IMockException|null {
         return $this->exception_;
     }
 
@@ -94,7 +91,7 @@ final class Report
     private ?array $lines_    = null;
     //private array $throwables_ = [];
 
-    public function __construct(IKickbackThrowable|IMockException|null  $exc = null)
+    public function __construct((IKickbackThrowable&\Throwable)|IMockException|null  $exc = null)
     {
         if (isset($exc)) {
             $this->exception_ = $exc;
@@ -142,7 +139,8 @@ final class Report
         ?string             $in_function = null,
         int                 $at_line = \PHP_INT_MIN,
         int                 $at_trace_depth = 0,
-        ?array              $trace = null) : void
+        ?array              $trace = null
+    ) : void
     {
         if (Location::need_backtrace(
             $in_file, $in_function, $at_line, $at_trace_depth, $trace))
@@ -172,6 +170,26 @@ final class Report
             $this->lines_[] = $at_line;
         }
     }
+
+    // These didn't work:
+    // (at)phpstan-assert-if-false   =(IKickbackThrowable&\Throwable)   $report->generate_exception()
+    // (at)phpstan-assert-if-false   =(IKickbackThrowable&\Throwable)   $report->testable_generate_exception()
+    //
+    // PHPStan supports hassers/getters with `$foo->bar->baz()` syntax, but
+    // is unclear about how to handle the return value of arbitrary functions
+    // (including ones with parameters). As of this writing, on 2025-08-29,
+    // with PHPStan v1.11.1, attempting to assert the return value of the
+    // above functions will NOT cause other code to narrow the return type
+    // on those functions (so we would still get errors like
+    // "Can't throw something of type (IKickbackThrowable&\Throwable)|null").
+    //
+    // The current workaround is splitting `$report->generate_exception(...)`
+    // into two different functions:
+    // * $report->generate_exception(...) // always returns (IKickbackThrowable&\Throwable)
+    // * $report->generate_exception_if_errors(...) // only if (0 < count())
+    //
+    // The latter is the equivalent of the version of `$report->generate_exception()`
+    // from when this was written, and the experimentation performed.
 
     /**
     * Conditionally place a generic message into the report.
@@ -220,9 +238,9 @@ final class Report
     * ```
     *
     * If a class-string is passed into `$report`, then it must be of a class
-    * that inherits from KickbackThrowable (or MockException).
+    * that implements IKickbackThrowable (or for internal testing, MockException).
     *
-    * @param  (self|class-string<KickbackThrowable|MockException>)&        $report
+    * @param  (self|class-string<(IKickbackThrowable&\Throwable)|MockException>)&   $report
     * @param  bool                                                         $condition
     * @param  string|\Closure():string                                     $msg
     * @param ?string                                                       $in_file
@@ -233,6 +251,9 @@ final class Report
     *
     * @phpstan-impure
     * @throws void
+    *
+    * @phpstan-assert-if-false   =Report       $report
+    * @phpstan-assert-if-false   =int<1,max>   $report->count()
     */
     public static function enforce(
         self|string      &$report,
@@ -243,10 +264,10 @@ final class Report
         int              $at_line = \PHP_INT_MIN,
         int              $at_trace_depth = 0,
         ?array           $trace = null
-    ) : void
+    ) : bool
     {
         if ( $condition ) {
-            return;
+            return true;
         }
 
         if (is_string($report)) {
@@ -257,6 +278,7 @@ final class Report
             $report = new Report();
         }
         $report->msg($msg, $in_file, $in_function, $at_line, $at_trace_depth + 1, $trace);
+        return false;
     }
 
     // Future directions?
@@ -274,12 +296,14 @@ final class Report
         }
     }
 
+    // Unfortunately, this didn't work:
+    // return ($this->count() is int<1,max> ? (IKickbackThrowable&\Throwable) : null))
     /**
     * Generate an exception that can print this Report.
     *
     * The `$kickback_exception_class_fqn` is the name of the exception class
-    * to use when generating the exception. It must be a KickbackThrowable
-    * type, because the Report class relies on Kickback's context message
+    * to use when generating the exception. It must implement IKickbackThrowable
+    * because the Report class relies on Kickback's context message
     * (`say_before_message`, `say_after_message`) features to print the report.
     *
     * If the Report already has an exception object (e.g. `isset($report->exception())`),
@@ -287,10 +311,79 @@ final class Report
     * or must match the class name (fully qualified name, case-sensitive)
     * that was provided during the Report's construction (or through Report::enforce).
     *
-    * @param  ?class-string<KickbackThrowable|MockException>  $kickback_exception_class_fqn
+    * @param  ?class-string<(IKickbackThrowable&\Throwable)>  $kickback_exception_class_fqn
     * @param  ?string                                         $msg
     */
-    public final function generate_exception(?string $kickback_exception_class_fqn, ?string $msg = null, mixed ...$args) : IKickbackThrowable|IMockException|null
+    public final function generate_exception(
+        ?string  $kickback_exception_class_fqn,
+        ?string  $msg = null,
+        mixed    ...$args
+    ) : IKickbackThrowable&\Throwable
+    {
+        $result = self::internal_generate_exception(
+            $kickback_exception_class_fqn, false, $msg, ...$args);
+        assert($result instanceof IKickbackThrowable);
+        return $result;
+    }
+
+    /**
+    * Conditionally generate an exception that can print this Report.
+    *
+    * This will return `null` if there are 0 errors to report.
+    *
+    * This is otherwise identical to `generate_exception`.
+    *
+    * @see generate_exception
+    *
+    * @param  ?class-string<(IKickbackThrowable&\Throwable)>  $kickback_exception_class_fqn
+    * @param  ?string                                         $msg
+    */
+    public final function generate_exception_if_errors(
+        ?string  $kickback_exception_class_fqn,
+        ?string  $msg = null,
+        mixed    ...$args
+    ) : (IKickbackThrowable&\Throwable)|null
+    {
+        $result = self::internal_generate_exception(
+            $kickback_exception_class_fqn, true, $msg, ...$args);
+        assert(!isset($result) || $result instanceof IKickbackThrowable);
+        return $result;
+    }
+
+    /**
+    * @param  ?class-string<(IKickbackThrowable&\Throwable)|MockException>  $kickback_exception_class_fqn
+    * @param  ?string                                         $msg
+    */
+    private function testable_generate_exception_if_errors(
+        ?string  $kickback_exception_class_fqn,
+        ?string  $msg = null,
+        mixed    ...$args
+    ) : (IKickbackThrowable&\Throwable)|IMockException|null
+    {
+        $result = self::internal_generate_exception(
+            $kickback_exception_class_fqn, true, $msg, ...$args);
+        assert(!isset($result)
+            || $result instanceof IKickbackThrowable
+            || $result instanceof MockException);
+        return $result;
+    }
+
+    /**
+    * @param  ?class-string<(IKickbackThrowable&\Throwable)|MockException>  $kickback_exception_class_fqn
+    * @param  bool                                            $return_null_on_empty
+    * @param  ?string                                         $msg
+    *
+    * @return ($return_null_on_empty is true
+    *     ? ( IKickbackThrowable & \Throwable )|IMockException|null
+    *     : ( IKickbackThrowable & \Throwable )|IMockException
+    * )
+    */
+    private function internal_generate_exception(
+        ?string  $kickback_exception_class_fqn,
+        bool     $return_null_on_empty,
+        ?string  $msg = null,
+        mixed    ...$args
+    ) : (IKickbackThrowable&\Throwable)|IMockException|null
     {
         // Ensure that we either have an existing exception,
         // or the caller provided a non-null and non-empty
@@ -315,7 +408,7 @@ final class Report
         assert(!isset($this->exception_) || (0 === \count($args)));
 
         $len = $this->count();
-        if ( $len === 0 ) {
+        if ( $return_null_on_empty && $len === 0 ) {
             return null;
         }
 
@@ -335,7 +428,7 @@ final class Report
         } else {
             $exc = new $kickback_exception_class_fqn($msg);
         }
-        assert($exc instanceof KickbackThrowable || $exc instanceof MockException);
+        assert($exc instanceof IKickbackThrowable || $exc instanceof MockException);
 
         for ($i = $len-1; $i >= 0; $i--) {
             $msg  = $this->messages_[$i];
@@ -407,7 +500,9 @@ final class Report
 
         $n_errors = $report->count();
 
-        $exc = $report->generate_exception(null, "Validation failed.\n$n_errors error(s).");
+        $exc = $report->testable_generate_exception_if_errors(
+            null, "Validation failed.\n$n_errors error(s).");
+
         $normalize_mock_exception($exc);
         assert($exc->__toString() ===
             "MockException\n".
@@ -436,7 +531,9 @@ final class Report
 
         $n_errors = $report->count();
 
-        $exc = $report->generate_exception(null, "Validation failed.\n$n_errors error(s).");
+        $exc = $report->testable_generate_exception_if_errors(
+            null, "Validation failed.\n$n_errors error(s).");
+
         $normalize_mock_exception($exc);
         assert($exc->__toString() ===
             "MockException\n".
@@ -462,7 +559,9 @@ final class Report
 
         $n_errors = $report->count();
 
-        $exc = $report->generate_exception(null, "Validation failed.\n$n_errors error(s).");
+        $exc = $report->testable_generate_exception_if_errors(
+            null, "Validation failed.\n$n_errors error(s).");
+
         $normalize_mock_exception($exc);
         assert($exc->__toString() ===
             "MockException\n".
@@ -517,7 +616,8 @@ final class Report
         ];
 
         assert($report === Report::blank());
-        $exc = $report->generate_exception(MockException::class, "There should be no errors right now.");
+        $exc = $report->testable_generate_exception_if_errors(
+            MockException::class, "There should be no errors right now.");
         assert(!isset($exc));
 
         assert($report === Report::blank());
@@ -540,7 +640,9 @@ final class Report
 
         $n_errors = $report->count();
 
-        $exc = $report->generate_exception(MockException::class, "Validation failed.\n$n_errors error(s).");
+        $exc = $report->testable_generate_exception_if_errors(
+            MockException::class, "Validation failed.\n$n_errors error(s).");
+
         $normalize_mock_exception($exc);
         assert($exc->__toString() ===
             "MockException\n".
@@ -569,7 +671,9 @@ final class Report
 
         $n_errors = $report->count();
 
-        $exc = $report->generate_exception(MockException::class, "Validation failed.\n$n_errors error(s).");
+        $exc = $report->testable_generate_exception_if_errors(
+            MockException::class, "Validation failed.\n$n_errors error(s).");
+
         $normalize_mock_exception($exc);
         assert($exc->__toString() ===
             "MockException\n".
@@ -595,7 +699,9 @@ final class Report
 
         $n_errors = $report->count();
 
-        $exc = $report->generate_exception(MockException::class, "Validation failed.\n$n_errors error(s).");
+        $exc = $report->testable_generate_exception_if_errors(
+            MockException::class, "Validation failed.\n$n_errors error(s).");
+
         $normalize_mock_exception($exc);
         assert($exc->__toString() ===
             "MockException\n".
