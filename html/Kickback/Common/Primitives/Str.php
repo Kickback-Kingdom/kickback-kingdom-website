@@ -263,6 +263,61 @@ final class Str
         // End of D standard library unittests.
     }
 
+    /**
+    * Removes `$prefix` from the given file system path, `$path`.
+    *
+    * The returned value will be a relative path, and thus will never start
+    * with the `/` character.
+    *
+    * This function will not do any path normalization, nor will it check
+    * that the `$prefix` is actually a prefix of the `$path`. It is the caller's
+    * responsibility to ensure that paths are normalized as needed, and that
+    * the `$prefix` is actually a prefix of `$path`.
+    */
+    public static function remove_path_prefix(string $path, string|int $prefix) : string
+    {
+        if ( is_string($prefix) ) {
+            $prefix_len = \strlen($prefix);
+            assert(\str_starts_with($path, $prefix));
+        } else {
+            $prefix_len = $prefix;
+            assert($prefix_len <= \strlen($path));
+        }
+        $relpath    = \substr($path, $prefix_len);
+        if ( \str_starts_with($relpath, '/') ) {
+            $relpath = \substr($relpath, 1);
+        }
+        return $relpath;
+    }
+
+    private static function unittest_remove_path_prefix() : void
+    {
+        echo("  ".__FUNCTION__."()\n");
+
+        assert(self::remove_path_prefix('',         '') === '');
+        assert(self::remove_path_prefix('/',        '') === '');
+        assert(self::remove_path_prefix('/foo',     '') === 'foo');
+        assert(self::remove_path_prefix('/foo',     '/foo')  === '');
+        assert(self::remove_path_prefix('foo',      'foo')   === '');
+        assert(self::remove_path_prefix('/foo/bar', '/foo/') === 'bar');
+        assert(self::remove_path_prefix('/foo/bar', '/foo')  === 'bar');
+        assert(self::remove_path_prefix('foo/bar',  'foo/')  === 'bar');
+        assert(self::remove_path_prefix('foo/bar',  'foo')   === 'bar');
+        assert(self::remove_path_prefix('/foo/bar/baz/qux/quux', '')  === 'foo/bar/baz/qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/baz/qux/quux', '/') === 'foo/bar/baz/qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/baz/qux/quux', '/foo')  === 'bar/baz/qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/baz/qux/quux', '/foo/bar')  === 'baz/qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/baz/qux/quux', '/foo/bar/baz')  === 'qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/baz/qux/quux', '/foo/bar/baz/qux')  === 'quux');
+        assert(self::remove_path_prefix('/foo/bar/baz/qux/quux', '/foo/bar/baz/qux/quux') === '');
+        assert(self::remove_path_prefix('/foo/bar/../qux/quux', '')  === 'foo/bar/../qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/../qux/quux', '/') === 'foo/bar/../qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/../qux/quux', '/foo')  === 'bar/../qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/../qux/quux', '/foo/bar')  === '../qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/../qux/quux', '/foo/bar/..')  === 'qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/../qux/quux', '/foo/bar/../qux')  === 'quux');
+        assert(self::remove_path_prefix('/foo/bar/../qux/quux', '/foo/bar/../qux/quux') === '');
+    }
 
     /**
     * Scans `$msg` for the first newline sequence at or after `$cursor`.
@@ -800,6 +855,7 @@ final class Str
 
         self::unittest_is_longer_than();
         self::unittest_normalize_path();
+        self::unittest_remove_path_prefix();
         self::unittest_next_newline();
         self::unittest_is_ascii_identifier();
         self::unittest_unchecked_blit_fwd();
