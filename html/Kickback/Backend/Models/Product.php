@@ -12,7 +12,6 @@ class Product extends RecordId
     public string $name;
     public string $description;
     public string $locator;
-    public int $stock;
     public string $ref_store_ctime;
     public int $ref_store_crand;
     public string $ref_item_ctime;
@@ -24,7 +23,6 @@ class Product extends RecordId
         string $name,
         string $description,
         string $locator,
-        int $stock,
         string $ref_store_ctime,
         int $ref_store_crand,
         string $ref_item_ctime,
@@ -37,7 +35,6 @@ class Product extends RecordId
         $this->name = $name;
         $this->description = $description;
         $this->locator = $locator;
-        $this->stock = $stock;
         $this->ref_store_ctime = $ref_store_ctime;
         $this->ref_store_crand = $ref_store_crand;
         $this->ref_item_ctime = $ref_item_ctime;

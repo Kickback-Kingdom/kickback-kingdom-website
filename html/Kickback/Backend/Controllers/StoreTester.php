@@ -11,6 +11,7 @@ use \Kickback\Backend\Models\Store;
 use \Kickback\Services\Database;
 
 use \Exception;
+use Kickback\Backend\Models\Item;
 use Kickback\Backend\Models\Price;
 use Kickback\Backend\Models\Product;
 use Kickback\Backend\Views\vAccount;
@@ -23,14 +24,31 @@ class StoreTester
     public static function testStoreController()
     {
         StoreController::runUnitTests();
+        static::fullIntegrationTest();
 
-        $database = static::createTestEnviroment();
+        
+    }
+
+    private static function fungiblityTest() : void
+    {
+        $database = static::createTestEnviroment("FUNGIBILITY_");
 
         try
         {
             $storeController = new StoreController;
 
-            $testStore = static::testAddStore($storeController);
+            $storeAccount = static::returnStoreAccount();
+            static::insertStoreAccount($storeAccount);
+            static::insertTestProductLootForTestStore(2, $storeAccount);
+
+            $fungibleItem = new Item();
+            $fungibleItem->
+
+            $store = static::returnTestStore();
+            StoreController::addStore($store);
+            $product = new Product("FungiblePricedProduct", "test", "test", $store->ctime, $store->crand, );
+            StoreController::upsertProduct();
+
             $prices = static::testSelectOrInsertPrices_Insert($testStore);
             $prices = static::convertPriceViewArrayToModels($prices);
             static::testUpsertProduct_Insert($testStore, $prices);
@@ -40,6 +58,15 @@ class StoreTester
 
             $link = static::testAddProductToCart($product, $cart);
             static::testRemoveProductFromCart($link);
+
+            $cartOwner = static::getTestAccount(static::buyerAccountUsername());
+            $link = StoreController::AddProductToCart($product, $cart);
+            $cartResp = StoreController::GetCartForAccount($cartOwner, $testStore);
+            if(is_null($cartResp->data))
+            { 
+                throw new Exception(json_encode($cartResp));
+            }
+            static::testCheckout($cartResp->data);
 
             static::testRemoveProduct($testStore, $product);
         }
@@ -52,11 +79,72 @@ class StoreTester
         {
             //static::cleanupTestEnviroment($database);
         }
-    }  
+    }
+
+    private static function fullIntegrationTest() : void
+    {
+        $database = static::createTestEnviroment();
+
+        try
+        {
+            $storeController = new StoreController;
+
+            $storeAccount = static::returnStoreAccount();
+            static::insertStoreAccount($storeAccount);
+            static::insertTestProductLootForTestStore(2, $storeAccount);
+
+            $testStore = static::testAddStore($storeController);
+            $prices = static::testSelectOrInsertPrices_Insert($testStore);
+            $prices = static::convertPriceViewArrayToModels($prices);
+            static::testUpsertProduct_Insert($testStore, $prices);
+            $product = static::testUpsertProduct_Update($testStore, $prices);
+
+            $cart = static::testGetCartForAccount($testStore);
+
+            $link = static::testAddProductToCart($product, $cart);
+            static::testRemoveProductFromCart($link);
+
+            $cartOwner = static::getTestAccount(static::buyerAccountUsername());
+            $link = StoreController::AddProductToCart($product, $cart);
+            $cartResp = StoreController::GetCartForAccount($cartOwner, $testStore);
+            if(is_null($cartResp->data))
+            { 
+                throw new Exception(json_encode($cartResp));
+            }
+            static::testCheckout($cartResp->data);
+
+            static::testRemoveProduct($testStore, $product);
+        }
+        catch(Exception $e)
+        {
+            //static::cleanupTestEnviroment($database);
+            throw $e;
+        }
+        finally
+        {
+            //static::cleanupTestEnviroment($database);
+        }
+    }
+    
+    private static function storeUsername() : string
+    {
+        return "store";
+    }
 
     private static function buyerAccountUsername() : string
     {
         return "JoeDoe";
+    }
+
+    public static function testCheckout(vCart $cart) : void
+    {
+
+        $checkoutResp = StoreController::checkoutCart($cart);
+
+        if(!$checkoutResp->success)
+        {
+            throw new Exception("COMPONENT TEST FAILED : failed to checkout cart : $checkoutResp->message");
+        }
     }
 
     public static function testRemoveProductFromCart($link) : void
@@ -175,7 +263,6 @@ class StoreTester
     public static function testGetCartForAccount(vRecordId $storeId) : vCart
     {
         $cartOwner = static::getTestAccount(static::buyerAccountUsername());
-
 
         $cart = StoreController::getCartForAccount($cartOwner, $storeId);
 
@@ -328,10 +415,10 @@ class StoreTester
         return true;
     }
 
-    public static function createTestEnviroment() : string
+    public static function createTestEnviroment(string $uniqueName = '') : string
     {
         $randomId = new RecordId;
-        $database = "TEST_DATABASE_STORE_DELETE_IF_STILL_PRESENT_$randomId->crand";
+        $database = "TEST_".$uniqueName."DATABASE_STORE_DELETE_IF_STILL_PRESENT_$randomId->crand";
 
         $query = "CREATE DATABASE $database";
         Database::executeSqlQuery($query, []);
@@ -388,6 +475,10 @@ class StoreTester
 
         //CartItem
         static::createCartItemView();
+
+        //Trade
+        static::createTradeTable();
+        static::createTradeView();
 
         return $database;
     }
@@ -489,24 +580,27 @@ class StoreTester
     private static function createCartView() : void
     {
         $query = "CREATE VIEW v_cart AS (
-            SELECT
-                c.ctime,
-                c.crand,
-                a.Username as `account_username`,
-                s.name as `store_name`,
-                s.locator as `store_locator`,
-                c.checked_out,
-                c.void,
-                a.DateCreated AS `account_ctime`,
-                a.Id as `account_crand`,
-                s.ctime as `store_ctime`,
-                s.crand as `store_crand`,
-                c.ref_transaction_ctime as `transaction_ctime`,
-                c.ref_transaction_crand as `transaction_crand`
-            FROM cart c
-                LEFT JOIN store s on c.ref_store_ctime = s.ctime AND c.ref_store_crand = s.crand
-                LEFT JOIN account a on a.id = c.ref_account_crand
-            );";
+        SELECT
+            c.ctime,
+            c.crand,
+            a.Username as `account_username`,
+            s.name as `store_name`,
+            s.locator as `store_locator`,
+            c.checked_out,
+            c.void,
+            a.DateCreated AS `account_ctime`,
+            a.Id as `account_crand`,
+            s.ctime as `store_ctime`,
+            s.crand as `store_crand`,
+        s.ref_account_ctime as `store_owner_ctime`,
+            s.ref_account_crand as `store_owner_crand`,
+            c.ref_transaction_ctime as `transaction_ctime`,
+            c.ref_transaction_crand as `transaction_crand`
+        FROM cart c
+            LEFT JOIN store s on c.ref_store_ctime = s.ctime AND c.ref_store_crand = s.crand
+            LEFT JOIN account a on a.id = c.ref_account_crand
+        );
+        ";
 
         database::executeSqlQuery($query, []);
     }
@@ -530,6 +624,9 @@ class StoreTester
             vprod.small_media_media_path as 'product_small_media_path',
             vprod.large_media_media_path as 'product_large_media_path',
             vprod.back_media_media_path as 'product_back_media_path',
+            vprod.stock as 'product_stock',
+            vii.DateCreated as 'product_item_ctime',
+            vii.Id as 'product_item_crand',
             vprice.ctime as 'price_ctime',
             vprice.crand as 'price_crand',
             vprice.amount as 'price_amount',
@@ -542,13 +639,12 @@ class StoreTester
             vprice.item_ctime as 'price_item_ctime',
             vprice.item_crand as 'price_item_crand'
         FROM cart_product_link cplink
-            JOIN cart c ON cplink.ref_cart_ctime = c.ctime AND cplink.crand = c.crand
+            JOIN cart c ON cplink.ref_cart_ctime = c.ctime AND cplink.ref_cart_crand = c.crand
             JOIN v_product vprod ON cplink.ref_product_ctime = vprod.ctime AND cplink.ref_product_crand = vprod.crand
             JOIN product_price_link pplink ON vprod.ctime = pplink.ref_product_ctime AND vprod.crand = pplink.ref_product_crand
-            JOIN v_price vprice ON pplink.ref_price_ctime = vprice.ctime AND pplink.ref_product_crand = vprice.crand 
-        );
-
-        ";
+            JOIN v_price vprice ON pplink.ref_price_ctime = vprice.ctime AND pplink.ref_price_crand = vprice.crand 
+            JOIN v_item_info vii ON vii.Id = vprod.item_crand
+        );";
 
         Database::executeSqlQuery($sql, []);
     }
@@ -565,7 +661,6 @@ class StoreTester
             `description` varchar(200),
             `removed` tinyint not null DEFAULT(0),
             locator varchar(50) not null,
-            stock int not null DEFAULT (0),
             ref_store_ctime datetime(6) not null,
             ref_store_crand bigint not null,
             ref_item_ctime datetime(6) not null,
@@ -590,7 +685,13 @@ class StoreTester
                     p.name,
                     p.description,
                     p.locator,
-                    p.stock,
+                    (
+                        SELECT COUNT(*)
+                        FROM v_loot_item li
+                        WHERE li.account_id = s.ownerCrand
+                        AND li.item_id = i.Id
+                        AND li.opened = 1
+                    ) AS stock,
                     s.name AS `store_name`,
                     s.locator AS `store_locator`,
                     s.description AS `store_description`,
@@ -620,7 +721,7 @@ class StoreTester
 
     private static function returnTestProduct(vRecordId $storeId, array $prices) : Product
     {
-        $testProduct = new Product("CheapTestProduct", "Test-Product-Cheap", "Test product locator", 100, $storeId->ctime, $storeId->crand, '2024-01-09 16:58:40', 81, $prices);
+        $testProduct = new Product("CheapTestProduct", "Test-Product-Cheap", "Test product locator", $storeId->ctime, $storeId->crand, '2024-01-09 16:58:40', 81, $prices);
 
         return $testProduct;
     }
@@ -767,12 +868,37 @@ class StoreTester
         Database::executeSqlQuery($query, []);
     }
 
+    public static function insertStoreAccount(Account $storeAccount) : void
+    {
+        $query = "INSERT INTO account 
+        (id, email, `password`, firstName, lastName, DateCreated, Username, Banned, pass_reset, passage_id) VALUES 
+        ($storeAccount->crand, '$storeAccount->email', 'somepasswordhash', '$storeAccount->firstName', '$storeAccount->lastName', '$storeAccount->ctime', '$storeAccount->username', 0, 0, -1);";
+
+        Database::executeSqlQuery($query, []);
+    }
+
+    public static function returnStoreAccount() : Account
+    {
+        $account = new Account();
+
+        $record = new RecordId();
+        $account->ctime = $record->ctime;
+
+        $account->email = "teststoreemail@gmail.com";
+        $account->firstName = "Store";
+        $account->lastName = "Store";
+        $account->username = static::storeUsername();
+        $account->banned = false;
+
+        return $account;
+    }
+
     public static function insertTestAccount(Account $account) : void
     {
 
         $query = "INSERT INTO account 
         (id, email, `password`, firstName, lastName, DateCreated, Username, Banned, pass_reset, passage_id) VALUES 
-        ($account->crand, '$account->email', 'somepasswordhash', '$account->firstName', '$account->lastName', '$account->ctime', '$account->username', 0, 0, -1);";
+        ($account->crand, '$account->email', 'somepasswordhash', '$account->firstName', '$account->lastName', '$account->ctime', '$account->username', 0, 0, -2);";
 
         Database::executeSqlQuery($query, []);
     }
@@ -851,7 +977,7 @@ class StoreTester
 
     public static function returnTestStore() : Store
     {
-        $accountId = static::getTestAccount(static::buyerAccountUsername());
+        $accountId = static::getTestAccount(static::storeUsername());
 
         $store = new Store("testStore", "testLocator", "testDescription", $accountId);
 
@@ -882,6 +1008,7 @@ class StoreTester
             container_item_category int,
             item_category int,
             media_id_back int,
+            is_fungible tinyint NOT NULL DEFAULT 0
             PRIMARY KEY (Id)
             )";
 
@@ -997,16 +1124,20 @@ class StoreTester
     private static function createLootTable() : void
     {
 
-        $query = " 	CREATE TABLE loot (
-            Id int(11) NOT NULL AUTO_INCREMENT,
-            opened tinyint(4) NOT NULL DEFAULT 0,
-            account_id int(11) DEFAULT NULL,
-            item_id int(11) NOT NULL DEFAULT 0,
-            quest_id int(11) DEFAULT NULL,
-            dateObtained datetime NOT NULL DEFAULT current_timestamp(),
-            redeemed tinyint(4) NOT NULL DEFAULT 0,
-            PRIMARY KEY (Id)
-            ) ENGINE=InnoDB AUTO_INCREMENT=2993 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci";
+        $query = "CREATE TABLE `loot` (
+        `Id` int(11) NOT NULL AUTO_INCREMENT,
+        `opened` tinyint(4) NOT NULL DEFAULT 0,
+        `nickname` varchar(255) DEFAULT '',
+        `description` text DEFAULT NULL,
+        `account_id` int(11) DEFAULT NULL,
+        `item_id` int(11) NOT NULL DEFAULT 0,
+        `quest_id` int(11) DEFAULT NULL,
+        `dateObtained` datetime NOT NULL DEFAULT current_timestamp(),
+        `redeemed` tinyint(4) NOT NULL DEFAULT 0,
+        `container_loot_id` int(11) DEFAULT NULL,
+        `quantity` bigint(20) NOT NULL DEFAULT 1,
+        PRIMARY KEY (`Id`)
+        ) ";
 
         Database::executeSqlQuery($query, []);
     }
@@ -1014,19 +1145,21 @@ class StoreTester
     private static function createLootView() : void
     {
 
-        $query = "CREATE VIEW v_loot_item AS select 
-            a.Id AS Id,
-            a.opened AS opened,
-            a.account_id AS account_id,
-            a.item_id AS item_id,
-            a.quest_id AS quest_id,
-            b.media_id_small AS media_id_small,
-            b.media_id_large AS media_id_large,
-            b.type AS loot_type,
-            b.desc AS `desc`,
-            b.rarity AS rarity,
-            a.dateObtained AS dateObtained 
-            from (loot a join item b on(a.item_id = b.Id))";
+        $query = "CREATE VIEW v_loot_item AS 
+            select lt.Id AS Id,
+            lt.opened AS opened,
+            lt.account_id AS account_id,
+            lt.item_id AS item_id,
+            lt.quest_id AS quest_id,
+            it.media_id_small AS media_id_small,
+            it.media_id_large AS media_id_large,
+            it.media_id_back AS media_id_back,
+            it.type AS loot_type,
+            it.desc AS `desc`,
+            it.rarity AS rarity,
+            lt.dateObtained AS dateObtained,
+            lt.container_loot_id AS container_loot_id 
+            from (loot lt join item it on(lt.item_id = it.Id))";
 
         Database::executeSqlQuery($query, []);
     }
@@ -1043,13 +1176,31 @@ class StoreTester
 
         for($numOfLoot = 1; $numOfLoot < $numberOfRaffleTicketsToGive; $numOfLoot++)
         {
-            $insertPart = $insertPart.",(28, 1, $accountId->crand, 4, NULL, '2023-01-14 17:01:39', 1)";
+            $id = new RecordId();
+            $insertPart = $insertPart.",($id->crand, 1, $accountId->crand, 4, NULL, '2023-01-14 17:01:39', 1)";
         }
 
         $query = "INSERT INTO `loot` (`Id`, `opened`, `account_id`, `item_id`, `quest_id`, `dateObtained`, `redeemed`) VALUES
-            (28, 1, $accountId->crand, 4, NULL, '2023-01-14 17:01:39', 1);";
+            $insertPart;";
 
         Database::executeSqlQuery($query, []);
+    }
+
+    private static function insertTestProductLootForTestStore(int $num, vRecordId $storeOwnerId) : void
+    {
+        $id = new RecordId();
+        $sql = "INSERT INTO loot (Id, opened, nickname, description, account_id, item_id, quest_id, dateObtained, redeemed, container_loot_id, quantity) VALUES ($id->crand, 1, 'testNickname', 'testDescription', $storeOwnerId->crand, 81, null, NOW(), 1, null, 1)";
+
+        for($i = 1; $i < $num; $i++)
+        {
+            $id = new RecordId();
+
+            $sql = $sql.", ( $id->crand, 1, 'testNickname', 'testDescription', $storeOwnerId->crand, 81, null, NOW(), 1, null, 1)";
+        }
+
+        $sql = $sql.";";
+
+        Database::executeSqlQuery($sql, []);
     }
 
     //TRADE
