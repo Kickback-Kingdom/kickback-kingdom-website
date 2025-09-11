@@ -189,10 +189,16 @@
   function getIconGlyph(icon){
     if(!icon) return '';
     if(icon.includes('fa-')){
-      if(iconCache[icon]) return iconCache[icon];
-      const i=document.createElement('i'); i.className=icon; i.style.display='none'; document.body.appendChild(i);
-      const glyph=getComputedStyle(i,'::before').content.replace(/['"]/g,'');
-      document.body.removeChild(i); iconCache[icon]=glyph; return glyph;
+      if(iconCache[icon]!==undefined) return iconCache[icon];
+      const i=document.createElement('i');
+      i.className=icon;
+      i.style.display='none';
+      document.body.appendChild(i);
+      let glyph=getComputedStyle(i,'::before').content.replace(/['"]/g,'');
+      document.body.removeChild(i);
+      if(!glyph || glyph==='none') glyph='';
+      iconCache[icon]=glyph;
+      return glyph;
     }
     if(icon.startsWith('\\u')) return String.fromCharCode(parseInt(icon.slice(2),16));
     if(/^&#x[0-9a-fA-F]+;?$/.test(icon)) return String.fromCharCode(parseInt(icon.replace(/^&#x|;$/g,''),16));
@@ -281,8 +287,8 @@
     // clip for content
     ctx.save(); roundRect(-w/2+4,-h/2+4,w-8,h-8,12); ctx.clip();
     const iconSize = 40;
-    if(n.icon){
-      const glyph=getIconGlyph(n.icon);
+    const glyph = n.icon ? getIconGlyph(n.icon) : '';
+    if(glyph){
       ctx.fillStyle='#e6edf3';
       ctx.textAlign='center';
       ctx.textBaseline='top';
@@ -344,8 +350,16 @@
   canvas.addEventListener('contextmenu', e=> e.preventDefault());
   canvas.addEventListener('dblclick', ()=>{ const n=getNodeAt(mouse); if(n) openEditModal(n); });
 
-  window.addEventListener('keydown', (e)=>{ if(e.code==='Space') spaceDown=true; if(e.key==='Delete'||e.key==='Backspace') deleteSelected(); if(e.key==='Escape'){ state.mode='select'; state.connectFrom=null; setModeHint('Mode: Select/Drag'); } });
-  window.addEventListener('keyup', (e)=>{ if(e.code==='Space') spaceDown=false; });
+  window.addEventListener('keydown', (e)=>{
+    if(e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA') return;
+    if(e.code==='Space') spaceDown=true;
+    if(e.key==='Delete'||e.key==='Backspace') deleteSelected();
+    if(e.key==='Escape'){ state.mode='select'; state.connectFrom=null; setModeHint('Mode: Select/Drag'); }
+  });
+  window.addEventListener('keyup', (e)=>{
+    if(e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA') return;
+    if(e.code==='Space') spaceDown=false;
+  });
 
   canvas.addEventListener('wheel', (e)=>{ e.preventDefault(); const delta=-e.deltaY; const factor=Math.exp(delta*0.001); const before=screenToWorld(mouse.x,mouse.y); state.camera.z = clamp(state.camera.z * factor, 0.3, 2.5); const after=screenToWorld(mouse.x,mouse.y); state.camera.x += (before.x-after.x); state.camera.y += (before.y-after.y); }, { passive:false });
 
