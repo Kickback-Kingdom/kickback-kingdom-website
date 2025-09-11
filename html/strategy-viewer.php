@@ -302,7 +302,7 @@
 
   function drawBadge(x,y,text,color){ const padX=8, height=20; ctx.save(); ctx.font='12px system-ui'; const width=ctx.measureText(text).width+padX*2; ctx.fillStyle='#0f1420'; roundRect(x-width/2,y,width,height,10); ctx.fill(); ctx.strokeStyle='#1f2a3d'; ctx.lineWidth=1/state.camera.z; ctx.stroke(); ctx.fillStyle=color||'#cbd5e1'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(text,x,y+height/2); ctx.restore(); }
 
-  function drawNode(n){ const {x,y,w=200,h=90,type}=n; const z=state.camera.z; ctx.save(); ctx.translate(x,y);
+  function drawNode(n, z){ const {x,y,w=200,h=90,type}=n; ctx.save(); ctx.translate(x,y);
     // shadow
     ctx.save(); ctx.translate(3/z,6/z); ctx.fillStyle='rgba(0,0,0,.35)'; roundRect(-w/2,-h/2,w,h,14); ctx.fill(); ctx.restore();
     ctx.fillStyle='#1d2230'; roundRect(-w/2,-h/2,w,h,14); ctx.fill();
@@ -353,7 +353,7 @@
     // preview during connect
     if(state.mode==='connect' && state.connectFrom){ const a=diagram.nodes.find(n=>n.id===state.connectFrom); if(a){ const mw=screenToWorld(mouse.x, mouse.y); drawArrow({x:a.x,y:a.y}, mw); } }
     // nodes
-    for(const n of diagram.nodes) drawNode(n);
+    for(const n of diagram.nodes) drawNode(n, z);
     ctx.restore(); requestAnimationFrame(draw); }
 
   // ---------- Interaction ----------
