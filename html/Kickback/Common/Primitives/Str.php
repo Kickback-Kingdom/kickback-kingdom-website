@@ -843,6 +843,1832 @@ final class Str
         assert($substr_replace_inplace('_IA', '', 1, 1) === '_A');
     }
 
+    private static function fqdn_is_ambiguous(string $fqdn, bool $at_start_of_str) : bool
+    {
+        return $at_start_of_str &&
+            (  $fqdn === 'http' || $fqdn === 'https'
+            || $fqdn === 'ftp'  || $fqdn === 'sftp'
+            || $fqdn === 'ssh'  || $fqdn === 'smtp'
+            || $fqdn === 'file' || $fqdn === 'mailto');
+    }
+
+    private static bool $do_fqdn_debug = false;
+
+    private static function fqdn_debug_line_str() : string
+    {
+        $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS,2);
+        $frame = $trace[1];
+        if ( \array_key_exists('line',$frame) ) {
+            $line = $frame['line'];
+            $line_str = \strval($line).': ';
+        } else {
+            $line_str ='';
+        }
+        return $line_str;
+    }
+
+    /**
+    * @param  non-empty-string  $url
+    * @return bool
+    */
+    private static function fqdn_debug(string $prefix, string $url, int $pos, int $end_pos) : bool
+    {
+        if (!self::$do_fqdn_debug) {
+            return true;
+        }
+
+        $line_str = self::fqdn_debug_line_str();
+        $slice = \substr($url, $pos, $end_pos-$pos);
+        echo "$line_str{$prefix}pos=$pos;  {$prefix}end=$end_pos;  slice=$slice\n";
+        return true;
+    }
+
+    /**
+    * @return bool
+    */
+    private static function fqdn_debug_print(string $msg) : bool
+    {
+        if (!self::$do_fqdn_debug) {
+            return true;
+        }
+        $line_str = self::fqdn_debug_line_str();
+        echo $line_str;
+        echo $msg;
+        echo "\n";
+        return true;
+    }
+
+    /**
+    * @param  non-empty-string  $name
+    * @return bool
+    */
+    private static function fqdn_debug_bool(string $name, bool $value) : bool
+    {
+        if (!self::$do_fqdn_debug) {
+            return true;
+        }
+        $line_str = self::fqdn_debug_line_str();
+        $str = $value ? 'true' : 'false';
+        echo ("$line_str$name = $str\n");
+        return true;
+    }
+
+    /**
+    * Scans the URL for the Fully Qualified Domain Name (FQDN) and returns its integer position and length.
+    *
+    * This is a lower-level version of `Str::fqdn_from_url` which is useful
+    * if string processing is required beyond simply extracting the FQDN.
+    *
+    * The `$fqdn_offset` and `$fqdn_length` parameters will only be modified
+    * when the function successfully identifies an FQDN
+    * (and, if `$validate_result === true`, only when it finds a _valid_ FQDN).
+    *
+    * If this function does not find an FQDN, then
+    * `$fqdn_offset` and `fqdn_length` will not be modified.
+    *
+    * This function has the same memory and portability guarantees
+    * as `Str::fqdn_from_url`, since that function is implemented
+    * using this function.
+    *
+    * @see fqdn_from_url
+    *
+    * @param      int         $fqdn_offset  Scanning will begin at the position passed into this parameter.
+    * @param-out  int<0,max>  $fqdn_offset
+    * @param      int<0,max>  $fqdn_length  As an input: only `$fqdn_length` characters will be scanned. As an output: This is the length of the FQDN found.
+    * @param-out  int<0,max>  $fqdn_length
+    *
+    * @return bool  `true` if a FQDN was found; or `false` if it wasn't, or if `$validate_result === true` and the FQDN was invalid.
+    *
+    * @phpstan-pure
+    * @throws void
+    */
+    public static function fqdn_bounds_from_url(
+        string  $url,
+        int     &$fqdn_offset  = 0,
+        int     &$fqdn_length  = \PHP_INT_MAX,
+        bool    $validate_result = true
+    ) : bool
+    {
+        assert(self::fqdn_debug_print("fqdn_bounds_from_url(url='$url', fqdn_offset=$fqdn_offset, fqdn_length=$fqdn_length, ...)"));
+
+        // Calculation that doesn't require `$fqdn_offset` or `$fqdn_length`.
+        $url_length = \strlen($url);
+        if ( $url_length === 0 ) {
+            return false;
+        }
+        assert(0 < \strlen($url)); // To make PHPStan happy.
+
+        // Mostly-atomic read of caller's state.
+        $len     = $fqdn_length;
+        $pos     = $fqdn_offset;
+
+        // Input clipping
+        assert(self::fqdn_debug_print("pos=$pos, len=$len"));
+        if ( $pos < 0 ) {
+            $pos = (-$pos) % $url_length; // Handle wrapping.
+            if ( $pos !== 0 ) {
+                $pos = $url_length - $pos;
+            }
+        }
+        assert(self::fqdn_debug_print("pos=$pos, len=$len"));
+        // We do `$url_length - $len < $pos` instead of `$url_length < $pos + $len`
+        // because $len can (and often will) be \PHP_INT_MAX, which would
+        // cause $pos+$len might overflow.
+        if ( $url_length - $len < $pos ) {
+            $len = $url_length - $pos;
+            $end_pos = $url_length;
+        } else {
+            $end_pos = $pos + $len;
+        }
+        assert(self::fqdn_debug_print("pos=$pos, len=$len, end=$end_pos"));
+        if ( $len === 0 || $end_pos <= $pos ) {
+            return false;
+        }
+        $end_pos = $pos + $len;
+
+        // Parsing logic.
+        assert(self::fqdn_debug('in.',$url, $pos, $end_pos));
+        $success = self::fqdn_bounds_from_url_parse(
+            $url, $pos, $end_pos);
+        if ( !$success ) {
+            assert(self::fqdn_debug_print("returning `false`"));
+            return false;
+        }
+
+        // Varying degrees of validation logic.
+        $len = $end_pos - $pos;
+        assert(self::fqdn_debug('out.',$url, $pos, $end_pos));
+
+        $fqdn = \substr($url, $pos, $len);
+        $at_start_of_str = ($fqdn_offset === $pos);
+        if ( self::fqdn_is_ambiguous($fqdn, $at_start_of_str) ) {
+            assert(self::fqdn_debug_print("returning `false`"));
+            return false;
+        }
+
+        if ( !$validate_result ) {
+            assert(self::fqdn_debug_print("returning `true`; pos=$pos, len=$len"));
+            $fqdn_offset = $pos;
+            $fqdn_length = $len;
+            return true;
+        }
+
+        $valid_fqdn = \filter_var($fqdn, FILTER_VALIDATE_DOMAIN, FILTER_NULL_ON_FAILURE);
+        if (isset($valid_fqdn)) {
+            assert(self::fqdn_debug_print("returning `true`; pos=$pos, len=$len"));
+            $fqdn_offset = $pos;
+            $fqdn_length = $len;
+            return true;
+        }
+        assert(self::fqdn_debug_print("returning `false`"));
+        return false;
+    }
+
+    // Ideally it's like this:
+    // param  non-empty-string  $url
+    // param  int<0,max>        $pos
+    // param  int<$pos+1,max>   $end_pos
+    // (But PHPStan doesn't allow `$pos` as an int range parameter.)
+
+    /**
+    * @param  non-empty-string  $url
+    * @param  int<0,max>        $pos
+    * @param  int<1,max>        $end_pos
+    */
+    private static function fqdn_bounds_from_url_parse(
+        string  $url,
+        int     &$pos,
+        int     &$end_pos
+    ) : bool
+    {
+        assert(self::fqdn_debug('in.',$url, $pos, $end_pos));
+        $peek_pos = $pos + \strcspn($url, ':/@', $pos, $end_pos-$pos);
+
+        // Early return if there's no syntax to parse, and it's just an FQDN.
+        if ( $peek_pos === $end_pos ) {
+            return true;
+        }
+        assert(self::fqdn_debug('',$url, $peek_pos, $end_pos));
+
+        // Otherwise, $url[$peek_pos] exists, and we have more parsing to do.
+        $ch = $url[$peek_pos];
+
+        // Check for user@host possibility.
+        // This happens FIRST because '@' is the least-ambiguous
+        // syntax token in the URL. Both ':' and '/' can mean different
+        // things depending on where they appear relative to other
+        // tokens, but '@' can only mean one thing. (Though it CAN appear
+        // in the resource identifier portion of the URL, but we've
+        // excluded that possibility by allowing our scanner to stop
+        // at '/' first, and it didn't, so this @ genuinely comes first.)
+        if ( $ch === '@' ) {
+            $pos = $peek_pos + 1;
+            return self::fqdn_from_start_of_url($url, $pos, $end_pos);
+        }
+
+        // Now we check for things like 'fqdn/path' and 'fqdn/path?foo=bar'
+        // Note that stuff like 'fqdn/path@foo' is allowed, but we don't
+        // have to do anything special for it, because the '@' is part
+        // of the URI path in that/this situation.
+        if ( $ch === '/' ) {
+            if ( $pos === $peek_pos ) {
+                // Zero-length FQDN = invalid.
+                return false;
+            }
+            $end_pos = $peek_pos;
+            return true;
+        }
+
+        // Why just this one, phpstan??
+        // @phpstan-ignore  function.alreadyNarrowedType
+        assert(self::fqdn_debug('',$url, $peek_pos, $end_pos));
+
+        // Now things get slightly more complicated, because ':' can mean
+        // a bunch of different things, depending on where it appears
+        // and what comes after it.
+        assert($ch === ':');
+        if ( \str_starts_with(\substr($url, $peek_pos, $end_pos-$peek_pos), '://') ) {
+            // Confirmed that there's a schema.
+            $peek_pos += 3;
+            assert(self::fqdn_debug('',$url, $peek_pos, $end_pos));
+
+            if ( $peek_pos < $end_pos && $url[$peek_pos] === '/'
+            &&  \str_starts_with(\substr($url, $pos, $end_pos-$pos), 'file:///') ) {
+                // Special exception for the `file:///` scheme where
+                // triple-slashes are allowed.
+                $peek_pos++;
+            }
+
+            // If there's also login info, we can skip it and the schema.
+            // (Note that our scanner stops at '/' also, because
+            // 'foo/bar@baz' has a hostname 'foo' with NO user/login info.)
+            $pos = $peek_pos;
+            $peek_pos = $pos + \strcspn($url, '/@', $pos, $end_pos-$pos);
+            if ( $peek_pos < $end_pos && $url[$peek_pos] === '@' ) {
+                $pos = $peek_pos + 1;
+            }
+
+            // Parse the rest.
+            assert(self::fqdn_debug('',$url, $pos, $end_pos));
+            return self::fqdn_from_start_of_url($url, $pos, $end_pos);
+        }
+
+        // Non-schema things.
+        // We've found a ':', which is either the delimiter for
+        // a 'username:password' string, or the delimiter for a
+        // 'fqdn:port' string, (or something invalid)
+        // 'and we have to determine which.
+        $start_pos = $pos;
+        $pos = $peek_pos;
+        assert(self::fqdn_debug('',$url, $pos, $end_pos));
+        $peek_pos++; // Skip the ':'
+        $peek_pos += \strcspn($url, '/@', $peek_pos, $end_pos-$peek_pos);
+        if ( $peek_pos === $end_pos ) {
+            // EOS.
+            // Saying it's '/' is a lie. But it's the correct lie.
+            // Because the implications for '/' and EOS are the same.
+            $ch = '/';
+        } else {
+            $ch = $url[$peek_pos];
+        }
+
+        // If the next character is '/' or we're at EOS, then
+        // it's a string like `fqdn:port/path` or `fqdn:port`.
+        // (No @ past the ':' implies it's not a `user:pass` string.)
+        if ( $ch === '/' ) {
+            // We can treat the stuff before ':' as a hostname/fqdn.
+            if ( $start_pos === $pos ) { // Zero-length FQDN.
+                return false;
+            }
+            // Move our {$pos,$end_pos} back to before the ':'.
+            // (Beware: Order of operations.)
+            $end_pos = $pos;
+            $pos = $start_pos;
+            return true;
+        }
+
+        // This case is `username:password@fqdn:pORt/whatever`.
+        // Which is easy enough because we've identified where the start
+        // of the FQDN would be. We just need to truncate the '@' and
+        // everything before it from the result.
+        assert($ch === '@');
+        $pos = $peek_pos;
+        $pos++; // skip the '@'
+
+        // Parse the rest.
+        assert(self::fqdn_debug('',$url, $pos, $end_pos));
+        return self::fqdn_from_start_of_url($url, $pos, $end_pos);
+    }
+
+    // Ideally it's like this:
+    // param  non-empty-string  $url
+    // param  int<0,max>        $pos
+    // param  int<$pos,max>     $end_pos
+    // (But PHPStan doesn't allow `$pos` as an int range parameter.)
+    // (Also, we use `int<1,max>` because $end_pos actually shouldn't be 0,
+    // though if it's non-zero, then it CAN be equal to $pos.)
+
+    /**
+    * @param  non-empty-string  $url
+    * @param  int<0,max>        $pos
+    * @param  int<1,max>        $end_pos
+    */
+    private static function fqdn_from_start_of_url(
+        string  $url,
+        int     &$pos,
+        int     &$end_pos
+    ) : bool
+    {
+        $peek_pos = $pos + \strcspn($url, ':/', $pos, $end_pos-$pos);
+        if ( $pos === $peek_pos ) { // Zero-length FQDN.
+            return false;
+        }
+
+        assert(self::fqdn_debug('',$url, $pos, $peek_pos));
+        if ( $peek_pos === $end_pos ) {
+            // EOS.
+            // Once again, the implications for '/' and EOS are the same.
+            $ch = '/';
+        } else {
+            $ch = $url[$peek_pos];
+        }
+
+        // If the next character is '/' or we're at EOS, then
+        // it's a string like `fqdn/path` or `fqdn`.
+        if ( $ch === '/' ) {
+            // $pos = $pos
+            $end_pos = $peek_pos;
+            return true;
+        }
+
+        assert($ch === ':');
+        if ( \str_starts_with(\substr($url, $peek_pos, $end_pos), '://') ) {
+            $peek_pos += 3;
+            if ( $peek_pos < $end_pos && $url[$peek_pos] !== '/' ) {
+                // Reject invalid: this function shall not be called with
+                // a URL contain a schema. (In the broader context, this means
+                // that a schema separator token is appearing in a place
+                // where it shouldn't. And we consider the schema separator
+                // to be unambiguous enough that it isn't just a missing
+                // port followed by a couple missing URI path segments.)
+                return false;
+            }
+        }
+
+        // We've excluded all of the other possibilities now.
+        // Everything up to the ':' is the FQDN.
+        // $pos = $pos
+        $end_pos = $peek_pos;
+        assert(self::fqdn_debug('',$url, $pos, $end_pos));
+        return true;
+    }
+
+    //private const SYM_MISSING = -1;
+    //private const SYM_EOS     = 0;
+    //private const SYM_SLASH   = 1;
+    //private const SYM_COLON   = 2;
+    //private const SYM_AT      = 3;
+    //private const SYM_SCHEMA  = 4;
+    //
+    //private static function populate_url_symbol_lookup(array  &$table) : void
+    //{
+    //    // We are numbering the following characters: '/'=1, ':'=2, '@'=3.
+    //    // Everything else is numbered as 0 to make it easy to tell via comparison-to-0.
+    //    // These characters have the following ASCII codes:
+    //    // '/': 47 or 0x2F
+    //    // ':': 58 or 0x3A
+    //    // '@': 64 or 0x40
+    //    // We are numbering the following characters: '/'=1, ':'=2, '@'=3.
+    //    // Everything else is numbered as 0 to make it easy to tell via comparison-to-0.
+    //    // These characters have the following ASCII codes:
+    //    // '/': 47 or 0x2F
+    //    // ':': 58 or 0x3A
+    //    // '@': 64 or 0x40
+    //    $table = \array_fill(0,256, self::SYM_MISSING);
+    //    $table[\ord('/')] = self::SYM_SLASH + (1 << 8);
+    //    $table[\ord(':')] = self::SYM_COLON + (1 << 8);
+    //    $table[\ord('@')] = self::SYM_AT    + (3 << 8);
+    //
+    //    //$lookup_table = [
+    //    //// 0xN0, 0xN1, 0xN2, 0xN3, 0xN4, 0xN5, 0xN6, 0xN7
+    //    //// 0xN8, 0xN9, 0xNA, 0xNB, 0xNC, 0xND, 0xNE, 0xNF
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x0M + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x0M + 8
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x1M + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x1M + 8
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x2M + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   (0), // 0x2M + 8
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x3M + 0
+    //    //    -1,   -1,   (1),  -1,   -1,   -1,   -1,   -1,  // 0x3M + 8
+    //    //    (2),  -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x4M + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x4M + 8
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x5M + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x5M + 8
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x6M + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x6M + 8
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x7M + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x7M + 8
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x8M + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x8M + 8
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x9M + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0x9M + 8
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0xAM + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0xAM + 8
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0xBM + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0xBM + 8
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0xCM + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0xCM + 8
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0xDM + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0xDM + 8
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0xEM + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0xEM + 8
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  // 0xFM + 0
+    //    //    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1   // 0xFM + 8
+    //    //];
+    //    //
+    //    //assert($table[\ord('/')] === self::SYM_SLASH);
+    //    //assert($table[\ord(':')] === self::SYM_COLON);
+    //    //assert($table[\ord('@')] === self::SYM_AT);
+    //}
+    //
+    //private static function fqdn_bounds_from_url_parse(
+    //    string  $url,
+    //    int     &$fqdn_offset,
+    //    int     &$fqdn_length,
+    //    bool    $validate_result
+    //) : bool
+    //{
+    //    static $sym_lookup = null;
+    //    if (!isset($sym_lookup)) {
+    //        self::populate_url_symbol_lookup($sym_lookup);
+    //    }
+    //    $p0a = $fqdn_offset;
+    //    $nchars = $fqdn_length;
+    //
+    //    $token_len = \strcspn($url, ':/@', $p0a, $nchars);
+    //    $p0b = $p0a + $token_len;
+    //    $nums = ($token_len < $nchars) ? $sym_lookup[\ord($url[$p0b])] : self::SYM_EOS;
+    //    $idx  = $nums & 0xFF;
+    //    $token_len = $nums >> 8;
+    //    assert(0 <= $idx);
+    //    $p1a = $p0b + $token_len;
+    //    if (self::SYM_COLON === $idx
+    //    &&  \str_starts_with(\substr($url,$p0b,$nchars), '://') ) {
+    //        $idx = self::SYM_SCHEMA;
+    //    }
+    //    $nchars -= ($p1a - $p0a);
+    //    $state = $idx;
+    //
+    //    $token_len = \strcspn($url, ':/@', $p1a, $nchars);
+    //    $p1b = $p1a + $token_len;
+    //    $nums = ($token_len < $nchars) ? $sym_lookup[\ord($url[$p1b])] : self::SYM_EOS;
+    //    $idx  = $nums & 0xFF;
+    //    $token_len = $nums >> 8;
+    //    $p2a = $p1b + $token_len;
+    //    assert(0 <= $idx);
+    //    $state <<= 2;
+    //    $state |= $idx;
+    //
+    //}
+
+    // The full URL syntax we are parsing is as follows:
+    // `schema://user:pass@fqdn:port/uri_seg_1/uri_seg_2/...`
+    //
+    // Note that there are 5 tokens that separate the various identifiers:
+    // `schema://user:pass@fqdn:port/uri_seg_1/uri_seg_2/...`
+    //         ^     ^    ^    ^    ^
+    //         1     2    3    4    5
+    //
+    // Possibilities:
+    // * [   EOS,   NULL,   NULL,   NULL,   NULL] -> 'hostname.domain' (valid) or '' (invalid)
+    // * [schema,    EOS,   NULL,   NULL,   NULL] -> 'sch://fqdn' (valid) or 'sch://' (invalid) or '://' (invalid)
+    // * [ slash,    EOS,   NULL,   NULL,   NULL] -> 'fqdn/path' (valid) or '/path' (invalid) or '/' (invalid)
+    // * [   at,     EOS,   NULL,   NULL,   NULL] -> 'user@fqdn' (valid) or 'user@' (invalid) or '@' (invalid)
+    // * [ colon,    EOS,   NULL,   NULL,   NULL] -> 'fqdn:80' (valid) or 'fqdn:foo' (valid-ish) or ':foo' (invalid) or ':' (invalid)
+    // * [schema,  slash,    EOS,   NULL,   NULL] -> 'sch://fqdn/path' (valid) or 'sch:///' (invalid?) or 'sch:///path' (invalid) or '://' (invalid)
+    // * [ slash,  slash,    EOS,   NULL,   NULL]
+    // * [   at,   slash,    EOS,   NULL,   NULL]
+    // * [ colon,  slash,    EOS,   NULL,   NULL]
+    // * [schema,    at,     EOS,   NULL,   NULL]
+    // * [ slash,    at,     EOS,   NULL,   NULL]
+    // * [   at,     at,     EOS,   NULL,   NULL]
+    // * [ colon,    at,     EOS,   NULL,   NULL]
+    // * [schema,  colon,    EOS,   NULL,   NULL]
+    // * [ slash,  colon,    EOS,   NULL,   NULL]
+    // * [   at,   colon,    EOS,   NULL,   NULL]
+    // * [ colon,  colon,    EOS,   NULL,   NULL]
+    // * [schema,  slash,  slash,    EOS,   NULL]
+    // * [ slash,  slash,  slash,    EOS,   NULL]
+    // * [   at,   slash,  slash,    EOS,   NULL]
+    // * [ colon,  slash,  slash,    EOS,   NULL]
+    // * [schema,    at,   slash,    EOS,   NULL]
+    // * [ slash,    at,   slash,    EOS,   NULL]
+    // * [   at,     at,   slash,    EOS,   NULL]
+    // * [ colon,    at,   slash,    EOS,   NULL]
+    // * [schema,  colon,  slash,    EOS,   NULL]
+    // * [ slash,  colon,  slash,    EOS,   NULL]
+    // * [   at,   colon,  slash,    EOS,   NULL]
+    // * [ colon,  colon,  slash,    EOS,   NULL]
+    // * [schema,  slash,    at,     EOS,   NULL]
+    // * [ slash,  slash,    at,     EOS,   NULL]
+    // * [   at,   slash,    at,     EOS,   NULL]
+    // * [ colon,  slash,    at,     EOS,   NULL]
+    // * [schema,    at,     at,     EOS,   NULL]
+    // * [ slash,    at,     at,     EOS,   NULL]
+    // * [   at,     at,     at,     EOS,   NULL]
+    // * [ colon,    at,     at,     EOS,   NULL]
+    // * [schema,  colon,    at,     EOS,   NULL]
+    // * [ slash,  colon,    at,     EOS,   NULL]
+    // * [   at,   colon,    at,     EOS,   NULL]
+    // * [ colon,  colon,    at,     EOS,   NULL]
+    // * [schema,  slash,  colon,    EOS,   NULL]
+    // * [ slash,  slash,  colon,    EOS,   NULL]
+    // * [   at,   slash,  colon,    EOS,   NULL]
+    // * [ colon,  slash,  colon,    EOS,   NULL]
+    // * [schema,    at,   colon,    EOS,   NULL]
+    // * [ slash,    at,   colon,    EOS,   NULL]
+    // * [   at,     at,   colon,    EOS,   NULL]
+    // * [ colon,    at,   colon,    EOS,   NULL]
+    // * [schema,  colon,  colon,    EOS,   NULL]
+    // * [ slash,  colon,  colon,    EOS,   NULL]
+    // * [   at,   colon,  colon,    EOS,   NULL]
+    // * [ colon,  colon,  colon,    EOS,   NULL]
+    // * [schema,  slash,  slash,  slash,    EOS]
+    // * [ slash,  slash,  slash,  slash,    EOS]
+    // * [   at,   slash,  slash,  slash,    EOS]
+    // * [ colon,  slash,  slash,  slash,    EOS]
+    // * [schema,    at,   slash,  slash,    EOS]
+    // * [ slash,    at,   slash,  slash,    EOS]
+    // * [   at,     at,   slash,  slash,    EOS]
+    // * [ colon,    at,   slash,  slash,    EOS]
+    // * [schema,  colon,  slash,  slash,    EOS]
+    // * [ slash,  colon,  slash,  slash,    EOS]
+    // * [   at,   colon,  slash,  slash,    EOS]
+    // * [ colon,  colon,  slash,  slash,    EOS]
+    // * [schema,  slash,    at,   slash,    EOS]
+    // * [ slash,  slash,    at,   slash,    EOS]
+    // * [   at,   slash,    at,   slash,    EOS]
+    // * [ colon,  slash,    at,   slash,    EOS]
+    // * [schema,    at,     at,   slash,    EOS]
+    // * [ slash,    at,     at,   slash,    EOS]
+    // * [   at,     at,     at,   slash,    EOS]
+    // * [ colon,    at,     at,   slash,    EOS]
+    // * [schema,  colon,    at,   slash,    EOS]
+    // * [ slash,  colon,    at,   slash,    EOS]
+    // * [   at,   colon,    at,   slash,    EOS]
+    // * [ colon,  colon,    at,   slash,    EOS]
+    // * [schema,  slash,  colon,  slash,    EOS]
+    // * [ slash,  slash,  colon,  slash,    EOS]
+    // * [   at,   slash,  colon,  slash,    EOS]
+    // * [ colon,  slash,  colon,  slash,    EOS]
+    // * [schema,    at,   colon,  slash,    EOS]
+    // * [ slash,    at,   colon,  slash,    EOS]
+    // * [   at,     at,   colon,  slash,    EOS]
+    // * [ colon,    at,   colon,  slash,    EOS]
+    // * [schema,  colon,  colon,  slash,    EOS]
+    // * [ slash,  colon,  colon,  slash,    EOS]
+    // * [   at,   colon,  colon,  slash,    EOS]
+    // * [ colon,  colon,  colon,  slash,    EOS]
+    // * [schema,  slash,  slash,    at,     EOS]
+    // * [ slash,  slash,  slash,    at,     EOS]
+    // * [   at,   slash,  slash,    at,     EOS]
+    // * [ colon,  slash,  slash,    at,     EOS]
+    // * [schema,    at,   slash,    at,     EOS]
+    // * [ slash,    at,   slash,    at,     EOS]
+    // * [   at,     at,   slash,    at,     EOS]
+    // * [ colon,    at,   slash,    at,     EOS]
+    // * [schema,  colon,  slash,    at,     EOS]
+    // * [ slash,  colon,  slash,    at,     EOS]
+    // * [   at,   colon,  slash,    at,     EOS]
+    // * [ colon,  colon,  slash,    at,     EOS]
+    // * [schema,  slash,    at,     at,     EOS]
+    // * [ slash,  slash,    at,     at,     EOS]
+    // * [   at,   slash,    at,     at,     EOS]
+    // * [ colon,  slash,    at,     at,     EOS]
+    // * [schema,    at,     at,     at,     EOS]
+    // * [ slash,    at,     at,     at,     EOS]
+    // * [   at,     at,     at,     at,     EOS]
+    // * [ colon,    at,     at,     at,     EOS]
+    // * [schema,  colon,    at,     at,     EOS]
+    // * [ slash,  colon,    at,     at,     EOS]
+    // * [   at,   colon,    at,     at,     EOS]
+    // * [ colon,  colon,    at,     at,     EOS]
+    // * [schema,  slash,  colon,    at,     EOS]
+    // * [ slash,  slash,  colon,    at,     EOS]
+    // * [   at,   slash,  colon,    at,     EOS]
+    // * [ colon,  slash,  colon,    at,     EOS]
+    // * [schema,    at,   colon,    at,     EOS]
+    // * [ slash,    at,   colon,    at,     EOS]
+    // * [   at,     at,   colon,    at,     EOS]
+    // * [ colon,    at,   colon,    at,     EOS]
+    // * [schema,  colon,  colon,    at,     EOS]
+    // * [ slash,  colon,  colon,    at,     EOS]
+    // * [   at,   colon,  colon,    at,     EOS]
+    // * [ colon,  colon,  colon,    at,     EOS]
+    // * [schema,  slash,  slash,  colon,    EOS]
+    // * [ slash,  slash,  slash,  colon,    EOS]
+    // * [   at,   slash,  slash,  colon,    EOS]
+    // * [ colon,  slash,  slash,  colon,    EOS]
+    // * [schema,    at,   slash,  colon,    EOS]
+    // * [ slash,    at,   slash,  colon,    EOS]
+    // * [   at,     at,   slash,  colon,    EOS]
+    // * [ colon,    at,   slash,  colon,    EOS]
+    // * [schema,  colon,  slash,  colon,    EOS]
+    // * [ slash,  colon,  slash,  colon,    EOS]
+    // * [   at,   colon,  slash,  colon,    EOS]
+    // * [ colon,  colon,  slash,  colon,    EOS]
+    // * [schema,  slash,    at,   colon,    EOS]
+    // * [ slash,  slash,    at,   colon,    EOS]
+    // * [   at,   slash,    at,   colon,    EOS]
+    // * [ colon,  slash,    at,   colon,    EOS]
+    // * [schema,    at,     at,   colon,    EOS]
+    // * [ slash,    at,     at,   colon,    EOS]
+    // * [   at,     at,     at,   colon,    EOS]
+    // * [ colon,    at,     at,   colon,    EOS]
+    // * [schema,  colon,    at,   colon,    EOS]
+    // * [ slash,  colon,    at,   colon,    EOS]
+    // * [   at,   colon,    at,   colon,    EOS]
+    // * [ colon,  colon,    at,   colon,    EOS]
+    // * [schema,  slash,  colon,  colon,    EOS]
+    // * [ slash,  slash,  colon,  colon,    EOS]
+    // * [   at,   slash,  colon,  colon,    EOS]
+    // * [ colon,  slash,  colon,  colon,    EOS]
+    // * [schema,    at,   colon,  colon,    EOS]
+    // * [ slash,    at,   colon,  colon,    EOS]
+    // * [   at,     at,   colon,  colon,    EOS]
+    // * [ colon,    at,   colon,  colon,    EOS]
+    // * [schema,  colon,  colon,  colon,    EOS]
+    // * [ slash,  colon,  colon,  colon,    EOS]
+    // * [   at,   colon,  colon,  colon,    EOS]
+    // * [ colon,  colon,  colon,  colon,    EOS]
+    // * [schema,  slash,  slash,  slash,  slash]
+    // * [ slash,  slash,  slash,  slash,  slash]
+    // * [   at,   slash,  slash,  slash,  slash]
+    // * [ colon,  slash,  slash,  slash,  slash]
+    // * [schema,    at,   slash,  slash,  slash]
+    // * [ slash,    at,   slash,  slash,  slash]
+    // * [   at,     at,   slash,  slash,  slash]
+    // * [ colon,    at,   slash,  slash,  slash]
+    // * [schema,  colon,  slash,  slash,  slash]
+    // * [ slash,  colon,  slash,  slash,  slash]
+    // * [   at,   colon,  slash,  slash,  slash]
+    // * [ colon,  colon,  slash,  slash,  slash]
+    // * [schema,  slash,    at,   slash,  slash]
+    // * [ slash,  slash,    at,   slash,  slash]
+    // * [   at,   slash,    at,   slash,  slash]
+    // * [ colon,  slash,    at,   slash,  slash]
+    // * [schema,    at,     at,   slash,  slash]
+    // * [ slash,    at,     at,   slash,  slash]
+    // * [   at,     at,     at,   slash,  slash]
+    // * [ colon,    at,     at,   slash,  slash]
+    // * [schema,  colon,    at,   slash,  slash]
+    // * [ slash,  colon,    at,   slash,  slash]
+    // * [   at,   colon,    at,   slash,  slash]
+    // * [ colon,  colon,    at,   slash,  slash]
+    // * [schema,  slash,  colon,  slash,  slash]
+    // * [ slash,  slash,  colon,  slash,  slash]
+    // * [   at,   slash,  colon,  slash,  slash]
+    // * [ colon,  slash,  colon,  slash,  slash]
+    // * [schema,    at,   colon,  slash,  slash]
+    // * [ slash,    at,   colon,  slash,  slash]
+    // * [   at,     at,   colon,  slash,  slash]
+    // * [ colon,    at,   colon,  slash,  slash]
+    // * [schema,  colon,  colon,  slash,  slash]
+    // * [ slash,  colon,  colon,  slash,  slash]
+    // * [   at,   colon,  colon,  slash,  slash]
+    // * [ colon,  colon,  colon,  slash,  slash]
+    // * [schema,  slash,  slash,    at,   slash]
+    // * [ slash,  slash,  slash,    at,   slash]
+    // * [   at,   slash,  slash,    at,   slash]
+    // * [ colon,  slash,  slash,    at,   slash]
+    // * [schema,    at,   slash,    at,   slash]
+    // * [ slash,    at,   slash,    at,   slash]
+    // * [   at,     at,   slash,    at,   slash]
+    // * [ colon,    at,   slash,    at,   slash]
+    // * [schema,  colon,  slash,    at,   slash]
+    // * [ slash,  colon,  slash,    at,   slash]
+    // * [   at,   colon,  slash,    at,   slash]
+    // * [ colon,  colon,  slash,    at,   slash]
+    // * [schema,  slash,    at,     at,   slash]
+    // * [ slash,  slash,    at,     at,   slash]
+    // * [   at,   slash,    at,     at,   slash]
+    // * [ colon,  slash,    at,     at,   slash]
+    // * [schema,    at,     at,     at,   slash]
+    // * [ slash,    at,     at,     at,   slash]
+    // * [   at,     at,     at,     at,   slash]
+    // * [ colon,    at,     at,     at,   slash]
+    // * [schema,  colon,    at,     at,   slash]
+    // * [ slash,  colon,    at,     at,   slash]
+    // * [   at,   colon,    at,     at,   slash]
+    // * [ colon,  colon,    at,     at,   slash]
+    // * [schema,  slash,  colon,    at,   slash]
+    // * [ slash,  slash,  colon,    at,   slash]
+    // * [   at,   slash,  colon,    at,   slash]
+    // * [ colon,  slash,  colon,    at,   slash]
+    // * [schema,    at,   colon,    at,   slash]
+    // * [ slash,    at,   colon,    at,   slash]
+    // * [   at,     at,   colon,    at,   slash]
+    // * [ colon,    at,   colon,    at,   slash]
+    // * [schema,  colon,  colon,    at,   slash]
+    // * [ slash,  colon,  colon,    at,   slash]
+    // * [   at,   colon,  colon,    at,   slash]
+    // * [ colon,  colon,  colon,    at,   slash]
+    // * [schema,  slash,  slash,  colon,  slash]
+    // * [ slash,  slash,  slash,  colon,  slash]
+    // * [   at,   slash,  slash,  colon,  slash]
+    // * [ colon,  slash,  slash,  colon,  slash]
+    // * [schema,    at,   slash,  colon,  slash]
+    // * [ slash,    at,   slash,  colon,  slash]
+    // * [   at,     at,   slash,  colon,  slash]
+    // * [ colon,    at,   slash,  colon,  slash]
+    // * [schema,  colon,  slash,  colon,  slash]
+    // * [ slash,  colon,  slash,  colon,  slash]
+    // * [   at,   colon,  slash,  colon,  slash]
+    // * [ colon,  colon,  slash,  colon,  slash]
+    // * [schema,  slash,    at,   colon,  slash]
+    // * [ slash,  slash,    at,   colon,  slash]
+    // * [   at,   slash,    at,   colon,  slash]
+    // * [ colon,  slash,    at,   colon,  slash]
+    // * [schema,    at,     at,   colon,  slash]
+    // * [ slash,    at,     at,   colon,  slash]
+    // * [   at,     at,     at,   colon,  slash]
+    // * [ colon,    at,     at,   colon,  slash]
+    // * [schema,  colon,    at,   colon,  slash]
+    // * [ slash,  colon,    at,   colon,  slash]
+    // * [   at,   colon,    at,   colon,  slash]
+    // * [ colon,  colon,    at,   colon,  slash]
+    // * [schema,  slash,  colon,  colon,  slash]
+    // * [ slash,  slash,  colon,  colon,  slash]
+    // * [   at,   slash,  colon,  colon,  slash]
+    // * [ colon,  slash,  colon,  colon,  slash]
+    // * [schema,    at,   colon,  colon,  slash]
+    // * [ slash,    at,   colon,  colon,  slash]
+    // * [   at,     at,   colon,  colon,  slash]
+    // * [ colon,    at,   colon,  colon,  slash]
+    // * [schema,  colon,  colon,  colon,  slash]
+    // * [ slash,  colon,  colon,  colon,  slash]
+    // * [   at,   colon,  colon,  colon,  slash]
+    // * [ colon,  colon,  colon,  colon,  slash]
+    // * [schema,  slash,  slash,  slash,     at]
+    // * [ slash,  slash,  slash,  slash,     at]
+    // * [   at,   slash,  slash,  slash,     at]
+    // * [ colon,  slash,  slash,  slash,     at]
+    // * [schema,    at,   slash,  slash,     at]
+    // * [ slash,    at,   slash,  slash,     at]
+    // * [   at,     at,   slash,  slash,     at]
+    // * [ colon,    at,   slash,  slash,     at]
+    // * [schema,  colon,  slash,  slash,     at]
+    // * [ slash,  colon,  slash,  slash,     at]
+    // * [   at,   colon,  slash,  slash,     at]
+    // * [ colon,  colon,  slash,  slash,     at]
+    // * [schema,  slash,    at,   slash,     at]
+    // * [ slash,  slash,    at,   slash,     at]
+    // * [   at,   slash,    at,   slash,     at]
+    // * [ colon,  slash,    at,   slash,     at]
+    // * [schema,    at,     at,   slash,     at]
+    // * [ slash,    at,     at,   slash,     at]
+    // * [   at,     at,     at,   slash,     at]
+    // * [ colon,    at,     at,   slash,     at]
+    // * [schema,  colon,    at,   slash,     at]
+    // * [ slash,  colon,    at,   slash,     at]
+    // * [   at,   colon,    at,   slash,     at]
+    // * [ colon,  colon,    at,   slash,     at]
+    // * [schema,  slash,  colon,  slash,     at]
+    // * [ slash,  slash,  colon,  slash,     at]
+    // * [   at,   slash,  colon,  slash,     at]
+    // * [ colon,  slash,  colon,  slash,     at]
+    // * [schema,    at,   colon,  slash,     at]
+    // * [ slash,    at,   colon,  slash,     at]
+    // * [   at,     at,   colon,  slash,     at]
+    // * [ colon,    at,   colon,  slash,     at]
+    // * [schema,  colon,  colon,  slash,     at]
+    // * [ slash,  colon,  colon,  slash,     at]
+    // * [   at,   colon,  colon,  slash,     at]
+    // * [ colon,  colon,  colon,  slash,     at]
+    // * [schema,  slash,  slash,    at,      at]
+    // * [ slash,  slash,  slash,    at,      at]
+    // * [   at,   slash,  slash,    at,      at]
+    // * [ colon,  slash,  slash,    at,      at]
+    // * [schema,    at,   slash,    at,      at]
+    // * [ slash,    at,   slash,    at,      at]
+    // * [   at,     at,   slash,    at,      at]
+    // * [ colon,    at,   slash,    at,      at]
+    // * [schema,  colon,  slash,    at,      at]
+    // * [ slash,  colon,  slash,    at,      at]
+    // * [   at,   colon,  slash,    at,      at]
+    // * [ colon,  colon,  slash,    at,      at]
+    // * [schema,  slash,    at,     at,      at]
+    // * [ slash,  slash,    at,     at,      at]
+    // * [   at,   slash,    at,     at,      at]
+    // * [ colon,  slash,    at,     at,      at]
+    // * [schema,    at,     at,     at,      at]
+    // * [ slash,    at,     at,     at,      at]
+    // * [   at,     at,     at,     at,      at]
+    // * [ colon,    at,     at,     at,      at]
+    // * [schema,  colon,    at,     at,      at]
+    // * [ slash,  colon,    at,     at,      at]
+    // * [   at,   colon,    at,     at,      at]
+    // * [ colon,  colon,    at,     at,      at]
+    // * [schema,  slash,  colon,    at,      at]
+    // * [ slash,  slash,  colon,    at,      at]
+    // * [   at,   slash,  colon,    at,      at]
+    // * [ colon,  slash,  colon,    at,      at]
+    // * [schema,    at,   colon,    at,      at]
+    // * [ slash,    at,   colon,    at,      at]
+    // * [   at,     at,   colon,    at,      at]
+    // * [ colon,    at,   colon,    at,      at]
+    // * [schema,  colon,  colon,    at,      at]
+    // * [ slash,  colon,  colon,    at,      at]
+    // * [   at,   colon,  colon,    at,      at]
+    // * [ colon,  colon,  colon,    at,      at]
+    // * [schema,  slash,  slash,  colon,     at]
+    // * [ slash,  slash,  slash,  colon,     at]
+    // * [   at,   slash,  slash,  colon,     at]
+    // * [ colon,  slash,  slash,  colon,     at]
+    // * [schema,    at,   slash,  colon,     at]
+    // * [ slash,    at,   slash,  colon,     at]
+    // * [   at,     at,   slash,  colon,     at]
+    // * [ colon,    at,   slash,  colon,     at]
+    // * [schema,  colon,  slash,  colon,     at]
+    // * [ slash,  colon,  slash,  colon,     at]
+    // * [   at,   colon,  slash,  colon,     at]
+    // * [ colon,  colon,  slash,  colon,     at]
+    // * [schema,  slash,    at,   colon,     at]
+    // * [ slash,  slash,    at,   colon,     at]
+    // * [   at,   slash,    at,   colon,     at]
+    // * [ colon,  slash,    at,   colon,     at]
+    // * [schema,    at,     at,   colon,     at]
+    // * [ slash,    at,     at,   colon,     at]
+    // * [   at,     at,     at,   colon,     at]
+    // * [ colon,    at,     at,   colon,     at]
+    // * [schema,  colon,    at,   colon,     at]
+    // * [ slash,  colon,    at,   colon,     at]
+    // * [   at,   colon,    at,   colon,     at]
+    // * [ colon,  colon,    at,   colon,     at]
+    // * [schema,  slash,  colon,  colon,     at]
+    // * [ slash,  slash,  colon,  colon,     at]
+    // * [   at,   slash,  colon,  colon,     at]
+    // * [ colon,  slash,  colon,  colon,     at]
+    // * [schema,    at,   colon,  colon,     at]
+    // * [ slash,    at,   colon,  colon,     at]
+    // * [   at,     at,   colon,  colon,     at]
+    // * [ colon,    at,   colon,  colon,     at]
+    // * [schema,  colon,  colon,  colon,     at]
+    // * [ slash,  colon,  colon,  colon,     at]
+    // * [   at,   colon,  colon,  colon,     at]
+    // * [ colon,  colon,  colon,  colon,     at]
+    // * [schema,  slash,  slash,  slash,  colon]
+    // * [ slash,  slash,  slash,  slash,  colon]
+    // * [   at,   slash,  slash,  slash,  colon]
+    // * [ colon,  slash,  slash,  slash,  colon]
+    // * [schema,    at,   slash,  slash,  colon]
+    // * [ slash,    at,   slash,  slash,  colon]
+    // * [   at,     at,   slash,  slash,  colon]
+    // * [ colon,    at,   slash,  slash,  colon]
+    // * [schema,  colon,  slash,  slash,  colon]
+    // * [ slash,  colon,  slash,  slash,  colon]
+    // * [   at,   colon,  slash,  slash,  colon]
+    // * [ colon,  colon,  slash,  slash,  colon]
+    // * [schema,  slash,    at,   slash,  colon]
+    // * [ slash,  slash,    at,   slash,  colon]
+    // * [   at,   slash,    at,   slash,  colon]
+    // * [ colon,  slash,    at,   slash,  colon]
+    // * [schema,    at,     at,   slash,  colon]
+    // * [ slash,    at,     at,   slash,  colon]
+    // * [   at,     at,     at,   slash,  colon]
+    // * [ colon,    at,     at,   slash,  colon]
+    // * [schema,  colon,    at,   slash,  colon]
+    // * [ slash,  colon,    at,   slash,  colon]
+    // * [   at,   colon,    at,   slash,  colon]
+    // * [ colon,  colon,    at,   slash,  colon]
+    // * [schema,  slash,  colon,  slash,  colon]
+    // * [ slash,  slash,  colon,  slash,  colon]
+    // * [   at,   slash,  colon,  slash,  colon]
+    // * [ colon,  slash,  colon,  slash,  colon]
+    // * [schema,    at,   colon,  slash,  colon]
+    // * [ slash,    at,   colon,  slash,  colon]
+    // * [   at,     at,   colon,  slash,  colon]
+    // * [ colon,    at,   colon,  slash,  colon]
+    // * [schema,  colon,  colon,  slash,  colon]
+    // * [ slash,  colon,  colon,  slash,  colon]
+    // * [   at,   colon,  colon,  slash,  colon]
+    // * [ colon,  colon,  colon,  slash,  colon]
+    // * [schema,  slash,  slash,    at,   colon]
+    // * [ slash,  slash,  slash,    at,   colon]
+    // * [   at,   slash,  slash,    at,   colon]
+    // * [ colon,  slash,  slash,    at,   colon]
+    // * [schema,    at,   slash,    at,   colon]
+    // * [ slash,    at,   slash,    at,   colon]
+    // * [   at,     at,   slash,    at,   colon]
+    // * [ colon,    at,   slash,    at,   colon]
+    // * [schema,  colon,  slash,    at,   colon]
+    // * [ slash,  colon,  slash,    at,   colon]
+    // * [   at,   colon,  slash,    at,   colon]
+    // * [ colon,  colon,  slash,    at,   colon]
+    // * [schema,  slash,    at,     at,   colon]
+    // * [ slash,  slash,    at,     at,   colon]
+    // * [   at,   slash,    at,     at,   colon]
+    // * [ colon,  slash,    at,     at,   colon]
+    // * [schema,    at,     at,     at,   colon]
+    // * [ slash,    at,     at,     at,   colon]
+    // * [   at,     at,     at,     at,   colon]
+    // * [ colon,    at,     at,     at,   colon]
+    // * [schema,  colon,    at,     at,   colon]
+    // * [ slash,  colon,    at,     at,   colon]
+    // * [   at,   colon,    at,     at,   colon]
+    // * [ colon,  colon,    at,     at,   colon]
+    // * [schema,  slash,  colon,    at,   colon]
+    // * [ slash,  slash,  colon,    at,   colon]
+    // * [   at,   slash,  colon,    at,   colon]
+    // * [ colon,  slash,  colon,    at,   colon]
+    // * [schema,    at,   colon,    at,   colon]
+    // * [ slash,    at,   colon,    at,   colon]
+    // * [   at,     at,   colon,    at,   colon]
+    // * [ colon,    at,   colon,    at,   colon]
+    // * [schema,  colon,  colon,    at,   colon]
+    // * [ slash,  colon,  colon,    at,   colon]
+    // * [   at,   colon,  colon,    at,   colon]
+    // * [ colon,  colon,  colon,    at,   colon]
+    // * [schema,  slash,  slash,  colon,  colon]
+    // * [ slash,  slash,  slash,  colon,  colon]
+    // * [   at,   slash,  slash,  colon,  colon]
+    // * [ colon,  slash,  slash,  colon,  colon]
+    // * [schema,    at,   slash,  colon,  colon]
+    // * [ slash,    at,   slash,  colon,  colon]
+    // * [   at,     at,   slash,  colon,  colon]
+    // * [ colon,    at,   slash,  colon,  colon]
+    // * [schema,  colon,  slash,  colon,  colon]
+    // * [ slash,  colon,  slash,  colon,  colon]
+    // * [   at,   colon,  slash,  colon,  colon]
+    // * [ colon,  colon,  slash,  colon,  colon]
+    // * [schema,  slash,    at,   colon,  colon]
+    // * [ slash,  slash,    at,   colon,  colon]
+    // * [   at,   slash,    at,   colon,  colon]
+    // * [ colon,  slash,    at,   colon,  colon]
+    // * [schema,    at,     at,   colon,  colon]
+    // * [ slash,    at,     at,   colon,  colon]
+    // * [   at,     at,     at,   colon,  colon]
+    // * [ colon,    at,     at,   colon,  colon]
+    // * [schema,  colon,    at,   colon,  colon]
+    // * [ slash,  colon,    at,   colon,  colon]
+    // * [   at,   colon,    at,   colon,  colon]
+    // * [ colon,  colon,    at,   colon,  colon]
+    // * [schema,  slash,  colon,  colon,  colon]
+    // * [ slash,  slash,  colon,  colon,  colon]
+    // * [   at,   slash,  colon,  colon,  colon]
+    // * [ colon,  slash,  colon,  colon,  colon]
+    // * [schema,    at,   colon,  colon,  colon]
+    // * [ slash,    at,   colon,  colon,  colon]
+    // * [   at,     at,   colon,  colon,  colon]
+    // * [ colon,    at,   colon,  colon,  colon]
+    // * [schema,  colon,  colon,  colon,  colon]
+    // * [ slash,  colon,  colon,  colon,  colon]
+    // * [   at,   colon,  colon,  colon,  colon]
+    // * [ colon,  colon,  colon,  colon,  colon]
+
+    //public static function fqdn_bounds_from_url(
+    //    string  $url,
+    //    int     &$fqdn_offset  = 0,
+    //    int     &$fqdn_length  = \PHP_INT_MAX,
+    //    bool    $validate_result = true
+    //) : bool
+    //{
+    //    $tmp_fqdn_offset = $fqdn_offset;
+    //    $tmp_fqdn_length = $fqdn_length;
+    //    $success = self::fqdn_bounds_from_url_parse(
+    //        $url, $tmp_fqdn_offset, $tmp_fqdn_length);
+    //    if ( !$success ) {
+    //        return false;
+    //    }
+    //
+    //    $slice = \substr($url, $tmp_fqdn_offset, $tmp_fqdn_length);
+    //    echo \strval(__LINE__).": out.pos=$tmp_fqdn_offset;  out.nchars=$tmp_fqdn_length;  slice=$slice\n";
+    //
+    //    $fqdn = \substr($url, $tmp_fqdn_offset, $tmp_fqdn_length);
+    //    $at_start_of_str = ($fqdn_offset === $tmp_fqdn_offset);
+    //    if ( self::fqdn_is_ambiguous($fqdn, $at_start_of_str) ) {
+    //        return false;
+    //    }
+    //
+    //    if ( !$validate_result ) {
+    //        $fqdn_offset = $tmp_fqdn_offset;
+    //        $fqdn_length = $tmp_fqdn_length;
+    //        return true;
+    //    }
+    //
+    //    $valid_fqdn = \filter_var($fqdn, FILTER_VALIDATE_DOMAIN, FILTER_NULL_ON_FAILURE);
+    //    if (isset($valid_fqdn)) {
+    //        $fqdn_offset = $tmp_fqdn_offset;
+    //        $fqdn_length = $tmp_fqdn_length;
+    //        return true;
+    //    }
+    //    return false;
+    //}
+    //
+    //private static function fqdn_bounds_from_url_parse(
+    //    string  $url,
+    //    int     &$fqdn_offset,
+    //    int     &$fqdn_length,
+    //    bool    $validate_result
+    //) : bool
+    //{
+    //    $url_length = \strlen($url);
+    //    if ( $url_length === 0 ) {
+    //        return false;
+    //    }
+    //
+    //    // Correctness: Do computations on local variables so that
+    //    //   intermediate states are not visible to the caller
+    //    //   during the function call.
+    //    $pos    = $fqdn_offset;
+    //    $nchars = $fqdn_length;
+    //
+    //    // Input clipping
+    //    if ( $pos < 0 ) {
+    //        $pos = (-$pos) % $url_length; // Handle wrapping.
+    //        $pos = $url_length - $pos;
+    //    }
+    //    if ( $url_length < $pos + $nchars ) {
+    //        $nchars = $url_length - $pos;
+    //    }
+    //
+    //    // Now that inputs have been adjusted, parsing begins in earnest.
+    //    $slice = \substr($url, $pos, $nchars);
+    //    echo \strval(__LINE__).": pos=$pos;  nchars=$nchars;  slice=$slice\n";
+    //    $token_len = \strcspn($url, ':/@', $pos, $nchars);
+    //    if ( $token_len === $nchars ) // EOS
+    //    {
+    //        if ( $token_len === 0 ) {
+    //            // Zero-length FQDN.
+    //            return false;
+    //        }
+    //        $fqdn_offset = $pos;
+    //        $fqdn_length = $token_len;
+    //        return true;
+    //    }
+    //
+    //    $start_pos = $pos;
+    //    $next_char = $url[$pos + $token_len];
+    //    if ( $next_char === ':' ) {
+    //        $pos    += $token_len;
+    //        $nchars -= $token_len;
+    //    } // Otherwise, we don't have a schema/protocol.
+    //
+    //    if ( $next_char !== ':' && $token_len === 0 ) {
+    //        // Zero-length FQDN.
+    //        return false;
+    //    }
+    //
+    //    // Scan past the '://', invalidating the string if that's all there is.
+    //    if ( 0 < $nchars && $next_char === ':' ) {
+    //        // Skip the ':'
+    //        $pos++; $nchars--;
+    //
+    //        // Scan past the '//'.
+    //        $token_len = \str_starts_with(\substr($url, $pos, $nchars), '//') ? 2 : 0;
+    //        $nchars -= $token_len;
+    //        if ( $nchars === 0 ) { // EOS
+    //            // This is very clearly the protocol portion of a URL, with no domain/host.
+    //            return false;
+    //        }
+    //        $pos += $token_len;
+    //    }
+    //    $slice = \substr($url, $pos, $nchars);
+    //    echo \strval(__LINE__).": pos=$pos;  nchars=$nchars;  slice=$slice\n";
+    //
+    //    // Handle corner cases where we expected '://',
+    //    // but got a ':' and things are a bit different.
+    //    if ( $start_pos === $pos-1 ) {
+    //        if ( $token_len === 0 ) {
+    //            // If this is true, then it's a zero-length FQDN.
+    //            return false;
+    //        }
+    //        // Otherwise, the string starts with '://', so we just don't have a schema.
+    //        // (But we can still find the hostname after that separator.)
+    //    }
+    //
+    //    if ( $token_len === 0 )
+    //    {
+    //        // "foo:" is a partial URL where the `:` denotes a port.
+    //        // We can also catch more complete ones like "foo:80".
+    //        // (So we weren't parsing '://' after all!)
+    //        $end_pos = $pos-1;
+    //        $token_len = \strcspn($url,'/',$pos,$nchars);
+    //        $port = \substr($url, $pos, $token_len);
+    //        if ( $token_len === 0 && 0 < $nchars ) {
+    //            // Handle things like 'foo:/bar'
+    //            assert($url[$pos] === '/');
+    //            return false;
+    //        }
+    //        if ( $token_len === 0 || \ctype_digit($port) ) {
+    //            $fqdn_offset = $start_pos;
+    //            $fqdn_length = $end_pos - $start_pos;
+    //    $slice = \substr($url, $start_pos, $fqdn_length);
+    //    echo \strval(__LINE__).": pos=$start_pos;  nchars=$fqdn_length;  slice=$slice\n";
+    //            return true;
+    //        }
+    //
+    //        $token_len = \strcspn($url,':@/',$pos,$nchars);
+    //
+    //        // Else, port isn't valid (ex: 'foo:bar')
+    //        // (So, reset $pos and parse as if after schema/proto)
+    //        $token_len = $pos - $start_pos;
+    //        $pos    -= $token_len;
+    //        $nchars += $token_len;
+    //    }
+    //
+    //    // URL:  scheme://user:pass@hostname.sld.tld:port/path
+    //    // Where `user:pass@hostname.sld.tld:port` is the "authority".
+    //    // Unfortunately, we must do extra parsing steps just in case
+    //    // that `user:pass` part of the syntax puts a colon before the
+    //    // host/fqdn part of the string.
+    //    $slice = \substr($url, $pos, $nchars);
+    //    echo \strval(__LINE__).": pos=$pos;  nchars=$nchars;  slice=$slice\n";
+    //    $token_len = \strcspn($url, '@/', $pos, $nchars);
+    //    if ( $token_len === $nchars || $url[$pos+$token_len] === '/' ) {
+    //        if ( $token_len === 0 ) {
+    //            // Zero-length FQDN.
+    //            return false;
+    //        }
+    //        // No '@' found AND eos reached: it's everything up to next ':'.
+    //        // No '@' found AND '/' reached: ditto.
+    //        $tmp_fqdn_offset = $pos;
+    //    } else {
+    //        // '@' found: it's everything after '@', up to next ':' or '/'|EOS.
+    //        $pos    += $token_len;
+    //        $nchars -= $token_len;
+    //        assert($url[$pos] === '@');
+    //        $pos++; $nchars--;
+    //        $tmp_fqdn_offset = $pos;
+    //    $slice = \substr($url, $pos, $nchars);
+    //    echo \strval(__LINE__).": pos=$pos;  nchars=$nchars;  slice=$slice\n";
+    //    }
+    //
+    //    // Length determination is common to both paths above.
+    //    $tmp_fqdn_length = \strcspn($url, ':/', $pos, $nchars);
+    //    if ( $tmp_fqdn_length === 0 ) {
+    //        // Zero-length FQDN.
+    //        return false;
+    //    }
+    //
+    //    // Mostly-atomic assignment.
+    //    $fqdn_offset = $tmp_fqdn_offset;
+    //    $fqdn_length = $tmp_fqdn_length;
+    //
+    //    // We don't care about the rest of the string after that.
+    //    // So we don't have to advance $pos/$nchars anymore.
+    //    // (This function does not validate the URL.
+    //    // The caller may do that separately.)
+    //
+    //    $slice = \substr($url, $fqdn_offset, $fqdn_length);
+    //    echo \strval(__LINE__).": pos=$fqdn_offset;  nchars=$fqdn_length;  slice=$slice\n";
+    //    return true;
+    //}
+
+    private static int  $total_permutations = 0;
+    private static int  $n_permutations_passed = 0;
+    private static bool $do_tests = true;
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function print_fqdn_func_test_details(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value,
+        bool   $expect_pass,
+        string $text,
+        string $url,
+        int    $offset,
+        int    $length,
+        string $prefix, // Part of string before the URL to ignore
+        string $suffix, // Part of string after the URL to ignore
+        string $schema, // AKA protocol, including '://'
+        string $user,   // Username, including ':' if providing password, otherwise including '@'
+        string $pass,   // Password, including '@'
+        string $fqdn,   // The Fully Qualified Domain Name
+        string $port,   // Port, with preceding ':'
+        string $rpath,  // Resource path; with preceding '/'
+        bool   $validate
+    ) : string
+    {
+        $total_tests  = \strval(self::$total_permutations);
+        $n_passed_str = \strval(self::$n_permutations_passed);
+        $percent_pass = \intdiv(self::$n_permutations_passed * 1000, self::$total_permutations);
+        $percent_pass_str = \strval(\intdiv($percent_pass,10)) .'.'. \strval($percent_pass % 10);
+        $validate_str = $validate ? 'true' : 'false';
+        $offset_str = \strval($offset);
+        $length_str = ($length === \PHP_INT_MAX) ? '\PHP_INT_MAX' : \strval($length);
+        return "\n".
+            "  details:\n".
+            "    text:   '$text'\n".
+            "    url:    '$url'\n".
+            "    offset: $offset_str\n".
+            "    length: $length_str\n".
+            "    prefix: '$prefix'\n".
+            "    suffix: '$suffix'\n".
+            "    schema: '$schema'\n".
+            "    user:   '$user'\n".
+            "    pass:   '$pass'\n".
+            "    fqdn:   '$fqdn'\n".
+            "    port:   '$port'\n".
+            "    rpath:  '$rpath'\n".
+            "    validate: $validate_str\n".
+            "\n".
+            "  testing progress for $func_name:\n".
+            "    $n_passed_str other parametric assertions passed.\n".
+            "    $total_tests total parametric assertions possible for this function.\n".
+            "    Percentage passed: $percent_pass_str%\n".
+            "\n";
+    }
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function test_fqdn_func_with_params(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value,
+        bool   $valid_schema,
+        string $prefix, // Part of string before the URL to ignore
+        string $suffix, // Part of string after the URL to ignore
+        string $schema, // AKA protocol, including '://'
+        string $user,   // Username, including ':' if providing password, otherwise including '@'
+        string $pass,   // Password, including '@'
+        string $fqdn,   // The Fully Qualified Domain Name
+        string $port,   // Port, with preceding ':'
+        string $rpath,  // Resource path; with preceding '/'
+        bool   $validate
+    ) : bool
+    {
+        if (!self::$do_tests) {
+            self::$n_permutations_passed++;
+            return true;
+        }
+
+        // Unfortunately, the various URL components can combine
+        // to form URLs that have entirely different components.
+        // Example:
+        //   schema='http:' + user='user@' + pass='' + fqdn='foo'
+        // creates the url 'http:user@foo', which is ambiguous with
+        //   schema='' + user='http:' + pass='user@' + fqdn='foo'
+        // (Which is valid, albeit a bit weird.)
+        //
+        // To work around these things, we must do some calculations
+        // to figure out _what actually SHOULD pass_, as well as what
+        // the actual FQDN in the tested URL would look like to the
+        // parser.
+        $expect_fqdn = $fqdn;
+
+        if (\str_ends_with($schema,':/') && 0 < \strlen($rpath)
+        &&  0 === \strlen($user) &&  0 === \strlen($pass)
+        &&  0 === \strlen($fqdn) &&  0 === \strlen($port) ) {
+            // This set of circumstances causes false-pos.
+            // Because it results in things like url='http://foo',
+            // which is valid as a whole, but did not have a valid schema ('http:/').
+            $valid_schema = true;
+            $expect_fqdn = \substr($rpath, 1);
+        }
+
+        // The '@' character easily dictates where the FQDN/hostname are
+        // in a URL. If it's present, then we _know_ that what follows it
+        // is the FQDN.
+        $have_at = ($valid_schema || \str_ends_with($schema, ':')) && (\str_ends_with($user,'@') || \str_ends_with($pass,'@'));
+        assert(self::fqdn_debug_bool('have_at', $have_at));
+
+        // These can disambiguate an ambiguous FQDN, so we need to know if they exist.
+        $at_start_of_str = (0 === \strlen($schema) && 0 === \strlen($user) && 0 === \strlen($pass));
+        assert(self::fqdn_debug_bool('at_start_of_str', $at_start_of_str));
+
+        // Ambiguity is important for testing FQDNs.
+        $fqdn_is_ambiguous = (!$valid_schema || 0 === \strlen($schema)) && !$have_at && self::fqdn_is_ambiguous($expect_fqdn, $at_start_of_str);
+        assert(self::fqdn_debug_bool('fqdn_is_ambiguous', $fqdn_is_ambiguous));
+
+        // Most basic passing condition: have an unambiguous FQDN.
+        $expect_pass = (0 < \strlen($expect_fqdn)) && !$fqdn_is_ambiguous;
+        assert(self::fqdn_debug_bool('expect_pass', $expect_pass));
+        assert(self::fqdn_debug_bool('valid_schema', $valid_schema));
+
+        // If we have a nonzero-length schema like the "foo" in `foo:`, then that
+        // can be interpreted as an incomplete URL (or malformed URL) where
+        // the port is missing or incorrect. (We also check $have_at because
+        // it would supercede anything involving the schema.)
+        if ( !$have_at && !$valid_schema ) {
+            // This works because both ':' and '/' can come after a hostname/FQDN:
+            // 'foo:' is 'host:port' notation, and 'foo/bar' is a host with a resource.
+            $tmp_fqdn_endpos = \strcspn($schema,':/');
+            if ( 0 === $tmp_fqdn_endpos ) {
+                $expect_pass = false; // If it's unambiguously a borked schema, then don't pass it.
+            } else {
+                $tmp_fqdn = \substr($schema, 0, $tmp_fqdn_endpos);
+                $expect_pass = !self::fqdn_is_ambiguous($tmp_fqdn, true);
+                if ($expect_pass) {
+                    $expect_fqdn = $tmp_fqdn;
+                }
+            }
+        }
+
+        assert(self::fqdn_debug_bool('expect_pass', $expect_pass));
+        if (!$expect_pass) {
+            $expect_fqdn = '';
+        }
+
+        // Now that we know what to expect, we can begin the test.
+        $prefix_len = \strlen($prefix);
+        $suffix_len = \strlen($suffix);
+        $url  = $schema . $user . $pass . $fqdn . $port . $rpath;
+        $text = $prefix . $url . $suffix;
+        $offset = $prefix_len;
+        $length = \strlen($url);
+        $pos    = $offset;
+        $nchars = $length;
+
+        $result = $fqdn_func($text, $pos, $nchars, $validate);
+        $result_str = is_string($result) ? "'".$result."'"
+            : (is_bool($result) ? ($result ? '`true`' : '`false`')
+            : \strval($result));
+
+        if ( $expect_pass ) {
+            $expected = $fqdn_to_return_value($expect_fqdn);
+            $expected_str = is_string($expected) ? "'".$expected."'"
+                : (is_bool($expected) ? ($expected ? '`true`' : '`false`')
+                : \strval($expected));
+
+            assert($result === $expected, "\n".
+                "  $func_name('$text',...)\n".
+                "    returned $result_str\n".
+                "    expected $expected_str\n".
+                self::print_fqdn_func_test_details(
+                    $func_name, $fqdn_func, $fqdn_to_return_value, $expect_pass, $text, $url, $offset, $length,
+                    $prefix, $suffix, $schema, $user, $pass, $fqdn, $port, $rpath, $validate)
+            );
+        } else {
+            assert($result === false || $result === '', "\n".
+                "  $func_name('$text',...)\n".
+                "    returned $result_str\n".
+                "    expected `false` or empty string\n".
+                self::print_fqdn_func_test_details(
+                    $func_name, $fqdn_func, $fqdn_to_return_value, $expect_pass, $text, $url, $offset, $length,
+                    $prefix, $suffix, $schema, $user, $pass, $fqdn, $port, $rpath, $validate)
+                );
+        }
+
+        self::$n_permutations_passed++;
+
+        // Return bool just so that we can call this from inside an arrow function.
+        return true;
+    }
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function test_fqdn_func_with_fqdn_as(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value,
+        bool   $valid_schema,
+        string $prefix, // Part of string before the URL to ignore
+        string $suffix, // Part of string after the URL to ignore
+        string $schema, // AKA protocol, including '://'
+        string $user,   // Username, including ':' if providing password, otherwise including '@'
+        string $pass,   // Password, including '@'
+        string $fqdn,   // The Fully Qualified Domain Name
+        string $port,   // Port, with preceding ':'
+        string $rpath,  // Resource path; with preceding '/'
+        bool   $validate
+    ) : bool
+    {
+        try
+        {
+            return self::test_fqdn_func_with_params(
+                $func_name, $fqdn_func, $fqdn_to_return_value, $valid_schema,
+                $prefix, $suffix, $schema, $user, $pass, $fqdn, $port, $rpath, $validate);
+        }
+        catch(\Throwable $e)
+        {
+            self::$do_fqdn_debug = true;
+            return self::test_fqdn_func_with_params(
+                $func_name, $fqdn_func, $fqdn_to_return_value, $valid_schema,
+                $prefix, $suffix, $schema, $user, $pass, $fqdn, $port, $rpath, $validate);
+        }
+    }
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function test_fqdn_func_with_affixes_as(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value,
+        bool   $valid_schema,
+        string $prefix, // Part of string before the URL to ignore
+        string $suffix, // Part of string after the URL to ignore
+        string $schema, // AKA protocol, including '://'
+        string $user,   // Username, including ':' if providing password, otherwise including '@'
+        string $pass,   // Password, including '@'
+        string $port,   // Port, with preceding ':'
+        string $rpath,  // Resource path; with preceding '/'
+        bool   $validate
+    ) : bool
+    {
+        $test = fn(string $fqdn):bool =>
+            self::test_fqdn_func_with_fqdn_as(
+                $func_name, $fqdn_func, $fqdn_to_return_value, $valid_schema,
+                $prefix, $suffix, $schema, $user, $pass, $fqdn, $port, $rpath, $validate);
+
+        $test('foo')          ;
+        $test('foo.bar')      ;
+        $test('foo.bar.com')  ;
+        $test('bar')          ;
+        $test('bar.baz')      ;
+        $test('bar.baz.com')  ;
+        $test('localhost')    ;
+        $test('localhost.com');
+        $test('127.0.0.1')    ;
+
+        $test('http');
+        $test('https');
+        // // These are a bit sus.
+        // // If there's no schema, they probably shouldn't parse.
+        // // But if there's a schema, we... take their word for it?
+        // if ( 0 < \strlen($schema) ) {
+        //     // There is a schema. Parse if possible.
+        //     $test('http');
+        //     $test('https');
+        // }
+
+        $test('');
+
+        // if ( 0 === \strlen($schema) && 0 === \strlen($user) && 0 === \strlen($pass) ) {
+        //     // No schema. Don't parse it; too ambiguous.
+        //     // (User+pass (ending in @) also disambiguate this.)
+        //     $test('http');
+        //     $test('https');
+        // }
+
+        // Return bool just so that we can call this from inside an arrow function.
+        return true;
+    }
+
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function test_fqdn_func_with_schema_as(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value,
+        bool   $valid_schema,
+        string $schema,
+        string $user,
+        string $pass,
+        string $port,
+        string $rpath,
+        bool $validate) : void
+    {
+        $test = fn(string $prefix, string $suffix):bool =>
+            self::test_fqdn_func_with_affixes_as(
+                $func_name, $fqdn_func, $fqdn_to_return_value, $valid_schema,
+                $prefix, $suffix, $schema, $user, $pass, $port, $rpath, $validate);
+
+        $test(   '',   '');
+        $test(   '','foo');
+        $test('foo',   '');
+        $test('abc','def');
+
+        $test(   '','/foo');
+        $test('abc','/def');
+        $test(   '','/foo/bar');
+        $test('abc','/def/ghi');
+
+        $test(       '','http://');
+        $test('http://',       '');
+        $test('http://','http://');
+
+        $test(                   '','http://example.com');
+        $test('http://example.com/',                  '');
+        $test('http://example.com/','http://example.com');
+    }
+
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function test_fqdn_func_with_fqdn_params_as(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value,
+        string $user,
+        string $pass,
+        string $port,
+        string $rpath,
+        bool $validate) : void
+    {
+        $ftrv = $fqdn_to_return_value;
+        //                                                              valid_schema,  schema,  user,  pass,  port,  rpath,  validate
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,    true,        '', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,   false,       ':', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,   false,       '/', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,   false,      '//', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,    true,     '://', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,   false,   'http:', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,   false,  'http:/', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,    true, 'http://', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,   false,    'foo:', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,   false,   'foo:/', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,    true,  'foo://', $user, $pass, $port, $rpath, $validate);
+    }
+
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function test_fqdn_func_with_validate_as(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value,
+        bool $validate
+    ) : void
+    {
+        $ftrv = $fqdn_to_return_value;
+        //                                                                         user,   password,  port,  rpath, validate
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv,      '',         '',    '',     '', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv,      '',         '',    '', '/foo', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv,      '',         '', ':80',     '', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv,      '',         '', ':80', '/foo', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user@',         '',    '',     '', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user@',         '',    '', '/foo', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user@',         '', ':80',     '', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user@',         '', ':80', '/foo', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user:', 'hunter2@',    '',     '', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user:', 'hunter2@',    '', '/foo', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user:', 'hunter2@', ':80',     '', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user:', 'hunter2@', ':80', '/foo', $validate);
+    }
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function test_fqdn_func_parametrically(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value
+    ) : void
+    {
+        $ftrv = $fqdn_to_return_value;
+
+        // First pass: get total permutations.
+        self::$total_permutations = 0;
+        self::$n_permutations_passed = 0;
+        self::$do_tests = false;
+
+        self::test_fqdn_func_with_validate_as($func_name, $fqdn_func, $ftrv, true);
+        self::test_fqdn_func_with_validate_as($func_name, $fqdn_func, $ftrv, false);
+
+        // Second pass: run the tests.
+        self::$total_permutations = self::$n_permutations_passed;
+        self::$n_permutations_passed = 0;
+        self::$do_tests = true;
+
+        self::test_fqdn_func_with_validate_as($func_name, $fqdn_func, $ftrv, true);
+        self::test_fqdn_func_with_validate_as($func_name, $fqdn_func, $ftrv, false);
+
+        //$n_passed = self::$n_permutations_passed;
+        //echo "$func_name passed $n_passed parametric tests\n";
+    }
+
+    private static function test_fqdn_bounds_from_url(bool $validate) : void
+    {
+        $does_fqdn_parse =
+            function(string $url)
+            use($validate)
+                :bool
+        {
+            $dummy_fqdn_offset = 0;
+            $dummy_fqdn_length = \PHP_INT_MAX;
+            return
+                self::fqdn_bounds_from_url(
+                    $url, $dummy_fqdn_offset, $dummy_fqdn_length, $validate);
+        };
+
+        $xfail =
+            function(string $url)
+            use($validate, $does_fqdn_parse)
+                :void
+        {
+            $validate_str = $validate ? 'true' : 'false';
+            assert(!$does_fqdn_parse($url),
+                "fqdn_bounds_from_url('$url', 0, \PHP_INT_MAX, $validate_str) returned `true`; expected `false`.");
+        };
+
+        $xfail('');
+        $xfail('https');
+        $xfail('https:');
+        $xfail('https:/');
+        $xfail('https://');
+        $xfail('https:///');
+        $xfail('https:///foo');
+        $xfail('/localhost');
+        $xfail('//localhost');
+        //$xfail('localhost:'); // somewhat valid: it's just a hostname with a missing port.
+        $xfail('/localhost:');
+        $xfail('//localhost::');
+        $xfail('/localhost://');
+        //$xfail('foo:bar'); // regretably valid: the function does not validate URLs ('foo' is the hostname, 'bar' is an invalid port)
+    }
+
+    private static function unittest_fqdn_bounds_from_url() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        self::test_fqdn_bounds_from_url(true);
+        self::test_fqdn_bounds_from_url(false);
+
+        self::test_fqdn_func_parametrically(
+            'fqdn_bounds_from_url',
+            self::fqdn_bounds_from_url(...),
+            fn(string $fqdn):bool => 0 < \strlen($fqdn));
+    }
+
+    /**
+    * Extracts the Fully Qualified Domain Name component of the URL.
+    *
+    * In cases where the fqdn is also the hostname (ex: localhost), this
+    * can serve as a way to extract the hostname:
+    * ```
+    * assert(Str::fqdn_from_url('https://localhost/foo') === 'localhost');
+    * ```
+    *
+    * Note that in more complicated scenarios, it will return more than
+    * just the hostname, in accordance with the definition of a domain:
+    * ```
+    * assert(Str::fqdn_from_url('https://foo.bar.com') === 'foo.bar.com');
+    * // (The hostname itself would be considered 'foo'.)
+    * ```
+    *
+    * Returns an empty string if no valid fqdn was found.
+    *
+    * If `$validate_result` is set to `false`, this may return part of the
+    * `$url` string instead of an empty string for some invalid fqdns/hostnames.
+    *
+    * Features:
+    * * Performs no explicit memory allocation.
+    * * Does not depend on PCRE extension (portability).
+    * * Works on partial, incomplete, or malformed URLs (as long as it's unambiguous).
+    * * Thread-safe and reentrant.
+    * * Handles URLs with unicode characters (when `$validate_result = false`).
+    *
+    * This function avoids any explicit memory allocation.
+    * (Caveat: Setting $validate_result to `true` will cause `\filter_var`
+    * to be called with `FILTER_VALIDATE_DOMAIN`, and it is unknown if that
+    * allocates. Although unlikely, it may even perform I/O. We don't know.)
+    *
+    * The avoidance of explicit memory allocation is why this function
+    * might be preferred over the built-in `parse_url` function.
+    *
+    * Caveat: This might not be directly _faster_ than `parse_url`, because
+    * this function is not implemented directly in the Zend engine.
+    * Microbenchmarks _might_ prefer `parse_url`. (It's easily possible.)
+    * However, because this function does not require memory allocations,
+    * it will allow a process to behave better "under pressure" and reduces
+    * cache misses in other areas of code, thus potentially making
+    * "whole program" performance considerable better.
+    *
+    * This function also does NOT depend on the PCRE extension, which makes
+    * it portable to environments without that. (It is also likely that
+    * the PCRE extension would need to allocate memory, if it were to be used.
+    * And if no other PHP code uses it, then we can avoid loading the
+    * entire .so/extension into memory.)
+    *
+    * The `$offset` and `$length` parameters determine which part of the
+    * string will be scanned.
+    *
+    *
+    * @param  int<0,max>  $length
+    *
+    * @phpstan-pure
+    * @throws void
+    */
+    public static function fqdn_from_url(
+        string  $url,
+        bool    $validate_result = true,
+        int     $offset          = 0,
+        int     $length          = \PHP_INT_MAX
+    ) : string
+    {
+        $fqdn_pos = $offset;
+        $fqdn_len = $length;
+        $success = self::fqdn_bounds_from_url(
+            $url, $fqdn_pos, $fqdn_len, $validate_result);
+        if ($success) {
+            assert(self::fqdn_debug_print("returning `true`; fqdn_pos=$fqdn_pos, fqdn_len=$fqdn_len"));
+            return \substr($url, $fqdn_pos, $fqdn_len);
+        }
+        assert(self::fqdn_debug_print("returning `false`"));
+        return '';
+    }
+
+    // $max_length = fn(string $url):int => \strlen($url) - ($prefix_len + $suffix_len);
+    // $validate_fqdn = false;
+    // $fqdn_from_url =
+    //     function(string $fqdn)
+    //         use($prefix, $schema, $user, $pass, $port, $rpath, $suffix, $validate_fqdn, $prefix_len, $max_length)
+    //         :mixed
+    // {
+    //     $url = $prefix . $schema . $user . $pass . $fqdn . $port . $rpath . $suffix;
+    //     $max_length = \strlen($url) - ($prefix_len + $suffix_len);
+    //     $fqdn_pos =
+    //     return self::$fqdn_func($url, $validate_fqdn, $prefix_len, $max_length);
+    // }
+
+    private static function unittest_fqdn_from_url() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        //self::$do_fqdn_debug = true;
+
+        // Fundamentals.
+        assert(self::fqdn_from_url('',           false) === '');
+        assert(self::fqdn_from_url('foo',        false) === 'foo');
+        assert(self::fqdn_from_url('http://foo', false) === 'foo');
+
+        // Positive offsets. No wrap-around allowed.
+        assert(self::fqdn_from_url('foo', false, 0)  === 'foo');
+        assert(self::fqdn_from_url('foo', false, 3)  === '');
+        assert(self::fqdn_from_url('foo', false, 4)  === '');
+        assert(self::fqdn_from_url('foo', false, 6)  === '');
+
+        // Negative offsets and wrap-around behavior.
+        assert(self::fqdn_from_url('foo', false, -3) === 'foo');
+        assert(self::fqdn_from_url('foo', false, -6) === 'foo');
+        assert(self::fqdn_from_url('foo', false, -9) === 'foo');
+        assert(self::fqdn_from_url('foo', false, -1) === 'o');
+        assert(self::fqdn_from_url('foo', false, -4) === 'o');
+        assert(self::fqdn_from_url('foo', false, -7) === 'o');
+        assert(self::fqdn_from_url('foo', false, -2) === 'oo');
+        assert(self::fqdn_from_url('foo', false, -5) === 'oo');
+        assert(self::fqdn_from_url('foo', false, -8) === 'oo');
+
+        // Length bounding.
+        assert(self::fqdn_from_url('abc', false, 0, 0)  === '');
+        assert(self::fqdn_from_url('abc', false, 0, 1)  === 'a');
+        assert(self::fqdn_from_url('abc', false, 0, 2)  === 'ab');
+        assert(self::fqdn_from_url('abc', false, 0, 3)  === 'abc');
+        assert(self::fqdn_from_url('abc', false, 0, 4)  === 'abc');
+        assert(self::fqdn_from_url('abc', false, 0, 6)  === 'abc');
+        assert(self::fqdn_from_url('abc', false, 0, \PHP_INT_MAX)  === 'abc');
+
+        // Length bounding + offsets
+        assert(self::fqdn_from_url('abc', false, 1, 0)  === '');
+        assert(self::fqdn_from_url('abc', false, 1, 1)  === 'b');
+        assert(self::fqdn_from_url('abc', false, 1, 2)  === 'bc');
+        assert(self::fqdn_from_url('abc', false, 1, 3)  === 'bc');
+        assert(self::fqdn_from_url('abc', false, 1, 4)  === 'bc');
+        assert(self::fqdn_from_url('abc', false, 1, 6)  === 'bc');
+        assert(self::fqdn_from_url('abc', false, 1, \PHP_INT_MAX)  === 'bc');
+
+        assert(self::fqdn_from_url('abc', false, -1, 0)  === '');
+        assert(self::fqdn_from_url('abc', false, -1, 1)  === 'c');
+        assert(self::fqdn_from_url('abc', false, -1, 2)  === 'c');
+        assert(self::fqdn_from_url('abc', false, -1, 3)  === 'c');
+        assert(self::fqdn_from_url('abc', false, -1, 4)  === 'c');
+        assert(self::fqdn_from_url('abc', false, -1, 6)  === 'c');
+        assert(self::fqdn_from_url('abc', false, -1, \PHP_INT_MAX)  === 'c');
+
+        // Corner cases
+        assert(self::fqdn_from_url('foo:bar',  false) === 'foo');
+        assert(self::fqdn_from_url('foo:bar',  true)  === 'foo');
+
+        // File schema is a special-case that allows triple-slashes.
+        assert(self::fqdn_from_url('file:///foo', false) === 'foo');
+        assert(self::fqdn_from_url('http:///foo', false) === '');
+
+        // Parametric testing to be very thorough.
+        self::test_fqdn_func_parametrically(
+            'fqdn_from_url',
+            fn(string  $url, int $offset, int $length, $validate)
+                => self::fqdn_from_url($url, $validate, $offset, $length),
+            fn(string $fqdn):string => $fqdn);
+    }
+
+
+
     /**
     * Runs all unittests defined in the Str class.
     */
@@ -862,6 +2688,8 @@ final class Str
         self::unittest_unchecked_blit_rev();
         self::unittest_unchecked_blit();
         self::unittest_substr_replace_inplace();
+        self::unittest_fqdn_bounds_from_url();
+        self::unittest_fqdn_from_url();
         //self::unittest_to_string($runner);
 
         // $runner->note("  ... passed.\n\n");
