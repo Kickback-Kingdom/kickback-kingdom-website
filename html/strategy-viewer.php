@@ -25,8 +25,10 @@ require("php-components/base-page-pull-active-account-info.php");
                 </div>
                 <div class="card-body">
                     <canvas id="strategy-canvas" width="1200" height="800" style="border:1px solid #ccc; width:100%; height:60vh;"></canvas>
-                    <div class="mt-2 d-flex gap-2">
-                        <button id="export-json" class="btn btn-primary btn-sm">Export JSON</button>
+                    <div class="mt-2 d-flex flex-wrap gap-2">
+                        <button id="add-milestone" class="btn btn-success btn-sm">Add Milestone</button>
+                        <button id="add-prerequisite" class="btn btn-warning btn-sm">Add Prerequisite</button>
+                        <button id="export-json" class="btn btn-primary btn-sm ms-auto">Export JSON</button>
                         <label class="btn btn-secondary btn-sm mb-0">
                             Import JSON <input type="file" id="import-json" accept="application/json" hidden>
                         </label>

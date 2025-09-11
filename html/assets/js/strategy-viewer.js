@@ -1,6 +1,7 @@
 (() => {
     const canvas = document.getElementById('strategy-canvas');
     const ctx = canvas.getContext('2d');
+    const addPrereqBtn = document.getElementById('add-prerequisite');
 
     let nodes = [];
     let edges = [];
@@ -12,6 +13,7 @@
     let dragStart = { x: 0, y: 0, offsetX: 0, offsetY: 0, nodeOffsetX: 0, nodeOffsetY: 0 };
     let panning = false;
     let connectFrom = null;
+    let prereqMode = false;
 
     function worldToScreen(x, y) {
         return { x: x * scale + offsetX, y: y * scale + offsetY };
@@ -135,10 +137,22 @@
     });
 
     canvas.addEventListener('click', e => {
-        if (!e.shiftKey) return;
         const world = screenToWorld(e.offsetX, e.offsetY);
         const node = hitNode(world);
         if (!node) return;
+        if (prereqMode) {
+            if (connectFrom && connectFrom !== node) {
+                edges.push({ id: 'e' + Date.now(), from: connectFrom.id, to: node.id });
+                connectFrom = null;
+                prereqMode = false;
+                addPrereqBtn.classList.remove('active');
+                draw();
+            } else {
+                connectFrom = node;
+            }
+            return;
+        }
+        if (!e.shiftKey) return;
         if (connectFrom && connectFrom !== node) {
             edges.push({ id: 'e' + Date.now(), from: connectFrom.id, to: node.id });
             connectFrom = null;
@@ -171,6 +185,18 @@
     }
 
     document.getElementById('export-json').addEventListener('click', exportJSON);
+
+    document.getElementById('add-milestone').addEventListener('click', () => {
+        const center = screenToWorld(canvas.width / 2, canvas.height / 2);
+        nodes.push({ id: 'n' + nextId++, x: center.x - 50, y: center.y - 25, w: 100, h: 50, title: 'New Milestone' });
+        draw();
+    });
+
+    addPrereqBtn.addEventListener('click', () => {
+        prereqMode = !prereqMode;
+        connectFrom = null;
+        addPrereqBtn.classList.toggle('active', prereqMode);
+    });
 
     document.getElementById('import-json').addEventListener('change', e => {
         const file = e.target.files[0];
