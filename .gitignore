@@ -26,6 +26,10 @@
 /html/scratch-pad/**
 !/html/scratch-pad/.gitkeep
 
+# Local development and documentation folder
+# (Like html/scratch-pad, but outside of the HTTP server's "Document Root")
+/extra/**
+
 # Ignore visual studio folder
 /.vs/**
 
@@ -63,6 +67,3 @@
 # having our git repo track someone else's code.
 /html/vendor/composer/**
 !/html/vendor/composer/.gitkeep
-
-# Local development and documentation folder
-/extra/**
