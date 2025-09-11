@@ -57,6 +57,7 @@
       <button class="btn" id="addGoal">+ Goal</button>
       <button class="btn" id="connectMode">Connect</button>
       <button class="btn" id="autoLayout">Auto‑Layout</button>
+      <button class="btn" id="toggleGrid">Toggle Grid</button>
       <button class="btn" id="exportBtn">Export JSON</button>
       <label class="btn" title="Import JSON">Import<input id="importFile" type="file" accept="application/json"></label>
       <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
@@ -221,6 +222,7 @@
     drag: null, // {node, off:{x,y}} | null
     mode: 'select', // 'select' | 'connect'
     connectFrom: null, // nodeId | null
+    showGrid: true,
   };
 
   const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
@@ -341,7 +343,7 @@
 
   function draw(){ const wCSS=canvas.clientWidth, hCSS=canvas.clientHeight; ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,wCSS,hCSS);
     const {x:cx,y:cy,z}=state.camera; ctx.save(); ctx.scale(z,z); ctx.translate(-cx,-cy);
-    drawGrid();
+    if (state.showGrid) drawGrid();
     // edges
     for(const e of diagram.edges){ const a=diagram.nodes.find(n=>n.id===e.from); const b=diagram.nodes.find(n=>n.id===e.to); if(!a||!b) continue; drawArrow({x:a.x,y:a.y},{x:b.x,y:b.y}); }
     // preview during connect
@@ -392,6 +394,7 @@
   document.getElementById('addGoal').onclick  =()=> addNode('goal');
   document.getElementById('connectMode').onclick =()=>{ state.mode='connect'; state.connectFrom=null; setModeHint('Mode: Connect — click source then target'); };
   document.getElementById('autoLayout').onclick =()=>{ autoLayout(); scheduleSave(); showToast('Auto‑layout applied'); };
+  document.getElementById('toggleGrid').onclick =()=>{ state.showGrid = !state.showGrid; };
   document.getElementById('exportBtn').onclick = exportJSON;
   document.getElementById('importFile').addEventListener('change', (e)=>{ if(e.target.files && e.target.files[0]) importJSON(e.target.files[0]); e.target.value=''; });
   document.getElementById('deleteSelected').onclick = deleteSelected;
