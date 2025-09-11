@@ -411,7 +411,25 @@
   function addEdge(from,to){ if(from===to) return; if(diagram.edges.some(e=>e.from===from && e.to===to)) return; diagram.edges.push({ id:uid(), from, to }); scheduleSave(); }
   function deleteSelected(){ if(!state.selection) return; const id=state.selection.id; diagram.nodes = diagram.nodes.filter(n=>n.id!==id); diagram.edges = diagram.edges.filter(e=>e.from!==id && e.to!==id); state.selection=null; updateSelectionInfo(); scheduleSave(); }
 
-  function autoLayout(){ const milestones=diagram.nodes.filter(n=>n.type==='milestone'); const deps=diagram.nodes.filter(n=>n.type!=='milestone'); milestones.sort((a,b)=>a.x-b.x); const startX=100, gap=260, yTop=120, yDeps=260; milestones.forEach((m,i)=>{ m.x=startX+i*gap; m.y=yTop; }); deps.forEach((d,idx)=>{ const toMs = diagram.edges.map(e=> (e.from===d.id? e.to: e.to===d.id? e.from: null)).filter(Boolean).map(id=> diagram.nodes.find(n=>n.id===id)).filter(n=>n && n.type==='milestone'); let segment = Math.min(Math.max(0, (toMs.length? milestones.indexOf(toMs[0]): Math.floor(idx%(Math.max(1,milestones.length-1))))), Math.max(0,milestones.length-2)); const x=startX+(segment+0.5)*gap; d.x=x+((idx%3)-1)*110; d.y=yDeps+(idx%2)*110; }); }
+  function autoLayout(opts={}){
+    const gapX = opts.gapX ?? 100;
+    const gapY = opts.gapY ?? 160;
+    const nodesById = new Map(diagram.nodes.map(n=>[n.id,n]));
+    const inCount = new Map(diagram.nodes.map(n=>[n.id,0]));
+    const outgoing = new Map(diagram.nodes.map(n=>[n.id,[]]));
+    diagram.edges.forEach(e=>{
+      inCount.set(e.to,(inCount.get(e.to)||0)+1);
+      outgoing.get(e.from).push(e.to);
+    });
+    const level = new Map();
+    const q=[];
+    diagram.nodes.forEach(n=>{ if((inCount.get(n.id)||0)===0){ level.set(n.id,0); q.push(n.id); } });
+    while(q.length){ const id=q.shift(); const l=level.get(id); (outgoing.get(id)||[]).forEach(to=>{ if(!level.has(to) || level.get(to)<l+1) level.set(to,l+1); inCount.set(to,(inCount.get(to)||0)-1); if(inCount.get(to)===0) q.push(to); }); }
+    const groups=[]; diagram.nodes.forEach(n=>{ const l=level.get(n.id)||0; (groups[l] ||= []).push(n); });
+    const levelHeights = groups.map(g=> Math.max(...g.map(n=>n.h||90)));
+    let y=100; groups.forEach((g,li)=>{ let x=100; g.sort((a,b)=>{ if(a.type==='milestone' && b.type!=='milestone') return -1; if(a.type!=='milestone' && b.type==='milestone') return 1; return 0; }); g.forEach(n=>{ const w=n.w||200; n.x=x+w/2; n.y=y+levelHeights[li]/2; x+=w+gapX; }); y+=levelHeights[li]+gapY; });
+    for(let iter=0; iter<2; iter++) groups.forEach(g=>{ g.forEach(n=>{ const parents=diagram.edges.filter(e=>e.to===n.id).map(e=>nodesById.get(e.from)).filter(Boolean); if(parents.length){ const avg=parents.reduce((s,p)=>s+p.x,0)/parents.length; n.x=avg; } }); g.sort((a,b)=>a.x-b.x); for(let i=1;i<g.length;i++){ const prev=g[i-1],cur=g[i]; const min=((prev.w||200)/2+(cur.w||200)/2)+gapX; if(cur.x-prev.x<min) cur.x=prev.x+min; } });
+  }
 
   // ---------- Import/Export ----------
   function exportJSON(){ const payload=JSON.stringify({ id:diagram.id, nodes:diagram.nodes, edges:diagram.edges, version:diagram.version }, null, 2); const blob=new Blob([payload], {type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`${diagram.id}-strategy-flow.json`; a.click(); URL.revokeObjectURL(url); }
