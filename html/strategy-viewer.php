@@ -275,7 +275,28 @@
   function roundRect(x, y, w, h, r){ const rr=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+rr,y); ctx.arcTo(x+w,y,x+w,y+h,rr); ctx.arcTo(x+w,y+h,x,y+h,rr); ctx.arcTo(x,y+h,x,y,rr); ctx.arcTo(x,y,x+w,y,rr); ctx.closePath(); }
   function wrapText(text,maxWidth){ ctx.save(); ctx.font='600 13px system-ui'; const words=String(text||'').split(/\s+/); const lines=[]; let line=''; for(const w of words){ const test=line?line+' '+w:w; if(ctx.measureText(test).width<=maxWidth||!line) line=test; else { lines.push(line); line=w; } } if(line) lines.push(line); ctx.restore(); return lines.slice(0,3); }
 
-  function drawArrow(from,to){ const ang=Math.atan2(to.y-from.y,to.x-from.x); const head=8; ctx.save(); ctx.lineWidth=2/state.camera.z; ctx.strokeStyle='#39445a'; ctx.fillStyle='#39445a'; ctx.beginPath(); ctx.moveTo(from.x,from.y); ctx.lineTo(to.x,to.y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(to.x,to.y); ctx.lineTo(to.x-head*Math.cos(ang-Math.PI/6), to.y-head*Math.sin(ang-Math.PI/6)); ctx.lineTo(to.x-head*Math.cos(ang+Math.PI/6), to.y-head*Math.sin(ang+Math.PI/6)); ctx.closePath(); ctx.fill(); ctx.restore(); }
+  function drawArrow(from,to,opts={}){
+    const ang=Math.atan2(to.y-from.y,to.x-from.x);
+    const head=8;
+    ctx.save();
+    const color=opts.color||'#7aa2f7';
+    ctx.lineWidth=(opts.lineWidth||3)/state.camera.z;
+    ctx.strokeStyle=color;
+    ctx.fillStyle=color;
+    if(opts.shadowColor) ctx.shadowColor=opts.shadowColor;
+    if(opts.shadowBlur) ctx.shadowBlur=opts.shadowBlur;
+    ctx.beginPath();
+    ctx.moveTo(from.x,from.y);
+    ctx.lineTo(to.x,to.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(to.x,to.y);
+    ctx.lineTo(to.x-head*Math.cos(ang-Math.PI/6), to.y-head*Math.sin(ang-Math.PI/6));
+    ctx.lineTo(to.x-head*Math.cos(ang+Math.PI/6), to.y-head*Math.sin(ang+Math.PI/6));
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
 
   function drawBadge(x,y,text,color){ const padX=8, height=20; ctx.save(); ctx.font='12px system-ui'; const width=ctx.measureText(text).width+padX*2; ctx.fillStyle='#0f1420'; roundRect(x-width/2,y,width,height,10); ctx.fill(); ctx.strokeStyle='#1f2a3d'; ctx.lineWidth=1/state.camera.z; ctx.stroke(); ctx.fillStyle=color||'#cbd5e1'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(text,x,y+height/2); ctx.restore(); }
 
