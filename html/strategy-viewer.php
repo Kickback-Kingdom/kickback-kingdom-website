@@ -412,7 +412,8 @@
   function deleteSelected(){ if(!state.selection) return; const id=state.selection.id; diagram.nodes = diagram.nodes.filter(n=>n.id!==id); diagram.edges = diagram.edges.filter(e=>e.from!==id && e.to!==id); state.selection=null; updateSelectionInfo(); scheduleSave(); }
 
   function autoLayout(opts={}){
-    const gapX = opts.gapX ?? 100;
+    // basic layered DAG layout with barycentric ordering
+    const gapX = opts.gapX ?? 120;
     const gapY = opts.gapY ?? 160;
     const nodesById = new Map(diagram.nodes.map(n=>[n.id,n]));
     const inCount = new Map(diagram.nodes.map(n=>[n.id,0]));
@@ -421,14 +422,74 @@
       inCount.set(e.to,(inCount.get(e.to)||0)+1);
       outgoing.get(e.from).push(e.to);
     });
+
+    // ----- assign levels via topological traversal -----
     const level = new Map();
     const q=[];
     diagram.nodes.forEach(n=>{ if((inCount.get(n.id)||0)===0){ level.set(n.id,0); q.push(n.id); } });
-    while(q.length){ const id=q.shift(); const l=level.get(id); (outgoing.get(id)||[]).forEach(to=>{ if(!level.has(to) || level.get(to)<l+1) level.set(to,l+1); inCount.set(to,(inCount.get(to)||0)-1); if(inCount.get(to)===0) q.push(to); }); }
-    const groups=[]; diagram.nodes.forEach(n=>{ const l=level.get(n.id)||0; (groups[l] ||= []).push(n); });
+    while(q.length){
+      const id=q.shift();
+      const l=level.get(id);
+      (outgoing.get(id)||[]).forEach(to=>{
+        if(!level.has(to) || level.get(to)<l+1) level.set(to,l+1);
+        inCount.set(to,(inCount.get(to)||0)-1);
+        if(inCount.get(to)===0) q.push(to);
+      });
+    }
+
+    // group nodes by level
+    const groups=[];
+    diagram.nodes.forEach(n=>{ const l=level.get(n.id)||0; (groups[l] ||= []).push(n); });
+
+    // initial horizontal positions
+    groups.forEach(g=> g.forEach((n,i)=>{ const w=n.w||200; n.x = i*(w+gapX); }));
+
+    // ----- refine ordering to minimise crossings -----
+    const sweeps=4;
+    for(let s=0;s<sweeps;s++){
+      // top‑down sweep
+      for(let li=1; li<groups.length; li++){
+        const g=groups[li];
+        g.forEach(n=>{
+          const parents = diagram.edges.filter(e=>e.to===n.id).map(e=>nodesById.get(e.from)).filter(Boolean);
+          if(parents.length) n.x = parents.reduce((sum,p)=>sum+p.x,0)/parents.length;
+        });
+        g.sort((a,b)=>a.x-b.x);
+        for(let i=1;i<g.length;i++){
+          const prev=g[i-1], cur=g[i];
+          const min=(prev.w||200)/2 + (cur.w||200)/2 + gapX;
+          if(cur.x - prev.x < min) cur.x = prev.x + min;
+        }
+      }
+      // bottom‑up sweep
+      for(let li=groups.length-2; li>=0; li--){
+        const g=groups[li];
+        g.forEach(n=>{
+          const children = diagram.edges.filter(e=>e.from===n.id).map(e=>nodesById.get(e.to)).filter(Boolean);
+          if(children.length) n.x = children.reduce((sum,c)=>sum+c.x,0)/children.length;
+        });
+        g.sort((a,b)=>a.x-b.x);
+        for(let i=1;i<g.length;i++){
+          const prev=g[i-1], cur=g[i];
+          const min=(prev.w||200)/2 + (cur.w||200)/2 + gapX;
+          if(cur.x - prev.x < min) cur.x = prev.x + min;
+        }
+      }
+    }
+
+    // compute vertical positions per layer
     const levelHeights = groups.map(g=> Math.max(...g.map(n=>n.h||90)));
-    let y=100; groups.forEach((g,li)=>{ let x=100; g.sort((a,b)=>{ if(a.type==='milestone' && b.type!=='milestone') return -1; if(a.type!=='milestone' && b.type==='milestone') return 1; return 0; }); g.forEach(n=>{ const w=n.w||200; n.x=x+w/2; n.y=y+levelHeights[li]/2; x+=w+gapX; }); y+=levelHeights[li]+gapY; });
-    for(let iter=0; iter<2; iter++) groups.forEach(g=>{ g.forEach(n=>{ const parents=diagram.edges.filter(e=>e.to===n.id).map(e=>nodesById.get(e.from)).filter(Boolean); if(parents.length){ const avg=parents.reduce((s,p)=>s+p.x,0)/parents.length; n.x=avg; } }); g.sort((a,b)=>a.x-b.x); for(let i=1;i<g.length;i++){ const prev=g[i-1],cur=g[i]; const min=((prev.w||200)/2+(cur.w||200)/2)+gapX; if(cur.x-prev.x<min) cur.x=prev.x+min; } });
+    let y=100;
+    groups.forEach((g,li)=>{
+      const h=levelHeights[li];
+      g.forEach(n=>{ n.y = y + h/2; });
+      y += h + gapY;
+    });
+
+    // shift to positive x so diagram appears in view
+    const minX = Math.min(...diagram.nodes.map(n=>n.x - (n.w||200)/2));
+    const offsetX = 100 - minX;
+    diagram.nodes.forEach(n=>{ n.x += offsetX; });
   }
 
   // ---------- Import/Export ----------
