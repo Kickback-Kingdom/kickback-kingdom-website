@@ -230,11 +230,13 @@
   // ---------- Drawing ----------
   function drawGrid(){
     const { z, x:cx, y:cy } = state.camera;
-    const spacing = 40; const w = canvas.clientWidth / z + cx; const h = canvas.clientHeight / z + cy;
+    const spacing = 40;
+    const w = canvas.clientWidth / z;
+    const h = canvas.clientHeight / z;
     const startX = Math.floor((cx-50)/spacing)*spacing - spacing*2;
-    const endX   = Math.ceil((cx+w+50)/spacing)*spacing + spacing*2;
+    const endX   = Math.ceil((cx + w + 50)/spacing)*spacing + spacing*2;
     const startY = Math.floor((cy-50)/spacing)*spacing - spacing*2;
-    const endY   = Math.ceil((cy+h+50)/spacing)*spacing + spacing*2;
+    const endY   = Math.ceil((cy + h + 50)/spacing)*spacing + spacing*2;
     ctx.save(); ctx.lineWidth = 1 / z; ctx.strokeStyle = '#17202e'; ctx.beginPath();
     for(let x=startX; x<=endX; x+=spacing){ ctx.moveTo(x,startY); ctx.lineTo(x,endY); }
     for(let y=startY; y<=endY; y+=spacing){ ctx.moveTo(startX,y); ctx.lineTo(endX,y); }
