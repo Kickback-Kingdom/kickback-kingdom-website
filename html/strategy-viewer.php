@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Strategy Flow — Working App (Backend‑Ready)</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
     :root {
       --bg: #0f1115; --panel: #171a20; --muted: #8b94a7; --text: #e7ecf3; --accent: #7aa2f7; --ok: #7ee787; --line:#2a2f3a;
@@ -99,6 +100,7 @@
       <header id="modalTitle">Edit Node</header>
       <div class="content">
         <div class="field"><label for="fTitle">Title</label><input id="fTitle" placeholder="e.g., Launch Beta" /></div>
+        <div class="field"><label for="fIcon">Icon</label><input id="fIcon" placeholder="fa-solid fa-flag or \\uf024" /></div>
         <div class="field"><label for="fType">Type</label>
           <select id="fType">
             <option value="milestone">Milestone</option>
@@ -140,7 +142,7 @@
    * @property {(diagramId:string)=>Promise<Diagram>} loadDiagram
    * @property {(diagram:Diagram)=>Promise<{version:string}>} saveDiagram
    */
-  /** @typedef {{id:string,title?:string,x:number,y:number,w?:number,h?:number,type:'milestone'|'ticket'|'goal',date?:string,ticketId?:string,status?:'todo'|'in-progress'|'blocked'|'done',current?:number,target?:number}} Node */
+  /** @typedef {{id:string,title?:string,icon?:string,x:number,y:number,w?:number,h?:number,type:'milestone'|'ticket'|'goal',date?:string,ticketId?:string,status?:'todo'|'in-progress'|'blocked'|'done',current?:number,target?:number}} Node */
   /** @typedef {{id:string, from:string, to:string}} Edge */
   /** @typedef {{id:string, nodes:Node[], edges:Edge[], version?:string}} Diagram */
 
@@ -182,6 +184,27 @@
   images.castle.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzMiAzMic+PHBhdGggZmlsbD0nI2IwYjBiMCcgZD0nTTQgMTRWNmg0djJoMlY2aDR2MmgyVjZoNHY4aDJ2MTJoLTZ2LThoLTR2OEg0VjE0aDJ6Jy8+PC9zdmc+';
   images.swordsBlue.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzMiAzMic+PGcgc3Ryb2tlPScjNWZhMGZmJyBzdHJva2Utd2lkdGg9JzQnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCc+PGxpbmUgeDE9JzYnIHkxPScyNicgeDI9JzI2JyB5Mj0nNicvPjxsaW5lIHgxPSc2JyB5MT0nNicgeDI9JzI2JyB5Mj0nMjYnLz48L2c+PC9zdmc+';
   images.swordsRed.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzMiAzMic+PGcgc3Ryb2tlPScjZmY1ZjVmJyBzdHJva2Utd2lkdGg9JzQnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCc+PGxpbmUgeDE9JzYnIHkxPScyNicgeDI9JzI2JyB5Mj0nNicvPjxsaW5lIHgxPSc2JyB5MT0nNicgeDI9JzI2JyB5Mj0nMjYnLz48L2c+PC9zdmc+';
+
+  const iconCache={};
+  function getIconGlyph(icon){
+    if(!icon) return '';
+    if(icon.includes('fa-')){
+      if(iconCache[icon]) return iconCache[icon];
+      const i=document.createElement('i'); i.className=icon; i.style.display='none'; document.body.appendChild(i);
+      const glyph=getComputedStyle(i,'::before').content.replace(/['"]/g,'');
+      document.body.removeChild(i); iconCache[icon]=glyph; return glyph;
+    }
+    if(icon.startsWith('\\u')) return String.fromCharCode(parseInt(icon.slice(2),16));
+    if(/^&#x[0-9a-fA-F]+;?$/.test(icon)) return String.fromCharCode(parseInt(icon.replace(/^&#x|;$/g,''),16));
+    if(/^0x[0-9a-fA-F]+$/.test(icon)) return String.fromCharCode(parseInt(icon.slice(2),16));
+    if(/^[0-9a-fA-F]{4,6}$/.test(icon)) return String.fromCharCode(parseInt(icon,16));
+    return icon;
+  }
+  function getIconFont(icon,size){
+    if(icon.includes('fa-brands')) return `400 ${size}px 'Font Awesome 6 Brands'`;
+    if(icon.includes('fa-regular')) return `400 ${size}px 'Font Awesome 6 Free'`;
+    return `900 ${size}px 'Font Awesome 6 Free'`;
+  }
 
   /** @type {Diagram} */
   let diagram = { id: diagramId, nodes: [], edges: [], version: undefined };
@@ -257,9 +280,18 @@
     ctx.strokeStyle='#2e3a52'; ctx.lineWidth=2/z; roundRect(-w/2,-h/2,w,h,14); ctx.stroke(); ctx.strokeStyle='rgba(255,255,255,.06)'; ctx.stroke();
     // clip for content
     ctx.save(); roundRect(-w/2+4,-h/2+4,w-8,h-8,12); ctx.clip();
-    const icon = type==='milestone' ? images.castle : type==='ticket' ? images.swordsBlue : images.swordsRed;
     const iconSize = 40;
-    ctx.drawImage(icon,-iconSize/2,-h/2+8,iconSize,iconSize);
+    if(n.icon){
+      const glyph=getIconGlyph(n.icon);
+      ctx.fillStyle='#e6edf3';
+      ctx.textAlign='center';
+      ctx.textBaseline='top';
+      ctx.font=getIconFont(n.icon, iconSize);
+      ctx.fillText(glyph,0,-h/2+8);
+    } else {
+      const icon = type==='milestone' ? images.castle : type==='ticket' ? images.swordsBlue : images.swordsRed;
+      ctx.drawImage(icon,-iconSize/2,-h/2+8,iconSize,iconSize);
+    }
     // title
     ctx.fillStyle='#e6edf3'; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.font='600 13px system-ui'; const lines=wrapText(n.title||defaultTitle(n), w-24); let yCursor=-h/2+8+iconSize+4; for(const line of lines){ ctx.fillText(line,0,yCursor); yCursor+=15.6; }
     // sub‑info
@@ -351,6 +383,7 @@
   // ---------- Modal ----------
   const modalBackdrop=document.getElementById('modalBackdrop');
   const fTitle=document.getElementById('fTitle');
+  const fIcon=document.getElementById('fIcon');
   const fType=document.getElementById('fType');
   const fTicketId=document.getElementById('fTicketId');
   const fStatus=document.getElementById('fStatus');
@@ -360,12 +393,12 @@
   const goalFields=document.getElementById('goalFields');
 
   let editNodeRef=null;
-  function openEditModal(n){ editNodeRef=n; document.getElementById('modalTitle').textContent=`Edit ${n.type}`; fTitle.value=n.title||''; fType.value=n.type; fTicketId.value=n.ticketId||''; fStatus.value=n.status||'todo'; fTarget.value=n.target||''; fProgress.value=n.current||''; updateTypeFields(); modalBackdrop.style.display='flex'; modalBackdrop.setAttribute('aria-hidden','false'); }
+  function openEditModal(n){ editNodeRef=n; document.getElementById('modalTitle').textContent=`Edit ${n.type}`; fTitle.value=n.title||''; fIcon.value=n.icon||''; fType.value=n.type; fTicketId.value=n.ticketId||''; fStatus.value=n.status||'todo'; fTarget.value=n.target||''; fProgress.value=n.current||''; updateTypeFields(); modalBackdrop.style.display='flex'; modalBackdrop.setAttribute('aria-hidden','false'); }
   function closeEditModal(){ modalBackdrop.style.display='none'; modalBackdrop.setAttribute('aria-hidden','true'); editNodeRef=null; }
   function updateTypeFields(){ const t=fType.value; ticketFields.style.display = (t==='ticket')? 'block':'none'; goalFields.style.display=(t==='goal')? 'block':'none'; }
   fType.addEventListener('change', updateTypeFields);
   document.getElementById('cancelEdit').addEventListener('click', closeEditModal);
-  document.getElementById('saveEdit').addEventListener('click', ()=>{ if(!editNodeRef) return; const n=editNodeRef; n.title=fTitle.value.trim(); n.type=fType.value; if(n.type==='ticket'){ n.ticketId=fTicketId.value.trim(); n.status=fStatus.value; } else { delete n.ticketId; delete n.status; } if(n.type==='goal'){ n.target=Number(fTarget.value)||0; n.current=Number(fProgress.value)||0; } else { delete n.target; delete n.current; } closeEditModal(); updateSelectionInfo(); scheduleSave(); });
+  document.getElementById('saveEdit').addEventListener('click', ()=>{ if(!editNodeRef) return; const n=editNodeRef; n.title=fTitle.value.trim(); n.icon=fIcon.value.trim(); if(!n.icon) delete n.icon; n.type=fType.value; if(n.type==='ticket'){ n.ticketId=fTicketId.value.trim(); n.status=fStatus.value; } else { delete n.ticketId; delete n.status; } if(n.type==='goal'){ n.target=Number(fTarget.value)||0; n.current=Number(fProgress.value)||0; } else { delete n.target; delete n.current; } closeEditModal(); updateSelectionInfo(); scheduleSave(); });
   modalBackdrop.addEventListener('click', (e)=>{ if(e.target===modalBackdrop) closeEditModal(); });
 
   // ---------- Seed & Load ----------
