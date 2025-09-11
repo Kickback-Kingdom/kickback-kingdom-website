@@ -328,7 +328,11 @@
     if(n.type==='goal'){
       const target=Number(n.target)||0; const current=clamp(Number(n.current)||0,0,target||1);
       ctx.fillText(`${current} / ${target}`,0,yCursor+6);
-      const pad=16, yBar=h/2-18; ctx.strokeStyle='#2e3546'; ctx.lineWidth=8/z; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(-w/2+pad,yBar); ctx.lineTo(w/2-pad,yBar); ctx.stroke(); const pct=target>0?current/target:0; ctx.strokeStyle='#7ee787'; ctx.beginPath(); ctx.moveTo(-w/2+pad,yBar); ctx.lineTo(-w/2+pad+(w-2*pad)*pct,yBar); ctx.stroke();
+      const pad=16, yBar=h/2-18; const barH=8/z; const pct=target>0?current/target:0; const barW=Math.round((w-2*pad)*pct*z)/z;
+      ctx.fillStyle='#2e3546';
+      roundRect(-w/2+pad, yBar-barH/2, w-2*pad, barH, barH/2); ctx.fill();
+      ctx.fillStyle='#7ee787';
+      roundRect(-w/2+pad, yBar-barH/2, barW, barH, barH/2); ctx.fill();
     } else if(n.type==='ticket'){
       const color=({"todo":"#8b94a7","in-progress":"#7aa2f7","blocked":"#ff8080","done":"#7ee787"})[n.status||'todo'];
       drawBadge(0,yCursor+6,n.ticketId||'Ticket',color); drawBadge(0,yCursor+28,'Status: '+(n.status||'todo'),color);
