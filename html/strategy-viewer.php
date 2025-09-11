@@ -302,7 +302,7 @@
 
   function drawBadge(x,y,text,color){ const padX=8, height=20; ctx.save(); ctx.font='12px system-ui'; const width=ctx.measureText(text).width+padX*2; ctx.fillStyle='#0f1420'; roundRect(x-width/2,y,width,height,10); ctx.fill(); ctx.strokeStyle='#1f2a3d'; ctx.lineWidth=1/state.camera.z; ctx.stroke(); ctx.fillStyle=color||'#cbd5e1'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(text,x,y+height/2); ctx.restore(); }
 
-  function drawNode(n){ const {x,y,w=200,h=90,type}=n; const z=state.camera.z; ctx.save(); ctx.translate(x,y);
+  function drawNode(n, z){ const {x,y,w=200,h=90,type}=n; ctx.save(); ctx.translate(x,y);
     // shadow
     ctx.save(); ctx.translate(3/z,6/z); ctx.fillStyle='rgba(0,0,0,.35)'; roundRect(-w/2,-h/2,w,h,14); ctx.fill(); ctx.restore();
     ctx.fillStyle='#1d2230'; roundRect(-w/2,-h/2,w,h,14); ctx.fill();
@@ -328,7 +328,11 @@
     if(n.type==='goal'){
       const target=Number(n.target)||0; const current=clamp(Number(n.current)||0,0,target||1);
       ctx.fillText(`${current} / ${target}`,0,yCursor+6);
-      const pad=16, yBar=h/2-18; ctx.strokeStyle='#2e3546'; ctx.lineWidth=8/z; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(-w/2+pad,yBar); ctx.lineTo(w/2-pad,yBar); ctx.stroke(); const pct=target>0?current/target:0; ctx.strokeStyle='#7ee787'; ctx.beginPath(); ctx.moveTo(-w/2+pad,yBar); ctx.lineTo(-w/2+pad+(w-2*pad)*pct,yBar); ctx.stroke();
+      const pad=16, yBar=h/2-18; const barH=Math.round(8*z)/z; const pct=target>0?current/target:0; const barW=Math.round((w-2*pad)*pct*z)/z;
+      ctx.fillStyle='#2e3546';
+      roundRect(-w/2+pad, yBar-barH/2, w-2*pad, barH, barH/2); ctx.fill();
+      ctx.fillStyle='#7ee787';
+      roundRect(-w/2+pad, yBar-barH/2, barW, barH, barH/2); ctx.fill();
     } else if(n.type==='ticket'){
       const color=({"todo":"#8b94a7","in-progress":"#7aa2f7","blocked":"#ff8080","done":"#7ee787"})[n.status||'todo'];
       drawBadge(0,yCursor+6,n.ticketId||'Ticket',color); drawBadge(0,yCursor+28,'Status: '+(n.status||'todo'),color);
@@ -349,7 +353,7 @@
     // preview during connect
     if(state.mode==='connect' && state.connectFrom){ const a=diagram.nodes.find(n=>n.id===state.connectFrom); if(a){ const mw=screenToWorld(mouse.x, mouse.y); drawArrow({x:a.x,y:a.y}, mw); } }
     // nodes
-    for(const n of diagram.nodes) drawNode(n);
+    for(const n of diagram.nodes) drawNode(n, z);
     ctx.restore(); requestAnimationFrame(draw); }
 
   // ---------- Interaction ----------
