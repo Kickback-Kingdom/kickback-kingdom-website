@@ -102,13 +102,13 @@ final class ServiceCredentials implements \ArrayAccess
             $this->error("ERROR: Missing credential item '" . $item . "'");
             return false;
         }
-        else
-        if ( is_null($this->entries[$item]) ) {
-            $this->error("ERROR: Credential item '" . $item . "' is NULL.");
-            return false;
+
+        if ( isset($this->entries[$item]) ) {
+            return true;
         }
 
-        return true;
+        $this->error("ERROR: Credential item '" . $item . "' is NULL.");
+        return false;
     }
 
     /**
@@ -119,14 +119,14 @@ final class ServiceCredentials implements \ArrayAccess
     {
         if ( !$this->credential_item_exists($item) )
                 return false;
-        else
-        if ( !is_string($this->entries[$item]) ) {
-            // NOTE: For security reasons, we must NOT output the value associated with the key.
-            $this->error("ERROR: '" . $item . "' set to something that is not a string, but it should be.");
-            return false;
+
+        if ( is_string($this->entries[$item]) ) {
+            return true;
         }
 
-        return true;
+        // NOTE: For security reasons, we must NOT output the value associated with the key.
+        $this->error("ERROR: '" . $item . "' set to something that is not a string, but it should be.");
+        return false;
     }
 
     /**
@@ -140,14 +140,15 @@ final class ServiceCredentials implements \ArrayAccess
     {
         if ( !$this->credential_item_exists($item) )
                 return false;
-        else
-        if ( is_null(filter_var($this->entries[$item], $filter, $flags | FILTER_NULL_ON_FAILURE)) ) {
-            // NOTE: For security reasons, we must NOT output the value associated with the key.
-            $this->error("ERROR: '" . $item . "' set to something that is not a/an " . $type_name . ", but it should be.");
-            return false;
+
+        $item_if_valid = \filter_var($this->entries[$item], $filter, $flags | FILTER_NULL_ON_FAILURE);
+        if ( isset($item_if_valid) ) {
+            return true;
         }
 
-        return true;
+        // NOTE: For security reasons, we must NOT output the value associated with the key.
+        $this->error("ERROR: '" . $item . "' set to something that is not a/an " . $type_name . ", but it should be.");
+        return false;
     }
 
     /**
@@ -306,6 +307,13 @@ final class ServiceCredentials implements \ArrayAccess
         // (Technically we could use `!is_null($kickback_service_credentials)` as
         // the condition here, but we use `isset` just in case caller code unsets
         // the global value for some reason, and we need to reload it.)
+        // (Update: `isset` is superior to `is_null` because it will never
+        // emit a "warning" regardless of the state of the variable it is
+        // checking. `is_null`, on the other hand, may emit a warning.
+        // See the chart in this post: https://stackoverflow.com/a/45389115
+        // `empty` is also non-warning-emitting, but also checks for "falsey"
+        // values, which involves PHP's weird boolean equivalence rules,
+        // and is thus less predictable, and using it is an error in PHPStan.)
         if ( !isset(self::$instance) )
             self::load_new_service_credentials();
 
@@ -325,11 +333,10 @@ final class ServiceCredentials implements \ArrayAccess
     public static function get(string $entry_name)
     {
         $entries = self::get_all();
-        if ( is_null($entries) ) {
-            return null;
-        } else {
+        if ( isset($entries) && \array_key_exists($entry_name, $entries) ) {
             return $entries[$entry_name];
         }
+        return null;
     }
 
     /** @return null|string */
@@ -471,29 +478,34 @@ final class ServiceCredentials implements \ArrayAccess
     // (Unfortunately, this only works for object instances, not for static access.
     // So we still need (=want) things like `get` and `get_all`, declared earlier.)
     /**
-    * @param mixed  $offset
-    * @param mixed  $value
+    * @param ?string  $offset
+    * @param mixed    $value
     */
     public function offsetSet(mixed $offset, mixed $value) : void {
         echo "<!-- ERROR: Attempt to set element on read-only ServiceCredentials object. -->";
     }
 
-    /// @param mixed  $offset
+    /// @param string  $offset
     public function offsetExists(mixed $offset) : bool {
-        return isset($this->entries[$offset]);
+        return \array_key_exists($offset, $this->entries);
     }
 
-    /// @param mixed  $offset
+    /// @param string  $offset
     public function offsetUnset(mixed $offset) : void {
-        unset($this->entries[$offset]);
+        echo "<!-- ERROR: Attempt to clear an element on read-only ServiceCredentials object. -->";
+        //unset($this->entries[$offset]);
     }
 
     /**
-    * @param mixed  $offset
+    * @param  string  $offset
     * @return mixed
     */
     public function offsetGet(mixed $offset) : mixed {
-        return isset($this->entries[$offset]) ? $this->entries[$offset] : null;
+        $entries = $this->entries;
+        if ( \array_key_exists($offset, $entries) ) {
+            return $entries[$offset];
+        }
+        return null;
     }
 }
 ?>
