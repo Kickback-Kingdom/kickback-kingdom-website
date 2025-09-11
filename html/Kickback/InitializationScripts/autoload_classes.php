@@ -1778,8 +1778,10 @@ function autoload_function_impl(string $class_fqn) : int
     // Well, I have no way to predict what those are in a general way. Sadge.)
     // (Update 2025-07-09: @phpstan-type workaroud was implemented using '_a' suffix.)
     // (Update 2025-07-10: PHPStan also does this with the `scalar` type.)
-    if ($class_fqn === 'never'  || \str_ends_with($class_fqn, '\\never')
-    ||  $class_fqn === 'scalar' || \str_ends_with($class_fqn, '\\scalar'))
+    // (Update 2025-09-11: PHPStan also does this with the `resource` type.)
+    if ($class_fqn === 'never'    || \str_ends_with($class_fqn, '\\never')
+    ||  $class_fqn === 'scalar'   || \str_ends_with($class_fqn, '\\scalar')
+    ||  $class_fqn === 'resource' || \str_ends_with($class_fqn, '\\resource'))
     {
         return AUTOLOAD_IGNORED;
     }
