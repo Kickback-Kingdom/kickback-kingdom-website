@@ -328,7 +328,7 @@
     if(n.type==='goal'){
       const target=Number(n.target)||0; const current=clamp(Number(n.current)||0,0,target||1);
       ctx.fillText(`${current} / ${target}`,0,yCursor+6);
-      const pad=16, yBar=h/2-18; const barH=8/z; const pct=target>0?current/target:0; const barW=Math.round((w-2*pad)*pct*z)/z;
+      const pad=16, yBar=h/2-18; const barH=Math.round(8*z)/z; const pct=target>0?current/target:0; const barW=Math.round((w-2*pad)*pct*z)/z;
       ctx.fillStyle='#2e3546';
       roundRect(-w/2+pad, yBar-barH/2, w-2*pad, barH, barH/2); ctx.fill();
       ctx.fillStyle='#7ee787';
