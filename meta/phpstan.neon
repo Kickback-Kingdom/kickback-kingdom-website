@@ -1,10 +1,12 @@
 includes:
     - ../html/vendor/composer/phpstan/phpstan-strict-rules/rules.neon
+    - tmp/phpstan-files-without-php-extension.neon
 parameters:
     level: 9
     parallel:
         processTimeout: 3600.0
     paths:
+        - scripts
         - ../html
     bootstrapFiles:
         - ../html/Kickback/InitializationScripts/init_for_phpstan.php
