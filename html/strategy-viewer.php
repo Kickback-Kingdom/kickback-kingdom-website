@@ -26,7 +26,7 @@
     .group h3{ margin:0 0 8px; font-size:13px; color:var(--muted); font-weight:600; letter-spacing:.4px; }
 
     .stage{ grid-area:stage; position:relative; }
-    canvas{ display:block; width:100%; height:100%; background: radial-gradient(1200px 1200px at 30% 20%, #121725, #0d111a 60%, #0a0d14 ); }
+    canvas{ display:block; width:100%; height:100%; background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSczMicgaGVpZ2h0PSczMic+PHJlY3Qgd2lkdGg9JzMyJyBoZWlnaHQ9JzMyJyBmaWxsPScjM2Y3ZTNmJy8+PHJlY3Qgd2lkdGg9JzE2JyBoZWlnaHQ9JzE2JyBmaWxsPScjMzU2YzM1Jy8+PHJlY3QgeD0nMTYnIHk9JzE2JyB3aWR0aD0nMTYnIGhlaWdodD0nMTYnIGZpbGw9JyMzNTZjMzUnLz48L3N2Zz4=') repeat; }
     .hint{ position:absolute; left:12px; bottom:8px; color:var(--muted); font-size:12px; opacity:.9; background:rgba(0,0,0,.25); padding:6px 8px; border-radius:10px; border:1px solid var(--line); }
     .toast{ position:absolute; top:12px; right:12px; background:#141925; border:1px solid #2a344a; padding:8px 12px; border-radius:10px; color:#cdd7eb; box-shadow:0 6px 22px rgba(0,0,0,.35); opacity:0; transform:translateY(-8px); pointer-events:none; transition:.25s ease; }
     .toast.show{ opacity:1; transform:translateY(0); }
@@ -174,6 +174,15 @@
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
 
+  const images = {
+    castle: new Image(),
+    swordsBlue: new Image(),
+    swordsRed: new Image()
+  };
+  images.castle.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzMiAzMic+PHBhdGggZmlsbD0nI2IwYjBiMCcgZD0nTTQgMTRWNmg0djJoMlY2aDR2MmgyVjZoNHY4aDJ2MTJoLTZ2LThoLTR2OEg0VjE0aDJ6Jy8+PC9zdmc+';
+  images.swordsBlue.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzMiAzMic+PGcgc3Ryb2tlPScjNWZhMGZmJyBzdHJva2Utd2lkdGg9JzQnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCc+PGxpbmUgeDE9JzYnIHkxPScyNicgeDI9JzI2JyB5Mj0nNicvPjxsaW5lIHgxPSc2JyB5MT0nNicgeDI9JzI2JyB5Mj0nMjYnLz48L2c+PC9zdmc+';
+  images.swordsRed.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzMiAzMic+PGcgc3Ryb2tlPScjZmY1ZjVmJyBzdHJva2Utd2lkdGg9JzQnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCc+PGxpbmUgeDE9JzYnIHkxPScyNicgeDI9JzI2JyB5Mj0nNicvPjxsaW5lIHgxPSc2JyB5MT0nNicgeDI9JzI2JyB5Mj0nMjYnLz48L2c+PC9zdmc+';
+
   /** @type {Diagram} */
   let diagram = { id: diagramId, nodes: [], edges: [], version: undefined };
 
@@ -242,12 +251,15 @@
   function drawNode(n){ const {x,y,w=200,h=90,type}=n; const z=state.camera.z; ctx.save(); ctx.translate(x,y);
     // shadow
     ctx.save(); ctx.translate(3/z,6/z); ctx.fillStyle='rgba(0,0,0,.35)'; roundRect(-w/2,-h/2,w,h,14); ctx.fill(); ctx.restore();
-    let fill='#1d2230'; if(type==='milestone') fill='#25304a'; else if(type==='ticket') fill='#21352a'; else if(type==='goal') fill='#3a2634';
-    ctx.fillStyle=fill; ctx.strokeStyle='#2e3a52'; ctx.lineWidth=2/z; roundRect(-w/2,-h/2,w,h,14); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,.06)'; ctx.stroke();
-    // clip
+    ctx.fillStyle='#1d2230'; roundRect(-w/2,-h/2,w,h,14); ctx.fill();
+    ctx.strokeStyle='#2e3a52'; ctx.lineWidth=2/z; roundRect(-w/2,-h/2,w,h,14); ctx.stroke(); ctx.strokeStyle='rgba(255,255,255,.06)'; ctx.stroke();
+    // clip for content
     ctx.save(); roundRect(-w/2+4,-h/2+4,w-8,h-8,12); ctx.clip();
+    const icon = type==='milestone' ? images.castle : type==='ticket' ? images.swordsBlue : images.swordsRed;
+    const iconSize = 40;
+    ctx.drawImage(icon,-iconSize/2,-h/2+8,iconSize,iconSize);
     // title
-    ctx.fillStyle='#e6edf3'; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.font='600 13px system-ui'; const lines=wrapText(n.title||defaultTitle(n), w-24); let yCursor=-h/2+8; for(const line of lines){ ctx.fillText(line,0,yCursor); yCursor+=15.6; }
+    ctx.fillStyle='#e6edf3'; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.font='600 13px system-ui'; const lines=wrapText(n.title||defaultTitle(n), w-24); let yCursor=-h/2+8+iconSize+4; for(const line of lines){ ctx.fillText(line,0,yCursor); yCursor+=15.6; }
     // sub‑info
     ctx.font='12px system-ui'; ctx.fillStyle='#9fb3d1';
     if(n.type==='goal'){
