@@ -109,5 +109,40 @@ class NotificationController
 
         return $not;
     }
+
+    public static function queryQuestReviewsByHostAsResponse(vRecordId $hostId): Response
+    {
+        $conn = Database::getConnection();
+        $stmt = $conn->prepare("SELECT * FROM v_notifications_reviewed_quests WHERE account_id = ? ORDER BY date DESC");
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare query", null);
+        }
+
+        $stmt->bind_param('i', $hostId->crand);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $reviews = [];
+        while ($row = $result->fetch_assoc()) {
+            $quest = new vQuest('', $row['quest_id']);
+            $quest->title = $row['name'];
+            $quest->locator = $row['locator'];
+            $quest->icon = new vMedia();
+            $quest->icon->setMediaPath($row['image']);
+            $quest->playStyle = PlayStyle::from($row['play_style']);
+
+            $review = new vQuestReview('', $row['Id']);
+            $review->questRating = (int)$row['quest_rating'];
+            $review->hostRating = (int)$row['host_rating'];
+            $review->message = $row['text'];
+            $review->fromAccount = new vAccount('', $row['account_id_from']);
+            $review->fromAccount->username = $row['from_name'];
+            $review->dateTime = new vDateTime($row['date']);
+
+            $reviews[] = ['quest' => $quest, 'review' => $review];
+        }
+
+        return new Response(true, "Quest reviews loaded.", $reviews);
+    }
 }
 ?>

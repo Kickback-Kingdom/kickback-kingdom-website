@@ -203,6 +203,44 @@ class QuestController
         }
     }
 
+
+    public static function queryHostedFutureQuests(vRecordId $hostId): Response
+    {
+        return self::queryHostedQuests($hostId, true);
+    }
+
+    public static function queryHostedPastQuests(vRecordId $hostId): Response
+    {
+        return self::queryHostedQuests($hostId, false);
+    }
+
+    private static function queryHostedQuests(vRecordId $hostId, bool $future): Response
+    {
+        $conn = Database::getConnection();
+
+        if ($future) {
+            $sql = "SELECT * FROM v_quest_info WHERE (host_id = ? OR host_id_2 = ?) AND end_date > CURRENT_TIMESTAMP AND published = 1 ORDER BY end_date ASC";
+        } else {
+            $sql = "SELECT * FROM v_quest_info WHERE (host_id = ? OR host_id_2 = ?) AND end_date <= CURRENT_TIMESTAMP AND published = 1 ORDER BY end_date DESC";
+        }
+
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare query", null);
+        }
+
+        $stmt->bind_param('ii', $hostId->crand, $hostId->crand);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $quests = [];
+        while ($row = $result->fetch_assoc()) {
+            $quests[] = self::row_to_vQuest($row);
+        }
+
+        return new Response(true, "Hosted quests loaded.", $quests);
+    }
+
     /**
     * @return array<vQuest>
     */
