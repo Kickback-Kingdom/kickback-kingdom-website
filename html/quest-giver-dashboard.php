@@ -1049,7 +1049,7 @@ function renderStarRating(float $rating): string
                         <span class="badge bg-success me-1">&nbsp;</span>High participation
                         <span class="badge bg-warning ms-2 me-1">&nbsp;</span>Moderate
                         <span class="badge bg-danger ms-2 me-1">&nbsp;</span>Low
-                        <span class="badge bg-secondary ms-2 me-1">&nbsp;</span>Conflicts
+                        <span class="badge bg-light border border-danger ms-2 me-1">&nbsp;</span>Conflicts
                         <span class="ms-2">Numbers show participants per day. Hover for details and conflicts.</span>
                     </div>
                     <div class="card card-body mt-3">
@@ -1300,7 +1300,7 @@ $(document).ready(function () {
     const sessionToken = "<?= $_SESSION['sessionToken']; ?>";
 
     let participationCounts = {};
-    let eventConflicts = {};
+    let calendarEvents = {};
     let weekdayChart;
     let calMonth = (new Date()).getMonth();
     let calYear = (new Date()).getFullYear();
@@ -1308,7 +1308,7 @@ $(document).ready(function () {
     function renderScheduleCalendar() {
         const first = new Date(calYear, calMonth, 1);
         const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-        let header = '<thead><tr>' + days.map(d => `<th>${d}</th>`).join('') + '</tr></thead>';
+        let header = '<thead><tr>' + days.map(d => `<th class="text-center">${d}</th>`).join('') + '</tr></thead>';
         const values = Object.values(participationCounts);
         const max = values.length ? Math.max(...values) : 0;
         let body = '<tbody><tr>';
@@ -1317,27 +1317,29 @@ $(document).ready(function () {
         while (date.getMonth() === calMonth) {
             const dStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
             const count = participationCounts[dStr] || 0;
-            const conflicts = eventConflicts[dStr] || [];
-            let cls = '';
+            const events = calendarEvents[dStr] || [];
+            let cls = 'align-top';
             if (count > 0 && max > 0) {
                 const ratio = count / max;
-                if (ratio > 0.66) { cls = 'bg-success text-white'; }
-                else if (ratio > 0.33) { cls = 'bg-warning'; }
-                else { cls = 'bg-danger text-white'; }
+                if (ratio > 0.66) { cls += ' bg-success text-white'; }
+                else if (ratio > 0.33) { cls += ' bg-warning'; }
+                else { cls += ' bg-danger text-white'; }
             }
-            const tooltipLines = [`Participants: ${count}`];
-            let tooltip = '';
-            if (conflicts.length > 0) {
-                cls = 'bg-secondary text-muted';
-                const title = conflicts.map(c => c.title || c).join(', ');
-                tooltipLines.push(`Conflicts: ${title}`);
-            } else {
-                cls += ' border border-success border-2';
-            }
-            if (tooltipLines.length) {
-                tooltip = `data-bs-toggle="tooltip" data-bs-html="true" title="${tooltipLines.join('<br>').replace(/"/g, '&quot;')}"`;
-            }
-            body += `<td class="${cls}" ${tooltip}><div>${date.getDate()}</div>${count ? `<small>${count} participants</small>` : ''}</td>`;
+            let tooltipLines = [];
+            if (count > 0) { tooltipLines.push(`Participants: ${count}`); }
+            if (events.length > 1) { tooltipLines.push('Multiple events'); }
+            let tooltip = tooltipLines.length ? `data-bs-toggle="tooltip" data-bs-html="true" title="${tooltipLines.join('<br>').replace(/"/g, '&quot;')}"` : '';
+            if (events.length > 1) { cls += ' border border-danger border-2'; }
+            else if (events.length === 1) { cls += ' border border-success border-2'; }
+            let pills = '';
+            events.forEach(function(e) {
+                const start = new Date(e.start_date);
+                const time = start.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                const part = e.participants !== null ? ` - ${e.participants} participants` : '';
+                const pillTip = `${e.title}${part} @ ${time}`;
+                pills += `<div class=\"badge bg-primary rounded-pill text-truncate w-100 mb-1 calendar-event-pill\" data-bs-toggle=\"tooltip\" title=\"${pillTip.replace(/\"/g,'&quot;')}\">${time} ${e.title}</div>`;
+            });
+            body += `<td class="${cls}" ${tooltip}><div class="fw-bold">${date.getDate()}</div>${pills}${(!events.length && count) ? `<small>${count} participants</small>` : ''}</td>`;
             if (date.getDay() === 6) { body += '</tr><tr>'; }
             date.setDate(date.getDate()+1);
         }
@@ -1407,11 +1409,15 @@ $(document).ready(function () {
     function loadCalendarEvents() {
         $.post('/api/v1/schedule/events.php', { sessionToken: sessionToken, month: calMonth + 1, year: calYear }, function(resp) {
             if (resp && resp.success) {
-                eventConflicts = {};
+                calendarEvents = {};
                 resp.data.forEach(function(e) {
                     const d = e.start_date.substring(0,10);
-                    if (!eventConflicts[d]) { eventConflicts[d] = []; }
-                    eventConflicts[d].push(e);
+                    if (!calendarEvents[d]) { calendarEvents[d] = []; }
+                    calendarEvents[d].push(e);
+                });
+                // sort events by start time for each day
+                Object.keys(calendarEvents).forEach(function(k) {
+                    calendarEvents[k].sort(function(a,b){ return new Date(a.start_date) - new Date(b.start_date); });
                 });
                 renderScheduleCalendar();
             }
