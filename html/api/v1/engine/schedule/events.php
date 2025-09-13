@@ -10,6 +10,7 @@ OnlyPOST();
 
 $month = isset($_POST['month']) ? intval($_POST['month']) : intval(date('m'));
 $year  = isset($_POST['year']) ? intval($_POST['year']) : intval(date('Y'));
+$includeAll = isset($_POST['includeAll']) ? intval($_POST['includeAll']) === 1 : false;
 
 $questGiverId = null;
 if (isset($_POST['sessionToken'])) {
@@ -23,7 +24,7 @@ if (isset($_POST['sessionToken'])) {
     $questGiverId = $account->crand;
 }
 
-$events = ScheduleController::getCalendarEvents($month, $year, $questGiverId);
+$events = ScheduleController::getCalendarEvents($month, $year, $questGiverId, $includeAll);
 
 return new Response(true, 'Calendar events loaded.', $events);
 ?>

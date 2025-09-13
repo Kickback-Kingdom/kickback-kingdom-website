@@ -13,6 +13,7 @@ class ScheduleController
     * @param int      $month        1-12 month value
     * @param int      $year         four digit year
     * @param ?int     $questGiverId Optional quest giver account id to include their quests
+    * @param bool     $includeAll   When true, include quests from all hosts
     *
     * @return array<array{
     *     Id:            int,
@@ -29,13 +30,13 @@ class ScheduleController
     *     participants:  ?int
     * }>
     */
-    public static function getCalendarEvents(int $month, int $year, ?int $questGiverId = null) : array
+    public static function getCalendarEvents(int $month, int $year, ?int $questGiverId = null, bool $includeAll = false) : array
     {
         // Use dedicated database connection service
         $db = Database::getConnection();
 
         // Retrieve global calendar events for the specified month and year
-        $query = "SELECT * FROM calendar_events WHERE MONTH(start_date) = ? AND YEAR(start_date) = ?";
+        $query = "SELECT *, NULL AS host_id, NULL AS host_name FROM calendar_events WHERE MONTH(start_date) = ? AND YEAR(start_date) = ?";
         $stmt = mysqli_prepare($db, $query);
         mysqli_stmt_bind_param($stmt, 'ii', $month, $year);
 
@@ -46,33 +47,61 @@ class ScheduleController
         // ensure consistent keys for consumers
         foreach ($events as &$e) {
             $e['participants'] = null;
+            $e['host_id'] = null;
+            $e['host_name'] = null;
         }
         unset($e);
 
-        // Include the quest giver's own quest events if an account id is provided
-        if ($questGiverId !== null) {
-            $questQuery =
-                "SELECT q.Id AS id, q.name AS title, q.`desc` AS description, "
-                . "q.end_date AS start_date, q.end_date AS end_date, "
-                . "'NONE' AS recurrence, NULL AS day_of_week, NULL AS day_of_month, "
-                . "NULL AS week_of_month, NULL AS month, 'QUEST' AS event_type, "
-                . "COUNT(qa.participated) AS participants "
-                . "FROM quest q "
-                . "LEFT JOIN quest_applicants qa ON qa.quest_id = q.Id AND qa.participated = 1 "
-                . "WHERE (q.host_id = ? OR q.host_id_2 = ?) "
-                . "AND MONTH(q.end_date) = ? AND YEAR(q.end_date) = ? "
-                . "GROUP BY q.Id";
-
-            $stmt2 = mysqli_prepare($db, $questQuery);
-            if ($stmt2) {
-                mysqli_stmt_bind_param($stmt2, 'iiii', $questGiverId, $questGiverId, $month, $year);
-                mysqli_stmt_execute($stmt2);
-                $result2 = mysqli_stmt_get_result($stmt2);
-                if ($result2) {
-                    $questEvents = mysqli_fetch_all($result2, MYSQLI_ASSOC);
-                    $events = array_merge($events, $questEvents);
+        // Include quest events
+        if ($includeAll || $questGiverId !== null) {
+            if ($includeAll) {
+                $questQuery =
+                    "SELECT q.Id AS id, q.name AS title, q.`desc` AS description, "
+                    . "q.end_date AS start_date, q.end_date AS end_date, "
+                    . "'NONE' AS recurrence, NULL AS day_of_week, NULL AS day_of_month, "
+                    . "NULL AS week_of_month, NULL AS month, 'QUEST' AS event_type, "
+                    . "COUNT(qa.participated) AS participants, q.host_id AS host_id, a.Username AS host_name "
+                    . "FROM quest q "
+                    . "JOIN account a ON a.Id = q.host_id "
+                    . "LEFT JOIN quest_applicants qa ON qa.quest_id = q.Id AND qa.participated = 1 "
+                    . "WHERE MONTH(q.end_date) = ? AND YEAR(q.end_date) = ? "
+                    . "GROUP BY q.Id";
+                $stmt2 = mysqli_prepare($db, $questQuery);
+                if ($stmt2) {
+                    mysqli_stmt_bind_param($stmt2, 'ii', $month, $year);
+                    mysqli_stmt_execute($stmt2);
+                    $result2 = mysqli_stmt_get_result($stmt2);
+                    if ($result2) {
+                        $questEvents = mysqli_fetch_all($result2, MYSQLI_ASSOC);
+                        $events = array_merge($events, $questEvents);
+                    }
+                    mysqli_stmt_close($stmt2);
                 }
-                mysqli_stmt_close($stmt2);
+            } elseif ($questGiverId !== null) {
+                $questQuery =
+                    "SELECT q.Id AS id, q.name AS title, q.`desc` AS description, "
+                    . "q.end_date AS start_date, q.end_date AS end_date, "
+                    . "'NONE' AS recurrence, NULL AS day_of_week, NULL AS day_of_month, "
+                    . "NULL AS week_of_month, NULL AS month, 'QUEST' AS event_type, "
+                    . "COUNT(qa.participated) AS participants, q.host_id AS host_id, a.Username AS host_name "
+                    . "FROM quest q "
+                    . "JOIN account a ON a.Id = q.host_id "
+                    . "LEFT JOIN quest_applicants qa ON qa.quest_id = q.Id AND qa.participated = 1 "
+                    . "WHERE (q.host_id = ? OR q.host_id_2 = ?) "
+                    . "AND MONTH(q.end_date) = ? AND YEAR(q.end_date) = ? "
+                    . "GROUP BY q.Id";
+
+                $stmt2 = mysqli_prepare($db, $questQuery);
+                if ($stmt2) {
+                    mysqli_stmt_bind_param($stmt2, 'iiii', $questGiverId, $questGiverId, $month, $year);
+                    mysqli_stmt_execute($stmt2);
+                    $result2 = mysqli_stmt_get_result($stmt2);
+                    if ($result2) {
+                        $questEvents = mysqli_fetch_all($result2, MYSQLI_ASSOC);
+                        $events = array_merge($events, $questEvents);
+                    }
+                    mysqli_stmt_close($stmt2);
+                }
             }
         }
 
