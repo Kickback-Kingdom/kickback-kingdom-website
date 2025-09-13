@@ -10,7 +10,6 @@ require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Services\Session;
 use Kickback\Backend\Controllers\QuestController;
-use Kickback\Backend\Controllers\NotificationController;
 use Kickback\Backend\Controllers\FeedCardController;
 use Kickback\Backend\Views\vDateTime;
 
@@ -26,13 +25,13 @@ $futureQuests = $futureResp->success ? $futureResp->data : [];
 $pastResp = QuestController::queryHostedPastQuests($account);
 $pastQuests = $pastResp->success ? $pastResp->data : [];
 
-$reviewsResp = NotificationController::queryQuestReviewsByHostAsResponse($account);
+$reviewsResp = QuestController::queryQuestReviewsByHostAsResponse($account);
 $questReviewAverages = $reviewsResp->success ? $reviewsResp->data : [];
 
 $totalHostedQuests = count($futureQuests) + count($pastQuests);
-$questTitles = array_column($questReviewAverages, 'questTitle');
-$avgHostRatings = array_map('floatval', array_column($questReviewAverages, 'avgHostRating'));
-$avgQuestRatings = array_map('floatval', array_column($questReviewAverages, 'avgQuestRating'));
+$questTitles = array_map(fn($qr) => $qr->questTitle, $questReviewAverages);
+$avgHostRatings = array_map(fn($qr) => (float)$qr->avgHostRating, $questReviewAverages);
+$avgQuestRatings = array_map(fn($qr) => (float)$qr->avgQuestRating, $questReviewAverages);
 
 $participantCounts = [];
 $participantQuestTitles = [];
@@ -45,7 +44,7 @@ foreach (array_merge($futureQuests, $pastQuests) as $quest) {
 
 $questRatingsMap = [];
 foreach ($questReviewAverages as $qr) {
-    $questRatingsMap[$qr['questTitle']] = (float)$qr['avgQuestRating'];
+$questRatingsMap[$qr->questTitle] = (float)$qr->avgQuestRating;
 }
 
 $ratingDates = [];
@@ -158,24 +157,24 @@ function renderStarRating(int $rating): string
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <img src="<?= htmlspecialchars($qr['questIcon']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
-                                                    <span><?= htmlspecialchars($qr['questTitle']); ?></span>
+                                                    <img src="<?= htmlspecialchars($qr->questIcon); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
+                                                    <span><?= htmlspecialchars($qr->questTitle); ?></span>
                                                 </div>
                                             </td>
                                             <td>
-                                                <?php $qd = new vDateTime($qr['questDate']); ?>
+                                                <?php $qd = new vDateTime($qr->questDate); ?>
                                                 <div class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($qd->formattedDetailed); ?> UTC" data-datetime-utc="<?= htmlspecialchars($qd->valueString); ?>" data-db-value="<?= htmlspecialchars($qd->dbValue); ?>"><?= htmlspecialchars($qd->formattedBasic); ?></div>
                                             </td>
-                                            <td data-order="<?= $qr['avgHostRating']; ?>" class="align-middle">
-                                                <?= renderStarRating((int)round($qr['avgHostRating'])); ?><span class="ms-1"><?= number_format($qr['avgHostRating'], 2); ?></span>
+                                            <td data-order="<?= $qr->avgHostRating; ?>" class="align-middle">
+                                                <?= renderStarRating((int)round($qr->avgHostRating)); ?><span class="ms-1"><?= number_format($qr->avgHostRating, 2); ?></span>
                                             </td>
-                                            <td data-order="<?= $qr['avgQuestRating']; ?>" class="align-middle">
-                                                <?= renderStarRating((int)round($qr['avgQuestRating'])); ?><span class="ms-1"><?= number_format($qr['avgQuestRating'], 2); ?></span>
+                                            <td data-order="<?= $qr->avgQuestRating; ?>" class="align-middle">
+                                                <?= renderStarRating((int)round($qr->avgQuestRating)); ?><span class="ms-1"><?= number_format($qr->avgQuestRating, 2); ?></span>
                                             </td>
                                             <td class="align-middle">
-                                                <?php $btnClass = !empty($qr['hasComments']) ? 'btn-primary' : 'btn-outline-secondary'; ?>
-                                                <?php $iconClass = !empty($qr['hasComments']) ? 'fa-solid' : 'fa-regular'; ?>
-                                                <button class="btn btn-sm <?= $btnClass ?> view-reviews-btn" data-quest-id="<?= $qr['questId']; ?>" data-quest-title="<?= htmlspecialchars($qr['questTitle']); ?>"><i class="<?= $iconClass ?> fa-comments me-1"></i>View</button>
+                                                <?php $btnClass = !empty($qr->hasComments) ? 'btn-primary' : 'btn-outline-secondary'; ?>
+                                                <?php $iconClass = !empty($qr->hasComments) ? 'fa-solid' : 'fa-regular'; ?>
+                                                <button class="btn btn-sm <?= $btnClass ?> view-reviews-btn" data-quest-id="<?= $qr->questId; ?>" data-quest-title="<?= htmlspecialchars($qr->questTitle); ?>"><i class="<?= $iconClass ?> fa-comments me-1"></i>View</button>
                                             </td>
                                         </tr>
                                     <?php } ?>
