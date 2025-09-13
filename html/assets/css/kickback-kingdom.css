@@ -811,7 +811,7 @@ animation: confetti-fast 1.25s linear 1 forwards;
     padding: 0px;
 }
 
-.star-rating .fa-star {
+.star-rating .fa-star, .star-rating .fa-star-half-stroke {
     color: #ccc;
     cursor: pointer;
     font-size: 1.2em;

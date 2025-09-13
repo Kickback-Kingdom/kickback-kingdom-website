@@ -642,11 +642,18 @@ $recentCount = count($recentReviews);
 $avgHostRatingRecent = $recentCount > 0 ? array_sum(array_map(fn($qr) => (float)$qr->avgHostRating, $recentReviews)) / $recentCount : 0;
 $avgQuestRatingRecent = $recentCount > 0 ? array_sum(array_map(fn($qr) => (float)$qr->avgQuestRating, $recentReviews)) / $recentCount : 0;
 
-function renderStarRating(int $rating): string
+function renderStarRating(float $rating): string
 {
+    $rounded = round($rating * 2) / 2;
     $stars = '<span class="star-rating" style="pointer-events: none; display: inline-block;">';
     for ($i = 1; $i <= 5; $i++) {
-        $class = $i <= $rating ? 'fa-solid fa-star selected' : 'fa-regular fa-star';
+        if ($rounded >= $i) {
+            $class = 'fa-solid fa-star selected';
+        } elseif ($rounded >= $i - 0.5) {
+            $class = 'fa-solid fa-star-half-stroke selected';
+        } else {
+            $class = 'fa-regular fa-star';
+        }
         $stars .= "<i class=\"{$class}\"></i>";
     }
     return $stars . '</span>';
@@ -683,7 +690,7 @@ function renderStarRating(int $rating): string
             <div class="card h-100">
                 <div class="card-body">
                     <small>Average Host Rating (Last 10)</small>
-                    <div><?= renderStarRating((int)round($avgHostRatingRecent)); ?><span class="ms-1"><?= number_format($avgHostRatingRecent, 2); ?>/5</span></div>
+                    <div><?= renderStarRating($avgHostRatingRecent); ?><span class="ms-1"><?= number_format($avgHostRatingRecent, 2); ?>/5</span></div>
                 </div>
             </div>
         </div>
@@ -691,7 +698,7 @@ function renderStarRating(int $rating): string
             <div class="card h-100">
                 <div class="card-body">
                     <small>Average Quest Rating (Last 10)</small>
-                    <div><?= renderStarRating((int)round($avgQuestRatingRecent)); ?><span class="ms-1"><?= number_format($avgQuestRatingRecent, 2); ?>/5</span></div>
+                    <div><?= renderStarRating($avgQuestRatingRecent); ?><span class="ms-1"><?= number_format($avgQuestRatingRecent, 2); ?>/5</span></div>
                 </div>
             </div>
         </div>
@@ -757,10 +764,10 @@ function renderStarRating(int $rating): string
                                                 <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($qd->formattedDetailed); ?> UTC" data-datetime-utc="<?= htmlspecialchars($qd->valueString); ?>" data-db-value="<?= htmlspecialchars($qd->dbValue); ?>"><?= htmlspecialchars($qd->formattedBasic); ?></span>
                                             </td>
                                             <td data-order="<?= $qr->avgHostRating; ?>" class="align-middle">
-                                                <?= renderStarRating((int)round($qr->avgHostRating)); ?><span class="ms-1"><?= number_format($qr->avgHostRating, 2); ?></span>
+                                                <?= renderStarRating($qr->avgHostRating); ?><span class="ms-1"><?= number_format($qr->avgHostRating, 2); ?></span>
                                             </td>
                                             <td data-order="<?= $qr->avgQuestRating; ?>" class="align-middle">
-                                                <?= renderStarRating((int)round($qr->avgQuestRating)); ?><span class="ms-1"><?= number_format($qr->avgQuestRating, 2); ?></span>
+                                                <?= renderStarRating($qr->avgQuestRating); ?><span class="ms-1"><?= number_format($qr->avgQuestRating, 2); ?></span>
                                             </td>
                                             <td class="align-middle">
                                                 <?php $btnClass = !empty($qr->hasComments) ? 'btn-primary' : 'btn-outline-secondary'; ?>
@@ -829,8 +836,8 @@ function renderStarRating(int $rating): string
                                             <h5 class="card-title mb-1">Bring this quest back</h5>
                                             <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $dormantQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($dormantQuest['title']); ?></a> last ran <?= htmlspecialchars($dormantQuest['endDate']->formattedBasic); ?></p>
                         <p class="card-text mb-0">
-                                                Quest Rating: <?= renderStarRating((int)round($dormantQuest['avgQuestRating'])); ?><span class="ms-1"><?= number_format($dormantQuest['avgQuestRating'], 1); ?></span>
-                                                &middot; Host Rating: <?= renderStarRating((int)round($dormantQuest['avgHostRating'])); ?><span class="ms-1"><?= number_format($dormantQuest['avgHostRating'], 1); ?></span>
+                                                Quest Rating: <?= renderStarRating($dormantQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($dormantQuest['avgQuestRating'], 1); ?></span>
+                                                &middot; Host Rating: <?= renderStarRating($dormantQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($dormantQuest['avgHostRating'], 1); ?></span>
                                             </p>
                                         </div>
                                     </div>
@@ -852,8 +859,8 @@ function renderStarRating(int $rating): string
                                             <h5 class="card-title mb-1">Create a sequel</h5>
                                             <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $fanFavoriteQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($fanFavoriteQuest['title']); ?></a> last ran <?= htmlspecialchars($fanFavoriteQuest['endDate']->formattedBasic); ?></p>
                                             <p class="card-text mb-0">
-                                                Quest Rating: <?= renderStarRating((int)round($fanFavoriteQuest['avgQuestRating'])); ?><span class="ms-1"><?= number_format($fanFavoriteQuest['avgQuestRating'], 1); ?></span>
-                                                &middot; Host Rating: <?= renderStarRating((int)round($fanFavoriteQuest['avgHostRating'])); ?><span class="ms-1"><?= number_format($fanFavoriteQuest['avgHostRating'], 1); ?></span>
+                                                Quest Rating: <?= renderStarRating($fanFavoriteQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($fanFavoriteQuest['avgQuestRating'], 1); ?></span>
+                                                &middot; Host Rating: <?= renderStarRating($fanFavoriteQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($fanFavoriteQuest['avgHostRating'], 1); ?></span>
                                             </p>
                                         </div>
                                     </div>
@@ -873,8 +880,8 @@ function renderStarRating(int $rating): string
                                             <h5 class="card-title mb-1">Create a similar quest</h5>
                                             <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $recommendedQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($recommendedQuest['title']); ?></a> last ran <?= htmlspecialchars($recommendedQuest['endDate']->formattedBasic); ?></p>
                                             <p class="card-text mb-0">
-                                                Quest Rating: <?= renderStarRating((int)round($recommendedQuest['avgQuestRating'])); ?><span class="ms-1"><?= number_format($recommendedQuest['avgQuestRating'], 1); ?></span>
-                                                &middot; Host Rating: <?= renderStarRating((int)round($recommendedQuest['avgHostRating'])); ?><span class="ms-1"><?= number_format($recommendedQuest['avgHostRating'], 1); ?></span>
+                                                Quest Rating: <?= renderStarRating($recommendedQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($recommendedQuest['avgQuestRating'], 1); ?></span>
+                                                &middot; Host Rating: <?= renderStarRating($recommendedQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($recommendedQuest['avgHostRating'], 1); ?></span>
                                             </p>
                                         </div>
                                     </div>
@@ -894,8 +901,8 @@ function renderStarRating(int $rating): string
                                             <h5 class="card-title mb-1">Promote this quest</h5>
                                             <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $hiddenGemQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($hiddenGemQuest['title']); ?></a> last ran <?= htmlspecialchars($hiddenGemQuest['endDate']->formattedBasic); ?></p>
                                             <p class="card-text mb-0">
-                                                Quest Rating: <?= renderStarRating((int)round($hiddenGemQuest['avgQuestRating'])); ?><span class="ms-1"><?= number_format($hiddenGemQuest['avgQuestRating'], 1); ?></span>
-                                                &middot; Host Rating: <?= renderStarRating((int)round($hiddenGemQuest['avgHostRating'])); ?><span class="ms-1"><?= number_format($hiddenGemQuest['avgHostRating'], 1); ?></span>
+                                                Quest Rating: <?= renderStarRating($hiddenGemQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($hiddenGemQuest['avgQuestRating'], 1); ?></span>
+                                                &middot; Host Rating: <?= renderStarRating($hiddenGemQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($hiddenGemQuest['avgHostRating'], 1); ?></span>
                                             </p>
                                         </div>
                                     </div>
@@ -916,7 +923,7 @@ function renderStarRating(int $rating): string
                                             <p class="card-text mb-1"><a href="<?= htmlspecialchars($coHostCandidate['url']); ?>" target="_blank"><?= htmlspecialchars($coHostCandidate['username']); ?></a></p>
                                             <p class="card-text mb-0">
                                                 Joined <?= $coHostCandidate['count']; ?> quest<?= $coHostCandidate['count'] === 1 ? '' : 's'; ?>
-                                                &middot; <?= renderStarRating((int)round($coHostCandidate['avgHostRating'])); ?><span class="ms-1"><?= number_format($coHostCandidate['avgHostRating'], 1); ?></span>
+                                                &middot; <?= renderStarRating($coHostCandidate['avgHostRating']); ?><span class="ms-1"><?= number_format($coHostCandidate['avgHostRating'], 1); ?></span>
                                                 &middot; Adventured with <?= $coHostCandidate['friends']; ?> other player<?= $coHostCandidate['friends'] === 1 ? '' : 's'; ?>
                                             </p>
                                         </div>
@@ -936,8 +943,8 @@ function renderStarRating(int $rating): string
                                             <h5 class="card-title mb-1">Improve this quest</h5>
                                             <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $underperformingQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($underperformingQuest['title']); ?></a> last ran <?= htmlspecialchars($underperformingQuest['endDate']->formattedBasic); ?></p>
                                             <p class="card-text mb-0">
-                                                Quest Rating: <?= renderStarRating((int)round($underperformingQuest['avgQuestRating'])); ?><span class="ms-1"><?= number_format($underperformingQuest['avgQuestRating'], 1); ?></span>
-                                                &middot; Host Rating: <?= renderStarRating((int)round($underperformingQuest['avgHostRating'])); ?><span class="ms-1"><?= number_format($underperformingQuest['avgHostRating'], 1); ?></span>
+                                                Quest Rating: <?= renderStarRating($underperformingQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($underperformingQuest['avgQuestRating'], 1); ?></span>
+                                                &middot; Host Rating: <?= renderStarRating($underperformingQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($underperformingQuest['avgHostRating'], 1); ?></span>
                                             </p>
                                         </div>
                                     </div>
@@ -987,10 +994,10 @@ function renderStarRating(int $rating): string
                                                             </td>
                                                             <td class="align-middle"><?= $q['participants']; ?></td>
                                                             <td class="align-middle">
-                                                                <?= renderStarRating((int)round($q['avgQuestRating'])); ?><span class="ms-1"><?= number_format($q['avgQuestRating'], 2); ?></span>
+                                                                <?= renderStarRating($q['avgQuestRating']); ?><span class="ms-1"><?= number_format($q['avgQuestRating'], 2); ?></span>
                                                             </td>
                                                             <td class="align-middle">
-                                                                <?= renderStarRating((int)round($q['avgHostRating'])); ?><span class="ms-1"><?= number_format($q['avgHostRating'], 2); ?></span>
+                                                                <?= renderStarRating($q['avgHostRating']); ?><span class="ms-1"><?= number_format($q['avgHostRating'], 2); ?></span>
                                                             </td>
                                                         </tr>
                                                     <?php } ?>
@@ -1033,11 +1040,11 @@ function renderStarRating(int $rating): string
                                                             </td>
                                                             <td class="align-middle"><?= $p['count']; ?></td>
                                                             <td class="align-middle">
-                                                                <?= renderStarRating((int)round($p['avgQuestRating'])); ?>
+                                                                <?= renderStarRating($p['avgQuestRating']); ?>
                                                                 <span class="ms-1"><?= number_format($p['avgQuestRating'], 2); ?></span>
                                                             </td>
                                                             <td class="align-middle">
-                                                                <?= renderStarRating((int)round($p['avgHostRating'])); ?>
+                                                                <?= renderStarRating($p['avgHostRating']); ?>
                                                                 <span class="ms-1"><?= number_format($p['avgHostRating'], 2); ?></span>
                                                             </td>
                                                         </tr>
@@ -1085,11 +1092,11 @@ function renderStarRating(int $rating): string
                                                             <td class="align-middle"><?= number_format($h['avgParticipants'], 1); ?></td>
                                                             <td class="align-middle"><?= $h['uniqueParticipants']; ?></td>
                                                             <td class="align-middle">
-                                                                <?= renderStarRating((int)round($h['avgHostRating'])); ?>
+                                                                <?= renderStarRating($h['avgHostRating']); ?>
                                                                 <span class="ms-1"><?= number_format($h['avgHostRating'], 2); ?></span>
                                                             </td>
                                                             <td class="align-middle">
-                                                                <?= renderStarRating((int)round($h['avgQuestRating'])); ?>
+                                                                <?= renderStarRating($h['avgQuestRating']); ?>
                                                                 <span class="ms-1"><?= number_format($h['avgQuestRating'], 2); ?></span>
                                                             </td>
                                                         </tr>
@@ -1136,9 +1143,17 @@ const ratingDates = <?= json_encode($ratingDates); ?>;
 const avgRatingsOverTime = <?= json_encode($avgRatingsOverTime); ?>;
 
 function renderStarRatingJs(rating) {
+    const rounded = Math.round(rating * 2) / 2;
     let stars = '<span class="star-rating" style="pointer-events: none; display: inline-block;">';
     for (let i = 1; i <= 5; i++) {
-        const cls = i <= rating ? 'fa-solid fa-star selected' : 'fa-regular fa-star';
+        let cls;
+        if (rounded >= i) {
+            cls = 'fa-solid fa-star selected';
+        } else if (rounded >= i - 0.5) {
+            cls = 'fa-solid fa-star-half-stroke selected';
+        } else {
+            cls = 'fa-regular fa-star';
+        }
         stars += `<i class="${cls}"></i>`;
     }
     return stars + '</span>';
