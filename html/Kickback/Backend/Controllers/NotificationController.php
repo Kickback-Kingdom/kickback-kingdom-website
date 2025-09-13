@@ -15,6 +15,7 @@ use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vQuestReview;
 use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Models\PlayStyle;
+use Kickback\Backend\Controllers\AccountController;
 
 class NotificationController
 {
@@ -123,6 +124,7 @@ class NotificationController
         $result = $stmt->get_result();
 
         $reviews = [];
+        $accountCache = [];
         while ($row = $result->fetch_assoc()) {
             $quest = new vQuest('', $row['quest_id']);
             $quest->title = $row['name'];
@@ -135,8 +137,19 @@ class NotificationController
             $review->questRating = (int)$row['quest_rating'];
             $review->hostRating = (int)$row['host_rating'];
             $review->message = $row['text'];
-            $review->fromAccount = new vAccount('', $row['account_id_from']);
-            $review->fromAccount->username = $row['from_name'];
+
+            $accountIdFrom = (int)$row['account_id_from'];
+            if (!isset($accountCache[$accountIdFrom])) {
+                $accountLookup = new vAccount('', $accountIdFrom);
+                $accountResp = AccountController::getAccountById($accountLookup);
+                if ($accountResp->success && $accountResp->data instanceof vAccount) {
+                    $accountCache[$accountIdFrom] = $accountResp->data;
+                } else {
+                    $accountLookup->username = $row['from_name'];
+                    $accountCache[$accountIdFrom] = $accountLookup;
+                }
+            }
+            $review->fromAccount = $accountCache[$accountIdFrom];
             $review->dateTime = new vDateTime($row['date']);
 
             $reviews[] = ['quest' => $quest, 'review' => $review];

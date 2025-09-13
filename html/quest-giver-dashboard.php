@@ -137,19 +137,27 @@ function renderStarRating(int $rating): string
                                         $comment = trim($qr['review']->message);
                                     ?>
                                         <tr>
-                                            <td><a href="/q/<?= $qr['quest']->locator; ?>"><?= htmlspecialchars($qr['quest']->title); ?></a></td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img src="<?= htmlspecialchars($qr['quest']->icon->getFullPath()); ?>"
+                                                        alt="<?= htmlspecialchars($qr['quest']->title); ?> icon"
+                                                        class="me-2"
+                                                        style="width: 40px; height: 40px; object-fit: cover;">
+                                                    <a href="/q/<?= $qr['quest']->locator; ?>"><?= htmlspecialchars($qr['quest']->title); ?></a>
+                                                </div>
+                                            </td>
                                             <td>
                                                 <div class="d-flex align-items-center">
                                                     <img src="<?= htmlspecialchars($qr['review']->fromAccount->profilePictureURL()); ?>"
                                                         alt="<?= htmlspecialchars($qr['review']->fromAccount->username); ?>"
                                                         class="me-2"
-                                                        style="width: 40px; height: 40px;">
+                                                        style="width: 40px; height: 40px; object-fit: cover;">
                                                     <?= $qr['review']->fromAccount->getAccountElement(); ?>
                                                 </div>
                                             </td>
                                             <td><span class="date"><?= $qr['review']->dateTime->formattedBasic; ?></span></td>
-                                            <td><?= renderStarRating($qr['review']->hostRating); ?></td>
-                                            <td><?= renderStarRating($qr['review']->questRating); ?></td>
+                                            <td data-order="<?= $qr['review']->hostRating; ?>"><?= renderStarRating($qr['review']->hostRating); ?></td>
+                                            <td data-order="<?= $qr['review']->questRating; ?>"><?= renderStarRating($qr['review']->questRating); ?></td>
                                             <td>
                                                 <?php if ($comment !== '') { ?>
                                                     <button class="btn btn-primary btn-sm toggle-comment" data-comment="<?= htmlspecialchars($comment, ENT_QUOTES); ?>">View Comment</button>
