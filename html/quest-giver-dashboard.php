@@ -14,6 +14,10 @@ use Kickback\Backend\Controllers\FeedCardController;
 use Kickback\Backend\Views\vDateTime;
 use Kickback\Common\Version;
 
+const LOYAL_PARTICIPANT_THRESHOLD = 3;
+const WEIGHT_RATING = 0.7;
+const WEIGHT_LOYALTY = 0.3;
+
 if (!Session::isQuestGiver()) {
     Session::redirect("index.php");
 }
@@ -133,6 +137,7 @@ foreach ($participantTotals as $crand => $count) {
     }
     $info = $participantDetails[$crand];
     $topParticipants[] = [
+        'id' => $crand,
         'username' => $info['username'],
         'avatar' => $info['avatar'],
         'url' => $info['url'],
@@ -142,6 +147,51 @@ foreach ($participantTotals as $crand => $count) {
     if (count($topParticipants) >= 10) {
         break;
     }
+}
+
+$topParticipantIds = array_map(fn($p) => $p['id'], $topParticipants);
+$fanFavoriteQuest = null;
+$questRatingsByTop = [];
+foreach ($pastQuests as $quest) {
+    $qid = $quest->crand;
+    $details = $reviewDetailsByQuest[$qid] ?? [];
+    $sum = 0;
+    $count = 0;
+    $seen = [];
+    foreach ($details as $detail) {
+        $id = $detail->accountId;
+        if (!in_array($id, $topParticipantIds, true)) {
+            continue;
+        }
+        if ($detail->questRating !== null) {
+            $sum += $detail->questRating;
+            $count++;
+        }
+        $seen[$id] = true;
+    }
+    if ($count > 0) {
+        $loyal = count(array_filter(array_keys($seen), fn($id) => ($participantTotals[$id] ?? 0) > 1));
+        $questRatingsByTop[] = [
+            'quest' => $quest,
+            'avgRating' => $sum / $count,
+            'loyal' => $loyal,
+        ];
+    }
+}
+$qualifiedTop = array_filter($questRatingsByTop, fn($q) => $q['loyal'] >= LOYAL_PARTICIPANT_THRESHOLD);
+if (!empty($qualifiedTop)) {
+    usort($qualifiedTop, function ($a, $b) {
+        $scoreA = WEIGHT_RATING * $a['avgRating'] + WEIGHT_LOYALTY * $a['loyal'];
+        $scoreB = WEIGHT_RATING * $b['avgRating'] + WEIGHT_LOYALTY * $b['loyal'];
+        return $scoreB <=> $scoreA;
+    });
+    $top = $qualifiedTop[0];
+    $fanFavoriteQuest = [
+        'title' => $top['quest']->title,
+        'locator' => $top['quest']->locator,
+        'icon' => $top['quest']->icon ? $top['quest']->icon->getFullPath() : '',
+        'avgRating' => $top['avgRating'],
+    ];
 }
 
 $questRatingsMap = [];
@@ -416,7 +466,7 @@ function renderStarRating(int $rating): string
                 </div>
                 <div class="tab-pane fade" id="nav-suggestions" role="tabpanel" aria-labelledby="nav-suggestions-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Suggestions</div>
-                    <?php if ($recommendedQuest || $underperformingQuest || $dormantQuest) { ?>
+                    <?php if ($recommendedQuest || $underperformingQuest || $dormantQuest || $fanFavoriteQuest) { ?>
                         <?php if ($dormantQuest) { ?>
                             <div class="card mb-3">
                                 <div class="card-body d-flex align-items-center">
@@ -435,6 +485,21 @@ function renderStarRating(int $rating): string
                             </div>
                         <?php } else { ?>
                             <p>No dormant fan favorites found.</p>
+                        <?php } ?>
+                        <?php if ($fanFavoriteQuest) { ?>
+                            <div class="card mb-3">
+                                <div class="card-body d-flex align-items-center">
+                                    <?php if (!empty($fanFavoriteQuest['icon'])) { ?>
+                                        <img src="<?= htmlspecialchars($fanFavoriteQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
+                                    <?php } ?>
+                                    <div>
+                                        <h5 class="card-title mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $fanFavoriteQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($fanFavoriteQuest['title']); ?></a></h5>
+                                        <p class="card-text mb-0">
+                                            <?= renderStarRating((int)round($fanFavoriteQuest['avgRating'])); ?><span class="ms-1"><?= number_format($fanFavoriteQuest['avgRating'], 1); ?></span> – Your loyal players loved this—consider a sequel.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         <?php } ?>
                         <?php if ($recommendedQuest) { ?>
                             <div class="card mb-3">
@@ -469,7 +534,7 @@ function renderStarRating(int $rating): string
                             </div>
                         <?php } ?>
                     <?php } else { ?>
-                        <p>No dormant fan favorites found. Keep hosting adventures!</p>
+                        <p>No suggestions found. Keep hosting adventures!</p>
                     <?php } ?>
                 </div>
                 <div class="tab-pane fade" id="nav-top" role="tabpanel" aria-labelledby="nav-top-tab" tabindex="0">
