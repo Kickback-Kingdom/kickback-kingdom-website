@@ -1194,6 +1194,8 @@ class QuestController
 
         $questApplicant->seed = $row["seed"];
         $questApplicant->rank = (int)($row["rank"] ?? -1);
+        $questApplicant->accepted = boolval($row["accepted"] ?? false);
+        $questApplicant->participated = boolval($row["participated"] ?? false);
         return $questApplicant;
     }
 

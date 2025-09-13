@@ -129,6 +129,7 @@ class NotificationController
             $questId = (int)$row['quest_id'];
             $hostRating = (int)$row['host_rating'];
             $questRating = (int)$row['quest_rating'];
+            $hasComment = trim((string)$row['text']) !== '';
 
             if (!isset($questRatings[$questId])) {
                 $questRatings[$questId] = [
@@ -138,11 +139,15 @@ class NotificationController
                     'hostRatingSum' => $hostRating,
                     'questRatingSum' => $questRating,
                     'count' => 1,
+                    'hasComments' => $hasComment,
                 ];
             } else {
                 $questRatings[$questId]['hostRatingSum'] += $hostRating;
                 $questRatings[$questId]['questRatingSum'] += $questRating;
                 $questRatings[$questId]['count']++;
+                if ($hasComment) {
+                    $questRatings[$questId]['hasComments'] = true;
+                }
             }
         }
 
@@ -154,6 +159,7 @@ class NotificationController
                 'questDate' => $data['questDate'],
                 'avgHostRating' => $data['hostRatingSum'] / $data['count'],
                 'avgQuestRating' => $data['questRatingSum'] / $data['count'],
+                'hasComments' => $data['hasComments'],
             ];
         }
 
@@ -187,8 +193,16 @@ class NotificationController
 
         $details = [];
         foreach ($applicants as $applicant) {
+            if (!$applicant->participated) {
+                continue;
+            }
+
             $account = $applicant->account;
             $id = $account->crand;
+            if ($id === $quest->host1->crand || (isset($quest->host2) && $id === $quest->host2->crand)) {
+                continue;
+            }
+
             $avatar = $account->avatar ? $account->avatar->getFullPath() : null;
             if (isset($reviews[$id])) {
                 $details[] = [
