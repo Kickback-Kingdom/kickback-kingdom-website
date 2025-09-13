@@ -1535,6 +1535,7 @@ class QuestController
 
     /**
      * @param array<vQuestApplicant>|null $applicants
+     * @deprecated Use queryQuestReviewDetailsForQuests() for bulk queries.
      */
     public static function queryQuestReviewDetailsAsResponse(vQuest $quest, ?array $applicants = null): Response
     {
@@ -1636,6 +1637,72 @@ class QuestController
         }
 
         return new Response(true, 'Quest review details loaded.', $details);
+    }
+
+    /**
+     * Fetch review details for multiple quests in a single query.
+     *
+     * @param array<int> $questIds
+     * @return array<int, array<vQuestReviewDetail>> keyed by quest id
+     */
+    public static function queryQuestReviewDetailsForQuests(array $questIds): array
+    {
+        if (empty($questIds)) {
+            return [];
+        }
+
+        $conn = Database::getConnection();
+        $placeholders = implode(',', array_fill(0, count($questIds), '?'));
+        $sql = "SELECT qa.quest_id, qa.account_id, acc.Username AS username, acc.avatar_media, rv.host_rating, rv.quest_rating, rv.text, q.host_id, q.host_id_2 " .
+            "FROM quest_applicants qa " .
+            "JOIN v_account_info acc ON qa.account_id = acc.Id " .
+            "JOIN quest q ON qa.quest_id = q.Id " .
+            "LEFT JOIN v_notifications_reviewed_quests rv ON rv.quest_id = qa.quest_id AND rv.account_id_from = qa.account_id " .
+            "WHERE qa.quest_id IN ($placeholders) AND qa.participated = 1";
+
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return [];
+        }
+
+        $types = str_repeat('i', count($questIds));
+        // @phpstan-ignore-next-line
+        $stmt->bind_param($types, ...$questIds);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result === false) {
+            return [];
+        }
+
+        $byQuest = [];
+        while ($row = $result->fetch_assoc()) {
+            $qid = (int)$row['quest_id'];
+            $accountId = (int)$row['account_id'];
+            $host1 = (int)$row['host_id'];
+            $host2 = isset($row['host_id_2']) ? (int)$row['host_id_2'] : null;
+            if ($accountId === $host1 || ($host2 !== null && $accountId === $host2)) {
+                continue;
+            }
+
+            $avatar = null;
+            if (!empty($row['avatar_media'])) {
+                $media = new vMedia();
+                $media->setMediaPath($row['avatar_media']);
+                $avatar = $media->getFullPath();
+            }
+
+            $detail = new vQuestReviewDetail();
+            $detail->accountId = $accountId;
+            $detail->username = $row['username'];
+            $detail->avatar = $avatar;
+            $detail->hostRating = isset($row['host_rating']) ? (int)$row['host_rating'] : null;
+            $detail->questRating = isset($row['quest_rating']) ? (int)$row['quest_rating'] : null;
+            $detail->message = $row['text'] ?? null;
+
+            $byQuest[$qid][] = $detail;
+        }
+
+        return $byQuest;
     }
 
 }
