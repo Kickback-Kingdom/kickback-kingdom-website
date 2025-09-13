@@ -34,10 +34,17 @@ $events = ScheduleController::getCalendarEvents($month, $year);
                 require("php-components/base-page-breadcrumbs.php"); 
                 ?>
                 <div class="card card-body bg-primary table-responsive px-0">
-                  <h2 class="text-white"><span id="calendarPage"></span><button id="next" class="btn btn-secondary float-end bg-ranked-1" onclick="NextMonth();">Next</button><button id="prev" class="btn btn-secondary float-end me-2 bg-ranked-1" onclick="PreviousMonth();">Previous</button></h2> 
+                  <h2 class="text-white"><span id="calendarPage"></span><button id="next" class="btn btn-secondary float-end bg-ranked-1" onclick="NextMonth();">Next</button><button id="prev" class="btn btn-secondary float-end me-2 bg-ranked-1" onclick="PreviousMonth();">Previous</button></h2>
                   <table id="calendar" class="calendar table table-sm table-bordered">
                       <!-- Calendar will be generated here -->
                   </table>
+                </div>
+
+                <div class="card mt-3">
+                  <div class="card-header">Suggested Dates</div>
+                  <div class="card-body" id="suggested-dates">
+                    Loading...
+                  </div>
                 </div>
 
             </div>
@@ -54,7 +61,7 @@ $events = ScheduleController::getCalendarEvents($month, $year);
         // Convert the PHP array to JSON so JavaScript can use it
         var events = <?php echo json_encode($events); ?>;
     </script>
-    <script>
+<script>
     var month = <?php echo $month; ?>; // July
     var year = <?php echo $year; ?>;
 
@@ -96,6 +103,7 @@ $events = ScheduleController::getCalendarEvents($month, $year);
         month++;
       }
       generateCalendar(month, year);
+      loadSuggestedDates();
     }
 
     function PreviousMonth()
@@ -107,9 +115,33 @@ $events = ScheduleController::getCalendarEvents($month, $year);
         month--;
       }
       generateCalendar(month, year);
+      loadSuggestedDates();
+    }
+
+    function loadSuggestedDates() {
+      fetch(`/api/v1/schedule/suggestedDates.php?month=${month+1}&year=${year}`)
+        .then(response => response.json())
+        .then(data => {
+          var container = document.getElementById('suggested-dates');
+          if (data.success && data.data.length > 0) {
+            container.innerHTML = '';
+            data.data.forEach(item => {
+              var p = document.createElement('p');
+              p.textContent = `${item.date} - ${item.reason}`;
+              container.appendChild(p);
+            });
+          } else {
+            container.textContent = 'No suggestions available';
+          }
+        })
+        .catch(() => {
+          var container = document.getElementById('suggested-dates');
+          container.textContent = 'Failed to load suggestions';
+        });
     }
 
     generateCalendar(month, year);
+    loadSuggestedDates();
   </script>
 </body>
 
