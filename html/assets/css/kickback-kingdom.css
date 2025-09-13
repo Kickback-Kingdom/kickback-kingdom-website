@@ -1122,6 +1122,10 @@ animation: confetti-fast 1.25s linear 1 forwards;
     padding: 0.25rem;
 }
 
+.calendar-today {
+    outline: 2px solid var(--bs-primary);
+}
+
 .calendar-event-pill {
     font-size: 0.75rem;
     cursor: pointer;
