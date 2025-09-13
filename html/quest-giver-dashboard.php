@@ -1298,6 +1298,7 @@ function renderStarRatingJs(rating) {
 
 $(document).ready(function () {
     const sessionToken = "<?= $_SESSION['sessionToken']; ?>";
+    const currentHostId = <?= $account->crand; ?>;
 
     let participationCounts = {};
     let calendarEvents = {};
@@ -1329,17 +1330,23 @@ $(document).ready(function () {
             }
             let tooltipLines = [];
             if (count > 0) { tooltipLines.push(`Participants: ${count}`); }
-            if (events.length > 1) { tooltipLines.push('Multiple events'); }
+            if (events.length > 1) { tooltipLines.push('Conflicting events'); }
             let tooltip = tooltipLines.length ? `data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="bottom" title="${tooltipLines.join('<br>').replace(/"/g, '&quot;')}"` : '';
             if (events.length > 1) { cls += ' border border-danger border-2'; }
             else if (events.length === 1) { cls += ' border border-success border-2'; }
             let pills = '';
+            if (events.length > 1) {
+                pills += '<div class="badge bg-danger rounded-pill text-truncate mb-1">Conflict</div>';
+            }
             events.forEach(function(e) {
                 const start = new Date(e.start_date);
                 const time = start.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
                 const part = e.participants !== null ? ` - ${e.participants} participants` : '';
-                const pillTip = `${e.title}${part} @ ${time}`;
-                pills += `<div class=\"badge bg-primary rounded-pill text-truncate mb-1 calendar-event-pill\" data-bs-toggle=\"tooltip\" title=\"${pillTip.replace(/\"/g,'&quot;')}\">${time}</div>`;
+                const otherHost = e.host_id && e.host_id !== currentHostId;
+                const hostInfo = otherHost && e.host_name ? ` - Host: ${e.host_name}` : '';
+                const pillTip = `${e.title}${part}${hostInfo} @ ${time}`;
+                const pillClass = otherHost ? 'bg-secondary' : 'bg-primary';
+                pills += `<div class=\"badge ${pillClass} rounded-pill text-truncate mb-1 calendar-event-pill\" data-bs-toggle=\"tooltip\" title=\"${pillTip.replace(/\"/g,'&quot;')}\">${time}</div>`;
             });
             body += `<td class="${cls}" ${tooltip}><div class="fw-bold">${date.getDate()}</div>${pills}${(!events.length && count) ? `<small>${count} participants</small>` : ''}</td>`;
             if (date.getDay() === 6) { body += '</tr><tr>'; }
@@ -1410,7 +1417,7 @@ $(document).ready(function () {
     }
 
     function loadCalendarEvents() {
-        $.post('/api/v1/schedule/events.php', { sessionToken: sessionToken, month: calMonth + 1, year: calYear }, function(resp) {
+        $.post('/api/v1/schedule/events.php', { sessionToken: sessionToken, month: calMonth + 1, year: calYear, includeAll: 1 }, function(resp) {
             if (resp && resp.success) {
                 calendarEvents = {};
                 resp.data.forEach(function(e) {
