@@ -225,6 +225,7 @@ $participantRatingCounts = [];
 $perQuestParticipantCounts = [];
 $perQuestParticipantIds = [];
 $perQuestRegisteredCounts = [];
+$coHostStats = [];
 $allQuests = array_merge($futureQuests, $pastQuests);
 usort($allQuests, fn($a, $b) => strcmp(
     $a->hasEndDate() ? $a->endDate()->formattedYmd : '',
@@ -363,6 +364,69 @@ foreach ($topParticipants as &$p) {
     }
 }
 unset($p);
+
+// Aggregate co-host performance metrics
+foreach ($pastQuests as $quest) {
+    if (!isset($quest->host2) || $quest->host2->crand === $account->crand) {
+        continue;
+    }
+
+    $id = $quest->host2->crand;
+    if (!isset($coHostStats[$id])) {
+        $coHostStats[$id] = [
+            'id' => $id,
+            'username' => $quest->host2->username,
+            'avatar' => $quest->host2->avatar ? $quest->host2->avatar->getFullPath() : '',
+            'url' => $quest->host2->url(),
+            'questCount' => 0,
+            'participantSum' => 0,
+            'uniqueParticipantIds' => [],
+            'hostRatingSum' => 0,
+            'hostRatingCount' => 0,
+            'questRatingSum' => 0,
+            'questRatingCount' => 0,
+        ];
+    }
+
+    $stats =& $coHostStats[$id];
+    $stats['questCount']++;
+    $stats['participantSum'] += $perQuestParticipantCounts[$quest->title] ?? 0;
+    foreach ($perQuestParticipantIds[$quest->crand] ?? [] as $pid) {
+        $stats['uniqueParticipantIds'][$pid] = true;
+    }
+    foreach ($reviewDetailsByQuest[$quest->crand] ?? [] as $detail) {
+        if ($detail->hostRating !== null) {
+            $stats['hostRatingSum'] += $detail->hostRating;
+            $stats['hostRatingCount']++;
+        }
+        if ($detail->questRating !== null) {
+            $stats['questRatingSum'] += $detail->questRating;
+            $stats['questRatingCount']++;
+        }
+    }
+}
+unset($stats);
+
+$topCoHosts = [];
+foreach ($coHostStats as $stats) {
+    $avgParticipants = $stats['questCount'] > 0 ? $stats['participantSum'] / $stats['questCount'] : 0;
+    $uniqueCount = count($stats['uniqueParticipantIds']);
+    $avgHostRating = $stats['hostRatingCount'] > 0 ? $stats['hostRatingSum'] / $stats['hostRatingCount'] : 0;
+    $avgQuestRating = $stats['questRatingCount'] > 0 ? $stats['questRatingSum'] / $stats['questRatingCount'] : 0;
+    $topCoHosts[] = [
+        'id' => $stats['id'],
+        'username' => $stats['username'],
+        'avatar' => $stats['avatar'],
+        'url' => $stats['url'],
+        'avgParticipants' => $avgParticipants,
+        'uniqueParticipants' => $uniqueCount,
+        'avgHostRating' => $avgHostRating,
+        'avgQuestRating' => $avgQuestRating,
+        'score' => $avgParticipants + $uniqueCount + $avgHostRating + $avgQuestRating,
+    ];
+}
+usort($topCoHosts, fn($a, $b) => $b['score'] <=> $a['score']);
+$topCoHosts = array_slice($topCoHosts, 0, 10);
 
 $topParticipantIds = array_map(fn($p) => $p['id'], $topParticipants);
 $fanFavoriteQuest = null;
@@ -874,7 +938,7 @@ function renderStarRating(int $rating): string
                 <div class="tab-pane fade" id="nav-top" role="tabpanel" aria-labelledby="nav-top-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Top Quests & Participants</div>
                     <div class="row">
-                        <div class="col-12 col-lg-6 mb-3 mb-lg-0">
+                        <div class="col-12 col-lg-4 mb-3 mb-lg-0">
                             <h4>Top 10 Quests</h4>
                             <?php if (count($topBestQuests) === 0) { ?>
                                 <p>No completed quests.</p>
@@ -910,7 +974,7 @@ function renderStarRating(int $rating): string
                                 </div>
                             <?php } ?>
                         </div>
-                        <div class="col-12 col-lg-6">
+                        <div class="col-12 col-lg-4 mb-3 mb-lg-0">
                             <h4>Top 10 Loyal Participants</h4>
                             <?php if (count($topParticipants) === 0) { ?>
                                 <p>No participants yet.</p>
@@ -937,6 +1001,50 @@ function renderStarRating(int $rating): string
                                                     <td class="align-middle">
                                                         <?= renderStarRating((int)round($p['avgRating'])); ?>
                                                         <span class="ms-1"><?= number_format($p['avgRating'], 2); ?></span>
+                                                    </td>
+                                                </tr>
+                                            <?php } ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php } ?>
+                        </div>
+                        <div class="col-12 col-lg-4">
+                            <h4>Top 10 Co-Hosts</h4>
+                            <?php if (count($topCoHosts) === 0) { ?>
+                                <p>No co-hosts yet.</p>
+                            <?php } else { ?>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Co-Host</th>
+                                                <th>Avg Participants</th>
+                                                <th>Unique Participants</th>
+                                                <th>Avg Host Rating</th>
+                                                <th>Avg Quest Rating</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($topCoHosts as $h) { ?>
+                                                <tr>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <?php if (!empty($h['avatar'])) { ?>
+                                                                <img src="<?= htmlspecialchars($h['avatar']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
+                                                            <?php } ?>
+                                                            <a href="<?= htmlspecialchars($h['url']); ?>" target="_blank"><?= htmlspecialchars($h['username']); ?></a>
+                                                        </div>
+                                                    </td>
+                                                    <td class="align-middle"><?= number_format($h['avgParticipants'], 1); ?></td>
+                                                    <td class="align-middle"><?= $h['uniqueParticipants']; ?></td>
+                                                    <td class="align-middle">
+                                                        <?= renderStarRating((int)round($h['avgHostRating'])); ?>
+                                                        <span class="ms-1"><?= number_format($h['avgHostRating'], 2); ?></span>
+                                                    </td>
+                                                    <td class="align-middle">
+                                                        <?= renderStarRating((int)round($h['avgQuestRating'])); ?>
+                                                        <span class="ms-1"><?= number_format($h['avgQuestRating'], 2); ?></span>
                                                     </td>
                                                 </tr>
                                             <?php } ?>
