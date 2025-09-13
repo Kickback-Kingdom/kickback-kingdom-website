@@ -1379,11 +1379,10 @@ class QuestController
     {
         $conn = Database::getConnection();
         $stmt = $conn->prepare(
-            "SELECT q.Id AS quest_id, q.name, q.end_date, q.imagePath_icon, q.imagePath, \
-                    qa.host_rating, qa.quest_rating, qa.feedback\n" .
-            "FROM quest_applicants qa\n" .
-            "JOIN v_quest_info q ON qa.quest_id = q.Id\n" .
-            "WHERE (q.host_id = ? OR q.host_id_2 = ?) AND qa.host_rating IS NOT NULL\n" .
+            "SELECT q.Id AS quest_id, q.name, q.end_date, q.imagePath_icon, q.imagePath, qa.host_rating, qa.quest_rating, qa.feedback " .
+            "FROM quest_applicants qa " .
+            "JOIN v_quest_info q ON qa.quest_id = q.Id " .
+            "WHERE (q.host_id = ? OR q.host_id_2 = ?) AND qa.host_rating IS NOT NULL " .
             "ORDER BY q.end_date DESC"
         );
         if ($stmt === false) {
