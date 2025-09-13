@@ -29,17 +29,9 @@ $reviewsResp = NotificationController::queryQuestReviewsByHostAsResponse($accoun
 $questReviewAverages = $reviewsResp->success ? $reviewsResp->data : [];
 
 $totalHostedQuests = count($futureQuests) + count($pastQuests);
+$questTitles = array_column($questReviewAverages, 'questTitle');
 $avgHostRatings = array_map('floatval', array_column($questReviewAverages, 'avgHostRating'));
 $avgQuestRatings = array_map('floatval', array_column($questReviewAverages, 'avgQuestRating'));
-
-// Build rating trend arrays sorted by quest end date
-$sortedReviews = $questReviewAverages;
-usort($sortedReviews, function ($a, $b) {
-    return strcmp($a['endDate'] ?? '', $b['endDate'] ?? '');
-});
-$ratingDates = array_column($sortedReviews, 'endDate');
-$hostRatingTrend = array_map('floatval', array_column($sortedReviews, 'avgHostRating'));
-$questRatingTrend = array_map('floatval', array_column($sortedReviews, 'avgQuestRating'));
 
 $participantDates = [];
 $participantCounts = [];
@@ -206,9 +198,9 @@ function renderStarRating(int $rating): string
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
 <script>
-const ratingDates = <?= json_encode($ratingDates); ?>;
-const hostRatingTrend = <?= json_encode($hostRatingTrend); ?>;
-const questRatingTrend = <?= json_encode($questRatingTrend); ?>;
+const questTitles = <?= json_encode($questTitles); ?>;
+const avgHostRatings = <?= json_encode($avgHostRatings); ?>;
+const avgQuestRatings = <?= json_encode($avgQuestRatings); ?>;
 const participantDates = <?= json_encode($participantDates); ?>;
 const participantCounts = <?= json_encode($participantCounts); ?>;
 const participantQuestTitles = <?= json_encode($participantQuestTitles); ?>;
@@ -221,38 +213,24 @@ $(document).ready(function () {
 
     var reviewCtx = document.getElementById('reviewChart').getContext('2d');
     new Chart(reviewCtx, {
-        type: 'line',
+        type: 'bar',
         data: {
-            labels: ratingDates,
+            labels: questTitles,
             datasets: [
                 {
                     label: 'Avg Host Rating',
-                    data: hostRatingTrend,
-                    fill: false,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    tension: 0.1
+                    data: avgHostRatings,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)'
                 },
                 {
                     label: 'Avg Quest Rating',
-                    data: questRatingTrend,
-                    fill: false,
-                    borderColor: 'rgba(153, 102, 255, 1)',
-                    tension: 0.1
+                    data: avgQuestRatings,
+                    backgroundColor: 'rgba(153, 102, 255, 0.6)'
                 }
             ]
         },
         options: {
             scales: {
-                xAxes: [{
-                    type: 'time',
-                    time: {
-                        parser: 'YYYY-MM-DD',
-                        unit: 'day',
-                        displayFormats: {
-                            day: 'MMM D'
-                        }
-                    }
-                }],
                 yAxes: [{
                     ticks: {
                         beginAtZero: true,
