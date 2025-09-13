@@ -177,6 +177,16 @@ function generatePromoteQuestSuggestion(array $quest): string
     return implode(' ', $parts);
 }
 
+function generateCoHostSuggestion(array $candidate): string
+{
+    $parts = [];
+    $parts[] = $candidate['username'] . ' has joined you on ' . $candidate['count'] . ' quest' . ($candidate['count'] === 1 ? '' : 's') . ',';
+    $parts[] = 'earning an average rating of ' . number_format($candidate['avgRating'], 1) . '/5 from your hosting.';
+    $parts[] = 'They\'ve adventured alongside ' . $candidate['friends'] . ' other player' . ($candidate['friends'] === 1 ? '' : 's') . ', expanding your reach.';
+    $parts[] = 'Consider inviting them to co-host your next quest.';
+    return implode(' ', $parts);
+}
+
 if (!Session::isQuestGiver()) {
     Session::redirect("index.php");
 }
@@ -332,6 +342,27 @@ foreach ($participantTotals as $crand => $count) {
         break;
     }
 }
+$coHostCandidate = null;
+$highestCoHostScore = -1;
+foreach ($topParticipants as &$p) {
+    $friendSet = [];
+    foreach ($perQuestParticipantIds as $ids) {
+        if (in_array($p['id'], $ids, true)) {
+            foreach ($ids as $id) {
+                if ($id !== $p['id']) {
+                    $friendSet[$id] = true;
+                }
+            }
+        }
+    }
+    $p['friends'] = count($friendSet);
+    $p['score'] = ($p['avgRating'] * 2) + $p['count'] + $p['friends'];
+    if ($p['score'] > $highestCoHostScore) {
+        $highestCoHostScore = $p['score'];
+        $coHostCandidate = $p;
+    }
+}
+unset($p);
 
 $topParticipantIds = array_map(fn($p) => $p['id'], $topParticipants);
 $fanFavoriteQuest = null;
@@ -707,7 +738,7 @@ function renderStarRating(int $rating): string
                 </div>
                 <div class="tab-pane fade" id="nav-suggestions" role="tabpanel" aria-labelledby="nav-suggestions-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Suggestions</div>
-                    <?php if ($recommendedQuest || $underperformingQuest || $dormantQuest || $fanFavoriteQuest || $hiddenGemQuest) { ?>
+                    <?php if ($recommendedQuest || $underperformingQuest || $dormantQuest || $fanFavoriteQuest || $hiddenGemQuest || $coHostCandidate) { ?>
                         <?php if ($dormantQuest) { ?>
                             <div class="card mb-3">
                                 <div class="card-body">
@@ -791,6 +822,27 @@ function renderStarRating(int $rating): string
                                     </div>
                                     <p class="card-text mb-2"><?= generatePromoteQuestSuggestion($hiddenGemQuest); ?></p>
                                     <button class="btn btn-sm btn-outline-primary view-reviews-btn mt-2" data-quest-id="<?= $hiddenGemQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($hiddenGemQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($hiddenGemQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
+                                </div>
+                            </div>
+                        <?php } ?>
+                        <?php if ($coHostCandidate) { ?>
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <?php if (!empty($coHostCandidate['avatar'])) { ?>
+                                            <img src="<?= htmlspecialchars($coHostCandidate['avatar']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
+                                        <?php } ?>
+                                        <div>
+                                            <h5 class="card-title mb-1">Invite a co-host</h5>
+                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars($coHostCandidate['url']); ?>" target="_blank"><?= htmlspecialchars($coHostCandidate['username']); ?></a></p>
+                                            <p class="card-text mb-0">
+                                                Joined <?= $coHostCandidate['count']; ?> quest<?= $coHostCandidate['count'] === 1 ? '' : 's'; ?>
+                                                &middot; <?= renderStarRating((int)round($coHostCandidate['avgRating'])); ?><span class="ms-1"><?= number_format($coHostCandidate['avgRating'], 1); ?></span>
+                                                &middot; Adventured with <?= $coHostCandidate['friends']; ?> other player<?= $coHostCandidate['friends'] === 1 ? '' : 's'; ?>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <p class="card-text mb-2"><?= generateCoHostSuggestion($coHostCandidate); ?></p>
                                 </div>
                             </div>
                         <?php } ?>
