@@ -547,7 +547,7 @@ function renderStarRating(int $rating): string
                                         <?php } ?>
                                         <div>
                                             <h5 class="card-title mb-1">Bring this quest back</h5>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $dormantQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($dormantQuest['title']); ?></a> last ran <?= htmlspecialchars($dormantQuest['endDate']->formattedBasic); ?> with <?= $dormantQuest['registered']; ?> registrations and <?= $dormantQuest['participants']; ?> participants.</p>
+                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $dormantQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($dormantQuest['title']); ?></a> last ran <?= htmlspecialchars($dormantQuest['endDate']->formattedBasic); ?></p>
                         <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating((int)round($dormantQuest['avgQuestRating'])); ?><span class="ms-1"><?= number_format($dormantQuest['avgQuestRating'], 1); ?></span>
                                                 &middot; Host Rating: <?= renderStarRating((int)round($dormantQuest['avgHostRating'])); ?><span class="ms-1"><?= number_format($dormantQuest['avgHostRating'], 1); ?></span>
@@ -570,7 +570,7 @@ function renderStarRating(int $rating): string
                                         <?php } ?>
                                         <div>
                                             <h5 class="card-title mb-1">Create a sequel</h5>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $fanFavoriteQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($fanFavoriteQuest['title']); ?></a> last ran <?= htmlspecialchars($fanFavoriteQuest['endDate']->formattedBasic); ?> with <?= $fanFavoriteQuest['registered']; ?> registrations and <?= $fanFavoriteQuest['participants']; ?> participants.</p>
+                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $fanFavoriteQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($fanFavoriteQuest['title']); ?></a> last ran <?= htmlspecialchars($fanFavoriteQuest['endDate']->formattedBasic); ?></p>
                                             <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating((int)round($fanFavoriteQuest['avgQuestRating'])); ?><span class="ms-1"><?= number_format($fanFavoriteQuest['avgQuestRating'], 1); ?></span>
                                                 &middot; Host Rating: <?= renderStarRating((int)round($fanFavoriteQuest['avgHostRating'])); ?><span class="ms-1"><?= number_format($fanFavoriteQuest['avgHostRating'], 1); ?></span>
@@ -591,7 +591,7 @@ function renderStarRating(int $rating): string
                                         <?php } ?>
                                         <div>
                                             <h5 class="card-title mb-1">Create a similar quest</h5>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $recommendedQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($recommendedQuest['title']); ?></a> last ran <?= htmlspecialchars($recommendedQuest['endDate']->formattedBasic); ?> with <?= $recommendedQuest['registered']; ?> registrations and <?= $recommendedQuest['unique']; ?> participants including <?= $recommendedQuest['loyal']; ?> loyal adventurers.</p>
+                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $recommendedQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($recommendedQuest['title']); ?></a> last ran <?= htmlspecialchars($recommendedQuest['endDate']->formattedBasic); ?></p>
                                             <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating((int)round($recommendedQuest['avgQuestRating'])); ?><span class="ms-1"><?= number_format($recommendedQuest['avgQuestRating'], 1); ?></span>
                                                 &middot; Host Rating: <?= renderStarRating((int)round($recommendedQuest['avgHostRating'])); ?><span class="ms-1"><?= number_format($recommendedQuest['avgHostRating'], 1); ?></span>
@@ -612,7 +612,7 @@ function renderStarRating(int $rating): string
                                         <?php } ?>
                                         <div>
                                             <h5 class="card-title mb-1">Improve this quest</h5>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $underperformingQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($underperformingQuest['title']); ?></a> last ran <?= htmlspecialchars($underperformingQuest['endDate']->formattedBasic); ?> with <?= $underperformingQuest['registered']; ?> registrations and <?= $underperformingQuest['participants']; ?> participants.</p>
+                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $underperformingQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($underperformingQuest['title']); ?></a> last ran <?= htmlspecialchars($underperformingQuest['endDate']->formattedBasic); ?></p>
                                             <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating((int)round($underperformingQuest['avgQuestRating'])); ?><span class="ms-1"><?= number_format($underperformingQuest['avgQuestRating'], 1); ?></span>
                                                 &middot; Host Rating: <?= renderStarRating((int)round($underperformingQuest['avgHostRating'])); ?><span class="ms-1"><?= number_format($underperformingQuest['avgHostRating'], 1); ?></span>
