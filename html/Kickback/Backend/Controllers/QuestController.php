@@ -1702,5 +1702,51 @@ class QuestController
         return $byQuest;
     }
 
+    public static function queryHostStatsForAccounts(array $accountIds): array
+    {
+        if (empty($accountIds)) {
+            return [];
+        }
+
+        $conn = Database::getConnection();
+        $placeholders = implode(',', array_fill(0, count($accountIds), '?'));
+        $sql = "SELECT h.host_id AS host_id, COUNT(DISTINCT h.quest_id) AS questsHosted, " .
+            "AVG(qa.host_rating) AS avgHostRating, AVG(qa.quest_rating) AS avgQuestRating " .
+            "FROM (" .
+            "  SELECT q.Id AS quest_id, q.host_id AS host_id FROM v_quest_info q WHERE q.published = 1 AND q.host_id IN ($placeholders) " .
+            "  UNION ALL " .
+            "  SELECT q.Id AS quest_id, q.host_id_2 AS host_id FROM v_quest_info q WHERE q.published = 1 AND q.host_id_2 IN ($placeholders) " .
+            ") h " .
+            "LEFT JOIN quest_applicants qa ON qa.quest_id = h.quest_id " .
+            "GROUP BY h.host_id";
+
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return [];
+        }
+
+        $params = array_merge($accountIds, $accountIds);
+        $types = str_repeat('i', count($params));
+        // @phpstan-ignore-next-line
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result === false) {
+            return [];
+        }
+
+        $stats = [];
+        while ($row = $result->fetch_assoc()) {
+            $hostId = (int)$row['host_id'];
+            $stats[$hostId] = [
+                'questsHosted' => (int)$row['questsHosted'],
+                'avgHostRating' => isset($row['avgHostRating']) ? (float)$row['avgHostRating'] : 0.0,
+                'avgQuestRating' => isset($row['avgQuestRating']) ? (float)$row['avgQuestRating'] : 0.0,
+            ];
+        }
+
+        return $stats;
+    }
+
 }
 ?>
