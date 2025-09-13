@@ -1120,6 +1120,8 @@ animation: confetti-fast 1.25s linear 1 forwards;
     height: 120px;
     vertical-align: top;
     padding: 0.25rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .calendar-today {
@@ -1129,4 +1131,6 @@ animation: confetti-fast 1.25s linear 1 forwards;
 .calendar-event-pill {
     font-size: 0.75rem;
     cursor: pointer;
+    display: inline-block;
+    padding: 0.125rem 0.25rem;
 }
