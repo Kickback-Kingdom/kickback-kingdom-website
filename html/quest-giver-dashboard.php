@@ -1046,6 +1046,10 @@ function renderStarRating(float $rating): string
                         <table id="scheduleCalendar" class="table table-sm table-bordered mb-0"></table>
                     </div>
                     <small class="text-muted">Cell colors indicate relative participation.</small>
+                    <div class="card card-body mt-3">
+                        <h5 class="mb-3">Average Participation by Weekday</h5>
+                        <canvas id="weekdayAveragesChart"></canvas>
+                    </div>
                 </div>
                 <div class="tab-pane fade" id="nav-top" role="tabpanel" aria-labelledby="nav-top-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Top Quests & Participants</div>
@@ -1285,6 +1289,7 @@ $(document).ready(function () {
     const sessionToken = "<?= $_SESSION['sessionToken']; ?>";
 
     let participationCounts = {};
+    let weekdayChart;
     let calMonth = (new Date()).getMonth();
     let calYear = (new Date()).getFullYear();
 
@@ -1328,10 +1333,40 @@ $(document).ready(function () {
         });
     }
 
+    function loadWeekdayAverages() {
+        $.post('/api/v1/quest/participationAveragesByWeekday.php', { sessionToken: sessionToken }, function(resp) {
+            if (resp.success) {
+                const labels = resp.data.map(function(r) { return r.weekday; });
+                const data = resp.data.map(function(r) { return r.avgParticipants; });
+                const ctx = document.getElementById('weekdayAveragesChart').getContext('2d');
+                if (weekdayChart) { weekdayChart.destroy(); }
+                weekdayChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Avg Participants',
+                            data: data,
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: { beginAtZero: true, precision: 0 }
+                            }]
+                        }
+                    }
+                });
+            }
+        });
+    }
+
     $('#scheduleNext').on('click', function() { if (calMonth === 11) { calMonth = 0; calYear++; } else { calMonth++; } renderScheduleCalendar(); });
     $('#schedulePrev').on('click', function() { if (calMonth === 0) { calMonth = 11; calYear--; } else { calMonth--; } renderScheduleCalendar(); });
 
     loadParticipationByDate();
+    loadWeekdayAverages();
 
     $('#datatable-reviews').DataTable({
         pageLength: 10,
