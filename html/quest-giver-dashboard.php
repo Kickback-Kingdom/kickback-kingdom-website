@@ -28,6 +28,17 @@ $pastQuests = $pastResp->success ? $pastResp->data : [];
 $reviewsResp = NotificationController::queryQuestReviewsByHostAsResponse($account);
 $questReviews = $reviewsResp->success ? $reviewsResp->data : [];
 
+$totalHostedQuests = count($futureQuests) + count($pastQuests);
+$reviewCount = count($questReviews);
+$hostRatingSum = 0;
+$questRatingSum = 0;
+foreach ($questReviews as $qr) {
+    $hostRatingSum += $qr['review']->hostRating;
+    $questRatingSum += $qr['review']->questRating;
+}
+$avgHostRating = $reviewCount > 0 ? $hostRatingSum / $reviewCount : 0;
+$avgQuestRating = $reviewCount > 0 ? $questRatingSum / $reviewCount : 0;
+
 function renderStarRating(int $rating): string
 {
     $stars = '<div class="star-rating" style="pointer-events: none;">';
@@ -48,6 +59,34 @@ function renderStarRating(int $rating): string
 ?>
 <main class="container pt-3 bg-body" style="margin-bottom: 56px;">
     <h2>Quest Giver Dashboard</h2>
+    <div class="row text-center g-3 mt-3 mb-3">
+        <div class="col-12 col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <small>Total Quests Hosted</small>
+                    <h3 class="mb-0"><?= $totalHostedQuests; ?></h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <small>Average Host Rating</small>
+                    <?= renderStarRating((int)round($avgHostRating)); ?>
+                    <div><?= number_format($avgHostRating, 2); ?>/5</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <small>Average Quest Rating</small>
+                    <?= renderStarRating((int)round($avgQuestRating)); ?>
+                    <div><?= number_format($avgQuestRating, 2); ?>/5</div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row mt-3">
         <div class="col-12">
             <nav>
@@ -80,30 +119,77 @@ function renderStarRating(int $rating): string
                     <div class="display-6 tab-pane-title">Quest Reviews</div>
                     <?php if (count($questReviews) === 0) { ?>
                         <p>No quest reviews yet.</p>
-                    <?php } else { foreach ($questReviews as $qr) { ?>
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h5 class="card-title"><a href="/q/<?= $qr['quest']->locator; ?>"><?= htmlspecialchars($qr['quest']->title); ?></a></h5>
-                                <p class="card-text">From <a href="/u/<?= $qr['review']->fromAccount->username; ?>"><?= htmlspecialchars($qr['review']->fromAccount->username); ?></a> on <?= $qr['review']->dateTime->formattedBasic; ?></p>
-                                <div class="row mb-2">
-                                    <div class="col-6">
-                                        <small>Host Rating</small>
-                                        <?= renderStarRating($qr['review']->hostRating); ?>
-                                    </div>
-                                    <div class="col-6">
-                                        <small>Quest Rating</small>
-                                        <?= renderStarRating($qr['review']->questRating); ?>
-                                    </div>
-                                </div>
-                                <p class="card-text"><?= htmlspecialchars($qr['review']->message); ?></p>
-                            </div>
+                    <?php } else { ?>
+                        <div class="table-responsive">
+                            <table id="datatable-reviews" class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Quest</th>
+                                        <th>From</th>
+                                        <th>Date</th>
+                                        <th>Host Rating</th>
+                                        <th>Quest Rating</th>
+                                        <th>Comment</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($questReviews as $qr) {
+                                        $comment = trim($qr['review']->message);
+                                    ?>
+                                        <tr>
+                                            <td><a href="/q/<?= $qr['quest']->locator; ?>"><?= htmlspecialchars($qr['quest']->title); ?></a></td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img src="<?= htmlspecialchars($qr['review']->fromAccount->profilePictureURL()); ?>"
+                                                        alt="<?= htmlspecialchars($qr['review']->fromAccount->username); ?>"
+                                                        class="me-2"
+                                                        style="width: 40px; height: 40px;">
+                                                    <?= $qr['review']->fromAccount->getAccountElement(); ?>
+                                                </div>
+                                            </td>
+                                            <td><span class="date"><?= $qr['review']->dateTime->formattedBasic; ?></span></td>
+                                            <td><?= renderStarRating($qr['review']->hostRating); ?></td>
+                                            <td><?= renderStarRating($qr['review']->questRating); ?></td>
+                                            <td>
+                                                <?php if ($comment !== '') { ?>
+                                                    <button class="btn btn-primary btn-sm toggle-comment" data-comment="<?= htmlspecialchars($comment, ENT_QUOTES); ?>">View Comment</button>
+                                                <?php } else { ?>
+                                                    <span class="text-muted">No Comment</span>
+                                                <?php } ?>
+                                            </td>
+                                        </tr>
+                                    <?php } ?>
+                                </tbody>
+                            </table>
                         </div>
-                    <?php }} ?>
+                    <?php } ?>
                 </div>
             </div>
         </div>
     </div>
+    <?php require("php-components/base-page-footer.php"); ?>
 </main>
 <?php require("php-components/base-page-javascript.php"); ?>
+<script>
+$(document).ready(function () {
+    var reviewTable = $('#datatable-reviews').DataTable({
+        pageLength: 5,
+        lengthChange: false
+    });
+
+    $('#datatable-reviews tbody').on('click', '.toggle-comment', function () {
+        var tr = $(this).closest('tr');
+        var row = reviewTable.row(tr);
+        if (row.child.isShown()) {
+            row.child.hide();
+            tr.removeClass('shown');
+        } else {
+            var comment = $(this).attr('data-comment');
+            row.child('<div class="p-3">'+comment+'</div>').show();
+            tr.addClass('shown');
+        }
+    });
+});
+</script>
 </body>
 </html>
