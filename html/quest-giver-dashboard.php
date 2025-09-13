@@ -1050,7 +1050,7 @@ function renderStarRating(float $rating): string
                         <span class="badge bg-warning ms-2 me-1">&nbsp;</span>Moderate
                         <span class="badge bg-danger ms-2 me-1">&nbsp;</span>Low
                         <span class="badge bg-secondary ms-2 me-1">&nbsp;</span>Conflicts
-                        <span class="ms-2">Numbers show participants per day.</span>
+                        <span class="ms-2">Numbers show participants per day. Hover for details and conflicts.</span>
                     </div>
                     <div class="card card-body mt-3">
                         <h5 class="mb-3">Suggested Next Quest Dates</h5>
@@ -1325,15 +1325,19 @@ $(document).ready(function () {
                 else if (ratio > 0.33) { cls = 'bg-warning'; }
                 else { cls = 'bg-danger text-white'; }
             }
+            const tooltipLines = [`Participants: ${count}`];
             let tooltip = '';
             if (conflicts.length > 0) {
                 cls = 'bg-secondary text-muted';
-                const title = conflicts.map(c => c.title || c).join('<br>');
-                tooltip = `data-bs-toggle="tooltip" data-bs-html="true" title="${title.replace(/"/g, '&quot;')}"`;
+                const title = conflicts.map(c => c.title || c).join(', ');
+                tooltipLines.push(`Conflicts: ${title}`);
             } else {
                 cls += ' border border-success border-2';
             }
-            body += `<td class="${cls}" ${tooltip}><div>${date.getDate()}</div>${count ? `<small>${count}</small>` : ''}</td>`;
+            if (tooltipLines.length) {
+                tooltip = `data-bs-toggle="tooltip" data-bs-html="true" title="${tooltipLines.join('<br>').replace(/"/g, '&quot;')}"`;
+            }
+            body += `<td class="${cls}" ${tooltip}><div>${date.getDate()}</div>${count ? `<small>${count} participants</small>` : ''}</td>`;
             if (date.getDay() === 6) { body += '</tr><tr>'; }
             date.setDate(date.getDate()+1);
         }
