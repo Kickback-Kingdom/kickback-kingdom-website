@@ -762,6 +762,7 @@ function renderStarRating(float $rating): string
                     <button class="nav-link" id="nav-reviews-tab" data-bs-toggle="tab" data-bs-target="#nav-reviews" type="button" role="tab" aria-controls="nav-reviews" aria-selected="false"><i class="fa-solid fa-star"></i></button>
                     <button class="nav-link" id="nav-graphs-tab" data-bs-toggle="tab" data-bs-target="#nav-graphs" type="button" role="tab" aria-controls="nav-graphs" aria-selected="false"><i class="fa-solid fa-chart-line"></i></button>
                     <button class="nav-link" id="nav-suggestions-tab" data-bs-toggle="tab" data-bs-target="#nav-suggestions" type="button" role="tab" aria-controls="nav-suggestions" aria-selected="false"><i class="fa-solid fa-lightbulb"></i></button>
+                    <button class="nav-link" id="nav-schedule-tab" data-bs-toggle="tab" data-bs-target="#nav-schedule" type="button" role="tab" aria-controls="nav-schedule" aria-selected="false"><i class="fa-solid fa-calendar-days"></i></button>
                     <button class="nav-link" id="nav-top-tab" data-bs-toggle="tab" data-bs-target="#nav-top" type="button" role="tab" aria-controls="nav-top" aria-selected="false"><i class="fa-solid fa-trophy"></i></button>
                 </div>
             </nav>
@@ -965,6 +966,7 @@ function renderStarRating(float $rating): string
                             <div class="card mb-3">
                                 <div class="card-body">
                                     <h5 class="card-title mb-3">Invite a co-host</h5>
+                                    <p class="card-text mb-3">Partner with reliable players to manage larger quests and reach new audiences.</p>
                                     <div class="table-responsive">
                                         <table class="table table-striped mb-0">
                                             <thead>
@@ -1031,6 +1033,10 @@ function renderStarRating(float $rating): string
                     <?php } else { ?>
                         <p>No suggestions found. Keep hosting adventures!</p>
                     <?php } ?>
+                </div>
+                <div class="tab-pane fade" id="nav-schedule" role="tabpanel" aria-labelledby="nav-schedule-tab" tabindex="0">
+                    <div class="display-6 tab-pane-title">Schedule Planning</div>
+                    <p>Review past quest performance to discover the best days and times for hosting. Plan future quests when participation has historically been highest.</p>
                 </div>
                 <div class="tab-pane fade" id="nav-top" role="tabpanel" aria-labelledby="nav-top-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Top Quests & Participants</div>
