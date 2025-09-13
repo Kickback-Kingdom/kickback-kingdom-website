@@ -163,7 +163,7 @@ function renderStarRating(int $rating): string
                                             </td>
                                             <?php $qd = new vDateTime($qr->questEndDate); ?>
                                             <td data-order="<?= htmlspecialchars($qd->dbValue); ?>">
-                                                <div class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($qd->formattedDetailed); ?> UTC" data-datetime-utc="<?= htmlspecialchars($qd->valueString); ?>" data-db-value="<?= htmlspecialchars($qd->dbValue); ?>"><?= htmlspecialchars($qd->formattedBasic); ?></div>
+                                                <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($qd->formattedDetailed); ?> UTC" data-datetime-utc="<?= htmlspecialchars($qd->valueString); ?>" data-db-value="<?= htmlspecialchars($qd->dbValue); ?>"><?= htmlspecialchars($qd->formattedBasic); ?></span>
                                             </td>
                                             <td data-order="<?= $qr->avgHostRating; ?>" class="align-middle">
                                                 <?= renderStarRating((int)round($qr->avgHostRating)); ?><span class="ms-1"><?= number_format($qr->avgHostRating, 2); ?></span>
