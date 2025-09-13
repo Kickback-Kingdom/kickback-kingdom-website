@@ -21,35 +21,106 @@ const WEIGHT_LOYALTY = 0.3;
 function describeRating(float $rating): string
 {
     if ($rating >= 4.5) {
-        return 'excellent';
+        $phrases = ['excellent', 'outstanding', 'stellar'];
+    } elseif ($rating >= 4.0) {
+        $phrases = ['strong', 'solid', 'favorable'];
+    } elseif ($rating >= 3.0) {
+        $phrases = ['moderate', 'mixed', 'average'];
+    } else {
+        $phrases = ['low', 'weak', 'subpar'];
     }
-    if ($rating >= 4.0) {
-        return 'strong';
-    }
-    if ($rating >= 3.0) {
-        return 'moderate';
-    }
-    return 'low';
+    return $phrases[array_rand($phrases)];
 }
 
-function followupPrompt(float $questRating, float $hostRating): string
-{
+function followupPrompt(
+    float $questRating,
+    float $hostRating,
+    int $registered,
+    int $unique,
+    int $loyal
+): string {
+    $messages = [];
+
+    // Overall rating blend
     if ($questRating >= 4.5 && $hostRating >= 4.5) {
-        return 'Players loved both the quest and your hosting—consider a celebratory sequel or special event to capitalize on the enthusiasm.';
+        $options = [
+            'Players raved about every aspect—this adventure could become a flagship event.',
+            'Quest and hosting alike earned top marks; a celebratory sequel might be in order.'
+        ];
+    } elseif ($questRating >= 4.5) {
+        $options = [
+            'The quest design dazzled adventurers; polish your hosting to match the concept.',
+            'Players loved the adventure itself—refining delivery could push it into legend status.'
+        ];
+    } elseif ($hostRating >= 4.5) {
+        $options = [
+            'Your hosting carried the run even as the quest mechanics drew mixed reactions.',
+            'Guiding players is your strength; revisit the quest structure to align with your talent.'
+        ];
+    } elseif ($questRating >= 4.0 && $hostRating >= 4.0) {
+        $options = [
+            'Feedback is favorable across the board—consider scheduling a follow-up while interest is high.',
+            'Both design and hosting resonated; a seasonal return could keep momentum going.'
+        ];
+    } elseif ($questRating >= 3.0 && $hostRating >= 3.0) {
+        $options = [
+            'Reviews were mixed, suggesting targeted tweaks could boost future runs.',
+            'Some players were engaged while others hesitated—use detailed comments to refine pacing.'
+        ];
+    } else {
+        $options = [
+            'Results highlight pain points in design or delivery—consider a significant overhaul before revisiting.',
+            'Ratings were low overall; a fresh approach may serve better than a direct sequel.'
+        ];
     }
-    if ($questRating >= 4.0 && $hostRating >= 4.0) {
-        return 'Strong feedback across the board—build on this momentum with a follow-up adventure.';
+    $messages[] = $options[array_rand($options)];
+
+    // Participation rate commentary
+    if ($registered > 0) {
+        $rate = $unique / $registered;
+        if ($rate >= 0.9) {
+            $options = [
+                'Turnout was exceptional, showing strong commitment from registrants.',
+                'Nearly everyone who signed up joined the adventure—engagement is high.'
+            ];
+        } elseif ($rate >= 0.5) {
+            $options = [
+                'Participation was solid; consider nudging undecided registrants next time.',
+                'About half of sign-ups became participants—there\'s room to convert more.'
+            ];
+        } else {
+            $options = [
+                'Few registrants took part—review timing or messaging to boost attendance.',
+                'A low conversion from sign-ups to players suggests barriers to entry.'
+            ];
+        }
+        $messages[] = $options[array_rand($options)];
     }
-    if ($questRating >= 4.0 && $hostRating < 4.0) {
-        return 'The quest resonated with players, but hosting feedback suggests room for improvement. Review comments on pacing and clarity before planning a sequel.';
+
+    // Loyalty commentary
+    if ($loyal > 0) {
+        $options = [
+            "{$loyal} repeat players returned, so rewarding that loyalty could pay off.",
+            "With {$loyal} familiar faces coming back, a sequel might deepen community ties.",
+            "{$loyal} loyal adventurers showed up again—recognize them to keep them engaged."
+        ];
+    } else {
+        $options = [
+            'No repeat players joined—consider incentives to build long-term interest.',
+            'This run drew only first-timers; think about ways to encourage returns.'
+        ];
     }
-    if ($questRating < 4.0 && $hostRating >= 4.0) {
-        return 'Your hosting was praised even though the quest design received mixed reviews. Consider iterating on the mechanics or narrative to elevate future runs.';
-    }
-    if ($questRating >= 3.0 && $hostRating >= 3.0) {
-        return 'Feedback is mixed—use player comments to refine balance, narrative, and reward structure before offering another chapter.';
-    }
-    return 'Ratings indicate several pain points. Study detailed feedback and iterate significantly before returning to this concept.';
+    $messages[] = $options[array_rand($options)];
+
+    // Closing remark
+    $options = [
+        'Let these insights guide your next quest.',
+        'Use these details to shape future adventures.',
+        'Carry these takeaways into your upcoming runs.'
+    ];
+    $messages[] = $options[array_rand($options)];
+
+    return implode(' ', $messages);
 }
 
 if (!Session::isQuestGiver()) {
@@ -161,7 +232,13 @@ if (!empty($perPastQuestParticipantStats)) {
     ];
     $recommendedQuest['questRatingDesc'] = describeRating($recommendedQuest['avgQuestRating']);
     $recommendedQuest['hostRatingDesc'] = describeRating($recommendedQuest['avgHostRating']);
-    $recommendedQuest['followupPrompt'] = followupPrompt($recommendedQuest['avgQuestRating'], $recommendedQuest['avgHostRating']);
+    $recommendedQuest['followupPrompt'] = followupPrompt(
+        $recommendedQuest['avgQuestRating'],
+        $recommendedQuest['avgHostRating'],
+        $recommendedQuest['registered'],
+        $recommendedQuest['unique'],
+        $recommendedQuest['loyal']
+    );
 }
 
 $pastQuestIds = array_map(fn($q) => $q->crand, $pastQuests);
