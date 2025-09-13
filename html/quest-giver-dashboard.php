@@ -1037,6 +1037,15 @@ function renderStarRating(float $rating): string
                 <div class="tab-pane fade" id="nav-schedule" role="tabpanel" aria-labelledby="nav-schedule-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Schedule Planning</div>
                     <p>Review past quest performance to discover the best days and times for hosting. Plan future quests when participation has historically been highest.</p>
+                    <div class="card card-body">
+                        <h5>
+                            <span id="scheduleCalendarMonth"></span>
+                            <button class="btn btn-sm btn-outline-secondary float-end ms-2" id="scheduleNext">Next</button>
+                            <button class="btn btn-sm btn-outline-secondary float-end" id="schedulePrev">Previous</button>
+                        </h5>
+                        <table id="scheduleCalendar" class="table table-sm table-bordered mb-0"></table>
+                    </div>
+                    <small class="text-muted">Cell colors indicate relative participation.</small>
                 </div>
                 <div class="tab-pane fade" id="nav-top" role="tabpanel" aria-labelledby="nav-top-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Top Quests & Participants</div>
@@ -1274,6 +1283,55 @@ function renderStarRatingJs(rating) {
 
 $(document).ready(function () {
     const sessionToken = "<?= $_SESSION['sessionToken']; ?>";
+
+    let participationCounts = {};
+    let calMonth = (new Date()).getMonth();
+    let calYear = (new Date()).getFullYear();
+
+    function renderScheduleCalendar() {
+        const first = new Date(calYear, calMonth, 1);
+        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        let header = '<thead><tr>' + days.map(d => `<th>${d}</th>`).join('') + '</tr></thead>';
+        const values = Object.values(participationCounts);
+        const max = values.length ? Math.max(...values) : 0;
+        let body = '<tbody><tr>';
+        for (let i = 0; i < first.getDay(); i++) { body += '<td></td>'; }
+        let date = new Date(first);
+        while (date.getMonth() === calMonth) {
+            const dStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+            const count = participationCounts[dStr] || 0;
+            let cls = '';
+            if (count > 0 && max > 0) {
+                const ratio = count / max;
+                if (ratio > 0.66) { cls = 'bg-success text-white'; }
+                else if (ratio > 0.33) { cls = 'bg-warning'; }
+                else { cls = 'bg-danger text-white'; }
+            }
+            body += `<td class="${cls}"><div>${date.getDate()}</div>${count ? `<small>${count}</small>` : ''}</td>`;
+            if (date.getDay() === 6) { body += '</tr><tr>'; }
+            date.setDate(date.getDate()+1);
+        }
+        const lastDay = new Date(calYear, calMonth + 1, 0);
+        for (let i = lastDay.getDay(); i < 6; i++) { body += '<td></td>'; }
+        body += '</tr></tbody>';
+        $('#scheduleCalendarMonth').text(first.toLocaleString('default', { month: 'long', year: 'numeric' }));
+        $('#scheduleCalendar').html(header + body);
+    }
+
+    function loadParticipationByDate() {
+        $.post('/api/v1/quest/participationByDate.php', { sessionToken: sessionToken }, function(resp) {
+            if (resp.success) {
+                participationCounts = {};
+                resp.data.forEach(function(r) { participationCounts[r.date] = r.participants; });
+                renderScheduleCalendar();
+            }
+        });
+    }
+
+    $('#scheduleNext').on('click', function() { if (calMonth === 11) { calMonth = 0; calYear++; } else { calMonth++; } renderScheduleCalendar(); });
+    $('#schedulePrev').on('click', function() { if (calMonth === 0) { calMonth = 11; calYear--; } else { calMonth--; } renderScheduleCalendar(); });
+
+    loadParticipationByDate();
 
     $('#datatable-reviews').DataTable({
         pageLength: 10,

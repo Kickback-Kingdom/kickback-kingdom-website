@@ -1702,6 +1702,38 @@ class QuestController
         return $byQuest;
     }
 
+    public static function getParticipationByDate(vRecordId $hostId): Response
+    {
+        $conn = Database::getConnection();
+        $sql = "SELECT DATE(q.end_date) AS day, COUNT(*) AS participants "
+            . "FROM quest_applicants qa "
+            . "JOIN quest q ON qa.quest_id = q.Id "
+            . "WHERE qa.participated = 1 AND (q.host_id = ? OR q.host_id_2 = ?) "
+            . "GROUP BY DATE(q.end_date) ORDER BY day";
+
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare query", null);
+        }
+
+        $stmt->bind_param('ii', $hostId->crand, $hostId->crand);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result === false) {
+            return new Response(false, "Failed to execute query", null);
+        }
+
+        $counts = [];
+        while ($row = $result->fetch_assoc()) {
+            $counts[] = [
+                'date' => $row['day'],
+                'participants' => (int)$row['participants'],
+            ];
+        }
+
+        return new Response(true, "Participation counts loaded.", $counts);
+    }
+
     public static function queryHostStatsForAccounts(array $accountIds): array
     {
         if (empty($accountIds)) {
