@@ -1533,6 +1533,46 @@ class QuestController
         return new Response(true, "Quest review averages loaded.", $averages);
     }
 
+    public static function queryHostQuestHistoryAsResponse(vRecordId $hostId): Response
+    {
+        $conn = Database::getConnection();
+        $stmt = $conn->prepare(
+            "SELECT q.Id AS quest_id, q.name, q.locator, q.end_date, " .
+            "AVG(qa.host_rating) AS avg_host_rating, AVG(qa.quest_rating) AS avg_quest_rating, " .
+            "SUM(CASE WHEN qa.participated = 1 THEN 1 ELSE 0 END) AS participants " .
+            "FROM v_quest_info q " .
+            "LEFT JOIN quest_applicants qa ON qa.quest_id = q.Id " .
+            "WHERE (q.host_id = ? OR q.host_id_2 = ?) AND q.end_date < CURRENT_DATE " .
+            "GROUP BY q.Id, q.name, q.locator, q.end_date " .
+            "ORDER BY q.end_date DESC"
+        );
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare query", null);
+        }
+
+        $stmt->bind_param('ii', $hostId->crand, $hostId->crand);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result === false) {
+            return new Response(false, "Failed to execute query", null);
+        }
+
+        $quests = [];
+        while ($row = $result->fetch_assoc()) {
+            $quests[] = [
+                'questId' => (int)$row['quest_id'],
+                'questTitle' => $row['name'],
+                'questLocator' => $row['locator'],
+                'endDate' => $row['end_date'],
+                'participants' => (int)$row['participants'],
+                'avgHostRating' => isset($row['avg_host_rating']) ? (float)$row['avg_host_rating'] : null,
+                'avgQuestRating' => isset($row['avg_quest_rating']) ? (float)$row['avg_quest_rating'] : null,
+            ];
+        }
+
+        return new Response(true, "Quest history loaded.", $quests);
+    }
+
     /**
      * @param array<vQuestApplicant>|null $applicants
      * @deprecated Use queryQuestReviewDetailsForQuests() for bulk queries.

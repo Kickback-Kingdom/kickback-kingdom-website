@@ -64,14 +64,17 @@ $events = ScheduleController::getCalendarEvents($month, $year);
 <script>
     var month = <?php echo $month; ?>; // July
     var year = <?php echo $year; ?>;
+    var historyByDate = {};
+    var participantsByDate = {};
+    var avgByWeekday = {};
 
     function generateCalendar(month, year) {
       var date = new Date(year, month, 1);
-      var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
       var header = '<thead><tr>';
       for (var i = 0; i < days.length; i++) {
-        header += '<th>' + days[i] + '</th>';
+        header += '<th>' + days[i].substring(0,3) + '</th>';
       }
       header += '</tr></thead>';
 
@@ -80,7 +83,8 @@ $events = ScheduleController::getCalendarEvents($month, $year);
         body += '<tr>';
         for (var i = 0; i < 7; i++) {
           if (date.getDay() === i && date.getMonth() === month) {
-            body += '<td><span>' + date.getDate() + '</span><h6 style="" class="calendar-event text-bg-danger text-sm-center">RedCaps</h6></td>';
+            var dateStr = date.toISOString().split('T')[0];
+            body += `<td data-date="${dateStr}"><span>${date.getDate()}</span></td>`;
             date.setDate(date.getDate() + 1);
           } else {
             body += '<td></td>';
@@ -90,8 +94,9 @@ $events = ScheduleController::getCalendarEvents($month, $year);
       }
       body += '</tbody>';
 
-      document.getElementById('calendarPage').innerHTML = date.toLocaleString('default', { month: 'long' }) + ' ' + year;
+      document.getElementById('calendarPage').innerHTML = new Date(year, month).toLocaleString('default', { month: 'long' }) + ' ' + year;
       document.getElementById('calendar').innerHTML = header + body;
+      applyHistoryIcons();
     }
 
     function NextMonth()
@@ -139,9 +144,55 @@ $events = ScheduleController::getCalendarEvents($month, $year);
           container.textContent = 'Failed to load suggestions';
         });
     }
+    function loadPerformanceData() {
+      var fd = new FormData();
+      fd.append('sessionToken', sessionToken);
+      Promise.all([
+        fetch('/api/v1/quest/history.php', { method: 'POST', body: fd })
+          .then(r => r.json()),
+        fetch('/api/v1/quest/participationByDate.php', { method: 'POST', body: fd })
+          .then(r => r.json()),
+        fetch('/api/v1/quest/participationAveragesByWeekday.php', { method: 'POST', body: fd })
+          .then(r => r.json())
+      ]).then(([history, byDate, byWeekday]) => {
+        if (history.success) {
+          history.data.forEach(q => { historyByDate[q.endDate] = q; });
+        }
+        if (byDate.success) {
+          byDate.data.forEach(p => { participantsByDate[p.date] = p.participants; });
+        }
+        if (byWeekday.success) {
+          byWeekday.data.forEach(w => { avgByWeekday[w.weekday] = w.avgParticipants; });
+        }
+        applyHistoryIcons();
+      }).catch(() => {});
+    }
+
+    function applyHistoryIcons() {
+      var cells = document.querySelectorAll('#calendar td[data-date]');
+      cells.forEach(td => {
+        var d = td.getAttribute('data-date');
+        var quest = historyByDate[d];
+        var participants = participantsByDate[d];
+        if (quest && participants) {
+          var weekdayName = new Date(d).toLocaleDateString('en-US', { weekday: 'long' });
+          var avg = avgByWeekday[weekdayName] || 0;
+          if ((quest.avgQuestRating && quest.avgQuestRating >= 4) || participants >= avg) {
+            var icon = document.createElement('span');
+            icon.className = 'badge bg-success ms-1';
+            icon.innerHTML = '<i class="fa-solid fa-star"></i>';
+            icon.style.cursor = 'pointer';
+            icon.title = quest.questTitle + ' (' + participants + ' participants)';
+            icon.onclick = function() { window.location.href = '/quest.php?locator=' + quest.questLocator; };
+            td.appendChild(icon);
+          }
+        }
+      });
+    }
 
     generateCalendar(month, year);
     loadSuggestedDates();
+    loadPerformanceData();
   </script>
 </body>
 
