@@ -155,7 +155,7 @@ function renderStarRating(int $rating): string
                                                     <?= $qr['review']->fromAccount->getAccountElement(); ?>
                                                 </div>
                                             </td>
-                                            <td><span class="date"><?= $qr['review']->dateTime->formattedBasic; ?></span></td>
+                                             <td data-order="<?= $qr['review']->dateTime->value->getTimestamp(); ?>"><span class="date"><?= $qr['review']->dateTime->formattedBasic; ?></span></td>
                                             <td data-order="<?= $qr['review']->hostRating; ?>"><?= renderStarRating($qr['review']->hostRating); ?></td>
                                             <td data-order="<?= $qr['review']->questRating; ?>"><?= renderStarRating($qr['review']->questRating); ?></td>
                                             <td>
@@ -182,7 +182,8 @@ function renderStarRating(int $rating): string
 $(document).ready(function () {
     var reviewTable = $('#datatable-reviews').DataTable({
         pageLength: 5,
-        lengthChange: false
+        lengthChange: true,
+        order: [[2, 'desc']]
     });
 
     $('#datatable-reviews tbody').on('click', '.toggle-comment', function () {
