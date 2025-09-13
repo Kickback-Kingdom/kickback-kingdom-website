@@ -17,6 +17,7 @@ use Kickback\Common\Version;
 const LOYAL_PARTICIPANT_THRESHOLD = 3;
 const WEIGHT_RATING = 0.7;
 const WEIGHT_LOYALTY = 0.3;
+const CO_HOST_SUGGESTION_COUNT = 5;
 
 function describeRating(float $rating): string
 {
@@ -381,8 +382,6 @@ foreach ($participantTotals as $crand => $count) {
 }
 $topParticipantIds = array_map(fn($p) => $p['id'], $topParticipants);
 $hostingStats = QuestController::queryHostStatsForAccounts($topParticipantIds);
-$coHostCandidate = null;
-$highestCoHostScore = -1;
 foreach ($topParticipants as &$p) {
     $friendSet = [];
     foreach ($perQuestParticipantIds as $ids) {
@@ -419,12 +418,12 @@ foreach ($topParticipants as &$p) {
         ($p['avgHostedHostRating'] * 0.5) +
         ($p['avgHostedQuestRating'] * 0.5)
     );
-    if ($p['score'] > $highestCoHostScore) {
-        $highestCoHostScore = $p['score'];
-        $coHostCandidate = $p;
-    }
 }
 unset($p);
+
+$sortedCandidates = $topParticipants;
+usort($sortedCandidates, fn($a, $b) => $b['score'] <=> $a['score']);
+$coHostCandidates = array_slice($sortedCandidates, 0, CO_HOST_SUGGESTION_COUNT);
 
 // Aggregate co-host performance metrics
 foreach ($pastQuests as $quest) {
@@ -875,7 +874,7 @@ function renderStarRating(float $rating): string
                 </div>
                 <div class="tab-pane fade" id="nav-suggestions" role="tabpanel" aria-labelledby="nav-suggestions-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Suggestions</div>
-                    <?php if ($recommendedQuest || $underperformingQuest || $dormantQuest || $fanFavoriteQuest || $hiddenGemQuest || $coHostCandidate) { ?>
+                    <?php if ($recommendedQuest || $underperformingQuest || $dormantQuest || $fanFavoriteQuest || $hiddenGemQuest || !empty($coHostCandidates)) { ?>
                         <?php if ($dormantQuest) { ?>
                             <div class="card mb-3">
                                 <div class="card-body">
@@ -962,29 +961,32 @@ function renderStarRating(float $rating): string
                                 </div>
                             </div>
                         <?php } ?>
-                        <?php if ($coHostCandidate) { ?>
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <?php if (!empty($coHostCandidate['avatar'])) { ?>
-                                            <img src="<?= htmlspecialchars($coHostCandidate['avatar']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
-                                        <?php } ?>
-                                        <div>
-                                            <h5 class="card-title mb-1">Invite a co-host</h5>
-                                            <div class="card-text mb-1"><a href="<?= htmlspecialchars($coHostCandidate['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($coHostCandidate['username']); ?></a></div>
-                                            <p class="card-text mb-0">
-                                                Joined <?= $coHostCandidate['loyalty']; ?> quest<?= $coHostCandidate['loyalty'] === 1 ? '' : 's'; ?>
-                                                &middot; <?= renderStarRating($coHostCandidate['avgHostedHostRating']); ?><span class="ms-1"><?= number_format($coHostCandidate['avgHostedHostRating'], 1); ?></span>
-                                                &middot; Adventured with <?= $coHostCandidate['network']; ?> other player<?= $coHostCandidate['network'] === 1 ? '' : 's'; ?>
-                                                <?php if (isset($coHostCandidate['daysSinceLastQuest'])) { ?>
-                                                    &middot; Last quest <?= $coHostCandidate['daysSinceLastQuest']; ?> day<?= $coHostCandidate['daysSinceLastQuest'] === 1 ? '' : 's'; ?> ago
-                                                <?php } ?>
-                                            </p>
+                        <?php if (!empty($coHostCandidates)) { ?>
+                            <?php foreach ($coHostCandidates as $coHostCandidate) { ?>
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <?php if (!empty($coHostCandidate['avatar'])) { ?>
+                                                <img src="<?= htmlspecialchars($coHostCandidate['avatar']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
+                                            <?php } ?>
+                                            <div>
+                                                <h5 class="card-title mb-1">Invite a co-host</h5>
+                                                <div class="card-text mb-1"><a href="<?= htmlspecialchars($coHostCandidate['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($coHostCandidate['username']); ?></a></div>
+                                                <p class="card-text mb-0">
+                                                    Joined <?= $coHostCandidate['loyalty']; ?> quest<?= $coHostCandidate['loyalty'] === 1 ? '' : 's'; ?>
+                                                    &middot; Reliability: <?= number_format($coHostCandidate['reliability'] * 100, 0); ?>%
+                                                    &middot; Hosted <?= $coHostCandidate['questsHosted']; ?> quest<?= $coHostCandidate['questsHosted'] === 1 ? '' : 's'; ?>
+                                                    &middot; Network: <?= $coHostCandidate['network']; ?>
+                                                    <?php if (isset($coHostCandidate['daysSinceLastQuest'])) { ?>
+                                                        &middot; Last quest <?= $coHostCandidate['daysSinceLastQuest']; ?> day<?= $coHostCandidate['daysSinceLastQuest'] === 1 ? '' : 's'; ?> ago
+                                                    <?php } ?>
+                                                </p>
+                                            </div>
                                         </div>
+                                        <p class="card-text mb-2"><?= generateCoHostSuggestion($coHostCandidate); ?></p>
                                     </div>
-                                    <p class="card-text mb-2"><?= generateCoHostSuggestion($coHostCandidate); ?></p>
                                 </div>
-                            </div>
+                            <?php } ?>
                         <?php } ?>
                         <?php if ($underperformingQuest) { ?>
                             <div class="card mb-3">
@@ -1077,19 +1079,42 @@ function renderStarRating(float $rating): string
                                     <?php if (count($topParticipants) === 0) { ?>
                                         <p>No participants yet.</p>
                                     <?php } else { ?>
+                                        <div class="mb-3">
+                                            <label for="participantSort" class="form-label">Sort by:</label>
+                                            <select id="participantSort" class="form-select form-select-sm" style="max-width:200px;">
+                                                <option value="loyalty">Quests Joined</option>
+                                                <option value="reliability">Reliability</option>
+                                                <option value="questshosted">Hosted Quests</option>
+                                                <option value="network">Network Reach</option>
+                                            </select>
+                                        </div>
+                                        <div class="row mb-3 g-2">
+                                            <div class="col">
+                                                <input type="number" id="reliabilityFilter" class="form-control form-control-sm" placeholder="Min reliability %">
+                                            </div>
+                                            <div class="col">
+                                                <input type="number" id="hostedFilter" class="form-control form-control-sm" placeholder="Min hosted quests">
+                                            </div>
+                                            <div class="col">
+                                                <input type="number" id="networkFilter" class="form-control form-control-sm" placeholder="Min network reach">
+                                            </div>
+                                        </div>
                                         <div class="table-responsive">
-                                            <table class="table table-striped">
+                                            <table class="table table-striped" id="topParticipantsTable">
                                                 <thead>
                                                     <tr>
                                                         <th>Participant</th>
                                                         <th>Quests Joined</th>
+                                                        <th>Reliability</th>
+                                                        <th>Hosted Quests</th>
+                                                        <th>Network</th>
                                                         <th>Avg Quest Rating</th>
                                                         <th>Avg Host Rating</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     <?php foreach ($topParticipants as $p) { ?>
-                                                        <tr>
+                                                        <tr data-loyalty="<?= $p['loyalty']; ?>" data-reliability="<?= $p['reliability']; ?>" data-questshosted="<?= $p['questsHosted']; ?>" data-network="<?= $p['network']; ?>">
                                                             <td>
                                                                 <div class="d-flex align-items-center">
                                                                     <img src="<?= htmlspecialchars($p['avatar']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
@@ -1097,6 +1122,9 @@ function renderStarRating(float $rating): string
                                                                 </div>
                                                             </td>
                                                             <td class="align-middle"><?= $p['loyalty']; ?></td>
+                                                            <td class="align-middle"><?= number_format($p['reliability'] * 100, 0); ?>%</td>
+                                                            <td class="align-middle"><?= $p['questsHosted']; ?></td>
+                                                            <td class="align-middle"><?= $p['network']; ?></td>
                                                             <td class="align-middle">
                                                                 <?= renderStarRating($p['avgQuestRating']); ?>
                                                                 <span class="ms-1"><?= number_format($p['avgQuestRating'], 2); ?></span>
@@ -1228,6 +1256,35 @@ $(document).ready(function () {
         columnDefs: [{ targets: [4], orderable: false }],
         order: [[1, 'desc']]
     });
+
+    function updateParticipantTable() {
+        const sortKey = $('#participantSort').val();
+        const relMin = parseFloat($('#reliabilityFilter').val()) || 0;
+        const hostedMin = parseFloat($('#hostedFilter').val()) || 0;
+        const networkMin = parseFloat($('#networkFilter').val()) || 0;
+        const rows = $('#topParticipantsTable tbody tr').get();
+
+        rows.forEach(row => {
+            const rel = parseFloat($(row).data('reliability')) * 100;
+            const hosted = parseFloat($(row).data('questshosted'));
+            const network = parseFloat($(row).data('network'));
+            if (rel >= relMin && hosted >= hostedMin && network >= networkMin) {
+                $(row).show();
+            } else {
+                $(row).hide();
+            }
+        });
+
+        rows.sort((a, b) => {
+            const aVal = parseFloat($(a).data(sortKey));
+            const bVal = parseFloat($(b).data(sortKey));
+            return bVal - aVal;
+        });
+        $.each(rows, (idx, row) => $('#topParticipantsTable tbody').append(row));
+    }
+
+    $('#participantSort, #reliabilityFilter, #hostedFilter, #networkFilter').on('input change', updateParticipantTable);
+    updateParticipantTable();
 
     $(document).on('click', '.view-reviews-btn', function () {
         const questId = $(this).data('quest-id');
