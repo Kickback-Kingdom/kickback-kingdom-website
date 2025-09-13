@@ -138,7 +138,15 @@ function renderStarRating(int $rating): string
                                     ?>
                                         <tr>
                                             <td><a href="/q/<?= $qr['quest']->locator; ?>"><?= htmlspecialchars($qr['quest']->title); ?></a></td>
-                                            <td><a href="/u/<?= $qr['review']->fromAccount->username; ?>"><?= htmlspecialchars($qr['review']->fromAccount->username); ?></a></td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img src="<?= htmlspecialchars($qr['review']->fromAccount->profilePictureURL()); ?>"
+                                                        alt="<?= htmlspecialchars($qr['review']->fromAccount->username); ?>"
+                                                        class="me-2"
+                                                        style="width: 40px; height: 40px;">
+                                                    <?= $qr['review']->fromAccount->getAccountElement(); ?>
+                                                </div>
+                                            </td>
                                             <td><span class="date"><?= $qr['review']->dateTime->formattedBasic; ?></span></td>
                                             <td><?= renderStarRating($qr['review']->hostRating); ?></td>
                                             <td><?= renderStarRating($qr['review']->questRating); ?></td>
