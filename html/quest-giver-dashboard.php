@@ -180,9 +180,13 @@ function generatePromoteQuestSuggestion(array $quest): string
 function generateCoHostSuggestion(array $candidate): string
 {
     $parts = [];
-    $parts[] = $candidate['username'] . ' has joined you on ' . $candidate['count'] . ' quest' . ($candidate['count'] === 1 ? '' : 's') . ',';
+    $parts[] = $candidate['username'] . ' has joined you on ' . $candidate['loyalty'] . ' quest' . ($candidate['loyalty'] === 1 ? '' : 's') . ',';
     $parts[] = 'earning an average rating of ' . number_format($candidate['avgHostRating'], 1) . '/5 from your hosting.';
-    $parts[] = 'They\'ve adventured alongside ' . $candidate['friends'] . ' other player' . ($candidate['friends'] === 1 ? '' : 's') . ', expanding your reach.';
+    $parts[] = 'They\'ve adventured alongside ' . $candidate['network'] . ' other player' . ($candidate['network'] === 1 ? '' : 's') . ', expanding your reach.';
+    if (isset($candidate['daysSinceLastQuest'])) {
+        $days = $candidate['daysSinceLastQuest'];
+        $parts[] = 'Their last quest with you was ' . $days . ' day' . ($days === 1 ? '' : 's') . ' ago.';
+    }
     $parts[] = 'Consider inviting them to co-host your next quest.';
     return implode(' ', $parts);
 }
@@ -227,7 +231,9 @@ $participantQuestRatingCounts = [];
 $perQuestParticipantCounts = [];
 $perQuestParticipantIds = [];
 $perQuestRegisteredCounts = [];
+$participantLastQuestTimes = [];
 $coHostStats = [];
+$now = time();
 $allQuests = array_merge($futureQuests, $pastQuests);
 usort($allQuests, fn($a, $b) => strcmp(
     $a->hasEndDate() ? $a->endDate()->formattedYmd : '',
@@ -252,6 +258,12 @@ foreach ($allQuests as $quest) {
         $crand = $participant->account->crand;
         $perQuestParticipantIds[$qid][] = $crand;
         $uniqueParticipants[$crand] = true;
+        if ($quest->hasEndDate()) {
+            $endTime = $quest->endDate()->value->getTimestamp();
+            if ($endTime <= $now) {
+                $participantLastQuestTimes[$crand] = $endTime;
+            }
+        }
         if ($crand === $account->crand) {
             continue;
         }
@@ -348,7 +360,7 @@ foreach ($participantTotals as $crand => $count) {
         'username' => $info['username'],
         'avatar' => $info['avatar'],
         'url' => $info['url'],
-        'count' => $count,
+        'loyalty' => $count,
         'avgQuestRating' => $participantAvgQuestRatings[$crand] ?? 0,
         'avgHostRating' => $participantAvgHostRatings[$crand] ?? 0,
     ];
@@ -369,8 +381,14 @@ foreach ($topParticipants as &$p) {
             }
         }
     }
-    $p['friends'] = count($friendSet);
-    $p['score'] = ($p['avgHostRating'] * 2) + $p['count'] + $p['friends'];
+    $p['network'] = count($friendSet);
+    $p['loyalty'] = $p['loyalty'] ?? 0;
+    $daysSince = isset($participantLastQuestTimes[$p['id']])
+        ? (int) floor(($now - $participantLastQuestTimes[$p['id']]) / 86400)
+        : null;
+    $p['daysSinceLastQuest'] = $daysSince;
+    $p['recentActivity'] = isset($daysSince) ? max(0, 30 - $daysSince) : 0;
+    $p['score'] = ($p['loyalty'] * 2) + ($p['network'] * 1) + ($p['recentActivity'] * 0.5);
     if ($p['score'] > $highestCoHostScore) {
         $highestCoHostScore = $p['score'];
         $coHostCandidate = $p;
@@ -925,9 +943,12 @@ function renderStarRating(float $rating): string
                                             <h5 class="card-title mb-1">Invite a co-host</h5>
                                             <div class="card-text mb-1"><a href="<?= htmlspecialchars($coHostCandidate['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($coHostCandidate['username']); ?></a></div>
                                             <p class="card-text mb-0">
-                                                Joined <?= $coHostCandidate['count']; ?> quest<?= $coHostCandidate['count'] === 1 ? '' : 's'; ?>
+                                                Joined <?= $coHostCandidate['loyalty']; ?> quest<?= $coHostCandidate['loyalty'] === 1 ? '' : 's'; ?>
                                                 &middot; <?= renderStarRating($coHostCandidate['avgHostRating']); ?><span class="ms-1"><?= number_format($coHostCandidate['avgHostRating'], 1); ?></span>
-                                                &middot; Adventured with <?= $coHostCandidate['friends']; ?> other player<?= $coHostCandidate['friends'] === 1 ? '' : 's'; ?>
+                                                &middot; Adventured with <?= $coHostCandidate['network']; ?> other player<?= $coHostCandidate['network'] === 1 ? '' : 's'; ?>
+                                                <?php if (isset($coHostCandidate['daysSinceLastQuest'])) { ?>
+                                                    &middot; Last quest <?= $coHostCandidate['daysSinceLastQuest']; ?> day<?= $coHostCandidate['daysSinceLastQuest'] === 1 ? '' : 's'; ?> ago
+                                                <?php } ?>
                                             </p>
                                         </div>
                                     </div>
@@ -1045,7 +1066,7 @@ function renderStarRating(float $rating): string
                                                                     <div><a href="<?= htmlspecialchars($p['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($p['username']); ?></a></div>
                                                                 </div>
                                                             </td>
-                                                            <td class="align-middle"><?= $p['count']; ?></td>
+                                                            <td class="align-middle"><?= $p['loyalty']; ?></td>
                                                             <td class="align-middle">
                                                                 <?= renderStarRating($p['avgQuestRating']); ?>
                                                                 <span class="ms-1"><?= number_format($p['avgQuestRating'], 2); ?></span>
