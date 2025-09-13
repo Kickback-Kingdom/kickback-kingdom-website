@@ -210,18 +210,6 @@ function renderStarRating(int $rating): string
                                 </div>
                             </div>
                         </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingPerQuestParticipants">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePerQuestParticipants" aria-expanded="false" aria-controls="collapsePerQuestParticipants">
-                                    Participants Per Quest
-                                </button>
-                            </h2>
-                            <div id="collapsePerQuestParticipants" class="accordion-collapse collapse" aria-labelledby="headingPerQuestParticipants">
-                                <div class="accordion-body">
-                                    <canvas id="participantPerQuestChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
