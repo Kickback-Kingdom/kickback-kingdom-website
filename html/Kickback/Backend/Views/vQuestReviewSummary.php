@@ -6,6 +6,7 @@ namespace Kickback\Backend\Views;
 class vQuestReviewSummary
 {
     public int $questId;
+    public string $questLocator;
     public string $questTitle;
     public string $questEndDate;
     public string $questIcon;

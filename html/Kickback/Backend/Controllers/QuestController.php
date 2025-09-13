@@ -1379,7 +1379,7 @@ class QuestController
     {
         $conn = Database::getConnection();
         $stmt = $conn->prepare(
-            "SELECT q.Id AS quest_id, q.name, q.end_date, q.imagePath_icon, q.imagePath, qa.host_rating, qa.quest_rating, qa.feedback " .
+            "SELECT q.Id AS quest_id, q.name, q.locator, q.end_date, q.imagePath_icon, q.imagePath, qa.host_rating, qa.quest_rating, qa.feedback " .
             "FROM quest_applicants qa " .
             "JOIN v_quest_info q ON qa.quest_id = q.Id " .
             "WHERE (q.host_id = ? OR q.host_id_2 = ?) AND qa.host_rating IS NOT NULL " .
@@ -1404,6 +1404,7 @@ class QuestController
                 $questRatings[$questId] = [
                     'questId' => $questId,
                     'questTitle' => $row['name'],
+                    'questLocator' => $row['locator'],
                     'questEndDate' => $row['end_date'],
                     'questIcon' => $row['imagePath_icon'],
                     'questBanner' => $row['imagePath'],
@@ -1431,6 +1432,7 @@ class QuestController
             $summary = new vQuestReviewSummary();
             $summary->questId = $data['questId'];
             $summary->questTitle = $data['questTitle'];
+            $summary->questLocator = $data['questLocator'];
             $summary->questEndDate = $data['questEndDate'];
             $summary->questIcon = $icon->getFullPath();
             $summary->questBanner = $banner->getFullPath();

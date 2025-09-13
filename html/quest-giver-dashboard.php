@@ -12,6 +12,7 @@ use Kickback\Services\Session;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Controllers\FeedCardController;
 use Kickback\Backend\Views\vDateTime;
+use Kickback\Common\Version;
 
 if (!Session::isQuestGiver()) {
     Session::redirect("index.php");
@@ -158,7 +159,7 @@ function renderStarRating(int $rating): string
                                             <td>
                                                 <div class="d-flex align-items-center">
                                                     <img src="<?= htmlspecialchars($qr->questIcon); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
-                                                    <a href="quest.php?id=<?= $qr->questId; ?>" target="_blank"><?= htmlspecialchars($qr->questTitle); ?></a>
+                                                    <a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $qr->questLocator)); ?>" target="_blank"><?= htmlspecialchars($qr->questTitle); ?></a>
                                                 </div>
                                             </td>
                                             <?php $qd = new vDateTime($qr->questEndDate); ?>
