@@ -168,7 +168,7 @@ function renderStarRating(int $rating): string
                                     Average Ratings
                                 </button>
                             </h2>
-                            <div id="collapseRatings" class="accordion-collapse collapse show" aria-labelledby="headingRatings" data-bs-parent="#graphAccordion">
+                            <div id="collapseRatings" class="accordion-collapse collapse show" aria-labelledby="headingRatings">
                                 <div class="accordion-body">
                                     <canvas id="reviewChart"></canvas>
                                 </div>
@@ -180,14 +180,25 @@ function renderStarRating(int $rating): string
                                     Participant Count Over Time
                                 </button>
                             </h2>
-                            <div id="collapseParticipants" class="accordion-collapse collapse" aria-labelledby="headingParticipants" data-bs-parent="#graphAccordion">
+                            <div id="collapseParticipants" class="accordion-collapse collapse" aria-labelledby="headingParticipants">
                                 <div class="accordion-body">
                                     <canvas id="participantChart"></canvas>
                                 </div>
                             </div>
                         </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingPerQuestParticipants">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePerQuestParticipants" aria-expanded="false" aria-controls="collapsePerQuestParticipants">
+                                    Participants Per Quest
+                                </button>
+                            </h2>
+                            <div id="collapsePerQuestParticipants" class="accordion-collapse collapse" aria-labelledby="headingPerQuestParticipants">
+                                <div class="accordion-body">
+                                    <canvas id="participantPerQuestChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <canvas id="participantPerQuestChart"></canvas>
                 </div>
             </div>
         </div>
