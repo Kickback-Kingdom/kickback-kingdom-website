@@ -1307,6 +1307,7 @@ $(document).ready(function () {
 
     function renderScheduleCalendar() {
         const first = new Date(calYear, calMonth, 1);
+        const today = new Date();
         const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
         let header = '<thead><tr>' + days.map(d => `<th class="text-center">${d}</th>`).join('') + '</tr></thead>';
         const values = Object.values(participationCounts);
@@ -1319,6 +1320,7 @@ $(document).ready(function () {
             const count = participationCounts[dStr] || 0;
             const events = calendarEvents[dStr] || [];
             let cls = 'align-top';
+            if (date.toDateString() === today.toDateString()) { cls += ' calendar-today'; }
             if (count > 0 && max > 0) {
                 const ratio = count / max;
                 if (ratio > 0.66) { cls += ' bg-success text-white'; }
