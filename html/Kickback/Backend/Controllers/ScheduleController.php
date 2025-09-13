@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Kickback\Backend\Controllers;
 
+use Kickback\Services\Database;
 
 class ScheduleController
 {
@@ -29,8 +30,8 @@ class ScheduleController
     */
     public static function getCalendarEvents(int $month, int $year, ?int $questGiverId = null) : array
     {
-        // Use global connection
-        $db = $GLOBALS['conn'];
+        // Use dedicated database connection service
+        $db = Database::getConnection();
 
         // Retrieve global calendar events for the specified month and year
         $query = "SELECT * FROM calendar_events WHERE MONTH(start_date) = ? AND YEAR(start_date) = ?";
@@ -76,7 +77,7 @@ class ScheduleController
     */
     public static function getSuggestedDates(int $month, int $year, int $limit = 3) : array
     {
-        $db = $GLOBALS['conn'];
+        $db = Database::getConnection();
 
         // Historical engagement averages by day of week (1=Sunday .. 7=Saturday)
         $avgQuery = "SELECT DAYOFWEEK(start_date) AS dow, COUNT(*) AS cnt

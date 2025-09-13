@@ -1375,7 +1375,7 @@ $(document).ready(function () {
     }
 
     function loadCalendarEvents() {
-        $.get('/api/v1/schedule/events.php', { sessionToken: sessionToken, month: calMonth + 1, year: calYear }, function(resp) {
+        $.post('/api/v1/schedule/events.php', { sessionToken: sessionToken, month: calMonth + 1, year: calYear }, function(resp) {
             if (resp.success) {
                 eventConflicts = {};
                 resp.data.forEach(function(e) {
