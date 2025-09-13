@@ -1533,12 +1533,64 @@ class QuestController
         return new Response(true, "Quest review averages loaded.", $averages);
     }
 
-    public static function queryQuestReviewDetailsAsResponse(vQuest $quest): Response
+    /**
+     * @param array<vQuestApplicant>|null $applicants
+     */
+    public static function queryQuestReviewDetailsAsResponse(vQuest $quest, ?array $applicants = null): Response
     {
         $conn = Database::getConnection();
-        $stmt = $conn->prepare("SELECT account_id_from, from_name, host_rating, quest_rating, text FROM v_notifications_reviewed_quests WHERE quest_id = ?");
+
+        // If applicants were not preloaded, fetch both applicants and reviews in a single query
+        if ($applicants === null) {
+            $stmt = $conn->prepare(
+                "SELECT qa.account_id, acc.Username AS username, acc.avatar_media, rv.host_rating, rv.quest_rating, rv.text
+                 FROM quest_applicants qa
+                 JOIN v_account_info acc ON qa.account_id = acc.Id
+                 LEFT JOIN v_notifications_reviewed_quests rv
+                    ON rv.quest_id = qa.quest_id AND rv.account_id_from = qa.account_id
+                 WHERE qa.quest_id = ? AND qa.participated = 1"
+            );
+            if ($stmt === false) {
+                return new Response(false, 'Failed to prepare query', null);
+            }
+
+            $stmt->bind_param('i', $quest->crand);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $details = [];
+            while ($row = $result->fetch_assoc()) {
+                $id = (int)$row['account_id'];
+                if ($id === $quest->host1->crand || (isset($quest->host2) && $id === $quest->host2->crand)) {
+                    continue;
+                }
+
+                $avatar = null;
+                if (!empty($row['avatar_media'])) {
+                    $media = new vMedia();
+                    $media->setMediaPath($row['avatar_media']);
+                    $avatar = $media->getFullPath();
+                }
+
+                $detail = new vQuestReviewDetail();
+                $detail->accountId = $id;
+                $detail->username = $row['username'];
+                $detail->avatar = $avatar;
+                $detail->hostRating = isset($row['host_rating']) ? (int)$row['host_rating'] : null;
+                $detail->questRating = isset($row['quest_rating']) ? (int)$row['quest_rating'] : null;
+                $detail->message = $row['text'] ?? null;
+                $details[] = $detail;
+            }
+
+            return new Response(true, 'Quest review details loaded.', $details);
+        }
+
+        // Applicants were provided, fetch only review data
+        $stmt = $conn->prepare(
+            'SELECT account_id_from, host_rating, quest_rating, text FROM v_notifications_reviewed_quests WHERE quest_id = ?'
+        );
         if ($stmt === false) {
-            return new Response(false, "Failed to prepare query", null);
+            return new Response(false, 'Failed to prepare query', null);
         }
 
         $stmt->bind_param('i', $quest->crand);
@@ -1548,15 +1600,11 @@ class QuestController
         $reviews = [];
         while ($row = $result->fetch_assoc()) {
             $reviews[(int)$row['account_id_from']] = [
-                'hostRating' => (int)$row['host_rating'],
-                'questRating' => (int)$row['quest_rating'],
-                'message' => $row['text'],
-                'username' => $row['from_name'],
+                'hostRating' => isset($row['host_rating']) ? (int)$row['host_rating'] : null,
+                'questRating' => isset($row['quest_rating']) ? (int)$row['quest_rating'] : null,
+                'message' => $row['text'] ?? null,
             ];
         }
-
-        $appResp = self::queryQuestApplicantsAsResponse($quest);
-        $applicants = $appResp->success ? $appResp->data : [];
 
         $details = [];
         foreach ($applicants as $applicant) {
@@ -1587,7 +1635,7 @@ class QuestController
             $details[] = $detail;
         }
 
-        return new Response(true, "Quest review details loaded.", $details);
+        return new Response(true, 'Quest review details loaded.', $details);
     }
 
 }
