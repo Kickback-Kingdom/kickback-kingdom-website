@@ -257,6 +257,8 @@ function renderStarRatingJs(rating) {
 }
 
 $(document).ready(function () {
+    const sessionToken = "<?= $_SESSION['sessionToken']; ?>";
+
     $('#datatable-reviews').DataTable({
         pageLength: 5,
         lengthChange: true,
@@ -270,7 +272,7 @@ $(document).ready(function () {
         $('#reviewModalBody').html('<div class="text-center p-3"><i class="fa fa-spinner fa-spin"></i></div>');
         $('#reviewModal').modal('show');
 
-        $.post('/api/v1/quest/reviews.php', { questId: questId }, function (resp) {
+        $.post('/api/v1/quest/reviews.php', { questId: questId, sessionToken: sessionToken }, function (resp) {
             if (resp.success) {
                 const list = $('<div class="list-group"></div>');
                 resp.data.forEach(function (r) {
@@ -292,7 +294,7 @@ $(document).ready(function () {
             } else {
                 $('#reviewModalBody').html('<div class="text-danger">' + resp.message + '</div>');
             }
-        });
+        }, 'json');
     });
 
     var reviewCtx = document.getElementById('reviewChart').getContext('2d');
