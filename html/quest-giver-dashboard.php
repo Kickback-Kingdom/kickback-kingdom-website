@@ -937,121 +937,145 @@ function renderStarRating(int $rating): string
                 </div>
                 <div class="tab-pane fade" id="nav-top" role="tabpanel" aria-labelledby="nav-top-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Top Quests & Participants</div>
-                    <div class="row">
-                        <div class="col-12 col-lg-4 mb-3 mb-lg-0">
-                            <h4>Top 10 Quests</h4>
-                            <?php if (count($topBestQuests) === 0) { ?>
-                                <p>No completed quests.</p>
-                            <?php } else { ?>
-                                <div class="table-responsive">
-                                    <table class="table table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>Quest</th>
-                                                <th>Participants</th>
-                                                <th>Avg Rating</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach ($topBestQuests as $q) { ?>
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <?php if (!empty($q['icon'])) { ?>
-                                                                <img src="<?= htmlspecialchars($q['icon']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
-                                                            <?php } ?>
-                                                            <a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $q['locator'])); ?>" target="_blank"><?= htmlspecialchars($q['title']); ?></a>
-                                                        </div>
-                                                    </td>
-                                                    <td class="align-middle"><?= $q['participants']; ?></td>
-                                                    <td class="align-middle">
-                                                        <?= renderStarRating((int)round($q['avgRating'])); ?><span class="ms-1"><?= number_format($q['avgRating'], 2); ?></span>
-                                                    </td>
-                                                </tr>
-                                            <?php } ?>
-                                        </tbody>
-                                    </table>
+                    <div class="accordion" id="topAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTopQuests">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTopQuests" aria-expanded="true" aria-controls="collapseTopQuests">
+                                    Top 10 Quests
+                                </button>
+                            </h2>
+                            <div id="collapseTopQuests" class="accordion-collapse collapse show" aria-labelledby="headingTopQuests">
+                                <div class="accordion-body">
+                                    <?php if (count($topBestQuests) === 0) { ?>
+                                        <p>No completed quests.</p>
+                                    <?php } else { ?>
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Quest</th>
+                                                        <th>Participants</th>
+                                                        <th>Avg Rating</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($topBestQuests as $q) { ?>
+                                                        <tr>
+                                                            <td>
+                                                                <div class="d-flex align-items-center">
+                                                                    <?php if (!empty($q['icon'])) { ?>
+                                                                        <img src="<?= htmlspecialchars($q['icon']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
+                                                                    <?php } ?>
+                                                                    <a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $q['locator'])); ?>" target="_blank"><?= htmlspecialchars($q['title']); ?></a>
+                                                                </div>
+                                                            </td>
+                                                            <td class="align-middle"><?= $q['participants']; ?></td>
+                                                            <td class="align-middle">
+                                                                <?= renderStarRating((int)round($q['avgRating'])); ?><span class="ms-1"><?= number_format($q['avgRating'], 2); ?></span>
+                                                            </td>
+                                                        </tr>
+                                                    <?php } ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    <?php } ?>
                                 </div>
-                            <?php } ?>
+                            </div>
                         </div>
-                        <div class="col-12 col-lg-4 mb-3 mb-lg-0">
-                            <h4>Top 10 Loyal Participants</h4>
-                            <?php if (count($topParticipants) === 0) { ?>
-                                <p>No participants yet.</p>
-                            <?php } else { ?>
-                                <div class="table-responsive">
-                                    <table class="table table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>Participant</th>
-                                                <th>Quests Joined</th>
-                                                <th>Avg Rating of You</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach ($topParticipants as $p) { ?>
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <img src="<?= htmlspecialchars($p['avatar']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
-                                                            <a href="<?= htmlspecialchars($p['url']); ?>" target="_blank"><?= htmlspecialchars($p['username']); ?></a>
-                                                        </div>
-                                                    </td>
-                                                    <td class="align-middle"><?= $p['count']; ?></td>
-                                                    <td class="align-middle">
-                                                        <?= renderStarRating((int)round($p['avgRating'])); ?>
-                                                        <span class="ms-1"><?= number_format($p['avgRating'], 2); ?></span>
-                                                    </td>
-                                                </tr>
-                                            <?php } ?>
-                                        </tbody>
-                                    </table>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTopParticipants">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTopParticipants" aria-expanded="false" aria-controls="collapseTopParticipants">
+                                    Top 10 Loyal Participants
+                                </button>
+                            </h2>
+                            <div id="collapseTopParticipants" class="accordion-collapse collapse" aria-labelledby="headingTopParticipants">
+                                <div class="accordion-body">
+                                    <?php if (count($topParticipants) === 0) { ?>
+                                        <p>No participants yet.</p>
+                                    <?php } else { ?>
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Participant</th>
+                                                        <th>Quests Joined</th>
+                                                        <th>Avg Rating of You</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($topParticipants as $p) { ?>
+                                                        <tr>
+                                                            <td>
+                                                                <div class="d-flex align-items-center">
+                                                                    <img src="<?= htmlspecialchars($p['avatar']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
+                                                                    <a href="<?= htmlspecialchars($p['url']); ?>" target="_blank"><?= htmlspecialchars($p['username']); ?></a>
+                                                                </div>
+                                                            </td>
+                                                            <td class="align-middle"><?= $p['count']; ?></td>
+                                                            <td class="align-middle">
+                                                                <?= renderStarRating((int)round($p['avgRating'])); ?>
+                                                                <span class="ms-1"><?= number_format($p['avgRating'], 2); ?></span>
+                                                            </td>
+                                                        </tr>
+                                                    <?php } ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    <?php } ?>
                                 </div>
-                            <?php } ?>
+                            </div>
                         </div>
-                        <div class="col-12 col-lg-4">
-                            <h4>Top 10 Co-Hosts</h4>
-                            <?php if (count($topCoHosts) === 0) { ?>
-                                <p>No co-hosts yet.</p>
-                            <?php } else { ?>
-                                <div class="table-responsive">
-                                    <table class="table table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>Co-Host</th>
-                                                <th>Avg Participants</th>
-                                                <th>Unique Participants</th>
-                                                <th>Avg Host Rating</th>
-                                                <th>Avg Quest Rating</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach ($topCoHosts as $h) { ?>
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <?php if (!empty($h['avatar'])) { ?>
-                                                                <img src="<?= htmlspecialchars($h['avatar']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
-                                                            <?php } ?>
-                                                            <a href="<?= htmlspecialchars($h['url']); ?>" target="_blank"><?= htmlspecialchars($h['username']); ?></a>
-                                                        </div>
-                                                    </td>
-                                                    <td class="align-middle"><?= number_format($h['avgParticipants'], 1); ?></td>
-                                                    <td class="align-middle"><?= $h['uniqueParticipants']; ?></td>
-                                                    <td class="align-middle">
-                                                        <?= renderStarRating((int)round($h['avgHostRating'])); ?>
-                                                        <span class="ms-1"><?= number_format($h['avgHostRating'], 2); ?></span>
-                                                    </td>
-                                                    <td class="align-middle">
-                                                        <?= renderStarRating((int)round($h['avgQuestRating'])); ?>
-                                                        <span class="ms-1"><?= number_format($h['avgQuestRating'], 2); ?></span>
-                                                    </td>
-                                                </tr>
-                                            <?php } ?>
-                                        </tbody>
-                                    </table>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTopCoHosts">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTopCoHosts" aria-expanded="false" aria-controls="collapseTopCoHosts">
+                                    Top 10 Co-Hosts
+                                </button>
+                            </h2>
+                            <div id="collapseTopCoHosts" class="accordion-collapse collapse" aria-labelledby="headingTopCoHosts">
+                                <div class="accordion-body">
+                                    <?php if (count($topCoHosts) === 0) { ?>
+                                        <p>No co-hosts yet.</p>
+                                    <?php } else { ?>
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Co-Host</th>
+                                                        <th>Avg Participants</th>
+                                                        <th>Unique Participants</th>
+                                                        <th>Avg Host Rating</th>
+                                                        <th>Avg Quest Rating</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($topCoHosts as $h) { ?>
+                                                        <tr>
+                                                            <td>
+                                                                <div class="d-flex align-items-center">
+                                                                    <?php if (!empty($h['avatar'])) { ?>
+                                                                        <img src="<?= htmlspecialchars($h['avatar']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
+                                                                    <?php } ?>
+                                                                    <a href="<?= htmlspecialchars($h['url']); ?>" target="_blank"><?= htmlspecialchars($h['username']); ?></a>
+                                                                </div>
+                                                            </td>
+                                                            <td class="align-middle"><?= number_format($h['avgParticipants'], 1); ?></td>
+                                                            <td class="align-middle"><?= $h['uniqueParticipants']; ?></td>
+                                                            <td class="align-middle">
+                                                                <?= renderStarRating((int)round($h['avgHostRating'])); ?>
+                                                                <span class="ms-1"><?= number_format($h['avgHostRating'], 2); ?></span>
+                                                            </td>
+                                                            <td class="align-middle">
+                                                                <?= renderStarRating((int)round($h['avgQuestRating'])); ?>
+                                                                <span class="ms-1"><?= number_format($h['avgQuestRating'], 2); ?></span>
+                                                            </td>
+                                                        </tr>
+                                                    <?php } ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    <?php } ?>
                                 </div>
-                            <?php } ?>
+                            </div>
                         </div>
                     </div>
                 </div>
