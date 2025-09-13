@@ -64,7 +64,7 @@ class ScheduleController
                     . "FROM quest q "
                     . "JOIN account a ON a.Id = q.host_id "
                     . "LEFT JOIN quest_applicants qa ON qa.quest_id = q.Id AND qa.participated = 1 "
-                    . "WHERE MONTH(q.end_date) = ? AND YEAR(q.end_date) = ? "
+                    . "WHERE MONTH(q.end_date) = ? AND YEAR(q.end_date) = ? AND q.raffle_id IS NULL "
                     . "GROUP BY q.Id";
                 $stmt2 = mysqli_prepare($db, $questQuery);
                 if ($stmt2) {
@@ -89,6 +89,7 @@ class ScheduleController
                     . "LEFT JOIN quest_applicants qa ON qa.quest_id = q.Id AND qa.participated = 1 "
                     . "WHERE (q.host_id = ? OR q.host_id_2 = ?) "
                     . "AND MONTH(q.end_date) = ? AND YEAR(q.end_date) = ? "
+                    . "AND q.raffle_id IS NULL "
                     . "GROUP BY q.Id";
 
                 $stmt2 = mysqli_prepare($db, $questQuery);

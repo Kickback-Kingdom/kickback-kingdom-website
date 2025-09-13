@@ -1334,10 +1334,9 @@ $(document).ready(function () {
                 else if (ratio > 0.33) { cls += ' bg-warning'; }
                 else { cls += ' bg-danger text-white'; }
             }
-            let tooltipLines = [];
-            if (count > 0) { tooltipLines.push(`Participants: ${count}`); }
+            let tooltipLines = [`Participants: ${count}`];
             if (events.length > 1) { tooltipLines.push('Conflicting events'); }
-            let tooltip = tooltipLines.length ? `data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="bottom" title="${tooltipLines.join('<br>').replace(/"/g, '&quot;')}"` : '';
+            let tooltip = `data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="bottom" title="${tooltipLines.join('<br>').replace(/"/g, '&quot;')}"`;
             if (events.length > 1) { cls += ' border border-danger border-2'; }
             else if (events.length === 1) { cls += ' border border-success border-2'; }
             let pills = '';
