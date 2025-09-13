@@ -126,19 +126,25 @@ class NotificationController
 
         $reviews = [];
         $accountCache = [];
+        $questCache = [];
         while ($row = $result->fetch_assoc()) {
-            $questLookup = new vQuest('', $row['quest_id']);
-            $questResp = QuestController::queryQuestByIdAsResponse($questLookup);
-            if ($questResp->success && $questResp->data instanceof vQuest) {
-                $quest = $questResp->data;
-            } else {
-                $quest = new vQuest('', $row['quest_id']);
-                $quest->title = $row['name'];
-                $quest->locator = $row['locator'];
-                $quest->icon = new vMedia();
-                $quest->icon->setMediaPath($row['image']);
-                $quest->playStyle = PlayStyle::from($row['play_style']);
+            $questId = (int)$row['quest_id'];
+            if (!isset($questCache[$questId])) {
+                $questLookup = new vQuest('', $questId);
+                $questResp = QuestController::queryQuestByIdAsResponse($questLookup);
+                if ($questResp->success && $questResp->data instanceof vQuest) {
+                    $questCache[$questId] = $questResp->data;
+                } else {
+                    $quest = new vQuest('', $questId);
+                    $quest->title = $row['name'];
+                    $quest->locator = $row['locator'];
+                    $quest->icon = new vMedia();
+                    $quest->icon->setMediaPath($row['image']);
+                    $quest->playStyle = PlayStyle::from($row['play_style']);
+                    $questCache[$questId] = $quest;
+                }
             }
+            $quest = $questCache[$questId];
 
             $review = new vQuestReview('', $row['Id']);
             $review->questRating = (int)$row['quest_rating'];
