@@ -6,14 +6,14 @@ use Kickback\Backend\Controllers\ScheduleController;
 use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Backend\Models\Response;
 
-OnlyGET();
+OnlyPOST();
 
-$month = isset($_GET['month']) ? intval($_GET['month']) : intval(date('m'));
-$year  = isset($_GET['year']) ? intval($_GET['year']) : intval(date('Y'));
+$month = isset($_POST['month']) ? intval($_POST['month']) : intval(date('m'));
+$year  = isset($_POST['year']) ? intval($_POST['year']) : intval(date('Y'));
 
 $questGiverId = null;
-if (isset($_GET['sessionToken'])) {
-    $sessionToken = Validate($_GET['sessionToken']);
+if (isset($_POST['sessionToken'])) {
+    $sessionToken = Validate($_POST['sessionToken']);
     $kk_service_key = ServiceCredentials::get('kk_service_key');
     $loginResp = AccountController::getAccountBySession($kk_service_key, $sessionToken);
     if (!$loginResp->success) {
