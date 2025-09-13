@@ -12,6 +12,7 @@ use Kickback\Services\Session;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Controllers\NotificationController;
 use Kickback\Backend\Controllers\FeedCardController;
+use Kickback\Backend\Views\vDateTime;
 
 if (!Session::isQuestGiver()) {
     Session::redirect("index.php");
@@ -63,12 +64,12 @@ $avgQuestRating = $reviewCount > 0 ? array_sum($avgQuestRatings) / $reviewCount 
 
 function renderStarRating(int $rating): string
 {
-    $stars = '<div class="star-rating" style="pointer-events: none;">';
+    $stars = '<span class="star-rating" style="pointer-events: none; display: inline-block;">';
     for ($i = 1; $i <= 5; $i++) {
         $class = $i <= $rating ? 'fa-solid fa-star selected' : 'fa-regular fa-star';
         $stars .= "<i class=\"{$class}\"></i>";
     }
-    return $stars . '</div>';
+    return $stars . '</span>';
 }
 ?>
 <!DOCTYPE html>
@@ -94,8 +95,7 @@ function renderStarRating(int $rating): string
             <div class="card h-100">
                 <div class="card-body">
                     <small>Average Host Rating</small>
-                    <?= renderStarRating((int)round($avgHostRating)); ?>
-                    <div><?= number_format($avgHostRating, 2); ?>/5</div>
+                    <div><?= renderStarRating((int)round($avgHostRating)); ?><span class="ms-1"><?= number_format($avgHostRating, 2); ?>/5</span></div>
                 </div>
             </div>
         </div>
@@ -103,8 +103,7 @@ function renderStarRating(int $rating): string
             <div class="card h-100">
                 <div class="card-body">
                     <small>Average Quest Rating</small>
-                    <?= renderStarRating((int)round($avgQuestRating)); ?>
-                    <div><?= number_format($avgQuestRating, 2); ?>/5</div>
+                    <div><?= renderStarRating((int)round($avgQuestRating)); ?><span class="ms-1"><?= number_format($avgQuestRating, 2); ?>/5</span></div>
                 </div>
             </div>
         </div>
@@ -157,21 +156,26 @@ function renderStarRating(int $rating): string
                                 <tbody>
                                     <?php foreach ($questReviewAverages as $qr) { ?>
                                         <tr>
-                                            <td><?= htmlspecialchars($qr['questTitle']); ?></td>
-                                            <td><?= htmlspecialchars($qr['questDate']); ?></td>
-                                            <td data-order="<?= $qr['avgHostRating']; ?>">
-                                                <?= renderStarRating((int)round($qr['avgHostRating'])); ?>
-                                                <?= number_format($qr['avgHostRating'], 2); ?>
-                                            </td>
-                                            <td data-order="<?= $qr['avgQuestRating']; ?>">
-                                                <?= renderStarRating((int)round($qr['avgQuestRating'])); ?>
-                                                <?= number_format($qr['avgQuestRating'], 2); ?>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img src="<?= htmlspecialchars($qr['questIcon']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
+                                                    <span><?= htmlspecialchars($qr['questTitle']); ?></span>
+                                                </div>
                                             </td>
                                             <td>
-                                                <?php if (!empty($qr['hasComments'])) { ?>
-                                                    <i class="fa-solid fa-comment text-info me-1" title="Has comments"></i>
-                                                <?php } ?>
-                                                <button class="btn btn-sm btn-primary view-reviews-btn" data-quest-id="<?= $qr['questId']; ?>" data-quest-title="<?= htmlspecialchars($qr['questTitle']); ?>">View</button>
+                                                <?php $qd = new vDateTime($qr['questDate']); ?>
+                                                <div class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($qd->formattedDetailed); ?> UTC" data-datetime-utc="<?= htmlspecialchars($qd->valueString); ?>" data-db-value="<?= htmlspecialchars($qd->dbValue); ?>"><?= htmlspecialchars($qd->formattedBasic); ?></div>
+                                            </td>
+                                            <td data-order="<?= $qr['avgHostRating']; ?>" class="align-middle">
+                                                <?= renderStarRating((int)round($qr['avgHostRating'])); ?><span class="ms-1"><?= number_format($qr['avgHostRating'], 2); ?></span>
+                                            </td>
+                                            <td data-order="<?= $qr['avgQuestRating']; ?>" class="align-middle">
+                                                <?= renderStarRating((int)round($qr['avgQuestRating'])); ?><span class="ms-1"><?= number_format($qr['avgQuestRating'], 2); ?></span>
+                                            </td>
+                                            <td class="align-middle">
+                                                <?php $btnClass = !empty($qr['hasComments']) ? 'btn-primary' : 'btn-outline-secondary'; ?>
+                                                <?php $iconClass = !empty($qr['hasComments']) ? 'fa-solid' : 'fa-regular'; ?>
+                                                <button class="btn btn-sm <?= $btnClass ?> view-reviews-btn" data-quest-id="<?= $qr['questId']; ?>" data-quest-title="<?= htmlspecialchars($qr['questTitle']); ?>"><i class="<?= $iconClass ?> fa-comments me-1"></i>View</button>
                                             </td>
                                         </tr>
                                     <?php } ?>
@@ -251,12 +255,12 @@ const ratingDates = <?= json_encode($ratingDates); ?>;
 const avgRatingsOverTime = <?= json_encode($avgRatingsOverTime); ?>;
 
 function renderStarRatingJs(rating) {
-    let stars = '<div class="star-rating" style="pointer-events: none;">';
+    let stars = '<span class="star-rating" style="pointer-events: none; display: inline-block;">';
     for (let i = 1; i <= 5; i++) {
         const cls = i <= rating ? 'fa-solid fa-star selected' : 'fa-regular fa-star';
         stars += `<i class="${cls}"></i>`;
     }
-    return stars + '</div>';
+    return stars + '</span>';
 }
 
 $(document).ready(function () {

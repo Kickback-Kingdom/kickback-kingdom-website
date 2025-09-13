@@ -136,6 +136,7 @@ class NotificationController
                     'questId' => $questId,
                     'questTitle' => $row['name'],
                     'questDate' => $row['date'],
+                    'questIcon' => $row['image'],
                     'hostRatingSum' => $hostRating,
                     'questRatingSum' => $questRating,
                     'count' => 1,
@@ -153,10 +154,13 @@ class NotificationController
 
         $averages = [];
         foreach ($questRatings as $data) {
+            $icon = new vMedia();
+            $icon->setMediaPath($data['questIcon']);
             $averages[] = [
                 'questId' => $data['questId'],
                 'questTitle' => $data['questTitle'],
                 'questDate' => $data['questDate'],
+                'questIcon' => $icon->getFullPath(),
                 'avgHostRating' => $data['hostRatingSum'] / $data['count'],
                 'avgQuestRating' => $data['questRatingSum'] / $data['count'],
                 'hasComments' => $data['hasComments'],
