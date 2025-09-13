@@ -1782,7 +1782,7 @@ class QuestController
             . "SELECT DAYOFWEEK(q.end_date) AS weekday, COUNT(*) AS participants "
             . "FROM quest_applicants qa "
             . "JOIN quest q ON qa.quest_id = q.Id "
-            . "WHERE qa.participated = 1";
+            . "WHERE qa.participated = 1 AND q.raffle_id IS NULL";
 
         if ($hostId !== null) {
             $sql .= " AND (q.host_id = ? OR q.host_id_2 = ?)";
@@ -1826,7 +1826,7 @@ class QuestController
             . "SELECT HOUR(q.end_date) AS hour, COUNT(*) AS participants "
             . "FROM quest_applicants qa "
             . "JOIN quest q ON qa.quest_id = q.Id "
-            . "WHERE qa.participated = 1";
+            . "WHERE qa.participated = 1 AND q.raffle_id IS NULL";
 
         if ($hostId !== null) {
             $sql .= " AND (q.host_id = ? OR q.host_id_2 = ?)";
