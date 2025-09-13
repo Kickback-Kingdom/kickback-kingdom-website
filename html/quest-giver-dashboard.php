@@ -949,7 +949,7 @@ function renderStarRating(float $rating): string
                                             <img src="<?= htmlspecialchars($hiddenGemQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
                                         <?php } ?>
                                         <div>
-                                            <h5 class="card-title mb-1">Promote this quest</h5>
+                                            <h5 class="card-title mb-1">Retry this quest with more promotion</h5>
                                             <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $hiddenGemQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($hiddenGemQuest['title']); ?></a> last ran <?= htmlspecialchars($hiddenGemQuest['endDate']->formattedBasic); ?></p>
                                             <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating($hiddenGemQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($hiddenGemQuest['avgQuestRating'], 1); ?></span>
