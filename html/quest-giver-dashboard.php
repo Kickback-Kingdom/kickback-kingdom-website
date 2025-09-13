@@ -33,16 +33,28 @@ $questTitles = array_column($questReviewAverages, 'questTitle');
 $avgHostRatings = array_map('floatval', array_column($questReviewAverages, 'avgHostRating'));
 $avgQuestRatings = array_map('floatval', array_column($questReviewAverages, 'avgQuestRating'));
 
-$participantDates = [];
 $participantCounts = [];
 $participantQuestTitles = [];
 foreach (array_merge($futureQuests, $pastQuests) as $quest) {
     $participantsResp = QuestController::queryQuestApplicantsAsResponse($quest);
     $participants = $participantsResp->success ? $participantsResp->data : [];
-    $count = count($participants);
-    $participantCounts[] = $count;
-    $participantDates[] = $quest->hasEndDate() ? $quest->endDate()->formattedYmd : '';
+    $participantCounts[] = count($participants);
     $participantQuestTitles[] = $quest->title;
+}
+
+$questRatingsMap = [];
+foreach ($questReviewAverages as $qr) {
+    $questRatingsMap[$qr['questTitle']] = (float)$qr['avgQuestRating'];
+}
+
+$ratingDates = [];
+$avgRatingsOverTime = [];
+foreach ($pastQuests as $quest) {
+    $title = $quest->title;
+    if (isset($questRatingsMap[$title]) && $quest->hasEndDate()) {
+        $ratingDates[] = $quest->endDate()->formattedYmd;
+        $avgRatingsOverTime[] = $questRatingsMap[$title];
+    }
 }
 
 $reviewCount = count($questReviewAverages);
@@ -175,14 +187,26 @@ function renderStarRating(int $rating): string
                             </div>
                         </div>
                         <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingParticipants">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseParticipants" aria-expanded="false" aria-controls="collapseParticipants">
-                                    Participant Count Over Time
+                            <h2 class="accordion-header" id="headingRatingOverTime">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRatingOverTime" aria-expanded="false" aria-controls="collapseRatingOverTime">
+                                    Average Quest Rating Over Time
                                 </button>
                             </h2>
-                            <div id="collapseParticipants" class="accordion-collapse collapse" aria-labelledby="headingParticipants">
+                            <div id="collapseRatingOverTime" class="accordion-collapse collapse" aria-labelledby="headingRatingOverTime">
                                 <div class="accordion-body">
-                                    <canvas id="participantChart"></canvas>
+                                    <canvas id="ratingOverTimeChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingPerQuest">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePerQuest" aria-expanded="false" aria-controls="collapsePerQuest">
+                                    Participants per Quest
+                                </button>
+                            </h2>
+                            <div id="collapsePerQuest" class="accordion-collapse collapse" aria-labelledby="headingPerQuest">
+                                <div class="accordion-body">
+                                    <canvas id="participantPerQuestChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -212,9 +236,10 @@ function renderStarRating(int $rating): string
 const questTitles = <?= json_encode($questTitles); ?>;
 const avgHostRatings = <?= json_encode($avgHostRatings); ?>;
 const avgQuestRatings = <?= json_encode($avgQuestRatings); ?>;
-const participantDates = <?= json_encode($participantDates); ?>;
 const participantCounts = <?= json_encode($participantCounts); ?>;
 const participantQuestTitles = <?= json_encode($participantQuestTitles); ?>;
+const ratingDates = <?= json_encode($ratingDates); ?>;
+const avgRatingsOverTime = <?= json_encode($avgRatingsOverTime); ?>;
 
 $(document).ready(function () {
     $('#datatable-reviews').DataTable({
@@ -252,16 +277,16 @@ $(document).ready(function () {
         }
     });
 
-    var participantCtx = document.getElementById('participantChart').getContext('2d');
-    new Chart(participantCtx, {
+    var ratingOverTimeCtx = document.getElementById('ratingOverTimeChart').getContext('2d');
+    new Chart(ratingOverTimeCtx, {
         type: 'line',
         data: {
-            labels: participantDates,
+            labels: ratingDates,
             datasets: [{
-                label: 'Participants',
-                data: participantCounts,
+                label: 'Avg Quest Rating',
+                data: avgRatingsOverTime,
                 fill: false,
-                borderColor: 'rgba(255, 99, 132, 1)',
+                borderColor: 'rgba(255, 206, 86, 1)',
                 tension: 0.1
             }]
         },
@@ -280,7 +305,7 @@ $(document).ready(function () {
                 yAxes: [{
                     ticks: {
                         beginAtZero: true,
-                        precision: 0
+                        max: 5
                     }
                 }]
             }
