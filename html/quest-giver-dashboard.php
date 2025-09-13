@@ -28,6 +28,7 @@ $pastQuests = $pastResp->success ? $pastResp->data : [];
 
 $reviewsResp = QuestController::queryQuestReviewsByHostAsResponse($account);
 $questReviewAverages = $reviewsResp->success ? $reviewsResp->data : [];
+usort($questReviewAverages, fn($a, $b) => strtotime($a->questEndDate) <=> strtotime($b->questEndDate));
 
 $totalHostedQuests = count($futureQuests) + count($pastQuests);
 $questTitles = array_map(fn($qr) => $qr->questTitle, $questReviewAverages);
@@ -37,7 +38,12 @@ $avgQuestRatings = array_map(fn($qr) => (float)$qr->avgQuestRating, $questReview
 $participantCounts = [];
 $participantQuestTitles = [];
 $uniqueParticipants = [];
-foreach (array_merge($futureQuests, $pastQuests) as $quest) {
+$allQuests = array_merge($futureQuests, $pastQuests);
+usort($allQuests, fn($a, $b) => strcmp(
+    $a->hasEndDate() ? $a->endDate()->formattedYmd : '',
+    $b->hasEndDate() ? $b->endDate()->formattedYmd : ''
+));
+foreach ($allQuests as $quest) {
     $participantsResp = QuestController::queryQuestApplicantsAsResponse($quest);
     $participants = $participantsResp->success ? $participantsResp->data : [];
     $participantCounts[] = count($participants);
@@ -50,18 +56,22 @@ $totalUniqueParticipants = count($uniqueParticipants);
 
 $questRatingsMap = [];
 foreach ($questReviewAverages as $qr) {
-$questRatingsMap[$qr->questTitle] = (float)$qr->avgQuestRating;
+    $questRatingsMap[$qr->questTitle] = (float)$qr->avgQuestRating;
 }
 
-$ratingDates = [];
-$avgRatingsOverTime = [];
+$ratingData = [];
 foreach ($pastQuests as $quest) {
     $title = $quest->title;
     if (isset($questRatingsMap[$title]) && $quest->hasEndDate()) {
-        $ratingDates[] = $quest->endDate()->formattedYmd;
-        $avgRatingsOverTime[] = $questRatingsMap[$title];
+        $ratingData[] = [
+            'date' => $quest->endDate()->formattedYmd,
+            'rating' => $questRatingsMap[$title],
+        ];
     }
 }
+usort($ratingData, fn($a, $b) => strcmp($a['date'], $b['date']));
+$ratingDates = array_column($ratingData, 'date');
+$avgRatingsOverTime = array_column($ratingData, 'rating');
 
 $recentReviews = $questReviewAverages;
 usort($recentReviews, fn($a, $b) => strtotime($b->questEndDate) <=> strtotime($a->questEndDate));
