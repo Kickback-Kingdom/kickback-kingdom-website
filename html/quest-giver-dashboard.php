@@ -79,7 +79,8 @@ foreach ($allQuests as $quest) {
 $totalUniqueParticipants = count($uniqueParticipants);
 
 foreach ($pastQuests as $quest) {
-    $reviewDetailsResp = QuestController::queryQuestReviewDetailsAsResponse($quest);
+    $applicants = $applicantsByQuest[$quest->crand] ?? null;
+    $reviewDetailsResp = QuestController::queryQuestReviewDetailsAsResponse($quest, $applicants);
     if ($reviewDetailsResp->success) {
         foreach ($reviewDetailsResp->data as $detail) {
             $id = $detail->accountId;
