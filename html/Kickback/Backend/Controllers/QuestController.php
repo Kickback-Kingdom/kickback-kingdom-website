@@ -1378,12 +1378,19 @@ class QuestController
     public static function queryQuestReviewsByHostAsResponse(vRecordId $hostId): Response
     {
         $conn = Database::getConnection();
-        $stmt = $conn->prepare("SELECT * FROM v_notifications_reviewed_quests WHERE account_id = ? ORDER BY date DESC");
+        $stmt = $conn->prepare(
+            "SELECT q.Id AS quest_id, q.name, q.end_date, q.imagePath_icon, q.imagePath, \
+                    qa.host_rating, qa.quest_rating, qa.feedback\n" .
+            "FROM quest_applicants qa\n" .
+            "JOIN v_quest_info q ON qa.quest_id = q.Id\n" .
+            "WHERE (q.host_id = ? OR q.host_id_2 = ?) AND qa.host_rating IS NOT NULL\n" .
+            "ORDER BY q.end_date DESC"
+        );
         if ($stmt === false) {
             return new Response(false, "Failed to prepare query", null);
         }
 
-        $stmt->bind_param('i', $hostId->crand);
+        $stmt->bind_param('ii', $hostId->crand, $hostId->crand);
         $stmt->execute();
         $result = $stmt->get_result();
 
@@ -1392,14 +1399,15 @@ class QuestController
             $questId = (int)$row['quest_id'];
             $hostRating = (int)$row['host_rating'];
             $questRating = (int)$row['quest_rating'];
-            $hasComment = trim((string)$row['text']) !== '';
+            $hasComment = trim((string)$row['feedback']) !== '';
 
             if (!isset($questRatings[$questId])) {
                 $questRatings[$questId] = [
                     'questId' => $questId,
                     'questTitle' => $row['name'],
-                    'questDate' => $row['date'],
-                    'questIcon' => $row['image'],
+                    'questEndDate' => $row['end_date'],
+                    'questIcon' => $row['imagePath_icon'],
+                    'questBanner' => $row['imagePath'],
                     'hostRatingSum' => $hostRating,
                     'questRatingSum' => $questRating,
                     'count' => 1,
@@ -1419,11 +1427,14 @@ class QuestController
         foreach ($questRatings as $data) {
             $icon = new vMedia();
             $icon->setMediaPath($data['questIcon']);
+            $banner = new vMedia();
+            $banner->setMediaPath($data['questBanner']);
             $summary = new vQuestReviewSummary();
             $summary->questId = $data['questId'];
             $summary->questTitle = $data['questTitle'];
-            $summary->questDate = $data['questDate'];
+            $summary->questEndDate = $data['questEndDate'];
             $summary->questIcon = $icon->getFullPath();
+            $summary->questBanner = $banner->getFullPath();
             $summary->avgHostRating = $data['hostRatingSum'] / $data['count'];
             $summary->avgQuestRating = $data['questRatingSum'] / $data['count'];
             $summary->hasComments = $data['hasComments'];

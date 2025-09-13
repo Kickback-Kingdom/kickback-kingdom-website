@@ -161,8 +161,8 @@ function renderStarRating(int $rating): string
                                                     <span><?= htmlspecialchars($qr->questTitle); ?></span>
                                                 </div>
                                             </td>
-                                            <td>
-                                                <?php $qd = new vDateTime($qr->questDate); ?>
+                                            <?php $qd = new vDateTime($qr->questEndDate); ?>
+                                            <td data-order="<?= htmlspecialchars($qd->dbValue); ?>">
                                                 <div class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($qd->formattedDetailed); ?> UTC" data-datetime-utc="<?= htmlspecialchars($qd->valueString); ?>" data-db-value="<?= htmlspecialchars($qd->dbValue); ?>"><?= htmlspecialchars($qd->formattedBasic); ?></div>
                                             </td>
                                             <td data-order="<?= $qr->avgHostRating; ?>" class="align-middle">
@@ -174,7 +174,7 @@ function renderStarRating(int $rating): string
                                             <td class="align-middle">
                                                 <?php $btnClass = !empty($qr->hasComments) ? 'btn-primary' : 'btn-outline-secondary'; ?>
                                                 <?php $iconClass = !empty($qr->hasComments) ? 'fa-solid' : 'fa-regular'; ?>
-                                                <button class="btn btn-sm <?= $btnClass ?> view-reviews-btn" data-quest-id="<?= $qr->questId; ?>" data-quest-title="<?= htmlspecialchars($qr->questTitle); ?>"><i class="<?= $iconClass ?> fa-comments me-1"></i>View</button>
+                                                <button class="btn btn-sm <?= $btnClass ?> view-reviews-btn" data-quest-id="<?= $qr->questId; ?>" data-quest-title="<?= htmlspecialchars($qr->questTitle); ?>" data-quest-banner="<?= htmlspecialchars($qr->questBanner); ?>"><i class="<?= $iconClass ?> fa-comments me-1"></i>View</button>
                                             </td>
                                         </tr>
                                     <?php } ?>
@@ -234,7 +234,10 @@ function renderStarRating(int $rating): string
                     <h5 class="modal-title" id="reviewModalLabel">Quest Reviews</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="reviewModalBody"></div>
+                <div class="modal-body">
+                    <img id="reviewModalBanner" class="img-fluid mb-3" src="" alt="">
+                    <div id="reviewModalBody"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -268,13 +271,16 @@ $(document).ready(function () {
     $('#datatable-reviews').DataTable({
         pageLength: 5,
         lengthChange: true,
-        columnDefs: [{ targets: [4], orderable: false }]
+        columnDefs: [{ targets: [4], orderable: false }],
+        order: [[1, 'desc']]
     });
 
     $(document).on('click', '.view-reviews-btn', function () {
         const questId = $(this).data('quest-id');
         const title = $(this).data('quest-title');
+        const banner = $(this).data('quest-banner');
         $('#reviewModalLabel').text(title + ' Reviews');
+        $('#reviewModalBanner').attr('src', banner);
         $('#reviewModalBody').html('<div class="text-center p-3"><i class="fa fa-spinner fa-spin"></i></div>');
         $('#reviewModal').modal('show');
 

@@ -7,8 +7,9 @@ class vQuestReviewSummary
 {
     public int $questId;
     public string $questTitle;
-    public string $questDate;
+    public string $questEndDate;
     public string $questIcon;
+    public string $questBanner;
     public float $avgHostRating;
     public float $avgQuestRating;
     public bool $hasComments;
