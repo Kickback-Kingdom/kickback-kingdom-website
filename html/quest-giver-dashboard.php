@@ -166,6 +166,32 @@ foreach ($pastQuests as $quest) {
 usort($bestQuestCandidates, fn($a, $b) => $b['score'] <=> $a['score']);
 $topBestQuests = array_slice($bestQuestCandidates, 0, 10);
 
+// Identify quests with high participation but low ratings
+$underperformingQuest = null;
+$underperformingCandidates = [];
+$minParticipants = 10;
+$maxAvgRating = 3;
+foreach ($pastQuests as $quest) {
+    $title = $quest->title;
+    $participants = $perQuestParticipantCounts[$title] ?? 0;
+    $avgRating = $questRatingsMap[$title] ?? 0;
+    if ($participants >= $minParticipants && $avgRating <= $maxAvgRating) {
+        $underperformingCandidates[] = [
+            'title' => $title,
+            'locator' => $quest->locator,
+            'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
+            'participants' => $participants,
+            'avgRating' => $avgRating,
+        ];
+    }
+}
+usort($underperformingCandidates, fn($a, $b) => $b['participants'] <=> $a['participants']);
+if (!empty($underperformingCandidates)) {
+    $top = $underperformingCandidates[0];
+    $underperformingQuest = $top;
+    $underperformingQuest['reviewUrl'] = Version::formatUrl('/q/' . $top['locator'] . '#reviews');
+}
+
 $ratingData = [];
 foreach ($pastQuests as $quest) {
     $title = $quest->title;
@@ -362,18 +388,39 @@ function renderStarRating(int $rating): string
                 </div>
                 <div class="tab-pane fade" id="nav-suggestions" role="tabpanel" aria-labelledby="nav-suggestions-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Suggestions</div>
-                    <?php if ($recommendedQuest) { ?>
-                        <div class="card">
-                            <div class="card-body d-flex align-items-center">
-                                <?php if (!empty($recommendedQuest['icon'])) { ?>
-                                    <img src="<?= htmlspecialchars($recommendedQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
-                                <?php } ?>
-                                <div>
-                                    <h5 class="card-title mb-1">Create a similar quest</h5>
-                                    <p class="card-text mb-0">Your quest <a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $recommendedQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($recommendedQuest['title']); ?></a> had <?= $recommendedQuest['unique']; ?> participants with <?= $recommendedQuest['loyal']; ?> loyal adventurers. Consider creating a similar quest!</p>
+                    <?php if ($recommendedQuest || $underperformingQuest) { ?>
+                        <?php if ($recommendedQuest) { ?>
+                            <div class="card mb-3">
+                                <div class="card-body d-flex align-items-center">
+                                    <?php if (!empty($recommendedQuest['icon'])) { ?>
+                                        <img src="<?= htmlspecialchars($recommendedQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
+                                    <?php } ?>
+                                    <div>
+                                        <h5 class="card-title mb-1">Create a similar quest</h5>
+                                        <p class="card-text mb-0">Your quest <a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $recommendedQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($recommendedQuest['title']); ?></a> had <?= $recommendedQuest['unique']; ?> participants with <?= $recommendedQuest['loyal']; ?> loyal adventurers. Consider creating a similar quest!</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        <?php } ?>
+                        <?php if ($underperformingQuest) { ?>
+                            <div class="card mb-3">
+                                <div class="card-body d-flex align-items-center">
+                                    <?php if (!empty($underperformingQuest['icon'])) { ?>
+                                        <img src="<?= htmlspecialchars($underperformingQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
+                                    <?php } ?>
+                                    <div>
+                                        <h5 class="card-title mb-1">Improve this quest</h5>
+                                        <p class="card-text mb-0">
+                                            <a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $underperformingQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($underperformingQuest['title']); ?></a>
+                                            drew <?= $underperformingQuest['participants']; ?> participants but averaged <?= number_format($underperformingQuest['avgRating'], 1); ?> stars. Great turnout—consider polishing the experience.
+                                            <?php if (!empty($underperformingQuest['reviewUrl'])) { ?>
+                                                <a href="<?= htmlspecialchars($underperformingQuest['reviewUrl']); ?>" target="_blank">View reviews</a>
+                                            <?php } ?>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php } ?>
                     <?php } else { ?>
                         <p>No suggestions available.</p>
                     <?php } ?>
