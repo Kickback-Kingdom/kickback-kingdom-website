@@ -132,7 +132,9 @@ class NotificationController
 
             if (!isset($questRatings[$questId])) {
                 $questRatings[$questId] = [
+                    'questId' => $questId,
                     'questTitle' => $row['name'],
+                    'questDate' => $row['date'],
                     'hostRatingSum' => $hostRating,
                     'questRatingSum' => $questRating,
                     'count' => 1,
@@ -147,13 +149,69 @@ class NotificationController
         $averages = [];
         foreach ($questRatings as $data) {
             $averages[] = [
+                'questId' => $data['questId'],
                 'questTitle' => $data['questTitle'],
+                'questDate' => $data['questDate'],
                 'avgHostRating' => $data['hostRatingSum'] / $data['count'],
                 'avgQuestRating' => $data['questRatingSum'] / $data['count'],
             ];
         }
 
         return new Response(true, "Quest review averages loaded.", $averages);
+    }
+
+    public static function queryQuestReviewDetailsAsResponse(vQuest $quest): Response
+    {
+        $conn = Database::getConnection();
+        $stmt = $conn->prepare("SELECT account_id_from, from_name, host_rating, quest_rating, text FROM v_notifications_reviewed_quests WHERE quest_id = ?");
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare query", null);
+        }
+
+        $stmt->bind_param('i', $quest->crand);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $reviews = [];
+        while ($row = $result->fetch_assoc()) {
+            $reviews[(int)$row['account_id_from']] = [
+                'hostRating' => (int)$row['host_rating'],
+                'questRating' => (int)$row['quest_rating'],
+                'message' => $row['text'],
+                'username' => $row['from_name'],
+            ];
+        }
+
+        $appResp = QuestController::queryQuestApplicantsAsResponse($quest);
+        $applicants = $appResp->success ? $appResp->data : [];
+
+        $details = [];
+        foreach ($applicants as $applicant) {
+            $account = $applicant->account;
+            $id = $account->crand;
+            $avatar = $account->avatar ? $account->avatar->getFullPath() : null;
+            if (isset($reviews[$id])) {
+                $details[] = [
+                    'accountId' => $id,
+                    'username' => $account->username,
+                    'avatar' => $avatar,
+                    'hostRating' => $reviews[$id]['hostRating'],
+                    'questRating' => $reviews[$id]['questRating'],
+                    'message' => $reviews[$id]['message'],
+                ];
+            } else {
+                $details[] = [
+                    'accountId' => $id,
+                    'username' => $account->username,
+                    'avatar' => $avatar,
+                    'hostRating' => null,
+                    'questRating' => null,
+                    'message' => null,
+                ];
+            }
+        }
+
+        return new Response(true, "Quest review details loaded.", $details);
     }
 }
 ?>
