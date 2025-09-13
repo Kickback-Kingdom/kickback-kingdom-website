@@ -169,6 +169,14 @@ function generateImproveQuestSuggestion(array $quest): string
     return implode(' ', $parts);
 }
 
+function generatePromoteQuestSuggestion(array $quest): string
+{
+    $parts = [];
+    $parts[] = "Players gave {$quest['questRatingDesc']} marks of " . number_format($quest['avgQuestRating'], 1) . "/5 for the quest and {$quest['hostRatingDesc']} ratings of " . number_format($quest['avgHostRating'], 1) . "/5 for your hosting, yet only {$quest['participants']} adventurer" . ($quest['participants'] === 1 ? '' : 's') . " joined.";
+    $parts[] = "Highlight those strong reviews and spread the word across guild halls and socials to draw more participants.";
+    return implode(' ', $parts);
+}
+
 if (!Session::isQuestGiver()) {
     Session::redirect("index.php");
 }
@@ -468,6 +476,41 @@ if (!empty($underperformingCandidates)) {
     $underperformingQuest['hostRatingDesc'] = describeRating($underperformingQuest['avgHostRating']);
 }
 
+// Identify well-rated quests that had low participation
+$hiddenGemQuest = null;
+$hiddenGemCandidates = [];
+foreach ($pastQuests as $quest) {
+    $title = $quest->title;
+    $participants = $perQuestParticipantCounts[$title] ?? 0;
+    $avgRating = $questRatingsMap[$title] ?? 0;
+    $hostRating = $hostRatingsMap[$title] ?? 0;
+    if ($avgRating >= 4 && $participants < $minParticipants) {
+        $hiddenGemCandidates[] = [
+            'title' => $title,
+            'locator' => $quest->locator,
+            'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
+            'participants' => $participants,
+            'registered' => $perQuestRegisteredCounts[$title] ?? 0,
+            'avgQuestRating' => $avgRating,
+            'avgHostRating' => $hostRating,
+            'endDate' => $quest->hasEndDate() ? $quest->endDate() : null,
+            'id' => $quest->crand,
+            'banner' => $quest->banner ? $quest->banner->getFullPath() : '',
+        ];
+    }
+}
+usort($hiddenGemCandidates, function ($a, $b) {
+    if ($b['avgQuestRating'] === $a['avgQuestRating']) {
+        return $a['participants'] <=> $b['participants'];
+    }
+    return $b['avgQuestRating'] <=> $a['avgQuestRating'];
+});
+if (!empty($hiddenGemCandidates)) {
+    $hiddenGemQuest = $hiddenGemCandidates[0];
+    $hiddenGemQuest['questRatingDesc'] = describeRating($hiddenGemQuest['avgQuestRating']);
+    $hiddenGemQuest['hostRatingDesc'] = describeRating($hiddenGemQuest['avgHostRating']);
+}
+
 $ratingData = [];
 foreach ($pastQuests as $quest) {
     $title = $quest->title;
@@ -664,7 +707,7 @@ function renderStarRating(int $rating): string
                 </div>
                 <div class="tab-pane fade" id="nav-suggestions" role="tabpanel" aria-labelledby="nav-suggestions-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Suggestions</div>
-                    <?php if ($recommendedQuest || $underperformingQuest || $dormantQuest || $fanFavoriteQuest) { ?>
+                    <?php if ($recommendedQuest || $underperformingQuest || $dormantQuest || $fanFavoriteQuest || $hiddenGemQuest) { ?>
                         <?php if ($dormantQuest) { ?>
                             <div class="card mb-3">
                                 <div class="card-body">
@@ -727,6 +770,27 @@ function renderStarRating(int $rating): string
                                     </div>
                                     <p class="card-text mb-2"><?= generateSimilarQuestSuggestion($recommendedQuest); ?></p>
                                     <button class="btn btn-sm btn-outline-primary view-reviews-btn mt-2" data-quest-id="<?= $recommendedQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($recommendedQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($recommendedQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
+                                </div>
+                            </div>
+                        <?php } ?>
+                        <?php if ($hiddenGemQuest) { ?>
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <?php if (!empty($hiddenGemQuest['icon'])) { ?>
+                                            <img src="<?= htmlspecialchars($hiddenGemQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
+                                        <?php } ?>
+                                        <div>
+                                            <h5 class="card-title mb-1">Promote this quest</h5>
+                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $hiddenGemQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($hiddenGemQuest['title']); ?></a> last ran <?= htmlspecialchars($hiddenGemQuest['endDate']->formattedBasic); ?></p>
+                                            <p class="card-text mb-0">
+                                                Quest Rating: <?= renderStarRating((int)round($hiddenGemQuest['avgQuestRating'])); ?><span class="ms-1"><?= number_format($hiddenGemQuest['avgQuestRating'], 1); ?></span>
+                                                &middot; Host Rating: <?= renderStarRating((int)round($hiddenGemQuest['avgHostRating'])); ?><span class="ms-1"><?= number_format($hiddenGemQuest['avgHostRating'], 1); ?></span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <p class="card-text mb-2"><?= generatePromoteQuestSuggestion($hiddenGemQuest); ?></p>
+                                    <button class="btn btn-sm btn-outline-primary view-reviews-btn mt-2" data-quest-id="<?= $hiddenGemQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($hiddenGemQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($hiddenGemQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
                                 </div>
                             </div>
                         <?php } ?>
