@@ -12,6 +12,8 @@ class vQuestApplicant extends vRecordId
     public int $seed;
     public int $rank;
     public string $displayName;
+    public bool $accepted;
+    public bool $participated;
 
     function __construct(string $ctime = '', int $crand = -1)
     {

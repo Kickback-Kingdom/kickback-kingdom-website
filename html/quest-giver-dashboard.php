@@ -168,6 +168,9 @@ function renderStarRating(int $rating): string
                                                 <?= number_format($qr['avgQuestRating'], 2); ?>
                                             </td>
                                             <td>
+                                                <?php if (!empty($qr['hasComments'])) { ?>
+                                                    <i class="fa-solid fa-comment text-info me-1" title="Has comments"></i>
+                                                <?php } ?>
                                                 <button class="btn btn-sm btn-primary view-reviews-btn" data-quest-id="<?= $qr['questId']; ?>" data-quest-title="<?= htmlspecialchars($qr['questTitle']); ?>">View</button>
                                             </td>
                                         </tr>
