@@ -181,8 +181,11 @@ function generateCoHostSuggestion(array $candidate): string
 {
     $parts = [];
     $parts[] = $candidate['username'] . ' has joined you on ' . $candidate['loyalty'] . ' quest' . ($candidate['loyalty'] === 1 ? '' : 's') . ',';
-    $parts[] = 'earning an average rating of ' . number_format($candidate['avgHostRating'], 1) . '/5 from your hosting.';
+    $parts[] = 'showing up for ' . number_format($candidate['reliability'] * 100, 0) . '% of the quests they register for.';
     $parts[] = 'They\'ve adventured alongside ' . $candidate['network'] . ' other player' . ($candidate['network'] === 1 ? '' : 's') . ', expanding your reach.';
+    if (($candidate['questsHosted'] ?? 0) > 0) {
+        $parts[] = 'They\'ve hosted ' . $candidate['questsHosted'] . ' quest' . ($candidate['questsHosted'] === 1 ? '' : 's') . ' of their own with average ratings of ' . number_format($candidate['avgHostedQuestRating'], 1) . '/5.';
+    }
     if (isset($candidate['daysSinceLastQuest'])) {
         $days = $candidate['daysSinceLastQuest'];
         $parts[] = 'Their last quest with you was ' . $days . ' day' . ($days === 1 ? '' : 's') . ' ago.';
@@ -223,6 +226,7 @@ $participantCounts = [];
 $participantQuestTitles = [];
 $uniqueParticipants = [];
 $participantTotals = [];
+$participantRegisteredTotals = [];
 $participantDetails = [];
 $participantHostRatingSums = [];
 $participantHostRatingCounts = [];
@@ -244,6 +248,13 @@ $applicantsByQuest = QuestController::queryQuestApplicantsForQuests($questIds);
 foreach ($allQuests as $quest) {
     $qid = $quest->crand;
     $registrations = $applicantsByQuest[$qid] ?? [];
+    foreach ($registrations as $reg) {
+        $rid = $reg->account->crand;
+        if ($rid === $account->crand) {
+            continue;
+        }
+        $participantRegisteredTotals[$rid] = ($participantRegisteredTotals[$rid] ?? 0) + 1;
+    }
     $participants = array_filter(
         $registrations,
         fn($app) => $app->participated
@@ -361,13 +372,15 @@ foreach ($participantTotals as $crand => $count) {
         'avatar' => $info['avatar'],
         'url' => $info['url'],
         'loyalty' => $count,
-        'avgQuestRating' => $participantAvgQuestRatings[$crand] ?? 0,
         'avgHostRating' => $participantAvgHostRatings[$crand] ?? 0,
+        'avgQuestRating' => $participantAvgQuestRatings[$crand] ?? 0,
     ];
     if (count($topParticipants) >= 10) {
         break;
     }
 }
+$topParticipantIds = array_map(fn($p) => $p['id'], $topParticipants);
+$hostingStats = QuestController::queryHostStatsForAccounts($topParticipantIds);
 $coHostCandidate = null;
 $highestCoHostScore = -1;
 foreach ($topParticipants as &$p) {
@@ -388,7 +401,24 @@ foreach ($topParticipants as &$p) {
         : null;
     $p['daysSinceLastQuest'] = $daysSince;
     $p['recentActivity'] = isset($daysSince) ? max(0, 30 - $daysSince) : 0;
-    $p['score'] = ($p['loyalty'] * 2) + ($p['network'] * 1) + ($p['recentActivity'] * 0.5);
+    $registered = $participantRegisteredTotals[$p['id']] ?? 0;
+    $attended = $participantTotals[$p['id']] ?? 0;
+    $p['registered'] = $registered;
+    $p['attended'] = $attended;
+    $p['reliability'] = $registered > 0 ? $attended / $registered : 0;
+    $hostStat = $hostingStats[$p['id']] ?? ['questsHosted' => 0, 'avgHostRating' => 0, 'avgQuestRating' => 0];
+    $p['questsHosted'] = $hostStat['questsHosted'];
+    $p['avgHostedHostRating'] = $hostStat['avgHostRating'];
+    $p['avgHostedQuestRating'] = $hostStat['avgQuestRating'];
+    $p['score'] = (
+        ($p['loyalty'] * 2) +
+        ($p['network'] * 1) +
+        ($p['recentActivity'] * 0.5) +
+        ($p['reliability'] * 3) +
+        ($p['questsHosted'] * 0.2) +
+        ($p['avgHostedHostRating'] * 0.5) +
+        ($p['avgHostedQuestRating'] * 0.5)
+    );
     if ($p['score'] > $highestCoHostScore) {
         $highestCoHostScore = $p['score'];
         $coHostCandidate = $p;
@@ -944,7 +974,7 @@ function renderStarRating(float $rating): string
                                             <div class="card-text mb-1"><a href="<?= htmlspecialchars($coHostCandidate['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($coHostCandidate['username']); ?></a></div>
                                             <p class="card-text mb-0">
                                                 Joined <?= $coHostCandidate['loyalty']; ?> quest<?= $coHostCandidate['loyalty'] === 1 ? '' : 's'; ?>
-                                                &middot; <?= renderStarRating($coHostCandidate['avgHostRating']); ?><span class="ms-1"><?= number_format($coHostCandidate['avgHostRating'], 1); ?></span>
+                                                &middot; <?= renderStarRating($coHostCandidate['avgHostedHostRating']); ?><span class="ms-1"><?= number_format($coHostCandidate['avgHostedHostRating'], 1); ?></span>
                                                 &middot; Adventured with <?= $coHostCandidate['network']; ?> other player<?= $coHostCandidate['network'] === 1 ? '' : 's'; ?>
                                                 <?php if (isset($coHostCandidate['daysSinceLastQuest'])) { ?>
                                                     &middot; Last quest <?= $coHostCandidate['daysSinceLastQuest']; ?> day<?= $coHostCandidate['daysSinceLastQuest'] === 1 ? '' : 's'; ?> ago
