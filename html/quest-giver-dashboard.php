@@ -123,6 +123,52 @@ function followupPrompt(
     return implode(' ', $messages);
 }
 
+function generateBringBackSuggestion(array $quest): string
+{
+    $parts = [];
+    $parts[] = "Players gave {$quest['questRatingDesc']} marks of " . number_format($quest['avgQuestRating'], 1) . "/5 for the quest and {$quest['hostRatingDesc']} feedback of " . number_format($quest['avgHostRating'], 1) . "/5 for your hosting";
+    if (($quest['participants'] ?? 0) > 0) {
+        $parts[] = "with {$quest['participants']} adventurer" . ($quest['participants'] === 1 ? '' : 's') . " taking part";
+    }
+    if (isset($quest['loyal']) && $quest['loyal'] > 0) {
+        $parts[] = "including {$quest['loyal']} returning player" . ($quest['loyal'] === 1 ? '' : 's');
+    }
+    $parts[] = "but it hasn't been offered since " . htmlspecialchars($quest['endDate']->formattedBasic) . ".";
+    $parts[] = "Reviving it could re-engage fans—consider adding new twists or rewards to keep it fresh.";
+    return implode(' ', $parts);
+}
+
+function generateSequelSuggestion(array $quest): string
+{
+    $parts = [];
+    $parts[] = "Loyal adventurers gave {$quest['questRatingDesc']} marks of " . number_format($quest['avgQuestRating'], 1) . "/5 for the quest and {$quest['hostRatingDesc']} ratings of " . number_format($quest['avgHostRating'], 1) . "/5 for your hosting.";
+    if (isset($quest['loyal'])) {
+        $parts[] = "{$quest['loyal']} returning player" . ($quest['loyal'] === 1 ? '' : 's') . " joined its last run on " . htmlspecialchars($quest['endDate']->formattedBasic) . ".";
+    }
+    $parts[] = "A sequel would be well received—build on its strengths and address any feedback to keep the saga fresh.";
+    return implode(' ', $parts);
+}
+
+function generateSimilarQuestSuggestion(array $quest): string
+{
+    $parts = [];
+    $parts[] = "Out of {$quest['registered']} sign-ups, {$quest['unique']} adventurer" . ($quest['unique'] === 1 ? '' : 's') . " joined";
+    if ($quest['loyal'] > 0) {
+        $parts[] = "including {$quest['loyal']} loyal player" . ($quest['loyal'] === 1 ? '' : 's');
+    }
+    $parts[] = "The quest earned {$quest['questRatingDesc']} feedback at " . number_format($quest['avgQuestRating'], 1) . "/5 and your hosting received {$quest['hostRatingDesc']} marks at " . number_format($quest['avgHostRating'], 1) . "/5.";
+    $parts[] = $quest['followupPrompt'];
+    return implode(' ', $parts);
+}
+
+function generateImproveQuestSuggestion(array $quest): string
+{
+    $parts = [];
+    $parts[] = "Despite {$quest['participants']} of {$quest['registered']} registered adventurer" . ($quest['registered'] === 1 ? '' : 's') . " taking part, players gave {$quest['questRatingDesc']} ratings of " . number_format($quest['avgQuestRating'], 1) . "/5 and your hosting received {$quest['hostRatingDesc']} marks of " . number_format($quest['avgHostRating'], 1) . "/5.";
+    $parts[] = "Review the feedback to adjust balance, narrative, or rewards before offering a refined version.";
+    return implode(' ', $parts);
+}
+
 if (!Session::isQuestGiver()) {
     Session::redirect("index.php");
 }
@@ -348,6 +394,9 @@ foreach ($pastQuests as $quest) {
     }
     $endDateObj = $quest->endDate();
     if ($endDateObj->value < $dormantCutoff) {
+        $ids = $perQuestParticipantIds[$quest->crand] ?? [];
+        $participants = count($ids);
+        $loyal = count(array_filter($ids, fn($id) => ($participantTotals[$id] ?? 0) > 1));
         $dormantCandidates[] = [
             'title' => $quest->title,
             'locator' => $quest->locator,
@@ -357,8 +406,9 @@ foreach ($pastQuests as $quest) {
             'endDate' => $endDateObj,
             'id' => $quest->crand,
             'banner' => $quest->banner ? $quest->banner->getFullPath() : '',
-            'participants' => $perQuestParticipantCounts[$quest->title] ?? 0,
+            'participants' => $participants,
             'registered' => $perQuestRegisteredCounts[$quest->title] ?? 0,
+            'loyal' => $loyal,
         ];
     }
 }
@@ -631,7 +681,7 @@ function renderStarRating(int $rating): string
                                             </p>
                                         </div>
                                     </div>
-                                    <p class="card-text mb-2">Players gave <?= $dormantQuest['questRatingDesc']; ?> marks of <?= number_format($dormantQuest['avgQuestRating'], 1); ?>/5 for the quest and <?= $dormantQuest['hostRatingDesc']; ?> feedback of <?= number_format($dormantQuest['avgHostRating'], 1); ?>/5 for your hosting, but it hasn't been offered since <?= htmlspecialchars($dormantQuest['endDate']->formattedBasic); ?>. Reviving it could re-engage fans—consider adding new twists or rewards to keep it fresh.</p>
+                                    <p class="card-text mb-2"><?= generateBringBackSuggestion($dormantQuest); ?></p>
                                     <button class="btn btn-sm btn-outline-primary view-reviews-btn mt-2" data-quest-id="<?= $dormantQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($dormantQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($dormantQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
                                 </div>
                             </div>
@@ -654,7 +704,7 @@ function renderStarRating(int $rating): string
                                             </p>
                                         </div>
                                     </div>
-                                    <p class="card-text mb-2">Loyal adventurers gave <?= $fanFavoriteQuest['questRatingDesc']; ?> marks of <?= number_format($fanFavoriteQuest['avgQuestRating'], 1); ?>/5 for the quest and <?= $fanFavoriteQuest['hostRatingDesc']; ?> ratings of <?= number_format($fanFavoriteQuest['avgHostRating'], 1); ?>/5 for your hosting. With <?= $fanFavoriteQuest['loyal']; ?> returning players, a sequel would be well received—build on its strengths and address any feedback to keep the saga fresh.</p>
+                                    <p class="card-text mb-2"><?= generateSequelSuggestion($fanFavoriteQuest); ?></p>
                                     <button class="btn btn-sm btn-outline-primary view-reviews-btn mt-2" data-quest-id="<?= $fanFavoriteQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($fanFavoriteQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($fanFavoriteQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
                                 </div>
                             </div>
@@ -675,7 +725,7 @@ function renderStarRating(int $rating): string
                                             </p>
                                         </div>
                                     </div>
-                                    <p class="card-text mb-2">Out of <?= $recommendedQuest['registered']; ?> sign-ups, <?= $recommendedQuest['unique']; ?> adventurers joined, including <?= $recommendedQuest['loyal']; ?> loyal players. The quest earned <?= $recommendedQuest['questRatingDesc']; ?> feedback at <?= number_format($recommendedQuest['avgQuestRating'], 1); ?>/5 and your hosting received <?= $recommendedQuest['hostRatingDesc']; ?> marks at <?= number_format($recommendedQuest['avgHostRating'], 1); ?>/5. <?= $recommendedQuest['followupPrompt']; ?></p>
+                                    <p class="card-text mb-2"><?= generateSimilarQuestSuggestion($recommendedQuest); ?></p>
                                     <button class="btn btn-sm btn-outline-primary view-reviews-btn mt-2" data-quest-id="<?= $recommendedQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($recommendedQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($recommendedQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
                                 </div>
                             </div>
@@ -696,7 +746,7 @@ function renderStarRating(int $rating): string
                                             </p>
                                         </div>
                                     </div>
-                                    <p class="card-text mb-2">Despite <?= $underperformingQuest['participants']; ?> of <?= $underperformingQuest['registered']; ?> registered adventurers taking part, players gave <?= $underperformingQuest['questRatingDesc']; ?> ratings of <?= number_format($underperformingQuest['avgQuestRating'], 1); ?>/5 and your hosting received <?= $underperformingQuest['hostRatingDesc']; ?> marks of <?= number_format($underperformingQuest['avgHostRating'], 1); ?>/5. Review the feedback to adjust balance, narrative, or rewards before offering a refined version.</p>
+                                    <p class="card-text mb-2"><?= generateImproveQuestSuggestion($underperformingQuest); ?></p>
                                     <button class="btn btn-sm btn-outline-primary view-reviews-btn mt-2" data-quest-id="<?= $underperformingQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($underperformingQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($underperformingQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
                                 </div>
                             </div>
