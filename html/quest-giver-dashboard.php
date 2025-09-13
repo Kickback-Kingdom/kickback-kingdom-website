@@ -962,31 +962,52 @@ function renderStarRating(float $rating): string
                             </div>
                         <?php } ?>
                         <?php if (!empty($coHostCandidates)) { ?>
-                            <?php foreach ($coHostCandidates as $coHostCandidate) { ?>
-                                <div class="card mb-3">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <?php if (!empty($coHostCandidate['avatar'])) { ?>
-                                                <img src="<?= htmlspecialchars($coHostCandidate['avatar']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
-                                            <?php } ?>
-                                            <div>
-                                                <h5 class="card-title mb-1">Invite a co-host</h5>
-                                                <div class="card-text mb-1"><a href="<?= htmlspecialchars($coHostCandidate['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($coHostCandidate['username']); ?></a></div>
-                                                <p class="card-text mb-0">
-                                                    Joined <?= $coHostCandidate['loyalty']; ?> quest<?= $coHostCandidate['loyalty'] === 1 ? '' : 's'; ?>
-                                                    &middot; Reliability: <?= number_format($coHostCandidate['reliability'] * 100, 0); ?>%
-                                                    &middot; Hosted <?= $coHostCandidate['questsHosted']; ?> quest<?= $coHostCandidate['questsHosted'] === 1 ? '' : 's'; ?>
-                                                    &middot; Network: <?= $coHostCandidate['network']; ?>
-                                                    <?php if (isset($coHostCandidate['daysSinceLastQuest'])) { ?>
-                                                        &middot; Last quest <?= $coHostCandidate['daysSinceLastQuest']; ?> day<?= $coHostCandidate['daysSinceLastQuest'] === 1 ? '' : 's'; ?> ago
-                                                    <?php } ?>
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <p class="card-text mb-2"><?= generateCoHostSuggestion($coHostCandidate); ?></p>
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title mb-3">Invite a co-host</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Player</th>
+                                                    <th>Joined</th>
+                                                    <th>Reliability</th>
+                                                    <th>Hosted</th>
+                                                    <th>Network</th>
+                                                    <th>Last Quest</th>
+                                                    <th>Suggestion</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($coHostCandidates as $coHostCandidate) { ?>
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <?php if (!empty($coHostCandidate['avatar'])) { ?>
+                                                                    <img src="<?= htmlspecialchars($coHostCandidate['avatar']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
+                                                                <?php } ?>
+                                                                <a href="<?= htmlspecialchars($coHostCandidate['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($coHostCandidate['username']); ?></a>
+                                                            </div>
+                                                        </td>
+                                                        <td class="align-middle"><?= $coHostCandidate['loyalty']; ?></td>
+                                                        <td class="align-middle"><?= number_format($coHostCandidate['reliability'] * 100, 0); ?>%</td>
+                                                        <td class="align-middle"><?= $coHostCandidate['questsHosted']; ?></td>
+                                                        <td class="align-middle"><?= $coHostCandidate['network']; ?></td>
+                                                        <td class="align-middle">
+                                                            <?php if (isset($coHostCandidate['daysSinceLastQuest'])) { ?>
+                                                                <?= $coHostCandidate['daysSinceLastQuest']; ?> day<?= $coHostCandidate['daysSinceLastQuest'] === 1 ? '' : 's'; ?> ago
+                                                            <?php } else { ?>
+                                                                &ndash;
+                                                            <?php } ?>
+                                                        </td>
+                                                        <td class="align-middle"><?= generateCoHostSuggestion($coHostCandidate); ?></td>
+                                                    </tr>
+                                                <?php } ?>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
-                            <?php } ?>
+                            </div>
                         <?php } ?>
                         <?php if ($underperformingQuest) { ?>
                             <div class="card mb-3">
