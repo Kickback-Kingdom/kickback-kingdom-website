@@ -136,7 +136,7 @@ foreach ($pastQuests as $quest) {
     ];
 }
 usort($bestQuestCandidates, fn($a, $b) => $b['score'] <=> $a['score']);
-$topBestQuests = array_slice($bestQuestCandidates, 0, 5);
+$topBestQuests = array_slice($bestQuestCandidates, 0, 10);
 
 $ratingData = [];
 foreach ($pastQuests as $quest) {
@@ -335,7 +335,7 @@ function renderStarRating(int $rating): string
                     <div class="display-6 tab-pane-title">Top Quests & Participants</div>
                     <div class="row">
                         <div class="col-12 col-lg-6 mb-3 mb-lg-0">
-                            <h4>Top 5 Quests</h4>
+                            <h4>Top 10 Quests</h4>
                             <?php if (count($topBestQuests) === 0) { ?>
                                 <p>No completed quests.</p>
                             <?php } else { ?>
