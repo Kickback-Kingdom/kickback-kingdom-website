@@ -34,13 +34,22 @@ function describeRating(float $rating): string
 
 function followupPrompt(float $questRating, float $hostRating): string
 {
+    if ($questRating >= 4.5 && $hostRating >= 4.5) {
+        return 'Players loved both the quest and your hosting—consider a celebratory sequel or special event to capitalize on the enthusiasm.';
+    }
     if ($questRating >= 4.0 && $hostRating >= 4.0) {
-        return 'A follow-up quest could build on this momentum.';
+        return 'Strong feedback across the board—build on this momentum with a follow-up adventure.';
+    }
+    if ($questRating >= 4.0 && $hostRating < 4.0) {
+        return 'The quest resonated with players, but hosting feedback suggests room for improvement. Review comments on pacing and clarity before planning a sequel.';
+    }
+    if ($questRating < 4.0 && $hostRating >= 4.0) {
+        return 'Your hosting was praised even though the quest design received mixed reviews. Consider iterating on the mechanics or narrative to elevate future runs.';
     }
     if ($questRating >= 3.0 && $hostRating >= 3.0) {
-        return 'Consider refining pacing or difficulty based on player feedback.';
+        return 'Feedback is mixed—use player comments to refine balance, narrative, and reward structure before offering another chapter.';
     }
-    return 'Use player feedback to adjust the experience before planning a sequel.';
+    return 'Ratings indicate several pain points. Study detailed feedback and iterate significantly before returning to this concept.';
 }
 
 if (!Session::isQuestGiver()) {
@@ -103,11 +112,11 @@ foreach ($allQuests as $quest) {
     $perQuestParticipantIds[$qid] = [];
     foreach ($participants as $participant) {
         $crand = $participant->account->crand;
+        $perQuestParticipantIds[$qid][] = $crand;
+        $uniqueParticipants[$crand] = true;
         if ($crand === $account->crand) {
             continue;
         }
-        $perQuestParticipantIds[$qid][] = $crand;
-        $uniqueParticipants[$crand] = true;
         $participantTotals[$crand] = ($participantTotals[$crand] ?? 0) + 1;
         if (!isset($participantDetails[$crand])) {
             $participantDetails[$crand] = [
