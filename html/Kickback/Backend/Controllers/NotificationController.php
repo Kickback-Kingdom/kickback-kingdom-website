@@ -16,6 +16,7 @@ use Kickback\Backend\Views\vQuestReview;
 use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Models\PlayStyle;
 use Kickback\Backend\Controllers\AccountController;
+use Kickback\Backend\Controllers\QuestController;
 
 class NotificationController
 {
@@ -126,12 +127,18 @@ class NotificationController
         $reviews = [];
         $accountCache = [];
         while ($row = $result->fetch_assoc()) {
-            $quest = new vQuest('', $row['quest_id']);
-            $quest->title = $row['name'];
-            $quest->locator = $row['locator'];
-            $quest->icon = new vMedia();
-            $quest->icon->setMediaPath($row['image']);
-            $quest->playStyle = PlayStyle::from($row['play_style']);
+            $questLookup = new vQuest('', $row['quest_id']);
+            $questResp = QuestController::queryQuestByIdAsResponse($questLookup);
+            if ($questResp->success && $questResp->data instanceof vQuest) {
+                $quest = $questResp->data;
+            } else {
+                $quest = new vQuest('', $row['quest_id']);
+                $quest->title = $row['name'];
+                $quest->locator = $row['locator'];
+                $quest->icon = new vMedia();
+                $quest->icon->setMediaPath($row['image']);
+                $quest->playStyle = PlayStyle::from($row['play_style']);
+            }
 
             $review = new vQuestReview('', $row['Id']);
             $review->questRating = (int)$row['quest_rating'];
