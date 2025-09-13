@@ -1045,12 +1045,20 @@ function renderStarRating(float $rating): string
                         </h5>
                         <table id="scheduleCalendar" class="table table-sm table-bordered mb-0"></table>
                     </div>
-                    <div class="small text-muted mt-2" id="calendarLegend">
-                        <span class="badge bg-success me-1">&nbsp;</span>High participation
-                        <span class="badge bg-warning ms-2 me-1">&nbsp;</span>Moderate
-                        <span class="badge bg-danger ms-2 me-1">&nbsp;</span>Low
-                        <span class="badge bg-light border border-danger ms-2 me-1">&nbsp;</span>Conflicts
-                        <span class="ms-2">Numbers show participants per day. Hover for details and conflicts.</span>
+                    <div class="d-flex align-items-center mt-2">
+                        <div class="small text-muted flex-grow-1" id="calendarLegend">
+                            <span class="badge bg-primary me-1">&nbsp;</span>Your quests
+                            <span class="badge bg-secondary ms-2 me-1">&nbsp;</span>Other hosts
+                            <span class="badge bg-success ms-2 me-1">&nbsp;</span>High participation
+                            <span class="badge bg-warning ms-2 me-1">&nbsp;</span>Moderate
+                            <span class="badge bg-danger ms-2 me-1">&nbsp;</span>Low
+                            <span class="badge bg-light border border-danger ms-2 me-1">&nbsp;</span>Conflicts
+                            <span class="ms-2">Numbers show participants per day. Hover for details and conflicts.</span>
+                        </div>
+                        <div class="form-check form-switch ms-3">
+                            <input class="form-check-input" type="checkbox" id="showOtherHosts" checked>
+                            <label class="form-check-label" for="showOtherHosts">Show other hosts</label>
+                        </div>
                     </div>
                     <div class="card card-body mt-3">
                         <h5 class="mb-3">Suggested Next Quest Dates</h5>
@@ -1317,9 +1325,12 @@ $(document).ready(function () {
         const today = new Date();
         const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
         let header = '<thead><tr>' + days.map(d => `<th class="text-center">${d}</th>`).join('') + '</tr></thead>';
+        const showOthers = $('#showOtherHosts').is(':checked');
         const values = [
             ...Object.values(participationCounts),
-            ...Object.values(calendarEvents).map(evts => evts.reduce((sum, e) => sum + (e.participants || 0), 0))
+            ...Object.values(calendarEvents).map(evts => evts
+                .filter(e => showOthers || !(e.host_id && e.host_id !== currentHostId))
+                .reduce((sum, e) => sum + (e.participants || 0), 0))
         ];
         const max = values.length ? Math.max(...values) : 0;
         let body = '<tbody><tr>';
@@ -1327,7 +1338,7 @@ $(document).ready(function () {
         let date = new Date(first);
         while (date.getMonth() === calMonth) {
             const dStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-            const events = calendarEvents[dStr] || [];
+            const events = (calendarEvents[dStr] || []).filter(e => showOthers || !(e.host_id && e.host_id !== currentHostId));
             const totalParticipants = events.reduce((sum, e) => sum + (e.participants || 0), 0);
             const globalCount = participationCounts[dStr];
             const count = (globalCount !== undefined) ? globalCount : totalParticipants;
@@ -1516,10 +1527,13 @@ $(document).ready(function () {
     }
 
     function loadCalendarEvents() {
+        const showOthers = $('#showOtherHosts').is(':checked');
         $.post('/api/v1/schedule/events.php', { sessionToken: sessionToken, month: calMonth + 1, year: calYear, includeAll: 1 }, function(resp) {
             if (resp && resp.success) {
                 calendarEvents = {};
                 resp.data.forEach(function(e) {
+                    const otherHost = e.host_id && e.host_id !== currentHostId;
+                    if (!showOthers && otherHost) { return; }
                     const d = e.start_date.substring(0,10);
                     if (!calendarEvents[d]) { calendarEvents[d] = []; }
                     calendarEvents[d].push(e);
@@ -1553,6 +1567,10 @@ $(document).ready(function () {
     loadWeekdayAverages();
     loadHourlyAverages();
     loadSuggestedDates();
+
+    $('#showOtherHosts').on('change', function() {
+        loadCalendarEvents();
+    });
 
     $('#datatable-reviews').DataTable({
         pageLength: 10,
