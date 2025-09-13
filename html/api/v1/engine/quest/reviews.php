@@ -1,7 +1,6 @@
 <?php
 require_once(__DIR__ . "/../../engine/engine.php");
 
-use Kickback\Backend\Controllers\NotificationController;
 use Kickback\Backend\Controllers\AccountController;
 use Kickback\Backend\Controllers\QuestController;
 use Kickback\Backend\Config\ServiceCredentials;
@@ -38,5 +37,5 @@ if ($quest->host1->crand !== $account->crand && (!isset($quest->host2) || $quest
     return new Response(false, "Only the quest owner can view reviews.", null);
 }
 
-return NotificationController::queryQuestReviewDetailsAsResponse($quest);
+return QuestController::queryQuestReviewDetailsAsResponse($quest);
 ?>

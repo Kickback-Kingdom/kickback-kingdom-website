@@ -15,8 +15,6 @@ use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vQuestReview;
 use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Models\PlayStyle;
-use Kickback\Backend\Controllers\AccountController;
-use Kickback\Backend\Controllers\QuestController;
 
 class NotificationController
 {
@@ -110,126 +108,6 @@ class NotificationController
 
 
         return $not;
-    }
-
-    public static function queryQuestReviewsByHostAsResponse(vRecordId $hostId): Response
-    {
-        $conn = Database::getConnection();
-        $stmt = $conn->prepare("SELECT * FROM v_notifications_reviewed_quests WHERE account_id = ? ORDER BY date DESC");
-        if ($stmt === false) {
-            return new Response(false, "Failed to prepare query", null);
-        }
-
-        $stmt->bind_param('i', $hostId->crand);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        $questRatings = [];
-        while ($row = $result->fetch_assoc()) {
-            $questId = (int)$row['quest_id'];
-            $hostRating = (int)$row['host_rating'];
-            $questRating = (int)$row['quest_rating'];
-            $hasComment = trim((string)$row['text']) !== '';
-
-            if (!isset($questRatings[$questId])) {
-                $questRatings[$questId] = [
-                    'questId' => $questId,
-                    'questTitle' => $row['name'],
-                    'questDate' => $row['date'],
-                    'questIcon' => $row['image'],
-                    'hostRatingSum' => $hostRating,
-                    'questRatingSum' => $questRating,
-                    'count' => 1,
-                    'hasComments' => $hasComment,
-                ];
-            } else {
-                $questRatings[$questId]['hostRatingSum'] += $hostRating;
-                $questRatings[$questId]['questRatingSum'] += $questRating;
-                $questRatings[$questId]['count']++;
-                if ($hasComment) {
-                    $questRatings[$questId]['hasComments'] = true;
-                }
-            }
-        }
-
-        $averages = [];
-        foreach ($questRatings as $data) {
-            $icon = new vMedia();
-            $icon->setMediaPath($data['questIcon']);
-            $averages[] = [
-                'questId' => $data['questId'],
-                'questTitle' => $data['questTitle'],
-                'questDate' => $data['questDate'],
-                'questIcon' => $icon->getFullPath(),
-                'avgHostRating' => $data['hostRatingSum'] / $data['count'],
-                'avgQuestRating' => $data['questRatingSum'] / $data['count'],
-                'hasComments' => $data['hasComments'],
-            ];
-        }
-
-        return new Response(true, "Quest review averages loaded.", $averages);
-    }
-
-    public static function queryQuestReviewDetailsAsResponse(vQuest $quest): Response
-    {
-        $conn = Database::getConnection();
-        $stmt = $conn->prepare("SELECT account_id_from, from_name, host_rating, quest_rating, text FROM v_notifications_reviewed_quests WHERE quest_id = ?");
-        if ($stmt === false) {
-            return new Response(false, "Failed to prepare query", null);
-        }
-
-        $stmt->bind_param('i', $quest->crand);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        $reviews = [];
-        while ($row = $result->fetch_assoc()) {
-            $reviews[(int)$row['account_id_from']] = [
-                'hostRating' => (int)$row['host_rating'],
-                'questRating' => (int)$row['quest_rating'],
-                'message' => $row['text'],
-                'username' => $row['from_name'],
-            ];
-        }
-
-        $appResp = QuestController::queryQuestApplicantsAsResponse($quest);
-        $applicants = $appResp->success ? $appResp->data : [];
-
-        $details = [];
-        foreach ($applicants as $applicant) {
-            if (!$applicant->participated) {
-                continue;
-            }
-
-            $account = $applicant->account;
-            $id = $account->crand;
-            if ($id === $quest->host1->crand || (isset($quest->host2) && $id === $quest->host2->crand)) {
-                continue;
-            }
-
-            $avatar = $account->avatar ? $account->avatar->getFullPath() : null;
-            if (isset($reviews[$id])) {
-                $details[] = [
-                    'accountId' => $id,
-                    'username' => $account->username,
-                    'avatar' => $avatar,
-                    'hostRating' => $reviews[$id]['hostRating'],
-                    'questRating' => $reviews[$id]['questRating'],
-                    'message' => $reviews[$id]['message'],
-                ];
-            } else {
-                $details[] = [
-                    'accountId' => $id,
-                    'username' => $account->username,
-                    'avatar' => $avatar,
-                    'hostRating' => null,
-                    'questRating' => null,
-                    'message' => null,
-                ];
-            }
-        }
-
-        return new Response(true, "Quest review details loaded.", $details);
     }
 }
 ?>
