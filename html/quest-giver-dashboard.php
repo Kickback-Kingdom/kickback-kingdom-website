@@ -1337,7 +1337,7 @@ $(document).ready(function () {
                 const time = start.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
                 const part = e.participants !== null ? ` - ${e.participants} participants` : '';
                 const pillTip = `${e.title}${part} @ ${time}`;
-                pills += `<div class=\"badge bg-primary rounded-pill text-truncate w-100 mb-1 calendar-event-pill\" data-bs-toggle=\"tooltip\" title=\"${pillTip.replace(/\"/g,'&quot;')}\">${time} ${e.title}</div>`;
+                pills += `<div class=\"badge bg-primary rounded-pill text-truncate w-100 mb-1 calendar-event-pill\" data-bs-toggle=\"tooltip\" title=\"${pillTip.replace(/\"/g,'&quot;')}\">${time}</div>`;
             });
             body += `<td class="${cls}" ${tooltip}><div class="fw-bold">${date.getDate()}</div>${pills}${(!events.length && count) ? `<small>${count} participants</small>` : ''}</td>`;
             if (date.getDay() === 6) { body += '</tr><tr>'; }
