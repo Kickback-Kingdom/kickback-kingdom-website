@@ -25,7 +25,8 @@ class ScheduleController
     *     day_of_month:  int,
     *     week_of_month: string,
     *     month:         int,
-    *     event_type:    string
+    *     event_type:    string,
+    *     participants:  ?int
     * }>
     */
     public static function getCalendarEvents(int $month, int $year, ?int $questGiverId = null) : array
@@ -42,16 +43,25 @@ class ScheduleController
         $result = mysqli_stmt_get_result($stmt);
         $events = $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
         mysqli_stmt_close($stmt);
+        // ensure consistent keys for consumers
+        foreach ($events as &$e) {
+            $e['participants'] = null;
+        }
+        unset($e);
 
         // Include the quest giver's own quest events if an account id is provided
         if ($questGiverId !== null) {
             $questQuery =
-                "SELECT Id AS id, name AS title, `desc` AS description, "
-                . "end_date AS start_date, end_date AS end_date, "
+                "SELECT q.Id AS id, q.name AS title, q.`desc` AS description, "
+                . "q.end_date AS start_date, q.end_date AS end_date, "
                 . "'NONE' AS recurrence, NULL AS day_of_week, NULL AS day_of_month, "
-                . "NULL AS week_of_month, NULL AS month, 'QUEST' AS event_type "
-                . "FROM quest WHERE (host_id = ? OR host_id_2 = ?) "
-                . "AND MONTH(end_date) = ? AND YEAR(end_date) = ?";
+                . "NULL AS week_of_month, NULL AS month, 'QUEST' AS event_type, "
+                . "COUNT(qa.participated) AS participants "
+                . "FROM quest q "
+                . "LEFT JOIN quest_applicants qa ON qa.quest_id = q.Id AND qa.participated = 1 "
+                . "WHERE (q.host_id = ? OR q.host_id_2 = ?) "
+                . "AND MONTH(q.end_date) = ? AND YEAR(q.end_date) = ? "
+                . "GROUP BY q.Id";
 
             $stmt2 = mysqli_prepare($db, $questQuery);
             if ($stmt2) {

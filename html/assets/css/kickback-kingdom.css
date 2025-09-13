@@ -1115,3 +1115,14 @@ animation: confetti-fast 1.25s linear 1 forwards;
     flex-shrink: 0; /* Prevent the actions from shrinking */
     margin-left: 1rem; /* Add some spacing between the details and the actions */
 }
+
+#scheduleCalendar td {
+    height: 120px;
+    vertical-align: top;
+    padding: 0.25rem;
+}
+
+.calendar-event-pill {
+    font-size: 0.75rem;
+    cursor: pointer;
+}
