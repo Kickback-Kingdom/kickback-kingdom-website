@@ -33,6 +33,15 @@ $questTitles = array_column($questReviewAverages, 'questTitle');
 $avgHostRatings = array_map('floatval', array_column($questReviewAverages, 'avgHostRating'));
 $avgQuestRatings = array_map('floatval', array_column($questReviewAverages, 'avgQuestRating'));
 
+$participantDates = [];
+$participantCounts = [];
+foreach (array_reverse($pastQuests) as $pquest) {
+    $participantsResp = QuestController::queryQuestApplicantsAsResponse($pquest);
+    $participants = $participantsResp->success ? $participantsResp->data : [];
+    $participantCounts[] = count($participants);
+    $participantDates[] = $pquest->hasEndDate() ? $pquest->endDate()->formattedYmd : '';
+}
+
 $reviewCount = count($questReviewAverages);
 $avgHostRating = $reviewCount > 0 ? array_sum($avgHostRatings) / $reviewCount : 0;
 $avgQuestRating = $reviewCount > 0 ? array_sum($avgQuestRatings) / $reviewCount : 0;
@@ -85,11 +94,6 @@ function renderStarRating(int $rating): string
             </div>
         </div>
     </div>
-    <div class="row mb-3">
-        <div class="col-12">
-            <canvas id="reviewChart"></canvas>
-        </div>
-    </div>
     <div class="row mt-3">
         <div class="col-12">
             <nav>
@@ -97,6 +101,7 @@ function renderStarRating(int $rating): string
                     <button class="nav-link active" id="nav-upcoming-tab" data-bs-toggle="tab" data-bs-target="#nav-upcoming" type="button" role="tab" aria-controls="nav-upcoming" aria-selected="true"><i class="fa-regular fa-calendar"></i></button>
                     <button class="nav-link" id="nav-past-tab" data-bs-toggle="tab" data-bs-target="#nav-past" type="button" role="tab" aria-controls="nav-past" aria-selected="false"><i class="fa-solid fa-clock-rotate-left"></i></button>
                     <button class="nav-link" id="nav-reviews-tab" data-bs-toggle="tab" data-bs-target="#nav-reviews" type="button" role="tab" aria-controls="nav-reviews" aria-selected="false"><i class="fa-solid fa-star"></i></button>
+                    <button class="nav-link" id="nav-graphs-tab" data-bs-toggle="tab" data-bs-target="#nav-graphs" type="button" role="tab" aria-controls="nav-graphs" aria-selected="false"><i class="fa-solid fa-chart-line"></i></button>
                 </div>
             </nav>
             <div class="tab-content" id="nav-tabContent">
@@ -151,17 +156,49 @@ function renderStarRating(int $rating): string
                         </div>
                     <?php } ?>
                 </div>
+                <div class="tab-pane fade" id="nav-graphs" role="tabpanel" aria-labelledby="nav-graphs-tab" tabindex="0">
+                    <div class="display-6 tab-pane-title">Quest Analytics</div>
+                    <div class="accordion" id="graphAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingRatings">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRatings" aria-expanded="true" aria-controls="collapseRatings">
+                                    Average Ratings
+                                </button>
+                            </h2>
+                            <div id="collapseRatings" class="accordion-collapse collapse show" aria-labelledby="headingRatings" data-bs-parent="#graphAccordion">
+                                <div class="accordion-body">
+                                    <canvas id="reviewChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingParticipants">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseParticipants" aria-expanded="false" aria-controls="collapseParticipants">
+                                    Participant Count Over Time
+                                </button>
+                            </h2>
+                            <div id="collapseParticipants" class="accordion-collapse collapse" aria-labelledby="headingParticipants" data-bs-parent="#graphAccordion">
+                                <div class="accordion-body">
+                                    <canvas id="participantChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     <?php require("php-components/base-page-footer.php"); ?>
 </main>
 <?php require("php-components/base-page-javascript.php"); ?>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
 <script>
 const questTitles = <?= json_encode($questTitles); ?>;
 const avgHostRatings = <?= json_encode($avgHostRatings); ?>;
 const avgQuestRatings = <?= json_encode($avgQuestRatings); ?>;
+const participantDates = <?= json_encode($participantDates); ?>;
+const participantCounts = <?= json_encode($participantCounts); ?>;
 
 $(document).ready(function () {
     $('#datatable-reviews').DataTable({
@@ -169,8 +206,8 @@ $(document).ready(function () {
         lengthChange: true
     });
 
-    var ctx = document.getElementById('reviewChart').getContext('2d');
-    new Chart(ctx, {
+    var reviewCtx = document.getElementById('reviewChart').getContext('2d');
+    new Chart(reviewCtx, {
         type: 'bar',
         data: {
             labels: questTitles,
@@ -193,6 +230,41 @@ $(document).ready(function () {
                     ticks: {
                         beginAtZero: true,
                         max: 5
+                    }
+                }]
+            }
+        }
+    });
+
+    var participantCtx = document.getElementById('participantChart').getContext('2d');
+    new Chart(participantCtx, {
+        type: 'line',
+        data: {
+            labels: participantDates,
+            datasets: [{
+                label: 'Participants',
+                data: participantCounts,
+                fill: false,
+                borderColor: 'rgba(255, 99, 132, 1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            scales: {
+                xAxes: [{
+                    type: 'time',
+                    time: {
+                        parser: 'YYYY-MM-DD',
+                        unit: 'day',
+                        displayFormats: {
+                            day: 'MMM D'
+                        }
+                    }
+                }],
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        precision: 0
                     }
                 }]
             }
