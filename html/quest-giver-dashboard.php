@@ -35,11 +35,14 @@ $avgQuestRatings = array_map('floatval', array_column($questReviewAverages, 'avg
 
 $participantDates = [];
 $participantCounts = [];
-foreach (array_reverse($pastQuests) as $pquest) {
-    $participantsResp = QuestController::queryQuestApplicantsAsResponse($pquest);
+$participantQuestTitles = [];
+foreach (array_merge($futureQuests, $pastQuests) as $quest) {
+    $participantsResp = QuestController::queryQuestApplicantsAsResponse($quest);
     $participants = $participantsResp->success ? $participantsResp->data : [];
-    $participantCounts[] = count($participants);
-    $participantDates[] = $pquest->hasEndDate() ? $pquest->endDate()->formattedYmd : '';
+    $count = count($participants);
+    $participantCounts[] = $count;
+    $participantDates[] = $quest->hasEndDate() ? $quest->endDate()->formattedYmd : '';
+    $participantQuestTitles[] = $quest->title;
 }
 
 $reviewCount = count($questReviewAverages);
@@ -184,6 +187,7 @@ function renderStarRating(int $rating): string
                             </div>
                         </div>
                     </div>
+                    <canvas id="participantPerQuestChart"></canvas>
                 </div>
             </div>
         </div>
@@ -199,6 +203,7 @@ const avgHostRatings = <?= json_encode($avgHostRatings); ?>;
 const avgQuestRatings = <?= json_encode($avgQuestRatings); ?>;
 const participantDates = <?= json_encode($participantDates); ?>;
 const participantCounts = <?= json_encode($participantCounts); ?>;
+const participantQuestTitles = <?= json_encode($participantQuestTitles); ?>;
 
 $(document).ready(function () {
     $('#datatable-reviews').DataTable({
@@ -261,6 +266,29 @@ $(document).ready(function () {
                         }
                     }
                 }],
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        precision: 0
+                    }
+                }]
+            }
+        }
+    });
+
+    var perQuestCtx = document.getElementById('participantPerQuestChart').getContext('2d');
+    new Chart(perQuestCtx, {
+        type: 'bar',
+        data: {
+            labels: participantQuestTitles,
+            datasets: [{
+                label: 'Participants',
+                data: participantCounts,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)'
+            }]
+        },
+        options: {
+            scales: {
                 yAxes: [{
                     ticks: {
                         beginAtZero: true,
