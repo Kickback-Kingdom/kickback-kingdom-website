@@ -920,7 +920,7 @@ function renderStarRating(float $rating): string
                                         <?php } ?>
                                         <div>
                                             <h5 class="card-title mb-1">Invite a co-host</h5>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars($coHostCandidate['url']); ?>" target="_blank"><?= htmlspecialchars($coHostCandidate['username']); ?></a></p>
+                                            <div class="card-text mb-1"><a href="<?= htmlspecialchars($coHostCandidate['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($coHostCandidate['username']); ?></a></div>
                                             <p class="card-text mb-0">
                                                 Joined <?= $coHostCandidate['count']; ?> quest<?= $coHostCandidate['count'] === 1 ? '' : 's'; ?>
                                                 &middot; <?= renderStarRating($coHostCandidate['avgHostRating']); ?><span class="ms-1"><?= number_format($coHostCandidate['avgHostRating'], 1); ?></span>
@@ -1035,7 +1035,7 @@ function renderStarRating(float $rating): string
                                                             <td>
                                                                 <div class="d-flex align-items-center">
                                                                     <img src="<?= htmlspecialchars($p['avatar']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
-                                                                    <a href="<?= htmlspecialchars($p['url']); ?>" target="_blank"><?= htmlspecialchars($p['username']); ?></a>
+                                                                    <div><a href="<?= htmlspecialchars($p['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($p['username']); ?></a></div>
                                                                 </div>
                                                             </td>
                                                             <td class="align-middle"><?= $p['count']; ?></td>
@@ -1086,7 +1086,7 @@ function renderStarRating(float $rating): string
                                                                     <?php if (!empty($h['avatar'])) { ?>
                                                                         <img src="<?= htmlspecialchars($h['avatar']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
                                                                     <?php } ?>
-                                                                    <a href="<?= htmlspecialchars($h['url']); ?>" target="_blank"><?= htmlspecialchars($h['username']); ?></a>
+                                                                    <div><a href="<?= htmlspecialchars($h['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($h['username']); ?></a></div>
                                                                 </div>
                                                             </td>
                                                             <td class="align-middle"><?= number_format($h['avgParticipants'], 1); ?></td>
@@ -1185,7 +1185,7 @@ $(document).ready(function () {
                     const item = $('<div class="list-group-item d-flex align-items-start"></div>');
                     const img = $('<img class="rounded me-3" style="width:40px;height:40px;">').attr('src', r.avatar);
                     const body = $('<div class="flex-grow-1"></div>');
-                    body.append(`<strong>${r.username}</strong><br>`);
+                    body.append(`<div><a href="/u/${r.username}" class="username" target="_blank">${r.username}</a></div>`);
                     if (r.hostRating !== null) {
                         body.append('Host Rating: ' + renderStarRatingJs(r.hostRating) + '<br>');
                         body.append('Quest Rating: ' + renderStarRatingJs(r.questRating) + '<br>');
