@@ -1337,17 +1337,17 @@ $(document).ready(function () {
 
     function loadParticipationByDate() {
         $.post('/api/v1/quest/participationByDate.php', { sessionToken: sessionToken }, function(resp) {
-            if (resp.success) {
+            if (resp && resp.success) {
                 participationCounts = {};
                 resp.data.forEach(function(r) { participationCounts[r.date] = r.participants; });
                 renderScheduleCalendar();
             }
-        });
+        }, 'json');
     }
 
     function loadWeekdayAverages() {
         $.post('/api/v1/quest/participationAveragesByWeekday.php', { sessionToken: sessionToken }, function(resp) {
-            if (resp.success) {
+            if (resp && resp.success) {
                 const labels = resp.data.map(function(r) { return r.weekday; });
                 const data = resp.data.map(function(r) { return r.avgParticipants; });
                 const ctx = document.getElementById('weekdayAveragesChart').getContext('2d');
@@ -1371,12 +1371,12 @@ $(document).ready(function () {
                     }
                 });
             }
-        });
+        }, 'json');
     }
 
     function loadCalendarEvents() {
         $.post('/api/v1/schedule/events.php', { sessionToken: sessionToken, month: calMonth + 1, year: calYear }, function(resp) {
-            if (resp.success) {
+            if (resp && resp.success) {
                 eventConflicts = {};
                 resp.data.forEach(function(e) {
                     const d = e.start_date.substring(0,10);
@@ -1385,7 +1385,7 @@ $(document).ready(function () {
                 });
                 renderScheduleCalendar();
             }
-        });
+        }, 'json');
     }
 
     $('#scheduleNext').on('click', function() {
