@@ -1317,16 +1317,20 @@ $(document).ready(function () {
         const today = new Date();
         const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
         let header = '<thead><tr>' + days.map(d => `<th class="text-center">${d}</th>`).join('') + '</tr></thead>';
-        const values = Object.values(participationCounts);
+        const values = [
+            ...Object.values(participationCounts),
+            ...Object.values(calendarEvents).map(evts => evts.reduce((sum, e) => sum + (e.participants || 0), 0))
+        ];
         const max = values.length ? Math.max(...values) : 0;
         let body = '<tbody><tr>';
         for (let i = 0; i < first.getDay(); i++) { body += '<td></td>'; }
         let date = new Date(first);
         while (date.getMonth() === calMonth) {
             const dStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-            const count = participationCounts[dStr] || 0;
             const events = calendarEvents[dStr] || [];
             const totalParticipants = events.reduce((sum, e) => sum + (e.participants || 0), 0);
+            const globalCount = participationCounts[dStr];
+            const count = (globalCount !== undefined) ? globalCount : totalParticipants;
             let cls = 'align-top';
             if (date.toDateString() === today.toDateString()) { cls += ' calendar-today'; }
             if (count > 0 && max > 0) {
@@ -1335,7 +1339,7 @@ $(document).ready(function () {
                 else if (ratio > 0.33) { cls += ' bg-warning'; }
                 else { cls += ' bg-danger text-white'; }
             }
-            let tooltipLines = [`Participants: ${totalParticipants}`];
+            let tooltipLines = [`Participants: ${count}`];
             if (events.length > 1) { tooltipLines.push('Conflicting events'); }
             let tooltip = `data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="bottom" title="${tooltipLines.join('<br>').replace(/"/g, '&quot;')}"`;
             if (events.length > 1) { cls += ' border border-danger border-2'; }
@@ -1369,7 +1373,7 @@ $(document).ready(function () {
     }
 
     function loadParticipationByDate() {
-        $.post('/api/v1/quest/participationByDate.php', { sessionToken: sessionToken }, function(resp) {
+        $.post('/api/v1/quest/participationByDate.php', { includeAll: 1, month: calMonth + 1, year: calYear }, function(resp) {
             if (resp && resp.success) {
                 participationCounts = {};
                 resp.data.forEach(function(r) { participationCounts[r.date] = r.participants; });
@@ -1511,12 +1515,14 @@ $(document).ready(function () {
         if (calMonth === 11) { calMonth = 0; calYear++; } else { calMonth++; }
         renderScheduleCalendar();
         loadCalendarEvents();
+        loadParticipationByDate();
         loadSuggestedDates();
     });
     $('#schedulePrev').on('click', function() {
         if (calMonth === 0) { calMonth = 11; calYear--; } else { calMonth--; }
         renderScheduleCalendar();
         loadCalendarEvents();
+        loadParticipationByDate();
         loadSuggestedDates();
     });
 
