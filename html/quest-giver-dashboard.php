@@ -38,6 +38,9 @@ $avgQuestRatings = array_map(fn($qr) => (float)$qr->avgQuestRating, $questReview
 $participantCounts = [];
 $participantQuestTitles = [];
 $uniqueParticipants = [];
+$participantTotals = [];
+$participantDetails = [];
+$perQuestParticipantCounts = [];
 $allQuests = array_merge($futureQuests, $pastQuests);
 usort($allQuests, fn($a, $b) => strcmp(
     $a->hasEndDate() ? $a->endDate()->formattedYmd : '',
@@ -46,18 +49,58 @@ usort($allQuests, fn($a, $b) => strcmp(
 foreach ($allQuests as $quest) {
     $participantsResp = QuestController::queryQuestApplicantsAsResponse($quest);
     $participants = $participantsResp->success ? $participantsResp->data : [];
-    $participantCounts[] = count($participants);
+    $count = count($participants);
+    $participantCounts[] = $count;
     $participantQuestTitles[] = $quest->title;
+    $perQuestParticipantCounts[$quest->title] = $count;
     foreach ($participants as $participant) {
-        $uniqueParticipants[$participant->account->crand] = true;
+        $crand = $participant->account->crand;
+        $uniqueParticipants[$crand] = true;
+        $participantTotals[$crand] = ($participantTotals[$crand] ?? 0) + 1;
+        if (!isset($participantDetails[$crand])) {
+            $participantDetails[$crand] = [
+                'username' => $participant->account->username,
+                'avatar' => $participant->account->avatar->getFullPath(),
+                'url' => $participant->account->url(),
+            ];
+        }
     }
 }
 $totalUniqueParticipants = count($uniqueParticipants);
+
+arsort($participantTotals);
+$topParticipants = [];
+foreach (array_slice($participantTotals, 0, 10, true) as $crand => $count) {
+    $info = $participantDetails[$crand];
+    $topParticipants[] = [
+        'username' => $info['username'],
+        'avatar' => $info['avatar'],
+        'url' => $info['url'],
+        'count' => $count,
+    ];
+}
 
 $questRatingsMap = [];
 foreach ($questReviewAverages as $qr) {
     $questRatingsMap[$qr->questTitle] = (float)$qr->avgQuestRating;
 }
+
+$bestQuestCandidates = [];
+foreach ($pastQuests as $quest) {
+    $title = $quest->title;
+    $participants = $perQuestParticipantCounts[$title] ?? 0;
+    $avgRating = $questRatingsMap[$title] ?? 0;
+    $bestQuestCandidates[] = [
+        'title' => $title,
+        'locator' => $quest->locator,
+        'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
+        'participants' => $participants,
+        'avgRating' => $avgRating,
+        'score' => $participants * $avgRating,
+    ];
+}
+usort($bestQuestCandidates, fn($a, $b) => $b['score'] <=> $a['score']);
+$topBestQuests = array_slice($bestQuestCandidates, 0, 5);
 
 $ratingData = [];
 foreach ($pastQuests as $quest) {
@@ -142,6 +185,7 @@ function renderStarRating(int $rating): string
                     <button class="nav-link" id="nav-past-tab" data-bs-toggle="tab" data-bs-target="#nav-past" type="button" role="tab" aria-controls="nav-past" aria-selected="false"><i class="fa-solid fa-clock-rotate-left"></i></button>
                     <button class="nav-link" id="nav-reviews-tab" data-bs-toggle="tab" data-bs-target="#nav-reviews" type="button" role="tab" aria-controls="nav-reviews" aria-selected="false"><i class="fa-solid fa-star"></i></button>
                     <button class="nav-link" id="nav-graphs-tab" data-bs-toggle="tab" data-bs-target="#nav-graphs" type="button" role="tab" aria-controls="nav-graphs" aria-selected="false"><i class="fa-solid fa-chart-line"></i></button>
+                    <button class="nav-link" id="nav-top-tab" data-bs-toggle="tab" data-bs-target="#nav-top" type="button" role="tab" aria-controls="nav-top" aria-selected="false"><i class="fa-solid fa-trophy"></i></button>
                 </div>
             </nav>
             <div class="tab-content" id="nav-tabContent">
@@ -248,6 +292,77 @@ function renderStarRating(int $rating): string
                                     <canvas id="participantPerQuestChart"></canvas>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="nav-top" role="tabpanel" aria-labelledby="nav-top-tab" tabindex="0">
+                    <div class="display-6 tab-pane-title">Top Quests & Participants</div>
+                    <div class="row">
+                        <div class="col-12 col-lg-6 mb-3 mb-lg-0">
+                            <h4>Top 5 Quests</h4>
+                            <?php if (count($topBestQuests) === 0) { ?>
+                                <p>No completed quests.</p>
+                            <?php } else { ?>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Quest</th>
+                                                <th>Participants</th>
+                                                <th>Avg Rating</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($topBestQuests as $q) { ?>
+                                                <tr>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <?php if (!empty($q['icon'])) { ?>
+                                                                <img src="<?= htmlspecialchars($q['icon']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
+                                                            <?php } ?>
+                                                            <a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $q['locator'])); ?>" target="_blank"><?= htmlspecialchars($q['title']); ?></a>
+                                                        </div>
+                                                    </td>
+                                                    <td class="align-middle"><?= $q['participants']; ?></td>
+                                                    <td class="align-middle">
+                                                        <?= renderStarRating((int)round($q['avgRating'])); ?><span class="ms-1"><?= number_format($q['avgRating'], 2); ?></span>
+                                                    </td>
+                                                </tr>
+                                            <?php } ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php } ?>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <h4>Top 10 Loyal Participants</h4>
+                            <?php if (count($topParticipants) === 0) { ?>
+                                <p>No participants yet.</p>
+                            <?php } else { ?>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Participant</th>
+                                                <th>Quests Joined</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($topParticipants as $p) { ?>
+                                                <tr>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <img src="<?= htmlspecialchars($p['avatar']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
+                                                            <a href="<?= htmlspecialchars($p['url']); ?>" target="_blank"><?= htmlspecialchars($p['username']); ?></a>
+                                                        </div>
+                                                    </td>
+                                                    <td class="align-middle"><?= $p['count']; ?></td>
+                                                </tr>
+                                            <?php } ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php } ?>
                         </div>
                     </div>
                 </div>
