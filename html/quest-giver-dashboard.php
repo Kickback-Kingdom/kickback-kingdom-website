@@ -148,14 +148,17 @@ function renderStarRating(int $rating): string
                                 <thead>
                                     <tr>
                                         <th>Quest</th>
+                                        <th>Date</th>
                                         <th>Average Host Rating</th>
                                         <th>Average Quest Rating</th>
+                                        <th>Reviews</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($questReviewAverages as $qr) { ?>
                                         <tr>
                                             <td><?= htmlspecialchars($qr['questTitle']); ?></td>
+                                            <td><?= htmlspecialchars($qr['questDate']); ?></td>
                                             <td data-order="<?= $qr['avgHostRating']; ?>">
                                                 <?= renderStarRating((int)round($qr['avgHostRating'])); ?>
                                                 <?= number_format($qr['avgHostRating'], 2); ?>
@@ -163,6 +166,9 @@ function renderStarRating(int $rating): string
                                             <td data-order="<?= $qr['avgQuestRating']; ?>">
                                                 <?= renderStarRating((int)round($qr['avgQuestRating'])); ?>
                                                 <?= number_format($qr['avgQuestRating'], 2); ?>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary view-reviews-btn" data-quest-id="<?= $qr['questId']; ?>" data-quest-title="<?= htmlspecialchars($qr['questTitle']); ?>">View</button>
                                             </td>
                                         </tr>
                                     <?php } ?>
@@ -215,6 +221,18 @@ function renderStarRating(int $rating): string
             </div>
         </div>
     </div>
+    <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reviewModalLabel">Quest Reviews</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="reviewModalBody"></div>
+            </div>
+        </div>
+    </div>
+
     <?php require("php-components/base-page-footer.php"); ?>
 </main>
 <?php require("php-components/base-page-javascript.php"); ?>
@@ -229,10 +247,52 @@ const participantQuestTitles = <?= json_encode($participantQuestTitles); ?>;
 const ratingDates = <?= json_encode($ratingDates); ?>;
 const avgRatingsOverTime = <?= json_encode($avgRatingsOverTime); ?>;
 
+function renderStarRatingJs(rating) {
+    let stars = '<div class="star-rating" style="pointer-events: none;">';
+    for (let i = 1; i <= 5; i++) {
+        const cls = i <= rating ? 'fa-solid fa-star selected' : 'fa-regular fa-star';
+        stars += `<i class="${cls}"></i>`;
+    }
+    return stars + '</div>';
+}
+
 $(document).ready(function () {
     $('#datatable-reviews').DataTable({
         pageLength: 5,
-        lengthChange: true
+        lengthChange: true,
+        columnDefs: [{ targets: [4], orderable: false }]
+    });
+
+    $(document).on('click', '.view-reviews-btn', function () {
+        const questId = $(this).data('quest-id');
+        const title = $(this).data('quest-title');
+        $('#reviewModalLabel').text(title + ' Reviews');
+        $('#reviewModalBody').html('<div class="text-center p-3"><i class="fa fa-spinner fa-spin"></i></div>');
+        $('#reviewModal').modal('show');
+
+        $.post('/api/v1/quest/reviews.php', { questId: questId }, function (resp) {
+            if (resp.success) {
+                const list = $('<div class="list-group"></div>');
+                resp.data.forEach(function (r) {
+                    const item = $('<div class="list-group-item d-flex align-items-start"></div>');
+                    const img = $('<img class="rounded me-3" style="width:40px;height:40px;">').attr('src', r.avatar);
+                    const body = $('<div class="flex-grow-1"></div>');
+                    body.append(`<strong>${r.username}</strong><br>`);
+                    if (r.hostRating !== null) {
+                        body.append('Host Rating: ' + renderStarRatingJs(r.hostRating) + '<br>');
+                        body.append('Quest Rating: ' + renderStarRatingJs(r.questRating) + '<br>');
+                        body.append(`<small>${r.message}</small>`);
+                    } else {
+                        body.append('<em>Review pending</em>');
+                    }
+                    item.append(img).append(body);
+                    list.append(item);
+                });
+                $('#reviewModalBody').html(list);
+            } else {
+                $('#reviewModalBody').html('<div class="text-danger">' + resp.message + '</div>');
+            }
+        });
     });
 
     var reviewCtx = document.getElementById('reviewChart').getContext('2d');
