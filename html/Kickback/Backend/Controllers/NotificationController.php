@@ -129,10 +129,12 @@ class NotificationController
             $questId = (int)$row['quest_id'];
             $hostRating = (int)$row['host_rating'];
             $questRating = (int)$row['quest_rating'];
+            $endDate = $row['date'];
 
             if (!isset($questRatings[$questId])) {
                 $questRatings[$questId] = [
                     'questTitle' => $row['name'],
+                    'endDate' => $endDate,
                     'hostRatingSum' => $hostRating,
                     'questRatingSum' => $questRating,
                     'count' => 1,
@@ -141,6 +143,10 @@ class NotificationController
                 $questRatings[$questId]['hostRatingSum'] += $hostRating;
                 $questRatings[$questId]['questRatingSum'] += $questRating;
                 $questRatings[$questId]['count']++;
+                // In case the date wasn't set previously, ensure it's stored
+                if (!isset($questRatings[$questId]['endDate'])) {
+                    $questRatings[$questId]['endDate'] = $endDate;
+                }
             }
         }
 
@@ -148,6 +154,7 @@ class NotificationController
         foreach ($questRatings as $data) {
             $averages[] = [
                 'questTitle' => $data['questTitle'],
+                'endDate' => $data['endDate'],
                 'avgHostRating' => $data['hostRatingSum'] / $data['count'],
                 'avgQuestRating' => $data['questRatingSum'] / $data['count'],
             ];
