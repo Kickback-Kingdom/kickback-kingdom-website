@@ -78,18 +78,17 @@ foreach ($allQuests as $quest) {
 }
 $totalUniqueParticipants = count($uniqueParticipants);
 
+$pastQuestIds = array_map(fn($q) => $q->crand, $pastQuests);
+$reviewDetailsByQuest = QuestController::queryQuestReviewDetailsForQuests($pastQuestIds);
+
 foreach ($pastQuests as $quest) {
-    $applicants = $applicantsByQuest[$quest->crand] ?? null;
-    $reviewDetailsResp = QuestController::queryQuestReviewDetailsAsResponse($quest, $applicants);
-    if ($reviewDetailsResp->success) {
-        foreach ($reviewDetailsResp->data as $detail) {
-            $id = $detail->accountId;
-            if ($id === $account->crand || is_null($detail->hostRating)) {
-                continue;
-            }
-            $participantRatingSums[$id] = ($participantRatingSums[$id] ?? 0) + $detail->hostRating;
-            $participantRatingCounts[$id] = ($participantRatingCounts[$id] ?? 0) + 1;
+    foreach ($reviewDetailsByQuest[$quest->crand] ?? [] as $detail) {
+        $id = $detail->accountId;
+        if ($id === $account->crand || is_null($detail->hostRating)) {
+            continue;
         }
+        $participantRatingSums[$id] = ($participantRatingSums[$id] ?? 0) + $detail->hostRating;
+        $participantRatingCounts[$id] = ($participantRatingCounts[$id] ?? 0) + 1;
     }
 }
 $participantAvgRatings = [];
