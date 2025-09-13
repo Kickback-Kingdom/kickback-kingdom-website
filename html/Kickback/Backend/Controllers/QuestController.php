@@ -1544,11 +1544,9 @@ class QuestController
         // If applicants were not preloaded, fetch both applicants and reviews in a single query
         if ($applicants === null) {
             $stmt = $conn->prepare(
-                "SELECT qa.account_id, acc.Username AS username, acc.avatar_media, rv.host_rating, rv.quest_rating, rv.text
+                "SELECT qa.account_id, acc.Username AS username, acc.avatar_media, qa.host_rating, qa.quest_rating, qa.feedback AS text
                  FROM quest_applicants qa
                  JOIN v_account_info acc ON qa.account_id = acc.Id
-                 LEFT JOIN v_notifications_reviewed_quests rv
-                    ON rv.quest_id = qa.quest_id AND rv.account_id_from = qa.account_id
                  WHERE qa.quest_id = ? AND qa.participated = 1"
             );
             if ($stmt === false) {
@@ -1588,7 +1586,7 @@ class QuestController
 
         // Applicants were provided, fetch only review data
         $stmt = $conn->prepare(
-            'SELECT account_id_from, host_rating, quest_rating, text FROM v_notifications_reviewed_quests WHERE quest_id = ?'
+            'SELECT account_id, host_rating, quest_rating, feedback AS text FROM quest_applicants WHERE quest_id = ? AND participated = 1'
         );
         if ($stmt === false) {
             return new Response(false, 'Failed to prepare query', null);
@@ -1600,7 +1598,7 @@ class QuestController
 
         $reviews = [];
         while ($row = $result->fetch_assoc()) {
-            $reviews[(int)$row['account_id_from']] = [
+            $reviews[(int)$row['account_id']] = [
                 'hostRating' => isset($row['host_rating']) ? (int)$row['host_rating'] : null,
                 'questRating' => isset($row['quest_rating']) ? (int)$row['quest_rating'] : null,
                 'message' => $row['text'] ?? null,
@@ -1653,11 +1651,10 @@ class QuestController
 
         $conn = Database::getConnection();
         $placeholders = implode(',', array_fill(0, count($questIds), '?'));
-        $sql = "SELECT qa.quest_id, qa.account_id, acc.Username AS username, acc.avatar_media, rv.host_rating, rv.quest_rating, rv.text, q.host_id, q.host_id_2 " .
+        $sql = "SELECT qa.quest_id, qa.account_id, acc.Username AS username, acc.avatar_media, qa.host_rating, qa.quest_rating, qa.feedback AS text, q.host_id, q.host_id_2 " .
             "FROM quest_applicants qa " .
             "JOIN v_account_info acc ON qa.account_id = acc.Id " .
             "JOIN quest q ON qa.quest_id = q.Id " .
-            "LEFT JOIN v_notifications_reviewed_quests rv ON rv.quest_id = qa.quest_id AND rv.account_id_from = qa.account_id " .
             "WHERE qa.quest_id IN ($placeholders) AND qa.participated = 1";
 
         $stmt = $conn->prepare($sql);
