@@ -1326,6 +1326,7 @@ $(document).ready(function () {
             const dStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
             const count = participationCounts[dStr] || 0;
             const events = calendarEvents[dStr] || [];
+            const totalParticipants = events.reduce((sum, e) => sum + (e.participants || 0), 0);
             let cls = 'align-top';
             if (date.toDateString() === today.toDateString()) { cls += ' calendar-today'; }
             if (count > 0 && max > 0) {
@@ -1334,7 +1335,7 @@ $(document).ready(function () {
                 else if (ratio > 0.33) { cls += ' bg-warning'; }
                 else { cls += ' bg-danger text-white'; }
             }
-            let tooltipLines = [`Participants: ${count}`];
+            let tooltipLines = [`Participants: ${totalParticipants}`];
             if (events.length > 1) { tooltipLines.push('Conflicting events'); }
             let tooltip = `data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="bottom" title="${tooltipLines.join('<br>').replace(/"/g, '&quot;')}"`;
             if (events.length > 1) { cls += ' border border-danger border-2'; }
