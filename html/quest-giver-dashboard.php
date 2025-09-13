@@ -32,9 +32,17 @@ $totalHostedQuests = count($futureQuests) + count($pastQuests);
 $reviewCount = count($questReviews);
 $hostRatingSum = 0;
 $questRatingSum = 0;
+$reviewDates = [];
+$hostRatings = [];
+$questRatings = [];
 foreach ($questReviews as $qr) {
-    $hostRatingSum += $qr['review']->hostRating;
-    $questRatingSum += $qr['review']->questRating;
+    $hostRating = $qr['review']->hostRating;
+    $questRating = $qr['review']->questRating;
+    $hostRatingSum += $hostRating;
+    $questRatingSum += $questRating;
+    $reviewDates[] = $qr['review']->dateTime->formattedBasic;
+    $hostRatings[] = $hostRating;
+    $questRatings[] = $questRating;
 }
 $avgHostRating = $reviewCount > 0 ? $hostRatingSum / $reviewCount : 0;
 $avgQuestRating = $reviewCount > 0 ? $questRatingSum / $reviewCount : 0;
@@ -85,6 +93,11 @@ function renderStarRating(int $rating): string
                     <div><?= number_format($avgQuestRating, 2); ?>/5</div>
                 </div>
             </div>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-12">
+            <canvas id="reviewChart"></canvas>
         </div>
     </div>
     <div class="row mt-3">
@@ -178,7 +191,12 @@ function renderStarRating(int $rating): string
     <?php require("php-components/base-page-footer.php"); ?>
 </main>
 <?php require("php-components/base-page-javascript.php"); ?>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
 <script>
+const reviewDates = <?= json_encode($reviewDates); ?>;
+const hostRatings = <?= json_encode($hostRatings); ?>;
+const questRatings = <?= json_encode($questRatings); ?>;
+
 $(document).ready(function () {
     var reviewTable = $('#datatable-reviews').DataTable({
         pageLength: 5,
@@ -196,6 +214,40 @@ $(document).ready(function () {
             var comment = $(this).attr('data-comment');
             row.child('<div class="p-3">'+comment+'</div>').show();
             tr.addClass('shown');
+        }
+    });
+
+    var ctx = document.getElementById('reviewChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: reviewDates,
+            datasets: [
+                {
+                    label: 'Host Rating',
+                    data: hostRatings,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    fill: false
+                },
+                {
+                    label: 'Quest Rating',
+                    data: questRatings,
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        max: 5
+                    }
+                }]
+            }
         }
     });
 });
