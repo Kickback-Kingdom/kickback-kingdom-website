@@ -23,5 +23,18 @@ if (!$loginResp->success) {
 }
 $account = $loginResp->data;
 
-return QuestController::getParticipationAveragesByWeekday(new vRecordId('', $account->crand));
+$personal = QuestController::getParticipationAveragesByWeekday(new vRecordId('', $account->crand));
+if (!$personal->success) {
+    return $personal;
+}
+
+$global = QuestController::getParticipationAveragesByWeekday();
+if (!$global->success) {
+    return $global;
+}
+
+return new Response(true, 'Average participation by weekday loaded.', [
+    'personal' => $personal->data,
+    'global' => $global->data,
+]);
 ?>

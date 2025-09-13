@@ -1774,23 +1774,31 @@ class QuestController
         return new Response(true, "Participation counts loaded.", $counts);
     }
 
-    public static function getParticipationAveragesByWeekday(vRecordId $hostId): Response
+    public static function getParticipationAveragesByWeekday(?vRecordId $hostId = null): Response
     {
         $conn = Database::getConnection();
         $sql = "SELECT weekday, AVG(participants) AS avg_participants FROM ("
             . "SELECT DAYOFWEEK(q.end_date) AS weekday, COUNT(*) AS participants "
             . "FROM quest_applicants qa "
             . "JOIN quest q ON qa.quest_id = q.Id "
-            . "WHERE qa.participated = 1 AND (q.host_id = ? OR q.host_id_2 = ?) "
-            . "GROUP BY q.Id" 
-            . ") sub GROUP BY weekday ORDER BY weekday";
+            . "WHERE qa.participated = 1";
+
+        if ($hostId !== null) {
+            $sql .= " AND (q.host_id = ? OR q.host_id_2 = ?)";
+        }
+
+        $sql .= " GROUP BY q.Id" .
+            ") sub GROUP BY weekday ORDER BY weekday";
 
         $stmt = $conn->prepare($sql);
         if ($stmt === false) {
             return new Response(false, "Failed to prepare query", null);
         }
 
-        $stmt->bind_param('ii', $hostId->crand, $hostId->crand);
+        if ($hostId !== null) {
+            $stmt->bind_param('ii', $hostId->crand, $hostId->crand);
+        }
+
         $stmt->execute();
         $result = $stmt->get_result();
         if ($result === false) {

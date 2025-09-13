@@ -1375,19 +1375,31 @@ $(document).ready(function () {
     function loadWeekdayAverages() {
         $.post('/api/v1/quest/participationAveragesByWeekday.php', { sessionToken: sessionToken }, function(resp) {
             if (resp && resp.success) {
-                const labels = resp.data.map(function(r) { return r.weekday; });
-                const data = resp.data.map(function(r) { return r.avgParticipants; });
+                const personal = resp.data.personal;
+                const global = resp.data.global;
+                const labels = global.map(function(r) { return r.weekday; });
+                const personalMap = {};
+                personal.forEach(function(r) { personalMap[r.weekday] = r.avgParticipants; });
+                const personalData = labels.map(function(l) { return personalMap[l] || 0; });
+                const globalData = global.map(function(r) { return r.avgParticipants; });
                 const ctx = document.getElementById('weekdayAveragesChart').getContext('2d');
                 if (weekdayChart) { weekdayChart.destroy(); }
                 weekdayChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: labels,
-                        datasets: [{
-                            label: 'Avg Participants',
-                            data: data,
-                            backgroundColor: 'rgba(54, 162, 235, 0.6)'
-                        }]
+                        datasets: [
+                            {
+                                label: 'My Avg',
+                                data: personalData,
+                                backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                            },
+                            {
+                                label: 'Global Avg',
+                                data: globalData,
+                                backgroundColor: 'rgba(255, 159, 64, 0.6)'
+                            }
+                        ]
                     },
                     options: {
                         scales: {
