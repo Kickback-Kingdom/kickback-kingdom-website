@@ -1045,10 +1045,21 @@ function renderStarRating(float $rating): string
                         </h5>
                         <table id="scheduleCalendar" class="table table-sm table-bordered mb-0"></table>
                     </div>
-                    <small class="text-muted">Cell colors indicate relative participation.</small>
+                    <div class="small text-muted mt-2" id="calendarLegend">
+                        <span class="badge bg-success me-1">&nbsp;</span>High participation
+                        <span class="badge bg-warning ms-2 me-1">&nbsp;</span>Moderate
+                        <span class="badge bg-danger ms-2 me-1">&nbsp;</span>Low
+                        <span class="badge bg-secondary ms-2 me-1">&nbsp;</span>Conflicts
+                        <span class="ms-2">Numbers show participants per day.</span>
+                    </div>
+                    <div class="card card-body mt-3">
+                        <h5 class="mb-3">Suggested Next Quest Dates</h5>
+                        <ul id="suggestedDatesList" class="list-unstyled mb-0"></ul>
+                    </div>
                     <div class="card card-body mt-3">
                         <h5 class="mb-3">Average Participation by Weekday</h5>
                         <canvas id="weekdayAveragesChart"></canvas>
+                        <small class="text-muted">Average participants for quests run on each weekday.</small>
                     </div>
                 </div>
                 <div class="tab-pane fade" id="nav-top" role="tabpanel" aria-labelledby="nav-top-tab" tabindex="0">
@@ -1374,6 +1385,21 @@ $(document).ready(function () {
         }, 'json');
     }
 
+    function loadSuggestedDates() {
+        $.get('/api/v1/schedule/suggestedDates.php', { month: calMonth + 1, year: calYear }, function(resp) {
+            const list = $('#suggestedDatesList');
+            list.empty();
+            if (resp && resp.success && resp.data.length) {
+                resp.data.forEach(function(item, idx) {
+                    const prefix = idx === 0 ? '<strong>Next quest:</strong> ' : '';
+                    list.append(`<li>${prefix}${item.date} - ${item.reason}</li>`);
+                });
+            } else {
+                list.append('<li>No suggestions available</li>');
+            }
+        }, 'json');
+    }
+
     function loadCalendarEvents() {
         $.post('/api/v1/schedule/events.php', { sessionToken: sessionToken, month: calMonth + 1, year: calYear }, function(resp) {
             if (resp && resp.success) {
@@ -1392,16 +1418,19 @@ $(document).ready(function () {
         if (calMonth === 11) { calMonth = 0; calYear++; } else { calMonth++; }
         renderScheduleCalendar();
         loadCalendarEvents();
+        loadSuggestedDates();
     });
     $('#schedulePrev').on('click', function() {
         if (calMonth === 0) { calMonth = 11; calYear--; } else { calMonth--; }
         renderScheduleCalendar();
         loadCalendarEvents();
+        loadSuggestedDates();
     });
 
     loadParticipationByDate();
     loadCalendarEvents();
     loadWeekdayAverages();
+    loadSuggestedDates();
 
     $('#datatable-reviews').DataTable({
         pageLength: 10,
