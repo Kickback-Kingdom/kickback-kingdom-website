@@ -40,6 +40,8 @@ $participantQuestTitles = [];
 $uniqueParticipants = [];
 $participantTotals = [];
 $participantDetails = [];
+$participantRatingSums = [];
+$participantRatingCounts = [];
 $perQuestParticipantCounts = [];
 $allQuests = array_merge($futureQuests, $pastQuests);
 usort($allQuests, fn($a, $b) => strcmp(
@@ -61,6 +63,9 @@ foreach ($allQuests as $quest) {
     $perQuestParticipantCounts[$quest->title] = $count;
     foreach ($participants as $participant) {
         $crand = $participant->account->crand;
+        if ($crand === $account->crand) {
+            continue;
+        }
         $uniqueParticipants[$crand] = true;
         $participantTotals[$crand] = ($participantTotals[$crand] ?? 0) + 1;
         if (!isset($participantDetails[$crand])) {
@@ -74,16 +79,41 @@ foreach ($allQuests as $quest) {
 }
 $totalUniqueParticipants = count($uniqueParticipants);
 
+foreach ($pastQuests as $quest) {
+    $reviewDetailsResp = QuestController::queryQuestReviewDetailsAsResponse($quest);
+    if ($reviewDetailsResp->success) {
+        foreach ($reviewDetailsResp->data as $detail) {
+            $id = $detail->accountId;
+            if ($id === $account->crand || is_null($detail->hostRating)) {
+                continue;
+            }
+            $participantRatingSums[$id] = ($participantRatingSums[$id] ?? 0) + $detail->hostRating;
+            $participantRatingCounts[$id] = ($participantRatingCounts[$id] ?? 0) + 1;
+        }
+    }
+}
+$participantAvgRatings = [];
+foreach ($participantRatingSums as $id => $sum) {
+    $participantAvgRatings[$id] = $sum / $participantRatingCounts[$id];
+}
+
 arsort($participantTotals);
 $topParticipants = [];
-foreach (array_slice($participantTotals, 0, 10, true) as $crand => $count) {
+foreach ($participantTotals as $crand => $count) {
+    if ($crand === $account->crand) {
+        continue;
+    }
     $info = $participantDetails[$crand];
     $topParticipants[] = [
         'username' => $info['username'],
         'avatar' => $info['avatar'],
         'url' => $info['url'],
         'count' => $count,
+        'avgRating' => $participantAvgRatings[$crand] ?? 0,
     ];
+    if (count($topParticipants) >= 10) {
+        break;
+    }
 }
 
 $questRatingsMap = [];
@@ -351,6 +381,7 @@ function renderStarRating(int $rating): string
                                             <tr>
                                                 <th>Participant</th>
                                                 <th>Quests Joined</th>
+                                                <th>Avg Rating of You</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -363,6 +394,10 @@ function renderStarRating(int $rating): string
                                                         </div>
                                                     </td>
                                                     <td class="align-middle"><?= $p['count']; ?></td>
+                                                    <td class="align-middle">
+                                                        <?= renderStarRating((int)round($p['avgRating'])); ?>
+                                                        <span class="ms-1"><?= number_format($p['avgRating'], 2); ?></span>
+                                                    </td>
                                                 </tr>
                                             <?php } ?>
                                         </tbody>
