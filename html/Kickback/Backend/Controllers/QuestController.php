@@ -1734,6 +1734,42 @@ class QuestController
         return new Response(true, "Participation counts loaded.", $counts);
     }
 
+    public static function getParticipationAveragesByWeekday(vRecordId $hostId): Response
+    {
+        $conn = Database::getConnection();
+        $sql = "SELECT weekday, AVG(participants) AS avg_participants FROM ("
+            . "SELECT DAYOFWEEK(q.end_date) AS weekday, COUNT(*) AS participants "
+            . "FROM quest_applicants qa "
+            . "JOIN quest q ON qa.quest_id = q.Id "
+            . "WHERE qa.participated = 1 AND (q.host_id = ? OR q.host_id_2 = ?) "
+            . "GROUP BY q.Id" 
+            . ") sub GROUP BY weekday ORDER BY weekday";
+
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare query", null);
+        }
+
+        $stmt->bind_param('ii', $hostId->crand, $hostId->crand);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result === false) {
+            return new Response(false, "Failed to execute query", null);
+        }
+
+        $averages = [];
+        $dayNames = [1 => 'Sunday', 2 => 'Monday', 3 => 'Tuesday', 4 => 'Wednesday', 5 => 'Thursday', 6 => 'Friday', 7 => 'Saturday'];
+        while ($row = $result->fetch_assoc()) {
+            $day = (int)$row['weekday'];
+            $averages[] = [
+                'weekday' => $dayNames[$day] ?? (string)$day,
+                'avgParticipants' => (float)$row['avg_participants'],
+            ];
+        }
+
+        return new Response(true, "Average participation by weekday loaded.", $averages);
+    }
+
     public static function queryHostStatsForAccounts(array $accountIds): array
     {
         if (empty($accountIds)) {
