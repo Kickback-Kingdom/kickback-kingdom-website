@@ -181,7 +181,7 @@ function generateCoHostSuggestion(array $candidate): string
 {
     $parts = [];
     $parts[] = $candidate['username'] . ' has joined you on ' . $candidate['count'] . ' quest' . ($candidate['count'] === 1 ? '' : 's') . ',';
-    $parts[] = 'earning an average rating of ' . number_format($candidate['avgRating'], 1) . '/5 from your hosting.';
+    $parts[] = 'earning an average rating of ' . number_format($candidate['avgHostRating'], 1) . '/5 from your hosting.';
     $parts[] = 'They\'ve adventured alongside ' . $candidate['friends'] . ' other player' . ($candidate['friends'] === 1 ? '' : 's') . ', expanding your reach.';
     $parts[] = 'Consider inviting them to co-host your next quest.';
     return implode(' ', $parts);
@@ -220,8 +220,10 @@ $participantQuestTitles = [];
 $uniqueParticipants = [];
 $participantTotals = [];
 $participantDetails = [];
-$participantRatingSums = [];
-$participantRatingCounts = [];
+$participantHostRatingSums = [];
+$participantHostRatingCounts = [];
+$participantQuestRatingSums = [];
+$participantQuestRatingCounts = [];
 $perQuestParticipantCounts = [];
 $perQuestParticipantIds = [];
 $perQuestRegisteredCounts = [];
@@ -312,16 +314,26 @@ $reviewDetailsByQuest = QuestController::queryQuestReviewDetailsForQuests($pastQ
 foreach ($pastQuests as $quest) {
     foreach ($reviewDetailsByQuest[$quest->crand] ?? [] as $detail) {
         $id = $detail->accountId;
-        if ($id === $account->crand || is_null($detail->hostRating)) {
+        if ($id === $account->crand) {
             continue;
         }
-        $participantRatingSums[$id] = ($participantRatingSums[$id] ?? 0) + $detail->hostRating;
-        $participantRatingCounts[$id] = ($participantRatingCounts[$id] ?? 0) + 1;
+        if (!is_null($detail->hostRating)) {
+            $participantHostRatingSums[$id] = ($participantHostRatingSums[$id] ?? 0) + $detail->hostRating;
+            $participantHostRatingCounts[$id] = ($participantHostRatingCounts[$id] ?? 0) + 1;
+        }
+        if (!is_null($detail->questRating)) {
+            $participantQuestRatingSums[$id] = ($participantQuestRatingSums[$id] ?? 0) + $detail->questRating;
+            $participantQuestRatingCounts[$id] = ($participantQuestRatingCounts[$id] ?? 0) + 1;
+        }
     }
 }
-$participantAvgRatings = [];
-foreach ($participantRatingSums as $id => $sum) {
-    $participantAvgRatings[$id] = $sum / $participantRatingCounts[$id];
+$participantAvgHostRatings = [];
+foreach ($participantHostRatingSums as $id => $sum) {
+    $participantAvgHostRatings[$id] = $sum / $participantHostRatingCounts[$id];
+}
+$participantAvgQuestRatings = [];
+foreach ($participantQuestRatingSums as $id => $sum) {
+    $participantAvgQuestRatings[$id] = $sum / $participantQuestRatingCounts[$id];
 }
 
 arsort($participantTotals);
@@ -337,7 +349,8 @@ foreach ($participantTotals as $crand => $count) {
         'avatar' => $info['avatar'],
         'url' => $info['url'],
         'count' => $count,
-        'avgRating' => $participantAvgRatings[$crand] ?? 0,
+        'avgQuestRating' => $participantAvgQuestRatings[$crand] ?? 0,
+        'avgHostRating' => $participantAvgHostRatings[$crand] ?? 0,
     ];
     if (count($topParticipants) >= 10) {
         break;
@@ -357,7 +370,7 @@ foreach ($topParticipants as &$p) {
         }
     }
     $p['friends'] = count($friendSet);
-    $p['score'] = ($p['avgRating'] * 2) + $p['count'] + $p['friends'];
+    $p['score'] = ($p['avgHostRating'] * 2) + $p['count'] + $p['friends'];
     if ($p['score'] > $highestCoHostScore) {
         $highestCoHostScore = $p['score'];
         $coHostCandidate = $p;
@@ -526,14 +539,16 @@ $bestQuestCandidates = [];
 foreach ($pastQuests as $quest) {
     $title = $quest->title;
     $participants = $perQuestParticipantCounts[$title] ?? 0;
-    $avgRating = $questRatingsMap[$title] ?? 0;
+    $avgQuestRating = $questRatingsMap[$title] ?? 0;
+    $avgHostRating = $hostRatingsMap[$title] ?? 0;
     $bestQuestCandidates[] = [
         'title' => $title,
         'locator' => $quest->locator,
         'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
         'participants' => $participants,
-        'avgRating' => $avgRating,
-        'score' => $participants * $avgRating,
+        'avgQuestRating' => $avgQuestRating,
+        'avgHostRating' => $avgHostRating,
+        'score' => $participants * $avgQuestRating,
     ];
 }
 usort($bestQuestCandidates, fn($a, $b) => $b['score'] <=> $a['score']);
@@ -901,7 +916,7 @@ function renderStarRating(int $rating): string
                                             <p class="card-text mb-1"><a href="<?= htmlspecialchars($coHostCandidate['url']); ?>" target="_blank"><?= htmlspecialchars($coHostCandidate['username']); ?></a></p>
                                             <p class="card-text mb-0">
                                                 Joined <?= $coHostCandidate['count']; ?> quest<?= $coHostCandidate['count'] === 1 ? '' : 's'; ?>
-                                                &middot; <?= renderStarRating((int)round($coHostCandidate['avgRating'])); ?><span class="ms-1"><?= number_format($coHostCandidate['avgRating'], 1); ?></span>
+                                                &middot; <?= renderStarRating((int)round($coHostCandidate['avgHostRating'])); ?><span class="ms-1"><?= number_format($coHostCandidate['avgHostRating'], 1); ?></span>
                                                 &middot; Adventured with <?= $coHostCandidate['friends']; ?> other player<?= $coHostCandidate['friends'] === 1 ? '' : 's'; ?>
                                             </p>
                                         </div>
@@ -955,7 +970,8 @@ function renderStarRating(int $rating): string
                                                     <tr>
                                                         <th>Quest</th>
                                                         <th>Participants</th>
-                                                        <th>Avg Rating</th>
+                                                        <th>Avg Quest Rating</th>
+                                                        <th>Avg Host Rating</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -971,7 +987,10 @@ function renderStarRating(int $rating): string
                                                             </td>
                                                             <td class="align-middle"><?= $q['participants']; ?></td>
                                                             <td class="align-middle">
-                                                                <?= renderStarRating((int)round($q['avgRating'])); ?><span class="ms-1"><?= number_format($q['avgRating'], 2); ?></span>
+                                                                <?= renderStarRating((int)round($q['avgQuestRating'])); ?><span class="ms-1"><?= number_format($q['avgQuestRating'], 2); ?></span>
+                                                            </td>
+                                                            <td class="align-middle">
+                                                                <?= renderStarRating((int)round($q['avgHostRating'])); ?><span class="ms-1"><?= number_format($q['avgHostRating'], 2); ?></span>
                                                             </td>
                                                         </tr>
                                                     <?php } ?>
@@ -999,7 +1018,8 @@ function renderStarRating(int $rating): string
                                                     <tr>
                                                         <th>Participant</th>
                                                         <th>Quests Joined</th>
-                                                        <th>Avg Rating of You</th>
+                                                        <th>Avg Quest Rating</th>
+                                                        <th>Avg Host Rating</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -1013,8 +1033,12 @@ function renderStarRating(int $rating): string
                                                             </td>
                                                             <td class="align-middle"><?= $p['count']; ?></td>
                                                             <td class="align-middle">
-                                                                <?= renderStarRating((int)round($p['avgRating'])); ?>
-                                                                <span class="ms-1"><?= number_format($p['avgRating'], 2); ?></span>
+                                                                <?= renderStarRating((int)round($p['avgQuestRating'])); ?>
+                                                                <span class="ms-1"><?= number_format($p['avgQuestRating'], 2); ?></span>
+                                                            </td>
+                                                            <td class="align-middle">
+                                                                <?= renderStarRating((int)round($p['avgHostRating'])); ?>
+                                                                <span class="ms-1"><?= number_format($p['avgHostRating'], 2); ?></span>
                                                             </td>
                                                         </tr>
                                                     <?php } ?>
