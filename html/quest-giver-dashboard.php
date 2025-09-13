@@ -975,7 +975,6 @@ function renderStarRating(float $rating): string
                                                     <th>Hosted</th>
                                                     <th>Network</th>
                                                     <th>Last Quest</th>
-                                                    <th>Suggestion</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -1000,7 +999,6 @@ function renderStarRating(float $rating): string
                                                                 &ndash;
                                                             <?php } ?>
                                                         </td>
-                                                        <td class="align-middle"><?= generateCoHostSuggestion($coHostCandidate); ?></td>
                                                     </tr>
                                                 <?php } ?>
                                             </tbody>
