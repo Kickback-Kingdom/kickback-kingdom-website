@@ -158,7 +158,7 @@ function renderStarRating(int $rating): string
                                             <td>
                                                 <div class="d-flex align-items-center">
                                                     <img src="<?= htmlspecialchars($qr->questIcon); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
-                                                    <span><?= htmlspecialchars($qr->questTitle); ?></span>
+                                                    <a href="quest.php?id=<?= $qr->questId; ?>" target="_blank"><?= htmlspecialchars($qr->questTitle); ?></a>
                                                 </div>
                                             </td>
                                             <?php $qd = new vDateTime($qr->questEndDate); ?>
@@ -269,7 +269,7 @@ $(document).ready(function () {
     const sessionToken = "<?= $_SESSION['sessionToken']; ?>";
 
     $('#datatable-reviews').DataTable({
-        pageLength: 5,
+        pageLength: 10,
         lengthChange: true,
         columnDefs: [{ targets: [4], orderable: false }],
         order: [[1, 'desc']]
