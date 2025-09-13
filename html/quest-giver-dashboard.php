@@ -26,26 +26,16 @@ $pastResp = QuestController::queryHostedPastQuests($account);
 $pastQuests = $pastResp->success ? $pastResp->data : [];
 
 $reviewsResp = NotificationController::queryQuestReviewsByHostAsResponse($account);
-$questReviews = $reviewsResp->success ? $reviewsResp->data : [];
+$questReviewAverages = $reviewsResp->success ? $reviewsResp->data : [];
 
 $totalHostedQuests = count($futureQuests) + count($pastQuests);
-$reviewCount = count($questReviews);
-$hostRatingSum = 0;
-$questRatingSum = 0;
-$reviewDates = [];
-$hostRatings = [];
-$questRatings = [];
-foreach ($questReviews as $qr) {
-    $hostRating = $qr['review']->hostRating;
-    $questRating = $qr['review']->questRating;
-    $hostRatingSum += $hostRating;
-    $questRatingSum += $questRating;
-    $reviewDates[] = $qr['review']->dateTime->formattedBasic;
-    $hostRatings[] = $hostRating;
-    $questRatings[] = $questRating;
-}
-$avgHostRating = $reviewCount > 0 ? $hostRatingSum / $reviewCount : 0;
-$avgQuestRating = $reviewCount > 0 ? $questRatingSum / $reviewCount : 0;
+$questTitles = array_column($questReviewAverages, 'questTitle');
+$avgHostRatings = array_map('floatval', array_column($questReviewAverages, 'avgHostRating'));
+$avgQuestRatings = array_map('floatval', array_column($questReviewAverages, 'avgQuestRating'));
+
+$reviewCount = count($questReviewAverages);
+$avgHostRating = $reviewCount > 0 ? array_sum($avgHostRatings) / $reviewCount : 0;
+$avgQuestRating = $reviewCount > 0 ? array_sum($avgQuestRatings) / $reviewCount : 0;
 
 function renderStarRating(int $rating): string
 {
@@ -130,7 +120,7 @@ function renderStarRating(int $rating): string
                 </div>
                 <div class="tab-pane fade" id="nav-reviews" role="tabpanel" aria-labelledby="nav-reviews-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Quest Reviews</div>
-                    <?php if (count($questReviews) === 0) { ?>
+                    <?php if (count($questReviewAverages) === 0) { ?>
                         <p>No quest reviews yet.</p>
                     <?php } else { ?>
                         <div class="table-responsive">
@@ -138,45 +128,21 @@ function renderStarRating(int $rating): string
                                 <thead>
                                     <tr>
                                         <th>Quest</th>
-                                        <th>From</th>
-                                        <th>Date</th>
-                                        <th>Host Rating</th>
-                                        <th>Quest Rating</th>
-                                        <th>Comment</th>
+                                        <th>Average Host Rating</th>
+                                        <th>Average Quest Rating</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($questReviews as $qr) {
-                                        $comment = trim($qr['review']->message);
-                                    ?>
+                                    <?php foreach ($questReviewAverages as $qr) { ?>
                                         <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <img src="<?= htmlspecialchars($qr['quest']->icon->getFullPath()); ?>"
-                                                        alt="<?= htmlspecialchars($qr['quest']->title); ?> icon"
-                                                        class="me-2"
-                                                        style="width: 40px; height: 40px; object-fit: cover;">
-                                                    <a href="/q/<?= $qr['quest']->locator; ?>"><?= htmlspecialchars($qr['quest']->title); ?></a>
-                                                </div>
+                                            <td><?= htmlspecialchars($qr['questTitle']); ?></td>
+                                            <td data-order="<?= $qr['avgHostRating']; ?>">
+                                                <?= renderStarRating((int)round($qr['avgHostRating'])); ?>
+                                                <?= number_format($qr['avgHostRating'], 2); ?>
                                             </td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <img src="<?= htmlspecialchars($qr['review']->fromAccount->profilePictureURL()); ?>"
-                                                        alt="<?= htmlspecialchars($qr['review']->fromAccount->username); ?>"
-                                                        class="me-2"
-                                                        style="width: 40px; height: 40px; object-fit: cover;">
-                                                    <?= $qr['review']->fromAccount->getAccountElement(); ?>
-                                                </div>
-                                            </td>
-                                             <td data-order="<?= $qr['review']->dateTime->value->getTimestamp(); ?>"><span class="date"><?= $qr['review']->dateTime->formattedBasic; ?></span></td>
-                                            <td data-order="<?= $qr['review']->hostRating; ?>"><?= renderStarRating($qr['review']->hostRating); ?></td>
-                                            <td data-order="<?= $qr['review']->questRating; ?>"><?= renderStarRating($qr['review']->questRating); ?></td>
-                                            <td>
-                                                <?php if ($comment !== '') { ?>
-                                                    <button class="btn btn-primary btn-sm toggle-comment" data-comment="<?= htmlspecialchars($comment, ENT_QUOTES); ?>">View Comment</button>
-                                                <?php } else { ?>
-                                                    <span class="text-muted">No Comment</span>
-                                                <?php } ?>
+                                            <td data-order="<?= $qr['avgQuestRating']; ?>">
+                                                <?= renderStarRating((int)round($qr['avgQuestRating'])); ?>
+                                                <?= number_format($qr['avgQuestRating'], 2); ?>
                                             </td>
                                         </tr>
                                     <?php } ?>
@@ -193,49 +159,31 @@ function renderStarRating(int $rating): string
 <?php require("php-components/base-page-javascript.php"); ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
 <script>
-const reviewDates = <?= json_encode($reviewDates); ?>;
-const hostRatings = <?= json_encode($hostRatings); ?>;
-const questRatings = <?= json_encode($questRatings); ?>;
+const questTitles = <?= json_encode($questTitles); ?>;
+const avgHostRatings = <?= json_encode($avgHostRatings); ?>;
+const avgQuestRatings = <?= json_encode($avgQuestRatings); ?>;
 
 $(document).ready(function () {
-    var reviewTable = $('#datatable-reviews').DataTable({
+    $('#datatable-reviews').DataTable({
         pageLength: 5,
-        lengthChange: true,
-        order: [[2, 'desc']]
-    });
-
-    $('#datatable-reviews tbody').on('click', '.toggle-comment', function () {
-        var tr = $(this).closest('tr');
-        var row = reviewTable.row(tr);
-        if (row.child.isShown()) {
-            row.child.hide();
-            tr.removeClass('shown');
-        } else {
-            var comment = $(this).attr('data-comment');
-            row.child('<div class="p-3">'+comment+'</div>').show();
-            tr.addClass('shown');
-        }
+        lengthChange: true
     });
 
     var ctx = document.getElementById('reviewChart').getContext('2d');
     new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
-            labels: reviewDates,
+            labels: questTitles,
             datasets: [
                 {
-                    label: 'Host Rating',
-                    data: hostRatings,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    fill: false
+                    label: 'Avg Host Rating',
+                    data: avgHostRatings,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)'
                 },
                 {
-                    label: 'Quest Rating',
-                    data: questRatings,
-                    borderColor: 'rgba(153, 102, 255, 1)',
-                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
-                    fill: false
+                    label: 'Avg Quest Rating',
+                    data: avgQuestRatings,
+                    backgroundColor: 'rgba(153, 102, 255, 0.6)'
                 }
             ]
         },

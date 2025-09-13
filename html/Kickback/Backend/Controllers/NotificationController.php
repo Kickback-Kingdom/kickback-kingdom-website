@@ -124,51 +124,36 @@ class NotificationController
         $stmt->execute();
         $result = $stmt->get_result();
 
-        $reviews = [];
-        $accountCache = [];
-        $questCache = [];
+        $questRatings = [];
         while ($row = $result->fetch_assoc()) {
             $questId = (int)$row['quest_id'];
-            if (!isset($questCache[$questId])) {
-                $questLookup = new vQuest('', $questId);
-                $questResp = QuestController::queryQuestByIdAsResponse($questLookup);
-                if ($questResp->success && $questResp->data instanceof vQuest) {
-                    $questCache[$questId] = $questResp->data;
-                } else {
-                    $quest = new vQuest('', $questId);
-                    $quest->title = $row['name'];
-                    $quest->locator = $row['locator'];
-                    $quest->icon = new vMedia();
-                    $quest->icon->setMediaPath($row['image']);
-                    $quest->playStyle = PlayStyle::from($row['play_style']);
-                    $questCache[$questId] = $quest;
-                }
+            $hostRating = (int)$row['host_rating'];
+            $questRating = (int)$row['quest_rating'];
+
+            if (!isset($questRatings[$questId])) {
+                $questRatings[$questId] = [
+                    'questTitle' => $row['name'],
+                    'hostRatingSum' => $hostRating,
+                    'questRatingSum' => $questRating,
+                    'count' => 1,
+                ];
+            } else {
+                $questRatings[$questId]['hostRatingSum'] += $hostRating;
+                $questRatings[$questId]['questRatingSum'] += $questRating;
+                $questRatings[$questId]['count']++;
             }
-            $quest = $questCache[$questId];
-
-            $review = new vQuestReview('', $row['Id']);
-            $review->questRating = (int)$row['quest_rating'];
-            $review->hostRating = (int)$row['host_rating'];
-            $review->message = $row['text'];
-
-            $accountIdFrom = (int)$row['account_id_from'];
-            if (!isset($accountCache[$accountIdFrom])) {
-                $accountLookup = new vAccount('', $accountIdFrom);
-                $accountResp = AccountController::getAccountById($accountLookup);
-                if ($accountResp->success && $accountResp->data instanceof vAccount) {
-                    $accountCache[$accountIdFrom] = $accountResp->data;
-                } else {
-                    $accountLookup->username = $row['from_name'];
-                    $accountCache[$accountIdFrom] = $accountLookup;
-                }
-            }
-            $review->fromAccount = $accountCache[$accountIdFrom];
-            $review->dateTime = new vDateTime($row['date']);
-
-            $reviews[] = ['quest' => $quest, 'review' => $review];
         }
 
-        return new Response(true, "Quest reviews loaded.", $reviews);
+        $averages = [];
+        foreach ($questRatings as $data) {
+            $averages[] = [
+                'questTitle' => $data['questTitle'],
+                'avgHostRating' => $data['hostRatingSum'] / $data['count'],
+                'avgQuestRating' => $data['questRatingSum'] / $data['count'],
+            ];
+        }
+
+        return new Response(true, "Quest review averages loaded.", $averages);
     }
 }
 ?>
