@@ -36,12 +36,17 @@ $avgQuestRatings = array_map(fn($qr) => (float)$qr->avgQuestRating, $questReview
 
 $participantCounts = [];
 $participantQuestTitles = [];
+$uniqueParticipants = [];
 foreach (array_merge($futureQuests, $pastQuests) as $quest) {
     $participantsResp = QuestController::queryQuestApplicantsAsResponse($quest);
     $participants = $participantsResp->success ? $participantsResp->data : [];
     $participantCounts[] = count($participants);
     $participantQuestTitles[] = $quest->title;
+    foreach ($participants as $participant) {
+        $uniqueParticipants[$participant->account->crand] = true;
+    }
 }
+$totalUniqueParticipants = count($uniqueParticipants);
 
 $questRatingsMap = [];
 foreach ($questReviewAverages as $qr) {
@@ -58,9 +63,12 @@ foreach ($pastQuests as $quest) {
     }
 }
 
-$reviewCount = count($questReviewAverages);
-$avgHostRating = $reviewCount > 0 ? array_sum($avgHostRatings) / $reviewCount : 0;
-$avgQuestRating = $reviewCount > 0 ? array_sum($avgQuestRatings) / $reviewCount : 0;
+$recentReviews = $questReviewAverages;
+usort($recentReviews, fn($a, $b) => strtotime($b->questEndDate) <=> strtotime($a->questEndDate));
+$recentReviews = array_slice($recentReviews, 0, 10);
+$recentCount = count($recentReviews);
+$avgHostRatingRecent = $recentCount > 0 ? array_sum(array_map(fn($qr) => (float)$qr->avgHostRating, $recentReviews)) / $recentCount : 0;
+$avgQuestRatingRecent = $recentCount > 0 ? array_sum(array_map(fn($qr) => (float)$qr->avgQuestRating, $recentReviews)) / $recentCount : 0;
 
 function renderStarRating(int $rating): string
 {
@@ -83,7 +91,7 @@ function renderStarRating(int $rating): string
 <main class="container pt-3 bg-body" style="margin-bottom: 56px;">
     <h2>Quest Giver Dashboard</h2>
     <div class="row text-center g-3 mt-3 mb-3">
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-3">
             <div class="card h-100">
                 <div class="card-body">
                     <small>Total Quests Hosted</small>
@@ -91,19 +99,27 @@ function renderStarRating(int $rating): string
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-3">
             <div class="card h-100">
                 <div class="card-body">
-                    <small>Average Host Rating</small>
-                    <div><?= renderStarRating((int)round($avgHostRating)); ?><span class="ms-1"><?= number_format($avgHostRating, 2); ?>/5</span></div>
+                    <small>Total Unique Participants</small>
+                    <h3 class="mb-0"><?= $totalUniqueParticipants; ?></h3>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-3">
             <div class="card h-100">
                 <div class="card-body">
-                    <small>Average Quest Rating</small>
-                    <div><?= renderStarRating((int)round($avgQuestRating)); ?><span class="ms-1"><?= number_format($avgQuestRating, 2); ?>/5</span></div>
+                    <small>Average Host Rating (Last 10)</small>
+                    <div><?= renderStarRating((int)round($avgHostRatingRecent)); ?><span class="ms-1"><?= number_format($avgHostRatingRecent, 2); ?>/5</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <small>Average Quest Rating (Last 10)</small>
+                    <div><?= renderStarRating((int)round($avgQuestRatingRecent)); ?><span class="ms-1"><?= number_format($avgQuestRatingRecent, 2); ?>/5</span></div>
                 </div>
             </div>
         </div>
