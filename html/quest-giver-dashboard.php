@@ -48,7 +48,13 @@ usort($allQuests, fn($a, $b) => strcmp(
 ));
 foreach ($allQuests as $quest) {
     $participantsResp = QuestController::queryQuestApplicantsAsResponse($quest);
-    $participants = $participantsResp->success ? $participantsResp->data : [];
+    $participants = [];
+    if ($participantsResp->success) {
+        $participants = array_filter(
+            $participantsResp->data,
+            fn($app) => $app->participated
+        );
+    }
     $count = count($participants);
     $participantCounts[] = $count;
     $participantQuestTitles[] = $quest->title;
