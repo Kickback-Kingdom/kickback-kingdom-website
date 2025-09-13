@@ -1742,22 +1742,47 @@ class QuestController
         return $byQuest;
     }
 
-    public static function getParticipationByDate(vRecordId $hostId): Response
+    public static function getParticipationByDate(?vRecordId $hostId = null, ?int $month = null, ?int $year = null): Response
     {
         $conn = Database::getConnection();
         $sql = "SELECT DATE(q.end_date) AS day, COUNT(*) AS participants "
             . "FROM quest_applicants qa "
             . "JOIN quest q ON qa.quest_id = q.Id "
-            . "WHERE qa.participated = 1 AND (q.host_id = ? OR q.host_id_2 = ?) "
-            . "AND q.raffle_id IS NULL "
-            . "GROUP BY DATE(q.end_date) ORDER BY day";
+            . "WHERE qa.participated = 1 AND q.raffle_id IS NULL";
+
+        $types = '';
+        $params = [];
+
+        if ($hostId !== null) {
+            $sql .= " AND (q.host_id = ? OR q.host_id_2 = ?)";
+            $types .= 'ii';
+            $params[] = $hostId->crand;
+            $params[] = $hostId->crand;
+        }
+
+        if ($month !== null) {
+            $sql .= " AND MONTH(q.end_date) = ?";
+            $types .= 'i';
+            $params[] = $month;
+        }
+
+        if ($year !== null) {
+            $sql .= " AND YEAR(q.end_date) = ?";
+            $types .= 'i';
+            $params[] = $year;
+        }
+
+        $sql .= " GROUP BY DATE(q.end_date) ORDER BY day";
 
         $stmt = $conn->prepare($sql);
         if ($stmt === false) {
             return new Response(false, "Failed to prepare query", null);
         }
 
-        $stmt->bind_param('ii', $hostId->crand, $hostId->crand);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+
         $stmt->execute();
         $result = $stmt->get_result();
         if ($result === false) {

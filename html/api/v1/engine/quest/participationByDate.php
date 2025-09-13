@@ -9,6 +9,14 @@ use Kickback\Backend\Models\Response;
 
 OnlyPOST();
 
+$includeAll = isset($_POST['includeAll']) && filter_var($_POST['includeAll'], FILTER_VALIDATE_BOOLEAN);
+$month = isset($_POST['month']) ? intval($_POST['month']) : null;
+$year = isset($_POST['year']) ? intval($_POST['year']) : null;
+
+if ($includeAll) {
+    return QuestController::getParticipationByDate(null, $month, $year);
+}
+
 $contains = POSTContainsFields("sessionToken");
 if (!$contains->success) {
     return $contains;
@@ -23,5 +31,5 @@ if (!$loginResp->success) {
 }
 $account = $loginResp->data;
 
-return QuestController::getParticipationByDate(new vRecordId('', $account->crand));
+return QuestController::getParticipationByDate(new vRecordId('', $account->crand), $month, $year);
 ?>
