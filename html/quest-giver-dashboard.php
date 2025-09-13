@@ -1289,6 +1289,7 @@ $(document).ready(function () {
     const sessionToken = "<?= $_SESSION['sessionToken']; ?>";
 
     let participationCounts = {};
+    let eventConflicts = {};
     let weekdayChart;
     let calMonth = (new Date()).getMonth();
     let calYear = (new Date()).getFullYear();
@@ -1305,6 +1306,7 @@ $(document).ready(function () {
         while (date.getMonth() === calMonth) {
             const dStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
             const count = participationCounts[dStr] || 0;
+            const conflicts = eventConflicts[dStr] || [];
             let cls = '';
             if (count > 0 && max > 0) {
                 const ratio = count / max;
@@ -1312,7 +1314,15 @@ $(document).ready(function () {
                 else if (ratio > 0.33) { cls = 'bg-warning'; }
                 else { cls = 'bg-danger text-white'; }
             }
-            body += `<td class="${cls}"><div>${date.getDate()}</div>${count ? `<small>${count}</small>` : ''}</td>`;
+            let tooltip = '';
+            if (conflicts.length > 0) {
+                cls = 'bg-secondary text-muted';
+                const title = conflicts.map(c => c.title || c).join('<br>');
+                tooltip = `data-bs-toggle="tooltip" data-bs-html="true" title="${title.replace(/"/g, '&quot;')}"`;
+            } else {
+                cls += ' border border-success border-2';
+            }
+            body += `<td class="${cls}" ${tooltip}><div>${date.getDate()}</div>${count ? `<small>${count}</small>` : ''}</td>`;
             if (date.getDay() === 6) { body += '</tr><tr>'; }
             date.setDate(date.getDate()+1);
         }
@@ -1321,6 +1331,8 @@ $(document).ready(function () {
         body += '</tr></tbody>';
         $('#scheduleCalendarMonth').text(first.toLocaleString('default', { month: 'long', year: 'numeric' }));
         $('#scheduleCalendar').html(header + body);
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl); });
     }
 
     function loadParticipationByDate() {
@@ -1362,10 +1374,33 @@ $(document).ready(function () {
         });
     }
 
-    $('#scheduleNext').on('click', function() { if (calMonth === 11) { calMonth = 0; calYear++; } else { calMonth++; } renderScheduleCalendar(); });
-    $('#schedulePrev').on('click', function() { if (calMonth === 0) { calMonth = 11; calYear--; } else { calMonth--; } renderScheduleCalendar(); });
+    function loadCalendarEvents() {
+        $.get('/api/v1/schedule/events.php', { sessionToken: sessionToken, month: calMonth + 1, year: calYear }, function(resp) {
+            if (resp.success) {
+                eventConflicts = {};
+                resp.data.forEach(function(e) {
+                    const d = e.start_date.substring(0,10);
+                    if (!eventConflicts[d]) { eventConflicts[d] = []; }
+                    eventConflicts[d].push(e);
+                });
+                renderScheduleCalendar();
+            }
+        });
+    }
+
+    $('#scheduleNext').on('click', function() {
+        if (calMonth === 11) { calMonth = 0; calYear++; } else { calMonth++; }
+        renderScheduleCalendar();
+        loadCalendarEvents();
+    });
+    $('#schedulePrev').on('click', function() {
+        if (calMonth === 0) { calMonth = 11; calYear--; } else { calMonth--; }
+        renderScheduleCalendar();
+        loadCalendarEvents();
+    });
 
     loadParticipationByDate();
+    loadCalendarEvents();
     loadWeekdayAverages();
 
     $('#datatable-reviews').DataTable({
