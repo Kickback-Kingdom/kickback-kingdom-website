@@ -144,7 +144,7 @@ class ScheduleController
                                    WHERE participated = 1
                                    GROUP BY quest_id
                                ) p ON p.quest_id = q.Id
-                               WHERE (q.host_id = ? OR q.host_id_2 = ?) AND q.end_date < CURDATE()
+                               WHERE (q.host_id = ? OR q.host_id_2 = ?) AND q.end_date < CURDATE() AND q.raffle_id IS NULL
                                GROUP BY dow";
             $stmt = mysqli_prepare($db, $personalQuery);
             if ($stmt) {
