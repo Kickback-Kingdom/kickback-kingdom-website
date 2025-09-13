@@ -48,15 +48,14 @@ usort($allQuests, fn($a, $b) => strcmp(
     $a->hasEndDate() ? $a->endDate()->formattedYmd : '',
     $b->hasEndDate() ? $b->endDate()->formattedYmd : ''
 ));
+$questIds = array_map(fn($q) => $q->crand, $allQuests);
+$applicantsByQuest = QuestController::queryQuestApplicantsForQuests($questIds);
 foreach ($allQuests as $quest) {
-    $participantsResp = QuestController::queryQuestApplicantsAsResponse($quest);
-    $participants = [];
-    if ($participantsResp->success) {
-        $participants = array_filter(
-            $participantsResp->data,
-            fn($app) => $app->participated
-        );
-    }
+    $qid = $quest->crand;
+    $participants = array_filter(
+        $applicantsByQuest[$qid] ?? [],
+        fn($app) => $app->participated
+    );
     $count = count($participants);
     $participantCounts[] = $count;
     $participantQuestTitles[] = $quest->title;

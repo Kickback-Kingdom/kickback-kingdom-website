@@ -467,6 +467,94 @@ class QuestController
         return new Response(true, "Quest Applicants", $applicants);
     }
 
+    /**
+    * Fetch applicants for multiple quests in a single query.
+    *
+    * @param array<int> $questIds
+    * @return array<int, array<vQuestApplicant>> keyed by quest id
+    */
+    public static function queryQuestApplicantsForQuests(array $questIds): array
+    {
+        if (empty($questIds)) {
+            return [];
+        }
+
+        $conn = Database::getConnection();
+
+        $placeholders = implode(',', array_fill(0, count($questIds), '?'));
+        $sql = "select
+        `account`.*,
+        `quest_applicants`.`accepted` AS `accepted`,
+        `quest_applicants`.`participated` AS `participated`,
+        `quest_applicants`.`quest_id` AS `quest_id`,
+        `quest_applicants`.`seed_score` AS `seed_score`,
+        CASE
+        WHEN `quest_applicants`.`seed_score` > 0
+        THEN RANK() OVER (
+            PARTITION BY `quest_applicants`.`quest_id`
+            ORDER BY
+                `quest_applicants`.`seed_score` DESC,
+                `account`.`Id` DESC
+        )
+        ELSE RANK() OVER (
+            PARTITION BY `quest_applicants`.`quest_id`
+            ORDER BY
+                CASE WHEN `v_game_rank`.`rank` IS NULL THEN 1 ELSE 0 END ASC,
+                `v_game_rank`.`rank` ASC,
+                `account`.`Id` DESC
+        )
+        END AS `seed`,
+        `v_game_rank`.`rank` AS `rank`
+      from
+        (
+          (
+            (
+              (
+                `quest_applicants`
+                join `v_account_info` `account` on(
+                  `quest_applicants`.`account_id` = `account`.`Id`
+                )
+              )
+              left join `quest` on(
+                `quest_applicants`.`quest_id` = `quest`.`Id`
+              )
+            )
+            left join `tournament` on(
+              `quest`.`tournament_id` = `tournament`.`Id`
+            )
+          )
+          left join `v_game_elo_rank_info` `v_game_rank` on(
+            `v_game_rank`.`account_id` = `account`.`Id`
+            and `v_game_rank`.`game_id` = `tournament`.`game_id`
+          )
+        )
+      where quest_applicants.quest_id IN ($placeholders)
+      ORDER BY quest_applicants.quest_id ASC, seed ASC, exp DESC, prestige DESC";
+
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return [];
+        }
+
+        $types = str_repeat('i', count($questIds));
+        // @phpstan-ignore-next-line
+        $stmt->bind_param($types, ...$questIds);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result === false) {
+            return [];
+        }
+
+        $byQuest = [];
+        while ($row = $result->fetch_assoc()) {
+            $qid = (int)$row['quest_id'];
+            $byQuest[$qid][] = self::row_to_vQuestApplicant($row);
+        }
+
+        return $byQuest;
+    }
+
     public static function getTotalUnusedRaffleTickets(vAccount $account) : Response {
         $conn = Database::getConnection();
 
