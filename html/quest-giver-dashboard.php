@@ -1054,7 +1054,7 @@ function renderStarRating(float $rating): string
                     </div>
                     <div class="card card-body mt-3">
                         <h5 class="mb-3">Suggested Next Quest Dates</h5>
-                        <ul id="suggestedDatesList" class="list-unstyled mb-0"></ul>
+                        <ul id="suggestedDatesList" class="list-group mb-0"></ul>
                     </div>
                     <div class="card card-body mt-3">
                         <h5 class="mb-3">Average Participation by Weekday</h5>
@@ -1483,12 +1483,34 @@ $(document).ready(function () {
             list.empty();
             if (resp && resp.success && resp.data.length) {
                 resp.data.forEach(function(item, idx) {
-                    const prefix = idx === 0 ? '<strong>Next quest:</strong> ' : '';
-                    const reason = item.reasons ? item.reasons.join('; ') : item.reason;
-                    list.append(`<li>${prefix}${item.date} - ${reason}</li>`);
+                    const dateObj = new Date(item.date);
+                    const formatted = dateObj.toLocaleDateString(undefined, {
+                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                    });
+
+                    const li = $('<li class="list-group-item"></li>');
+                    const header = $('<div class="d-flex justify-content-between align-items-start"></div>');
+                    const left = $('<div></div>');
+                    if (idx === 0) {
+                        left.append('<span class="badge bg-success me-2">Next quest</span>');
+                    }
+                    left.append($('<strong></strong>').text(formatted));
+                    header.append(left);
+                    if (typeof item.score !== 'undefined') {
+                        header.append($('<span class="badge bg-primary"></span>').text(item.score));
+                    }
+                    li.append(header);
+                    if (Array.isArray(item.reasons) && item.reasons.length) {
+                        const ul = $('<ul class="mb-0 mt-2"></ul>');
+                        item.reasons.forEach(function(r) {
+                            ul.append($('<li></li>').text(r));
+                        });
+                        li.append(ul);
+                    }
+                    list.append(li);
                 });
             } else {
-                list.append('<li>No suggestions available</li>');
+                list.append('<li class="list-group-item">No suggestions available</li>');
             }
         }, 'json');
     }

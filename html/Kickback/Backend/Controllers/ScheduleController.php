@@ -113,7 +113,7 @@ class ScheduleController
     * Project future dates with high expected engagement.
     * Combines historic averages by weekday with current calendar events.
     *
-    * @return array<array{date: string, score: int, reason: string}>
+    * @return array<array{date: string, score: int, reasons: string[]}>
     */
     public static function getSuggestedDates(int $month, int $year, ?int $questGiverId = null, int $limit = 3) : array
     {
@@ -175,21 +175,21 @@ class ScheduleController
             $dateStr = sprintf('%04d-%02d-%02d', $year, $month, $day);
             $dow = intval(date('w', strtotime($dateStr))) + 1; // MySQL style
             $score = $averages[$dow] ?? 0;
-            $reason = [];
+            $reasons = [];
 
             if ($averages[$dow] > 0) {
-                $reason[] = 'Historically high engagement on ' . date('l', strtotime($dateStr));
+                $reasons[] = 'Historically high engagement on ' . date('l', strtotime($dateStr));
             } else {
-                $reason[] = 'No historical data for ' . date('l', strtotime($dateStr));
+                $reasons[] = 'No historical data for ' . date('l', strtotime($dateStr));
             }
 
             if ($questGiverId !== null) {
                 $personal = $personalAverages[$dow] ?? 0;
                 if ($personal > 0) {
                     $score += intval(round($personal));
-                    $reason[] = 'High personal turnout on ' . date('l', strtotime($dateStr));
+                    $reasons[] = 'High personal turnout on ' . date('l', strtotime($dateStr));
                 } else {
-                    $reason[] = 'No personal turnout data';
+                    $reasons[] = 'No personal turnout data';
                 }
             }
 
@@ -204,15 +204,15 @@ class ScheduleController
 
             if ($conflictCount > 0) {
                 $score -= 5 * $conflictCount;
-                $reason[] = 'Conflicts with ' . $conflictCount . ' other event' . ($conflictCount > 1 ? 's' : '');
+                $reasons[] = 'Conflicts with ' . $conflictCount . ' other event' . ($conflictCount > 1 ? 's' : '');
             } else {
-                $reason[] = 'No competing events';
+                $reasons[] = 'No competing events';
             }
 
             $suggestions[] = [
                 'date' => $dateStr,
                 'score' => $score,
-                'reason' => implode('; ', $reason)
+                'reasons' => $reasons
             ];
         }
 
