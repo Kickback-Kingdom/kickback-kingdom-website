@@ -431,6 +431,7 @@ foreach ($coHostStats as $stats) {
         'username' => $stats['username'],
         'avatar' => $stats['avatar'],
         'url' => $stats['url'],
+        'questCount' => $stats['questCount'],
         'avgParticipants' => $avgParticipants,
         'uniqueParticipants' => $uniqueCount,
         'avgHostRating' => $avgHostRating,
@@ -545,6 +546,8 @@ foreach ($pastQuests as $quest) {
         'title' => $title,
         'locator' => $quest->locator,
         'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
+        'id' => $quest->crand,
+        'banner' => $quest->banner ? $quest->banner->getFullPath() : '',
         'participants' => $participants,
         'avgQuestRating' => $avgQuestRating,
         'avgHostRating' => $avgHostRating,
@@ -979,6 +982,7 @@ function renderStarRating(float $rating): string
                                                         <th>Participants</th>
                                                         <th>Avg Quest Rating</th>
                                                         <th>Avg Host Rating</th>
+                                                        <th>Reviews</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -998,6 +1002,9 @@ function renderStarRating(float $rating): string
                                                             </td>
                                                             <td class="align-middle">
                                                                 <?= renderStarRating($q['avgHostRating']); ?><span class="ms-1"><?= number_format($q['avgHostRating'], 2); ?></span>
+                                                            </td>
+                                                            <td class="align-middle">
+                                                                <button class="btn btn-sm btn-outline-primary view-reviews-btn" data-quest-id="<?= $q['id']; ?>" data-quest-title="<?= htmlspecialchars($q['title']); ?>" data-quest-banner="<?= htmlspecialchars($q['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
                                                             </td>
                                                         </tr>
                                                     <?php } ?>
@@ -1072,6 +1079,7 @@ function renderStarRating(float $rating): string
                                                 <thead>
                                                     <tr>
                                                         <th>Co-Host</th>
+                                                        <th>Quests Co-Hosted</th>
                                                         <th>Avg Participants</th>
                                                         <th>Unique Participants</th>
                                                         <th>Avg Host Rating</th>
@@ -1089,6 +1097,7 @@ function renderStarRating(float $rating): string
                                                                     <div><a href="<?= htmlspecialchars($h['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($h['username']); ?></a></div>
                                                                 </div>
                                                             </td>
+                                                            <td class="align-middle"><?= $h['questCount']; ?></td>
                                                             <td class="align-middle"><?= number_format($h['avgParticipants'], 1); ?></td>
                                                             <td class="align-middle"><?= $h['uniqueParticipants']; ?></td>
                                                             <td class="align-middle">
@@ -1100,7 +1109,7 @@ function renderStarRating(float $rating): string
                                                                 <span class="ms-1"><?= number_format($h['avgQuestRating'], 2); ?></span>
                                                             </td>
                                                         </tr>
-                                                    <?php } ?>
+                                                   <?php } ?>
                                                 </tbody>
                                             </table>
                                         </div>
