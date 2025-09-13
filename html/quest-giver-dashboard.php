@@ -372,6 +372,7 @@ foreach ($participantTotals as $crand => $count) {
         'avatar' => $info['avatar'],
         'url' => $info['url'],
         'loyalty' => $count,
+        'avgHostRating' => $participantAvgHostRatings[$crand] ?? 0,
         'avgQuestRating' => $participantAvgQuestRatings[$crand] ?? 0,
     ];
     if (count($topParticipants) >= 10) {
@@ -973,7 +974,7 @@ function renderStarRating(float $rating): string
                                             <div class="card-text mb-1"><a href="<?= htmlspecialchars($coHostCandidate['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($coHostCandidate['username']); ?></a></div>
                                             <p class="card-text mb-0">
                                                 Joined <?= $coHostCandidate['loyalty']; ?> quest<?= $coHostCandidate['loyalty'] === 1 ? '' : 's'; ?>
-                                                &middot; <?= renderStarRating($coHostCandidate['avgHostRating']); ?><span class="ms-1"><?= number_format($coHostCandidate['avgHostRating'], 1); ?></span>
+                                                &middot; <?= renderStarRating($coHostCandidate['avgHostedHostRating']); ?><span class="ms-1"><?= number_format($coHostCandidate['avgHostedHostRating'], 1); ?></span>
                                                 &middot; Adventured with <?= $coHostCandidate['network']; ?> other player<?= $coHostCandidate['network'] === 1 ? '' : 's'; ?>
                                                 <?php if (isset($coHostCandidate['daysSinceLastQuest'])) { ?>
                                                     &middot; Last quest <?= $coHostCandidate['daysSinceLastQuest']; ?> day<?= $coHostCandidate['daysSinceLastQuest'] === 1 ? '' : 's'; ?> ago
