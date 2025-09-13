@@ -124,7 +124,13 @@ $events = ScheduleController::getCalendarEvents($month, $year);
     }
 
     function loadSuggestedDates() {
-      fetch(`/api/v1/schedule/suggestedDates.php?month=${month+1}&year=${year}`)
+      var params = new URLSearchParams();
+      params.append('month', month + 1);
+      params.append('year', year);
+      if (typeof sessionToken !== 'undefined') {
+        params.append('sessionToken', sessionToken);
+      }
+      fetch('/api/v1/schedule/suggestedDates.php', { method: 'POST', body: params })
         .then(response => response.json())
         .then(data => {
           var container = document.getElementById('suggested-dates');
@@ -132,7 +138,8 @@ $events = ScheduleController::getCalendarEvents($month, $year);
             container.innerHTML = '';
             data.data.forEach(item => {
               var p = document.createElement('p');
-              p.textContent = `${item.date} - ${item.reason}`;
+              var reason = item.reasons ? item.reasons.join('; ') : item.reason;
+              p.textContent = `${item.date} - ${reason}`;
               container.appendChild(p);
             });
           } else {

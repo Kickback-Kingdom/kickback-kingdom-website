@@ -1414,13 +1414,14 @@ $(document).ready(function () {
     }
 
     function loadSuggestedDates() {
-        $.get('/api/v1/schedule/suggestedDates.php', { month: calMonth + 1, year: calYear }, function(resp) {
+        $.post('/api/v1/schedule/suggestedDates.php', { sessionToken: sessionToken, month: calMonth + 1, year: calYear }, function(resp) {
             const list = $('#suggestedDatesList');
             list.empty();
             if (resp && resp.success && resp.data.length) {
                 resp.data.forEach(function(item, idx) {
                     const prefix = idx === 0 ? '<strong>Next quest:</strong> ' : '';
-                    list.append(`<li>${prefix}${item.date} - ${item.reason}</li>`);
+                    const reason = item.reasons ? item.reasons.join('; ') : item.reason;
+                    list.append(`<li>${prefix}${item.date} - ${reason}</li>`);
                 });
             } else {
                 list.append('<li>No suggestions available</li>');

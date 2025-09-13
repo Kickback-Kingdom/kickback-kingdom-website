@@ -114,7 +114,7 @@ class ScheduleController
     *
     * @return array<array{date: string, score: int, reason: string}>
     */
-    public static function getSuggestedDates(int $month, int $year, int $limit = 3) : array
+    public static function getSuggestedDates(int $month, int $year, ?int $questGiverId = null, int $limit = 3) : array
     {
         $db = Database::getConnection();
 
@@ -132,8 +132,36 @@ class ScheduleController
             mysqli_free_result($avgResult);
         }
 
-        // Upcoming events for the specified month/year
-        $events = self::getCalendarEvents($month, $year);
+        // Personal participation averages by weekday for the quest giver
+        $personalAverages = [];
+        if ($questGiverId !== null) {
+            $personalQuery = "SELECT DAYOFWEEK(q.end_date) AS dow, AVG(p.participants) AS avg_participants
+                               FROM quest q
+                               LEFT JOIN (
+                                   SELECT quest_id, COUNT(*) AS participants
+                                   FROM quest_applicants
+                                   WHERE participated = 1
+                                   GROUP BY quest_id
+                               ) p ON p.quest_id = q.Id
+                               WHERE (q.host_id = ? OR q.host_id_2 = ?) AND q.end_date < CURDATE()
+                               GROUP BY dow";
+            $stmt = mysqli_prepare($db, $personalQuery);
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, 'ii', $questGiverId, $questGiverId);
+                mysqli_stmt_execute($stmt);
+                $res = mysqli_stmt_get_result($stmt);
+                if ($res) {
+                    while ($row = mysqli_fetch_assoc($res)) {
+                        $personalAverages[intval($row['dow'])] = floatval($row['avg_participants']);
+                    }
+                    mysqli_free_result($res);
+                }
+                mysqli_stmt_close($stmt);
+            }
+        }
+
+        // Upcoming events for the specified month/year from all hosts
+        $events = self::getCalendarEvents($month, $year, null, true);
         $eventsByDate = [];
         foreach ($events as $event) {
             $dateKey = date('Y-m-d', strtotime($event['start_date']));
@@ -148,25 +176,42 @@ class ScheduleController
             $score = $averages[$dow] ?? 0;
             $reason = [];
 
-            if ($score > 0) {
+            if ($averages[$dow] > 0) {
                 $reason[] = 'Historically high engagement on ' . date('l', strtotime($dateStr));
             } else {
                 $reason[] = 'No historical data for ' . date('l', strtotime($dateStr));
             }
 
+            if ($questGiverId !== null) {
+                $personal = $personalAverages[$dow] ?? 0;
+                if ($personal > 0) {
+                    $score += intval(round($personal));
+                    $reason[] = 'High personal turnout on ' . date('l', strtotime($dateStr));
+                } else {
+                    $reason[] = 'No personal turnout data';
+                }
+            }
+
+            $conflictCount = 0;
             if (isset($eventsByDate[$dateStr])) {
-                // Boost score if event already exists on this date
-                $score += 5;
-                $titles = array_map(fn($e) => $e['title'], $eventsByDate[$dateStr]);
-                $reason[] = 'Existing events: ' . implode(', ', $titles);
+                foreach ($eventsByDate[$dateStr] as $ev) {
+                    if ($questGiverId === null || ($ev['host_id'] !== null && intval($ev['host_id']) !== $questGiverId)) {
+                        $conflictCount++;
+                    }
+                }
+            }
+
+            if ($conflictCount > 0) {
+                $score -= 5 * $conflictCount;
+                $reason[] = 'Conflicts with ' . $conflictCount . ' other event' . ($conflictCount > 1 ? 's' : '');
             } else {
-                $reason[] = 'No conflicting events';
+                $reason[] = 'No competing events';
             }
 
             $suggestions[] = [
                 'date' => $dateStr,
                 'score' => $score,
-                'reason' => implode('. ', $reason)
+                'reason' => implode('; ', $reason)
             ];
         }
 
