@@ -1061,6 +1061,11 @@ function renderStarRating(float $rating): string
                         <canvas id="weekdayAveragesChart"></canvas>
                         <small class="text-muted">Average participants for quests run on each weekday.</small>
                     </div>
+                    <div class="card card-body mt-3">
+                        <h5 class="mb-3">Average Participation by Hour</h5>
+                        <canvas id="hourlyAveragesChart"></canvas>
+                        <small class="text-muted" id="hourlyPeakInfo">Average participants for quests by hour. Peak hour shown below.</small>
+                    </div>
                 </div>
                 <div class="tab-pane fade" id="nav-top" role="tabpanel" aria-labelledby="nav-top-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Top Quests & Participants</div>
@@ -1303,6 +1308,7 @@ $(document).ready(function () {
     let participationCounts = {};
     let calendarEvents = {};
     let weekdayChart;
+    let hourlyChart;
     let calMonth = (new Date()).getMonth();
     let calYear = (new Date()).getFullYear();
 
@@ -1413,6 +1419,60 @@ $(document).ready(function () {
         }, 'json');
     }
 
+    function loadHourlyAverages() {
+        function formatHour(h) {
+            const hour12 = h % 12 === 0 ? 12 : h % 12;
+            const ampm = h < 12 ? 'AM' : 'PM';
+            return hour12 + ' ' + ampm;
+        }
+
+        $.post('/api/v1/quest/participationAveragesByHour.php', { sessionToken: sessionToken }, function(resp) {
+            if (resp && resp.success) {
+                const personal = resp.data.personal;
+                const global = resp.data.global;
+                const personalMap = {};
+                personal.forEach(function(r) { personalMap[r.hour] = r.avgParticipants; });
+                const labels = global.map(function(r) { return formatHour(r.hour); });
+                const personalData = global.map(function(r) { return personalMap[r.hour] || 0; });
+                const globalData = global.map(function(r) { return r.avgParticipants; });
+                const ctx = document.getElementById('hourlyAveragesChart').getContext('2d');
+                if (hourlyChart) { hourlyChart.destroy(); }
+                hourlyChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'My Avg',
+                                data: personalData,
+                                borderColor: 'rgba(54, 162, 235, 0.6)',
+                                fill: false
+                            },
+                            {
+                                label: 'Global Avg',
+                                data: globalData,
+                                borderColor: 'rgba(255, 159, 64, 0.6)',
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: { beginAtZero: true, precision: 0 }
+                            }]
+                        }
+                    }
+                });
+
+                const max = Math.max.apply(null, globalData);
+                const peak = global.filter(function(r) { return r.avgParticipants === max; })
+                    .map(function(r) { return formatHour(r.hour); });
+                document.getElementById('hourlyPeakInfo').textContent = 'Peak hour(s): ' + peak.join(', ');
+            }
+        }, 'json');
+    }
+
     function loadSuggestedDates() {
         $.post('/api/v1/schedule/suggestedDates.php', { sessionToken: sessionToken, month: calMonth + 1, year: calYear }, function(resp) {
             const list = $('#suggestedDatesList');
@@ -1463,6 +1523,7 @@ $(document).ready(function () {
     loadParticipationByDate();
     loadCalendarEvents();
     loadWeekdayAverages();
+    loadHourlyAverages();
     loadSuggestedDates();
 
     $('#datatable-reviews').DataTable({
