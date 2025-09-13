@@ -1328,7 +1328,7 @@ $(document).ready(function () {
             let tooltipLines = [];
             if (count > 0) { tooltipLines.push(`Participants: ${count}`); }
             if (events.length > 1) { tooltipLines.push('Multiple events'); }
-            let tooltip = tooltipLines.length ? `data-bs-toggle="tooltip" data-bs-html="true" title="${tooltipLines.join('<br>').replace(/"/g, '&quot;')}"` : '';
+            let tooltip = tooltipLines.length ? `data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="bottom" title="${tooltipLines.join('<br>').replace(/"/g, '&quot;')}"` : '';
             if (events.length > 1) { cls += ' border border-danger border-2'; }
             else if (events.length === 1) { cls += ' border border-success border-2'; }
             let pills = '';
@@ -1348,8 +1348,9 @@ $(document).ready(function () {
         body += '</tr></tbody>';
         $('#scheduleCalendarMonth').text(first.toLocaleString('default', { month: 'long', year: 'numeric' }));
         $('#scheduleCalendar').html(header + body);
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl); });
+        document.querySelectorAll('#scheduleCalendar [data-bs-toggle="tooltip"]').forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
     }
 
     function loadParticipationByDate() {
