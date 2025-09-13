@@ -149,6 +149,34 @@ foreach ($questReviewAverages as $qr) {
     $questRatingsMap[$qr->questTitle] = (float)$qr->avgQuestRating;
 }
 
+$dormantQuest = null;
+$dormantWindowMonths = 6;
+$dormantCutoff = (new DateTime())->modify("-{$dormantWindowMonths} months");
+$dormantCandidates = [];
+foreach ($pastQuests as $quest) {
+    if (!$quest->hasEndDate()) {
+        continue;
+    }
+    $avgRating = $questRatingsMap[$quest->title] ?? 0;
+    if ($avgRating < 4) {
+        continue;
+    }
+    $endDateObj = $quest->endDate();
+    if ($endDateObj->value < $dormantCutoff) {
+        $dormantCandidates[] = [
+            'title' => $quest->title,
+            'locator' => $quest->locator,
+            'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
+            'avgRating' => $avgRating,
+            'endDate' => $endDateObj,
+        ];
+    }
+}
+if (!empty($dormantCandidates)) {
+    usort($dormantCandidates, fn($a, $b) => $b['avgRating'] <=> $a['avgRating']);
+    $dormantQuest = $dormantCandidates[0];
+}
+
 $bestQuestCandidates = [];
 foreach ($pastQuests as $quest) {
     $title = $quest->title;
@@ -388,7 +416,26 @@ function renderStarRating(int $rating): string
                 </div>
                 <div class="tab-pane fade" id="nav-suggestions" role="tabpanel" aria-labelledby="nav-suggestions-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Suggestions</div>
-                    <?php if ($recommendedQuest || $underperformingQuest) { ?>
+                    <?php if ($recommendedQuest || $underperformingQuest || $dormantQuest) { ?>
+                        <?php if ($dormantQuest) { ?>
+                            <div class="card mb-3">
+                                <div class="card-body d-flex align-items-center">
+                                    <?php if (!empty($dormantQuest['icon'])) { ?>
+                                        <img src="<?= htmlspecialchars($dormantQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
+                                    <?php } ?>
+                                    <div>
+                                        <h5 class="card-title mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $dormantQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($dormantQuest['title']); ?></a></h5>
+                                        <p class="card-text mb-0">
+                                            Last run <?= htmlspecialchars($dormantQuest['endDate']->formattedBasic); ?> ·
+                                            <?= renderStarRating((int)round($dormantQuest['avgRating'])); ?><span class="ms-1"><?= number_format($dormantQuest['avgRating'], 1); ?></span>
+                                        </p>
+                                        <p class="card-text mb-0">Fans haven’t seen this in a while.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php } else { ?>
+                            <p>No dormant fan favorites found.</p>
+                        <?php } ?>
                         <?php if ($recommendedQuest) { ?>
                             <div class="card mb-3">
                                 <div class="card-body d-flex align-items-center">
@@ -422,7 +469,7 @@ function renderStarRating(int $rating): string
                             </div>
                         <?php } ?>
                     <?php } else { ?>
-                        <p>No suggestions available.</p>
+                        <p>No dormant fan favorites found. Keep hosting adventures!</p>
                     <?php } ?>
                 </div>
                 <div class="tab-pane fade" id="nav-top" role="tabpanel" aria-labelledby="nav-top-tab" tabindex="0">
