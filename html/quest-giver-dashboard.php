@@ -43,6 +43,7 @@ $participantDetails = [];
 $participantRatingSums = [];
 $participantRatingCounts = [];
 $perQuestParticipantCounts = [];
+$perQuestParticipantIds = [];
 $allQuests = array_merge($futureQuests, $pastQuests);
 usort($allQuests, fn($a, $b) => strcmp(
     $a->hasEndDate() ? $a->endDate()->formattedYmd : '',
@@ -60,11 +61,13 @@ foreach ($allQuests as $quest) {
     $participantCounts[] = $count;
     $participantQuestTitles[] = $quest->title;
     $perQuestParticipantCounts[$quest->title] = $count;
+    $perQuestParticipantIds[$qid] = [];
     foreach ($participants as $participant) {
         $crand = $participant->account->crand;
         if ($crand === $account->crand) {
             continue;
         }
+        $perQuestParticipantIds[$qid][] = $crand;
         $uniqueParticipants[$crand] = true;
         $participantTotals[$crand] = ($participantTotals[$crand] ?? 0) + 1;
         if (!isset($participantDetails[$crand])) {
@@ -77,6 +80,32 @@ foreach ($allQuests as $quest) {
     }
 }
 $totalUniqueParticipants = count($uniqueParticipants);
+
+$perPastQuestParticipantStats = [];
+foreach ($pastQuests as $quest) {
+    $qid = $quest->crand;
+    $ids = $perQuestParticipantIds[$qid] ?? [];
+    $unique = count($ids);
+    $loyal = count(array_filter($ids, fn($id) => ($participantTotals[$id] ?? 0) > 1));
+    $perPastQuestParticipantStats[] = [
+        'quest' => $quest,
+        'unique' => $unique,
+        'loyal' => $loyal,
+        'score' => $unique * $loyal,
+    ];
+}
+usort($perPastQuestParticipantStats, fn($a, $b) => $b['score'] <=> $a['score']);
+$recommendedQuest = null;
+if (!empty($perPastQuestParticipantStats)) {
+    $top = $perPastQuestParticipantStats[0];
+    $recommendedQuest = [
+        'title' => $top['quest']->title,
+        'locator' => $top['quest']->locator,
+        'icon' => $top['quest']->icon ? $top['quest']->icon->getFullPath() : '',
+        'unique' => $top['unique'],
+        'loyal' => $top['loyal'],
+    ];
+}
 
 $pastQuestIds = array_map(fn($q) => $q->crand, $pastQuests);
 $reviewDetailsByQuest = QuestController::queryQuestReviewDetailsForQuests($pastQuestIds);
@@ -333,7 +362,21 @@ function renderStarRating(int $rating): string
                 </div>
                 <div class="tab-pane fade" id="nav-suggestions" role="tabpanel" aria-labelledby="nav-suggestions-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Suggestions</div>
-                    <!-- Recommendation widgets go here -->
+                    <?php if ($recommendedQuest) { ?>
+                        <div class="card">
+                            <div class="card-body d-flex align-items-center">
+                                <?php if (!empty($recommendedQuest['icon'])) { ?>
+                                    <img src="<?= htmlspecialchars($recommendedQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
+                                <?php } ?>
+                                <div>
+                                    <h5 class="card-title mb-1">Create a similar quest</h5>
+                                    <p class="card-text mb-0">Your quest <a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $recommendedQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($recommendedQuest['title']); ?></a> had <?= $recommendedQuest['unique']; ?> participants with <?= $recommendedQuest['loyal']; ?> loyal adventurers. Consider creating a similar quest!</p>
+                                </div>
+                            </div>
+                        </div>
+                    <?php } else { ?>
+                        <p>No suggestions available.</p>
+                    <?php } ?>
                 </div>
                 <div class="tab-pane fade" id="nav-top" role="tabpanel" aria-labelledby="nav-top-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Top Quests & Participants</div>
