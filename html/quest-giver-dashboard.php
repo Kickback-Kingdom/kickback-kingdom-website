@@ -1595,17 +1595,27 @@ $(document).ready(function () {
                     row.append($('<td></td>').text(r.questTitle));
                     const playerLink = $('<a></a>').attr('href', '/u/' + r.username).attr('target', '_blank').addClass('username').text(r.username);
                     row.append($('<td></td>').append(playerLink));
-                    row.append($('<td></td>').html(r.hostRating !== null ? renderStarRatingJs(r.hostRating) : ''));
-                    row.append($('<td></td>').html(r.questRating !== null ? renderStarRatingJs(r.questRating) : ''));
-                    row.append($('<td></td>').text(r.feedback || ''));
-                    row.append($('<td class="status"></td>').text(r.viewed ? 'Viewed' : 'Pending'));
-                    if (r.viewed) {
-                        row.append($('<td></td>'));
+
+                    if (r.hasReview) {
+                        row.append($('<td></td>').html(r.hostRating !== null ? renderStarRatingJs(r.hostRating) : ''));
+                        row.append($('<td></td>').html(r.questRating !== null ? renderStarRatingJs(r.questRating) : ''));
+                        row.append($('<td></td>').text(r.feedback || ''));
+                        row.append($('<td class="status"></td>').text(r.viewed ? 'Viewed' : 'Pending'));
+                        if (r.viewed) {
+                            row.append($('<td></td>'));
+                        } else {
+                            const btn = $('<button class="btn btn-sm btn-primary mark-viewed-btn">Mark Viewed</button>');
+                            btn.attr('data-applicant-id', r.id);
+                            row.append($('<td></td>').append(btn));
+                        }
                     } else {
-                        const btn = $('<button class="btn btn-sm btn-primary mark-viewed-btn">Mark Viewed</button>');
-                        btn.attr('data-applicant-id', r.id);
-                        row.append($('<td></td>').append(btn));
+                        row.append($('<td></td>'));
+                        row.append($('<td></td>'));
+                        row.append($('<td></td>'));
+                        row.append($('<td class="status"></td>').text('Pending Review'));
+                        row.append($('<td></td>'));
                     }
+
                     tbody.append(row);
                 });
                 $('#datatable-review-inbox').DataTable({

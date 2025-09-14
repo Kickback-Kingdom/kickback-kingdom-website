@@ -1997,13 +1997,18 @@ class QuestController
         $conn = Database::getConnection();
         $host = $hostId->crand;
 
-        $sql = 'SELECT qa.Id, q.name AS title, acc.Username AS username, qa.host_rating, qa.quest_rating, qa.feedback,
-                       IF(q.host_id = ?, qa.host_viewed, qa.host_2_viewed) AS viewed
+        $sql = 'SELECT qa.Id,
+                       q.name AS title,
+                       acc.Username AS username,
+                       qa.host_rating,
+                       qa.quest_rating,
+                       qa.feedback,
+                       IF(q.host_id = ?, qa.host_viewed, qa.host_2_viewed) AS viewed,
+                       (qa.host_rating IS NOT NULL OR qa.quest_rating IS NOT NULL OR qa.feedback IS NOT NULL) AS has_review
                 FROM quest_applicants qa
                 JOIN quest q ON qa.quest_id = q.Id
                 JOIN v_account_info acc ON qa.account_id = acc.Id
                 WHERE qa.participated = 1
-                  AND (qa.host_rating IS NOT NULL OR qa.quest_rating IS NOT NULL OR qa.feedback IS NOT NULL)
                   AND (q.host_id = ? OR q.host_id_2 = ?)';
         $stmt = $conn->prepare($sql);
         if ($stmt === false) {
@@ -2027,6 +2032,7 @@ class QuestController
                 'questRating' => isset($row['quest_rating']) ? (int)$row['quest_rating'] : null,
                 'feedback' => $row['feedback'],
                 'viewed' => (int)$row['viewed'] === 1,
+                'hasReview' => (int)$row['has_review'] === 1,
             ];
         }
 
