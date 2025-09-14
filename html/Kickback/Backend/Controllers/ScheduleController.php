@@ -171,8 +171,12 @@ class ScheduleController
 
         $suggestions = [];
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+        $today = date('Y-m-d');
         for ($day = 1; $day <= $daysInMonth; $day++) {
             $dateStr = sprintf('%04d-%02d-%02d', $year, $month, $day);
+            if ($dateStr < $today) {
+                continue;
+            }
             $dow = intval(date('w', strtotime($dateStr))) + 1; // MySQL style
             $score = $averages[$dow] ?? 0;
             $reasons = [];
