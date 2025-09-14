@@ -1939,7 +1939,7 @@ class QuestController
         $accountIdVal = $accountId->crand;
 
         $stmt = $conn->prepare(
-            'SELECT q.host_id, q.host_id_2, qa.host_viewed, qa.host_2_viewed
+            'SELECT q.host_id, q.host_id_2, qa.host_viewed, qa.host_2_viewed, qa.host_rating, qa.quest_rating
              FROM quest_applicants qa
              JOIN quest q ON qa.quest_id = q.Id
              WHERE qa.Id = ?'
@@ -1958,6 +1958,8 @@ class QuestController
 
         $host1 = (int)$row['host_id'];
         $host2 = isset($row['host_id_2']) ? (int)$row['host_id_2'] : null;
+        $hostRating = isset($row['host_rating']) ? (float)$row['host_rating'] : null;
+        $questRating = isset($row['quest_rating']) ? (float)$row['quest_rating'] : null;
 
         if ($accountIdVal === $host1) {
             if ((int)$row['host_viewed'] === 1) {
@@ -1970,6 +1972,7 @@ class QuestController
             $update->bind_param('i', $qaId);
             $update->execute();
             if ($update->affected_rows > 0) {
+                self::grantHostReward($accountId, $hostRating, $questRating);
                 return new Response(true, 'Review marked as viewed.', null);
             }
             return new Response(false, 'No review updated.', null);
@@ -1984,12 +1987,72 @@ class QuestController
             $update->bind_param('i', $qaId);
             $update->execute();
             if ($update->affected_rows > 0) {
+                self::grantHostReward($accountId, $hostRating, $questRating);
                 return new Response(true, 'Review marked as viewed.', null);
             }
             return new Response(false, 'No review updated.', null);
         }
 
         return new Response(false, 'Only quest hosts can mark reviews as viewed.', null);
+    }
+
+    public static function claimAllReviews(vRecordId $accountId): Response
+    {
+        $conn = Database::getConnection();
+        $accountIdVal = $accountId->crand;
+
+        $sql = 'SELECT qa.Id
+                FROM quest_applicants qa
+                JOIN quest q ON qa.quest_id = q.Id
+                WHERE ((q.host_id = ? AND qa.host_viewed = 0) OR (q.host_id_2 = ? AND qa.host_2_viewed = 0))
+                  AND (qa.host_rating IS NOT NULL OR qa.quest_rating IS NOT NULL OR qa.feedback IS NOT NULL)';
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return new Response(false, "Failed to prepare query.", null);
+        }
+
+        $stmt->bind_param('ii', $accountIdVal, $accountIdVal);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result === false) {
+            return new Response(false, "Failed to execute query.", null);
+        }
+
+        $claimed = 0;
+        while ($row = $result->fetch_assoc()) {
+            $resp = self::markReviewAsViewed(new vRecordId('', (int)$row['Id']), $accountId);
+            if ($resp->success) {
+                $claimed++;
+            }
+        }
+
+        return new Response(true, 'Claimed reviews.', ['claimed' => $claimed]);
+    }
+
+    private static function grantHostReward(vRecordId $accountId, ?float $hostRating, ?float $questRating): void
+    {
+        $ratings = [];
+        if ($hostRating !== null) {
+            $ratings[] = $hostRating;
+        }
+        if ($questRating !== null) {
+            $ratings[] = $questRating;
+        }
+        if (count($ratings) === 0) {
+            return;
+        }
+        $avg = array_sum($ratings) / count($ratings);
+        $tokens = 0;
+        if ($avg >= 4.5) {
+            $tokens = 3;
+        } elseif ($avg >= 4.0) {
+            $tokens = 2;
+        } elseif ($avg >= 3.0) {
+            $tokens = 1;
+        }
+        for ($i = 0; $i < $tokens; $i++) {
+            LootController::givePrestigeToken($accountId);
+        }
     }
 
     public static function queryReviewInbox(vRecordId $hostId): Response

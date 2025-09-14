@@ -778,6 +778,7 @@ function renderStarRating(float $rating): string
                 </div>
                 <div class="tab-pane fade" id="nav-review-inbox" role="tabpanel" aria-labelledby="nav-review-inbox-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Review Inbox</div>
+                    <button id="claim-all-reviews" class="btn btn-sm btn-success mb-2">Claim All</button>
                     <div class="table-responsive">
                         <table id="datatable-review-inbox" class="table table-striped">
                             <thead>
@@ -1585,7 +1586,20 @@ $(document).ready(function () {
 
     loadReviewInbox();
 
+    $('#claim-all-reviews').on('click', function () {
+        $.post('/api/v1/quest/claimAllReviews.php', { sessionToken: sessionToken }, function(resp) {
+            if (resp.success) {
+                loadReviewInbox();
+            } else {
+                alert(resp.message);
+            }
+        }, 'json');
+    });
+
     function loadReviewInbox() {
+        if ($.fn.DataTable.isDataTable('#datatable-review-inbox')) {
+            $('#datatable-review-inbox').DataTable().destroy();
+        }
         $.post('/api/v1/quest/reviewInbox.php', { sessionToken: sessionToken }, function(resp) {
             if (resp.success) {
                 const tbody = $('#datatable-review-inbox tbody');
