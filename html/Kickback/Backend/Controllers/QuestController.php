@@ -1997,7 +1997,7 @@ class QuestController
         $conn = Database::getConnection();
         $host = $hostId->crand;
 
-        $sql = 'SELECT qa.Id, q.title, acc.Username AS username, qa.host_rating, qa.quest_rating, qa.feedback,
+        $sql = 'SELECT qa.Id, q.name AS title, acc.Username AS username, qa.host_rating, qa.quest_rating, qa.feedback,
                        IF(q.host_id = ?, qa.host_viewed, qa.host_2_viewed) AS viewed
                 FROM quest_applicants qa
                 JOIN quest q ON qa.quest_id = q.Id
