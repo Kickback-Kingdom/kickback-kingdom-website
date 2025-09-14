@@ -1592,7 +1592,20 @@ $(document).ready(function () {
                 tbody.empty();
                 resp.data.forEach(function(r) {
                     const row = $('<tr></tr>');
-                    row.append($('<td></td>').text(r.questTitle));
+
+                    const questCell = $('<td></td>');
+                    const questWrapper = $('<div class="d-flex align-items-center"></div>');
+                    questWrapper.append(
+                        $('<img>').attr('src', r.questIcon).addClass('rounded me-2').css({ width: '40px', height: '40px' })
+                    );
+                    const questLink = $('<a></a>')
+                        .attr('href', '/q/' + r.questLocator)
+                        .attr('target', '_blank')
+                        .text(r.questTitle);
+                    questWrapper.append(questLink);
+                    questCell.append(questWrapper);
+                    row.append(questCell);
+
                     const playerLink = $('<a></a>').attr('href', '/u/' + r.username).attr('target', '_blank').addClass('username').text(r.username);
                     row.append($('<td></td>').append(playerLink));
 

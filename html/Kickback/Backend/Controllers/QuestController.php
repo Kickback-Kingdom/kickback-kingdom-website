@@ -1999,6 +1999,8 @@ class QuestController
 
         $sql = 'SELECT qa.Id,
                        q.name AS title,
+                       q.locator,
+                       q.imagePath_icon,
                        acc.Username AS username,
                        qa.host_rating,
                        qa.quest_rating,
@@ -2006,7 +2008,7 @@ class QuestController
                        IF(q.host_id = ?, qa.host_viewed, qa.host_2_viewed) AS viewed,
                        (qa.host_rating IS NOT NULL OR qa.quest_rating IS NOT NULL OR qa.feedback IS NOT NULL) AS has_review
                 FROM quest_applicants qa
-                JOIN quest q ON qa.quest_id = q.Id
+                JOIN v_quest_info q ON qa.quest_id = q.Id
                 JOIN v_account_info acc ON qa.account_id = acc.Id
                 WHERE qa.participated = 1
                   AND (q.host_id = ? OR q.host_id_2 = ?)';
@@ -2024,9 +2026,17 @@ class QuestController
 
         $reviews = [];
         while ($row = $result->fetch_assoc()) {
+            $icon = new vMedia();
+            if (!is_null($row['imagePath_icon'])) {
+                $icon->setMediaPath($row['imagePath_icon']);
+            } else {
+                $icon = vMedia::defaultIcon();
+            }
             $reviews[] = [
                 'id' => (int)$row['Id'],
                 'questTitle' => $row['title'],
+                'questLocator' => $row['locator'],
+                'questIcon' => $icon->getFullPath(),
                 'username' => $row['username'],
                 'hostRating' => isset($row['host_rating']) ? (int)$row['host_rating'] : null,
                 'questRating' => isset($row['quest_rating']) ? (int)$row['quest_rating'] : null,
