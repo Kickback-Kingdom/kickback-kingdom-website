@@ -2074,7 +2074,9 @@ class QuestController
                 JOIN v_quest_info q ON qa.quest_id = q.Id
                 JOIN v_account_info acc ON qa.account_id = acc.Id
                 WHERE qa.participated = 1
-                  AND (q.host_id = ? OR q.host_id_2 = ?)';
+                  AND (q.host_id = ? OR q.host_id_2 = ?)
+                  AND qa.account_id <> q.host_id
+                  AND (q.host_id_2 IS NULL OR qa.account_id <> q.host_id_2)';
         $stmt = $conn->prepare($sql);
         if ($stmt === false) {
             return new Response(false, 'Failed to prepare query.', null);
