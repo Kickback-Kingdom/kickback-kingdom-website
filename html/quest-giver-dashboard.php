@@ -1494,7 +1494,8 @@ $(document).ready(function () {
             list.empty();
             if (resp && resp.success && resp.data.length) {
                 resp.data.forEach(function(item, idx) {
-                    const dateObj = new Date(item.date);
+                    const [y, m, d] = item.date.split('-').map(Number);
+                    const dateObj = new Date(y, m - 1, d);
                     const formatted = dateObj.toLocaleDateString(undefined, {
                         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
                     });
