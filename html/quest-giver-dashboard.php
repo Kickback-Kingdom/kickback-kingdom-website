@@ -884,7 +884,7 @@ function renderStarRating(float $rating): string
                                             <img src="<?= htmlspecialchars($dormantQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
                                         <?php } ?>
                                         <div>
-                                            <h5 class="card-title mb-1">The Kingdom loved this Quest! Bring it back with a twist</h5>
+                                            <h5 class="card-title mb-1">Revive this beloved quest with a fresh twist</h5>
                                             <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $dormantQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($dormantQuest['title']); ?></a> last ran <?= htmlspecialchars($dormantQuest['endDate']->formattedBasic); ?></p>
                         <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating($dormantQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($dormantQuest['avgQuestRating'], 1); ?></span>
@@ -905,7 +905,7 @@ function renderStarRating(float $rating): string
                                             <img src="<?= htmlspecialchars($fanFavoriteQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
                                         <?php } ?>
                                         <div>
-                                            <h5 class="card-title mb-1">You have a loyal following that can't wait for this Sequel!</h5>
+                                            <h5 class="card-title mb-1">Reward loyal players with a long-awaited sequel</h5>
                                             <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $fanFavoriteQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($fanFavoriteQuest['title']); ?></a> last ran <?= htmlspecialchars($fanFavoriteQuest['endDate']->formattedBasic); ?></p>
                                             <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating($fanFavoriteQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($fanFavoriteQuest['avgQuestRating'], 1); ?></span>
@@ -926,7 +926,7 @@ function renderStarRating(float $rating): string
                                             <img src="<?= htmlspecialchars($recommendedQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
                                         <?php } ?>
                                         <div>
-                                            <h5 class="card-title mb-1">This was your most successful quest. A similar quest is highly anticipated!</h5>
+                                            <h5 class="card-title mb-1">Launch a new quest inspired by your top performer</h5>
                                             <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $recommendedQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($recommendedQuest['title']); ?></a> last ran <?= htmlspecialchars($recommendedQuest['endDate']->formattedBasic); ?></p>
                                             <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating($recommendedQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($recommendedQuest['avgQuestRating'], 1); ?></span>
@@ -947,7 +947,7 @@ function renderStarRating(float $rating): string
                                             <img src="<?= htmlspecialchars($hiddenGemQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
                                         <?php } ?>
                                         <div>
-                                            <h5 class="card-title mb-1">This quest was very well recieved. Relaunch it with more promotion.</h5>
+                                            <h5 class="card-title mb-1">Relaunch this highly rated quest with stronger promotion</h5>
                                             <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $hiddenGemQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($hiddenGemQuest['title']); ?></a> last ran <?= htmlspecialchars($hiddenGemQuest['endDate']->formattedBasic); ?></p>
                                             <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating($hiddenGemQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($hiddenGemQuest['avgQuestRating'], 1); ?></span>
@@ -963,7 +963,7 @@ function renderStarRating(float $rating): string
                         <?php if (!empty($coHostCandidates)) { ?>
                             <div class="card mb-3">
                                 <div class="card-body">
-                                    <h5 class="card-title mb-3">Invite a co-host</h5>
+                                    <h5 class="card-title mb-3">Partner with a co-host to expand your reach</h5>
                                     <p class="card-text mb-3">Partner with reliable players to manage larger quests and reach new audiences.</p>
                                     <div class="table-responsive">
                                         <table class="table table-striped mb-0">
@@ -1015,7 +1015,7 @@ function renderStarRating(float $rating): string
                                             <img src="<?= htmlspecialchars($underperformingQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
                                         <?php } ?>
                                         <div>
-                                            <h5 class="card-title mb-1">This quest was popular but could use some polish</h5>
+                                            <h5 class="card-title mb-1">Refine this quest to improve its performance</h5>
                                             <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $underperformingQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($underperformingQuest['title']); ?></a> last ran <?= htmlspecialchars($underperformingQuest['endDate']->formattedBasic); ?></p>
                                             <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating($underperformingQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($underperformingQuest['avgQuestRating'], 1); ?></span>
