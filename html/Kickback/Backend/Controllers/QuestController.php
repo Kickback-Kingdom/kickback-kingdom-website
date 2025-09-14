@@ -2064,6 +2064,7 @@ class QuestController
                        q.name AS title,
                        q.locator,
                        q.imagePath_icon,
+                       q.end_date,
                        acc.Username AS username,
                        qa.host_rating,
                        qa.quest_rating,
@@ -2097,12 +2098,19 @@ class QuestController
             } else {
                 $icon = vMedia::defaultIcon();
             }
+            $endDate = new vDateTime($row['end_date']);
             $reviews[] = [
                 'id' => (int)$row['Id'],
                 'questTitle' => $row['title'],
                 'questLocator' => $row['locator'],
                 'questIcon' => $icon->getFullPath(),
                 'username' => $row['username'],
+                'questEndDate' => [
+                    'formattedBasic' => $endDate->formattedBasic,
+                    'formattedDetailed' => $endDate->formattedDetailed,
+                    'valueString' => $endDate->valueString,
+                    'dbValue' => $endDate->dbValue,
+                ],
                 'hostRating' => isset($row['host_rating']) ? (int)$row['host_rating'] : null,
                 'questRating' => isset($row['quest_rating']) ? (int)$row['quest_rating'] : null,
                 'feedback' => $row['feedback'],

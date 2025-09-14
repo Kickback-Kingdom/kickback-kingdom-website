@@ -785,6 +785,7 @@ function renderStarRating(float $rating): string
                                 <tr>
                                     <th>Quest</th>
                                     <th>Player</th>
+                                    <th>Date</th>
                                     <th>Host Rating</th>
                                     <th>Quest Rating</th>
                                     <th>Feedback</th>
@@ -1623,6 +1624,11 @@ $(document).ready(function () {
                     const playerLink = $('<a></a>').attr('href', '/u/' + r.username).attr('target', '_blank').addClass('username').text(r.username);
                     row.append($('<td></td>').append(playerLink));
 
+                    const date = r.questEndDate;
+                    const dateCell = $('<td></td>').attr('data-order', date.dbValue);
+                    dateCell.append(`<span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="${date.formattedDetailed} UTC" data-datetime-utc="${date.valueString}" data-db-value="${date.dbValue}">${date.formattedBasic}</span>`);
+                    row.append(dateCell);
+
                     if (r.hasReview) {
                         row.append($('<td></td>').html(r.hostRating !== null ? renderStarRatingJs(r.hostRating) : ''));
                         row.append($('<td></td>').html(r.questRating !== null ? renderStarRatingJs(r.questRating) : ''));
@@ -1645,14 +1651,29 @@ $(document).ready(function () {
 
                     tbody.append(row);
                 });
+
+                tbody.find('.date').each(function () {
+                    const utcDateTime = $(this).attr('data-datetime-utc');
+                    if (utcDateTime) {
+                        const localDate = new Date(utcDateTime);
+                        const formattedDate = localDate.toLocaleDateString(undefined, {
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        }) + ' ' + localDate.toLocaleTimeString();
+                        $(this).text(formattedDate);
+                    }
+                });
+
                 $('#datatable-review-inbox').DataTable({
                     pageLength: 10,
                     lengthChange: true,
-                    order: [[0, 'asc']],
-                    columnDefs: [{ targets: [6], orderable: false }]
+                    order: [[2, 'desc']],
+                    columnDefs: [{ targets: [7], orderable: false }]
                 });
             } else {
-                $('#datatable-review-inbox tbody').html('<tr><td colspan="7" class="text-danger">' + resp.message + '</td></tr>');
+                $('#datatable-review-inbox tbody').html('<tr><td colspan="8" class="text-danger">' + resp.message + '</td></tr>');
             }
         }, 'json');
     }
