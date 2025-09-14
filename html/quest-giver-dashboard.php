@@ -1070,7 +1070,7 @@ function renderStarRating(float $rating): string
                     <div class="card card-body mt-3">
                         <h5 class="mb-3">Average Participation by Hour</h5>
                         <canvas id="hourlyAveragesChart"></canvas>
-                        <small class="text-muted" id="hourlyPeakInfo">Average participants for quests by hour. Peak hour shown below.</small>
+                        <small class="text-muted" id="hourlyPeakInfo"></small>
                     </div>
                 </div>
                 <div class="tab-pane fade" id="nav-top" role="tabpanel" aria-labelledby="nav-top-tab" tabindex="0">
@@ -1317,6 +1317,8 @@ $(document).ready(function () {
     let hourlyChart;
     let calMonth = (new Date()).getMonth();
     let calYear = (new Date()).getFullYear();
+    const tzAbbr = new Date().toLocaleTimeString('en-us', { timeZoneName: 'short' }).split(' ').pop();
+    document.getElementById('hourlyPeakInfo').textContent = 'Times shown in ' + tzAbbr + '. Loading peak hour(s)...';
 
     function renderScheduleCalendar() {
         const first = new Date(calYear, calMonth, 1);
@@ -1436,7 +1438,7 @@ $(document).ready(function () {
         function formatHour(h) {
             const hour12 = h % 12 === 0 ? 12 : h % 12;
             const ampm = h < 12 ? 'AM' : 'PM';
-            return hour12 + ' ' + ampm;
+            return hour12 + ' ' + ampm + ' ' + tzAbbr;
         }
 
         $.post('/api/v1/quest/participationAveragesByHour.php', { sessionToken: sessionToken }, function(resp) {
@@ -1481,7 +1483,7 @@ $(document).ready(function () {
                 const max = Math.max.apply(null, globalData);
                 const peak = global.filter(function(r) { return r.avgParticipants === max; })
                     .map(function(r) { return formatHour(r.hour); });
-                document.getElementById('hourlyPeakInfo').textContent = 'Peak hour(s): ' + peak.join(', ');
+                document.getElementById('hourlyPeakInfo').textContent = 'Times shown in ' + tzAbbr + '. Peak hour(s): ' + peak.join(', ');
             }
         }, 'json');
     }
