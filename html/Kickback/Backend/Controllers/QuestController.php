@@ -1932,5 +1932,106 @@ class QuestController
         return $stats;
     }
 
+    public static function markReviewAsViewed(vRecordId $applicantId, vRecordId $accountId): Response
+    {
+        $conn = Database::getConnection();
+        $qaId = $applicantId->crand;
+        $accountIdVal = $accountId->crand;
+
+        $stmt = $conn->prepare(
+            'SELECT q.host_id, q.host_id_2, qa.host_viewed, qa.host_2_viewed
+             FROM quest_applicants qa
+             JOIN quest q ON qa.quest_id = q.Id
+             WHERE qa.Id = ?'
+        );
+        if ($stmt === false) {
+            return new Response(false, 'Failed to prepare query.', null);
+        }
+
+        $stmt->bind_param('i', $qaId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        if (!$row) {
+            return new Response(false, 'Review not found.', null);
+        }
+
+        $host1 = (int)$row['host_id'];
+        $host2 = isset($row['host_id_2']) ? (int)$row['host_id_2'] : null;
+
+        if ($accountIdVal === $host1) {
+            if ((int)$row['host_viewed'] === 1) {
+                return new Response(false, 'Review already viewed.', null);
+            }
+            $update = $conn->prepare('UPDATE quest_applicants SET host_viewed = 1 WHERE Id = ?');
+            if ($update === false) {
+                return new Response(false, 'Failed to prepare update.', null);
+            }
+            $update->bind_param('i', $qaId);
+            $update->execute();
+            if ($update->affected_rows > 0) {
+                return new Response(true, 'Review marked as viewed.', null);
+            }
+            return new Response(false, 'No review updated.', null);
+        } elseif ($host2 !== null && $accountIdVal === $host2) {
+            if ((int)$row['host_2_viewed'] === 1) {
+                return new Response(false, 'Review already viewed.', null);
+            }
+            $update = $conn->prepare('UPDATE quest_applicants SET host_2_viewed = 1 WHERE Id = ?');
+            if ($update === false) {
+                return new Response(false, 'Failed to prepare update.', null);
+            }
+            $update->bind_param('i', $qaId);
+            $update->execute();
+            if ($update->affected_rows > 0) {
+                return new Response(true, 'Review marked as viewed.', null);
+            }
+            return new Response(false, 'No review updated.', null);
+        }
+
+        return new Response(false, 'Only quest hosts can mark reviews as viewed.', null);
+    }
+
+    public static function queryReviewInbox(vRecordId $hostId): Response
+    {
+        $conn = Database::getConnection();
+        $host = $hostId->crand;
+
+        $sql = 'SELECT qa.Id, q.title, acc.Username AS username, qa.host_rating, qa.quest_rating, qa.feedback,
+                       IF(q.host_id = ?, qa.host_viewed, qa.host_2_viewed) AS viewed
+                FROM quest_applicants qa
+                JOIN quest q ON qa.quest_id = q.Id
+                JOIN v_account_info acc ON qa.account_id = acc.Id
+                WHERE qa.participated = 1
+                  AND (qa.host_rating IS NOT NULL OR qa.quest_rating IS NOT NULL OR qa.feedback IS NOT NULL)
+                  AND (q.host_id = ? OR q.host_id_2 = ?)';
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return new Response(false, 'Failed to prepare query.', null);
+        }
+
+        $stmt->bind_param('iii', $host, $host, $host);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result === false) {
+            return new Response(false, 'Failed to execute query.', null);
+        }
+
+        $reviews = [];
+        while ($row = $result->fetch_assoc()) {
+            $reviews[] = [
+                'id' => (int)$row['Id'],
+                'questTitle' => $row['title'],
+                'username' => $row['username'],
+                'hostRating' => isset($row['host_rating']) ? (int)$row['host_rating'] : null,
+                'questRating' => isset($row['quest_rating']) ? (int)$row['quest_rating'] : null,
+                'feedback' => $row['feedback'],
+                'viewed' => (int)$row['viewed'] === 1,
+            ];
+        }
+
+        return new Response(true, 'Review inbox loaded.', $reviews);
+    }
+
 }
 ?>
