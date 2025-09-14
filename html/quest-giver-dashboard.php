@@ -758,7 +758,7 @@ function renderStarRating(float $rating): string
             <nav>
                 <div class="nav nav-tabs" id="nav-tab" role="tablist">
                     <button class="nav-link active" id="nav-upcoming-tab" data-bs-toggle="tab" data-bs-target="#nav-upcoming" type="button" role="tab" aria-controls="nav-upcoming" aria-selected="true"><i class="fa-regular fa-calendar"></i></button>
-                    <button class="nav-link" id="nav-past-tab" data-bs-toggle="tab" data-bs-target="#nav-past" type="button" role="tab" aria-controls="nav-past" aria-selected="false"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                    <button class="nav-link" id="nav-review-inbox-tab" data-bs-toggle="tab" data-bs-target="#nav-review-inbox" type="button" role="tab" aria-controls="nav-review-inbox" aria-selected="false"><i class="fa-solid fa-inbox"></i></button>
                     <button class="nav-link" id="nav-reviews-tab" data-bs-toggle="tab" data-bs-target="#nav-reviews" type="button" role="tab" aria-controls="nav-reviews" aria-selected="false"><i class="fa-solid fa-star"></i></button>
                     <button class="nav-link" id="nav-graphs-tab" data-bs-toggle="tab" data-bs-target="#nav-graphs" type="button" role="tab" aria-controls="nav-graphs" aria-selected="false"><i class="fa-solid fa-chart-line"></i></button>
                     <button class="nav-link" id="nav-suggestions-tab" data-bs-toggle="tab" data-bs-target="#nav-suggestions" type="button" role="tab" aria-controls="nav-suggestions" aria-selected="false"><i class="fa-solid fa-lightbulb"></i></button>
@@ -776,14 +776,24 @@ function renderStarRating(float $rating): string
                         require("php-components/vFeedCardRenderer.php");
                     }} ?>
                 </div>
-                <div class="tab-pane fade" id="nav-past" role="tabpanel" aria-labelledby="nav-past-tab" tabindex="0">
-                    <div class="display-6 tab-pane-title">Past Quests</div>
-                    <?php if (count($pastQuests) === 0) { ?>
-                        <p>No past quests.</p>
-                    <?php } else { foreach ($pastQuests as $quest) {
-                        $_vFeedCard = FeedCardController::vQuest_to_vFeedCard($quest);
-                        require("php-components/vFeedCardRenderer.php");
-                    }} ?>
+                <div class="tab-pane fade" id="nav-review-inbox" role="tabpanel" aria-labelledby="nav-review-inbox-tab" tabindex="0">
+                    <div class="display-6 tab-pane-title">Review Inbox</div>
+                    <div class="table-responsive">
+                        <table id="datatable-review-inbox" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Quest</th>
+                                    <th>Player</th>
+                                    <th>Host Rating</th>
+                                    <th>Quest Rating</th>
+                                    <th>Feedback</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
                 <div class="tab-pane fade" id="nav-reviews" role="tabpanel" aria-labelledby="nav-reviews-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Quest Reviews</div>
@@ -1573,6 +1583,43 @@ $(document).ready(function () {
         loadCalendarEvents();
     });
 
+    loadReviewInbox();
+
+    function loadReviewInbox() {
+        $.post('/api/v1/quest/reviewInbox.php', { sessionToken: sessionToken }, function(resp) {
+            if (resp.success) {
+                const tbody = $('#datatable-review-inbox tbody');
+                tbody.empty();
+                resp.data.forEach(function(r) {
+                    const row = $('<tr></tr>');
+                    row.append($('<td></td>').text(r.questTitle));
+                    const playerLink = $('<a></a>').attr('href', '/u/' + r.username).attr('target', '_blank').addClass('username').text(r.username);
+                    row.append($('<td></td>').append(playerLink));
+                    row.append($('<td></td>').html(r.hostRating !== null ? renderStarRatingJs(r.hostRating) : ''));
+                    row.append($('<td></td>').html(r.questRating !== null ? renderStarRatingJs(r.questRating) : ''));
+                    row.append($('<td></td>').text(r.feedback || ''));
+                    row.append($('<td class="status"></td>').text(r.viewed ? 'Viewed' : 'Pending'));
+                    if (r.viewed) {
+                        row.append($('<td></td>'));
+                    } else {
+                        const btn = $('<button class="btn btn-sm btn-primary mark-viewed-btn">Mark Viewed</button>');
+                        btn.attr('data-applicant-id', r.id);
+                        row.append($('<td></td>').append(btn));
+                    }
+                    tbody.append(row);
+                });
+                $('#datatable-review-inbox').DataTable({
+                    pageLength: 10,
+                    lengthChange: true,
+                    order: [[0, 'asc']],
+                    columnDefs: [{ targets: [6], orderable: false }]
+                });
+            } else {
+                $('#datatable-review-inbox tbody').html('<tr><td colspan="7" class="text-danger">' + resp.message + '</td></tr>');
+            }
+        }, 'json');
+    }
+
     $('#datatable-reviews').DataTable({
         pageLength: 10,
         lengthChange: true,
@@ -1639,6 +1686,20 @@ $(document).ready(function () {
                 $('#reviewModalBody').html(list);
             } else {
                 $('#reviewModalBody').html('<div class="text-danger">' + resp.message + '</div>');
+            }
+        }, 'json');
+    });
+
+    $(document).on('click', '.mark-viewed-btn', function () {
+        const btn = $(this);
+        const applicantId = btn.data('applicant-id');
+        $.post('/api/v1/quest/markReviewViewed.php', { applicantId: applicantId, sessionToken: sessionToken }, function(resp) {
+            if (resp.success) {
+                const row = btn.closest('tr');
+                row.find('.status').text('Viewed');
+                btn.remove();
+            } else {
+                alert(resp.message);
             }
         }, 'json');
     });
