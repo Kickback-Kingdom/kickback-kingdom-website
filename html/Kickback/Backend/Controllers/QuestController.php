@@ -1359,6 +1359,133 @@ class QuestController
         return (new Response(true, "New quest created.", $quest));
     }
 
+    public static function cloneQuest(vRecordId $questId) : Response
+    {
+        $conn = Database::getConnection();
+
+        if (!self::queryQuestByIdInto($questId, $originalQuest)) {
+            return new Response(false, "Could not find quest with that ID; failed to clone quest.", null);
+        }
+
+        if (!$originalQuest->canEdit()) {
+            return new Response(false, "You do not have permissions to clone this quest.", null);
+        }
+
+        $stmt = $conn->prepare("SELECT * FROM quest WHERE Id = ?");
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare quest lookup for cloning.", null);
+        }
+
+        $stmt->bind_param('i', $questId->crand);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return new Response(false, "Failed to load quest details for cloning.", null);
+        }
+
+        $result = $stmt->get_result();
+        $originalRow = $result->fetch_assoc();
+        $stmt->close();
+
+        if (!$originalRow) {
+            return new Response(false, "Could not load quest details for cloning.", null);
+        }
+
+        $conn->begin_transaction();
+
+        try {
+            $newLocator = self::generateCloneLocator($originalRow['locator'] ?? '');
+            $newTitle = self::generateCloneName($originalRow['name'] ?? '');
+
+            $newContentId = self::cloneQuestContent($conn, $originalRow['content_id'] ?? null);
+            $newTournamentId = self::cloneQuestTournament($conn, $originalRow['tournament_id'] ?? null);
+            $newRaffleId = self::cloneQuestRaffle($conn, $originalRow['raffle_id'] ?? null);
+
+            $desc = $originalRow['desc'] ?? null;
+            $endDate = $originalRow['end_date'] ?? null;
+            if (isset($endDate) && $endDate === '0000-00-00 00:00:00') {
+                $endDate = null;
+            }
+
+            $imageId = isset($originalRow['image_id']) ? (int)$originalRow['image_id'] : null;
+            $reqApply = isset($originalRow['req_apply']) ? (int)$originalRow['req_apply'] : 0;
+            $maxAccounts = isset($originalRow['max_accounts']) ? (int)$originalRow['max_accounts'] : 0;
+            $hostId = isset($originalRow['host_id']) ? (int)$originalRow['host_id'] : (Session::getCurrentAccount()?->crand ?? 0);
+            $applicationInfo = $originalRow['application_information'] ?? null;
+            $showTwitch = isset($originalRow['show_twitch']) ? (int)$originalRow['show_twitch'] : 0;
+            $hostId2 = isset($originalRow['host_id_2']) ? (int)$originalRow['host_id_2'] : null;
+            $summary = $originalRow['summary'] ?? null;
+            $playStyle = isset($originalRow['play_style']) ? (int)$originalRow['play_style'] : 0;
+            $questLineId = isset($originalRow['quest_line_id']) ? (int)$originalRow['quest_line_id'] : null;
+            if ($questLineId === 0) {
+                $questLineId = null;
+            }
+            $imageIdIcon = isset($originalRow['image_id_icon']) ? (int)$originalRow['image_id_icon'] : null;
+            $imageIdMobile = isset($originalRow['image_id_mobile']) ? (int)$originalRow['image_id_mobile'] : null;
+
+            $stmtInsert = $conn->prepare(
+                "INSERT INTO quest (name, `desc`, tournament_id, end_date, image_id, raffle_id, req_apply, max_accounts, locator, host_id, application_information, show_twitch, published, host_id_2, summary, play_style, quest_line_id, finished, image_id_icon, content_id, image_id_mobile, being_reviewed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            );
+
+            if (!$stmtInsert) {
+                throw new \RuntimeException('Failed to prepare cloned quest insert.');
+            }
+
+            $published = 0;
+            $finished = 0;
+            $beingReviewed = 0;
+
+            $stmtInsert->bind_param(
+                'ssisiiiisisiiisiiiiiii',
+                $newTitle,
+                $desc,
+                $newTournamentId,
+                $endDate,
+                $imageId,
+                $newRaffleId,
+                $reqApply,
+                $maxAccounts,
+                $newLocator,
+                $hostId,
+                $applicationInfo,
+                $showTwitch,
+                $published,
+                $hostId2,
+                $summary,
+                $playStyle,
+                $questLineId,
+                $finished,
+                $imageIdIcon,
+                $newContentId,
+                $imageIdMobile,
+                $beingReviewed
+            );
+
+            if (!$stmtInsert->execute()) {
+                $stmtInsert->close();
+                throw new \RuntimeException('Failed to insert cloned quest.');
+            }
+
+            $newQuestId = (int)$conn->insert_id;
+            $stmtInsert->close();
+
+            self::cloneQuestRewards($conn, (int)$originalRow['Id'], $newQuestId);
+
+            $conn->commit();
+
+            $data = [
+                'questId' => $newQuestId,
+                'locator' => $newLocator,
+                'title' => $newTitle,
+            ];
+
+            return new Response(true, "Quest cloned successfully.", $data);
+        } catch (\Throwable $th) {
+            $conn->rollback();
+            error_log('Quest clone failed: ' . $th->getMessage());
+            return new Response(false, "Failed to clone quest.", null);
+        }
+    }
+
     public static function insert(Quest $quest) : Response
     {
         $conn = Database::getConnection();
@@ -2027,6 +2154,303 @@ class QuestController
         }
 
         return new Response(true, 'Claimed reviews.', ['claimed' => $claimed]);
+    }
+
+    private static function cloneQuestContent(\mysqli $conn, $contentId) : ?int
+    {
+        $contentId = isset($contentId) ? (int)$contentId : 0;
+        if ($contentId <= 0) {
+            return null;
+        }
+
+        $stmt = $conn->prepare("SELECT summary FROM content WHERE Id = ?");
+        if (!$stmt) {
+            throw new \RuntimeException('Failed to prepare content lookup for cloning.');
+        }
+        $stmt->bind_param('i', $contentId);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            throw new \RuntimeException('Failed to execute content lookup for cloning.');
+        }
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+
+        if (!$row) {
+            return null;
+        }
+
+        $summary = $row['summary'];
+
+        $stmtInsertContent = $conn->prepare("INSERT INTO content (summary) VALUES (?)");
+        if (!$stmtInsertContent) {
+            throw new \RuntimeException('Failed to prepare content insert for cloning.');
+        }
+        $stmtInsertContent->bind_param('s', $summary);
+        if (!$stmtInsertContent->execute()) {
+            $stmtInsertContent->close();
+            throw new \RuntimeException('Failed to insert cloned content.');
+        }
+        $newContentId = (int)$conn->insert_id;
+        $stmtInsertContent->close();
+
+        $stmtDetails = $conn->prepare("SELECT Id, content_type_id, `order` FROM content_detail WHERE content_id = ? ORDER BY `order`, Id");
+        if (!$stmtDetails) {
+            throw new \RuntimeException('Failed to prepare content detail lookup for cloning.');
+        }
+        $stmtDetails->bind_param('i', $contentId);
+        if (!$stmtDetails->execute()) {
+            $stmtDetails->close();
+            throw new \RuntimeException('Failed to execute content detail lookup for cloning.');
+        }
+        $detailResult = $stmtDetails->get_result();
+
+        while ($detailRow = $detailResult->fetch_assoc()) {
+            $contentTypeId = (int)$detailRow['content_type_id'];
+            $order = isset($detailRow['order']) ? (int)$detailRow['order'] : 0;
+
+            $stmtInsertDetail = $conn->prepare("INSERT INTO content_detail (content_id, content_type_id, `order`) VALUES (?, ?, ?)");
+            if (!$stmtInsertDetail) {
+                $stmtDetails->close();
+                throw new \RuntimeException('Failed to prepare content detail insert for cloning.');
+            }
+            $stmtInsertDetail->bind_param('iii', $newContentId, $contentTypeId, $order);
+            if (!$stmtInsertDetail->execute()) {
+                $stmtInsertDetail->close();
+                $stmtDetails->close();
+                throw new \RuntimeException('Failed to insert cloned content detail.');
+            }
+            $newDetailId = (int)$conn->insert_id;
+            $stmtInsertDetail->close();
+
+            $stmtDetailData = $conn->prepare("SELECT data, data_order, media_id FROM content_detail_data WHERE content_detail_id = ? ORDER BY data_order, Id");
+            if (!$stmtDetailData) {
+                $stmtDetails->close();
+                throw new \RuntimeException('Failed to prepare content detail data lookup for cloning.');
+            }
+            $oldDetailId = (int)$detailRow['Id'];
+            $stmtDetailData->bind_param('i', $oldDetailId);
+            if (!$stmtDetailData->execute()) {
+                $stmtDetailData->close();
+                $stmtDetails->close();
+                throw new \RuntimeException('Failed to execute content detail data lookup for cloning.');
+            }
+            $dataResult = $stmtDetailData->get_result();
+
+            while ($dataRow = $dataResult->fetch_assoc()) {
+                $data = $dataRow['data'];
+                $dataOrder = isset($dataRow['data_order']) ? (int)$dataRow['data_order'] : null;
+                $mediaId = isset($dataRow['media_id']) ? (int)$dataRow['media_id'] : null;
+
+                $stmtInsertData = $conn->prepare("INSERT INTO content_detail_data (content_detail_id, data, data_order, media_id) VALUES (?, ?, ?, ?)");
+                if (!$stmtInsertData) {
+                    $stmtDetailData->close();
+                    $stmtDetails->close();
+                    throw new \RuntimeException('Failed to prepare content detail data insert for cloning.');
+                }
+                $stmtInsertData->bind_param('isii', $newDetailId, $data, $dataOrder, $mediaId);
+                if (!$stmtInsertData->execute()) {
+                    $stmtInsertData->close();
+                    $stmtDetailData->close();
+                    $stmtDetails->close();
+                    throw new \RuntimeException('Failed to insert cloned content detail data.');
+                }
+                $stmtInsertData->close();
+            }
+            $stmtDetailData->close();
+        }
+
+        $stmtDetails->close();
+
+        return $newContentId;
+    }
+
+    private static function cloneQuestTournament(\mysqli $conn, $tournamentId) : ?int
+    {
+        $tournamentId = isset($tournamentId) ? (int)$tournamentId : 0;
+        if ($tournamentId <= 0) {
+            return null;
+        }
+
+        $stmt = $conn->prepare("SELECT game_id, Name, `Desc`, `Date`, hasBracket FROM tournament WHERE Id = ?");
+        if (!$stmt) {
+            throw new \RuntimeException('Failed to prepare tournament lookup for cloning.');
+        }
+        $stmt->bind_param('i', $tournamentId);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            throw new \RuntimeException('Failed to execute tournament lookup for cloning.');
+        }
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+
+        if (!$row) {
+            return null;
+        }
+
+        $gameId = (int)$row['game_id'];
+        $name = $row['Name'];
+        $desc = $row['Desc'];
+        $date = $row['Date'];
+        $hasBracket = isset($row['hasBracket']) ? (int)$row['hasBracket'] : 0;
+
+        $stmtInsert = $conn->prepare("INSERT INTO tournament (game_id, Name, `Desc`, `Date`, hasBracket) VALUES (?, ?, ?, ?, ?)");
+        if (!$stmtInsert) {
+            throw new \RuntimeException('Failed to prepare tournament insert for cloning.');
+        }
+        $stmtInsert->bind_param('isssi', $gameId, $name, $desc, $date, $hasBracket);
+        if (!$stmtInsert->execute()) {
+            $stmtInsert->close();
+            throw new \RuntimeException('Failed to insert cloned tournament.');
+        }
+        $newTournamentId = (int)$conn->insert_id;
+        $stmtInsert->close();
+
+        return $newTournamentId;
+    }
+
+    private static function cloneQuestRaffle(\mysqli $conn, $raffleId) : ?int
+    {
+        $raffleId = isset($raffleId) ? (int)$raffleId : 0;
+        if ($raffleId <= 0) {
+            return null;
+        }
+
+        $stmtCheck = $conn->prepare("SELECT Id FROM raffle WHERE Id = ?");
+        if (!$stmtCheck) {
+            throw new \RuntimeException('Failed to prepare raffle lookup for cloning.');
+        }
+        $stmtCheck->bind_param('i', $raffleId);
+        if (!$stmtCheck->execute()) {
+            $stmtCheck->close();
+            throw new \RuntimeException('Failed to execute raffle lookup for cloning.');
+        }
+        $result = $stmtCheck->get_result();
+        $row = $result->fetch_assoc();
+        $stmtCheck->close();
+
+        if (!$row) {
+            return null;
+        }
+
+        $stmtInsert = $conn->prepare("INSERT INTO raffle (winner_submission_id) VALUES (NULL)");
+        if (!$stmtInsert) {
+            throw new \RuntimeException('Failed to prepare raffle insert for cloning.');
+        }
+        if (!$stmtInsert->execute()) {
+            $stmtInsert->close();
+            throw new \RuntimeException('Failed to insert cloned raffle.');
+        }
+        $newRaffleId = (int)$conn->insert_id;
+        $stmtInsert->close();
+
+        return $newRaffleId;
+    }
+
+    private static function cloneQuestRewards(\mysqli $conn, int $sourceQuestId, int $targetQuestId) : void
+    {
+        $stmt = $conn->prepare("SELECT badge_id, rarity, item_id, category, participation FROM quest_reward WHERE quest_id = ?");
+        if (!$stmt) {
+            throw new \RuntimeException('Failed to prepare quest reward lookup for cloning.');
+        }
+        $stmt->bind_param('i', $sourceQuestId);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            throw new \RuntimeException('Failed to execute quest reward lookup for cloning.');
+        }
+        $result = $stmt->get_result();
+
+        while ($row = $result->fetch_assoc()) {
+            $badgeId = isset($row['badge_id']) ? (int)$row['badge_id'] : null;
+            $rarity = isset($row['rarity']) ? (int)$row['rarity'] : null;
+            $itemId = isset($row['item_id']) ? (int)$row['item_id'] : null;
+            $category = $row['category'];
+            $participation = isset($row['participation']) ? (int)$row['participation'] : 0;
+
+            $stmtInsert = $conn->prepare("INSERT INTO quest_reward (quest_id, badge_id, rarity, item_id, category, participation) VALUES (?, ?, ?, ?, ?, ?)");
+            if (!$stmtInsert) {
+                $stmt->close();
+                throw new \RuntimeException('Failed to prepare quest reward insert for cloning.');
+            }
+            $stmtInsert->bind_param('iiiisi', $targetQuestId, $badgeId, $rarity, $itemId, $category, $participation);
+            if (!$stmtInsert->execute()) {
+                $stmtInsert->close();
+                $stmt->close();
+                throw new \RuntimeException('Failed to insert cloned quest reward.');
+            }
+            $stmtInsert->close();
+        }
+
+        $stmt->close();
+    }
+
+    private static function generateCloneLocator(string $locator) : string
+    {
+        $maxLength = 255;
+        $base = trim($locator);
+        if ($base === '') {
+            $base = 'quest';
+        }
+
+        if (preg_match('/-copy(?:-(\d+))?$/', $base)) {
+            $base = preg_replace('/-copy(?:-(\d+))?$/', '', $base);
+        }
+
+        $base = rtrim($base, '-');
+        if ($base === '') {
+            $base = 'quest';
+        }
+
+        $suffix = '-copy';
+        $candidate = self::buildLocatorCandidate($base, $suffix, $maxLength);
+        $counter = 2;
+        $tmp = null;
+        while (self::queryQuestByLocatorInto($candidate, $tmp)) {
+            $candidate = self::buildLocatorCandidate($base, $suffix . '-' . $counter, $maxLength);
+            $counter++;
+            $tmp = null;
+        }
+
+        return $candidate;
+    }
+
+    private static function buildLocatorCandidate(string $base, string $suffix, int $maxLength) : string
+    {
+        $available = $maxLength - strlen($suffix);
+        if ($available <= 0) {
+            return substr($suffix, max(0, strlen($suffix) - $maxLength));
+        }
+
+        $trimmedBase = substr($base, 0, $available);
+        $trimmed = rtrim($trimmedBase, '-');
+        if ($trimmed === '') {
+            $trimmed = $trimmedBase;
+        }
+
+        return $trimmed . $suffix;
+    }
+
+    private static function generateCloneName(string $name) : string
+    {
+        $trimmed = trim($name);
+        if ($trimmed === '') {
+            $trimmed = 'Quest';
+        }
+
+        if (preg_match('/\(Copy(?: (\d+))?\)$/i', $trimmed, $matches)) {
+            $base = preg_replace('/\s*\(Copy(?: (\d+))?\)$/i', '', $trimmed);
+            $number = isset($matches[1]) ? ((int)$matches[1] + 1) : 2;
+            $newName = $base . ' (Copy ' . $number . ')';
+        } else {
+            $newName = $trimmed . ' (Copy)';
+        }
+
+        if (strlen($newName) > 255) {
+            $newName = substr($newName, 0, 255);
+        }
+
+        return $newName;
     }
 
     private static function grantHostReward(vRecordId $accountId, ?float $hostRating, ?float $questRating): void
