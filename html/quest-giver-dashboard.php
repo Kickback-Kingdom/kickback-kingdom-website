@@ -839,8 +839,10 @@ function renderStarRating(float $rating): string
                     <?php }} ?>
                 </div>
                 <div class="tab-pane fade" id="nav-review-inbox" role="tabpanel" aria-labelledby="nav-review-inbox-tab" tabindex="0">
-                    <div class="display-6 tab-pane-title">Review Inbox</div>
-                    <button id="claim-all-reviews" class="btn btn-sm btn-success mb-2">Claim All</button>
+                    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                        <div class="display-6 tab-pane-title mb-0">Review Inbox</div>
+                        <button id="claim-all-reviews" class="btn btn-primary btn-lg">Claim All</button>
+                    </div>
                     <div class="table-responsive">
                         <table id="datatable-review-inbox" class="table table-striped">
                             <thead>
@@ -848,11 +850,7 @@ function renderStarRating(float $rating): string
                                     <th>Quest</th>
                                     <th>Player</th>
                                     <th>Date</th>
-                                    <th>Host Rating</th>
-                                    <th>Quest Rating</th>
-                                    <th>Feedback</th>
                                     <th>Status</th>
-                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -1781,25 +1779,23 @@ $(document).ready(function () {
                     dateCell.append(`<span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="${date.formattedDetailed} UTC" data-datetime-utc="${date.valueString}" data-db-value="${date.dbValue}">${date.formattedBasic}</span>`);
                     row.append(dateCell);
 
+                    const statusCell = $('<td class="status"></td>');
+                    const statusContent = $('<div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2"></div>');
+
                     if (r.hasReview) {
-                        row.append($('<td></td>').html(r.hostRating !== null ? renderStarRatingJs(r.hostRating) : ''));
-                        row.append($('<td></td>').html(r.questRating !== null ? renderStarRatingJs(r.questRating) : ''));
-                        row.append($('<td></td>').text(r.feedback || ''));
-                        row.append($('<td class="status"></td>').text(r.viewed ? 'Viewed' : 'Pending'));
-                        if (r.viewed) {
-                            row.append($('<td></td>'));
-                        } else {
+                        const statusText = $('<span class="status-text"></span>').text(r.viewed ? 'Viewed' : 'Pending');
+                        statusContent.append(statusText);
+                        if (!r.viewed) {
                             const btn = $('<button class="btn btn-sm btn-primary mark-viewed-btn">Mark Viewed</button>');
                             btn.attr('data-applicant-id', r.id);
-                            row.append($('<td></td>').append(btn));
+                            statusContent.append(btn);
                         }
                     } else {
-                        row.append($('<td></td>'));
-                        row.append($('<td></td>'));
-                        row.append($('<td></td>'));
-                        row.append($('<td class="status"></td>').text('Pending Review'));
-                        row.append($('<td></td>'));
+                        statusContent.append($('<span class="status-text"></span>').text('Pending Review'));
                     }
+
+                    statusCell.append(statusContent);
+                    row.append(statusCell);
 
                     tbody.append(row);
                 });
@@ -1822,10 +1818,10 @@ $(document).ready(function () {
                     pageLength: 10,
                     lengthChange: true,
                     order: [[2, 'desc']],
-                    columnDefs: [{ targets: [7], orderable: false }]
+                    columnDefs: [{ targets: [3], orderable: false }]
                 });
             } else {
-                $('#datatable-review-inbox tbody').html('<tr><td colspan="8" class="text-danger">' + resp.message + '</td></tr>');
+                $('#datatable-review-inbox tbody').html('<tr><td colspan="4" class="text-danger">' + resp.message + '</td></tr>');
             }
         }, 'json');
     }
@@ -2008,7 +2004,7 @@ $(document).ready(function () {
         $.post('/api/v1/quest/markReviewViewed.php', { applicantId: applicantId, sessionToken: sessionToken }, function(resp) {
             if (resp.success) {
                 const row = btn.closest('tr');
-                row.find('.status').text('Viewed');
+                row.find('.status-text').text('Viewed');
                 btn.remove();
             } else {
                 alert(resp.message);
