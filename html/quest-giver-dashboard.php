@@ -1387,7 +1387,8 @@ $(document).ready(function () {
     const sessionToken = "<?= $_SESSION['sessionToken']; ?>";
     const currentHostId = <?= $account->crand; ?>;
 
-    let participationCounts = {};
+    let globalParticipationCounts = {};
+    let personalParticipationCounts = {};
     let calendarEvents = {};
     let weekdayChart;
     let hourlyChart;
@@ -1403,40 +1404,55 @@ $(document).ready(function () {
         const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
         let header = '<thead><tr>' + days.map(d => `<th class="text-center">${d}</th>`).join('') + '</tr></thead>';
         const showOthers = $('#showOtherHosts').is(':checked');
-        const values = [
-            ...Object.values(participationCounts),
-            ...Object.values(calendarEvents).map(evts => evts
-                .filter(e => showOthers || !(e.host_id && e.host_id !== currentHostId))
-                .reduce((sum, e) => sum + (e.participants || 0), 0))
-        ];
-        const max = values.length ? Math.max(...values) : 0;
-        let body = '<tbody><tr>';
-        for (let i = 0; i < first.getDay(); i++) { body += '<td></td>'; }
+        const countsMap = showOthers ? globalParticipationCounts : personalParticipationCounts;
+        const daysInfo = [];
         let date = new Date(first);
         while (date.getMonth() === calMonth) {
+            const cellDate = new Date(date);
             const dStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
             const events = (calendarEvents[dStr] || []).filter(e => showOthers || !(e.host_id && e.host_id !== currentHostId));
-            const totalParticipants = events.reduce((sum, e) => sum + (e.participants || 0), 0);
-            const globalCount = participationCounts[dStr];
-            const count = (globalCount !== undefined) ? globalCount : totalParticipants;
+            const totalParticipants = events.reduce((sum, e) => {
+                const participants = parseInt(e.participants, 10);
+                return sum + (Number.isNaN(participants) ? 0 : participants);
+            }, 0);
+            let mapCount;
+            if (countsMap && Object.prototype.hasOwnProperty.call(countsMap, dStr)) {
+                const parsed = parseInt(countsMap[dStr], 10);
+                mapCount = Number.isNaN(parsed) ? 0 : parsed;
+            }
+            let count = 0;
+            if (showOthers) {
+                count = mapCount !== undefined ? mapCount : totalParticipants;
+            } else if (events.length) {
+                count = totalParticipants;
+            } else if (mapCount !== undefined) {
+                count = mapCount;
+            }
+            daysInfo.push({ date: cellDate, events: events, count: count });
+            date.setDate(date.getDate() + 1);
+        }
+        const max = daysInfo.reduce((m, info) => Math.max(m, info.count || 0), 0);
+        let body = '<tbody><tr>';
+        for (let i = 0; i < first.getDay(); i++) { body += '<td></td>'; }
+        daysInfo.forEach(function(info, idx) {
             let cls = 'align-top';
-            if (date.toDateString() === today.toDateString()) { cls += ' calendar-today'; }
-            if (count > 0 && max > 0) {
-                const ratio = count / max;
+            if (info.date.toDateString() === today.toDateString()) { cls += ' calendar-today'; }
+            if (info.count > 0 && max > 0) {
+                const ratio = info.count / max;
                 if (ratio > 0.66) { cls += ' bg-success text-white'; }
                 else if (ratio > 0.33) { cls += ' bg-warning'; }
                 else { cls += ' bg-danger text-white'; }
             }
-            let tooltipLines = [`Participants: ${count}`];
-            if (events.length > 1) { tooltipLines.push('Conflicting events'); }
-            let tooltip = `data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="bottom" title="${tooltipLines.join('<br>').replace(/"/g, '&quot;')}"`;
-            if (events.length > 1) { cls += ' border border-danger border-2'; }
-            else if (events.length === 1) { cls += ' border border-success border-2'; }
+            let tooltipLines = [`Participants: ${info.count}`];
+            if (info.events.length > 1) { tooltipLines.push('Conflicting events'); }
+            let tooltip = `data-bs-toggle=\"tooltip\" data-bs-html=\"true\" data-bs-placement=\"bottom\" title=\"${tooltipLines.join('<br>').replace(/\"/g, '&quot;')}\"`;
+            if (info.events.length > 1) { cls += ' border border-danger border-2'; }
+            else if (info.events.length === 1) { cls += ' border border-success border-2'; }
             let pills = '';
-            if (events.length > 1) {
+            if (info.events.length > 1) {
                 pills += '<div class="badge bg-danger rounded-pill text-truncate mb-1">Conflict</div>';
             }
-            events.forEach(function(e) {
+            info.events.forEach(function(e) {
                 const start = new Date(e.start_date);
                 const time = start.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
                 const part = e.participants !== null ? ` - ${e.participants} participants` : '';
@@ -1446,11 +1462,10 @@ $(document).ready(function () {
                 const pillClass = otherHost ? 'bg-secondary' : 'bg-primary';
                 pills += `<div class=\"badge ${pillClass} rounded-pill text-truncate mb-1 calendar-event-pill\" data-bs-toggle=\"tooltip\" title=\"${pillTip.replace(/\"/g,'&quot;')}\">${time}</div>`;
             });
-            const countInfo = (!events.length && count) ? `<small>${count} participants</small>` : '';
-            body += `<td class="${cls}" ${tooltip}><div class="schedule-calendar-cell"><div class="fw-bold">${date.getDate()}</div>${pills}${countInfo}</div></td>`;
-            if (date.getDay() === 6) { body += '</tr><tr>'; }
-            date.setDate(date.getDate()+1);
-        }
+            const countInfo = (!info.events.length && info.count) ? `<small>${info.count} participants</small>` : '';
+            body += `<td class="${cls}" ${tooltip}><div class="schedule-calendar-cell"><div class="fw-bold">${info.date.getDate()}</div>${pills}${countInfo}</div></td>`;
+            if (info.date.getDay() === 6 && idx !== daysInfo.length - 1) { body += '</tr><tr>'; }
+        });
         const lastDay = new Date(calYear, calMonth + 1, 0);
         for (let i = lastDay.getDay(); i < 6; i++) { body += '<td></td>'; }
         body += '</tr></tbody>';
@@ -1462,13 +1477,57 @@ $(document).ready(function () {
     }
 
     function loadParticipationByDate() {
-        $.post('/api/v1/quest/participationByDate.php', { includeAll: 1, month: calMonth + 1, year: calYear }, function(resp) {
-            if (resp && resp.success) {
-                participationCounts = {};
-                resp.data.forEach(function(r) { participationCounts[r.date] = r.participants; });
-                renderScheduleCalendar();
+        const month = calMonth + 1;
+        const year = calYear;
+
+        function requestParticipationCounts(payload) {
+            return new Promise(function(resolve, reject) {
+                $.ajax({
+                    url: '/api/v1/quest/participationByDate.php',
+                    method: 'POST',
+                    data: payload,
+                    dataType: 'json',
+                    success: resolve,
+                    error: function(_, textStatus, errorThrown) {
+                        reject(errorThrown || textStatus || 'Request failed');
+                    }
+                });
+            });
+        }
+
+        const globalPromise = requestParticipationCounts({ includeAll: 1, month: month, year: year }).catch(function() { return null; });
+        let personalPromise;
+        if (sessionToken) {
+            personalPromise = requestParticipationCounts({ sessionToken: sessionToken, month: month, year: year }).catch(function() { return null; });
+        } else {
+            personalPromise = Promise.resolve(null);
+        }
+
+        Promise.all([globalPromise, personalPromise]).then(function(responses) {
+            if (month !== calMonth + 1 || year !== calYear) {
+                return;
             }
-        }, 'json');
+            const [globalResp, personalResp] = responses;
+            globalParticipationCounts = {};
+            personalParticipationCounts = {};
+            if (globalResp && globalResp.success && Array.isArray(globalResp.data)) {
+                globalResp.data.forEach(function(r) {
+                    if (r && r.date) {
+                        const value = parseInt(r.participants, 10);
+                        globalParticipationCounts[r.date] = Number.isNaN(value) ? 0 : value;
+                    }
+                });
+            }
+            if (personalResp && personalResp.success && Array.isArray(personalResp.data)) {
+                personalResp.data.forEach(function(r) {
+                    if (r && r.date) {
+                        const value = parseInt(r.participants, 10);
+                        personalParticipationCounts[r.date] = Number.isNaN(value) ? 0 : value;
+                    }
+                });
+            }
+            renderScheduleCalendar();
+        });
     }
 
     function loadWeekdayAverages() {
@@ -1648,6 +1707,7 @@ $(document).ready(function () {
     loadSuggestedDates();
 
     $('#showOtherHosts').on('change', function() {
+        renderScheduleCalendar();
         loadCalendarEvents();
     });
 
