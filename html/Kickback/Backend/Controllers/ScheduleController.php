@@ -119,16 +119,30 @@ class ScheduleController
     {
         $db = Database::getConnection();
 
-        // Historical engagement averages by day of week (1=Sunday .. 7=Saturday)
-        $avgQuery = "SELECT DAYOFWEEK(start_date) AS dow, COUNT(*) AS cnt
-                     FROM calendar_events
-                     WHERE start_date < CURDATE()
-                     GROUP BY dow";
+        // Historical engagement averages by weekday for all quests (1=Sunday .. 7=Saturday)
+        $avgQuery = "SELECT DAYOFWEEK(q.end_date) AS dow,
+                            COUNT(*) AS quest_count,
+                            AVG(COALESCE(p.participants, 0)) AS avg_participants
+                       FROM quest q
+                       LEFT JOIN (
+                           SELECT quest_id, COUNT(*) AS participants
+                           FROM quest_applicants
+                           WHERE participated = 1
+                           GROUP BY quest_id
+                       ) p ON p.quest_id = q.Id
+                       WHERE q.end_date IS NOT NULL
+                         AND q.end_date < CURDATE()
+                         AND q.raffle_id IS NULL
+                       GROUP BY dow";
         $avgResult = mysqli_query($db, $avgQuery);
-        $averages = array_fill(1, 7, 0);
+        $globalAverages = [];
         if ($avgResult) {
             while ($row = mysqli_fetch_assoc($avgResult)) {
-                $averages[intval($row['dow'])] = intval($row['cnt']);
+                $dow = intval($row['dow']);
+                $globalAverages[$dow] = [
+                    'avg' => floatval($row['avg_participants'] ?? 0),
+                    'count' => intval($row['quest_count'] ?? 0),
+                ];
             }
             mysqli_free_result($avgResult);
         }
@@ -136,7 +150,10 @@ class ScheduleController
         // Personal participation averages by weekday for the quest giver
         $personalAverages = [];
         if ($questGiverId !== null) {
-            $personalQuery = "SELECT DAYOFWEEK(q.end_date) AS dow, AVG(p.participants) AS avg_participants
+            $personalQuery = "SELECT DAYOFWEEK(q.end_date) AS dow,
+                                     COUNT(*) AS quest_count,
+                                     AVG(COALESCE(p.participants, 0)) AS avg_participants,
+                                     MAX(q.end_date) AS last_run
                                FROM quest q
                                LEFT JOIN (
                                    SELECT quest_id, COUNT(*) AS participants
@@ -153,7 +170,12 @@ class ScheduleController
                 $res = mysqli_stmt_get_result($stmt);
                 if ($res) {
                     while ($row = mysqli_fetch_assoc($res)) {
-                        $personalAverages[intval($row['dow'])] = floatval($row['avg_participants']);
+                        $dow = intval($row['dow']);
+                        $personalAverages[$dow] = [
+                            'avg' => floatval($row['avg_participants'] ?? 0),
+                            'count' => intval($row['quest_count'] ?? 0),
+                            'last' => $row['last_run'] ?? null,
+                        ];
                     }
                     mysqli_free_result($res);
                 }
@@ -172,50 +194,119 @@ class ScheduleController
         $suggestions = [];
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
         $today = date('Y-m-d');
+        $todayTs = strtotime($today);
         for ($day = 1; $day <= $daysInMonth; $day++) {
             $dateStr = sprintf('%04d-%02d-%02d', $year, $month, $day);
-            if ($dateStr < $today) {
+            if ($dateStr <= $today) {
                 continue;
             }
             $dow = intval(date('w', strtotime($dateStr))) + 1; // MySQL style
-            $score = $averages[$dow] ?? 0;
+            $score = 0.0;
             $reasons = [];
+            $dayName = date('l', strtotime($dateStr));
 
-            if ($averages[$dow] > 0) {
-                $reasons[] = 'Historically high engagement on ' . date('l', strtotime($dateStr));
+            if (isset($globalAverages[$dow]) && $globalAverages[$dow]['count'] > 0) {
+                $avgGlobal = $globalAverages[$dow]['avg'];
+                $countGlobal = $globalAverages[$dow]['count'];
+                $score += round($avgGlobal);
+                $globalPlural = round($avgGlobal) === 1 ? '' : 's';
+                $reasons[] = sprintf(
+                    'Across %d quest%s, hosts average %s adventurer%s on %s.',
+                    $countGlobal,
+                    $countGlobal === 1 ? '' : 's',
+                    number_format($avgGlobal, 1),
+                    $globalPlural,
+                    $dayName
+                );
             } else {
-                $reasons[] = 'No historical data for ' . date('l', strtotime($dateStr));
+                $reasons[] = 'Limited community data for ' . $dayName . '.';
             }
 
             if ($questGiverId !== null) {
-                $personal = $personalAverages[$dow] ?? 0;
-                if ($personal > 0) {
-                    $score += intval(round($personal));
-                    $reasons[] = 'High personal turnout on ' . date('l', strtotime($dateStr));
+                if (isset($personalAverages[$dow]) && $personalAverages[$dow]['count'] > 0) {
+                    $avgPersonal = $personalAverages[$dow]['avg'];
+                    $countPersonal = $personalAverages[$dow]['count'];
+                    $lastRun = $personalAverages[$dow]['last'];
+                    // Personal performance gets extra weight in the score.
+                    $score += round($avgPersonal * 1.5);
+                    $personalPlural = round($avgPersonal) === 1 ? '' : 's';
+                    $reason = sprintf(
+                        'Your %d quest%s on %s average %s adventurer%s',
+                        $countPersonal,
+                        $countPersonal === 1 ? '' : 's',
+                        $dayName,
+                        number_format($avgPersonal, 1),
+                        $personalPlural
+                    );
+                    if (!empty($lastRun)) {
+                        $reason .= ' (last run ' . date('M j', strtotime($lastRun)) . ')';
+                    }
+                    $reasons[] = $reason . '.';
                 } else {
-                    $reasons[] = 'No personal turnout data';
+                    $reasons[] = 'You have no personal turnout history for ' . $dayName . '.';
                 }
             }
 
+            $targetTs = strtotime($dateStr);
+            $leadDays = (int) floor(($targetTs - $todayTs) / 86400);
+            if ($leadDays < 2) {
+                $score -= 15;
+                $reasons[] = 'Less than 48 hours of lead time for players to join.';
+            } elseif ($leadDays < 5) {
+                $penalty = (5 - $leadDays) * 2;
+                $score -= $penalty;
+                $reasons[] = 'Only ' . $leadDays . ' day' . ($leadDays === 1 ? '' : 's') . ' of notice for players.';
+            } else {
+                $bonus = (int) floor(min($leadDays, 14) / 2);
+                if ($bonus > 0) {
+                    $score += $bonus;
+                }
+                $reasons[] = 'Provides ' . $leadDays . ' day' . ($leadDays === 1 ? '' : 's') . ' to promote the quest.';
+            }
+
             $conflictCount = 0;
+            $conflictSamples = [];
+            $selfConflicts = [];
             if (isset($eventsByDate[$dateStr])) {
                 foreach ($eventsByDate[$dateStr] as $ev) {
-                    if ($questGiverId === null || ($ev['host_id'] !== null && intval($ev['host_id']) !== $questGiverId)) {
-                        $conflictCount++;
+                    $hostId = $ev['host_id'] !== null ? intval($ev['host_id']) : null;
+                    $title = trim((string)($ev['title'] ?? ''));
+                    $timeStr = date('g:ia', strtotime($ev['start_date']));
+                    if ($questGiverId !== null && $hostId === $questGiverId) {
+                        $selfConflicts[] = $title !== '' ? sprintf('"%s" at %s', $title, $timeStr) : 'an existing quest';
+                        continue;
+                    }
+                    $conflictCount++;
+                    if (count($conflictSamples) < 2) {
+                        $hostName = trim((string)($ev['host_name'] ?? 'another host'));
+                        if ($title === '') {
+                            $conflictSamples[] = sprintf('another event at %s', $timeStr);
+                        } else {
+                            $conflictSamples[] = sprintf('"%s" by %s at %s', $title, $hostName ?: 'another host', $timeStr);
+                        }
                     }
                 }
             }
 
+            if (!empty($selfConflicts)) {
+                $score -= 25;
+                $reasons[] = 'You already have ' . implode(' and ', $selfConflicts) . ' scheduled on this day.';
+            }
+
             if ($conflictCount > 0) {
                 $score -= 5 * $conflictCount;
-                $reasons[] = 'Conflicts with ' . $conflictCount . ' other event' . ($conflictCount > 1 ? 's' : '');
+                $detail = '';
+                if (!empty($conflictSamples)) {
+                    $detail = ' such as ' . implode(' and ', $conflictSamples);
+                }
+                $reasons[] = 'Competes with ' . $conflictCount . ' other event' . ($conflictCount === 1 ? '' : 's') . $detail . '.';
             } else {
-                $reasons[] = 'No competing events';
+                $reasons[] = 'No competing events on the community calendar.';
             }
 
             $suggestions[] = [
                 'date' => $dateStr,
-                'score' => $score,
+                'score' => (int) round($score),
                 'reasons' => $reasons
             ];
         }
