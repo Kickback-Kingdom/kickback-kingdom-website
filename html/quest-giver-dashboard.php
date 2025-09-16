@@ -134,7 +134,12 @@ function generateBringBackSuggestion(array $quest): string
     if (isset($quest['loyal']) && $quest['loyal'] > 0) {
         $parts[] = "including {$quest['loyal']} returning player" . ($quest['loyal'] === 1 ? '' : 's');
     }
-    $parts[] = "but it hasn't been offered since " . htmlspecialchars($quest['endDate']->formattedBasic) . ".";
+    $lastRun = $quest['endDateFormatted'] ?? null;
+    if (!empty($lastRun)) {
+        $parts[] = "but it hasn't been offered since " . htmlspecialchars($lastRun) . ".";
+    } else {
+        $parts[] = "and its last run date is still TBD—putting it back on the calendar could re-engage fans.";
+    }
     $parts[] = "Reviving it could re-engage fans—consider adding new twists or rewards to keep it fresh.";
     return implode(' ', $parts);
 }
@@ -144,7 +149,14 @@ function generateSequelSuggestion(array $quest): string
     $parts = [];
     $parts[] = "Loyal adventurers gave {$quest['questRatingDesc']} marks of " . number_format($quest['avgQuestRating'], 1) . "/5 for the quest and {$quest['hostRatingDesc']} ratings of " . number_format($quest['avgHostRating'], 1) . "/5 for your hosting.";
     if (isset($quest['loyal'])) {
-        $parts[] = "{$quest['loyal']} returning player" . ($quest['loyal'] === 1 ? '' : 's') . " joined its last run on " . htmlspecialchars($quest['endDate']->formattedBasic) . ".";
+        $lastRun = $quest['endDateFormatted'] ?? null;
+        $playerLabel = "{$quest['loyal']} returning player" . ($quest['loyal'] === 1 ? '' : 's');
+        if (!empty($lastRun)) {
+            $parts[] = $playerLabel . " joined its last run on " . htmlspecialchars($lastRun) . ".";
+        } else {
+            $verb = $quest['loyal'] === 1 ? 'is' : 'are';
+            $parts[] = $playerLabel . " {$verb} ready for the next run once it's scheduled.";
+        }
     }
     $parts[] = "A sequel would be well received—build on its strengths and address any feedback to keep the saga fresh.";
     return implode(' ', $parts);
@@ -311,6 +323,7 @@ if (!empty($perPastQuestParticipantStats)) {
     $top = $perPastQuestParticipantStats[0];
     $topQuest = $top['quest'];
     $topQuestId = $topQuest->crand;
+    $recommendedEndDate = $topQuest->hasEndDate() ? $topQuest->endDate() : null;
     $recommendedQuest = [
         'title' => $topQuest->title,
         'locator' => $topQuest->locator,
@@ -320,7 +333,8 @@ if (!empty($perPastQuestParticipantStats)) {
         'registered' => $perQuestRegisteredCounts[$topQuestId] ?? 0,
         'avgQuestRating' => $questRatingsMap[$topQuestId] ?? 0,
         'avgHostRating' => $hostRatingsMap[$topQuestId] ?? 0,
-        'endDate' => $topQuest->hasEndDate() ? $topQuest->endDate() : null,
+        'endDate' => $recommendedEndDate,
+        'endDateFormatted' => $recommendedEndDate ? $recommendedEndDate->formattedBasic : null,
         'id' => $topQuestId,
         'banner' => $topQuest->banner ? $topQuest->banner->getFullPath() : '',
     ];
@@ -532,13 +546,15 @@ if (!empty($qualifiedTop)) {
     $top = $qualifiedTop[0];
     $quest = $top['quest'];
     $qid = $quest->crand;
+    $fanFavoriteEndDate = $quest->hasEndDate() ? $quest->endDate() : null;
     $fanFavoriteQuest = [
         'title' => $quest->title,
         'locator' => $quest->locator,
         'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
         'avgQuestRating' => $top['avgRating'],
         'avgHostRating' => $hostRatingsMap[$qid] ?? 0,
-        'endDate' => $quest->endDate(),
+        'endDate' => $fanFavoriteEndDate,
+        'endDateFormatted' => $fanFavoriteEndDate ? $fanFavoriteEndDate->formattedBasic : null,
         'id' => $qid,
         'banner' => $quest->banner ? $quest->banner->getFullPath() : '',
         'loyal' => $top['loyal'],
@@ -575,6 +591,7 @@ foreach ($pastQuests as $quest) {
             'avgQuestRating' => $avgRating,
             'avgHostRating' => $hostRating,
             'endDate' => $endDateObj,
+            'endDateFormatted' => $endDateObj ? $endDateObj->formattedBasic : null,
             'id' => $qid,
             'banner' => $quest->banner ? $quest->banner->getFullPath() : '',
             'participants' => $participants,
@@ -624,6 +641,7 @@ foreach ($pastQuests as $quest) {
     $avgRating = $questRatingsMap[$qid] ?? 0;
     $hostRating = $hostRatingsMap[$qid] ?? 0;
     if ($participants >= $minParticipants && $avgRating <= $maxAvgRating) {
+        $endDateObj = $quest->hasEndDate() ? $quest->endDate() : null;
         $underperformingCandidates[] = [
             'title' => $title,
             'locator' => $quest->locator,
@@ -632,7 +650,8 @@ foreach ($pastQuests as $quest) {
             'registered' => $perQuestRegisteredCounts[$qid] ?? 0,
             'avgQuestRating' => $avgRating,
             'avgHostRating' => $hostRating,
-            'endDate' => $quest->hasEndDate() ? $quest->endDate() : null,
+            'endDate' => $endDateObj,
+            'endDateFormatted' => $endDateObj ? $endDateObj->formattedBasic : null,
             'id' => $qid,
             'banner' => $quest->banner ? $quest->banner->getFullPath() : '',
         ];
@@ -655,6 +674,7 @@ foreach ($pastQuests as $quest) {
     $avgRating = $questRatingsMap[$qid] ?? 0;
     $hostRating = $hostRatingsMap[$qid] ?? 0;
     if ($avgRating >= 4 && $participants < $minParticipants) {
+        $endDateObj = $quest->hasEndDate() ? $quest->endDate() : null;
         $hiddenGemCandidates[] = [
             'title' => $title,
             'locator' => $quest->locator,
@@ -663,7 +683,8 @@ foreach ($pastQuests as $quest) {
             'registered' => $perQuestRegisteredCounts[$qid] ?? 0,
             'avgQuestRating' => $avgRating,
             'avgHostRating' => $hostRating,
-            'endDate' => $quest->hasEndDate() ? $quest->endDate() : null,
+            'endDate' => $endDateObj,
+            'endDateFormatted' => $endDateObj ? $endDateObj->formattedBasic : null,
             'id' => $qid,
             'banner' => $quest->banner ? $quest->banner->getFullPath() : '',
         ];
@@ -942,7 +963,8 @@ function renderStarRating(float $rating): string
                                         <?php } ?>
                                         <div>
                                             <h5 class="card-title mb-1">Revive this beloved quest with a fresh twist</h5>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $dormantQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($dormantQuest['title']); ?></a> last ran <?= htmlspecialchars($dormantQuest['endDate']->formattedBasic); ?></p>
+                                            <?php $dormantLastRan = $dormantQuest['endDateFormatted'] ?? null; ?>
+                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $dormantQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($dormantQuest['title']); ?></a> last ran <?= $dormantLastRan !== null ? htmlspecialchars($dormantLastRan) : 'date TBD'; ?></p>
                         <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating($dormantQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($dormantQuest['avgQuestRating'], 1); ?></span>
                                                 &middot; Host Rating: <?= renderStarRating($dormantQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($dormantQuest['avgHostRating'], 1); ?></span>
@@ -966,7 +988,8 @@ function renderStarRating(float $rating): string
                                         <?php } ?>
                                         <div>
                                             <h5 class="card-title mb-1">Reward loyal players with a long-awaited sequel</h5>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $fanFavoriteQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($fanFavoriteQuest['title']); ?></a> last ran <?= htmlspecialchars($fanFavoriteQuest['endDate']->formattedBasic); ?></p>
+                                            <?php $fanFavoriteLastRan = $fanFavoriteQuest['endDateFormatted'] ?? null; ?>
+                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $fanFavoriteQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($fanFavoriteQuest['title']); ?></a> last ran <?= $fanFavoriteLastRan !== null ? htmlspecialchars($fanFavoriteLastRan) : 'date TBD'; ?></p>
                                             <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating($fanFavoriteQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($fanFavoriteQuest['avgQuestRating'], 1); ?></span>
                                                 &middot; Host Rating: <?= renderStarRating($fanFavoriteQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($fanFavoriteQuest['avgHostRating'], 1); ?></span>
@@ -990,7 +1013,8 @@ function renderStarRating(float $rating): string
                                         <?php } ?>
                                         <div>
                                             <h5 class="card-title mb-1">Launch a new quest inspired by your top performer</h5>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $recommendedQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($recommendedQuest['title']); ?></a> last ran <?= htmlspecialchars($recommendedQuest['endDate']->formattedBasic); ?></p>
+                                            <?php $recommendedLastRan = $recommendedQuest['endDateFormatted'] ?? null; ?>
+                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $recommendedQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($recommendedQuest['title']); ?></a> last ran <?= $recommendedLastRan !== null ? htmlspecialchars($recommendedLastRan) : 'date TBD'; ?></p>
                                             <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating($recommendedQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($recommendedQuest['avgQuestRating'], 1); ?></span>
                                                 &middot; Host Rating: <?= renderStarRating($recommendedQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($recommendedQuest['avgHostRating'], 1); ?></span>
@@ -1014,7 +1038,8 @@ function renderStarRating(float $rating): string
                                         <?php } ?>
                                         <div>
                                             <h5 class="card-title mb-1">Relaunch this highly rated quest with stronger promotion</h5>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $hiddenGemQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($hiddenGemQuest['title']); ?></a> last ran <?= htmlspecialchars($hiddenGemQuest['endDate']->formattedBasic); ?></p>
+                                            <?php $hiddenGemLastRan = $hiddenGemQuest['endDateFormatted'] ?? null; ?>
+                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $hiddenGemQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($hiddenGemQuest['title']); ?></a> last ran <?= $hiddenGemLastRan !== null ? htmlspecialchars($hiddenGemLastRan) : 'date TBD'; ?></p>
                                             <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating($hiddenGemQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($hiddenGemQuest['avgQuestRating'], 1); ?></span>
                                                 &middot; Host Rating: <?= renderStarRating($hiddenGemQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($hiddenGemQuest['avgHostRating'], 1); ?></span>
@@ -1085,7 +1110,8 @@ function renderStarRating(float $rating): string
                                         <?php } ?>
                                         <div>
                                             <h5 class="card-title mb-1">Refine this quest to improve its performance</h5>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $underperformingQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($underperformingQuest['title']); ?></a> last ran <?= htmlspecialchars($underperformingQuest['endDate']->formattedBasic); ?></p>
+                                            <?php $underperformingLastRan = $underperformingQuest['endDateFormatted'] ?? null; ?>
+                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $underperformingQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($underperformingQuest['title']); ?></a> last ran <?= $underperformingLastRan !== null ? htmlspecialchars($underperformingLastRan) : 'date TBD'; ?></p>
                                             <p class="card-text mb-0">
                                                 Quest Rating: <?= renderStarRating($underperformingQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($underperformingQuest['avgQuestRating'], 1); ?></span>
                                                 &middot; Host Rating: <?= renderStarRating($underperformingQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($underperformingQuest['avgHostRating'], 1); ?></span>
