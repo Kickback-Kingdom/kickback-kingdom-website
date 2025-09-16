@@ -1120,8 +1120,12 @@ animation: confetti-fast 1.25s linear 1 forwards;
     height: 120px;
     vertical-align: top;
     padding: 0.25rem;
+}
+
+#scheduleCalendar td .schedule-calendar-cell {
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
 .calendar-today {
