@@ -719,6 +719,10 @@ function renderStarRating(float $rating): string
 ?>
 <main class="container pt-3 bg-body" style="margin-bottom: 56px;">
     <h2>Quest Giver Dashboard</h2>
+    <div id="questCloneAlert" class="alert alert-dismissible fade d-none" role="alert">
+        <span class="message"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
     <div class="row text-center g-3 mt-3 mb-3">
         <div class="col-12 col-md-3">
             <div class="card h-100">
@@ -771,10 +775,19 @@ function renderStarRating(float $rating): string
                     <div class="display-6 tab-pane-title">Upcoming Quests</div>
                     <?php if (count($futureQuests) === 0) { ?>
                         <p>No upcoming quests.</p>
-                    <?php } else { foreach ($futureQuests as $quest) {
-                        $_vFeedCard = FeedCardController::vQuest_to_vFeedCard($quest);
-                        require("php-components/vFeedCardRenderer.php");
-                    }} ?>
+                    <?php } else { foreach ($futureQuests as $quest) { ?>
+                        <div class="mb-4">
+                            <?php
+                                $_vFeedCard = FeedCardController::vQuest_to_vFeedCard($quest);
+                                require("php-components/vFeedCardRenderer.php");
+                            ?>
+                            <div class="text-end">
+                                <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $quest->crand; ?>" data-quest-title="<?= htmlspecialchars($quest->title); ?>">
+                                    <i class="fa-regular fa-clone me-1"></i>Clone Quest
+                                </button>
+                            </div>
+                        </div>
+                    <?php }} ?>
                 </div>
                 <div class="tab-pane fade" id="nav-review-inbox" role="tabpanel" aria-labelledby="nav-review-inbox-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Review Inbox</div>
@@ -811,6 +824,7 @@ function renderStarRating(float $rating): string
                                         <th>Average Host Rating</th>
                                         <th>Average Quest Rating</th>
                                         <th>Reviews</th>
+                                        <th>Clone</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -836,6 +850,9 @@ function renderStarRating(float $rating): string
                                                 <?php $btnClass = !empty($qr->hasComments) ? 'btn-primary' : 'btn-outline-secondary'; ?>
                                                 <?php $iconClass = !empty($qr->hasComments) ? 'fa-solid' : 'fa-regular'; ?>
                                                 <button class="btn btn-sm <?= $btnClass ?> view-reviews-btn" data-quest-id="<?= $qr->questId; ?>" data-quest-title="<?= htmlspecialchars($qr->questTitle); ?>" data-quest-banner="<?= htmlspecialchars($qr->questBanner); ?>"><i class="<?= $iconClass ?> fa-comments me-1"></i>View</button>
+                                            </td>
+                                            <td class="align-middle">
+                                                <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $qr->questId; ?>" data-quest-title="<?= htmlspecialchars($qr->questTitle); ?>"><i class="fa-regular fa-clone me-1"></i>Clone</button>
                                             </td>
                                         </tr>
                                     <?php } ?>
@@ -905,7 +922,10 @@ function renderStarRating(float $rating): string
                                         </div>
                                     </div>
                                     <p class="card-text mb-2"><?= generateBringBackSuggestion($dormantQuest); ?></p>
-                                    <button class="btn btn-sm btn-outline-primary view-reviews-btn mt-2" data-quest-id="<?= $dormantQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($dormantQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($dormantQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
+                                    <div class="mt-2 d-flex flex-wrap gap-2">
+                                        <button class="btn btn-sm btn-outline-primary view-reviews-btn" data-quest-id="<?= $dormantQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($dormantQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($dormantQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
+                                        <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $dormantQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($dormantQuest['title']); ?>"><i class="fa-regular fa-clone me-1"></i>Clone Quest</button>
+                                    </div>
                                 </div>
                             </div>
                         <?php } ?>
@@ -926,7 +946,10 @@ function renderStarRating(float $rating): string
                                         </div>
                                     </div>
                                     <p class="card-text mb-2"><?= generateSequelSuggestion($fanFavoriteQuest); ?></p>
-                                    <button class="btn btn-sm btn-outline-primary view-reviews-btn mt-2" data-quest-id="<?= $fanFavoriteQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($fanFavoriteQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($fanFavoriteQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
+                                    <div class="mt-2 d-flex flex-wrap gap-2">
+                                        <button class="btn btn-sm btn-outline-primary view-reviews-btn" data-quest-id="<?= $fanFavoriteQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($fanFavoriteQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($fanFavoriteQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
+                                        <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $fanFavoriteQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($fanFavoriteQuest['title']); ?>"><i class="fa-regular fa-clone me-1"></i>Clone Quest</button>
+                                    </div>
                                 </div>
                             </div>
                         <?php } ?>
@@ -947,7 +970,10 @@ function renderStarRating(float $rating): string
                                         </div>
                                     </div>
                                     <p class="card-text mb-2"><?= generateSimilarQuestSuggestion($recommendedQuest); ?></p>
-                                    <button class="btn btn-sm btn-outline-primary view-reviews-btn mt-2" data-quest-id="<?= $recommendedQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($recommendedQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($recommendedQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
+                                    <div class="mt-2 d-flex flex-wrap gap-2">
+                                        <button class="btn btn-sm btn-outline-primary view-reviews-btn" data-quest-id="<?= $recommendedQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($recommendedQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($recommendedQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
+                                        <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $recommendedQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($recommendedQuest['title']); ?>"><i class="fa-regular fa-clone me-1"></i>Clone Quest</button>
+                                    </div>
                                 </div>
                             </div>
                         <?php } ?>
@@ -968,7 +994,10 @@ function renderStarRating(float $rating): string
                                         </div>
                                     </div>
                                     <p class="card-text mb-2"><?= generatePromoteQuestSuggestion($hiddenGemQuest); ?></p>
-                                    <button class="btn btn-sm btn-outline-primary view-reviews-btn mt-2" data-quest-id="<?= $hiddenGemQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($hiddenGemQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($hiddenGemQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
+                                    <div class="mt-2 d-flex flex-wrap gap-2">
+                                        <button class="btn btn-sm btn-outline-primary view-reviews-btn" data-quest-id="<?= $hiddenGemQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($hiddenGemQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($hiddenGemQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
+                                        <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $hiddenGemQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($hiddenGemQuest['title']); ?>"><i class="fa-regular fa-clone me-1"></i>Clone Quest</button>
+                                    </div>
                                 </div>
                             </div>
                         <?php } ?>
@@ -1036,7 +1065,10 @@ function renderStarRating(float $rating): string
                                         </div>
                                     </div>
                                     <p class="card-text mb-2"><?= generateImproveQuestSuggestion($underperformingQuest); ?></p>
-                                    <button class="btn btn-sm btn-outline-primary view-reviews-btn mt-2" data-quest-id="<?= $underperformingQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($underperformingQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($underperformingQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
+                                    <div class="mt-2 d-flex flex-wrap gap-2">
+                                        <button class="btn btn-sm btn-outline-primary view-reviews-btn" data-quest-id="<?= $underperformingQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($underperformingQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($underperformingQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
+                                        <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $underperformingQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($underperformingQuest['title']); ?>"><i class="fa-regular fa-clone me-1"></i>Clone Quest</button>
+                                    </div>
                                 </div>
                             </div>
                         <?php } ?>
@@ -1108,6 +1140,7 @@ function renderStarRating(float $rating): string
                                                         <th>Avg Quest Rating</th>
                                                         <th>Avg Host Rating</th>
                                                         <th>Reviews</th>
+                                                        <th>Clone</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -1130,6 +1163,9 @@ function renderStarRating(float $rating): string
                                                             </td>
                                                             <td class="align-middle">
                                                                 <button class="btn btn-sm btn-outline-primary view-reviews-btn" data-quest-id="<?= $q['id']; ?>" data-quest-title="<?= htmlspecialchars($q['title']); ?>" data-quest-banner="<?= htmlspecialchars($q['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
+                                                            </td>
+                                                            <td class="align-middle">
+                                                                <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $q['id']; ?>" data-quest-title="<?= htmlspecialchars($q['title']); ?>"><i class="fa-regular fa-clone me-1"></i>Clone</button>
                                                             </td>
                                                         </tr>
                                                     <?php } ?>
@@ -1327,6 +1363,7 @@ $(document).ready(function () {
     let calendarEvents = {};
     let weekdayChart;
     let hourlyChart;
+    let cloneAlertTimeout = null;
     let calMonth = (new Date()).getMonth();
     let calYear = (new Date()).getFullYear();
     const tzAbbr = new Date().toLocaleTimeString('en-us', { timeZoneName: 'short' }).split(' ').pop();
@@ -1682,8 +1719,85 @@ $(document).ready(function () {
     $('#datatable-reviews').DataTable({
         pageLength: 10,
         lengthChange: true,
-        columnDefs: [{ targets: [4], orderable: false }],
+        columnDefs: [{ targets: [4, 5], orderable: false }],
         order: [[1, 'desc']]
+    });
+
+    function escapeHtml(str) {
+        return $('<div>').text(str ?? '').html();
+    }
+
+    function showCloneAlert(message, isError = false) {
+        const alertBox = $('#questCloneAlert');
+        if (cloneAlertTimeout) {
+            clearTimeout(cloneAlertTimeout);
+            cloneAlertTimeout = null;
+        }
+        alertBox.removeClass('d-none alert-success alert-danger show');
+        alertBox.addClass(isError ? 'alert-danger' : 'alert-success');
+        alertBox.find('.message').html(message);
+        alertBox.removeClass('d-none');
+        alertBox.addClass('show');
+        if (!isError) {
+            cloneAlertTimeout = setTimeout(() => {
+                alertBox.removeClass('show');
+                setTimeout(() => {
+                    alertBox.addClass('d-none').removeClass('alert-success alert-danger');
+                    alertBox.find('.message').empty();
+                }, 200);
+            }, 8000);
+        }
+    }
+
+    $('#questCloneAlert').on('close.bs.alert', function (event) {
+        event.preventDefault();
+        if (cloneAlertTimeout) {
+            clearTimeout(cloneAlertTimeout);
+            cloneAlertTimeout = null;
+        }
+        const alertBox = $(this);
+        alertBox.removeClass('show');
+        setTimeout(() => {
+            alertBox.addClass('d-none').removeClass('alert-success alert-danger');
+            alertBox.find('.message').empty();
+        }, 200);
+    });
+
+    $(document).on('click', '.clone-quest-btn', function () {
+        const btn = $(this);
+        const questId = parseInt(btn.data('quest-id'), 10);
+        const questTitle = btn.data('quest-title') || '';
+
+        if (!questId) {
+            showCloneAlert('Unable to determine which quest to clone.', true);
+            return;
+        }
+
+        btn.prop('disabled', true);
+        $.post('/api/v1/quest/cloneQuest.php', { sessionToken: sessionToken, questId: questId }, function (resp) {
+            if (resp && resp.success && resp.data) {
+                const locator = resp.data.locator || '';
+                const title = resp.data.title || questTitle;
+                let message = 'Quest <strong>' + escapeHtml(title) + '</strong> cloned successfully.';
+                if (locator) {
+                    const editUrl = '/quest.php?locator=' + encodeURIComponent(locator);
+                    const viewUrl = '/q/' + encodeURIComponent(locator);
+                    message += ' <a class="alert-link" href="' + editUrl + '">Open editor</a>';
+                    message += ' or <a class="alert-link" href="' + viewUrl + '" target="_blank" rel="noopener">view quest</a>.';
+                }
+                showCloneAlert(message, false);
+            } else if (resp && !resp.success) {
+                showCloneAlert(escapeHtml(resp.message || 'Failed to clone quest.'), true);
+            } else {
+                showCloneAlert('Failed to clone quest.', true);
+            }
+        }, 'json')
+        .fail(function () {
+            showCloneAlert('Failed to clone quest.', true);
+        })
+        .always(function () {
+            btn.prop('disabled', false);
+        });
     });
 
     function updateParticipantTable() {
