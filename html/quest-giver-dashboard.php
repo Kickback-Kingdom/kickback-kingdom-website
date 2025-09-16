@@ -219,8 +219,9 @@ $avgQuestRatings = array_map(fn($qr) => (float)$qr->avgQuestRating, $questReview
 $questRatingsMap = [];
 $hostRatingsMap = [];
 foreach ($questReviewAverages as $qr) {
-    $questRatingsMap[$qr->questTitle] = (float)$qr->avgQuestRating;
-    $hostRatingsMap[$qr->questTitle] = (float)$qr->avgHostRating;
+    $qid = $qr->questId;
+    $questRatingsMap[$qid] = (float)$qr->avgQuestRating;
+    $hostRatingsMap[$qid] = (float)$qr->avgHostRating;
 }
 
 $participantCounts = [];
@@ -261,10 +262,10 @@ foreach ($allQuests as $quest) {
         fn($app) => $app->participated
     );
     $count = count($participants);
-    $perQuestRegisteredCounts[$quest->title] = count($registrations);
+    $perQuestRegisteredCounts[$qid] = count($registrations);
     $participantCounts[] = $count;
     $participantQuestTitles[] = $quest->title;
-    $perQuestParticipantCounts[$quest->title] = $count;
+    $perQuestParticipantCounts[$qid] = $count;
     $perQuestParticipantIds[$qid] = [];
     foreach ($participants as $participant) {
         $crand = $participant->account->crand;
@@ -308,18 +309,20 @@ usort($perPastQuestParticipantStats, fn($a, $b) => $b['score'] <=> $a['score']);
 $recommendedQuest = null;
 if (!empty($perPastQuestParticipantStats)) {
     $top = $perPastQuestParticipantStats[0];
+    $topQuest = $top['quest'];
+    $topQuestId = $topQuest->crand;
     $recommendedQuest = [
-        'title' => $top['quest']->title,
-        'locator' => $top['quest']->locator,
-        'icon' => $top['quest']->icon ? $top['quest']->icon->getFullPath() : '',
+        'title' => $topQuest->title,
+        'locator' => $topQuest->locator,
+        'icon' => $topQuest->icon ? $topQuest->icon->getFullPath() : '',
         'unique' => $top['unique'],
         'loyal' => $top['loyal'],
-        'registered' => $perQuestRegisteredCounts[$top['quest']->title] ?? 0,
-        'avgQuestRating' => $questRatingsMap[$top['quest']->title] ?? 0,
-        'avgHostRating' => $hostRatingsMap[$top['quest']->title] ?? 0,
-        'endDate' => $top['quest']->hasEndDate() ? $top['quest']->endDate() : null,
-        'id' => $top['quest']->crand,
-        'banner' => $top['quest']->banner ? $top['quest']->banner->getFullPath() : '',
+        'registered' => $perQuestRegisteredCounts[$topQuestId] ?? 0,
+        'avgQuestRating' => $questRatingsMap[$topQuestId] ?? 0,
+        'avgHostRating' => $hostRatingsMap[$topQuestId] ?? 0,
+        'endDate' => $topQuest->hasEndDate() ? $topQuest->endDate() : null,
+        'id' => $topQuestId,
+        'banner' => $topQuest->banner ? $topQuest->banner->getFullPath() : '',
     ];
     $recommendedQuest['questRatingDesc'] = describeRating($recommendedQuest['avgQuestRating']);
     $recommendedQuest['hostRatingDesc'] = describeRating($recommendedQuest['avgHostRating']);
@@ -427,6 +430,7 @@ $coHostCandidates = array_slice($sortedCandidates, 0, CO_HOST_SUGGESTION_COUNT);
 
 // Aggregate co-host performance metrics
 foreach ($pastQuests as $quest) {
+    $qid = $quest->crand;
     if (!isset($quest->host2) || $quest->host2->crand === $account->crand) {
         continue;
     }
@@ -450,11 +454,11 @@ foreach ($pastQuests as $quest) {
 
     $stats =& $coHostStats[$id];
     $stats['questCount']++;
-    $stats['participantSum'] += $perQuestParticipantCounts[$quest->title] ?? 0;
-    foreach ($perQuestParticipantIds[$quest->crand] ?? [] as $pid) {
+    $stats['participantSum'] += $perQuestParticipantCounts[$qid] ?? 0;
+    foreach ($perQuestParticipantIds[$qid] ?? [] as $pid) {
         $stats['uniqueParticipantIds'][$pid] = true;
     }
-    foreach ($reviewDetailsByQuest[$quest->crand] ?? [] as $detail) {
+    foreach ($reviewDetailsByQuest[$qid] ?? [] as $detail) {
         if ($detail->hostRating !== null) {
             $stats['hostRatingSum'] += $detail->hostRating;
             $stats['hostRatingCount']++;
@@ -526,18 +530,20 @@ if (!empty($qualifiedTop)) {
         return $scoreB <=> $scoreA;
     });
     $top = $qualifiedTop[0];
+    $quest = $top['quest'];
+    $qid = $quest->crand;
     $fanFavoriteQuest = [
-        'title' => $top['quest']->title,
-        'locator' => $top['quest']->locator,
-        'icon' => $top['quest']->icon ? $top['quest']->icon->getFullPath() : '',
+        'title' => $quest->title,
+        'locator' => $quest->locator,
+        'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
         'avgQuestRating' => $top['avgRating'],
-        'avgHostRating' => $hostRatingsMap[$top['quest']->title] ?? 0,
-        'endDate' => $top['quest']->endDate(),
-        'id' => $top['quest']->crand,
-        'banner' => $top['quest']->banner ? $top['quest']->banner->getFullPath() : '',
+        'avgHostRating' => $hostRatingsMap[$qid] ?? 0,
+        'endDate' => $quest->endDate(),
+        'id' => $qid,
+        'banner' => $quest->banner ? $quest->banner->getFullPath() : '',
         'loyal' => $top['loyal'],
-        'participants' => $perQuestParticipantCounts[$top['quest']->title] ?? 0,
-        'registered' => $perQuestRegisteredCounts[$top['quest']->title] ?? 0,
+        'participants' => $perQuestParticipantCounts[$qid] ?? 0,
+        'registered' => $perQuestRegisteredCounts[$qid] ?? 0,
     ];
     $fanFavoriteQuest['questRatingDesc'] = describeRating($fanFavoriteQuest['avgQuestRating']);
     $fanFavoriteQuest['hostRatingDesc'] = describeRating($fanFavoriteQuest['avgHostRating']);
@@ -551,14 +557,15 @@ foreach ($pastQuests as $quest) {
     if (!$quest->hasEndDate()) {
         continue;
     }
-    $avgRating = $questRatingsMap[$quest->title] ?? 0;
-    $hostRating = $hostRatingsMap[$quest->title] ?? 0;
+    $qid = $quest->crand;
+    $avgRating = $questRatingsMap[$qid] ?? 0;
+    $hostRating = $hostRatingsMap[$qid] ?? 0;
     if ($avgRating < 4) {
         continue;
     }
     $endDateObj = $quest->endDate();
     if ($endDateObj->value < $dormantCutoff) {
-        $ids = $perQuestParticipantIds[$quest->crand] ?? [];
+        $ids = $perQuestParticipantIds[$qid] ?? [];
         $participants = count($ids);
         $loyal = count(array_filter($ids, fn($id) => ($participantTotals[$id] ?? 0) > 1));
         $dormantCandidates[] = [
@@ -568,10 +575,10 @@ foreach ($pastQuests as $quest) {
             'avgQuestRating' => $avgRating,
             'avgHostRating' => $hostRating,
             'endDate' => $endDateObj,
-            'id' => $quest->crand,
+            'id' => $qid,
             'banner' => $quest->banner ? $quest->banner->getFullPath() : '',
             'participants' => $participants,
-            'registered' => $perQuestRegisteredCounts[$quest->title] ?? 0,
+            'registered' => $perQuestRegisteredCounts[$qid] ?? 0,
             'loyal' => $loyal,
         ];
     }
@@ -586,14 +593,15 @@ if (!empty($dormantCandidates)) {
 $bestQuestCandidates = [];
 foreach ($pastQuests as $quest) {
     $title = $quest->title;
-    $participants = $perQuestParticipantCounts[$title] ?? 0;
-    $avgQuestRating = $questRatingsMap[$title] ?? 0;
-    $avgHostRating = $hostRatingsMap[$title] ?? 0;
+    $qid = $quest->crand;
+    $participants = $perQuestParticipantCounts[$qid] ?? 0;
+    $avgQuestRating = $questRatingsMap[$qid] ?? 0;
+    $avgHostRating = $hostRatingsMap[$qid] ?? 0;
     $bestQuestCandidates[] = [
         'title' => $title,
         'locator' => $quest->locator,
         'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
-        'id' => $quest->crand,
+        'id' => $qid,
         'banner' => $quest->banner ? $quest->banner->getFullPath() : '',
         'participants' => $participants,
         'avgQuestRating' => $avgQuestRating,
@@ -611,20 +619,21 @@ $minParticipants = 10;
 $maxAvgRating = 3;
 foreach ($pastQuests as $quest) {
     $title = $quest->title;
-    $participants = $perQuestParticipantCounts[$title] ?? 0;
-    $avgRating = $questRatingsMap[$title] ?? 0;
-    $hostRating = $hostRatingsMap[$title] ?? 0;
+    $qid = $quest->crand;
+    $participants = $perQuestParticipantCounts[$qid] ?? 0;
+    $avgRating = $questRatingsMap[$qid] ?? 0;
+    $hostRating = $hostRatingsMap[$qid] ?? 0;
     if ($participants >= $minParticipants && $avgRating <= $maxAvgRating) {
         $underperformingCandidates[] = [
             'title' => $title,
             'locator' => $quest->locator,
             'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
             'participants' => $participants,
-            'registered' => $perQuestRegisteredCounts[$title] ?? 0,
+            'registered' => $perQuestRegisteredCounts[$qid] ?? 0,
             'avgQuestRating' => $avgRating,
             'avgHostRating' => $hostRating,
             'endDate' => $quest->hasEndDate() ? $quest->endDate() : null,
-            'id' => $quest->crand,
+            'id' => $qid,
             'banner' => $quest->banner ? $quest->banner->getFullPath() : '',
         ];
     }
@@ -641,20 +650,21 @@ $hiddenGemQuest = null;
 $hiddenGemCandidates = [];
 foreach ($pastQuests as $quest) {
     $title = $quest->title;
-    $participants = $perQuestParticipantCounts[$title] ?? 0;
-    $avgRating = $questRatingsMap[$title] ?? 0;
-    $hostRating = $hostRatingsMap[$title] ?? 0;
+    $qid = $quest->crand;
+    $participants = $perQuestParticipantCounts[$qid] ?? 0;
+    $avgRating = $questRatingsMap[$qid] ?? 0;
+    $hostRating = $hostRatingsMap[$qid] ?? 0;
     if ($avgRating >= 4 && $participants < $minParticipants) {
         $hiddenGemCandidates[] = [
             'title' => $title,
             'locator' => $quest->locator,
             'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
             'participants' => $participants,
-            'registered' => $perQuestRegisteredCounts[$title] ?? 0,
+            'registered' => $perQuestRegisteredCounts[$qid] ?? 0,
             'avgQuestRating' => $avgRating,
             'avgHostRating' => $hostRating,
             'endDate' => $quest->hasEndDate() ? $quest->endDate() : null,
-            'id' => $quest->crand,
+            'id' => $qid,
             'banner' => $quest->banner ? $quest->banner->getFullPath() : '',
         ];
     }
@@ -673,11 +683,11 @@ if (!empty($hiddenGemCandidates)) {
 
 $ratingData = [];
 foreach ($pastQuests as $quest) {
-    $title = $quest->title;
-    if (isset($questRatingsMap[$title]) && $quest->hasEndDate()) {
+    $qid = $quest->crand;
+    if (isset($questRatingsMap[$qid]) && $quest->hasEndDate()) {
         $ratingData[] = [
             'date' => $quest->endDate()->formattedYmd,
-            'rating' => $questRatingsMap[$title],
+            'rating' => $questRatingsMap[$qid],
         ];
     }
 }
