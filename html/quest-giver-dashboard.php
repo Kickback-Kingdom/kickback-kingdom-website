@@ -723,6 +723,24 @@ function renderStarRating(float $rating): string
         <span class="message"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+    <div class="modal fade" id="questClonedModal" tabindex="-1" aria-labelledby="questClonedModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="questClonedModalLabel">Quest Cloned</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-message mb-0"></p>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-primary go-to-quest" role="button" href="#">Go to quest</a>
+                    <a class="btn btn-outline-secondary view-quest-link" role="button" href="#" target="_blank" rel="noopener">View quest</a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row text-center g-3 mt-3 mb-3">
         <div class="col-12 col-md-3">
             <div class="card h-100">
@@ -1727,6 +1745,38 @@ $(document).ready(function () {
         return $('<div>').text(str ?? '').html();
     }
 
+    function resetCloneAlert() {
+        const alertBox = $('#questCloneAlert');
+        if (cloneAlertTimeout) {
+            clearTimeout(cloneAlertTimeout);
+            cloneAlertTimeout = null;
+        }
+        alertBox.removeClass('show alert-success alert-danger').addClass('d-none');
+        alertBox.find('.message').empty();
+    }
+
+    function showCloneSuccessModal(title, locator) {
+        resetCloneAlert();
+        const modal = $('#questClonedModal');
+        const messageEl = modal.find('.modal-message');
+        const goBtn = modal.find('.go-to-quest');
+        const viewBtn = modal.find('.view-quest-link');
+        const safeTitle = title ? escapeHtml(title) : 'Quest';
+        messageEl.html('Quest <strong>' + safeTitle + '</strong> cloned successfully.');
+
+        if (locator) {
+            const editUrl = '/quest.php?locator=' + encodeURIComponent(locator);
+            const viewUrl = '/q/' + encodeURIComponent(locator);
+            goBtn.attr('href', editUrl).removeClass('disabled').attr('aria-disabled', 'false').removeAttr('tabindex');
+            viewBtn.attr('href', viewUrl).removeClass('d-none');
+        } else {
+            goBtn.attr('href', '#').addClass('disabled').attr('aria-disabled', 'true').attr('tabindex', '-1');
+            viewBtn.attr('href', '#').addClass('d-none');
+        }
+
+        modal.modal('show');
+    }
+
     function showCloneAlert(message, isError = false) {
         const alertBox = $('#questCloneAlert');
         if (cloneAlertTimeout) {
@@ -1778,14 +1828,7 @@ $(document).ready(function () {
             if (resp && resp.success && resp.data) {
                 const locator = resp.data.locator || '';
                 const title = resp.data.title || questTitle;
-                let message = 'Quest <strong>' + escapeHtml(title) + '</strong> cloned successfully.';
-                if (locator) {
-                    const editUrl = '/quest.php?locator=' + encodeURIComponent(locator);
-                    const viewUrl = '/q/' + encodeURIComponent(locator);
-                    message += ' <a class="alert-link" href="' + editUrl + '">Open editor</a>';
-                    message += ' or <a class="alert-link" href="' + viewUrl + '" target="_blank" rel="noopener">view quest</a>.';
-                }
-                showCloneAlert(message, false);
+                showCloneSuccessModal(title, locator);
             } else if (resp && !resp.success) {
                 showCloneAlert(escapeHtml(resp.message || 'Failed to clone quest.'), true);
             } else {
