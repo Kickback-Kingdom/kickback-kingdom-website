@@ -1785,11 +1785,6 @@ $(document).ready(function () {
                     if (r.hasReview) {
                         const statusText = $('<span class="status-text"></span>').text(r.viewed ? 'Viewed' : 'Pending');
                         statusContent.append(statusText);
-                        if (!r.viewed) {
-                            const btn = $('<button class="btn btn-sm btn-primary mark-viewed-btn">Mark Viewed</button>');
-                            btn.attr('data-applicant-id', r.id);
-                            statusContent.append(btn);
-                        }
                     } else {
                         statusContent.append($('<span class="status-text"></span>').text('Pending Review'));
                     }
@@ -1997,21 +1992,6 @@ $(document).ready(function () {
             }
         }, 'json');
     });
-
-    $(document).on('click', '.mark-viewed-btn', function () {
-        const btn = $(this);
-        const applicantId = btn.data('applicant-id');
-        $.post('/api/v1/quest/markReviewViewed.php', { applicantId: applicantId, sessionToken: sessionToken }, function(resp) {
-            if (resp.success) {
-                const row = btn.closest('tr');
-                row.find('.status-text').text('Viewed');
-                btn.remove();
-            } else {
-                alert(resp.message);
-            }
-        }, 'json');
-    });
-
     var reviewCtx = document.getElementById('reviewChart').getContext('2d');
     new Chart(reviewCtx, {
         type: 'bar',
