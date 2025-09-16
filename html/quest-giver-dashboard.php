@@ -1381,7 +1381,8 @@ $(document).ready(function () {
                 const pillClass = otherHost ? 'bg-secondary' : 'bg-primary';
                 pills += `<div class=\"badge ${pillClass} rounded-pill text-truncate mb-1 calendar-event-pill\" data-bs-toggle=\"tooltip\" title=\"${pillTip.replace(/\"/g,'&quot;')}\">${time}</div>`;
             });
-            body += `<td class="${cls}" ${tooltip}><div class="fw-bold">${date.getDate()}</div>${pills}${(!events.length && count) ? `<small>${count} participants</small>` : ''}</td>`;
+            const countInfo = (!events.length && count) ? `<small>${count} participants</small>` : '';
+            body += `<td class="${cls}" ${tooltip}><div class="schedule-calendar-cell"><div class="fw-bold">${date.getDate()}</div>${pills}${countInfo}</div></td>`;
             if (date.getDay() === 6) { body += '</tr><tr>'; }
             date.setDate(date.getDate()+1);
         }
