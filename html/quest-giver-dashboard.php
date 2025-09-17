@@ -1445,7 +1445,7 @@ function renderStarRating(float $rating): string
                                                             <div class="d-flex align-items-center">
                                                                 <strong>Quest:</strong>
                                                                 <?php if ($lineStats['avgQuestRating'] !== null) { ?>
-                                                                    <span class="ms-2"><?= renderStarRating($lineStats['avgQuestRating']); ?></span><span class="ms-1"><?= number_format($lineStats['avgQuestRating'], 1); ?>/5</span>
+                                                                    <span class="ms-2"><?= renderStarRating($lineStats['avgQuestRating']); ?></span>
                                                                 <?php } else { ?>
                                                                     <span class="ms-2 text-muted">&ndash;</span>
                                                                 <?php } ?>
@@ -1453,7 +1453,7 @@ function renderStarRating(float $rating): string
                                                             <div class="d-flex align-items-center">
                                                                 <strong>Host:</strong>
                                                                 <?php if ($lineStats['avgHostRating'] !== null) { ?>
-                                                                    <span class="ms-2"><?= renderStarRating($lineStats['avgHostRating']); ?></span><span class="ms-1"><?= number_format($lineStats['avgHostRating'], 1); ?>/5</span>
+                                                                    <span class="ms-2"><?= renderStarRating($lineStats['avgHostRating']); ?></span>
                                                                 <?php } else { ?>
                                                                     <span class="ms-2 text-muted">&ndash;</span>
                                                                 <?php } ?>
