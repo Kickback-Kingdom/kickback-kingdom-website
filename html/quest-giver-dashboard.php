@@ -10,6 +10,7 @@ require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Services\Session;
 use Kickback\Backend\Controllers\QuestController;
+use Kickback\Backend\Controllers\QuestLineController;
 use Kickback\Backend\Controllers\FeedCardController;
 use Kickback\Backend\Views\vDateTime;
 use Kickback\Common\Version;
@@ -212,6 +213,51 @@ if (!Session::isQuestGiver()) {
 }
 
 $account = Session::getCurrentAccount();
+
+$questLinesResp = QuestLineController::getMyQuestLines($account, false);
+$questLines = $questLinesResp->success ? $questLinesResp->data : [];
+$questLinesError = $questLinesResp->success ? null : $questLinesResp->message;
+
+$questLineStatusCounts = [
+    'total' => count($questLines),
+    'published' => 0,
+    'inReview' => 0,
+    'draft' => 0,
+    'withUpcoming' => 0,
+    'needingScheduling' => 0,
+    'withoutQuests' => 0,
+];
+
+$questLineStats = [];
+foreach ($questLines as $questLine) {
+    if ($questLine->reviewStatus->published) {
+        $questLineStatusCounts['published']++;
+    } elseif ($questLine->reviewStatus->beingReviewed) {
+        $questLineStatusCounts['inReview']++;
+    } else {
+        $questLineStatusCounts['draft']++;
+    }
+
+    $questLineStats[$questLine->crand] = [
+        'questLine' => $questLine,
+        'questCount' => 0,
+        'futureCount' => 0,
+        'pastCount' => 0,
+        'publishedQuests' => 0,
+        'inReviewQuests' => 0,
+        'draftQuests' => 0,
+        'avgQuestRatingSum' => 0,
+        'avgQuestRatingCount' => 0,
+        'avgHostRatingSum' => 0,
+        'avgHostRatingCount' => 0,
+        'participantsTotal' => 0,
+        'registeredTotal' => 0,
+        'nextRun' => null,
+        'nextRunTimestamp' => null,
+        'lastRun' => null,
+        'lastRunTimestamp' => null,
+    ];
+}
 
 $futureResp = QuestController::queryHostedFutureQuests($account);
 $futureQuests = $futureResp->success ? $futureResp->data : [];
@@ -629,6 +675,139 @@ foreach ($pastQuests as $quest) {
 usort($bestQuestCandidates, fn($a, $b) => $b['score'] <=> $a['score']);
 $topBestQuests = array_slice($bestQuestCandidates, 0, 10);
 
+$questLinesWithUpcoming = 0;
+$questLinesNeedingScheduling = 0;
+$questLinesWithoutQuests = 0;
+
+foreach ($futureQuests as $quest) {
+    if (!$quest->hasQuestLine()) {
+        continue;
+    }
+    $lineId = $quest->questLine->crand;
+    if (!isset($questLineStats[$lineId])) {
+        continue;
+    }
+    $stats =& $questLineStats[$lineId];
+    $stats['questCount']++;
+    $stats['futureCount']++;
+    if ($quest->reviewStatus->published) {
+        $stats['publishedQuests']++;
+    } elseif ($quest->reviewStatus->beingReviewed) {
+        $stats['inReviewQuests']++;
+    } else {
+        $stats['draftQuests']++;
+    }
+    $qid = $quest->crand;
+    $stats['participantsTotal'] += $perQuestParticipantCounts[$qid] ?? 0;
+    $stats['registeredTotal'] += $perQuestRegisteredCounts[$qid] ?? 0;
+    if ($quest->hasEndDate()) {
+        $endDateObj = $quest->endDate();
+        $timestamp = $endDateObj->value->getTimestamp();
+        if ($stats['nextRunTimestamp'] === null || $timestamp < $stats['nextRunTimestamp']) {
+            $stats['nextRunTimestamp'] = $timestamp;
+            $stats['nextRun'] = $endDateObj;
+        }
+    }
+}
+
+foreach ($pastQuests as $quest) {
+    if (!$quest->hasQuestLine()) {
+        continue;
+    }
+    $lineId = $quest->questLine->crand;
+    if (!isset($questLineStats[$lineId])) {
+        continue;
+    }
+    $stats =& $questLineStats[$lineId];
+    $stats['questCount']++;
+    $stats['pastCount']++;
+    if ($quest->reviewStatus->published) {
+        $stats['publishedQuests']++;
+    } elseif ($quest->reviewStatus->beingReviewed) {
+        $stats['inReviewQuests']++;
+    } else {
+        $stats['draftQuests']++;
+    }
+    $qid = $quest->crand;
+    $stats['participantsTotal'] += $perQuestParticipantCounts[$qid] ?? 0;
+    $stats['registeredTotal'] += $perQuestRegisteredCounts[$qid] ?? 0;
+    if (isset($questRatingsMap[$qid])) {
+        $stats['avgQuestRatingSum'] += $questRatingsMap[$qid];
+        $stats['avgQuestRatingCount']++;
+    }
+    if (isset($hostRatingsMap[$qid])) {
+        $stats['avgHostRatingSum'] += $hostRatingsMap[$qid];
+        $stats['avgHostRatingCount']++;
+    }
+    if ($quest->hasEndDate()) {
+        $endDateObj = $quest->endDate();
+        $timestamp = $endDateObj->value->getTimestamp();
+        if ($stats['lastRunTimestamp'] === null || $timestamp > $stats['lastRunTimestamp']) {
+            $stats['lastRunTimestamp'] = $timestamp;
+            $stats['lastRun'] = $endDateObj;
+        }
+    }
+}
+unset($stats);
+
+foreach ($questLineStats as &$lineStats) {
+    $lineStats['avgQuestRating'] = $lineStats['avgQuestRatingCount'] > 0
+        ? $lineStats['avgQuestRatingSum'] / $lineStats['avgQuestRatingCount']
+        : null;
+    $lineStats['avgHostRating'] = $lineStats['avgHostRatingCount'] > 0
+        ? $lineStats['avgHostRatingSum'] / $lineStats['avgHostRatingCount']
+        : null;
+    $lineStats['attendanceRate'] = $lineStats['registeredTotal'] > 0
+        ? $lineStats['participantsTotal'] / $lineStats['registeredTotal']
+        : null;
+
+    if ($lineStats['futureCount'] > 0) {
+        $questLinesWithUpcoming++;
+    }
+    if ($lineStats['questCount'] === 0) {
+        $questLinesWithoutQuests++;
+    }
+    if (
+        $lineStats['questLine']->reviewStatus->published &&
+        $lineStats['futureCount'] === 0 &&
+        $lineStats['questCount'] > 0
+    ) {
+        $questLinesNeedingScheduling++;
+    }
+}
+unset($lineStats);
+
+$questLineStatusCounts['withUpcoming'] = $questLinesWithUpcoming;
+$questLineStatusCounts['needingScheduling'] = $questLinesNeedingScheduling;
+$questLineStatusCounts['withoutQuests'] = $questLinesWithoutQuests;
+
+$questLineStatsList = array_values($questLineStats);
+usort($questLineStatsList, function (array $a, array $b): int {
+    $aHasNext = isset($a['nextRunTimestamp']) && $a['nextRunTimestamp'] !== null;
+    $bHasNext = isset($b['nextRunTimestamp']) && $b['nextRunTimestamp'] !== null;
+    if ($aHasNext && $bHasNext) {
+        if ($a['nextRunTimestamp'] === $b['nextRunTimestamp']) {
+            return strcasecmp($a['questLine']->title, $b['questLine']->title);
+        }
+        return $a['nextRunTimestamp'] <=> $b['nextRunTimestamp'];
+    }
+    if ($aHasNext !== $bHasNext) {
+        return $aHasNext ? -1 : 1;
+    }
+    $aHasLast = isset($a['lastRunTimestamp']) && $a['lastRunTimestamp'] !== null;
+    $bHasLast = isset($b['lastRunTimestamp']) && $b['lastRunTimestamp'] !== null;
+    if ($aHasLast && $bHasLast) {
+        if ($a['lastRunTimestamp'] === $b['lastRunTimestamp']) {
+            return strcasecmp($a['questLine']->title, $b['questLine']->title);
+        }
+        return $b['lastRunTimestamp'] <=> $a['lastRunTimestamp'];
+    }
+    if ($aHasLast !== $bHasLast) {
+        return $aHasLast ? -1 : 1;
+    }
+    return strcasecmp($a['questLine']->title, $b['questLine']->title);
+});
+
 // Identify quests with high participation but low ratings
 $underperformingQuest = null;
 $underperformingCandidates = [];
@@ -815,6 +994,7 @@ function renderStarRating(float $rating): string
                     <button class="nav-link" id="nav-reviews-tab" data-bs-toggle="tab" data-bs-target="#nav-reviews" type="button" role="tab" aria-controls="nav-reviews" aria-selected="false"><i class="fa-solid fa-star"></i></button>
                     <button class="nav-link" id="nav-graphs-tab" data-bs-toggle="tab" data-bs-target="#nav-graphs" type="button" role="tab" aria-controls="nav-graphs" aria-selected="false"><i class="fa-solid fa-chart-line"></i></button>
                     <button class="nav-link" id="nav-suggestions-tab" data-bs-toggle="tab" data-bs-target="#nav-suggestions" type="button" role="tab" aria-controls="nav-suggestions" aria-selected="false"><i class="fa-solid fa-lightbulb"></i></button>
+                    <button class="nav-link" id="nav-quest-lines-tab" data-bs-toggle="tab" data-bs-target="#nav-quest-lines" type="button" role="tab" aria-controls="nav-quest-lines" aria-selected="false"><i class="fa-solid fa-route"></i></button>
                     <button class="nav-link" id="nav-schedule-tab" data-bs-toggle="tab" data-bs-target="#nav-schedule" type="button" role="tab" aria-controls="nav-schedule" aria-selected="false"><i class="fa-solid fa-calendar-days"></i></button>
                     <button class="nav-link" id="nav-top-tab" data-bs-toggle="tab" data-bs-target="#nav-top" type="button" role="tab" aria-controls="nav-top" aria-selected="false"><i class="fa-solid fa-trophy"></i></button>
                 </div>
@@ -1126,6 +1306,192 @@ function renderStarRating(float $rating): string
                         <?php } ?>
                     <?php } else { ?>
                         <p>No suggestions found. Keep hosting adventures!</p>
+                    <?php } ?>
+                </div>
+                <div class="tab-pane fade" id="nav-quest-lines" role="tabpanel" aria-labelledby="nav-quest-lines-tab" tabindex="0">
+                    <div class="display-6 tab-pane-title">Quest Lines</div>
+                    <p class="text-muted">Monitor your quest lines and spot where to plan the next adventure.</p>
+                    <?php if ($questLinesError) { ?>
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fa-solid fa-circle-exclamation me-2"></i><?= htmlspecialchars($questLinesError); ?>
+                        </div>
+                    <?php } elseif (empty($questLines)) { ?>
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <p class="mb-2">You haven't created any quest lines yet.</p>
+                                <a class="btn btn-primary" href="<?= Version::urlBetaPrefix(); ?>/quest-line.php?new"><i class="fa-solid fa-plus me-1"></i>Create your first quest line</a>
+                            </div>
+                        </div>
+                    <?php } else { ?>
+                        <div class="row g-3 mb-3">
+                            <div class="col-12 col-md-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <small>Total Quest Lines</small>
+                                        <h3 class="mb-0"><?= $questLineStatusCounts['total']; ?></h3>
+                                        <div class="text-muted small">With upcoming quests: <?= $questLineStatusCounts['withUpcoming']; ?></div>
+                                        <div class="text-muted small">No quests yet: <?= $questLineStatusCounts['withoutQuests']; ?></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <small>Published</small>
+                                        <h3 class="mb-0"><?= $questLineStatusCounts['published']; ?></h3>
+                                        <div class="text-muted small">Need scheduling: <?= $questLineStatusCounts['needingScheduling']; ?></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <small>In Review</small>
+                                        <h3 class="mb-0"><?= $questLineStatusCounts['inReview']; ?></h3>
+                                        <div class="text-muted small">Pending approval</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <small>Drafts</small>
+                                        <h3 class="mb-0"><?= $questLineStatusCounts['draft']; ?></h3>
+                                        <div class="text-muted small">Finish setup to publish</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mb-3">
+                            <div class="card-header d-flex align-items-center">
+                                <span class="fw-semibold">Quest Line Overview</span>
+                                <a class="btn btn-sm btn-outline-primary ms-auto" href="<?= Version::urlBetaPrefix(); ?>/quest-line.php?new"><i class="fa-solid fa-plus me-1"></i>Create Quest Line</a>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover mb-0 align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>Quest Line</th>
+                                                <th>Quests</th>
+                                                <th>Schedule</th>
+                                                <th>Ratings</th>
+                                                <th>Engagement</th>
+                                                <th class="text-end">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($questLineStatsList as $lineStats) {
+                                                $questLine = $lineStats['questLine'];
+                                                $manageUrl = Version::urlBetaPrefix() . '/quest-line.php?locator=' . rawurlencode($questLine->locator);
+                                                $publicUrl = $questLine->url();
+                                                $statusLabel = $questLine->reviewStatus->published ? 'Published' : ($questLine->reviewStatus->beingReviewed ? 'In Review' : 'Draft');
+                                                $statusBadgeClass = $questLine->reviewStatus->published ? 'bg-success' : ($questLine->reviewStatus->beingReviewed ? 'bg-warning text-dark' : 'bg-secondary');
+                                                $hasUpcoming = $lineStats['futureCount'] > 0;
+                                                $needsScheduling = $questLine->reviewStatus->published && $lineStats['futureCount'] === 0 && $lineStats['questCount'] > 0;
+                                                $noQuestsYet = $lineStats['questCount'] === 0;
+                                            ?>
+                                                <tr>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <?php if ($questLine->icon) { ?>
+                                                                <img src="<?= htmlspecialchars($questLine->icon->getFullPath()); ?>" class="rounded me-2" style="width:48px;height:48px;object-fit:cover;" alt="">
+                                                            <?php } ?>
+                                                            <div>
+                                                                <div class="fw-semibold"><?= htmlspecialchars($questLine->title); ?></div>
+                                                                <div class="small">
+                                                                    <span class="badge <?= $statusBadgeClass; ?> me-1"><?= $statusLabel; ?></span>
+                                                                    <?php if ($hasUpcoming) { ?><span class="badge bg-info text-dark me-1">Upcoming quests</span><?php } ?>
+                                                                    <?php if ($needsScheduling) { ?><span class="badge bg-warning text-dark me-1">Needs scheduling</span><?php } ?>
+                                                                    <?php if ($noQuestsYet) { ?><span class="badge bg-secondary me-1">No quests yet</span><?php } ?>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="fw-semibold"><?= $lineStats['questCount']; ?></div>
+                                                        <div class="small text-muted"><?= $lineStats['futureCount']; ?> upcoming &middot; <?= $lineStats['pastCount']; ?> past</div>
+                                                        <div class="small text-muted">Published: <?= $lineStats['publishedQuests']; ?> &middot; Review: <?= $lineStats['inReviewQuests']; ?> &middot; Draft: <?= $lineStats['draftQuests']; ?></div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="small">
+                                                            <div><strong>Next:</strong>
+                                                                <?php if ($lineStats['futureCount'] > 0) { ?>
+                                                                    <?php if ($lineStats['nextRun'] instanceof vDateTime) { ?>
+                                                                        <?= $lineStats['nextRun']->getDateTimeElement(); ?>
+                                                                    <?php } else { ?>
+                                                                        <span class="text-muted">Date TBD</span>
+                                                                    <?php } ?>
+                                                                <?php } else { ?>
+                                                                    <span class="text-muted">No quest scheduled</span>
+                                                                <?php } ?>
+                                                            </div>
+                                                            <div><strong>Last:</strong>
+                                                                <?php if ($lineStats['lastRun'] instanceof vDateTime) { ?>
+                                                                    <?= $lineStats['lastRun']->getDateTimeElement(); ?>
+                                                                <?php } elseif ($lineStats['pastCount'] > 0) { ?>
+                                                                    <span class="text-muted">Date TBD</span>
+                                                                <?php } else { ?>
+                                                                    <span class="text-muted">Never</span>
+                                                                <?php } ?>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <?php if ($lineStats['avgQuestRating'] !== null || $lineStats['avgHostRating'] !== null) { ?>
+                                                            <div><strong>Quest:</strong>
+                                                                <?php if ($lineStats['avgQuestRating'] !== null) { ?>
+                                                                    <?= number_format($lineStats['avgQuestRating'], 1); ?>/5
+                                                                <?php } else { ?>
+                                                                    &ndash;
+                                                                <?php } ?>
+                                                            </div>
+                                                            <div><strong>Host:</strong>
+                                                                <?php if ($lineStats['avgHostRating'] !== null) { ?>
+                                                                    <?= number_format($lineStats['avgHostRating'], 1); ?>/5
+                                                                <?php } else { ?>
+                                                                    &ndash;
+                                                                <?php } ?>
+                                                            </div>
+                                                        <?php } else { ?>
+                                                            <span class="text-muted">No reviews yet</span>
+                                                        <?php } ?>
+                                                    </td>
+                                                    <td>
+                                                        <div class="fw-semibold"><?= $lineStats['participantsTotal']; ?></div>
+                                                        <div class="small text-muted">Registrations: <?= $lineStats['registeredTotal']; ?></div>
+                                                        <div class="small text-muted">Attendance:
+                                                            <?php if ($lineStats['attendanceRate'] !== null) { ?>
+                                                                <?= number_format($lineStats['attendanceRate'] * 100, 0); ?>%
+                                                            <?php } else { ?>
+                                                                &ndash;
+                                                            <?php } ?>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <a href="<?= htmlspecialchars($manageUrl); ?>" class="btn btn-sm btn-primary me-1">Manage</a>
+                                                        <?php if ($questLine->reviewStatus->published) { ?>
+                                                            <a href="<?= htmlspecialchars($publicUrl); ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">View</a>
+                                                        <?php } else { ?>
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled>View</button>
+                                                        <?php } ?>
+                                                    </td>
+                                                </tr>
+                                            <?php } ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <?php if ($questLineStatusCounts['needingScheduling'] > 0) {
+                            $count = $questLineStatusCounts['needingScheduling'];
+                            $needsVerb = $count === 1 ? 'needs' : 'need';
+                            $lineLabel = $count === 1 ? 'quest line' : 'quest lines';
+                        ?>
+                            <div class="alert alert-warning" role="alert">
+                                <i class="fa-solid fa-bell me-2"></i><?= $count; ?> published <?= $lineLabel; ?> <?= $needsVerb; ?> a scheduled follow-up. Plan the next quest to keep players engaged.
+                            </div>
+                        <?php } ?>
                     <?php } ?>
                 </div>
                 <div class="tab-pane fade" id="nav-schedule" role="tabpanel" aria-labelledby="nav-schedule-tab" tabindex="0">
