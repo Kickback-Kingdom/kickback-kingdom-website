@@ -1387,7 +1387,6 @@ function renderStarRating(float $rating): string
                                         <tbody>
                                             <?php foreach ($questLineStatsList as $lineStats) {
                                                 $questLine = $lineStats['questLine'];
-                                                $manageUrl = Version::urlBetaPrefix() . '/quest-line.php?locator=' . rawurlencode($questLine->locator);
                                                 $publicUrl = $questLine->url();
                                                 $statusLabel = $questLine->reviewStatus->published ? 'Published' : ($questLine->reviewStatus->beingReviewed ? 'In Review' : 'Draft');
                                                 $statusBadgeClass = $questLine->reviewStatus->published ? 'bg-success' : ($questLine->reviewStatus->beingReviewed ? 'bg-warning text-dark' : 'bg-secondary');
@@ -1443,18 +1442,20 @@ function renderStarRating(float $rating): string
                                                     </td>
                                                     <td>
                                                         <?php if ($lineStats['avgQuestRating'] !== null || $lineStats['avgHostRating'] !== null) { ?>
-                                                            <div><strong>Quest:</strong>
+                                                            <div class="d-flex align-items-center">
+                                                                <strong>Quest:</strong>
                                                                 <?php if ($lineStats['avgQuestRating'] !== null) { ?>
-                                                                    <?= number_format($lineStats['avgQuestRating'], 1); ?>/5
+                                                                    <span class="ms-2"><?= renderStarRating($lineStats['avgQuestRating']); ?></span><span class="ms-1"><?= number_format($lineStats['avgQuestRating'], 1); ?>/5</span>
                                                                 <?php } else { ?>
-                                                                    &ndash;
+                                                                    <span class="ms-2 text-muted">&ndash;</span>
                                                                 <?php } ?>
                                                             </div>
-                                                            <div><strong>Host:</strong>
+                                                            <div class="d-flex align-items-center">
+                                                                <strong>Host:</strong>
                                                                 <?php if ($lineStats['avgHostRating'] !== null) { ?>
-                                                                    <?= number_format($lineStats['avgHostRating'], 1); ?>/5
+                                                                    <span class="ms-2"><?= renderStarRating($lineStats['avgHostRating']); ?></span><span class="ms-1"><?= number_format($lineStats['avgHostRating'], 1); ?>/5</span>
                                                                 <?php } else { ?>
-                                                                    &ndash;
+                                                                    <span class="ms-2 text-muted">&ndash;</span>
                                                                 <?php } ?>
                                                             </div>
                                                         <?php } else { ?>
@@ -1473,7 +1474,6 @@ function renderStarRating(float $rating): string
                                                         </div>
                                                     </td>
                                                     <td class="text-end">
-                                                        <a href="<?= htmlspecialchars($manageUrl); ?>" class="btn btn-sm btn-primary me-1">Manage</a>
                                                         <?php if ($questLine->reviewStatus->published) { ?>
                                                             <a href="<?= htmlspecialchars($publicUrl); ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">View</a>
                                                         <?php } else { ?>
