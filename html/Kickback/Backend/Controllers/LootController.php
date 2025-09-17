@@ -609,7 +609,7 @@ class LootController
     }
 
     public static function givePrestigeToken(vRecordId $account_id) : Response {
-        return self::giveLoot($account_id, 3);
+        return self::giveLoot($account_id, new vRecordId('', 3));
     }
 
     public static function giveBadge(vRecordId $account_id, vRecordId $item_id) : Response {
@@ -617,7 +617,7 @@ class LootController
     }
 
     public static function giveRaffleTicket(vRecordId $account_id) : Response {
-        return self::giveLoot($account_id, 4);
+        return self::giveLoot($account_id, new vRecordId('', 4));
     }
 
     public static function giveWritOfPassage(vRecordId $account_id) : Response {
