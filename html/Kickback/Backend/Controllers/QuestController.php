@@ -2501,13 +2501,15 @@ class QuestController
                 WHERE qa.participated = 1
                   AND (q.host_id = ? OR q.host_id_2 = ?)
                   AND qa.account_id <> q.host_id
-                  AND (q.host_id_2 IS NULL OR qa.account_id <> q.host_id_2)';
+                  AND (q.host_id_2 IS NULL OR qa.account_id <> q.host_id_2)
+                  AND ((q.host_id = ? AND IFNULL(qa.host_viewed, 0) = 0)
+                       OR (q.host_id_2 = ? AND IFNULL(qa.host_2_viewed, 0) = 0))';
         $stmt = $conn->prepare($sql);
         if ($stmt === false) {
             return new Response(false, 'Failed to prepare query.', null);
         }
 
-        $stmt->bind_param('iii', $host, $host, $host);
+        $stmt->bind_param('iiiii', $host, $host, $host, $host, $host);
         $stmt->execute();
         $result = $stmt->get_result();
         if ($result === false) {
