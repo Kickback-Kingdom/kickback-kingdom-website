@@ -928,7 +928,11 @@ function renderStarRating(float $rating): string
     require("php-components/ad-carousel.php");
 ?>
 <main class="container pt-3 bg-body" style="margin-bottom: 56px;">
-    <h2>Quest Giver Dashboard</h2>
+<?php
+    $activePageName = "Quest Giver Dashboard";
+    require("php-components/base-page-breadcrumbs.php");
+?>
+
     <div id="questCloneAlert" class="alert alert-dismissible fade d-none" role="alert">
         <span class="message"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
