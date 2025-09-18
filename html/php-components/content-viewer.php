@@ -155,6 +155,30 @@ if ($_vCanEditContent)
   </div>
 </div>
 
+<!-- EDIT MARKDOWN MODAL -->
+<div class="modal modal-lg fade" id="modalEditMarkdown" tabindex="-1" aria-labelledby="modalEditMarkdownLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="modalEditMarkdownLabel">Edit Markdown Content Element</h1>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <label for="content-edit-markdown-textbox" class="form-label">Enter Markdown</label>
+        <textarea class="form-control" id="content-edit-markdown-textbox" rows="10" oninput="UpdateMarkdownModalPreview()"></textarea>
+        <div class="mt-3">
+          <h2 class="h5">Preview</h2>
+          <div id="content-edit-markdown-preview" class="border rounded p-3 bg-body-tertiary"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn bg-ranked-1" id="modalEditMarkdownSaveButton" onclick="">Apply changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- EDIT LIST MODAL -->
 <div class="modal modal-lg fade" id="modalEditList" tabindex="-1" aria-labelledby="modalEditListLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
