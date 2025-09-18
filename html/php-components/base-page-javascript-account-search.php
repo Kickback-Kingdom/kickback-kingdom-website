@@ -7,6 +7,7 @@ use Kickback\Common\Version;
 <script>
 
 var selectAccountModalCallerId = -1;
+var selectAccountResultsById = {};
 
 function OpenSelectAccountModal(prevModal = null, clickableFunction = null) {
 
@@ -89,6 +90,7 @@ function ClearSearchAccountResults(formId)
 
     $("#"+formId+"selectUserPagination").html("");
     $("#" + formId + "selectAccountLoadingSpinner").show();
+    selectAccountResultsById = {};
 }
 
 
@@ -98,10 +100,14 @@ function AddSearchAccountResult(formId, account, clickableFunction = null) {
 
     // Append the card to the results container
     //$("#"+formId+"selectAccountSearchResults").append(cardHtml);
-    
+
     // Append the card to the results container
     var container = $("#"+formId+"selectAccountSearchResults");
     container.append(cardHtml);
+
+    if (account && account.crand !== undefined) {
+        selectAccountResultsById[account.crand] = account;
+    }
 
     // Initialize tooltips for the newly appended card
     container.find('.player-card').last().find('[data-bs-toggle="tooltip"]').tooltip();
@@ -173,7 +179,15 @@ for (var i = ranks; i < 5; i ++ )
 ">X / X</span></div>`;
 
 }
-const clickableLayer = clickableFunction ? `<div class="clickable-layer" onclick="${clickableFunction}(${playerCardAccount.crand})"></div>` : '';
+const sanitizedUsernameAttr = playerCardAccount.username
+    ? playerCardAccount.username.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+    : '';
+
+const accountIdAttr = String(playerCardAccount.crand ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+const clickableLayer = clickableFunction
+    ? `<div class="clickable-layer" data-account-id="${accountIdAttr}" data-username="${sanitizedUsernameAttr}" onclick='${clickableFunction}(${JSON.stringify(playerCardAccount.crand)})'></div>`
+    : '';
 
 let playerCardHTML = `<div class="card player-card${isRanked1 ? " ranked-1" : ""}">
 ${clickableLayer}

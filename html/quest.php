@@ -645,8 +645,9 @@ $itemInformationJSON = json_encode($itemInfos);
                                                     <label for="edit-quest-options-locator" class="form-label">Co-Host:</label>
                                                     <div class="input-group">
                                                         <span class="input-group-text"><i class="fa-solid fa-user-plus"></i></span>
-                                                        <input type="text" disabled class="form-control" value="<?= $thisQuest->getHost2Username(); ?>" />
-                                                        <button type="button" class="btn btn-primary" onclick="OpenSelectAccountModal('modalEditQuestOptions')">Select</button>
+                                                        <input type="text" disabled class="form-control" id="edit-quest-options-host-2-username" value="<?= $thisQuest->getHost2Username(); ?>" placeholder="No co-host selected" />
+                                                        <button type="button" class="btn btn-outline-secondary" onclick="SelectQuestCoHost('')">Clear</button>
+                                                        <button type="button" class="btn btn-primary" onclick="OpenSelectAccountModal('modalEditQuestOptions','SelectQuestCoHost')">Select</button>
                                                     </div>
                                                 </div>
                                                 <div class="col-lg-6 mb-3">
@@ -814,6 +815,72 @@ $itemInformationJSON = json_encode($itemInfos);
                                                                         if (radioElement.checked && selectedQuestStyle == '1') {
                                                                             bracketOptions.style.display = "block";
                                                                         }
+                                                                    }
+
+                                                                    function SelectQuestCoHost(accountId) {
+                                                                        const coHostIdInput = document.getElementById('edit-quest-options-host-2-id');
+                                                                        const coHostNameInput = document.getElementById('edit-quest-options-host-2-username');
+
+                                                                        if (!coHostIdInput || !coHostNameInput) {
+                                                                            return;
+                                                                        }
+
+                                                                        const selectedId = accountId ?? '';
+                                                                        let normalizedId = selectedId === null ? '' : selectedId.toString().trim();
+                                                                        if (normalizedId === 'undefined' || normalizedId === 'null') {
+                                                                            normalizedId = '';
+                                                                        }
+                                                                        coHostIdInput.value = normalizedId;
+
+                                                                        let selectedUsername = '';
+
+                                                                        if (normalizedId !== '') {
+                                                                            if (typeof selectAccountResultsById !== 'undefined') {
+                                                                                const accountInfo = selectAccountResultsById[normalizedId];
+                                                                                if (accountInfo && accountInfo.username) {
+                                                                                    selectedUsername = accountInfo.username;
+                                                                                }
+                                                                            }
+
+                                                                            if (!selectedUsername) {
+                                                                                const clickableLayer = document.querySelector(`#modal-selectAccountSearchResults .clickable-layer[data-account-id="${normalizedId.replace(/"/g, '\"')}"]`);
+                                                                                if (clickableLayer && clickableLayer.dataset.username) {
+                                                                                    selectedUsername = decodeHtml(clickableLayer.dataset.username);
+                                                                                }
+                                                                            }
+                                                                        }
+
+                                                                        coHostNameInput.value = selectedUsername;
+
+                                                                        const selectModalElement = document.getElementById('selectAccountModal');
+                                                                        const modalWasOpen = selectModalElement && selectModalElement.classList.contains('show');
+
+                                                                        if (modalWasOpen && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                                                                            let selectModalInstance = bootstrap.Modal.getInstance(selectModalElement);
+                                                                            if (!selectModalInstance) {
+                                                                                selectModalInstance = new bootstrap.Modal(selectModalElement);
+                                                                            }
+                                                                            selectModalInstance.hide();
+
+                                                                            if (selectAccountModalCallerId && selectAccountModalCallerId !== -1) {
+                                                                                const previousModalElement = document.getElementById(selectAccountModalCallerId);
+                                                                                if (previousModalElement) {
+                                                                                    let previousModalInstance = bootstrap.Modal.getInstance(previousModalElement);
+                                                                                    if (!previousModalInstance) {
+                                                                                        previousModalInstance = new bootstrap.Modal(previousModalElement);
+                                                                                    }
+                                                                                    previousModalInstance.show();
+                                                                                }
+                                                                            }
+
+                                                                            selectAccountModalCallerId = -1;
+                                                                        }
+                                                                    }
+
+                                                                    function decodeHtml(value) {
+                                                                        const textarea = document.createElement('textarea');
+                                                                        textarea.innerHTML = value;
+                                                                        return textarea.value;
                                                                     }
 
                                                                     function toggleDateTimeVisibility() {
