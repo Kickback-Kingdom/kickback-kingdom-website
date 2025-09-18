@@ -948,7 +948,6 @@ function renderStarRating(float $rating): string
                     <p class="modal-message mb-0"></p>
                 </div>
                 <div class="modal-footer">
-                    <a class="btn btn-primary go-to-quest" role="button" href="#">Go to quest</a>
                     <a class="btn btn-outline-secondary view-quest-link" role="button" href="#" target="_blank" rel="noopener">View quest</a>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
@@ -2216,19 +2215,21 @@ $(document).ready(function () {
         resetCloneAlert();
         const modal = $('#questClonedModal');
         const messageEl = modal.find('.modal-message');
-        const goBtn = modal.find('.go-to-quest');
         const viewBtn = modal.find('.view-quest-link');
         const safeTitle = title ? escapeHtml(title) : 'Quest';
         messageEl.html('Quest <strong>' + safeTitle + '</strong> cloned successfully.');
 
         if (locator) {
-            const editUrl = '/quest.php?locator=' + encodeURIComponent(locator);
             const viewUrl = '/q/' + encodeURIComponent(locator);
-            goBtn.attr('href', editUrl).removeClass('disabled').attr('aria-disabled', 'false').removeAttr('tabindex');
-            viewBtn.attr('href', viewUrl).removeClass('d-none');
+            viewBtn.attr('href', viewUrl)
+                .removeClass('d-none disabled')
+                .removeAttr('aria-disabled')
+                .removeAttr('tabindex');
         } else {
-            goBtn.attr('href', '#').addClass('disabled').attr('aria-disabled', 'true').attr('tabindex', '-1');
-            viewBtn.attr('href', '#').addClass('d-none');
+            viewBtn.attr('href', '#')
+                .addClass('d-none')
+                .attr('aria-disabled', 'true')
+                .attr('tabindex', '-1');
         }
 
         modal.modal('show');
