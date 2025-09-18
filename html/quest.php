@@ -740,7 +740,7 @@ $itemInformationJSON = json_encode($itemInfos);
                                                                 <div class="col-md-6 mb-3">
                                                                     <div class="form-group">
                                                                         <label for="edit-quest-options-datetime-time"  class="form-label">Time:</label>
-                                                                        <input type="time" id="edit-quest-options-datetime-time" name="edit-quest-options-datetime-time" value="" data-utc-time="<?= vDateTime::getFormattedYmd($thisQuest->nullableEndDate()); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
+                                                                        <input type="time" id="edit-quest-options-datetime-time" name="edit-quest-options-datetime-time" value="<?= vDateTime::getFormattedHi($thisQuest->nullableEndDate()); ?>" data-utc-time="<?= vDateTime::getFormattedHi($thisQuest->nullableEndDate()); ?>" onchange="OnDateTimeChangedForQuestOptions();" class="form-control">
                                                                     </div>
                                                                 </div>
 
