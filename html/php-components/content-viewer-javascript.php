@@ -44,6 +44,14 @@
             UpdatePageContent(pageContent);
         }
 
+        function SaveMarkdownModal(contentIndex)
+        {
+            var str = $("#content-edit-markdown-textbox").val();
+            SetContentElementDataValue(contentIndex, str);
+            $("#modalEditMarkdown").modal("hide");
+            UpdatePageContent(pageContent);
+        }
+
         function SaveCodeModal(contentIndex)
         {
             var str = $("#content-edit-code-textbox").val();
@@ -135,11 +143,18 @@
             $("#content-edit-youtube-preview-iframe").attr("src",video_url);
         }
 
-        function UpdateSketchFabModalPreview() 
+        function UpdateSketchFabModalPreview()
         {
             var video_id = $("#content-edit-sketchfab-textbox").val();
             var video_url = "https://sketchfab.com/models/"+video_id+"/embed";
             $("#content-edit-sketchfab-preview-iframe").attr("src",video_url);
+        }
+
+        function UpdateMarkdownModalPreview()
+        {
+            var markdown = $("#content-edit-markdown-textbox").val() || "";
+            var html = renderMarkdownToHtml(markdown);
+            $("#content-edit-markdown-preview").html(html);
         }
 
         function DeleteItemFromList(itemIndex)
@@ -207,16 +222,26 @@
             $("#modalEditHeader").modal("show");
         }
 
-        function OpenEditModal_Paragraph(contentIndex) 
+        function OpenEditModal_Paragraph(contentIndex)
         {
             var contentToEdit = pageContent[contentIndex];
-            
+
             $("#content-edit-paragraph-textbox").val(GetContentElementData(contentToEdit));
             $("#modalEditParagraphSaveButton").attr("onclick","SaveParagraphModal("+contentIndex+")");
             $("#modalEditParagraph").modal("show");
         }
 
-        function OpenEditModal_List(contentIndex) 
+        function OpenEditModal_Markdown(contentIndex)
+        {
+            var contentToEdit = pageContent[contentIndex];
+
+            $("#content-edit-markdown-textbox").val(GetContentElementData(contentToEdit));
+            UpdateMarkdownModalPreview();
+            $("#modalEditMarkdownSaveButton").attr("onclick","SaveMarkdownModal("+contentIndex+")");
+            $("#modalEditMarkdown").modal("show");
+        }
+
+        function OpenEditModal_List(contentIndex)
         {
 
             var contentToEdit = pageContent[contentIndex];
@@ -292,6 +317,7 @@
         var contentToEdit = pageContent[index];
 
         const contentElementType = contentToEdit["content_type"];
+        const contentElementTypeName = contentToEdit["content_type_name"] ?? "";
         console.log(contentToEdit);
         switch (contentElementType) {
             case 1:
@@ -304,6 +330,10 @@
 
             case 3:
                 OpenEditModal_Paragraph(index);
+                break;
+
+            case 11:
+                OpenEditModal_Markdown(index);
                 break;
 
             case 4:
@@ -333,7 +363,11 @@
                 OpenEditModal_Code(index);
                 break;
             default:
-                htmlContent = `<p>Error with element: ${JSON.stringify(contentElement)}</p>`;
+                if (contentElementTypeName === 'Markdown') {
+                    OpenEditModal_Markdown(index);
+                } else {
+                    console.error(`Error with element: ${JSON.stringify(contentToEdit)}`);
+                }
                 break;
         }
     }
@@ -546,6 +580,9 @@
             case 3:
                 htmlContent = `<p>${GetContentElementData(contentElement)}</p>`;
                 break;
+            case 11:
+                htmlContent = `<div class="markdown-content">${renderMarkdownToHtml(GetContentElementData(contentElement))}</div>`;
+                break;
             case 4:
                 htmlContent = '<ul>';
                 var order = 0;
@@ -596,7 +633,11 @@
 
 
             default:
-                htmlContent = `<p>Error with element: ${JSON.stringify(contentElement)}</p>`;
+                if (contentElement["content_type_name"] === 'Markdown') {
+                    htmlContent = `<div class="markdown-content">${renderMarkdownToHtml(GetContentElementData(contentElement))}</div>`;
+                } else {
+                    htmlContent = `<p>Error with element: ${JSON.stringify(contentElement)}</p>`;
+                }
                 break;
         }
 
@@ -610,6 +651,15 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
+
+    function renderMarkdownToHtml(markdownText) {
+        if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+            const rawHtml = marked.parse(markdownText ?? '');
+            return DOMPurify.sanitize(rawHtml);
+        }
+
+        return escapeHtml(markdownText ?? '');
     }
 
 
