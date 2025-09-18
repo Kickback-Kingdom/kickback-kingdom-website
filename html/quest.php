@@ -491,7 +491,7 @@ $itemInformationJSON = json_encode($itemInfos);
                         <form method="POST">
                             <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
                             <input type="hidden" value="<?= $thisQuest->crand; ?>" name="edit-quest-id" />
-                            <div class="modal modal-lg fade" id="modalEditQuestRewards" tabindex="-1" aria-labelledby="modalEditQuestRewardsLabel" aria-hidden="true">
+                            <div class="modal modal-lg fade" id="modalEditQuestRewards" tabindex="-1" aria-labelledby="modalEditQuestRewardsLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header">
@@ -574,7 +574,7 @@ $itemInformationJSON = json_encode($itemInfos);
                             <input type="hidden" value="<?= $thisQuest->banner->crand; ?>" name="edit-quest-images-desktop-banner-id" id="edit-quest-images-desktop-banner-id"/>
                             <input type="hidden" value="<?= $thisQuest->bannerMobile->crand; ?>" name="edit-quest-images-mobile-banner-id" id="edit-quest-images-mobile-banner-id" />
                             <input type="hidden" value="<?= $thisQuest->icon->crand; ?>" name="edit-quest-images-icon-id" id="edit-quest-images-icon-id"/>
-                            <div class="modal modal-lg fade" id="modalEditQuestImages" tabindex="-1" aria-labelledby="modalEditQuestImagesLabel" aria-hidden="true">
+                            <div class="modal modal-lg fade" id="modalEditQuestImages" tabindex="-1" aria-labelledby="modalEditQuestImagesLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header">
@@ -616,7 +616,7 @@ $itemInformationJSON = json_encode($itemInfos);
                             <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
                             <input type="hidden" value="<?= $thisQuest->crand; ?>" name="edit-quest-id" />
                             <input type="hidden" value="<?= $thisQuest->getHost2Id(); ?>" name="edit-quest-options-host-2-id" id="edit-quest-options-host-2-id"/>
-                            <div class="modal modal-lg fade" id="modalEditQuestOptions" tabindex="-1" aria-labelledby="modalEditQuestOptionsLabel" aria-hidden="true">
+                            <div class="modal modal-lg fade" id="modalEditQuestOptions" tabindex="-1" aria-labelledby="modalEditQuestOptionsLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header">
@@ -1016,7 +1016,7 @@ $itemInformationJSON = json_encode($itemInfos);
                         <form method="POST">
                             <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
                             <input type="hidden" name="quest-id" value="<?= $thisQuest->crand; ?>" />
-                            <div class="modal modal-xl fade" id="modalQuestPublish" tabindex="-1" aria-labelledby="modalQuestPublishLabel" aria-hidden="true">
+                            <div class="modal modal-xl fade" id="modalQuestPublish" tabindex="-1" aria-labelledby="modalQuestPublishLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                     <div class="modal-header">
@@ -1090,7 +1090,7 @@ $itemInformationJSON = json_encode($itemInfos);
                         <form method="POST">
                             <input type="hidden" name="form_token" value="<?= $_SESSION['form_token']; ?>">
                             <input type="hidden" name="quest-id" value="<?= $thisQuest->crand; ?>" />
-                            <div class="modal modal-xl fade" id="modalQuestApprove" tabindex="-1" aria-labelledby="modalQuestApproveLabel" aria-hidden="true">
+                            <div class="modal modal-xl fade" id="modalQuestApprove" tabindex="-1" aria-labelledby="modalQuestApproveLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header bg-success">
@@ -1121,7 +1121,7 @@ $itemInformationJSON = json_encode($itemInfos);
                         <form method="POST">
                             <input type="hidden" name="form_token" value="<?= $_SESSION['form_token']; ?>">
                             <input type="hidden" name="quest-id" value="<?= $thisQuest->crand; ?>" />
-                            <div class="modal modal-xl fade" id="modalQuestReject" tabindex="-1" aria-labelledby="modalQuestRejectLabel" aria-hidden="true">
+                            <div class="modal modal-xl fade" id="modalQuestReject" tabindex="-1" aria-labelledby="modalQuestRejectLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header bg-danger">
