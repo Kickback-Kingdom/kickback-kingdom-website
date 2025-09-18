@@ -190,7 +190,7 @@ $thisQuestLine->populateEverything();
                             <input type="hidden" value="<?php echo $thisQuestLine->banner->crand; ?>" name="edit-quest-line-images-desktop-banner-id" id="edit-quest-line-images-desktop-banner-id"/>
                             <input type="hidden" value="<?php echo $thisQuestLine->bannerMobile->crand; ?>" name="edit-quest-line-images-mobile-banner-id" id="edit-quest-line-images-mobile-banner-id" />
                             <input type="hidden" value="<?php echo $thisQuestLine->icon->crand; ?>" name="edit-quest-line-images-icon-id" id="edit-quest-line-images-icon-id"/>
-                            <div class="modal modal-lg fade" id="modalEditQuestImages" tabindex="-1" aria-labelledby="modalEditQuestImagesLabel" aria-hidden="true">
+                            <div class="modal modal-lg fade" id="modalEditQuestImages" tabindex="-1" aria-labelledby="modalEditQuestImagesLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header">
@@ -231,7 +231,7 @@ $thisQuestLine->populateEverything();
                         <form method="POST">
                             <input type="hidden" value="<?= $thisQuestLine->crand; ?>" name="edit-quest-line-id" />
                             <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                            <div class="modal modal-lg fade" id="modalEditQuestOptions" tabindex="-1" aria-labelledby="modalEditQuestOptionsLabel" aria-hidden="true">
+                            <div class="modal modal-lg fade" id="modalEditQuestOptions" tabindex="-1" aria-labelledby="modalEditQuestOptionsLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header">
@@ -301,7 +301,7 @@ $thisQuestLine->populateEverything();
                         <form method="POST">
                             <input type="hidden" name="form_token" value="<?= $_SESSION['form_token']; ?>">
                             <input type="hidden" name="quest-line-id" value="<?= $thisQuestLine->crand; ?>" />
-                            <div class="modal modal-xl fade" id="modalQuestPublish" tabindex="-1" aria-labelledby="modalQuestPublishLabel" aria-hidden="true">
+                            <div class="modal modal-xl fade" id="modalQuestPublish" tabindex="-1" aria-labelledby="modalQuestPublishLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header">
@@ -370,7 +370,7 @@ $thisQuestLine->populateEverything();
                         <form method="POST">
                             <input type="hidden" name="form_token" value="<?= $_SESSION['form_token']; ?>">
                             <input type="hidden" name="quest-line-id" value="<?= $thisQuestLine->crand; ?>" />
-                            <div class="modal modal-xl fade" id="modalQuestApprove" tabindex="-1" aria-labelledby="modalQuestApproveLabel" aria-hidden="true">
+                            <div class="modal modal-xl fade" id="modalQuestApprove" tabindex="-1" aria-labelledby="modalQuestApproveLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header bg-success">
@@ -401,7 +401,7 @@ $thisQuestLine->populateEverything();
                         <form method="POST">
                             <input type="hidden" name="form_token" value="<?= $_SESSION['form_token']; ?>">
                             <input type="hidden" name="quest-line-id" value="<?= $thisQuestLine->crand; ?>" />
-                            <div class="modal modal-xl fade" id="modalQuestReject" tabindex="-1" aria-labelledby="modalQuestRejectLabel" aria-hidden="true">
+                            <div class="modal modal-xl fade" id="modalQuestReject" tabindex="-1" aria-labelledby="modalQuestRejectLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header bg-danger">

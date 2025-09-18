@@ -26,7 +26,7 @@ if ($_vCanEditContent)
 ?>
 
 <!-- EDIT CODE MODAL -->
-<div class="modal modal-lg fade" id="modalEditCode" tabindex="-1" aria-labelledby="modalEditCodeLabel" aria-hidden="true">
+<div class="modal modal-lg fade" id="modalEditCode" tabindex="-1" aria-labelledby="modalEditCodeLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -46,7 +46,7 @@ if ($_vCanEditContent)
 </div>
 
 <!-- NEW ELEMENT MODAL -->
-<div class="modal modal-lg fade" id="modalNewElement" tabindex="-1" aria-labelledby="modalNewElementLabel" aria-hidden="true">
+<div class="modal modal-lg fade" id="modalNewElement" tabindex="-1" aria-labelledby="modalNewElementLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -75,7 +75,7 @@ if ($_vCanEditContent)
 </div>
 
 <!-- EDIT TITLE MODAL -->
-<div class="modal modal-lg fade" id="modalEditTitle" tabindex="-1" aria-labelledby="modalEditTitleLabel" aria-hidden="true">
+<div class="modal modal-lg fade" id="modalEditTitle" tabindex="-1" aria-labelledby="modalEditTitleLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -95,7 +95,7 @@ if ($_vCanEditContent)
 </div>
 
 <!-- EDIT SUBTITLE MODAL -->
-<div class="modal modal-lg fade" id="modalEditSubtitle" tabindex="-1" aria-labelledby="modalEditSubtitleLabel" aria-hidden="true">
+<div class="modal modal-lg fade" id="modalEditSubtitle" tabindex="-1" aria-labelledby="modalEditSubtitleLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -116,7 +116,7 @@ if ($_vCanEditContent)
 
 
 <!-- EDIT HEADER MODAL -->
-<div class="modal modal-lg fade" id="modalEditHeader" tabindex="-1" aria-labelledby="modalEditHeaderLabel" aria-hidden="true">
+<div class="modal modal-lg fade" id="modalEditHeader" tabindex="-1" aria-labelledby="modalEditHeaderLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -136,7 +136,7 @@ if ($_vCanEditContent)
 </div>
 
 <!-- EDIT PARAGRAPH MODAL -->
-<div class="modal modal-lg fade" id="modalEditParagraph" tabindex="-1" aria-labelledby="modalEditParagraphLabel" aria-hidden="true">
+<div class="modal modal-lg fade" id="modalEditParagraph" tabindex="-1" aria-labelledby="modalEditParagraphLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -156,7 +156,7 @@ if ($_vCanEditContent)
 </div>
 
 <!-- EDIT LIST MODAL -->
-<div class="modal modal-lg fade" id="modalEditList" tabindex="-1" aria-labelledby="modalEditListLabel" aria-hidden="true">
+<div class="modal modal-lg fade" id="modalEditList" tabindex="-1" aria-labelledby="modalEditListLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -192,7 +192,7 @@ if ($_vCanEditContent)
 </div>
 
 <!-- EDIT MEDIA MODAL -->
-<div class="modal modal-lg fade" id="modalEditMedia" tabindex="-1" aria-labelledby="modalEditMediaLabel" aria-hidden="true">
+<div class="modal modal-lg fade" id="modalEditMedia" tabindex="-1" aria-labelledby="modalEditMediaLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -231,7 +231,7 @@ if ($_vCanEditContent)
 </div>
 
 <!-- EDIT YOUTUBE MODAL -->
-<div class="modal modal-lg fade" id="modalEditYoutube" tabindex="-1" aria-labelledby="modalEditYoutubeLabel" aria-hidden="true">
+<div class="modal modal-lg fade" id="modalEditYoutube" tabindex="-1" aria-labelledby="modalEditYoutubeLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -270,7 +270,7 @@ if ($_vCanEditContent)
 </div>
 
 <!-- EDIT SKETCH FAB MODAL -->
-<div class="modal modal-lg fade" id="modalEditSketchFab" tabindex="-1" aria-labelledby="modalEditSketchFabLabel" aria-hidden="true">
+<div class="modal modal-lg fade" id="modalEditSketchFab" tabindex="-1" aria-labelledby="modalEditSketchFabLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -318,7 +318,7 @@ if ($_vCanEditContent)
 </div>
 
 <!-- EDIT SLIDER MODAL -->
-<div class="modal modal-lg fade" id="modalEditSlider" tabindex="-1" aria-labelledby="modalEditSliderLabel" aria-hidden="true">
+<div class="modal modal-lg fade" id="modalEditSlider" tabindex="-1" aria-labelledby="modalEditSliderLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
