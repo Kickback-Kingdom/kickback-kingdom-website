@@ -1161,6 +1161,8 @@ animation: confetti-fast 1.25s linear 1 forwards;
 .markdown-code-block {
     margin: 1.5rem 0;
     position: relative;
+    --markdown-code-font-size: 0.875rem;
+    --markdown-code-line-height: calc(var(--markdown-code-font-size) * 1.6);
 }
 
 .markdown-code-wrapper {
@@ -1179,7 +1181,7 @@ animation: confetti-fast 1.25s linear 1 forwards;
     text-align: right;
     font-family: 'Fira Code', 'SFMono-Regular', Menlo, Monaco, Consolas, "Liberation Mono", 'Courier New', monospace;
     font-size: 0.75rem;
-    line-height: 1.6;
+    line-height: var(--markdown-code-line-height, calc(0.875rem * 1.6));
     border-right: 1px solid rgba(148, 163, 184, 0.35);
     user-select: none;
 }
@@ -1188,6 +1190,7 @@ animation: confetti-fast 1.25s linear 1 forwards;
     display: block;
     padding: 0 0.75rem 0 0.5rem;
     min-width: 2.5ch;
+    line-height: var(--markdown-code-line-height, calc(0.875rem * 1.6));
 }
 
 .markdown-code-scroll {
@@ -1206,7 +1209,7 @@ animation: confetti-fast 1.25s linear 1 forwards;
     margin: 0;
     overflow: visible;
     font-family: 'Fira Code', 'SFMono-Regular', Menlo, Monaco, Consolas, "Liberation Mono", 'Courier New', monospace;
-    font-size: 0.875rem;
+    font-size: var(--markdown-code-font-size, 0.875rem);
     position: relative;
     min-width: 100%;
 }
@@ -1223,7 +1226,7 @@ animation: confetti-fast 1.25s linear 1 forwards;
     display: block;
     padding: 0 1.25rem;
     margin: 0 -1.25rem;
-    line-height: 1.6;
+    line-height: var(--markdown-code-line-height, calc(0.875rem * 1.6));
     white-space: pre;
     background-color: rgba(255, 255, 255, 0.02);
 }
