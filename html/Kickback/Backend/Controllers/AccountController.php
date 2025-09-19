@@ -334,13 +334,13 @@ class AccountController
             $conn = Database::getConnection();
             // SQL statement with placeholders
             $sql = 'SELECT account.*, service.Name as \'ServiceName\', ? as SessionToken
-            FROM v_account_info as account 
-            LEFT JOIN service on service.PublicKey = ? 
-            LEFT JOIN account_sessions on account_sessions.SessionToken = ? 
-            and account_sessions.ServiceKey = service.PublicKey 
-            and account_sessions.account_id = account.Id 
-            WHERE account.Banned = 0 
-            AND account_sessions.login_time >= (NOW() - INTERVAL 7 DAY) 
+            FROM v_account_info as account
+            LEFT JOIN service on service.PublicKey = ?
+            LEFT JOIN account_sessions on account_sessions.SessionToken = ?
+            and account_sessions.ServiceKey = service.PublicKey
+            and account_sessions.account_id = account.Id
+            WHERE account.Banned = 0
+            AND account_sessions.login_time >= (NOW() - INTERVAL 7 DAY)
             AND service.PublicKey = ?';
 
             // Prepare the SQL statement
@@ -376,6 +376,51 @@ class AccountController
         } catch (\Throwable $th) {
             return (new Response(false, 'Error. Check the data for more info.', $th));
         }
+    }
+
+    public static function getAccountGameStats(vRecordId $accountId) : Response
+    {
+        $conn = Database::getConnection();
+
+        $sql = 'SELECT * FROM v_game_elo_rank_info WHERE account_id = ?';
+        $stmt = $conn->prepare($sql);
+
+        if (!$stmt) {
+            return new Response(false, 'Failed to prepare statement for account game stats.', null);
+        }
+
+        $stmt->bind_param('i', $accountId->crand);
+
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return new Response(false, 'Failed to execute statement for account game stats.', null);
+        }
+
+        $result = $stmt->get_result();
+        if ($result === false) {
+            $stmt->close();
+            return new Response(false, 'Failed to retrieve account game stats.', null);
+        }
+
+        $stats = [];
+        while ($row = $result->fetch_assoc()) {
+            $gameId = (int)$row['game_id'];
+            $gameStat = new vGameStats('', $gameId);
+
+            $gameStat->elo = isset($row['elo_rating']) ? (float)$row['elo_rating'] : null;
+            $gameStat->is_ranked = isset($row['is_ranked']) ? (bool)$row['is_ranked'] : false;
+            $gameStat->ranked_matches = isset($row['ranked_matches']) ? (int)$row['ranked_matches'] : 0;
+            $gameStat->total_wins = isset($row['total_wins']) ? (int)$row['total_wins'] : 0;
+            $gameStat->total_losses = isset($row['total_losses']) ? (int)$row['total_losses'] : 0;
+            $gameStat->win_rate = isset($row['win_rate']) ? (float)$row['win_rate'] : null;
+            $gameStat->rank = isset($row['rank']) ? (int)$row['rank'] : null;
+
+            $stats[$gameId] = $gameStat;
+        }
+
+        $stmt->close();
+
+        return new Response(true, 'Account game stats', $stats);
     }
 
     private static function buildJoinsAndConditions(array $filters): array {

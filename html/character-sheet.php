@@ -9,6 +9,7 @@ use Kickback\Backend\Controllers\AccountController;
 use Kickback\Backend\Controllers\ActivityController;
 use Kickback\Backend\Controllers\LootController;
 use Kickback\Backend\Controllers\GameController;
+use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vRecordId;
 
 $character = null;
@@ -31,6 +32,13 @@ if (Session::isLoggedIn()) {
             $character = $accountResp->data;
         } else {
             $character = $activeAccount;
+        }
+
+        if ($character instanceof vAccount) {
+            $gameStatsResp = AccountController::getAccountGameStats($activeAccount);
+            if ($gameStatsResp->success && is_array($gameStatsResp->data)) {
+                $character->game_stats = $gameStatsResp->data;
+            }
         }
 
         $badgesResp = LootController::getBadgesByAccount($activeAccount);
