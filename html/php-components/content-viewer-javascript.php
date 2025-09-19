@@ -1092,6 +1092,32 @@
         inlineCodes.forEach((inlineCode) => {
             inlineCode.classList.add('markdown-inline-code');
         });
+
+        const tables = container.querySelectorAll('table');
+        tables.forEach((table) => {
+            if (table.closest('.markdown-table-wrapper')) {
+                table.classList.add('markdown-table');
+                return;
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'markdown-table-wrapper table-responsive';
+
+            table.parentNode.insertBefore(wrapper, table);
+            wrapper.appendChild(table);
+
+            table.classList.add('markdown-table', 'table', 'align-middle');
+
+            const thead = table.querySelector('thead');
+            if (thead) {
+                thead.classList.add('markdown-table-head');
+            }
+
+            const caption = table.querySelector('caption');
+            if (caption) {
+                caption.classList.add('markdown-table-caption');
+            }
+        });
     }
 
     $(document).on('click', '.markdown-copy-button', function () {
