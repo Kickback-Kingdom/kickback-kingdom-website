@@ -640,9 +640,353 @@
             $("#modalEditCode").modal("show");
         }
 
-        function OpenEditModal_Slider(contentIndex) 
+        var sliderModalState = {
+            contentIndex: null,
+            slides: [],
+            selectedIndex: 0,
+            isDirty: false
+        };
+
+        function cloneSlideForModal(slide)
         {
+            return {
+                content_detail_data_id: (typeof slide.content_detail_data_id !== "undefined") ? slide.content_detail_data_id : null,
+                data: (typeof slide.data !== "undefined" && slide.data !== null) ? slide.data : "",
+                data_order: (typeof slide.data_order !== "undefined") ? slide.data_order : 0,
+                image_path: (typeof slide.image_path !== "undefined" && slide.image_path !== null) ? slide.image_path : "",
+                media_id: (typeof slide.media_id !== "undefined" && slide.media_id !== null) ? slide.media_id : null,
+                inserted: (typeof slide.inserted !== "undefined") ? slide.inserted : false,
+                updated: (typeof slide.updated !== "undefined") ? slide.updated : false,
+                deleted: (typeof slide.deleted !== "undefined") ? slide.deleted : false
+            };
+        }
+
+        function cloneSlideForSave(slide)
+        {
+            var cloned = {
+                content_detail_data_id: (typeof slide.content_detail_data_id !== "undefined") ? slide.content_detail_data_id : null,
+                data: (typeof slide.data !== "undefined" && slide.data !== null) ? slide.data : "",
+                data_order: (typeof slide.data_order !== "undefined") ? slide.data_order : 0,
+                image_path: (typeof slide.image_path !== "undefined" && slide.image_path !== null) ? slide.image_path : "",
+                media_id: (typeof slide.media_id !== "undefined" && slide.media_id !== null) ? slide.media_id : null
+            };
+
+            if (slide.inserted) {
+                cloned.inserted = true;
+            }
+            if (slide.updated) {
+                cloned.updated = true;
+            }
+            if (slide.deleted) {
+                cloned.deleted = true;
+            }
+
+            return cloned;
+        }
+
+        function createEmptySlide()
+        {
+            return {
+                content_detail_data_id: null,
+                data: "",
+                data_order: sliderModalState.slides.length,
+                image_path: "",
+                media_id: null,
+                inserted: true
+            };
+        }
+
+        function getVisibleSliderSlideEntries()
+        {
+            var entries = [];
+            for (var index = 0; index < sliderModalState.slides.length; index++) {
+                var slide = sliderModalState.slides[index];
+                if (slide && !slide.deleted) {
+                    entries.push({ slide: slide, index: index });
+                }
+            }
+            return entries;
+        }
+
+        function CommitSliderTextbox()
+        {
+            var textbox = $("#content-edit-slide-textbox");
+            if (textbox.length === 0) {
+                return;
+            }
+
+            HandleSliderTextChange(textbox.val());
+        }
+
+        function HandleSliderTextChange(value)
+        {
+            if (sliderModalState.contentIndex === null) {
+                return;
+            }
+
+            var slide = sliderModalState.slides[sliderModalState.selectedIndex];
+            if (!slide) {
+                return;
+            }
+
+            var newValue = (typeof value !== "undefined" && value !== null) ? value : "";
+            var currentValue = (typeof slide.data !== "undefined" && slide.data !== null) ? slide.data : "";
+
+            if (newValue !== currentValue) {
+                slide.data = newValue;
+                if (!slide.inserted) {
+                    slide.updated = true;
+                }
+                sliderModalState.isDirty = true;
+            }
+        }
+
+        function HandleSliderMediaSelected(mediaId, mediaPath)
+        {
+            if (sliderModalState.contentIndex === null) {
+                return;
+            }
+
+            var slide = sliderModalState.slides[sliderModalState.selectedIndex];
+            if (!slide) {
+                return;
+            }
+
+            var fullPath = normalizeMediaPath(mediaPath);
+            var relativePath = removePrefix(fullPath, "/assets/media/");
+            var existingPath = (typeof slide.image_path !== "undefined" && slide.image_path !== null) ? slide.image_path : "";
+            var existingMediaId = (typeof slide.media_id !== "undefined" && slide.media_id !== null) ? slide.media_id : null;
+
+            if (existingMediaId !== mediaId) {
+                slide.media_id = mediaId;
+                if (!slide.inserted) {
+                    slide.updated = true;
+                }
+                sliderModalState.isDirty = true;
+            }
+
+            if (existingPath !== relativePath) {
+                slide.image_path = relativePath;
+                if (!slide.inserted) {
+                    slide.updated = true;
+                }
+                sliderModalState.isDirty = true;
+            }
+
+            RenderSliderModal();
+        }
+
+        function RenderSliderModal()
+        {
+            var visibleSlides = getVisibleSliderSlideEntries();
+
+            if (visibleSlides.length === 0) {
+                sliderModalState.slides.push(createEmptySlide());
+                sliderModalState.selectedIndex = sliderModalState.slides.length - 1;
+                sliderModalState.isDirty = true;
+                visibleSlides = getVisibleSliderSlideEntries();
+            }
+
+            if (visibleSlides.length === 0) {
+                return;
+            }
+
+            var hasSelected = false;
+            for (var i = 0; i < visibleSlides.length; i++) {
+                if (visibleSlides[i].index === sliderModalState.selectedIndex) {
+                    hasSelected = true;
+                    break;
+                }
+            }
+
+            if (!hasSelected) {
+                sliderModalState.selectedIndex = visibleSlides[0].index;
+            }
+
+            var buttonsHtml = "";
+            for (var j = 0; j < visibleSlides.length; j++) {
+                var entry = visibleSlides[j];
+                var isActive = entry.index === sliderModalState.selectedIndex;
+                var classes = isActive ? "btn bg-ranked-1" : "btn btn-primary";
+                buttonsHtml += `<button type="button" class="${classes}" data-slider-array-index="${entry.index}">${j + 1}</button>`;
+            }
+
+            $("#slider-slide-buttons").html(buttonsHtml);
+            $("#slider-slide-buttons button").off("click").on("click", function() {
+                var targetIndex = parseInt($(this).attr("data-slider-array-index"), 10);
+                SelectSliderSlide(targetIndex);
+            });
+
+            $("#modalEditSliderDeleteButton").prop("disabled", visibleSlides.length <= 1);
+
+            var currentSlide = sliderModalState.slides[sliderModalState.selectedIndex] || null;
+            var slideText = (currentSlide && typeof currentSlide.data !== "undefined" && currentSlide.data !== null) ? currentSlide.data : "";
+            var mediaId = (currentSlide && typeof currentSlide.media_id !== "undefined" && currentSlide.media_id !== null) ? currentSlide.media_id : "";
+            var imagePath = (currentSlide && typeof currentSlide.image_path !== "undefined" && currentSlide.image_path !== null) ? currentSlide.image_path : "";
+
+            $("#content-edit-slide-textbox").val(slideText);
+            $("#content-edit-slider-media-id").val(mediaId);
+            $("#content-edit-slider-image").attr("src", normalizeMediaPath(imagePath));
+        }
+
+        function AddSliderSlide(renderAfter = true)
+        {
+            sliderModalState.slides.push(createEmptySlide());
+            sliderModalState.selectedIndex = sliderModalState.slides.length - 1;
+            sliderModalState.isDirty = true;
+
+            if (renderAfter) {
+                RenderSliderModal();
+            }
+        }
+
+        function DeleteSliderSlide()
+        {
+            var visibleSlides = getVisibleSliderSlideEntries();
+            if (visibleSlides.length <= 1) {
+                return;
+            }
+
+            var currentIndex = sliderModalState.selectedIndex;
+            var slide = sliderModalState.slides[currentIndex];
+            if (!slide) {
+                return;
+            }
+
+            if (slide.inserted && !slide.content_detail_data_id) {
+                sliderModalState.slides.splice(currentIndex, 1);
+            } else {
+                slide.deleted = true;
+                slide.updated = true;
+            }
+
+            sliderModalState.isDirty = true;
+
+            var remainingSlides = getVisibleSliderSlideEntries();
+            if (remainingSlides.length === 0) {
+                AddSliderSlide();
+                return;
+            }
+
+            var newSelection = remainingSlides[0].index;
+            for (var i = 0; i < remainingSlides.length; i++) {
+                if (remainingSlides[i].index >= currentIndex) {
+                    newSelection = remainingSlides[i].index;
+                    break;
+                }
+            }
+
+            sliderModalState.selectedIndex = newSelection;
+            RenderSliderModal();
+        }
+
+        function SelectSliderSlide(arrayIndex)
+        {
+            if (sliderModalState.contentIndex === null) {
+                return;
+            }
+
+            if (sliderModalState.selectedIndex === arrayIndex) {
+                return;
+            }
+
+            var slide = sliderModalState.slides[arrayIndex];
+            if (!slide || slide.deleted) {
+                return;
+            }
+
+            CommitSliderTextbox();
+            sliderModalState.selectedIndex = arrayIndex;
+            RenderSliderModal();
+        }
+
+        function SaveSliderModal(contentIndex)
+        {
+            CommitSliderTextbox();
+
             var contentToEdit = pageContent[contentIndex];
+            if (!contentToEdit) {
+                return;
+            }
+
+            var order = 0;
+            for (var i = 0; i < sliderModalState.slides.length; i++) {
+                var slide = sliderModalState.slides[i];
+                if (!slide || slide.deleted) {
+                    continue;
+                }
+
+                if (slide.data_order !== order) {
+                    slide.data_order = order;
+                    if (!slide.inserted) {
+                        slide.updated = true;
+                    }
+                }
+                order++;
+            }
+
+            var updatedSlides = [];
+            for (var j = 0; j < sliderModalState.slides.length; j++) {
+                updatedSlides.push(cloneSlideForSave(sliderModalState.slides[j]));
+            }
+
+            contentToEdit.data_items = updatedSlides;
+            if (sliderModalState.isDirty) {
+                contentToEdit.updated = true;
+            }
+
+            UpdatePageContent(pageContent);
+            $("#modalEditSlider").modal("hide");
+
+            sliderModalState.contentIndex = null;
+            sliderModalState.slides = [];
+            sliderModalState.selectedIndex = 0;
+            sliderModalState.isDirty = false;
+        }
+
+        function OpenEditModal_Slider(contentIndex)
+        {
+            sliderModalState.contentIndex = contentIndex;
+            sliderModalState.slides = [];
+            sliderModalState.selectedIndex = 0;
+            sliderModalState.isDirty = false;
+
+            var contentToEdit = pageContent[contentIndex];
+            if (contentToEdit && Array.isArray(contentToEdit.data_items) && contentToEdit.data_items.length > 0) {
+                for (var i = 0; i < contentToEdit.data_items.length; i++) {
+                    sliderModalState.slides.push(cloneSlideForModal(contentToEdit.data_items[i]));
+                }
+            } else {
+                sliderModalState.slides.push(createEmptySlide());
+                sliderModalState.isDirty = true;
+            }
+
+            sliderModalState.selectedIndex = 0;
+
+            $("#content-edit-slide-textbox").off("input").on("input", function() {
+                HandleSliderTextChange($(this).val());
+            });
+
+            $("#modalEditSliderSaveButton").off("click").on("click", function() {
+                SaveSliderModal(contentIndex);
+            });
+
+            $("#modalEditSliderAddButton").off("click").on("click", function() {
+                CommitSliderTextbox();
+                AddSliderSlide();
+            });
+
+            $("#modalEditSliderDeleteButton").off("click").on("click", function() {
+                CommitSliderTextbox();
+                DeleteSliderSlide();
+            });
+
+            $("#modalEditSliderSelectMediaButton").off("click").on("click", function() {
+                CommitSliderTextbox();
+                OpenSelectMediaModal('modalEditSlider', 'content-edit-slider-image', 'content-edit-slider-media-id', HandleSliderMediaSelected);
+            });
+
+            RenderSliderModal();
             $("#modalEditSlider").modal("show");
         }
 
@@ -950,8 +1294,7 @@
                 </div>`;
                 break;
             case 7:
-                const carouselId = `content-carousel-${i}`;
-                htmlContent = generateCarousel(contentElement);
+                htmlContent = generateCarousel(contentElement, i);
                 break;
             case 8:
                 htmlContent = `
@@ -1201,25 +1544,74 @@
     });
 
 
-    function generateCarousel(data) {
-        const carouselId = `content-carousel-${data.content_detail_id}`;
-        
+    function normalizeMediaPath(path) {
+        if (typeof path === "undefined" || path === null || path === "") {
+            return "/assets/media/items/placeholder.png";
+        }
+
+        if (path.startsWith("http://") || path.startsWith("https://")) {
+            return path;
+        }
+
+        if (path.startsWith("/assets/media/")) {
+            return path;
+        }
+
+        var trimmed = path;
+        if (trimmed.startsWith("assets/media/")) {
+            trimmed = trimmed.substring("assets/media/".length);
+        }
+
+        trimmed = trimmed.replace(/^\/+/, "");
+
+        return "/assets/media/" + trimmed;
+    }
+
+    function generateCarousel(data, fallbackIndex = 0) {
+        var uniqueSuffix = (typeof data.content_detail_id !== "undefined" && data.content_detail_id !== null)
+            ? data.content_detail_id
+            : `new-${fallbackIndex}`;
+        const carouselId = `content-carousel-${uniqueSuffix}`;
+
+        var slideEntries = [];
+        if (Array.isArray(data.data_items)) {
+            for (var index = 0; index < data.data_items.length; index++) {
+                var item = data.data_items[index];
+                if (item && !item.deleted) {
+                    slideEntries.push({ item: item, index: index });
+                }
+            }
+        }
+
+        if (slideEntries.length === 0) {
+            return `<div class="alert alert-secondary mb-0">No slides configured yet.</div>`;
+        }
+
         let indicators = '';
         let slides = '';
-        for (let index = 0; index < data.data_items.length; index++) {
-            //const item = data.data_items[index];
-            indicators += `<button type="button" data-bs-target="#${carouselId}" data-bs-slide-to="${index}" ${index === 0 ? 'class="active" aria-current="true"' : ''} aria-label="${GetContentElementData(data, "data", index)}"></button>`;
-            
+
+        for (var position = 0; position < slideEntries.length; position++) {
+            var entry = slideEntries[position];
+            var item = entry.item;
+            var isActive = position === 0;
+            var slideTitleRaw = (typeof item.data !== "undefined" && item.data !== null) ? item.data : "";
+            var slideTitle = escapeHtml(slideTitleRaw);
+            var ariaLabel = slideTitle !== "" ? slideTitle : `Slide ${position + 1}`;
+            var imagePathValue = (typeof item.image_path !== "undefined" && item.image_path !== null) ? item.image_path : "";
+            var imageSource = normalizeMediaPath(imagePathValue);
+
+            indicators += `<button type="button" data-bs-target="#${carouselId}" data-bs-slide-to="${position}" ${isActive ? 'class="active" aria-current="true"' : ''} aria-label="${ariaLabel}"></button>`;
+
             slides += `
-            <div class="carousel-item ${index === 0 ? 'active' : ''}" data-bs-interval="7000">
-                <img src="/assets/media/${GetContentElementData(data, "image_path", index)}" class="d-block w-100">
+            <div class="carousel-item ${isActive ? 'active' : ''}" data-bs-interval="7000">
+                <img src="${imageSource}" class="d-block w-100">
                 <div class="carousel-caption d-block d-md-block text-shadow">
-                    <h5>${GetContentElementData(data, "data", index)}</h5>
-                    <p></p>  <!-- Placeholder for description if you add it later -->
+                    <h5>${slideTitle}</h5>
+                    <p></p>
                 </div>
             </div>`;
         }
-        
+
 
         return `<div id="${carouselId}" class="carousel slide" data-bs-ride="carousel">
                     <div class="carousel-indicators">
