@@ -10,6 +10,80 @@
     UpdatePageContent(pageContent);
 
 
+    function parseSliderDataFields(rawData)
+    {
+        var result = { title: "", subtitle: "" };
+
+        if (typeof rawData === "string") {
+            var trimmed = rawData.trim();
+            if (trimmed.charAt(0) === "{") {
+                try {
+                    var parsed = JSON.parse(trimmed);
+                    if (parsed && typeof parsed === "object") {
+                        if (typeof parsed.title === "string") {
+                            result.title = parsed.title;
+                        }
+                        if (typeof parsed.subtitle === "string") {
+                            result.subtitle = parsed.subtitle;
+                        }
+                    }
+                } catch (error) {
+                    result.title = rawData;
+                    result.subtitle = "";
+                    return result;
+                }
+
+                if (result.title === "" && result.subtitle === "") {
+                    result.title = rawData;
+                }
+            } else {
+                result.title = rawData;
+            }
+        } else if (rawData && typeof rawData === "object") {
+            if (typeof rawData.title === "string") {
+                result.title = rawData.title;
+            }
+            if (typeof rawData.subtitle === "string") {
+                result.subtitle = rawData.subtitle;
+            }
+        }
+
+        return result;
+    }
+
+    function resolveSlideTextFields(slide)
+    {
+        if (!slide || typeof slide !== "object") {
+            return { title: "", subtitle: "" };
+        }
+
+        var hasTitleProp = Object.prototype.hasOwnProperty.call(slide, "title");
+        var hasSubtitleProp = Object.prototype.hasOwnProperty.call(slide, "subtitle");
+        var title = (typeof slide.title === "string") ? slide.title : "";
+        var subtitle = (typeof slide.subtitle === "string") ? slide.subtitle : "";
+
+        if (!hasTitleProp || !hasSubtitleProp) {
+            var parsed = parseSliderDataFields(slide.data);
+            if (!hasTitleProp) {
+                title = parsed.title;
+            }
+            if (!hasSubtitleProp) {
+                subtitle = parsed.subtitle;
+            }
+        }
+
+        return { title: title || "", subtitle: subtitle || "" };
+    }
+
+    function serializeSlideTextFields(title, subtitle)
+    {
+        return JSON.stringify({
+            title: (typeof title === "string") ? title : "",
+            subtitle: (typeof subtitle === "string") ? subtitle : ""
+        });
+    }
+
+
     <?php if ($_vPageContentEditMode) { ?>
 
         function SaveSubtitleModal(contentIndex)
@@ -647,79 +721,6 @@
             isDirty: false,
             autoSlide: true
         };
-
-        function parseSliderDataFields(rawData)
-        {
-            var result = { title: "", subtitle: "" };
-
-            if (typeof rawData === "string") {
-                var trimmed = rawData.trim();
-                if (trimmed.charAt(0) === "{") {
-                    try {
-                        var parsed = JSON.parse(trimmed);
-                        if (parsed && typeof parsed === "object") {
-                            if (typeof parsed.title === "string") {
-                                result.title = parsed.title;
-                            }
-                            if (typeof parsed.subtitle === "string") {
-                                result.subtitle = parsed.subtitle;
-                            }
-                        }
-                    } catch (error) {
-                        result.title = rawData;
-                        result.subtitle = "";
-                        return result;
-                    }
-
-                    if (result.title === "" && result.subtitle === "") {
-                        result.title = rawData;
-                    }
-                } else {
-                    result.title = rawData;
-                }
-            } else if (rawData && typeof rawData === "object") {
-                if (typeof rawData.title === "string") {
-                    result.title = rawData.title;
-                }
-                if (typeof rawData.subtitle === "string") {
-                    result.subtitle = rawData.subtitle;
-                }
-            }
-
-            return result;
-        }
-
-        function resolveSlideTextFields(slide)
-        {
-            if (!slide || typeof slide !== "object") {
-                return { title: "", subtitle: "" };
-            }
-
-            var hasTitleProp = Object.prototype.hasOwnProperty.call(slide, "title");
-            var hasSubtitleProp = Object.prototype.hasOwnProperty.call(slide, "subtitle");
-            var title = (typeof slide.title === "string") ? slide.title : "";
-            var subtitle = (typeof slide.subtitle === "string") ? slide.subtitle : "";
-
-            if (!hasTitleProp || !hasSubtitleProp) {
-                var parsed = parseSliderDataFields(slide.data);
-                if (!hasTitleProp) {
-                    title = parsed.title;
-                }
-                if (!hasSubtitleProp) {
-                    subtitle = parsed.subtitle;
-                }
-            }
-
-            return { title: title || "", subtitle: subtitle || "" };
-        }
-
-        function serializeSlideTextFields(title, subtitle)
-        {
-            return JSON.stringify({
-                title: (typeof title === "string") ? title : "",
-                subtitle: (typeof subtitle === "string") ? subtitle : ""
-            });
-        }
 
         function cloneSlideForModal(slide)
         {
