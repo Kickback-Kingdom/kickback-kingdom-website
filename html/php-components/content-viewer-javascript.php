@@ -1005,13 +1005,131 @@
     }
 
     function renderMarkdownToHtml(markdownText) {
-        if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+        if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined' && typeof document !== 'undefined') {
             const rawHtml = marked.parse(markdownText ?? '');
-            return DOMPurify.sanitize(rawHtml);
+            const sanitizedFragment = DOMPurify.sanitize(rawHtml, { RETURN_DOM_FRAGMENT: true });
+            const container = document.createElement('div');
+            container.appendChild(sanitizedFragment);
+
+            enhanceMarkdownContent(container);
+
+            return container.innerHTML;
         }
 
         return escapeHtml(markdownText ?? '');
     }
+
+    function enhanceMarkdownContent(container) {
+        if (!container || typeof container.querySelectorAll !== 'function') {
+            return;
+        }
+
+        const blockquotes = container.querySelectorAll('blockquote');
+        blockquotes.forEach((blockquote) => {
+            blockquote.classList.add('markdown-blockquote', 'border-start', 'ps-3', 'py-2', 'my-3');
+        });
+
+        const codeBlocks = container.querySelectorAll('pre > code');
+        codeBlocks.forEach((code) => {
+            const pre = code.parentElement;
+            if (!pre || !pre.parentNode) {
+                return;
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'markdown-code-block position-relative';
+
+            pre.parentNode.insertBefore(wrapper, pre);
+            wrapper.appendChild(pre);
+
+            pre.classList.add('markdown-pre');
+            code.classList.add('markdown-code');
+
+            const copyButton = document.createElement('button');
+            copyButton.type = 'button';
+            copyButton.className = 'btn btn-sm btn-outline-secondary markdown-copy-button';
+            copyButton.setAttribute('aria-label', 'Copy code');
+            copyButton.setAttribute('data-code-text', code.textContent || '');
+            copyButton.textContent = 'Copy';
+
+            wrapper.appendChild(copyButton);
+        });
+
+        const inlineCodes = container.querySelectorAll('p > code, li > code');
+        inlineCodes.forEach((inlineCode) => {
+            inlineCode.classList.add('markdown-inline-code');
+        });
+    }
+
+    $(document).on('click', '.markdown-copy-button', function () {
+        const button = $(this);
+        const preElement = button.siblings('pre')[0];
+        const codeElement = preElement ? preElement.querySelector('code') : null;
+        const codeText = button.attr('data-code-text') || (codeElement ? codeElement.innerText : '');
+
+        if (!codeText) {
+            return;
+        }
+
+        const originalLabel = button.data('original-label') || button.text();
+        button.data('original-label', originalLabel);
+
+        const showFeedback = (text, stateClass) => {
+            button.text(text);
+            button.removeClass('copy-success copy-error');
+            if (stateClass) {
+                button.addClass(stateClass);
+            }
+
+            setTimeout(() => {
+                button.text(button.data('original-label'));
+                button.removeClass('copy-success copy-error');
+            }, 2000);
+        };
+
+        const fallbackCopy = () => {
+            const textarea = document.createElement('textarea');
+            textarea.value = codeText;
+            textarea.setAttribute('readonly', '');
+            textarea.style.position = 'absolute';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+
+            let success = false;
+
+            try {
+                success = document.execCommand('copy');
+            } catch (err) {
+                success = false;
+            }
+
+            document.body.removeChild(textarea);
+
+            return success;
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard
+                .writeText(codeText)
+                .then(() => {
+                    showFeedback('Copied!', 'copy-success');
+                })
+                .catch(() => {
+                    if (fallbackCopy()) {
+                        showFeedback('Copied!', 'copy-success');
+                    } else {
+                        showFeedback('Copy failed', 'copy-error');
+                    }
+                });
+        } else {
+            if (fallbackCopy()) {
+                showFeedback('Copied!', 'copy-success');
+            } else {
+                showFeedback('Copy failed', 'copy-error');
+            }
+        }
+    });
 
 
     function generateCarousel(data) {
