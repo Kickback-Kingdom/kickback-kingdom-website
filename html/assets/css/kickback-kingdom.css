@@ -1160,27 +1160,80 @@ animation: confetti-fast 1.25s linear 1 forwards;
 
 .markdown-code-block {
     margin: 1.5rem 0;
+    position: relative;
+}
+
+.markdown-code-wrapper {
+    display: flex;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background-color: #1e1e1e;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+    overflow: hidden;
+}
+
+.markdown-line-numbers {
+    background-color: #1b1b1b;
+    color: #6b7280;
+    padding: 1rem 0.75rem;
+    text-align: right;
+    font-family: 'Fira Code', 'SFMono-Regular', Menlo, Monaco, Consolas, "Liberation Mono", 'Courier New', monospace;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    border-right: 1px solid rgba(148, 163, 184, 0.35);
+    user-select: none;
+}
+
+.markdown-line-number {
+    display: block;
+    padding: 0 0.75rem 0 0.5rem;
+    min-width: 2.5ch;
+}
+
+.markdown-code-scroll {
+    flex: 1 1 auto;
+    overflow: auto;
+    position: relative;
 }
 
 .markdown-pre,
 .markdown-content pre {
-    background-color: #111827;
-    color: #f8fafc;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    border-radius: 0.5rem;
-    padding: 1rem;
-    overflow: auto;
+    background: transparent;
+    color: #d4d4d4;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
     font-family: 'Fira Code', 'SFMono-Regular', Menlo, Monaco, Consolas, "Liberation Mono", 'Courier New', monospace;
     font-size: 0.875rem;
     position: relative;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+    min-width: 100%;
 }
 
 .markdown-content pre code,
 .markdown-code {
     background: transparent;
     color: inherit;
-    padding: 0;
+    padding: 1rem 1.25rem;
+    display: block;
+}
+
+.markdown-code-line {
+    display: block;
+    padding: 0 1.25rem;
+    margin: 0 -1.25rem;
+    line-height: 1.6;
+    white-space: pre;
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.markdown-code-line:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.markdown-code-line:hover {
+    background-color: rgba(120, 81, 169, 0.18);
 }
 
 .markdown-inline-code,

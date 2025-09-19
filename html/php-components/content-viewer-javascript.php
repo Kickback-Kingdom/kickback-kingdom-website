@@ -1040,17 +1040,49 @@
             wrapper.className = 'markdown-code-block position-relative';
 
             pre.parentNode.insertBefore(wrapper, pre);
-            wrapper.appendChild(pre);
+
+            const codeWrapper = document.createElement('div');
+            codeWrapper.className = 'markdown-code-wrapper';
+            wrapper.appendChild(codeWrapper);
+
+            const lineNumberColumn = document.createElement('div');
+            lineNumberColumn.className = 'markdown-line-numbers';
+            codeWrapper.appendChild(lineNumberColumn);
+
+            const scrollContainer = document.createElement('div');
+            scrollContainer.className = 'markdown-code-scroll';
+            codeWrapper.appendChild(scrollContainer);
+            scrollContainer.appendChild(pre);
 
             pre.classList.add('markdown-pre');
             code.classList.add('markdown-code');
+
+            const codeText = code.textContent || '';
+            const normalizedCode = codeText.replace(/\r\n?/g, '\n');
+            const codeLines = normalizedCode.split('\n');
+            if (normalizedCode.endsWith('\n')) {
+                codeLines.push('');
+            }
+
+            code.innerHTML = '';
+            codeLines.forEach((line, index) => {
+                const lineNumber = document.createElement('span');
+                lineNumber.className = 'markdown-line-number';
+                lineNumber.textContent = String(index + 1);
+                lineNumberColumn.appendChild(lineNumber);
+
+                const lineSpan = document.createElement('span');
+                lineSpan.className = 'markdown-code-line';
+                lineSpan.textContent = line === '' ? '\u200B' : line;
+                code.appendChild(lineSpan);
+            });
 
             const copyButton = document.createElement('button');
             copyButton.type = 'button';
             copyButton.className = 'btn btn-sm btn-outline-secondary markdown-copy-button';
             copyButton.setAttribute('aria-label', 'Copy code');
             copyButton.setAttribute('title', 'Copy code');
-            copyButton.setAttribute('data-code-text', code.textContent || '');
+            copyButton.setAttribute('data-code-text', codeText);
             copyButton.innerHTML = '<i class="fa-regular fa-copy" aria-hidden="true"></i><span class="visually-hidden">Copy code</span>';
 
             wrapper.appendChild(copyButton);
