@@ -644,7 +644,8 @@
             contentIndex: null,
             slides: [],
             selectedIndex: 0,
-            isDirty: false
+            isDirty: false,
+            autoSlide: true
         };
 
         function cloneSlideForModal(slide)
@@ -652,6 +653,7 @@
             return {
                 content_detail_data_id: (typeof slide.content_detail_data_id !== "undefined") ? slide.content_detail_data_id : null,
                 data: (typeof slide.data !== "undefined" && slide.data !== null) ? slide.data : "",
+                data_secondary: (typeof slide.data_secondary !== "undefined" && slide.data_secondary !== null) ? slide.data_secondary : "",
                 data_order: (typeof slide.data_order !== "undefined") ? slide.data_order : 0,
                 image_path: (typeof slide.image_path !== "undefined" && slide.image_path !== null) ? slide.image_path : "",
                 media_id: (typeof slide.media_id !== "undefined" && slide.media_id !== null) ? slide.media_id : null,
@@ -666,6 +668,7 @@
             var cloned = {
                 content_detail_data_id: (typeof slide.content_detail_data_id !== "undefined") ? slide.content_detail_data_id : null,
                 data: (typeof slide.data !== "undefined" && slide.data !== null) ? slide.data : "",
+                data_secondary: (typeof slide.data_secondary !== "undefined" && slide.data_secondary !== null) ? slide.data_secondary : "",
                 data_order: (typeof slide.data_order !== "undefined") ? slide.data_order : 0,
                 image_path: (typeof slide.image_path !== "undefined" && slide.image_path !== null) ? slide.image_path : "",
                 media_id: (typeof slide.media_id !== "undefined" && slide.media_id !== null) ? slide.media_id : null
@@ -689,6 +692,7 @@
             return {
                 content_detail_data_id: null,
                 data: "",
+                data_secondary: "",
                 data_order: sliderModalState.slides.length,
                 image_path: "",
                 media_id: null,
@@ -708,17 +712,20 @@
             return entries;
         }
 
-        function CommitSliderTextbox()
+        function CommitSliderTextboxes()
         {
-            var textbox = $("#content-edit-slide-textbox");
-            if (textbox.length === 0) {
-                return;
+            var titleTextbox = $("#content-edit-slide-textbox");
+            if (titleTextbox.length > 0) {
+                HandleSliderTextChange("data", titleTextbox.val());
             }
 
-            HandleSliderTextChange(textbox.val());
+            var subtitleTextbox = $("#content-edit-slide-subtext");
+            if (subtitleTextbox.length > 0) {
+                HandleSliderTextChange("data_secondary", subtitleTextbox.val());
+            }
         }
 
-        function HandleSliderTextChange(value)
+        function HandleSliderTextChange(fieldName, value)
         {
             if (sliderModalState.contentIndex === null) {
                 return;
@@ -729,11 +736,15 @@
                 return;
             }
 
+            if (typeof fieldName !== "string" || fieldName === "") {
+                return;
+            }
+
             var newValue = (typeof value !== "undefined" && value !== null) ? value : "";
-            var currentValue = (typeof slide.data !== "undefined" && slide.data !== null) ? slide.data : "";
+            var currentValue = (typeof slide[fieldName] !== "undefined" && slide[fieldName] !== null) ? slide[fieldName] : "";
 
             if (newValue !== currentValue) {
-                slide.data = newValue;
+                slide[fieldName] = newValue;
                 if (!slide.inserted) {
                     slide.updated = true;
                 }
@@ -821,12 +832,15 @@
 
             var currentSlide = sliderModalState.slides[sliderModalState.selectedIndex] || null;
             var slideText = (currentSlide && typeof currentSlide.data !== "undefined" && currentSlide.data !== null) ? currentSlide.data : "";
+            var slideSubtitle = (currentSlide && typeof currentSlide.data_secondary !== "undefined" && currentSlide.data_secondary !== null) ? currentSlide.data_secondary : "";
             var mediaId = (currentSlide && typeof currentSlide.media_id !== "undefined" && currentSlide.media_id !== null) ? currentSlide.media_id : "";
             var imagePath = (currentSlide && typeof currentSlide.image_path !== "undefined" && currentSlide.image_path !== null) ? currentSlide.image_path : "";
 
             $("#content-edit-slide-textbox").val(slideText);
+            $("#content-edit-slide-subtext").val(slideSubtitle);
             $("#content-edit-slider-media-id").val(mediaId);
             $("#content-edit-slider-image").attr("src", normalizeMediaPath(imagePath));
+            $("#content-edit-slider-auto-slide").prop("checked", !!sliderModalState.autoSlide);
         }
 
         function AddSliderSlide(renderAfter = true)
@@ -895,14 +909,14 @@
                 return;
             }
 
-            CommitSliderTextbox();
+            CommitSliderTextboxes();
             sliderModalState.selectedIndex = arrayIndex;
             RenderSliderModal();
         }
 
         function SaveSliderModal(contentIndex)
         {
-            CommitSliderTextbox();
+            CommitSliderTextboxes();
 
             var contentToEdit = pageContent[contentIndex];
             if (!contentToEdit) {
@@ -931,6 +945,12 @@
             }
 
             contentToEdit.data_items = updatedSlides;
+
+            var existingAutoSlide = (typeof contentToEdit.auto_slide !== "undefined") ? !!contentToEdit.auto_slide : true;
+            contentToEdit.auto_slide = !!sliderModalState.autoSlide;
+            if (existingAutoSlide !== contentToEdit.auto_slide) {
+                sliderModalState.isDirty = true;
+            }
             if (sliderModalState.isDirty) {
                 contentToEdit.updated = true;
             }
@@ -942,6 +962,7 @@
             sliderModalState.slides = [];
             sliderModalState.selectedIndex = 0;
             sliderModalState.isDirty = false;
+            sliderModalState.autoSlide = true;
         }
 
         function OpenEditModal_Slider(contentIndex)
@@ -950,6 +971,7 @@
             sliderModalState.slides = [];
             sliderModalState.selectedIndex = 0;
             sliderModalState.isDirty = false;
+            sliderModalState.autoSlide = true;
 
             var contentToEdit = pageContent[contentIndex];
             if (contentToEdit && Array.isArray(contentToEdit.data_items) && contentToEdit.data_items.length > 0) {
@@ -961,10 +983,18 @@
                 sliderModalState.isDirty = true;
             }
 
+            if (contentToEdit && typeof contentToEdit.auto_slide !== "undefined") {
+                sliderModalState.autoSlide = !!contentToEdit.auto_slide;
+            }
+
             sliderModalState.selectedIndex = 0;
 
             $("#content-edit-slide-textbox").off("input").on("input", function() {
-                HandleSliderTextChange($(this).val());
+                HandleSliderTextChange("data", $(this).val());
+            });
+
+            $("#content-edit-slide-subtext").off("input").on("input", function() {
+                HandleSliderTextChange("data_secondary", $(this).val());
             });
 
             $("#modalEditSliderSaveButton").off("click").on("click", function() {
@@ -972,18 +1002,26 @@
             });
 
             $("#modalEditSliderAddButton").off("click").on("click", function() {
-                CommitSliderTextbox();
+                CommitSliderTextboxes();
                 AddSliderSlide();
             });
 
             $("#modalEditSliderDeleteButton").off("click").on("click", function() {
-                CommitSliderTextbox();
+                CommitSliderTextboxes();
                 DeleteSliderSlide();
             });
 
             $("#modalEditSliderSelectMediaButton").off("click").on("click", function() {
-                CommitSliderTextbox();
+                CommitSliderTextboxes();
                 OpenSelectMediaModal('modalEditSlider', 'content-edit-slider-image', 'content-edit-slider-media-id', HandleSliderMediaSelected);
+            });
+
+            $("#content-edit-slider-auto-slide").off("change").on("change", function() {
+                var newValue = $(this).is(":checked");
+                if (sliderModalState.autoSlide !== newValue) {
+                    sliderModalState.autoSlide = newValue;
+                    sliderModalState.isDirty = true;
+                }
             });
 
             RenderSliderModal();
@@ -1589,6 +1627,9 @@
 
         let indicators = '';
         let slides = '';
+        const autoSlide = (typeof data.auto_slide !== "undefined") ? !!data.auto_slide : true;
+        const rideAttribute = autoSlide ? ' data-bs-ride="carousel"' : '';
+        const intervalValue = autoSlide ? 7000 : 'false';
 
         for (var position = 0; position < slideEntries.length; position++) {
             var entry = slideEntries[position];
@@ -1596,24 +1637,28 @@
             var isActive = position === 0;
             var slideTitleRaw = (typeof item.data !== "undefined" && item.data !== null) ? item.data : "";
             var slideTitle = escapeHtml(slideTitleRaw);
-            var ariaLabel = slideTitle !== "" ? slideTitle : `Slide ${position + 1}`;
+            var slideSubtitleRaw = (typeof item.data_secondary !== "undefined" && item.data_secondary !== null) ? item.data_secondary : "";
+            var slideSubtitle = escapeHtml(slideSubtitleRaw);
+            var ariaLabelSource = slideTitle !== "" ? slideTitle : (slideSubtitle !== "" ? slideSubtitle : `Slide ${position + 1}`);
+            var ariaLabel = ariaLabelSource;
             var imagePathValue = (typeof item.image_path !== "undefined" && item.image_path !== null) ? item.image_path : "";
             var imageSource = normalizeMediaPath(imagePathValue);
+            var subtitleHtml = slideSubtitle !== "" ? `<p>${slideSubtitle}</p>` : "";
 
             indicators += `<button type="button" data-bs-target="#${carouselId}" data-bs-slide-to="${position}" ${isActive ? 'class="active" aria-current="true"' : ''} aria-label="${ariaLabel}"></button>`;
 
             slides += `
-            <div class="carousel-item ${isActive ? 'active' : ''}" data-bs-interval="7000">
+            <div class="carousel-item ${isActive ? 'active' : ''}" data-bs-interval="${intervalValue}">
                 <img src="${imageSource}" class="d-block w-100">
                 <div class="carousel-caption d-block d-md-block text-shadow">
                     <h5>${slideTitle}</h5>
-                    <p></p>
+                    ${subtitleHtml}
                 </div>
             </div>`;
         }
 
 
-        return `<div id="${carouselId}" class="carousel slide" data-bs-ride="carousel">
+        return `<div id="${carouselId}" class="carousel slide"${rideAttribute} data-bs-interval="${intervalValue}">
                     <div class="carousel-indicators">
                         ${indicators}
                     </div>

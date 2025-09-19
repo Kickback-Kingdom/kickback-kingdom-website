@@ -439,9 +439,23 @@ if ($_vCanEditContent)
                 </div>
                 <div class="row mb-3">
                     <div class="col-12">
-                        <label for="content-edit-slide-textbox" class="form-label">Slide Text</label>
+                        <label for="content-edit-slide-textbox" class="form-label">Slide Title</label>
                         <input type="text" class="form-control" id="content-edit-slide-textbox">
                         <input type="hidden" id="content-edit-slider-media-id">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <label for="content-edit-slide-subtext" class="form-label">Slide Subtitle</label>
+                        <input type="text" class="form-control" id="content-edit-slide-subtext">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="content-edit-slider-auto-slide" checked>
+                            <label class="form-check-label" for="content-edit-slider-auto-slide">Auto Slide</label>
+                        </div>
                     </div>
                 </div>
             </div>
