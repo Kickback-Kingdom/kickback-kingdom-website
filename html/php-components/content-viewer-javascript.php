@@ -648,30 +648,107 @@
             autoSlide: true
         };
 
+        function parseSliderDataFields(rawData)
+        {
+            var result = { title: "", subtitle: "" };
+
+            if (typeof rawData === "string") {
+                var trimmed = rawData.trim();
+                if (trimmed.charAt(0) === "{") {
+                    try {
+                        var parsed = JSON.parse(trimmed);
+                        if (parsed && typeof parsed === "object") {
+                            if (typeof parsed.title === "string") {
+                                result.title = parsed.title;
+                            }
+                            if (typeof parsed.subtitle === "string") {
+                                result.subtitle = parsed.subtitle;
+                            }
+                        }
+                    } catch (error) {
+                        result.title = rawData;
+                        result.subtitle = "";
+                        return result;
+                    }
+
+                    if (result.title === "" && result.subtitle === "") {
+                        result.title = rawData;
+                    }
+                } else {
+                    result.title = rawData;
+                }
+            } else if (rawData && typeof rawData === "object") {
+                if (typeof rawData.title === "string") {
+                    result.title = rawData.title;
+                }
+                if (typeof rawData.subtitle === "string") {
+                    result.subtitle = rawData.subtitle;
+                }
+            }
+
+            return result;
+        }
+
+        function resolveSlideTextFields(slide)
+        {
+            if (!slide || typeof slide !== "object") {
+                return { title: "", subtitle: "" };
+            }
+
+            var hasTitleProp = Object.prototype.hasOwnProperty.call(slide, "title");
+            var hasSubtitleProp = Object.prototype.hasOwnProperty.call(slide, "subtitle");
+            var title = (typeof slide.title === "string") ? slide.title : "";
+            var subtitle = (typeof slide.subtitle === "string") ? slide.subtitle : "";
+
+            if (!hasTitleProp || !hasSubtitleProp) {
+                var parsed = parseSliderDataFields(slide.data);
+                if (!hasTitleProp) {
+                    title = parsed.title;
+                }
+                if (!hasSubtitleProp) {
+                    subtitle = parsed.subtitle;
+                }
+            }
+
+            return { title: title || "", subtitle: subtitle || "" };
+        }
+
+        function serializeSlideTextFields(title, subtitle)
+        {
+            return JSON.stringify({
+                title: (typeof title === "string") ? title : "",
+                subtitle: (typeof subtitle === "string") ? subtitle : ""
+            });
+        }
+
         function cloneSlideForModal(slide)
         {
+            var textFields = resolveSlideTextFields(slide);
             return {
                 content_detail_data_id: (typeof slide.content_detail_data_id !== "undefined") ? slide.content_detail_data_id : null,
                 data: (typeof slide.data !== "undefined" && slide.data !== null) ? slide.data : "",
-                data_secondary: (typeof slide.data_secondary !== "undefined" && slide.data_secondary !== null) ? slide.data_secondary : "",
                 data_order: (typeof slide.data_order !== "undefined") ? slide.data_order : 0,
                 image_path: (typeof slide.image_path !== "undefined" && slide.image_path !== null) ? slide.image_path : "",
                 media_id: (typeof slide.media_id !== "undefined" && slide.media_id !== null) ? slide.media_id : null,
                 inserted: (typeof slide.inserted !== "undefined") ? slide.inserted : false,
                 updated: (typeof slide.updated !== "undefined") ? slide.updated : false,
-                deleted: (typeof slide.deleted !== "undefined") ? slide.deleted : false
+                deleted: (typeof slide.deleted !== "undefined") ? slide.deleted : false,
+                title: textFields.title,
+                subtitle: textFields.subtitle
             };
         }
 
         function cloneSlideForSave(slide)
         {
+            var textFields = resolveSlideTextFields(slide);
             var cloned = {
                 content_detail_data_id: (typeof slide.content_detail_data_id !== "undefined") ? slide.content_detail_data_id : null,
-                data: (typeof slide.data !== "undefined" && slide.data !== null) ? slide.data : "",
-                data_secondary: (typeof slide.data_secondary !== "undefined" && slide.data_secondary !== null) ? slide.data_secondary : "",
+                data: serializeSlideTextFields(textFields.title, textFields.subtitle),
                 data_order: (typeof slide.data_order !== "undefined") ? slide.data_order : 0,
                 image_path: (typeof slide.image_path !== "undefined" && slide.image_path !== null) ? slide.image_path : "",
-                media_id: (typeof slide.media_id !== "undefined" && slide.media_id !== null) ? slide.media_id : null
+                media_id: (typeof slide.media_id !== "undefined" && slide.media_id !== null) ? slide.media_id : null,
+                title: textFields.title,
+                subtitle: textFields.subtitle
             };
 
             if (slide.inserted) {
@@ -691,12 +768,13 @@
         {
             return {
                 content_detail_data_id: null,
-                data: "",
-                data_secondary: "",
+                data: serializeSlideTextFields("", ""),
                 data_order: sliderModalState.slides.length,
                 image_path: "",
                 media_id: null,
-                inserted: true
+                inserted: true,
+                title: "",
+                subtitle: ""
             };
         }
 
@@ -716,12 +794,12 @@
         {
             var titleTextbox = $("#content-edit-slide-textbox");
             if (titleTextbox.length > 0) {
-                HandleSliderTextChange("data", titleTextbox.val());
+                HandleSliderTextChange("title", titleTextbox.val());
             }
 
             var subtitleTextbox = $("#content-edit-slide-subtext");
             if (subtitleTextbox.length > 0) {
-                HandleSliderTextChange("data_secondary", subtitleTextbox.val());
+                HandleSliderTextChange("subtitle", subtitleTextbox.val());
             }
         }
 
@@ -741,6 +819,29 @@
             }
 
             var newValue = (typeof value !== "undefined" && value !== null) ? value : "";
+
+            if (fieldName === "title" || fieldName === "subtitle") {
+                var textFields = resolveSlideTextFields(slide);
+                var currentValue = (fieldName === "title") ? textFields.title : textFields.subtitle;
+
+                if (newValue !== currentValue) {
+                    if (fieldName === "title") {
+                        slide.title = newValue;
+                        textFields.title = newValue;
+                    } else {
+                        slide.subtitle = newValue;
+                        textFields.subtitle = newValue;
+                    }
+
+                    slide.data = serializeSlideTextFields(textFields.title, textFields.subtitle);
+                    if (!slide.inserted) {
+                        slide.updated = true;
+                    }
+                    sliderModalState.isDirty = true;
+                }
+                return;
+            }
+
             var currentValue = (typeof slide[fieldName] !== "undefined" && slide[fieldName] !== null) ? slide[fieldName] : "";
 
             if (newValue !== currentValue) {
@@ -831,8 +932,9 @@
             $("#modalEditSliderDeleteButton").prop("disabled", visibleSlides.length <= 1);
 
             var currentSlide = sliderModalState.slides[sliderModalState.selectedIndex] || null;
-            var slideText = (currentSlide && typeof currentSlide.data !== "undefined" && currentSlide.data !== null) ? currentSlide.data : "";
-            var slideSubtitle = (currentSlide && typeof currentSlide.data_secondary !== "undefined" && currentSlide.data_secondary !== null) ? currentSlide.data_secondary : "";
+            var textFields = resolveSlideTextFields(currentSlide);
+            var slideText = textFields.title;
+            var slideSubtitle = textFields.subtitle;
             var mediaId = (currentSlide && typeof currentSlide.media_id !== "undefined" && currentSlide.media_id !== null) ? currentSlide.media_id : "";
             var imagePath = (currentSlide && typeof currentSlide.image_path !== "undefined" && currentSlide.image_path !== null) ? currentSlide.image_path : "";
 
@@ -990,11 +1092,11 @@
             sliderModalState.selectedIndex = 0;
 
             $("#content-edit-slide-textbox").off("input").on("input", function() {
-                HandleSliderTextChange("data", $(this).val());
+                HandleSliderTextChange("title", $(this).val());
             });
 
             $("#content-edit-slide-subtext").off("input").on("input", function() {
-                HandleSliderTextChange("data_secondary", $(this).val());
+                HandleSliderTextChange("subtitle", $(this).val());
             });
 
             $("#modalEditSliderSaveButton").off("click").on("click", function() {
@@ -1635,10 +1737,9 @@
             var entry = slideEntries[position];
             var item = entry.item;
             var isActive = position === 0;
-            var slideTitleRaw = (typeof item.data !== "undefined" && item.data !== null) ? item.data : "";
-            var slideTitle = escapeHtml(slideTitleRaw);
-            var slideSubtitleRaw = (typeof item.data_secondary !== "undefined" && item.data_secondary !== null) ? item.data_secondary : "";
-            var slideSubtitle = escapeHtml(slideSubtitleRaw);
+            var textFields = resolveSlideTextFields(item);
+            var slideTitle = escapeHtml(textFields.title);
+            var slideSubtitle = escapeHtml(textFields.subtitle);
             var ariaLabelSource = slideTitle !== "" ? slideTitle : (slideSubtitle !== "" ? slideSubtitle : `Slide ${position + 1}`);
             var ariaLabel = ariaLabelSource;
             var imagePathValue = (typeof item.image_path !== "undefined" && item.image_path !== null) ? item.image_path : "";
