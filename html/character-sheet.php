@@ -77,7 +77,7 @@ if (Session::isLoggedIn()) {
 
 $winRate = ($totalWins + $totalLosses) > 0 ? ($totalWins / ($totalWins + $totalLosses)) * 100 : 0;
 $expProgress = 0;
-$prestige = $character->prestige ?? 0;
+$prestige = $character?->prestige ?? 0;
 $badgeCount = is_array($badges) ? count($badges) : 0;
 $inventoryItemCount = 0;
 $inventoryUniqueCount = count($inventoryStacks);
@@ -85,6 +85,14 @@ $inventoryUniqueCount = count($inventoryStacks);
 foreach ($inventoryStacks as $stack) {
     $inventoryItemCount += (int) $stack->amount;
 }
+
+$bannerMedia = $character?->banner;
+$playerCardBorder = $character?->playerCardBorder;
+$accountTitle = $character?->getAccountTitle() ?? 'Adventurer';
+$displayUsername = $character?->username ?? 'Adventurer';
+$displayLevel = (int) ($character?->level ?? 0);
+$lifetimeExp = (int) ($character?->exp ?? 0);
+$nextLevelExp = max(0, (int) (($character?->expGoal ?? 0) - ($character?->expCurrent ?? 0)));
 
 if ($character !== null) {
     $expRange = max(1, ($character->expGoal ?? 0) - ($character->expStarted ?? 0));
@@ -123,8 +131,8 @@ $activePageName = "Character Sheet";
         <?php else : ?>
             <section class="card border-0 shadow-sm overflow-hidden mb-4">
                 <div class="position-relative" style="min-height: 220px;">
-                    <?php if ($character !== null && $character->banner !== null && $character->banner->isValid()) : ?>
-                        <img src="<?= htmlspecialchars($character->banner->url); ?>" class="w-100 h-100 object-fit-cover" alt="Character banner">
+                    <?php if ($bannerMedia?->isValid()) : ?>
+                        <img src="<?= htmlspecialchars($bannerMedia->url); ?>" class="w-100 h-100 object-fit-cover" alt="Character banner">
                     <?php else : ?>
                         <div class="w-100 h-100 bg-dark" style="opacity: 0.65;"></div>
                     <?php endif; ?>
@@ -133,16 +141,17 @@ $activePageName = "Character Sheet";
                         <div class="d-flex align-items-center gap-3">
                             <div class="position-relative">
                                 <?php
-                                $avatarUrl = $character->avatar?->url ?? ($character?->profilePictureURL() ?? '');
+<?php
+                                $avatarUrl = $character?->avatar?->url ?? ($character?->profilePictureURL() ?? '');
                                 ?>
                                 <img src="<?= htmlspecialchars($avatarUrl); ?>" class="rounded-circle border border-3 border-success-subtle" style="width: 96px; height: 96px; object-fit: cover;" alt="Character avatar">
-                                <?php if ($character->playerCardBorder !== null && $character->playerCardBorder->isValid()) : ?>
-                                    <img src="<?= htmlspecialchars($character->playerCardBorder->url); ?>" class="position-absolute top-50 start-50 translate-middle" style="width: 120px; height: 120px; object-fit: contain;" alt="Player card border">
+                                <?php if ($playerCardBorder?->isValid()) : ?>
+                                    <img src="<?= htmlspecialchars($playerCardBorder->url); ?>" class="position-absolute top-50 start-50 translate-middle" style="width: 120px; height: 120px; object-fit: contain;" alt="Player card border">
                                 <?php endif; ?>
                             </div>
                             <div>
-                                <p class="text-uppercase small mb-1 letter-spacing">Level <?= (int) ($character->level ?? 0); ?> <?= htmlspecialchars($character->getAccountTitle()); ?></p>
-                                <h1 class="display-5 fw-bold mb-2"><?= htmlspecialchars($character->username ?? 'Adventurer'); ?></h1>
+                                <p class="text-uppercase small mb-1 letter-spacing">Level <?= $displayLevel; ?> <?= htmlspecialchars($accountTitle); ?></p>
+                                <h1 class="display-5 fw-bold mb-2"><?= htmlspecialchars($displayUsername); ?></h1>
                                 <div class="d-flex flex-wrap gap-3">
                                     <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-3 py-2">Prestige <?= (int) $prestige; ?></span>
                                     <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle px-3 py-2">Badges <?= (int) $badgeCount; ?></span>
@@ -157,11 +166,11 @@ $activePageName = "Character Sheet";
                     <div class="row g-4">
                         <div class="col-lg-6">
                             <h2 class="h5 text-uppercase text-secondary">Experience</h2>
-                            <p class="mb-1"><?= number_format((int) ($character->exp ?? 0)); ?> lifetime EXP</p>
+                            <p class="mb-1"><?= number_format($lifetimeExp); ?> lifetime EXP</p>
                             <div class="progress" style="height: 0.75rem;">
                                 <div class="progress-bar bg-success" role="progressbar" style="width: <?= number_format($expProgress, 2); ?>%;" aria-valuenow="<?= number_format($expProgress, 2); ?>" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
-                            <small class="text-secondary d-block mt-2">Next level in <?= max(0, (int) (($character->expGoal ?? 0) - ($character->expCurrent ?? 0))); ?> EXP</small>
+                            <small class="text-secondary d-block mt-2">Next level in <?= $nextLevelExp; ?> EXP</small>
                         </div>
                         <div class="col-lg-6">
                             <h2 class="h5 text-uppercase text-secondary">Battle Record</h2>
