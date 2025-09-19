@@ -1049,8 +1049,9 @@
             copyButton.type = 'button';
             copyButton.className = 'btn btn-sm btn-outline-secondary markdown-copy-button';
             copyButton.setAttribute('aria-label', 'Copy code');
+            copyButton.setAttribute('title', 'Copy code');
             copyButton.setAttribute('data-code-text', code.textContent || '');
-            copyButton.textContent = 'Copy';
+            copyButton.innerHTML = '<i class="fa-regular fa-copy" aria-hidden="true"></i><span class="visually-hidden">Copy code</span>';
 
             wrapper.appendChild(copyButton);
         });
@@ -1071,19 +1072,29 @@
             return;
         }
 
-        const originalLabel = button.data('original-label') || button.text();
+        const originalLabel = button.data('original-label') || button.html();
+        const originalAria = button.data('original-aria') || button.attr('aria-label');
+        const originalTitle = button.data('original-title') || button.attr('title');
         button.data('original-label', originalLabel);
+        button.data('original-aria', originalAria);
+        button.data('original-title', originalTitle);
 
         const showFeedback = (text, stateClass) => {
-            button.text(text);
+            const iconClass = stateClass === 'copy-error' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-check';
+            const iconHtml = '<i class="' + iconClass + '" aria-hidden="true"></i><span class="visually-hidden">' + text + '</span>';
+            button.html(iconHtml);
+            button.attr('aria-label', text);
+            button.attr('title', text);
             button.removeClass('copy-success copy-error');
             if (stateClass) {
                 button.addClass(stateClass);
             }
 
             setTimeout(() => {
-                button.text(button.data('original-label'));
+                button.html(button.data('original-label'));
                 button.removeClass('copy-success copy-error');
+                button.attr('aria-label', button.data('original-aria') || 'Copy code');
+                button.attr('title', button.data('original-title') || 'Copy code');
             }, 2000);
         };
 
