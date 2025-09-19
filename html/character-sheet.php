@@ -141,6 +141,7 @@ $activePageName = "Character Sheet";
                         <div class="d-flex align-items-center gap-3">
                             <div class="position-relative">
                                 <?php
+<?php
                                 $avatarUrl = $character?->avatar?->url ?? ($character?->profilePictureURL() ?? '');
                                 ?>
                                 <img src="<?= htmlspecialchars($avatarUrl); ?>" class="rounded-circle border border-3 border-success-subtle" style="width: 96px; height: 96px; object-fit: cover;" alt="Character avatar">
