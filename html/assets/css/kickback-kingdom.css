@@ -1138,3 +1138,83 @@ animation: confetti-fast 1.25s linear 1 forwards;
     display: inline-block;
     padding: 0.125rem 0.25rem;
 }
+
+.markdown-content {
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    color: #212529;
+}
+
+.markdown-content p {
+    line-height: 1.7;
+}
+
+.markdown-content blockquote,
+.markdown-blockquote {
+    border-left: 4px solid var(--bs-primary);
+    background-color: rgba(120, 81, 169, 0.05);
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    font-style: italic;
+    color: #4a3f63;
+}
+
+.markdown-code-block {
+    margin: 1.5rem 0;
+}
+
+.markdown-pre,
+.markdown-content pre {
+    background-color: #1e1e1e;
+    color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow: auto;
+    font-family: 'Fira Code', 'SFMono-Regular', Menlo, Monaco, Consolas, "Liberation Mono", 'Courier New', monospace;
+    font-size: 0.875rem;
+    position: relative;
+}
+
+.markdown-content pre code,
+.markdown-code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+}
+
+.markdown-inline-code,
+.markdown-content :not(pre) > code {
+    background-color: rgba(120, 81, 169, 0.15);
+    border-radius: 0.25rem;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.85em;
+    font-family: 'Fira Code', 'SFMono-Regular', Menlo, Monaco, Consolas, "Liberation Mono", 'Courier New', monospace;
+    color: #4a3f63;
+}
+
+.markdown-copy-button {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: opacity 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    opacity: 0.8;
+}
+
+.markdown-code-block:hover .markdown-copy-button {
+    opacity: 1;
+}
+
+.markdown-copy-button.copy-success {
+    background-color: var(--bs-success);
+    color: #fff;
+    border-color: var(--bs-success);
+}
+
+.markdown-copy-button.copy-error {
+    background-color: var(--bs-danger);
+    color: #fff;
+    border-color: var(--bs-danger);
+}
