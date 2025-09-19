@@ -633,10 +633,12 @@
                 break;
 
             case 11:
+                //header
                 htmlContent = `<p>Error with element: ${JSON.stringify(contentElement)}</p>`;
                 break;
 
             case 12:
+                //button
                 htmlContent = `<p>Error with element: ${JSON.stringify(contentElement)}</p>`;
                 break;
 
