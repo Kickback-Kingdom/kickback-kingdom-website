@@ -416,34 +416,38 @@ if ($_vCanEditContent)
                 
                 <div class="row mb-3">
                     <div class="col-12">
-                        <div class="btn-group me-2" role="group" aria-label="First group">
-                            <button type="button" class="btn btn-primary">1</button>
-                            <button type="button" class="btn bg-ranked-1">2</button>
-                            <button type="button" class="btn btn-primary">3</button>
-                            <button type="button" class="btn btn-primary"><i class="fa-solid fa-plus"></i></button>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <div class="btn-group flex-wrap" id="slider-slide-buttons" role="group" aria-label="Slides"></div>
+                            <button type="button" class="btn btn-primary" id="modalEditSliderAddButton" aria-label="Add slide">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                            <div class="ms-auto d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-primary" id="modalEditSliderSelectMediaButton">
+                                    <i class="fa-solid fa-image me-1"></i> Select Media
+                                </button>
+                                <button type="button" class="btn btn-danger" id="modalEditSliderDeleteButton">Delete Slide</button>
+                            </div>
                         </div>
-                            <button type="button" class="btn btn-danger float-end mx-1">Delete Slide</button>
-                            <button type="button" class="btn btn-primary float-end mx-1" onclick="OpenSelectMediaModal('modalEditSlider')">Select Media</button>
                     </div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-12">
-                        <div class="ratio ratio-16x9">
-                            <img src="/assets/media/" class="figure-img img-fluid rounded" style="background-color: black;">
+                        <div class="ratio ratio-16x9 border rounded bg-black overflow-hidden d-flex align-items-center justify-content-center">
+                            <img src="/assets/media/items/placeholder.png" class="figure-img img-fluid rounded" id="content-edit-slider-image" alt="Slider preview">
                         </div>
                     </div>
                 </div>
                 <div class="row mb-3">
-                    
                     <div class="col-12">
                         <label for="content-edit-slide-textbox" class="form-label">Slide Text</label>
-                        <input type="text" class="form-control" id="content-edit-slide-textbox" >
+                        <input type="text" class="form-control" id="content-edit-slide-textbox">
+                        <input type="hidden" id="content-edit-slider-media-id">
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn bg-ranked-1">Apply changes</button>
+                <button type="button" class="btn bg-ranked-1" id="modalEditSliderSaveButton">Apply changes</button>
             </div>
         </div>
     </div>
