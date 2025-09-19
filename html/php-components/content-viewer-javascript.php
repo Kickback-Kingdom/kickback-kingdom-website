@@ -360,7 +360,7 @@
                 break;
 
             case 11:
-                //header
+                OpenEditModal_Header(index);
                 break;
             case 12:
                 //button link
@@ -633,8 +633,7 @@
                 break;
 
             case 11:
-                //header
-                htmlContent = `<p>Error with element: ${JSON.stringify(contentElement)}</p>`;
+                htmlContent = `<h2 class="display-6">${GetContentElementData(contentElement)}</h2>`;
                 break;
 
             case 12:

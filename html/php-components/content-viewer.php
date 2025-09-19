@@ -124,8 +124,8 @@ if ($_vCanEditContent)
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <label for="content-edit-heaeder-textbox" class="form-label">Enter a Header</label>
-        <input class="form-control form-control-lg" type="text" id="content-edit-heaeder-textbox">
+        <label for="content-edit-header-textbox" class="form-label">Enter a Header</label>
+        <input class="form-control form-control-lg" type="text" id="content-edit-header-textbox">
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
