@@ -132,7 +132,10 @@ $activePageName = "Character Sheet";
                     <div class="position-absolute bottom-0 start-0 p-4 p-lg-5 text-white">
                         <div class="d-flex align-items-center gap-3">
                             <div class="position-relative">
-                                <img src="<?= htmlspecialchars($character->avatar?->url ?? $character->profilePictureURL()); ?>" class="rounded-circle border border-3 border-success-subtle" style="width: 96px; height: 96px; object-fit: cover;" alt="Character avatar">
+                                <?php
+                                $avatarUrl = $character->avatar?->url ?? ($character?->profilePictureURL() ?? '');
+                                ?>
+                                <img src="<?= htmlspecialchars($avatarUrl); ?>" class="rounded-circle border border-3 border-success-subtle" style="width: 96px; height: 96px; object-fit: cover;" alt="Character avatar">
                                 <?php if ($character->playerCardBorder !== null && $character->playerCardBorder->isValid()) : ?>
                                     <img src="<?= htmlspecialchars($character->playerCardBorder->url); ?>" class="position-absolute top-50 start-50 translate-middle" style="width: 120px; height: 120px; object-fit: contain;" alt="Player card border">
                                 <?php endif; ?>
