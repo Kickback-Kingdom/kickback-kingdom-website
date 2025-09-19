@@ -1249,6 +1249,133 @@ animation: confetti-fast 1.25s linear 1 forwards;
     color: #4a3f63;
 }
 
+.markdown-table-wrapper {
+    margin: 1.75rem 0;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(243, 244, 246, 0.9));
+    overflow: hidden;
+}
+
+.markdown-table-wrapper.table-responsive {
+    padding: 0;
+}
+
+.markdown-table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    color: #1f2937;
+    background-color: transparent;
+}
+
+.markdown-table thead,
+.markdown-table-head {
+    background: linear-gradient(135deg, rgba(120, 81, 169, 0.92), rgba(94, 58, 146, 0.92));
+    color: #f9fafb;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.markdown-table thead th,
+.markdown-table-head th {
+    border: none;
+    padding: 0.9rem 1.25rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    position: relative;
+    white-space: nowrap;
+}
+
+.markdown-table thead th::after,
+.markdown-table-head th::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.45);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.markdown-table thead th:hover::after,
+.markdown-table-head th:hover::after {
+    opacity: 1;
+}
+
+.markdown-table tbody tr {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.markdown-table tbody tr:nth-child(even) {
+    background-color: rgba(148, 163, 184, 0.12);
+}
+
+.markdown-table tbody tr:nth-child(odd) {
+    background-color: rgba(255, 255, 255, 0.92);
+}
+
+.markdown-table tbody tr:hover {
+    background-color: rgba(120, 81, 169, 0.12);
+    box-shadow: inset 0 0 0 999px rgba(120, 81, 169, 0.08);
+    transform: translateY(-1px);
+}
+
+.markdown-table tbody td {
+    padding: 0.85rem 1.25rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.25);
+    font-size: 0.9rem;
+    vertical-align: middle;
+}
+
+.markdown-table tbody tr:first-child td {
+    border-top: none;
+}
+
+.markdown-table tbody td:first-child {
+    font-weight: 500;
+    color: #43375a;
+}
+
+.markdown-table tbody td:last-child {
+    white-space: nowrap;
+}
+
+.markdown-table tfoot td {
+    padding: 0.85rem 1.25rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.35);
+    background-color: rgba(243, 244, 246, 0.9);
+    font-weight: 600;
+}
+
+.markdown-table-caption {
+    caption-side: bottom;
+    padding: 0.75rem 1.25rem 1rem;
+    color: #6b7280;
+    font-size: 0.85rem;
+    text-align: left;
+    background: rgba(243, 244, 246, 0.92);
+}
+
+.markdown-table-wrapper::-webkit-scrollbar {
+    height: 0.6rem;
+}
+
+.markdown-table-wrapper::-webkit-scrollbar-track {
+    background: rgba(120, 81, 169, 0.08);
+}
+
+.markdown-table-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(120, 81, 169, 0.45);
+    border-radius: 999px;
+}
+
+.markdown-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(120, 81, 169, 0.65);
+}
+
 .markdown-copy-button {
     position: absolute;
     top: 0.6rem;
