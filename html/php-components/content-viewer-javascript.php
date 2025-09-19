@@ -332,10 +332,6 @@
                 OpenEditModal_Paragraph(index);
                 break;
 
-            case 11:
-                OpenEditModal_Markdown(index);
-                break;
-
             case 4:
                 OpenEditModal_List(index);
                 break;
@@ -362,12 +358,20 @@
             case 10:
                 OpenEditModal_Code(index);
                 break;
+
+            case 11:
+                //header
+                break;
+            case 12:
+                //button link
+                break;
+            case 13:
+                OpenEditModal_Markdown(index);
+                break;
+
             default:
-                if (contentElementTypeName === 'Markdown') {
-                    OpenEditModal_Markdown(index);
-                } else {
-                    console.error(`Error with element: ${JSON.stringify(contentToEdit)}`);
-                }
+                
+                console.error(`Error with element: ${JSON.stringify(contentToEdit)}`);
                 break;
         }
     }
@@ -580,9 +584,6 @@
             case 3:
                 htmlContent = `<p>${GetContentElementData(contentElement)}</p>`;
                 break;
-            case 11:
-                htmlContent = `<div class="markdown-content">${renderMarkdownToHtml(GetContentElementData(contentElement))}</div>`;
-                break;
             case 4:
                 htmlContent = '<ul>';
                 var order = 0;
@@ -631,13 +632,21 @@
                 htmlContent = `<pre class="prettyprint linenums"><code>${escapeHtml(GetContentElementData(contentElement))}</code></pre>`;
                 break;
 
+            case 11:
+                htmlContent = `<p>Error with element: ${JSON.stringify(contentElement)}</p>`;
+                break;
+
+            case 12:
+                htmlContent = `<p>Error with element: ${JSON.stringify(contentElement)}</p>`;
+                break;
+
+            case 13:
+                htmlContent = `<div class="markdown-content">${renderMarkdownToHtml(GetContentElementData(contentElement))}</div>`;
+                break;
 
             default:
-                if (contentElement["content_type_name"] === 'Markdown') {
-                    htmlContent = `<div class="markdown-content">${renderMarkdownToHtml(GetContentElementData(contentElement))}</div>`;
-                } else {
-                    htmlContent = `<p>Error with element: ${JSON.stringify(contentElement)}</p>`;
-                }
+                
+                htmlContent = `<p>Error with element: ${JSON.stringify(contentElement)}</p>`;
                 break;
         }
 
