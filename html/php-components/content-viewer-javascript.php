@@ -12,7 +12,7 @@
 
     function parseSliderDataFields(rawData)
     {
-        var result = { title: "", subtitle: "" };
+        var result = { title: "", subtitle: "", autoSlide: null };
 
         if (typeof rawData === "string") {
             var trimmed = rawData.trim();
@@ -25,6 +25,11 @@
                         }
                         if (typeof parsed.subtitle === "string") {
                             result.subtitle = parsed.subtitle;
+                        }
+                        if (typeof parsed.autoSlide === "boolean") {
+                            result.autoSlide = parsed.autoSlide;
+                        } else if (typeof parsed.auto_slide === "boolean") {
+                            result.autoSlide = parsed.auto_slide;
                         }
                     }
                 } catch (error) {
@@ -46,6 +51,11 @@
             if (typeof rawData.subtitle === "string") {
                 result.subtitle = rawData.subtitle;
             }
+            if (typeof rawData.autoSlide === "boolean") {
+                result.autoSlide = rawData.autoSlide;
+            } else if (typeof rawData.auto_slide === "boolean") {
+                result.autoSlide = rawData.auto_slide;
+            }
         }
 
         return result;
@@ -54,13 +64,14 @@
     function resolveSlideTextFields(slide)
     {
         if (!slide || typeof slide !== "object") {
-            return { title: "", subtitle: "" };
+            return { title: "", subtitle: "", autoSlide: null };
         }
 
         var hasTitleProp = Object.prototype.hasOwnProperty.call(slide, "title");
         var hasSubtitleProp = Object.prototype.hasOwnProperty.call(slide, "subtitle");
         var title = (typeof slide.title === "string") ? slide.title : "";
         var subtitle = (typeof slide.subtitle === "string") ? slide.subtitle : "";
+        var autoSlide = null;
 
         if (!hasTitleProp || !hasSubtitleProp) {
             var parsed = parseSliderDataFields(slide.data);
@@ -70,17 +81,70 @@
             if (!hasSubtitleProp) {
                 subtitle = parsed.subtitle;
             }
+            if (parsed.autoSlide !== null) {
+                autoSlide = parsed.autoSlide;
+            }
         }
 
-        return { title: title || "", subtitle: subtitle || "" };
+        return { title: title || "", subtitle: subtitle || "", autoSlide: autoSlide };
     }
 
-    function serializeSlideTextFields(title, subtitle)
+    function serializeSlideTextFields(title, subtitle, autoSlide = null)
     {
-        return JSON.stringify({
+        var payload = {
             title: (typeof title === "string") ? title : "",
             subtitle: (typeof subtitle === "string") ? subtitle : ""
-        });
+        };
+
+        if (typeof autoSlide === "boolean") {
+            payload.autoSlide = autoSlide;
+        }
+
+        return JSON.stringify(payload);
+    }
+
+    function resolveSliderAutoSlideValue(contentElement, slideItems, fallback = true)
+    {
+        if (contentElement && typeof contentElement.auto_slide !== "undefined") {
+            return !!contentElement.auto_slide;
+        }
+
+        if (Array.isArray(slideItems)) {
+            for (var index = 0; index < slideItems.length; index++) {
+                var slide = slideItems[index];
+                if (!slide) {
+                    continue;
+                }
+
+                if (typeof slide.autoSlide === "boolean") {
+                    if (contentElement) {
+                        contentElement.auto_slide = slide.autoSlide;
+                    }
+                    return slide.autoSlide;
+                }
+
+                if (typeof slide.auto_slide === "boolean") {
+                    if (contentElement) {
+                        contentElement.auto_slide = slide.auto_slide;
+                    }
+                    return slide.auto_slide;
+                }
+
+                var parsed = parseSliderDataFields(slide.data);
+                if (typeof parsed.autoSlide === "boolean") {
+                    if (contentElement) {
+                        contentElement.auto_slide = parsed.autoSlide;
+                    }
+                    return parsed.autoSlide;
+                }
+            }
+        }
+
+        if (contentElement) {
+            contentElement.auto_slide = fallback;
+        }
+
+        return fallback;
     }
 
 
@@ -744,7 +808,7 @@
             var textFields = resolveSlideTextFields(slide);
             var cloned = {
                 content_detail_data_id: (typeof slide.content_detail_data_id !== "undefined") ? slide.content_detail_data_id : null,
-                data: serializeSlideTextFields(textFields.title, textFields.subtitle),
+                data: serializeSlideTextFields(textFields.title, textFields.subtitle, sliderModalState.autoSlide),
                 data_order: (typeof slide.data_order !== "undefined") ? slide.data_order : 0,
                 image_path: (typeof slide.image_path !== "undefined" && slide.image_path !== null) ? slide.image_path : "",
                 media_id: (typeof slide.media_id !== "undefined" && slide.media_id !== null) ? slide.media_id : null,
@@ -769,7 +833,7 @@
         {
             return {
                 content_detail_data_id: null,
-                data: serializeSlideTextFields("", ""),
+                data: serializeSlideTextFields("", "", sliderModalState.autoSlide),
                 data_order: sliderModalState.slides.length,
                 image_path: "",
                 media_id: null,
@@ -834,7 +898,7 @@
                         textFields.subtitle = newValue;
                     }
 
-                    slide.data = serializeSlideTextFields(textFields.title, textFields.subtitle);
+                    slide.data = serializeSlideTextFields(textFields.title, textFields.subtitle, sliderModalState.autoSlide);
                     if (!slide.inserted) {
                         slide.updated = true;
                     }
@@ -1088,6 +1152,8 @@
 
             if (contentToEdit && typeof contentToEdit.auto_slide !== "undefined") {
                 sliderModalState.autoSlide = !!contentToEdit.auto_slide;
+            } else {
+                sliderModalState.autoSlide = resolveSliderAutoSlideValue(contentToEdit, sliderModalState.slides, sliderModalState.autoSlide);
             }
 
             sliderModalState.selectedIndex = 0;
@@ -1730,7 +1796,8 @@
 
         let indicators = '';
         let slides = '';
-        const autoSlide = (typeof data.auto_slide !== "undefined") ? !!data.auto_slide : true;
+        const slideItems = slideEntries.map(function(entry) { return entry.item; });
+        const autoSlide = resolveSliderAutoSlideValue(data, slideItems, true);
         const rideAttribute = autoSlide ? ' data-bs-ride="carousel"' : '';
         const intervalValue = autoSlide ? 7000 : 'false';
 
