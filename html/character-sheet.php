@@ -109,6 +109,687 @@ $inventoryPreview = array_slice($inventoryStacks, 0, 6);
 arsort($activityBreakdown);
 $topActivities = array_slice($activityBreakdown, 0, 4, true);
 
+$skillTier = static function (float $score): string {
+    if ($score >= 100) {
+        return 'Legendary';
+    }
+    if ($score >= 80) {
+        return 'Grandmaster';
+    }
+    if ($score >= 60) {
+        return 'Master';
+    }
+    if ($score >= 40) {
+        return 'Expert';
+    }
+    if ($score >= 20) {
+        return 'Journeyman';
+    }
+
+    return 'Novice';
+};
+
+$tierBadgeClasses = [
+    'Legendary' => 'bg-warning-subtle text-warning-emphasis',
+    'Grandmaster' => 'bg-success-subtle text-success-emphasis',
+    'Master' => 'bg-info-subtle text-info-emphasis',
+    'Expert' => 'bg-primary-subtle text-primary-emphasis',
+    'Journeyman' => 'bg-secondary-subtle text-secondary-emphasis',
+    'Novice' => 'bg-light text-secondary',
+];
+
+$gameSkillMatrix = [
+    1 => [
+        'stats' => [
+            'Intelligence' => 0.85,
+            'Wisdom' => 0.75,
+            'Charisma' => 0.35,
+            'Focus' => 0.9,
+        ],
+        'skills' => [
+            'Grand Strategy' => 1.1,
+            'Diplomacy' => 1.0,
+            'Economic Stewardship' => 0.95,
+            'Civic Planning' => 0.85,
+        ],
+    ],
+    2 => [
+        'stats' => [
+            'Endurance' => 0.8,
+            'Perception' => 0.75,
+            'Cunning' => 0.55,
+            'Intelligence' => 0.5,
+        ],
+        'skills' => [
+            'Tactical Command' => 1.05,
+            'Siegecraft' => 0.95,
+            'Logistics' => 0.85,
+            'Combined Arms Strategy' => 0.9,
+        ],
+    ],
+    3 => [
+        'stats' => [
+            'Endurance' => 0.8,
+            'Perception' => 0.7,
+            'Cunning' => 0.6,
+            'Intelligence' => 0.55,
+        ],
+        'skills' => [
+            'Tactical Command' => 1.0,
+            'Siegecraft' => 0.9,
+            'Armored Warfare' => 0.95,
+            'Logistics' => 0.8,
+        ],
+    ],
+    4 => [
+        'stats' => [
+            'Strength' => 0.95,
+            'Dexterity' => 0.85,
+            'Agility' => 1.0,
+            'Endurance' => 0.6,
+        ],
+        'skills' => [
+            'Martial Arts' => 1.1,
+            'Reflex Mastery' => 1.0,
+            'Brawling' => 0.95,
+            'Combo Theory' => 0.8,
+        ],
+    ],
+    5 => [
+        'stats' => [
+            'Perception' => 0.95,
+            'Endurance' => 0.85,
+            'Cunning' => 0.6,
+            'Focus' => 0.75,
+        ],
+        'skills' => [
+            'Marksmanship' => 1.1,
+            'Tactical Awareness' => 1.0,
+            'Shooting Accuracy' => 1.05,
+            'Survival' => 0.8,
+            'Lock Picking' => 0.4,
+        ],
+    ],
+    6 => [
+        'stats' => [
+            'Endurance' => 0.75,
+            'Intelligence' => 0.65,
+            'Spirit' => 0.55,
+            'Perception' => 0.6,
+        ],
+        'skills' => [
+            'Engineering' => 1.05,
+            'Navigation' => 0.9,
+            'Deep Sea Survival' => 0.95,
+            'Medical Response' => 0.85,
+            'Lock Picking' => 0.55,
+        ],
+    ],
+    7 => [
+        'stats' => [
+            'Strength' => 0.85,
+            'Spirit' => 0.9,
+            'Endurance' => 0.8,
+            'Cunning' => 0.5,
+        ],
+        'skills' => [
+            'Swordsmanship' => 1.0,
+            'Arcane Studies' => 0.95,
+            'Shadowcraft' => 0.85,
+            'Demon Hunting' => 0.9,
+        ],
+    ],
+    8 => [
+        'stats' => [
+            'Intelligence' => 0.9,
+            'Wisdom' => 0.85,
+            'Focus' => 0.9,
+            'Cunning' => 0.6,
+        ],
+        'skills' => [
+            'Card Tactics' => 1.1,
+            'Arcane Studies' => 0.9,
+            'Resource Forecasting' => 0.85,
+            'Bluffing' => 0.7,
+        ],
+    ],
+    9 => [
+        'stats' => [
+            'Strength' => 0.8,
+            'Agility' => 1.0,
+            'Dexterity' => 0.85,
+            'Endurance' => 0.7,
+        ],
+        'skills' => [
+            'Martial Arts' => 1.0,
+            'Stage Control' => 0.95,
+            'Reflex Mastery' => 1.05,
+            'Edgeguarding' => 0.9,
+        ],
+    ],
+    10 => [
+        'stats' => [
+            'Intelligence' => 0.85,
+            'Creativity' => 1.05,
+            'Spirit' => 0.8,
+            'Focus' => 0.75,
+        ],
+        'skills' => [
+            'Programming' => 1.1,
+            'Creative Design' => 1.05,
+            'Cooperative Command' => 0.9,
+            'Systems Architecture' => 0.95,
+        ],
+    ],
+    11 => [
+        'stats' => [
+            'Cunning' => 0.85,
+            'Perception' => 0.7,
+            'Luck' => 0.6,
+            'Intelligence' => 0.55,
+        ],
+        'skills' => [
+            'Siegecraft' => 0.9,
+            'Explosives Handling' => 1.0,
+            'Wind Calculation' => 0.8,
+            'Trick Shots' => 0.85,
+        ],
+    ],
+    12 => [
+        'stats' => [
+            'Agility' => 0.9,
+            'Perception' => 0.85,
+            'Endurance' => 0.8,
+            'Charisma' => 0.55,
+        ],
+        'skills' => [
+            'Marksmanship' => 1.05,
+            'Team Coordination' => 1.0,
+            'Mobility Training' => 0.95,
+            'Clutch Factor' => 0.8,
+            'Lock Picking' => 0.35,
+        ],
+    ],
+    13 => [
+        'stats' => [
+            'Dexterity' => 0.85,
+            'Cunning' => 0.75,
+            'Luck' => 0.55,
+            'Focus' => 0.6,
+        ],
+        'skills' => [
+            'Ability Synergy' => 1.0,
+            'Reflex Mastery' => 0.9,
+            'Build Crafting' => 0.95,
+            'Chaos Management' => 0.85,
+        ],
+    ],
+    14 => [
+        'stats' => [
+            'Agility' => 0.85,
+            'Dexterity' => 0.8,
+            'Endurance' => 0.55,
+            'Luck' => 0.45,
+        ],
+        'skills' => [
+            'Footwork' => 1.05,
+            'Reflex Mastery' => 0.95,
+            'Positional Awareness' => 0.8,
+            'Balance' => 0.75,
+        ],
+    ],
+    15 => [
+        'stats' => [
+            'Wisdom' => 0.8,
+            'Charisma' => 0.75,
+            'Focus' => 0.7,
+            'Creativity' => 0.65,
+        ],
+        'skills' => [
+            'Social Deduction' => 1.05,
+            'Bluffing' => 1.0,
+            'Card Tactics' => 0.9,
+            'Table Etiquette' => 0.8,
+        ],
+    ],
+    16 => [
+        'stats' => [
+            'Wisdom' => 0.85,
+            'Spirit' => 0.8,
+            'Intelligence' => 0.75,
+            'Charisma' => 0.55,
+        ],
+        'skills' => [
+            'Mythic Command' => 1.05,
+            'Grand Strategy' => 0.95,
+            'Divine Favor' => 0.8,
+            'Economic Stewardship' => 0.75,
+        ],
+    ],
+    17 => [
+        'stats' => [
+            'Cunning' => 0.9,
+            'Perception' => 0.85,
+            'Charisma' => 0.7,
+            'Focus' => 0.65,
+        ],
+        'skills' => [
+            'Social Deduction' => 1.1,
+            'Observation' => 1.05,
+            'Bluffing' => 0.95,
+            'Stealth Signaling' => 0.85,
+            'Lock Picking' => 0.7,
+        ],
+    ],
+    18 => [
+        'stats' => [
+            'Spirit' => 0.85,
+            'Cunning' => 0.7,
+            'Intelligence' => 0.65,
+            'Perception' => 0.6,
+        ],
+        'skills' => [
+            'Runic Lore' => 1.0,
+            'Arcane Studies' => 0.9,
+            'Shadowcraft' => 0.85,
+            'Temporal Navigation' => 0.8,
+        ],
+    ],
+    19 => [
+        'stats' => [
+            'Endurance' => 0.8,
+            'Perception' => 0.75,
+            'Creativity' => 0.6,
+            'Spirit' => 0.65,
+        ],
+        'skills' => [
+            'Exploration' => 1.05,
+            'Navigation' => 1.0,
+            'Cartography' => 0.9,
+            'Survival' => 0.85,
+            'Lock Picking' => 0.6,
+        ],
+    ],
+    20 => [
+        'stats' => [
+            'Agility' => 0.85,
+            'Focus' => 0.9,
+            'Dexterity' => 0.7,
+            'Perception' => 0.65,
+        ],
+        'skills' => [
+            'Racing Lines' => 1.1,
+            'Vehicle Handling' => 1.0,
+            'Split-Second Decisions' => 0.9,
+            'Reflex Mastery' => 0.8,
+        ],
+    ],
+    21 => [
+        'stats' => [
+            'Luck' => 0.8,
+            'Cunning' => 0.6,
+            'Focus' => 0.55,
+            'Charisma' => 0.45,
+        ],
+        'skills' => [
+            'Bluffing' => 0.95,
+            'Mind Games' => 0.9,
+            'Reflex Mastery' => 0.75,
+            'Pattern Reading' => 0.8,
+        ],
+    ],
+    22 => [
+        'stats' => [
+            'Intelligence' => 0.95,
+            'Wisdom' => 0.9,
+            'Focus' => 0.9,
+            'Cunning' => 0.7,
+        ],
+        'skills' => [
+            'Grand Strategy' => 1.05,
+            'Opening Theory' => 1.0,
+            'Positional Mastery' => 0.95,
+            'Endgame Technique' => 0.9,
+        ],
+    ],
+    23 => [
+        'stats' => [
+            'Agility' => 0.8,
+            'Endurance' => 0.85,
+            'Charisma' => 0.7,
+            'Perception' => 0.65,
+        ],
+        'skills' => [
+            'Team Coordination' => 1.05,
+            'Field Vision' => 1.0,
+            'Set Piece Mastery' => 0.9,
+            'Stamina Training' => 0.85,
+        ],
+    ],
+    24 => [
+        'stats' => [
+            'Agility' => 0.85,
+            'Perception' => 0.9,
+            'Endurance' => 0.8,
+            'Cunning' => 0.65,
+        ],
+        'skills' => [
+            'Marksmanship' => 1.1,
+            'Shooting Accuracy' => 1.0,
+            'Tactical Awareness' => 0.95,
+            'Reconnaissance' => 0.85,
+        ],
+    ],
+    25 => [
+        'stats' => [
+            'Charisma' => 0.9,
+            'Cunning' => 0.85,
+            'Focus' => 0.6,
+            'Luck' => 0.55,
+        ],
+        'skills' => [
+            'Social Deduction' => 1.05,
+            'Bluffing' => 1.1,
+            'Lie Detection' => 0.95,
+            'Crowd Command' => 0.8,
+        ],
+    ],
+    26 => [
+        'stats' => [
+            'Strength' => 0.9,
+            'Endurance' => 0.85,
+            'Agility' => 0.6,
+            'Luck' => 0.5,
+        ],
+        'skills' => [
+            'Brawling' => 1.05,
+            'Grappling' => 1.0,
+            'Ring Awareness' => 0.85,
+            'Knockback Control' => 0.8,
+        ],
+    ],
+    27 => [
+        'stats' => [
+            'Luck' => 0.85,
+            'Cunning' => 0.75,
+            'Dexterity' => 0.6,
+            'Focus' => 0.55,
+        ],
+        'skills' => [
+            'Party Sabotage' => 1.05,
+            'Chaos Management' => 0.9,
+            'Reflex Mastery' => 0.85,
+            'Board Control' => 0.8,
+        ],
+    ],
+    28 => [
+        'stats' => [
+            'Intelligence' => 0.85,
+            'Wisdom' => 0.9,
+            'Focus' => 0.8,
+            'Cunning' => 0.6,
+        ],
+        'skills' => [
+            'Tile Reading' => 1.1,
+            'Memory Palace' => 1.0,
+            'Probability Weaving' => 0.95,
+            'Table Etiquette' => 0.75,
+        ],
+    ],
+    29 => [
+        'stats' => [
+            'Focus' => 0.95,
+            'Perception' => 0.9,
+            'Dexterity' => 0.75,
+            'Luck' => 0.4,
+        ],
+        'skills' => [
+            'Shotmaking' => 1.05,
+            'Cue Control' => 1.0,
+            'Geometry' => 0.95,
+            'Pace Management' => 0.85,
+        ],
+    ],
+    30 => [
+        'stats' => [
+            'Charisma' => 0.8,
+            'Luck' => 0.75,
+            'Cunning' => 0.65,
+            'Focus' => 0.6,
+        ],
+        'skills' => [
+            'Card Tactics' => 1.0,
+            'Team Coordination' => 0.9,
+            'Hero Synergy' => 0.95,
+            'Crowd Command' => 0.85,
+        ],
+    ],
+    31 => [
+        'stats' => [
+            'Intelligence' => 0.85,
+            'Perception' => 0.9,
+            'Cunning' => 0.7,
+            'Endurance' => 0.65,
+        ],
+        'skills' => [
+            'Modern Warfare Tactics' => 1.05,
+            'Logistics' => 0.95,
+            'Reconnaissance' => 0.9,
+            'Electronic Warfare' => 0.85,
+        ],
+    ],
+    32 => [
+        'stats' => [
+            'Creativity' => 1.0,
+            'Endurance' => 0.8,
+            'Spirit' => 0.7,
+            'Cunning' => 0.6,
+        ],
+        'skills' => [
+            'Crafting' => 1.1,
+            'Resource Harvesting' => 1.0,
+            'Construction' => 1.0,
+            'Exploration' => 0.85,
+        ],
+    ],
+    33 => [
+        'stats' => [
+            'Endurance' => 0.85,
+            'Cunning' => 0.75,
+            'Spirit' => 0.65,
+            'Perception' => 0.6,
+        ],
+        'skills' => [
+            'Survival' => 1.0,
+            'Resource Harvesting' => 0.95,
+            'Desert Navigation' => 0.9,
+            'Political Intrigue' => 0.8,
+            'Lock Picking' => 0.5,
+        ],
+    ],
+    34 => [
+        'stats' => [
+            'Strength' => 0.9,
+            'Endurance' => 0.85,
+            'Spirit' => 0.7,
+            'Creativity' => 0.6,
+        ],
+        'skills' => [
+            'Survival' => 1.05,
+            'Crafting' => 1.0,
+            'Fortification' => 0.95,
+            'Berserker Arts' => 0.85,
+            'Lock Picking' => 0.45,
+        ],
+    ],
+    35 => [
+        'stats' => [
+            'Endurance' => 0.9,
+            'Perception' => 0.75,
+            'Cunning' => 0.65,
+            'Spirit' => 0.6,
+        ],
+        'skills' => [
+            'Survival' => 1.05,
+            'Engineering' => 0.95,
+            'Zombie Tactics' => 1.0,
+            'Fortification' => 0.9,
+            'Lock Picking' => 0.5,
+        ],
+    ],
+    36 => [
+        'stats' => [
+            'Creativity' => 1.0,
+            'Endurance' => 0.75,
+            'Spirit' => 0.65,
+            'Cunning' => 0.55,
+        ],
+        'skills' => [
+            'Crafting' => 1.05,
+            'Resource Harvesting' => 0.95,
+            'Construction' => 0.95,
+            'Redstone Engineering' => 0.9,
+        ],
+    ],
+];
+
+$applyScore = static function (array &$bucket, string $key, float $value): void {
+    $bucket[$key] = min(120, max(0, ($bucket[$key] ?? 0) + $value));
+};
+
+$statScores = [];
+$skillScores = [];
+$allStatKeys = [];
+$allSkillKeys = [];
+
+foreach ($gameSkillMatrix as $mapping) {
+    foreach ($mapping['stats'] as $statName => $_) {
+        $allStatKeys[$statName] = true;
+    }
+    foreach ($mapping['skills'] as $skillName => $_) {
+        $allSkillKeys[$skillName] = true;
+    }
+}
+
+$allSkillKeys = array_merge($allSkillKeys, array_fill_keys([
+    'Tournament Resilience',
+    'Crowd Command',
+    'Competitive Instincts',
+    'Clutch Factor',
+    'Lock Picking',
+], true));
+
+$computePerformance = static function ($gameStat): float {
+    $rankedMatches = (int) ($gameStat->ranked_matches ?? 0);
+    $wins = (int) ($gameStat->total_wins ?? 0);
+    $losses = (int) ($gameStat->total_losses ?? 0);
+    $elo = (float) ($gameStat->elo ?? 0);
+
+    $winRate = ($wins + $losses) > 0
+        ? ($wins / max(1, $wins + $losses)) * 100
+        : 0.0;
+
+    $matchFactor = sqrt(max(0, $rankedMatches)) * 6;
+    $winFactor = min(30, $wins * 1.5);
+    $eloFactor = $elo > 1000 ? min(20, ($elo - 1000) / 25) : 0;
+    $consistencyFactor = max(-10, min(10, ($winRate - 50) / 5));
+
+    $performance = $matchFactor + $winFactor + $eloFactor + $consistencyFactor;
+
+    return max(0, min(120, $performance));
+};
+
+if ($character !== null && !empty($character->game_stats)) {
+    foreach ($character->game_stats as $gameStat) {
+        $gameId = $gameStat->gameId->crand ?? null;
+        if ($gameId === null || !isset($gameSkillMatrix[$gameId])) {
+            continue;
+        }
+
+        $performance = $computePerformance($gameStat);
+        if ($performance <= 0) {
+            continue;
+        }
+
+        foreach ($gameSkillMatrix[$gameId]['stats'] as $statName => $weight) {
+            $applyScore($statScores, $statName, $performance * $weight);
+        }
+
+        foreach ($gameSkillMatrix[$gameId]['skills'] as $skillName => $weight) {
+            $applyScore($skillScores, $skillName, $performance * $weight);
+        }
+
+        if (isset($gameSkillMatrix[$gameId]['skills']['Lock Picking'])) {
+            $allSkillKeys['Lock Picking'] = true;
+        }
+    }
+}
+
+$tournamentCount = (int) ($activityBreakdown['tournament'] ?? 0);
+$tournamentBonus = min(30, $tournamentCount * 3);
+
+if ($tournamentBonus > 0) {
+    $applyScore($statScores, 'Charisma', $tournamentBonus * 0.4);
+    $applyScore($statScores, 'Spirit', $tournamentBonus * 0.5);
+    $applyScore($statScores, 'Endurance', $tournamentBonus * 0.4);
+    $applyScore($skillScores, 'Tournament Resilience', $tournamentBonus);
+    $applyScore($skillScores, 'Crowd Command', $tournamentBonus * 0.8);
+}
+
+$overallPerformance = 0.0;
+if ($totalRankedMatches > 0) {
+    $overallPerformance = min(120, sqrt($totalRankedMatches) * 4 + min(40, $totalWins) + max(-15, min(15, ($winRate - 50) / 2)));
+    $applyScore($statScores, 'Endurance', $overallPerformance * 0.4);
+    $applyScore($statScores, 'Spirit', $overallPerformance * 0.35);
+    $applyScore($statScores, 'Focus', $overallPerformance * 0.25);
+    $applyScore($skillScores, 'Competitive Instincts', $overallPerformance * 0.6);
+    $applyScore($skillScores, 'Clutch Factor', $overallPerformance * 0.45);
+}
+
+foreach (array_keys($allStatKeys) as $statName) {
+    if (!array_key_exists($statName, $statScores)) {
+        $statScores[$statName] = 0.0;
+    }
+}
+
+foreach (array_keys($allSkillKeys) as $skillName) {
+    if (!array_key_exists($skillName, $skillScores)) {
+        $skillScores[$skillName] = 0.0;
+    }
+}
+
+ksort($statScores);
+ksort($skillScores);
+
+$sortedStatScores = $statScores;
+arsort($sortedStatScores);
+$sortedSkillScores = $skillScores;
+arsort($sortedSkillScores);
+
+$statLedger = [];
+foreach ($sortedStatScores as $statName => $score) {
+    $tier = $skillTier($score);
+    $statLedger[] = [
+        'name' => $statName,
+        'score' => $score,
+        'tier' => $tier,
+        'badgeClass' => $tierBadgeClasses[$tier] ?? 'bg-light text-secondary',
+    ];
+}
+
+$skillLedger = [];
+foreach ($sortedSkillScores as $skillName => $score) {
+    $tier = $skillTier($score);
+    $skillLedger[] = [
+        'name' => $skillName,
+        'score' => $score,
+        'tier' => $tier,
+        'badgeClass' => $tierBadgeClasses[$tier] ?? 'bg-light text-secondary',
+    ];
+}
+
+$hasSkillData = !empty($character?->game_stats) || $tournamentBonus > 0 || $overallPerformance > 0;
+
 $activePageName = "Character Sheet";
 ?>
 
@@ -191,6 +872,77 @@ $activePageName = "Character Sheet";
                             <p class="mt-3 mb-0">Your legend grows across the arenas of Kickback Kingdom. Harness these numbers to script your next Final Fantasy-style showdown.</p>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <section class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 d-flex flex-wrap justify-content-between align-items-end gap-2">
+                    <div>
+                        <h2 class="h4 mb-0">Comprehensive virtue ledger</h2>
+                        <p class="text-secondary mb-0">Ultima Online-inspired attributes and skills, auto-ranked from your ranked matches, Elo climbs, and tournament exploits.</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <?php if (!$hasSkillData) : ?>
+                        <p class="text-secondary">Queue into ranked playlists or tournaments to move these ratings beyond their novice baselines.</p>
+                    <?php endif; ?>
+                    <div class="row g-4">
+                        <div class="col-lg-4">
+                            <div class="border rounded-3 p-3 h-100">
+                                <h3 class="h6 text-uppercase text-secondary mb-3">Core attributes</h3>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Attribute</th>
+                                                <th scope="col" class="text-end">Rating</th>
+                                                <th scope="col">Tier</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($statLedger as $stat) : ?>
+                                                <tr>
+                                                    <th scope="row" class="fw-semibold"><?= htmlspecialchars($stat['name']); ?></th>
+                                                    <td class="text-end fw-semibold"><?= number_format($stat['score'], 1); ?></td>
+                                                    <td>
+                                                        <span class="badge <?= htmlspecialchars($stat['badgeClass']); ?>">
+                                                            <?= htmlspecialchars($stat['tier']); ?>
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-8">
+                            <div class="border rounded-3 p-3 h-100">
+                                <h3 class="h6 text-uppercase text-secondary mb-3">Specialized disciplines</h3>
+                                <div class="row row-cols-1 row-cols-md-2 row-cols-xxl-3 g-3">
+                                    <?php foreach ($skillLedger as $skill) : ?>
+                                        <div class="col">
+                                            <div class="border rounded-3 p-3 h-100">
+                                                <div class="d-flex justify-content-between align-items-start gap-3">
+                                                    <div>
+                                                        <p class="fw-semibold mb-1"><?= htmlspecialchars($skill['name']); ?></p>
+                                                        <span class="badge <?= htmlspecialchars($skill['badgeClass']); ?>">
+                                                            <?= htmlspecialchars($skill['tier']); ?>
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <p class="h5 mb-0 fw-bold"><?= number_format($skill['score'], 1); ?></p>
+                                                        <small class="text-secondary text-uppercase">Ultima rating</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="small text-secondary mt-3 mb-0">Ratings are capped at 120 to echo classic Britannian grandmastery. Tournament completions infuse bonus resolve and command presence.</p>
                 </div>
             </section>
 
