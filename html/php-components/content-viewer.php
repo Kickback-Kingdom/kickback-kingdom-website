@@ -135,6 +135,32 @@ if ($_vCanEditContent)
   </div>
 </div>
 
+<!-- EDIT BUTTON MODAL -->
+<div class="modal modal-lg fade" id="modalEditButton" tabindex="-1" aria-labelledby="modalEditButtonLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="modalEditButtonLabel">Edit Button Content Element</h1>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="content-edit-button-label" class="form-label">Button Label</label>
+          <input class="form-control" type="text" id="content-edit-button-label">
+        </div>
+        <div class="mb-3">
+          <label for="content-edit-button-url" class="form-label">Link URL</label>
+          <input class="form-control" type="url" id="content-edit-button-url" placeholder="https://example.com">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn bg-ranked-1" id="modalEditButtonSaveButton" onclick="">Apply changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- EDIT PARAGRAPH MODAL -->
 <div class="modal modal-lg fade" id="modalEditParagraph" tabindex="-1" aria-labelledby="modalEditParagraphLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered">

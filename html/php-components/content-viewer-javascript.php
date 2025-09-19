@@ -28,6 +28,16 @@
             UpdatePageContent(pageContent);
         }
 
+        function SaveButtonModal(contentIndex)
+        {
+            var label = $("#content-edit-button-label").val();
+            var url = $("#content-edit-button-url").val();
+            SetContentElementDataValue(contentIndex, label, "data", 0);
+            SetContentElementDataValue(contentIndex, url, "data", 1);
+            $("#modalEditButton").modal("hide");
+            UpdatePageContent(pageContent);
+        }
+
         function SaveTitleModal(contentIndex)
         {
             var str = $("#content-edit-title-textbox").val();
@@ -212,14 +222,26 @@
         }
 
         
-        function OpenEditModal_Header(contentIndex) 
+        function OpenEditModal_Header(contentIndex)
         {
 
             var contentToEdit = pageContent[contentIndex];
-            
+
             $("#content-edit-header-textbox").val(GetContentElementData(contentToEdit));
             $("#modalEditHeaderSaveButton").attr("onclick","SaveHeaderModal("+contentIndex+")");
             $("#modalEditHeader").modal("show");
+        }
+
+        function OpenEditModal_Button(contentIndex)
+        {
+            var contentToEdit = pageContent[contentIndex];
+            var buttonLabel = GetContentElementData(contentToEdit, "data", 0);
+            var buttonUrl = GetContentElementData(contentToEdit, "data", 1);
+
+            $("#content-edit-button-label").val(buttonLabel);
+            $("#content-edit-button-url").val(buttonUrl);
+            $("#modalEditButtonSaveButton").attr("onclick","SaveButtonModal("+contentIndex+")");
+            $("#modalEditButton").modal("show");
         }
 
         function OpenEditModal_Paragraph(contentIndex)
@@ -363,7 +385,7 @@
                 OpenEditModal_Header(index);
                 break;
             case 12:
-                //button link
+                OpenEditModal_Button(index);
                 break;
             case 13:
                 OpenEditModal_Markdown(index);
@@ -558,15 +580,17 @@
     }
 
     function GetContentElementData(contentElement, dataName = "data", index = 0){
-        
-        const contentElementType = contentElement["content_type"];
+
         const contentElementDataItems = contentElement["data_items"];
-        if (contentElementDataItems && contentElementDataItems.length > 0 && dataName in contentElementDataItems[index]) {
-            contentElementDataItems[index].data_order = index;
-            return contentElementDataItems[index][dataName];
-        } else {
-            return "";  // Or any other default value or error message
+        if (Array.isArray(contentElementDataItems) && index >= 0 && index < contentElementDataItems.length) {
+            const dataItem = contentElementDataItems[index];
+            if (dataItem && dataName in dataItem) {
+                dataItem.data_order = index;
+                return dataItem[dataName];
+            }
         }
+
+        return "";  // Or any other default value or error message
     }
 
     function renderContentElement(contentElement, i) {
@@ -637,8 +661,11 @@
                 break;
 
             case 12:
-                //button
-                htmlContent = `<p>Error with element: ${JSON.stringify(contentElement)}</p>`;
+                const rawButtonLabel = GetContentElementData(contentElement, "data", 0) || "";
+                const rawButtonUrl = GetContentElementData(contentElement, "data", 1) || "";
+                const buttonLabel = escapeHtml(rawButtonLabel.trim() !== "" ? rawButtonLabel : "Button");
+                const buttonUrl = escapeHtml(rawButtonUrl.trim() !== "" ? rawButtonUrl : "#");
+                htmlContent = `<a class="btn btn-primary" href="${buttonUrl}">${buttonLabel}</a>`;
                 break;
 
             case 13:
