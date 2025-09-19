@@ -190,11 +190,48 @@ if ($_vCanEditContent)
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <label for="content-edit-markdown-textbox" class="form-label">Enter Markdown</label>
-        <textarea class="form-control" id="content-edit-markdown-textbox" rows="10" oninput="UpdateMarkdownModalPreview()"></textarea>
-        <div class="mt-3">
-          <h2 class="h5">Preview</h2>
-          <div id="content-edit-markdown-preview" class="border rounded p-3 bg-body-tertiary"></div>
+        <div class="d-flex flex-column gap-3">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <label for="content-edit-markdown-textbox" class="form-label mb-0">Markdown Editor</label>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Markdown view toggle">
+              <button type="button" class="btn btn-outline-secondary active" id="markdown-view-toggle-code" onclick="SetMarkdownEditorView('code')">
+                <i class="fa-solid fa-code"></i> Markdown
+              </button>
+              <button type="button" class="btn btn-outline-secondary" id="markdown-view-toggle-preview" onclick="SetMarkdownEditorView('preview')">
+                <i class="fa-solid fa-eye"></i> Preview
+              </button>
+            </div>
+          </div>
+          <div class="btn-toolbar flex-wrap" id="content-edit-markdown-toolbar" role="toolbar" aria-label="Markdown toolbar">
+            <div class="btn-group btn-group-sm me-2 mb-2" role="group" aria-label="Text formatting">
+              <button type="button" class="btn btn-outline-secondary" title="Bold" onclick="ApplyMarkdownWrap('**','**','bold text')"><i class="fa-solid fa-bold"></i></button>
+              <button type="button" class="btn btn-outline-secondary" title="Italic" onclick="ApplyMarkdownWrap('*','*','italic text')"><i class="fa-solid fa-italic"></i></button>
+              <button type="button" class="btn btn-outline-secondary" title="Strikethrough" onclick="ApplyMarkdownWrap('~~','~~','strikethrough')"><i class="fa-solid fa-strikethrough"></i></button>
+              <button type="button" class="btn btn-outline-secondary" title="Inline code" onclick="ApplyMarkdownWrap('`','`','code')"><i class="fa-solid fa-terminal"></i></button>
+            </div>
+            <div class="btn-group btn-group-sm me-2 mb-2" role="group" aria-label="Headings">
+              <button type="button" class="btn btn-outline-secondary" title="Heading 1" onclick="ApplyMarkdownHeading(1)">H1</button>
+              <button type="button" class="btn btn-outline-secondary" title="Heading 2" onclick="ApplyMarkdownHeading(2)">H2</button>
+              <button type="button" class="btn btn-outline-secondary" title="Heading 3" onclick="ApplyMarkdownHeading(3)">H3</button>
+            </div>
+            <div class="btn-group btn-group-sm me-2 mb-2" role="group" aria-label="Blocks">
+              <button type="button" class="btn btn-outline-secondary" title="Blockquote" onclick="ApplyMarkdownPrefix('> ')"><i class="fa-solid fa-quote-left"></i></button>
+              <button type="button" class="btn btn-outline-secondary" title="Code block" onclick="ApplyMarkdownBlock('```\n','\n```','code block')"><i class="fa-solid fa-code"></i></button>
+              <button type="button" class="btn btn-outline-secondary" title="Horizontal rule" onclick="InsertMarkdownHorizontalRule()"><i class="fa-solid fa-grip-lines"></i></button>
+            </div>
+            <div class="btn-group btn-group-sm me-2 mb-2" role="group" aria-label="Lists">
+              <button type="button" class="btn btn-outline-secondary" title="Bulleted list" onclick="ApplyMarkdownList('unordered')"><i class="fa-solid fa-list-ul"></i></button>
+              <button type="button" class="btn btn-outline-secondary" title="Numbered list" onclick="ApplyMarkdownList('ordered')"><i class="fa-solid fa-list-ol"></i></button>
+              <button type="button" class="btn btn-outline-secondary" title="Task list" onclick="ApplyMarkdownList('task')"><i class="fa-regular fa-square-check"></i></button>
+            </div>
+            <div class="btn-group btn-group-sm mb-2" role="group" aria-label="Links and media">
+              <button type="button" class="btn btn-outline-secondary" title="Link" onclick="InsertMarkdownLink()"><i class="fa-solid fa-link"></i></button>
+              <button type="button" class="btn btn-outline-secondary" title="Image" onclick="InsertMarkdownImage()"><i class="fa-regular fa-image"></i></button>
+              <button type="button" class="btn btn-outline-secondary" title="Table" onclick="InsertMarkdownTable()"><i class="fa-solid fa-table"></i></button>
+            </div>
+          </div>
+          <textarea class="form-control" id="content-edit-markdown-textbox" rows="12" oninput="HandleMarkdownEditorInput()"></textarea>
+          <div id="content-edit-markdown-preview" class="border rounded p-3 bg-body-tertiary d-none"></div>
         </div>
       </div>
       <div class="modal-footer">
