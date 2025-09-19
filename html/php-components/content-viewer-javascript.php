@@ -160,11 +160,324 @@
             $("#content-edit-sketchfab-preview-iframe").attr("src",video_url);
         }
 
+        function HandleMarkdownEditorInput()
+        {
+            if ($("#markdown-view-toggle-preview").hasClass("active"))
+            {
+                UpdateMarkdownModalPreview();
+            }
+        }
+
         function UpdateMarkdownModalPreview()
         {
             var markdown = $("#content-edit-markdown-textbox").val() || "";
             var html = renderMarkdownToHtml(markdown);
             $("#content-edit-markdown-preview").html(html);
+        }
+
+        function SetMarkdownEditorView(view)
+        {
+            var codeButton = $("#markdown-view-toggle-code");
+            var previewButton = $("#markdown-view-toggle-preview");
+            var textarea = $("#content-edit-markdown-textbox");
+            var preview = $("#content-edit-markdown-preview");
+
+            if (view === "preview")
+            {
+                codeButton.removeClass("active");
+                previewButton.addClass("active");
+                textarea.addClass("d-none");
+                preview.removeClass("d-none");
+                UpdateMarkdownModalPreview();
+            }
+            else
+            {
+                previewButton.removeClass("active");
+                codeButton.addClass("active");
+                preview.addClass("d-none");
+                textarea.removeClass("d-none");
+                textarea.trigger("focus");
+            }
+        }
+
+        function GetMarkdownTextarea()
+        {
+            return document.getElementById("content-edit-markdown-textbox");
+        }
+
+        function ApplyMarkdownWrap(prefix, suffix, placeholder = "")
+        {
+            var textarea = GetMarkdownTextarea();
+            if (!textarea)
+            {
+                return;
+            }
+
+            var start = textarea.selectionStart;
+            var end = textarea.selectionEnd;
+            if (start == null || end == null)
+            {
+                start = textarea.value.length;
+                end = start;
+            }
+
+            var selectedText = textarea.value.substring(start, end);
+            if (!selectedText)
+            {
+                selectedText = placeholder;
+            }
+
+            var replacement = prefix + selectedText + suffix;
+            textarea.setRangeText(replacement, start, end, "end");
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+            textarea.focus();
+        }
+
+        function ApplyMarkdownBlock(prefix, suffix, placeholder = "")
+        {
+            var textarea = GetMarkdownTextarea();
+            if (!textarea)
+            {
+                return;
+            }
+
+            var start = textarea.selectionStart;
+            var end = textarea.selectionEnd;
+            if (start == null || end == null)
+            {
+                start = textarea.value.length;
+                end = start;
+            }
+
+            var selectedText = textarea.value.substring(start, end);
+            if (!selectedText)
+            {
+                selectedText = placeholder;
+            }
+
+            var needsLeadingNewline = start > 0 && textarea.value[start - 1] !== "\n";
+            var needsTrailingNewline = end < textarea.value.length && textarea.value[end] !== "\n";
+
+            var leading = needsLeadingNewline ? "\n" : "";
+            var trailing = needsTrailingNewline ? "\n" : "";
+
+            var replacement = leading + prefix + selectedText + suffix + trailing;
+            textarea.setRangeText(replacement, start, end, "end");
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+            textarea.focus();
+        }
+
+        function ApplyMarkdownHeading(level)
+        {
+            var textarea = GetMarkdownTextarea();
+            if (!textarea)
+            {
+                return;
+            }
+
+            var start = textarea.selectionStart ?? 0;
+            var end = textarea.selectionEnd ?? textarea.value.length;
+            var value = textarea.value;
+
+            var lineStart = value.lastIndexOf("\n", start - 1) + 1;
+            var lineEndIndex = value.indexOf("\n", end);
+            if (lineEndIndex === -1)
+            {
+                lineEndIndex = value.length;
+            }
+
+            var selectedText = value.substring(lineStart, lineEndIndex);
+            var lines = selectedText.split(/\r?\n/);
+            var prefix = "#".repeat(Math.max(1, Math.min(level, 6))) + " ";
+
+            var transformed = lines.map(function(line)
+            {
+                if (!line.trim())
+                {
+                    return line;
+                }
+
+                var trimmed = line.trimStart();
+                trimmed = trimmed.replace(/^#{1,6}\s+/, "");
+                var leadingWhitespace = line.substring(0, line.length - trimmed.length);
+                return leadingWhitespace + prefix + trimmed;
+            }).join("\n");
+
+            textarea.setRangeText(transformed, lineStart, lineEndIndex, "select");
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+            textarea.focus();
+        }
+
+        function ApplyMarkdownPrefix(prefix)
+        {
+            var textarea = GetMarkdownTextarea();
+            if (!textarea)
+            {
+                return;
+            }
+
+            var start = textarea.selectionStart ?? 0;
+            var end = textarea.selectionEnd ?? textarea.value.length;
+            var value = textarea.value;
+
+            var selectionStart = value.lastIndexOf("\n", start - 1) + 1;
+            var selectionEnd = value.indexOf("\n", end);
+            if (selectionEnd === -1)
+            {
+                selectionEnd = value.length;
+            }
+
+            var selectedText = value.substring(selectionStart, selectionEnd);
+            var lines = selectedText.split(/\r?\n/);
+
+            var transformed = lines.map(function(line)
+            {
+                if (!line.trim())
+                {
+                    return line;
+                }
+
+                var trimmed = line.trimStart();
+                var leadingWhitespace = line.substring(0, line.length - trimmed.length);
+                if (trimmed.startsWith(prefix))
+                {
+                    return line;
+                }
+
+                return leadingWhitespace + prefix + trimmed;
+            }).join("\n");
+
+            textarea.setRangeText(transformed, selectionStart, selectionEnd, "select");
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+            textarea.focus();
+        }
+
+        function ApplyMarkdownList(type)
+        {
+            var textarea = GetMarkdownTextarea();
+            if (!textarea)
+            {
+                return;
+            }
+
+            var start = textarea.selectionStart ?? 0;
+            var end = textarea.selectionEnd ?? textarea.value.length;
+            var value = textarea.value;
+
+            var selectionStart = value.lastIndexOf("\n", start - 1) + 1;
+            var selectionEnd = value.indexOf("\n", end);
+            if (selectionEnd === -1)
+            {
+                selectionEnd = value.length;
+            }
+
+            var selectedText = value.substring(selectionStart, selectionEnd);
+            var lines = selectedText.split(/\r?\n/);
+
+            var transformed = lines.map(function(line, index)
+            {
+                if (!line.trim())
+                {
+                    return line;
+                }
+
+                var trimmed = line.trimStart();
+                var leadingWhitespace = line.substring(0, line.length - trimmed.length);
+
+                if (type === "ordered")
+                {
+                    trimmed = trimmed.replace(/^\d+\.\s+/, "");
+                    return leadingWhitespace + (index + 1) + ". " + trimmed;
+                }
+
+                if (type === "task")
+                {
+                    trimmed = trimmed.replace(/^[-*+]\s+\[[ xX]?\]\s+/, "");
+                    return leadingWhitespace + "- [ ] " + trimmed;
+                }
+
+                trimmed = trimmed.replace(/^[-*+]\s+/, "");
+                return leadingWhitespace + "- " + trimmed;
+            }).join("\n");
+
+            textarea.setRangeText(transformed, selectionStart, selectionEnd, "select");
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+            textarea.focus();
+        }
+
+        function InsertMarkdownLink()
+        {
+            var textarea = GetMarkdownTextarea();
+            if (!textarea)
+            {
+                return;
+            }
+
+            var start = textarea.selectionStart ?? 0;
+            var end = textarea.selectionEnd ?? start;
+            var selectedText = textarea.value.substring(start, end) || "link text";
+            var urlPlaceholder = "https://example.com";
+            var replacement = "[" + selectedText + "](" + urlPlaceholder + ")";
+
+            textarea.setRangeText(replacement, start, end, "end");
+            var cursorPosition = start + replacement.length - (urlPlaceholder.length + 1);
+            textarea.setSelectionRange(cursorPosition, cursorPosition + urlPlaceholder.length);
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+            textarea.focus();
+        }
+
+        function InsertMarkdownImage()
+        {
+            var textarea = GetMarkdownTextarea();
+            if (!textarea)
+            {
+                return;
+            }
+
+            var start = textarea.selectionStart ?? 0;
+            var end = textarea.selectionEnd ?? start;
+            var selectedText = textarea.value.substring(start, end) || "alt text";
+            var urlPlaceholder = "https://example.com/image.png";
+            var replacement = "![" + selectedText + "](" + urlPlaceholder + ")";
+
+            textarea.setRangeText(replacement, start, end, "end");
+            var cursorPosition = start + replacement.length - (urlPlaceholder.length + 1);
+            textarea.setSelectionRange(cursorPosition, cursorPosition + urlPlaceholder.length);
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+            textarea.focus();
+        }
+
+        function InsertMarkdownHorizontalRule()
+        {
+            var textarea = GetMarkdownTextarea();
+            if (!textarea)
+            {
+                return;
+            }
+
+            var start = textarea.selectionStart ?? 0;
+            var end = textarea.selectionEnd ?? start;
+            textarea.setRangeText("\n\n---\n\n", start, end, "end");
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+            textarea.focus();
+        }
+
+        function InsertMarkdownTable()
+        {
+            var textarea = GetMarkdownTextarea();
+            if (!textarea)
+            {
+                return;
+            }
+
+            var start = textarea.selectionStart ?? 0;
+            var end = textarea.selectionEnd ?? start;
+            var tableTemplate = "\n\n| Column 1 | Column 2 | Column 3 |\n| --- | --- | --- |\n| Row 1 | Data | Data |\n\n";
+            textarea.setRangeText(tableTemplate, start, end, "end");
+            var cursorPosition = start + tableTemplate.indexOf("Row 1");
+            textarea.setSelectionRange(cursorPosition, cursorPosition + "Row 1".length);
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+            textarea.focus();
         }
 
         function DeleteItemFromList(itemIndex)
@@ -258,6 +571,7 @@
             var contentToEdit = pageContent[contentIndex];
 
             $("#content-edit-markdown-textbox").val(GetContentElementData(contentToEdit));
+            SetMarkdownEditorView('code');
             UpdateMarkdownModalPreview();
             $("#modalEditMarkdownSaveButton").attr("onclick","SaveMarkdownModal("+contentIndex+")");
             $("#modalEditMarkdown").modal("show");
