@@ -653,6 +653,105 @@ $gameSkillMatrix = [
     ],
 ];
 
+$activityContributionMatrix = [
+    'game' => [
+        'intensity' => 7.5,
+        'growth' => 1.2,
+        'stats' => [
+            'Endurance' => 0.55,
+            'Focus' => 0.75,
+            'Dexterity' => 0.6,
+        ],
+        'skills' => [
+            'Competitive Instincts' => 1.0,
+            'Clutch Factor' => 0.9,
+            'Reflex Mastery' => 0.7,
+        ],
+    ],
+    'quest' => [
+        'intensity' => 6.5,
+        'growth' => 1.4,
+        'stats' => [
+            'Spirit' => 0.7,
+            'Wisdom' => 0.55,
+            'Cunning' => 0.45,
+        ],
+        'skills' => [
+            'Exploration' => 0.95,
+            'Survival' => 0.85,
+            'Memory Palace' => 0.6,
+        ],
+    ],
+    'tournament' => [
+        'intensity' => 8.5,
+        'growth' => 1.6,
+        'stats' => [
+            'Charisma' => 0.65,
+            'Endurance' => 0.75,
+            'Spirit' => 0.6,
+        ],
+        'skills' => [
+            'Crowd Command' => 1.0,
+            'Tournament Resilience' => 0.95,
+            'Team Coordination' => 0.7,
+        ],
+    ],
+    'guild' => [
+        'intensity' => 5.5,
+        'growth' => 1.1,
+        'stats' => [
+            'Charisma' => 0.6,
+            'Intelligence' => 0.5,
+            'Creativity' => 0.45,
+        ],
+        'skills' => [
+            'Diplomacy' => 0.85,
+            'Crafting' => 0.75,
+            'Team Coordination' => 0.65,
+        ],
+    ],
+    'adventure' => [
+        'intensity' => 6.8,
+        'growth' => 1.3,
+        'stats' => [
+            'Endurance' => 0.6,
+            'Perception' => 0.55,
+            'Luck' => 0.5,
+        ],
+        'skills' => [
+            'Exploration' => 0.9,
+            'Survival' => 0.85,
+            'Resource Harvesting' => 0.7,
+        ],
+    ],
+    'market' => [
+        'intensity' => 5.0,
+        'growth' => 1.0,
+        'stats' => [
+            'Charisma' => 0.55,
+            'Intelligence' => 0.6,
+            'Cunning' => 0.5,
+        ],
+        'skills' => [
+            'Economic Stewardship' => 1.0,
+            'Logistics' => 0.75,
+            'Crafting' => 0.65,
+        ],
+    ],
+    'other' => [
+        'intensity' => 4.5,
+        'growth' => 0.9,
+        'stats' => [
+            'Spirit' => 0.45,
+            'Luck' => 0.4,
+        ],
+        'skills' => [
+            'Exploration' => 0.7,
+            'Crowd Command' => 0.5,
+        ],
+    ],
+];
+
 $applyScore = static function (array &$bucket, string $key, float $value): void {
     $bucket[$key] = min(120, max(0, ($bucket[$key] ?? 0) + $value));
 };
@@ -678,6 +777,15 @@ $allSkillKeys = array_merge($allSkillKeys, array_fill_keys([
     'Clutch Factor',
     'Lock Picking',
 ], true));
+
+foreach ($activityContributionMatrix as $activityMapping) {
+    foreach ($activityMapping['stats'] as $statName => $_) {
+        $allStatKeys[$statName] = true;
+    }
+    foreach ($activityMapping['skills'] as $skillName => $_) {
+        $allSkillKeys[$skillName] = true;
+    }
+}
 
 $computePerformance = static function ($gameStat): float {
     $rankedMatches = (int) ($gameStat->ranked_matches ?? 0);
@@ -722,6 +830,30 @@ if ($character !== null && !empty($character->game_stats)) {
         if (isset($gameSkillMatrix[$gameId]['skills']['Lock Picking'])) {
             $allSkillKeys['Lock Picking'] = true;
         }
+    }
+}
+
+$appliedActivityBonus = false;
+
+foreach ($activityContributionMatrix as $type => $mapping) {
+    $count = (int) ($activityBreakdown[$type] ?? 0);
+    if ($count <= 0) {
+        continue;
+    }
+
+    $intensity = min(60, sqrt($count) * $mapping['intensity'] + min(25, $count * $mapping['growth']));
+    if ($intensity <= 0) {
+        continue;
+    }
+
+    $appliedActivityBonus = true;
+
+    foreach ($mapping['stats'] as $statName => $weight) {
+        $applyScore($statScores, $statName, $intensity * $weight);
+    }
+
+    foreach ($mapping['skills'] as $skillName => $weight) {
+        $applyScore($skillScores, $skillName, $intensity * $weight);
     }
 }
 
@@ -788,7 +920,7 @@ foreach ($sortedSkillScores as $skillName => $score) {
     ];
 }
 
-$hasSkillData = !empty($character?->game_stats) || $tournamentBonus > 0 || $overallPerformance > 0;
+$hasSkillData = !empty($character?->game_stats) || $tournamentBonus > 0 || $overallPerformance > 0 || $appliedActivityBonus;
 
 $activePageName = "Character Sheet";
 ?>
@@ -919,30 +1051,34 @@ $activePageName = "Character Sheet";
                         <div class="col-lg-8">
                             <div class="border rounded-3 p-3 h-100">
                                 <h3 class="h6 text-uppercase text-secondary mb-3">Specialized disciplines</h3>
-                                <div class="row row-cols-1 row-cols-md-2 row-cols-xxl-3 g-3">
-                                    <?php foreach ($skillLedger as $skill) : ?>
-                                        <div class="col">
-                                            <div class="border rounded-3 p-3 h-100">
-                                                <div class="d-flex justify-content-between align-items-start gap-3">
-                                                    <div>
-                                                        <p class="fw-semibold mb-1"><?= htmlspecialchars($skill['name']); ?></p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Discipline</th>
+                                                <th scope="col" class="text-end">Rating</th>
+                                                <th scope="col">Tier</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($skillLedger as $skill) : ?>
+                                                <tr>
+                                                    <th scope="row" class="fw-semibold"><?= htmlspecialchars($skill['name']); ?></th>
+                                                    <td class="text-end fw-semibold"><?= number_format($skill['score'], 1); ?></td>
+                                                    <td>
                                                         <span class="badge <?= htmlspecialchars($skill['badgeClass']); ?>">
                                                             <?= htmlspecialchars($skill['tier']); ?>
                                                         </span>
-                                                    </div>
-                                                    <div class="text-end">
-                                                        <p class="h5 mb-0 fw-bold"><?= number_format($skill['score'], 1); ?></p>
-                                                        <small class="text-secondary text-uppercase">Ultima rating</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <p class="small text-secondary mt-3 mb-0">Ratings are capped at 120 to echo classic Britannian grandmastery. Tournament completions infuse bonus resolve and command presence.</p>
+                    <p class="small text-secondary mt-3 mb-0">Ratings are capped at 120 to echo classic Britannian grandmastery. Tournament completions infuse bonus resolve and command presence, and your quests, guild work, market trades, and other realm activity now weave into the ledger as well.</p>
                 </div>
             </section>
 
