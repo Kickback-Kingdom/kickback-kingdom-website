@@ -1164,14 +1164,16 @@ animation: confetti-fast 1.25s linear 1 forwards;
 
 .markdown-pre,
 .markdown-content pre {
-    background-color: #1e1e1e;
-    color: #f8f9fa;
+    background-color: #111827;
+    color: #f8fafc;
+    border: 1px solid rgba(148, 163, 184, 0.35);
     border-radius: 0.5rem;
     padding: 1rem;
     overflow: auto;
     font-family: 'Fira Code', 'SFMono-Regular', Menlo, Monaco, Consolas, "Liberation Mono", 'Courier New', monospace;
     font-size: 0.875rem;
     position: relative;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
 }
 
 .markdown-content pre code,
@@ -1193,14 +1195,21 @@ animation: confetti-fast 1.25s linear 1 forwards;
 
 .markdown-copy-button {
     position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    transition: opacity 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    top: 0.6rem;
+    right: 0.6rem;
+    padding: 0.35rem;
+    font-size: 0.875rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    transition: opacity 0.2s ease-in-out, background-color 0.2s ease-in-out, color 0.2s ease-in-out;
     opacity: 0.8;
+}
+
+.markdown-copy-button i {
+    pointer-events: none;
 }
 
 .markdown-code-block:hover .markdown-copy-button {
