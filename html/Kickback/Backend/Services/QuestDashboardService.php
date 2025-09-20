@@ -23,6 +23,27 @@ class QuestDashboardService
     public const WEIGHT_RATING = 0.7;
     public const WEIGHT_LOYALTY = 0.3;
     public const CO_HOST_SUGGESTION_COUNT = 5;
+    public const CO_HOST_LEADERBOARD_LIMIT = 10;
+    private const CO_HOST_SCORE_QUEST_COUNT_WEIGHT = 5.0;
+    private const CO_HOST_SCORE_AVG_PARTICIPANTS_WEIGHT = 1.0;
+    private const CO_HOST_SCORE_UNIQUE_PARTICIPANTS_WEIGHT = 0.5;
+    private const CO_HOST_SCORE_AVG_HOST_RATING_WEIGHT = 10.0;
+    private const CO_HOST_SCORE_AVG_QUEST_RATING_WEIGHT = 10.0;
+
+    private static function calculateCoHostScore(array $stats): float
+    {
+        $questCount = (float)($stats['questCount'] ?? 0);
+        $avgParticipants = (float)($stats['avgParticipants'] ?? 0);
+        $uniqueParticipants = (float)($stats['uniqueParticipants'] ?? 0);
+        $avgHostRating = (float)($stats['avgHostRating'] ?? 0);
+        $avgQuestRating = (float)($stats['avgQuestRating'] ?? 0);
+
+        return ($questCount * self::CO_HOST_SCORE_QUEST_COUNT_WEIGHT)
+            + ($avgParticipants * self::CO_HOST_SCORE_AVG_PARTICIPANTS_WEIGHT)
+            + ($uniqueParticipants * self::CO_HOST_SCORE_UNIQUE_PARTICIPANTS_WEIGHT)
+            + ($avgHostRating * self::CO_HOST_SCORE_AVG_HOST_RATING_WEIGHT)
+            + ($avgQuestRating * self::CO_HOST_SCORE_AVG_QUEST_RATING_WEIGHT);
+    }
 
     /**
      * Builds the full dashboard dataset for the provided quest giver.
@@ -62,7 +83,7 @@ class QuestDashboardService
      *         hiddenGemQuest:?array<string,mixed>,
      *         underperformingQuest:?array<string,mixed>,
      *         coHostCandidates:list<array<string,mixed>>,
-     *         coHostStats:list<array<string,mixed>>
+     *         coHostStats:list<array<string,mixed>> (each entry includes a `score` for ranking)
      *     },
      *     questLines: array{
      *         statusCounts:array<string,int>,
@@ -72,7 +93,7 @@ class QuestDashboardService
      *     top: array{
      *         quests:list<array<string,mixed>>,
      *         participants:list<array<string,mixed>>,
-     *         coHosts:list<array<string,mixed>>
+     *         coHosts:list<array<string,mixed>> (top-ranked co-hosts including `score`)
      *     },
      *     raw: array{
      *         futureQuests:list<vQuest>,
@@ -454,8 +475,12 @@ class QuestDashboardService
                 ? $stats['questRatingSum'] / $stats['questRatingCount']
                 : 0.0;
             $stats['hostRatingCount'] = $participantsTotal;
+            $stats['score'] = self::calculateCoHostScore($stats);
         }
         unset($stats);
+        $coHostStatsList = array_values($coHostStats);
+        usort($coHostStatsList, static fn($a, $b) => $b['score'] <=> $a['score']);
+        $topCoHosts = array_slice($coHostStatsList, 0, self::CO_HOST_LEADERBOARD_LIMIT);
         usort($coHostCandidates, static fn($a, $b) => $b['score'] <=> $a['score']);
 
         $questLinesWithUpcoming = 0;
@@ -765,7 +790,7 @@ class QuestDashboardService
                 'hiddenGemQuest' => $hiddenGemQuest,
                 'underperformingQuest' => $underperformingQuest,
                 'coHostCandidates' => $coHostCandidates,
-                'coHostStats' => array_values($coHostStats),
+                'coHostStats' => $coHostStatsList,
             ],
             'questLines' => [
                 'statusCounts' => $questLineStatusCounts,
@@ -775,7 +800,7 @@ class QuestDashboardService
             'top' => [
                 'quests' => $topBestQuests,
                 'participants' => $topParticipants,
-                'coHosts' => array_values($coHostStats),
+                'coHosts' => $topCoHosts,
             ],
             'raw' => [
                 'futureQuests' => $futureQuests,
@@ -809,7 +834,7 @@ class QuestDashboardService
      *         hiddenGemQuest:?array<string,mixed>,
      *         underperformingQuest:?array<string,mixed>,
      *         coHostCandidates:list<array<string,mixed>>,
-     *         coHostStats:list<array<string,mixed>>
+     *         coHostStats:list<array<string,mixed>> (each entry includes a `score` for ranking)
      *     },
      *     questLines: array{
      *         statusCounts:array<string,int>,
@@ -819,7 +844,7 @@ class QuestDashboardService
      *     top: array{
      *         quests:list<array<string,mixed>>,
      *         participants:list<array<string,mixed>>,
-     *         coHosts:list<array<string,mixed>>
+     *         coHosts:list<array<string,mixed>> (top-ranked co-hosts including `score`)
      *     }
      * }
      */

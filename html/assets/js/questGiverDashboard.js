@@ -954,6 +954,9 @@
                 $hostCell.append($hostWrap);
                 $row.append($hostCell);
 
+                const score = Number(host.score);
+                $row.append($('<td class="align-middle fw-semibold"></td>').text(Number.isFinite(score) ? score.toFixed(1) : '—'));
+
                 const questCount = Number(host.questCount);
                 $row.append($('<td class="align-middle"></td>').text(Number.isFinite(questCount) ? questCount.toLocaleString() : '—'));
 
