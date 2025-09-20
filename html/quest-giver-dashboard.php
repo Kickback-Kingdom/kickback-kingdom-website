@@ -1030,7 +1030,15 @@ $(document).ready(function () {
                     }
                 });
             } else {
-                $('#datatable-review-inbox tbody').html('<tr><td colspan="4" class="text-danger">' + resp.message + '</td></tr>');
+                const tbody = $('#datatable-review-inbox tbody');
+                tbody.empty();
+                const errorRow = $('<tr></tr>');
+                const errorCell = $('<td></td>')
+                    .attr('colspan', 4)
+                    .addClass('text-danger')
+                    .text(resp.message || 'Failed to load review inbox.');
+                errorRow.append(errorCell);
+                tbody.append(errorRow);
             }
         }, 'json');
     }
@@ -1194,7 +1202,9 @@ $(document).ready(function () {
                 });
                 $('#reviewModalBody').html(list);
             } else {
-                $('#reviewModalBody').html('<div class="text-danger">' + resp.message + '</div>');
+                const errorMessage = resp.message || 'Failed to load quest reviews.';
+                const errorContent = $('<div></div>').addClass('text-danger').text(errorMessage);
+                $('#reviewModalBody').empty().append(errorContent);
             }
         }, 'json');
     });
