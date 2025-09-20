@@ -148,12 +148,14 @@ body {
 .popover.player-card-popover .player-card {
     margin: 0;
     box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.45);
+    position: relative;
+    overflow: visible;
 }
 
 .popover.player-card-popover .popover-arrow {
     width: calc(var(--player-card-popover-arrow-size) * 2);
     height: calc(var(--player-card-popover-arrow-size) * 2);
-    filter: drop-shadow(0 0.35rem 0.9rem var(--player-card-popover-arrow-shadow));
+    opacity: 0;
 }
 
 .popover.player-card-popover .popover-arrow::before,
@@ -162,6 +164,18 @@ body {
     content: "";
     border-style: solid;
     border-color: transparent;
+}
+
+.popover.player-card-popover .player-card::before,
+.popover.player-card-popover .player-card::after {
+    content: "";
+    position: absolute;
+    display: none;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-color: transparent;
+    pointer-events: none;
 }
 
 .popover.player-card-popover[data-popper-placement^="top"] > .popover-arrow::before,
@@ -176,6 +190,24 @@ body {
 
 .popover.player-card-popover[data-popper-placement^="top"] > .popover-arrow::after {
     bottom: 1px;
+    border-top-color: var(--player-card-popover-arrow-bg);
+}
+
+.popover.player-card-popover[data-popper-placement^="top"] .player-card::before,
+.popover.player-card-popover[data-popper-placement^="top"] .player-card::after {
+    display: block;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: var(--player-card-popover-arrow-size) var(--player-card-popover-arrow-size) 0;
+}
+
+.popover.player-card-popover[data-popper-placement^="top"] .player-card::before {
+    bottom: calc(-1 * var(--player-card-popover-arrow-size));
+    border-top-color: var(--player-card-popover-arrow-shadow);
+}
+
+.popover.player-card-popover[data-popper-placement^="top"] .player-card::after {
+    bottom: calc(-1 * var(--player-card-popover-arrow-size) + 1px);
     border-top-color: var(--player-card-popover-arrow-bg);
 }
 
@@ -194,6 +226,24 @@ body {
     border-bottom-color: var(--player-card-popover-arrow-bg);
 }
 
+.popover.player-card-popover[data-popper-placement^="bottom"] .player-card::before,
+.popover.player-card-popover[data-popper-placement^="bottom"] .player-card::after {
+    display: block;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 var(--player-card-popover-arrow-size) var(--player-card-popover-arrow-size);
+}
+
+.popover.player-card-popover[data-popper-placement^="bottom"] .player-card::before {
+    top: calc(-1 * var(--player-card-popover-arrow-size));
+    border-bottom-color: var(--player-card-popover-arrow-shadow);
+}
+
+.popover.player-card-popover[data-popper-placement^="bottom"] .player-card::after {
+    top: calc(-1 * var(--player-card-popover-arrow-size) + 1px);
+    border-bottom-color: var(--player-card-popover-arrow-bg);
+}
+
 .popover.player-card-popover[data-popper-placement^="left"] > .popover-arrow::before,
 .popover.player-card-popover[data-popper-placement^="left"] > .popover-arrow::after {
     border-width: var(--player-card-popover-arrow-size) 0 var(--player-card-popover-arrow-size) var(--player-card-popover-arrow-size);
@@ -209,6 +259,24 @@ body {
     border-left-color: var(--player-card-popover-arrow-bg);
 }
 
+.popover.player-card-popover[data-popper-placement^="left"] .player-card::before,
+.popover.player-card-popover[data-popper-placement^="left"] .player-card::after {
+    display: block;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: var(--player-card-popover-arrow-size) 0 var(--player-card-popover-arrow-size) var(--player-card-popover-arrow-size);
+}
+
+.popover.player-card-popover[data-popper-placement^="left"] .player-card::before {
+    right: calc(-1 * var(--player-card-popover-arrow-size));
+    border-left-color: var(--player-card-popover-arrow-shadow);
+}
+
+.popover.player-card-popover[data-popper-placement^="left"] .player-card::after {
+    right: calc(-1 * var(--player-card-popover-arrow-size) + 1px);
+    border-left-color: var(--player-card-popover-arrow-bg);
+}
+
 .popover.player-card-popover[data-popper-placement^="right"] > .popover-arrow::before,
 .popover.player-card-popover[data-popper-placement^="right"] > .popover-arrow::after {
     border-width: var(--player-card-popover-arrow-size) var(--player-card-popover-arrow-size) var(--player-card-popover-arrow-size) 0;
@@ -221,6 +289,24 @@ body {
 
 .popover.player-card-popover[data-popper-placement^="right"] > .popover-arrow::after {
     left: 1px;
+    border-right-color: var(--player-card-popover-arrow-bg);
+}
+
+.popover.player-card-popover[data-popper-placement^="right"] .player-card::before,
+.popover.player-card-popover[data-popper-placement^="right"] .player-card::after {
+    display: block;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: var(--player-card-popover-arrow-size) var(--player-card-popover-arrow-size) var(--player-card-popover-arrow-size) 0;
+}
+
+.popover.player-card-popover[data-popper-placement^="right"] .player-card::before {
+    left: calc(-1 * var(--player-card-popover-arrow-size));
+    border-right-color: var(--player-card-popover-arrow-shadow);
+}
+
+.popover.player-card-popover[data-popper-placement^="right"] .player-card::after {
+    left: calc(-1 * var(--player-card-popover-arrow-size) + 1px);
     border-right-color: var(--player-card-popover-arrow-bg);
 }
 
