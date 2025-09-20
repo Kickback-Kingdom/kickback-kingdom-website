@@ -571,9 +571,10 @@ $account = Session::getCurrentAccount();
         </div>
     </div>
 
-    <?php require("php-components/base-page-footer.php"); ?>
+<?php require("php-components/base-page-footer.php"); ?>
 </main>
 <?php require("php-components/base-page-javascript.php"); ?>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
 <script>
 window.questDashboardConfig = Object.assign({}, window.questDashboardConfig || {}, {

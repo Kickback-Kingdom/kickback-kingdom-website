@@ -248,7 +248,8 @@ $mapDataJSON = json_encode($mapData);
 
     
     <?php require("php-components/base-page-javascript.php"); ?>
-    
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
 
     <script src="https://code.highcharts.com/maps/highmaps.js"></script>
