@@ -9,9 +9,6 @@ $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession
 require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Services\Session;
-use Kickback\Backend\Controllers\FeedCardController;
-use Kickback\Backend\Services\QuestDashboardService;
-use Kickback\Backend\Views\vDateTime;
 use Kickback\Common\Version;
 
 if (!Session::isQuestGiver()) {
@@ -20,64 +17,6 @@ if (!Session::isQuestGiver()) {
 
 $account = Session::getCurrentAccount();
 
-$dashboardService = new QuestDashboardService();
-$dashboardData = $dashboardService->buildDashboard($account);
-
-$overview = $dashboardData['overview'];
-$reviewsData = $dashboardData['reviews'];
-$suggestions = $dashboardData['suggestions'];
-$questLinesData = $dashboardData['questLines'];
-$topData = $dashboardData['top'];
-$rawData = $dashboardData['raw'];
-
-$futureQuests = $rawData['futureQuests'];
-$pastQuests = $rawData['pastQuests'];
-$questReviewAverages = $reviewsData['summaries'];
-
-$questTitles = $reviewsData['chart']['questTitles'];
-$avgHostRatings = $reviewsData['chart']['avgHostRatings'];
-$avgQuestRatings = $reviewsData['chart']['avgQuestRatings'];
-$participantQuestTitles = $reviewsData['chart']['participantQuestTitles'];
-$participantCounts = $reviewsData['chart']['participantCounts'];
-$ratingDates = $reviewsData['chart']['ratingDates'];
-$avgRatingsOverTime = $reviewsData['chart']['avgRatingsOverTime'];
-
-$totalHostedQuests = $overview['totals']['hosted'];
-$totalUniqueParticipants = $overview['participants']['unique'];
-$avgHostRatingRecent = $overview['ratings']['recentHost'];
-$avgQuestRatingRecent = $overview['ratings']['recentQuest'];
-
-$recommendedQuest = $suggestions['recommendedQuest'];
-$dormantQuest = $suggestions['dormantQuest'];
-$fanFavoriteQuest = $suggestions['fanFavoriteQuest'];
-$hiddenGemQuest = $suggestions['hiddenGemQuest'];
-$underperformingQuest = $suggestions['underperformingQuest'];
-$coHostCandidates = $suggestions['coHostCandidates'];
-
-$questLineStatusCounts = $questLinesData['statusCounts'];
-$questLineStatsList = $questLinesData['lines'];
-$questLinesError = $questLinesData['error'];
-
-$topParticipants = $topData['participants'];
-$topCoHosts = $topData['coHosts'];
-$topBestQuests = $topData['quests'];
-
-function renderStarRating(float $rating): string
-{
-    $rounded = round($rating * 2) / 2;
-    $stars = '<span class="star-rating" style="pointer-events: none; display: inline-block;">';
-    for ($i = 1; $i <= 5; $i++) {
-        if ($rounded >= $i) {
-            $class = 'fa-solid fa-star selected';
-        } elseif ($rounded >= $i - 0.5) {
-            $class = 'fa-solid fa-star-half-stroke selected';
-        } else {
-            $class = 'fa-regular fa-star';
-        }
-        $stars .= "<i class=\"{$class}\"></i>";
-    }
-    return $stars . '</span>';
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -320,7 +259,7 @@ function renderStarRating(float $rating): string
                         </div>
                         <div id="suggestionsError" class="alert alert-danger d-none" role="alert"></div>
                         <p id="suggestionsEmpty" class="text-muted d-none">No suggestions found. Keep hosting adventures!</p>
-                        <div id="suggestionsContent" class="d-none">
+                        <div id="suggestionsContent" class="suggestions-list d-none">
                             <div id="suggestionCards" class="mb-3"></div>
                             <div id="coHostSuggestionCard" class="card d-none">
                                 <div class="card-body">
@@ -368,9 +307,9 @@ function renderStarRating(float $rating): string
                                     <div class="card h-100">
                                         <div class="card-body">
                                             <small>Total Quest Lines</small>
-                                            <h3 class="mb-0" data-quest-line-count="total">—</h3>
-                                            <div class="text-muted small">With upcoming quests: <span data-quest-line-count="withUpcoming">—</span></div>
-                                            <div class="text-muted small">No quests yet: <span data-quest-line-count="withoutQuests">—</span></div>
+                                            <h3 class="mb-0" data-quest-line-count="total" data-status-key="total">—</h3>
+                                            <div class="text-muted small">With upcoming quests: <span data-quest-line-count="withUpcoming" data-status-key="withUpcoming">—</span></div>
+                                            <div class="text-muted small">No quests yet: <span data-quest-line-count="withoutQuests" data-status-key="withoutQuests">—</span></div>
                                         </div>
                                     </div>
                                 </div>
@@ -378,8 +317,8 @@ function renderStarRating(float $rating): string
                                     <div class="card h-100">
                                         <div class="card-body">
                                             <small>Published</small>
-                                            <h3 class="mb-0" data-quest-line-count="published">—</h3>
-                                            <div class="text-muted small">Need scheduling: <span data-quest-line-count="needingScheduling">—</span></div>
+                                            <h3 class="mb-0" data-quest-line-count="published" data-status-key="published">—</h3>
+                                            <div class="text-muted small">Need scheduling: <span data-quest-line-count="needingScheduling" data-status-key="needingScheduling">—</span></div>
                                         </div>
                                     </div>
                                 </div>
@@ -387,7 +326,7 @@ function renderStarRating(float $rating): string
                                     <div class="card h-100">
                                         <div class="card-body">
                                             <small>In Review</small>
-                                            <h3 class="mb-0" data-quest-line-count="inReview">—</h3>
+                                            <h3 class="mb-0" data-quest-line-count="inReview" data-status-key="inReview">—</h3>
                                             <div class="text-muted small">Pending approval</div>
                                         </div>
                                     </div>
@@ -396,7 +335,7 @@ function renderStarRating(float $rating): string
                                     <div class="card h-100">
                                         <div class="card-body">
                                             <small>Drafts</small>
-                                            <h3 class="mb-0" data-quest-line-count="draft">—</h3>
+                                            <h3 class="mb-0" data-quest-line-count="draft" data-status-key="draft">—</h3>
                                             <div class="text-muted small">Finish setup to publish</div>
                                         </div>
                                     </div>
@@ -489,21 +428,29 @@ function renderStarRating(float $rating): string
                                     </h2>
                                     <div id="collapseTopQuests" class="accordion-collapse collapse show" aria-labelledby="headingTopQuests">
                                         <div class="accordion-body">
-                                            <p id="topQuestsEmpty" class="text-muted d-none mb-0">No completed quests.</p>
-                                            <div class="table-responsive d-none" id="topQuestsTableWrapper">
-                                                <table class="table table-striped" id="topQuestsTable">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Quest</th>
-                                                            <th>Participants</th>
-                                                            <th>Avg Quest Rating</th>
-                                                            <th>Avg Host Rating</th>
-                                                            <th>Reviews</th>
-                                                            <th>Clone</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="topQuestsBody"></tbody>
-                                                </table>
+                                            <div id="topQuestsSection" class="top-subsection">
+                                                <div class="section-spinner text-center py-3 top-quests-spinner d-none">
+                                                    <div class="spinner-border text-secondary" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
+                                                    </div>
+                                                </div>
+                                                <div id="topQuestsError" class="alert alert-danger d-none" role="alert"></div>
+                                                <p id="topQuestsEmpty" class="text-muted d-none mb-0">No completed quests.</p>
+                                                <div class="table-responsive d-none" id="topQuestsTableWrapper">
+                                                    <table class="table table-striped" id="topQuestsTable">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Quest</th>
+                                                                <th>Participants</th>
+                                                                <th>Avg Quest Rating</th>
+                                                                <th>Avg Host Rating</th>
+                                                                <th>Reviews</th>
+                                                                <th>Clone</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="topQuestsBody"></tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -516,44 +463,52 @@ function renderStarRating(float $rating): string
                                     </h2>
                                     <div id="collapseTopParticipants" class="accordion-collapse collapse" aria-labelledby="headingTopParticipants">
                                         <div class="accordion-body">
-                                            <p id="topParticipantsEmpty" class="text-muted d-none mb-0">No participants yet.</p>
-                                            <div id="topParticipantsControls" class="d-none">
-                                                <div class="mb-3">
-                                                    <label for="participantSort" class="form-label">Sort by:</label>
-                                                    <select id="participantSort" class="form-select form-select-sm" style="max-width:200px;">
-                                                        <option value="loyalty">Quests Joined</option>
-                                                        <option value="reliability">Reliability</option>
-                                                        <option value="questshosted">Hosted Quests</option>
-                                                        <option value="network">Network Reach</option>
-                                                    </select>
-                                                </div>
-                                                <div class="row mb-3 g-2">
-                                                    <div class="col">
-                                                        <input type="number" id="reliabilityFilter" class="form-control form-control-sm" placeholder="Min reliability %">
-                                                    </div>
-                                                    <div class="col">
-                                                        <input type="number" id="hostedFilter" class="form-control form-control-sm" placeholder="Min hosted quests">
-                                                    </div>
-                                                    <div class="col">
-                                                        <input type="number" id="networkFilter" class="form-control form-control-sm" placeholder="Min network reach">
+                                            <div id="topParticipantsSection" class="top-subsection">
+                                                <div class="section-spinner text-center py-3 top-participants-spinner d-none">
+                                                    <div class="spinner-border text-secondary" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div class="table-responsive d-none" id="topParticipantsTableWrapper">
-                                                <table class="table table-striped" id="topParticipantsTable">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Participant</th>
-                                                            <th>Quests Joined</th>
-                                                            <th>Reliability</th>
-                                                            <th>Hosted Quests</th>
-                                                            <th>Network</th>
-                                                            <th>Avg Quest Rating</th>
-                                                            <th>Avg Host Rating</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="topParticipantsBody"></tbody>
-                                                </table>
+                                                <div id="topParticipantsError" class="alert alert-danger d-none" role="alert"></div>
+                                                <p id="topParticipantsEmpty" class="text-muted d-none mb-0">No participants yet.</p>
+                                                <div id="topParticipantsControls" class="d-none">
+                                                    <div class="mb-3">
+                                                        <label for="participantSort" class="form-label">Sort by:</label>
+                                                        <select id="participantSort" class="form-select form-select-sm" style="max-width:200px;">
+                                                            <option value="loyalty">Quests Joined</option>
+                                                            <option value="reliability">Reliability</option>
+                                                            <option value="questshosted">Hosted Quests</option>
+                                                            <option value="network">Network Reach</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="row mb-3 g-2">
+                                                        <div class="col">
+                                                            <input type="number" id="reliabilityFilter" class="form-control form-control-sm" placeholder="Min reliability %">
+                                                        </div>
+                                                        <div class="col">
+                                                            <input type="number" id="hostedFilter" class="form-control form-control-sm" placeholder="Min hosted quests">
+                                                        </div>
+                                                        <div class="col">
+                                                            <input type="number" id="networkFilter" class="form-control form-control-sm" placeholder="Min network reach">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="table-responsive d-none" id="topParticipantsTableWrapper">
+                                                    <table class="table table-striped" id="topParticipantsTable">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Participant</th>
+                                                                <th>Quests Joined</th>
+                                                                <th>Reliability</th>
+                                                                <th>Hosted Quests</th>
+                                                                <th>Network</th>
+                                                                <th>Avg Quest Rating</th>
+                                                                <th>Avg Host Rating</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="topParticipantsBody"></tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -566,21 +521,29 @@ function renderStarRating(float $rating): string
                                     </h2>
                                     <div id="collapseTopCoHosts" class="accordion-collapse collapse" aria-labelledby="headingTopCoHosts">
                                         <div class="accordion-body">
-                                            <p id="topCoHostsEmpty" class="text-muted d-none mb-0">No co-hosts yet.</p>
-                                            <div class="table-responsive d-none" id="topCoHostsTableWrapper">
-                                                <table class="table table-striped" id="topCoHostsTable">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Co-Host</th>
-                                                            <th>Quests Co-Hosted</th>
-                                                            <th>Avg Participants</th>
-                                                            <th>Unique Participants</th>
-                                                            <th>Avg Host Rating</th>
-                                                            <th>Avg Quest Rating</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="topCoHostsBody"></tbody>
-                                                </table>
+                                            <div id="topCoHostsSection" class="top-subsection">
+                                                <div class="section-spinner text-center py-3 top-cohosts-spinner d-none">
+                                                    <div class="spinner-border text-secondary" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
+                                                    </div>
+                                                </div>
+                                                <div id="topCoHostsError" class="alert alert-danger d-none" role="alert"></div>
+                                                <p id="topCoHostsEmpty" class="text-muted d-none mb-0">No co-hosts yet.</p>
+                                                <div class="table-responsive d-none" id="topCoHostsTableWrapper">
+                                                    <table class="table table-striped" id="topCoHostsTable">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Co-Host</th>
+                                                                <th>Quests Co-Hosted</th>
+                                                                <th>Avg Participants</th>
+                                                                <th>Unique Participants</th>
+                                                                <th>Avg Host Rating</th>
+                                                                <th>Avg Quest Rating</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="topCoHostsBody"></tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
