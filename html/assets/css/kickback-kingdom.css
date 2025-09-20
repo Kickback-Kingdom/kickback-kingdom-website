@@ -128,14 +128,24 @@ body {
 }
 
 .popover.player-card-popover {
+    --bs-popover-max-width: 9999px;
     max-width: none;
+    width: auto;
     padding: 0;
+    border: none;
+    background-color: transparent;
     box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.45);
     z-index: 1080;
 }
 
 .popover.player-card-popover .popover-body {
     padding: 0;
+    background-color: transparent;
+}
+
+.popover.player-card-popover .popover-arrow::before,
+.popover.player-card-popover .popover-arrow::after {
+    display: none;
 }
 
 .league {

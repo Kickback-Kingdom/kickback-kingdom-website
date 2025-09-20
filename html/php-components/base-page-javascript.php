@@ -163,6 +163,17 @@ use Kickback\Common\Version;
             const showTimers = new WeakMap();
             const hideTimers = new WeakMap();
             const supportsHover = window.matchMedia ? window.matchMedia('(hover: hover)').matches : false;
+            const hoverStates = new WeakMap();
+
+            function getHoverState(element) {
+                let state = hoverStates.get(element);
+                if (!state) {
+                    state = { triggerHovered: false, popoverHovered: false };
+                    hoverStates.set(element, state);
+                }
+
+                return state;
+            }
 
             function normalize(value) {
                 if (value === undefined || value === null) {
@@ -344,8 +355,19 @@ use Kickback\Common\Version;
 
                 const timerId = setTimeout(() => {
                     hideTimers.delete(element);
+                    const state = getHoverState(element);
+                    if (state.triggerHovered || state.popoverHovered) {
+                        return;
+                    }
+
                     const popover = popoverInstances.get(element);
                     if (popover) {
+                        const tipElement = typeof popover.getTipElement === 'function' ? popover.getTipElement() : null;
+                        if (tipElement && tipElement.matches(':hover')) {
+                            state.popoverHovered = true;
+                            return;
+                        }
+
                         popover.hide();
                     }
                 }, 200);
@@ -404,9 +426,15 @@ use Kickback\Common\Version;
                     element.addEventListener('hide.bs.popover', () => {
                         clearTimer(showTimers, element);
                         clearTimer(hideTimers, element);
+                        const state = getHoverState(element);
+                        state.triggerHovered = false;
+                        state.popoverHovered = false;
                     });
                 } else if (typeof popover.setContent === 'function') {
                     popover.setContent({ '.popover-body': content });
+                    if (typeof popover.update === 'function') {
+                        popover.update();
+                    }
                 } else {
                     popover._config = popover._config || {};
                     popover._config.content = content;
@@ -434,12 +462,32 @@ use Kickback\Common\Version;
                 }
 
                 if (!tipElement.dataset.playerCardPopoverBound) {
-                    const clearHide = () => clearTimer(hideTimers, element);
-                    const delayedHide = () => scheduleHide(element);
+                    const state = getHoverState(element);
+                    const handleEnter = () => {
+                        state.popoverHovered = true;
+                        clearTimer(hideTimers, element);
+                    };
+                    const handleLeave = () => {
+                        state.popoverHovered = false;
+                        scheduleHide(element);
+                    };
 
-                    tipElement.addEventListener('mouseenter', clearHide);
-                    tipElement.addEventListener('mouseleave', delayedHide);
+                    tipElement.addEventListener('mouseenter', handleEnter);
+                    tipElement.addEventListener('mouseleave', handleLeave);
+                    tipElement.addEventListener('focusin', handleEnter);
+                    tipElement.addEventListener('focusout', event => {
+                        const nextTarget = event.relatedTarget;
+                        if (!nextTarget || !tipElement.contains(nextTarget)) {
+                            handleLeave();
+                        }
+                    });
                     tipElement.dataset.playerCardPopoverBound = 'true';
+                }
+
+                if (tipElement.matches(':hover')) {
+                    const state = getHoverState(element);
+                    state.popoverHovered = true;
+                    clearTimer(hideTimers, element);
                 }
 
                 if (window.bootstrap && bootstrap.Tooltip) {
@@ -481,9 +529,18 @@ use Kickback\Common\Version;
                 }
 
                 element.dataset[BOUND_FLAG] = 'true';
+                getHoverState(element);
 
-                const showHandler = () => scheduleShow(element);
-                const hideHandler = () => scheduleHide(element);
+                const showHandler = () => {
+                    const state = getHoverState(element);
+                    state.triggerHovered = true;
+                    scheduleShow(element);
+                };
+                const hideHandler = () => {
+                    const state = getHoverState(element);
+                    state.triggerHovered = false;
+                    scheduleHide(element);
+                };
 
                 if (supportsHover) {
                     element.addEventListener('mouseenter', showHandler);
