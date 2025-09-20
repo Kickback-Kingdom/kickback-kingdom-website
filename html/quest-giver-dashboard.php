@@ -312,114 +312,22 @@ function renderStarRating(float $rating): string
                 </div>
                 <div class="tab-pane fade" id="nav-suggestions" role="tabpanel" aria-labelledby="nav-suggestions-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Suggestions</div>
-                    <?php if ($recommendedQuest || $underperformingQuest || $dormantQuest || $fanFavoriteQuest || $hiddenGemQuest || !empty($coHostCandidates)) { ?>
-                        <?php if ($dormantQuest) { ?>
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <?php if (!empty($dormantQuest['icon'])) { ?>
-                                            <img src="<?= htmlspecialchars($dormantQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
-                                        <?php } ?>
-                                        <div>
-                                            <h5 class="card-title mb-1">Revive this beloved quest with a fresh twist</h5>
-                                            <?php $dormantLastRan = $dormantQuest['endDateFormatted'] ?? null; ?>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $dormantQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($dormantQuest['title']); ?></a> last ran <?= $dormantLastRan !== null ? htmlspecialchars($dormantLastRan) : 'date TBD'; ?></p>
-                        <p class="card-text mb-0">
-                                                Quest Rating: <?= renderStarRating($dormantQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($dormantQuest['avgQuestRating'], 1); ?></span>
-                                                &middot; Host Rating: <?= renderStarRating($dormantQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($dormantQuest['avgHostRating'], 1); ?></span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <p class="card-text mb-2"><?= QuestDashboardService::generateBringBackSuggestion($dormantQuest); ?></p>
-                                    <div class="mt-2 d-flex flex-wrap gap-2">
-                                        <button class="btn btn-sm btn-outline-primary view-reviews-btn" data-quest-id="<?= $dormantQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($dormantQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($dormantQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
-                                        <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $dormantQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($dormantQuest['title']); ?>"><i class="fa-regular fa-clone me-1"></i>Clone Quest</button>
-                                    </div>
-                                </div>
+                    <div id="suggestionsSection">
+                        <div id="suggestionsSpinner" class="section-spinner text-center py-3">
+                            <div class="spinner-border text-secondary" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
-                        <?php } ?>
-                        <?php if ($fanFavoriteQuest) { ?>
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <?php if (!empty($fanFavoriteQuest['icon'])) { ?>
-                                            <img src="<?= htmlspecialchars($fanFavoriteQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
-                                        <?php } ?>
-                                        <div>
-                                            <h5 class="card-title mb-1">Reward loyal players with a long-awaited sequel</h5>
-                                            <?php $fanFavoriteLastRan = $fanFavoriteQuest['endDateFormatted'] ?? null; ?>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $fanFavoriteQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($fanFavoriteQuest['title']); ?></a> last ran <?= $fanFavoriteLastRan !== null ? htmlspecialchars($fanFavoriteLastRan) : 'date TBD'; ?></p>
-                                            <p class="card-text mb-0">
-                                                Quest Rating: <?= renderStarRating($fanFavoriteQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($fanFavoriteQuest['avgQuestRating'], 1); ?></span>
-                                                &middot; Host Rating: <?= renderStarRating($fanFavoriteQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($fanFavoriteQuest['avgHostRating'], 1); ?></span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <p class="card-text mb-2"><?= QuestDashboardService::generateSequelSuggestion($fanFavoriteQuest); ?></p>
-                                    <div class="mt-2 d-flex flex-wrap gap-2">
-                                        <button class="btn btn-sm btn-outline-primary view-reviews-btn" data-quest-id="<?= $fanFavoriteQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($fanFavoriteQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($fanFavoriteQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
-                                        <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $fanFavoriteQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($fanFavoriteQuest['title']); ?>"><i class="fa-regular fa-clone me-1"></i>Clone Quest</button>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php } ?>
-                        <?php if ($recommendedQuest) { ?>
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <?php if (!empty($recommendedQuest['icon'])) { ?>
-                                            <img src="<?= htmlspecialchars($recommendedQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
-                                        <?php } ?>
-                                        <div>
-                                            <h5 class="card-title mb-1">Launch a new quest inspired by your top performer</h5>
-                                            <?php $recommendedLastRan = $recommendedQuest['endDateFormatted'] ?? null; ?>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $recommendedQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($recommendedQuest['title']); ?></a> last ran <?= $recommendedLastRan !== null ? htmlspecialchars($recommendedLastRan) : 'date TBD'; ?></p>
-                                            <p class="card-text mb-0">
-                                                Quest Rating: <?= renderStarRating($recommendedQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($recommendedQuest['avgQuestRating'], 1); ?></span>
-                                                &middot; Host Rating: <?= renderStarRating($recommendedQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($recommendedQuest['avgHostRating'], 1); ?></span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <p class="card-text mb-2"><?= QuestDashboardService::generateSimilarQuestSuggestion($recommendedQuest); ?></p>
-                                    <div class="mt-2 d-flex flex-wrap gap-2">
-                                        <button class="btn btn-sm btn-outline-primary view-reviews-btn" data-quest-id="<?= $recommendedQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($recommendedQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($recommendedQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
-                                        <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $recommendedQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($recommendedQuest['title']); ?>"><i class="fa-regular fa-clone me-1"></i>Clone Quest</button>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php } ?>
-                        <?php if ($hiddenGemQuest) { ?>
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <?php if (!empty($hiddenGemQuest['icon'])) { ?>
-                                            <img src="<?= htmlspecialchars($hiddenGemQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
-                                        <?php } ?>
-                                        <div>
-                                            <h5 class="card-title mb-1">Relaunch this highly rated quest with stronger promotion</h5>
-                                            <?php $hiddenGemLastRan = $hiddenGemQuest['endDateFormatted'] ?? null; ?>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $hiddenGemQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($hiddenGemQuest['title']); ?></a> last ran <?= $hiddenGemLastRan !== null ? htmlspecialchars($hiddenGemLastRan) : 'date TBD'; ?></p>
-                                            <p class="card-text mb-0">
-                                                Quest Rating: <?= renderStarRating($hiddenGemQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($hiddenGemQuest['avgQuestRating'], 1); ?></span>
-                                                &middot; Host Rating: <?= renderStarRating($hiddenGemQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($hiddenGemQuest['avgHostRating'], 1); ?></span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <p class="card-text mb-2"><?= QuestDashboardService::generatePromoteQuestSuggestion($hiddenGemQuest); ?></p>
-                                    <div class="mt-2 d-flex flex-wrap gap-2">
-                                        <button class="btn btn-sm btn-outline-primary view-reviews-btn" data-quest-id="<?= $hiddenGemQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($hiddenGemQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($hiddenGemQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
-                                        <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $hiddenGemQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($hiddenGemQuest['title']); ?>"><i class="fa-regular fa-clone me-1"></i>Clone Quest</button>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php } ?>
-                        <?php if (!empty($coHostCandidates)) { ?>
-                            <div class="card mb-3">
+                        </div>
+                        <div id="suggestionsError" class="alert alert-danger d-none" role="alert"></div>
+                        <p id="suggestionsEmpty" class="text-muted d-none">No suggestions found. Keep hosting adventures!</p>
+                        <div id="suggestionsContent" class="d-none">
+                            <div id="suggestionCards" class="mb-3"></div>
+                            <div id="coHostSuggestionCard" class="card d-none">
                                 <div class="card-body">
                                     <h5 class="card-title mb-3">Partner with a co-host to expand your reach</h5>
                                     <p class="card-text mb-3">Partner with reliable players to manage larger quests and reach new audiences.</p>
                                     <div class="table-responsive">
-                                        <table class="table table-striped mb-0">
+                                        <table class="table table-striped mb-0" id="coHostSuggestionTable">
                                             <thead>
                                                 <tr>
                                                     <th>Player</th>
@@ -430,250 +338,96 @@ function renderStarRating(float $rating): string
                                                     <th>Last Quest</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
-                                                <?php foreach ($coHostCandidates as $coHostCandidate) { ?>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="d-flex align-items-center">
-                                                                <?php if (!empty($coHostCandidate['avatar'])) { ?>
-                                                                    <img src="<?= htmlspecialchars($coHostCandidate['avatar']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
-                                                                <?php } ?>
-                                                                <a href="<?= htmlspecialchars($coHostCandidate['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($coHostCandidate['username']); ?></a>
-                                                            </div>
-                                                        </td>
-                                                        <td class="align-middle"><?= $coHostCandidate['loyalty']; ?></td>
-                                                        <td class="align-middle"><?= number_format($coHostCandidate['reliability'] * 100, 0); ?>%</td>
-                                                        <td class="align-middle"><?= $coHostCandidate['questsHosted']; ?></td>
-                                                        <td class="align-middle"><?= $coHostCandidate['network']; ?></td>
-                                                        <td class="align-middle">
-                                                            <?php if (isset($coHostCandidate['daysSinceLastQuest'])) { ?>
-                                                                <?= $coHostCandidate['daysSinceLastQuest']; ?> day<?= $coHostCandidate['daysSinceLastQuest'] === 1 ? '' : 's'; ?> ago
-                                                            <?php } else { ?>
-                                                                &ndash;
-                                                            <?php } ?>
-                                                        </td>
-                                                    </tr>
-                                                <?php } ?>
-                                            </tbody>
+                                            <tbody></tbody>
                                         </table>
                                     </div>
                                 </div>
                             </div>
-                        <?php } ?>
-                        <?php if ($underperformingQuest) { ?>
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <?php if (!empty($underperformingQuest['icon'])) { ?>
-                                            <img src="<?= htmlspecialchars($underperformingQuest['icon']); ?>" class="rounded me-3" style="width:60px;height:60px;" alt="">
-                                        <?php } ?>
-                                        <div>
-                                            <h5 class="card-title mb-1">Refine this quest to improve its performance</h5>
-                                            <?php $underperformingLastRan = $underperformingQuest['endDateFormatted'] ?? null; ?>
-                                            <p class="card-text mb-1"><a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $underperformingQuest['locator'])); ?>" target="_blank"><?= htmlspecialchars($underperformingQuest['title']); ?></a> last ran <?= $underperformingLastRan !== null ? htmlspecialchars($underperformingLastRan) : 'date TBD'; ?></p>
-                                            <p class="card-text mb-0">
-                                                Quest Rating: <?= renderStarRating($underperformingQuest['avgQuestRating']); ?><span class="ms-1"><?= number_format($underperformingQuest['avgQuestRating'], 1); ?></span>
-                                                &middot; Host Rating: <?= renderStarRating($underperformingQuest['avgHostRating']); ?><span class="ms-1"><?= number_format($underperformingQuest['avgHostRating'], 1); ?></span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <p class="card-text mb-2"><?= QuestDashboardService::generateImproveQuestSuggestion($underperformingQuest); ?></p>
-                                    <div class="mt-2 d-flex flex-wrap gap-2">
-                                        <button class="btn btn-sm btn-outline-primary view-reviews-btn" data-quest-id="<?= $underperformingQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($underperformingQuest['title']); ?>" data-quest-banner="<?= htmlspecialchars($underperformingQuest['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
-                                        <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $underperformingQuest['id']; ?>" data-quest-title="<?= htmlspecialchars($underperformingQuest['title']); ?>"><i class="fa-regular fa-clone me-1"></i>Clone Quest</button>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php } ?>
-                    <?php } else { ?>
-                        <p>No suggestions found. Keep hosting adventures!</p>
-                    <?php } ?>
+                        </div>
+                    </div>
                 </div>
                 <div class="tab-pane fade" id="nav-quest-lines" role="tabpanel" aria-labelledby="nav-quest-lines-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Quest Lines</div>
                     <p class="text-muted">Monitor your quest lines and spot where to plan the next adventure.</p>
-                    <?php if ($questLinesError) { ?>
-                        <div class="alert alert-danger" role="alert">
-                            <i class="fa-solid fa-circle-exclamation me-2"></i><?= htmlspecialchars($questLinesError); ?>
+                    <div id="questLinesSection">
+                        <div id="questLinesSpinner" class="section-spinner text-center py-3">
+                            <div class="spinner-border text-secondary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
                         </div>
-                    <?php } elseif (empty($questLines)) { ?>
-                        <div class="card border-0 shadow-sm">
+                        <div id="questLinesError" class="alert alert-danger d-none" role="alert"></div>
+                        <div id="questLinesEmpty" class="card border-0 shadow-sm d-none">
                             <div class="card-body text-center">
                                 <p class="mb-2">You haven't created any quest lines yet.</p>
                                 <a class="btn btn-primary" href="<?= Version::urlBetaPrefix(); ?>/quest-line.php?new"><i class="fa-solid fa-plus me-1"></i>Create your first quest line</a>
                             </div>
                         </div>
-                    <?php } else { ?>
-                        <div class="row g-3 mb-3">
-                            <div class="col-12 col-md-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <small>Total Quest Lines</small>
-                                        <h3 class="mb-0"><?= $questLineStatusCounts['total']; ?></h3>
-                                        <div class="text-muted small">With upcoming quests: <?= $questLineStatusCounts['withUpcoming']; ?></div>
-                                        <div class="text-muted small">No quests yet: <?= $questLineStatusCounts['withoutQuests']; ?></div>
+                        <div id="questLinesContent" class="d-none">
+                            <div class="row g-3 mb-3">
+                                <div class="col-12 col-md-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <small>Total Quest Lines</small>
+                                            <h3 class="mb-0" data-quest-line-count="total">—</h3>
+                                            <div class="text-muted small">With upcoming quests: <span data-quest-line-count="withUpcoming">—</span></div>
+                                            <div class="text-muted small">No quests yet: <span data-quest-line-count="withoutQuests">—</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <small>Published</small>
+                                            <h3 class="mb-0" data-quest-line-count="published">—</h3>
+                                            <div class="text-muted small">Need scheduling: <span data-quest-line-count="needingScheduling">—</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <small>In Review</small>
+                                            <h3 class="mb-0" data-quest-line-count="inReview">—</h3>
+                                            <div class="text-muted small">Pending approval</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <small>Drafts</small>
+                                            <h3 class="mb-0" data-quest-line-count="draft">—</h3>
+                                            <div class="text-muted small">Finish setup to publish</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-12 col-md-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <small>Published</small>
-                                        <h3 class="mb-0"><?= $questLineStatusCounts['published']; ?></h3>
-                                        <div class="text-muted small">Need scheduling: <?= $questLineStatusCounts['needingScheduling']; ?></div>
-                                    </div>
+                            <div class="card mb-3">
+                                <div class="card-header d-flex align-items-center">
+                                    <span class="fw-semibold">Quest Line Overview</span>
+                                    <a class="btn btn-sm btn-outline-primary ms-auto" href="<?= Version::urlBetaPrefix(); ?>/quest-line.php?new"><i class="fa-solid fa-plus me-1"></i>Create Quest Line</a>
                                 </div>
-                            </div>
-                            <div class="col-12 col-md-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <small>In Review</small>
-                                        <h3 class="mb-0"><?= $questLineStatusCounts['inReview']; ?></h3>
-                                        <div class="text-muted small">Pending approval</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12 col-md-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <small>Drafts</small>
-                                        <h3 class="mb-0"><?= $questLineStatusCounts['draft']; ?></h3>
-                                        <div class="text-muted small">Finish setup to publish</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card mb-3">
-                            <div class="card-header d-flex align-items-center">
-                                <span class="fw-semibold">Quest Line Overview</span>
-                                <a class="btn btn-sm btn-outline-primary ms-auto" href="<?= Version::urlBetaPrefix(); ?>/quest-line.php?new"><i class="fa-solid fa-plus me-1"></i>Create Quest Line</a>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-striped table-hover mb-0 align-middle">
-                                        <thead>
-                                            <tr>
-                                                <th>Quest Line</th>
-                                                <th>Quests</th>
-                                                <th>Schedule</th>
-                                                <th>Ratings</th>
-                                                <th>Engagement</th>
-                                                <th class="text-end">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach ($questLineStatsList as $lineStats) {
-                                                $questLine = $lineStats['questLine'];
-                                                $publicUrl = $questLine->url();
-                                                $statusLabel = $questLine->reviewStatus->published ? 'Published' : ($questLine->reviewStatus->beingReviewed ? 'In Review' : 'Draft');
-                                                $statusBadgeClass = $questLine->reviewStatus->published ? 'bg-success' : ($questLine->reviewStatus->beingReviewed ? 'bg-warning text-dark' : 'bg-secondary');
-                                                $hasUpcoming = $lineStats['futureCount'] > 0;
-                                                $needsScheduling = $questLine->reviewStatus->published && $lineStats['futureCount'] === 0 && $lineStats['questCount'] > 0;
-                                                $noQuestsYet = $lineStats['questCount'] === 0;
-                                            ?>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover mb-0 align-middle" id="questLinesTable">
+                                            <thead>
                                                 <tr>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <?php if ($questLine->icon) { ?>
-                                                                <img src="<?= htmlspecialchars($questLine->icon->getFullPath()); ?>" class="rounded me-2" style="width:48px;height:48px;object-fit:cover;" alt="">
-                                                            <?php } ?>
-                                                            <div>
-                                                                <div class="fw-semibold"><?= htmlspecialchars($questLine->title); ?></div>
-                                                                <div class="small">
-                                                                    <span class="badge <?= $statusBadgeClass; ?> me-1"><?= $statusLabel; ?></span>
-                                                                    <?php if ($hasUpcoming) { ?><span class="badge bg-info text-dark me-1">Upcoming quests</span><?php } ?>
-                                                                    <?php if ($needsScheduling) { ?><span class="badge bg-warning text-dark me-1">Needs scheduling</span><?php } ?>
-                                                                    <?php if ($noQuestsYet) { ?><span class="badge bg-secondary me-1">No quests yet</span><?php } ?>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div class="fw-semibold"><?= $lineStats['questCount']; ?></div>
-                                                        <div class="small text-muted"><?= $lineStats['futureCount']; ?> upcoming &middot; <?= $lineStats['pastCount']; ?> past</div>
-                                                        <div class="small text-muted">Published: <?= $lineStats['publishedQuests']; ?> &middot; Review: <?= $lineStats['inReviewQuests']; ?> &middot; Draft: <?= $lineStats['draftQuests']; ?></div>
-                                                    </td>
-                                                    <td>
-                                                        <div class="small">
-                                                            <div><strong>Next:</strong>
-                                                                <?php if ($lineStats['futureCount'] > 0) { ?>
-                                                                    <?php if ($lineStats['nextRun'] instanceof vDateTime) { ?>
-                                                                        <?= $lineStats['nextRun']->getDateTimeElement(); ?>
-                                                                    <?php } else { ?>
-                                                                        <span class="text-muted">Date TBD</span>
-                                                                    <?php } ?>
-                                                                <?php } else { ?>
-                                                                    <span class="text-muted">No quest scheduled</span>
-                                                                <?php } ?>
-                                                            </div>
-                                                            <div><strong>Last:</strong>
-                                                                <?php if ($lineStats['lastRun'] instanceof vDateTime) { ?>
-                                                                    <?= $lineStats['lastRun']->getDateTimeElement(); ?>
-                                                                <?php } elseif ($lineStats['pastCount'] > 0) { ?>
-                                                                    <span class="text-muted">Date TBD</span>
-                                                                <?php } else { ?>
-                                                                    <span class="text-muted">Never</span>
-                                                                <?php } ?>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <?php if ($lineStats['avgQuestRating'] !== null || $lineStats['avgHostRating'] !== null) { ?>
-                                                            <div class="d-flex align-items-center">
-                                                                <strong>Quest:</strong>
-                                                                <?php if ($lineStats['avgQuestRating'] !== null) { ?>
-                                                                    <span class="ms-2"><?= renderStarRating($lineStats['avgQuestRating']); ?></span>
-                                                                <?php } else { ?>
-                                                                    <span class="ms-2 text-muted">&ndash;</span>
-                                                                <?php } ?>
-                                                            </div>
-                                                            <div class="d-flex align-items-center">
-                                                                <strong>Host:</strong>
-                                                                <?php if ($lineStats['avgHostRating'] !== null) { ?>
-                                                                    <span class="ms-2"><?= renderStarRating($lineStats['avgHostRating']); ?></span>
-                                                                <?php } else { ?>
-                                                                    <span class="ms-2 text-muted">&ndash;</span>
-                                                                <?php } ?>
-                                                            </div>
-                                                        <?php } else { ?>
-                                                            <span class="text-muted">No reviews yet</span>
-                                                        <?php } ?>
-                                                    </td>
-                                                    <td>
-                                                        <div class="fw-semibold"><?= $lineStats['participantsTotal']; ?></div>
-                                                        <div class="small text-muted">Registrations: <?= $lineStats['registeredTotal']; ?></div>
-                                                        <div class="small text-muted">Attendance:
-                                                            <?php if ($lineStats['attendanceRate'] !== null) { ?>
-                                                                <?= number_format($lineStats['attendanceRate'] * 100, 0); ?>%
-                                                            <?php } else { ?>
-                                                                &ndash;
-                                                            <?php } ?>
-                                                        </div>
-                                                    </td>
-                                                    <td class="text-end">
-                                                        <?php if ($questLine->reviewStatus->published) { ?>
-                                                            <a href="<?= htmlspecialchars($publicUrl); ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">View</a>
-                                                        <?php } else { ?>
-                                                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled>View</button>
-                                                        <?php } ?>
-                                                    </td>
+                                                    <th>Quest Line</th>
+                                                    <th>Quests</th>
+                                                    <th>Schedule</th>
+                                                    <th>Ratings</th>
+                                                    <th>Engagement</th>
+                                                    <th class="text-end">Actions</th>
                                                 </tr>
-                                            <?php } ?>
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody id="questLinesTableBody"></tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
+                            <div id="questLinesSchedulingAlert" class="alert alert-warning d-none" role="alert"></div>
                         </div>
-                        <?php if ($questLineStatusCounts['needingScheduling'] > 0) {
-                            $count = $questLineStatusCounts['needingScheduling'];
-                            $needsVerb = $count === 1 ? 'needs' : 'need';
-                            $lineLabel = $count === 1 ? 'quest line' : 'quest lines';
-                        ?>
-                            <div class="alert alert-warning" role="alert">
-                                <i class="fa-solid fa-bell me-2"></i><?= $count; ?> published <?= $lineLabel; ?> <?= $needsVerb; ?> a scheduled follow-up. Plan the next quest to keep players engaged.
-                            </div>
-                        <?php } ?>
-                    <?php } ?>
+                    </div>
                 </div>
                 <div class="tab-pane fade" id="nav-schedule" role="tabpanel" aria-labelledby="nav-schedule-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Schedule Planning</div>
@@ -718,188 +472,118 @@ function renderStarRating(float $rating): string
                 </div>
                 <div class="tab-pane fade" id="nav-top" role="tabpanel" aria-labelledby="nav-top-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Top Quests & Participants</div>
-                    <div class="accordion" id="topAccordion">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingTopQuests">
-                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTopQuests" aria-expanded="true" aria-controls="collapseTopQuests">
-                                    Top 10 Quests
-                                </button>
-                            </h2>
-                            <div id="collapseTopQuests" class="accordion-collapse collapse show" aria-labelledby="headingTopQuests">
-                                <div class="accordion-body">
-                                    <?php if (count($topBestQuests) === 0) { ?>
-                                        <p>No completed quests.</p>
-                                    <?php } else { ?>
-                                        <div class="table-responsive">
-                                            <table class="table table-striped">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Quest</th>
-                                                        <th>Participants</th>
-                                                        <th>Avg Quest Rating</th>
-                                                        <th>Avg Host Rating</th>
-                                                        <th>Reviews</th>
-                                                        <th>Clone</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php foreach ($topBestQuests as $q) { ?>
-                                                        <tr>
-                                                            <td>
-                                                                <div class="d-flex align-items-center">
-                                                                    <?php if (!empty($q['icon'])) { ?>
-                                                                        <img src="<?= htmlspecialchars($q['icon']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
-                                                                    <?php } ?>
-                                                                    <a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $q['locator'])); ?>" target="_blank"><?= htmlspecialchars($q['title']); ?></a>
-                                                                </div>
-                                                            </td>
-                                                            <td class="align-middle"><?= $q['participants']; ?></td>
-                                                            <td class="align-middle">
-                                                                <?= renderStarRating($q['avgQuestRating']); ?><span class="ms-1"><?= number_format($q['avgQuestRating'], 2); ?></span>
-                                                            </td>
-                                                            <td class="align-middle">
-                                                                <?= renderStarRating($q['avgHostRating']); ?><span class="ms-1"><?= number_format($q['avgHostRating'], 2); ?></span>
-                                                            </td>
-                                                            <td class="align-middle">
-                                                                <button class="btn btn-sm btn-outline-primary view-reviews-btn" data-quest-id="<?= $q['id']; ?>" data-quest-title="<?= htmlspecialchars($q['title']); ?>" data-quest-banner="<?= htmlspecialchars($q['banner']); ?>"><i class="fa-regular fa-comments me-1"></i>Reviews</button>
-                                                            </td>
-                                                            <td class="align-middle">
-                                                                <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $q['id']; ?>" data-quest-title="<?= htmlspecialchars($q['title']); ?>"><i class="fa-regular fa-clone me-1"></i>Clone</button>
-                                                            </td>
-                                                        </tr>
-                                                    <?php } ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    <?php } ?>
-                                </div>
+                    <div id="topSection">
+                        <div id="topSpinner" class="section-spinner text-center py-3">
+                            <div class="spinner-border text-secondary" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
                         </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingTopParticipants">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTopParticipants" aria-expanded="false" aria-controls="collapseTopParticipants">
-                                    Top 10 Loyal Participants
-                                </button>
-                            </h2>
-                            <div id="collapseTopParticipants" class="accordion-collapse collapse" aria-labelledby="headingTopParticipants">
-                                <div class="accordion-body">
-                                    <?php if (count($topParticipants) === 0) { ?>
-                                        <p>No participants yet.</p>
-                                    <?php } else { ?>
-                                        <div class="mb-3">
-                                            <label for="participantSort" class="form-label">Sort by:</label>
-                                            <select id="participantSort" class="form-select form-select-sm" style="max-width:200px;">
-                                                <option value="loyalty">Quests Joined</option>
-                                                <option value="reliability">Reliability</option>
-                                                <option value="questshosted">Hosted Quests</option>
-                                                <option value="network">Network Reach</option>
-                                            </select>
-                                        </div>
-                                        <div class="row mb-3 g-2">
-                                            <div class="col">
-                                                <input type="number" id="reliabilityFilter" class="form-control form-control-sm" placeholder="Min reliability %">
-                                            </div>
-                                            <div class="col">
-                                                <input type="number" id="hostedFilter" class="form-control form-control-sm" placeholder="Min hosted quests">
-                                            </div>
-                                            <div class="col">
-                                                <input type="number" id="networkFilter" class="form-control form-control-sm" placeholder="Min network reach">
-                                            </div>
-                                        </div>
-                                        <div class="table-responsive">
-                                            <table class="table table-striped" id="topParticipantsTable">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Participant</th>
-                                                        <th>Quests Joined</th>
-                                                        <th>Reliability</th>
-                                                        <th>Hosted Quests</th>
-                                                        <th>Network</th>
-                                                        <th>Avg Quest Rating</th>
-                                                        <th>Avg Host Rating</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php foreach ($topParticipants as $p) { ?>
-                                                        <tr data-loyalty="<?= $p['loyalty']; ?>" data-reliability="<?= $p['reliability']; ?>" data-questshosted="<?= $p['questsHosted']; ?>" data-network="<?= $p['network']; ?>">
-                                                            <td>
-                                                                <div class="d-flex align-items-center">
-                                                                    <img src="<?= htmlspecialchars($p['avatar']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
-                                                                    <div><a href="<?= htmlspecialchars($p['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($p['username']); ?></a></div>
-                                                                </div>
-                                                            </td>
-                                                            <td class="align-middle"><?= $p['loyalty']; ?></td>
-                                                            <td class="align-middle"><?= number_format($p['reliability'] * 100, 0); ?>%</td>
-                                                            <td class="align-middle"><?= $p['questsHosted']; ?></td>
-                                                            <td class="align-middle"><?= $p['network']; ?></td>
-                                                            <td class="align-middle">
-                                                                <?= renderStarRating($p['avgQuestRating']); ?>
-                                                                <span class="ms-1"><?= number_format($p['avgQuestRating'], 2); ?></span>
-                                                            </td>
-                                                            <td class="align-middle">
-                                                                <?= renderStarRating($p['avgHostRating']); ?>
-                                                                <span class="ms-1"><?= number_format($p['avgHostRating'], 2); ?></span>
-                                                            </td>
-                                                        </tr>
-                                                    <?php } ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    <?php } ?>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingTopCoHosts">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTopCoHosts" aria-expanded="false" aria-controls="collapseTopCoHosts">
-                                    Top 10 Co-Hosts
-                                </button>
-                            </h2>
-                            <div id="collapseTopCoHosts" class="accordion-collapse collapse" aria-labelledby="headingTopCoHosts">
-                                <div class="accordion-body">
-                                    <?php if (count($topCoHosts) === 0) { ?>
-                                        <p>No co-hosts yet.</p>
-                                    <?php } else { ?>
-                                        <div class="table-responsive">
-                                            <table class="table table-striped">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Co-Host</th>
-                                                        <th>Quests Co-Hosted</th>
-                                                        <th>Avg Participants</th>
-                                                        <th>Unique Participants</th>
-                                                        <th>Avg Host Rating</th>
-                                                        <th>Avg Quest Rating</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php foreach ($topCoHosts as $h) { ?>
+                        <div id="topError" class="alert alert-danger d-none" role="alert"></div>
+                        <div id="topContent" class="d-none">
+                            <div class="accordion" id="topAccordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingTopQuests">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTopQuests" aria-expanded="true" aria-controls="collapseTopQuests">
+                                            Top 10 Quests
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTopQuests" class="accordion-collapse collapse show" aria-labelledby="headingTopQuests">
+                                        <div class="accordion-body">
+                                            <p id="topQuestsEmpty" class="text-muted d-none mb-0">No completed quests.</p>
+                                            <div class="table-responsive d-none" id="topQuestsTableWrapper">
+                                                <table class="table table-striped" id="topQuestsTable">
+                                                    <thead>
                                                         <tr>
-                                                            <td>
-                                                                <div class="d-flex align-items-center">
-                                                                    <?php if (!empty($h['avatar'])) { ?>
-                                                                        <img src="<?= htmlspecialchars($h['avatar']); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
-                                                                    <?php } ?>
-                                                                    <div><a href="<?= htmlspecialchars($h['url']); ?>" target="_blank" class="username"><?= htmlspecialchars($h['username']); ?></a></div>
-                                                                </div>
-                                                            </td>
-                                                            <td class="align-middle"><?= $h['questCount']; ?></td>
-                                                            <td class="align-middle"><?= number_format($h['avgParticipants'], 1); ?></td>
-                                                            <td class="align-middle"><?= $h['uniqueParticipants']; ?></td>
-                                                            <td class="align-middle">
-                                                                <?= renderStarRating($h['avgHostRating']); ?>
-                                                                <span class="ms-1"><?= number_format($h['avgHostRating'], 2); ?></span>
-                                                            </td>
-                                                            <td class="align-middle">
-                                                                <?= renderStarRating($h['avgQuestRating']); ?>
-                                                                <span class="ms-1"><?= number_format($h['avgQuestRating'], 2); ?></span>
-                                                            </td>
+                                                            <th>Quest</th>
+                                                            <th>Participants</th>
+                                                            <th>Avg Quest Rating</th>
+                                                            <th>Avg Host Rating</th>
+                                                            <th>Reviews</th>
+                                                            <th>Clone</th>
                                                         </tr>
-                                                   <?php } ?>
-                                                </tbody>
-                                            </table>
+                                                    </thead>
+                                                    <tbody id="topQuestsBody"></tbody>
+                                                </table>
+                                            </div>
                                         </div>
-                                    <?php } ?>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingTopParticipants">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTopParticipants" aria-expanded="false" aria-controls="collapseTopParticipants">
+                                            Top 10 Loyal Participants
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTopParticipants" class="accordion-collapse collapse" aria-labelledby="headingTopParticipants">
+                                        <div class="accordion-body">
+                                            <p id="topParticipantsEmpty" class="text-muted d-none mb-0">No participants yet.</p>
+                                            <div id="topParticipantsControls" class="d-none">
+                                                <div class="mb-3">
+                                                    <label for="participantSort" class="form-label">Sort by:</label>
+                                                    <select id="participantSort" class="form-select form-select-sm" style="max-width:200px;">
+                                                        <option value="loyalty">Quests Joined</option>
+                                                        <option value="reliability">Reliability</option>
+                                                        <option value="questshosted">Hosted Quests</option>
+                                                        <option value="network">Network Reach</option>
+                                                    </select>
+                                                </div>
+                                                <div class="row mb-3 g-2">
+                                                    <div class="col">
+                                                        <input type="number" id="reliabilityFilter" class="form-control form-control-sm" placeholder="Min reliability %">
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="number" id="hostedFilter" class="form-control form-control-sm" placeholder="Min hosted quests">
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="number" id="networkFilter" class="form-control form-control-sm" placeholder="Min network reach">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="table-responsive d-none" id="topParticipantsTableWrapper">
+                                                <table class="table table-striped" id="topParticipantsTable">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Participant</th>
+                                                            <th>Quests Joined</th>
+                                                            <th>Reliability</th>
+                                                            <th>Hosted Quests</th>
+                                                            <th>Network</th>
+                                                            <th>Avg Quest Rating</th>
+                                                            <th>Avg Host Rating</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="topParticipantsBody"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingTopCoHosts">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTopCoHosts" aria-expanded="false" aria-controls="collapseTopCoHosts">
+                                            Top 10 Co-Hosts
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTopCoHosts" class="accordion-collapse collapse" aria-labelledby="headingTopCoHosts">
+                                        <div class="accordion-body">
+                                            <p id="topCoHostsEmpty" class="text-muted d-none mb-0">No co-hosts yet.</p>
+                                            <div class="table-responsive d-none" id="topCoHostsTableWrapper">
+                                                <table class="table table-striped" id="topCoHostsTable">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Co-Host</th>
+                                                            <th>Quests Co-Hosted</th>
+                                                            <th>Avg Participants</th>
+                                                            <th>Unique Participants</th>
+                                                            <th>Avg Host Rating</th>
+                                                            <th>Avg Quest Rating</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="topCoHostsBody"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1482,6 +1166,7 @@ $(document).ready(function () {
     }
 
     $('#participantSort, #reliabilityFilter, #hostedFilter, #networkFilter').on('input change', updateParticipantTable);
+    document.addEventListener('questDashboard:participantsRendered', updateParticipantTable);
     updateParticipantTable();
 
     $(document).on('click', '.view-reviews-btn', function () {
