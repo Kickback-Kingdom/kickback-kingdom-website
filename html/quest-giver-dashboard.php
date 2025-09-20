@@ -844,7 +844,8 @@ $(document).ready(function () {
                     if (idx === 0) {
                         left.append('<span class="badge bg-success me-2">Next quest</span>');
                     }
-                    left.append($('<strong></strong>').text(formatted));
+                    const dateSpan = $('<span class="date"></span>').text(formatted);
+                    left.append($('<strong></strong>').append(dateSpan));
                     header.append(left);
                     if (typeof item.score !== 'undefined') {
                         header.append($('<span class="badge bg-primary"></span>').text(item.score));
