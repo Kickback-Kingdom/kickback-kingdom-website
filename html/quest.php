@@ -173,6 +173,17 @@ if ($thisQuest->canEdit())
     $questLinesResp = QuestLineController::getMyQuestLines();
     $questLines = $questLinesResp->data;
 }
+
+$selectedRankedOption = 'custom';
+$selectedRankedGameId = '';
+if ($thisQuest->isTournament())
+{
+    $selectedRankedOption = $thisQuest->isBracketTournament() ? 'tournament-bracket' : 'tournament';
+    if (!is_null($thisQuest->tournament->gameId))
+    {
+        $selectedRankedGameId = (string)$thisQuest->tournament->gameId;
+    }
+}
 $canEditQuest = true;
 if ($thisQuest->expired() && $thisQuest->reviewStatus->published)
 {
@@ -805,13 +816,24 @@ $itemInformationJSON = json_encode($itemInfos);
                                                                     }
 
                                                                     function OnQuestOptionChanged() {
-                                                                        var bracketOptions = document.getElementById("quest-style-bracket-options");
-                                                                        bracketOptions.style.display = "none";
+                                                                        const bracketOptions = document.getElementById("quest-style-bracket-options");
+                                                                        const rankedGameSelect = document.getElementById('edit-quest-options-ranked-game');
 
-                                                                        var selectedQuestStyle = GetSelectedQuestStyle();
+                                                                        if (bracketOptions) {
+                                                                            bracketOptions.style.display = "none";
+                                                                        }
 
-                                                                        let radioElement = document.getElementById('edit-quest-options-0-bracket');
-                                                                        if (radioElement.checked && selectedQuestStyle == '1') {
+                                                                        const selectedQuestStyle = GetSelectedQuestStyle();
+                                                                        const rankedSelection = document.querySelector('input[name="edit-quest-options-ranked"]:checked');
+                                                                        const rankedValue = rankedSelection ? rankedSelection.value : 'custom';
+
+                                                                        if (rankedGameSelect) {
+                                                                            const requiresGame = rankedValue !== 'custom';
+                                                                            rankedGameSelect.disabled = !requiresGame;
+                                                                            rankedGameSelect.required = requiresGame;
+                                                                        }
+
+                                                                        if (bracketOptions && selectedQuestStyle == '1' && rankedValue === 'tournament-bracket') {
                                                                             bracketOptions.style.display = "block";
                                                                         }
                                                                     }
@@ -912,27 +934,34 @@ $itemInformationJSON = json_encode($itemInfos);
                                                             <div class="row">
                                                                 <div class="col-12">
                                                                     <div class="form-check">
-                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-ranked" value="custom" id="edit-quest-options-0-custom" <?= ($thisQuest->isBracketTournament()?"":"checked"); ?> onchange="OnQuestOptionChanged();">
-                                                                        <label class="form-check-label" for="edit-quest-options-0-custom">
+                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-ranked" value="custom" id="edit-quest-options-ranked-custom" <?= ($selectedRankedOption === 'custom'?"checked":""); ?> onchange="OnQuestOptionChanged();">
+                                                                        <label class="form-check-label" for="edit-quest-options-ranked-custom">
                                                                             Custom Ranked Match (Must be explained in the quest information content)
                                                                         </label>
                                                                     </div>
                                                                     <div class="form-check">
-                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-ranked" value="bracket" id="edit-quest-options-0-bracket" <?= ($thisQuest->isBracketTournament()?"checked":""); ?> onchange="OnQuestOptionChanged();">
-                                                                        <label class="form-check-label" for="edit-quest-options-0-bracket">
+                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-ranked" value="tournament" id="edit-quest-options-ranked-tournament" <?= ($selectedRankedOption === 'tournament'?"checked":""); ?> onchange="OnQuestOptionChanged();">
+                                                                        <label class="form-check-label" for="edit-quest-options-ranked-tournament">
+                                                                            Tournament (No Bracket)
+                                                                        </label>
+                                                                    </div>
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-ranked" value="tournament-bracket" id="edit-quest-options-ranked-bracket" <?= ($selectedRankedOption === 'tournament-bracket'?"checked":""); ?> onchange="OnQuestOptionChanged();">
+                                                                        <label class="form-check-label" for="edit-quest-options-ranked-bracket">
                                                                             Bracket Elimination Tournament
                                                                         </label>
                                                                     </div>
                                                                     <div class="form-group mt-2">
                                                                         <div class="input-group">
                                                                             <span class="input-group-text"><i class="fa-solid fa-gamepad"></i></span>
-                                                                            <select class="form-select" name="edit-quest-options-ranked-game" id="edit-quest-options-ranked-game" aria-label="Default select example">
-                                                                                <option value="" selected>What game is being played?</option>
-                                                                                <?php 
+                                                                            <select class="form-select" name="edit-quest-options-ranked-game" id="edit-quest-options-ranked-game" aria-label="Default select example" <?= ($selectedRankedOption === 'custom'?"disabled":""); ?> <?= ($selectedRankedOption === 'custom'?"":"required"); ?>>
+                                                                                <option value="" <?= ($selectedRankedGameId === ''?"selected":""); ?>>What game is being played?</option>
+                                                                                <?php
                                                                                     if ($games !== null) {
                                                                                         foreach($games as $game) {
                                                                                             if ($game->canRank) { // Only display games that can be ranked
-                                                                                                echo '<option value="' . $game->crand . '">' . $game->name . '</option>';
+                                                                                                $isSelected = ($selectedRankedGameId !== '' && $selectedRankedGameId == $game->crand) ? ' selected' : '';
+                                                                                                echo '<option value="' . $game->crand . '"' . $isSelected . '>' . $game->name . '</option>';
                                                                                             }
                                                                                         }
                                                                                     }

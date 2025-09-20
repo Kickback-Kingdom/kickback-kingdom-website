@@ -784,13 +784,18 @@ class QuestController
         $conn = Database::getConnection();
 
         $questId = new vRecordId('', (int)$data["edit-quest-id"]);
-        $questName = $data["edit-quest-options-title"];
-        $questLocator = $data["edit-quest-options-locator"];
+        $questName = (string)$data["edit-quest-options-title"];
+        $questLocator = (string)$data["edit-quest-options-locator"];
         $questHostId2 = $data["edit-quest-options-host-2-id"];
-        $questSummary = $data["edit-quest-options-summary"];
+        $questSummary = (string)$data["edit-quest-options-summary"];
         $hasADate = isset($data["edit-quest-options-has-a-date"]);
         $dateTime = $data["edit-quest-options-datetime"];
-        $playStyle = $data["edit-quest-options-style"];
+        $playStyle = (int)$data["edit-quest-options-style"];
+        $rankedOption = $data["edit-quest-options-ranked"] ?? 'custom';
+        if (!in_array($rankedOption, ['custom', 'tournament', 'tournament-bracket'], true)) {
+            $rankedOption = 'custom';
+        }
+        $rankedGameId = isset($data["edit-quest-options-ranked-game"]) ? (int)$data["edit-quest-options-ranked-game"] : 0;
         if ( array_key_exists('edit-quest-options-questline', $data) && isset($data["edit-quest-options-questline"]) ) {
             $questLineId = $data["edit-quest-options-questline"];
             $questLineIdValue = intval($questLineId) === 0 ? null : intval($questLineId);
@@ -815,20 +820,80 @@ class QuestController
             return (new Response(false, "Error updating quest. You do not have permission to edit this quest.", null));
         }
 
+        if ($playStyle !== PlayStyle::Ranked->value) {
+            $rankedOption = 'custom';
+        }
+
+        $existingTournamentId = ($quest->isTournament()) ? $quest->tournament->crand : null;
+        $tournamentIdValue = null;
+
+        if ($rankedOption === 'custom') {
+            $tournamentIdValue = null;
+        } elseif ($rankedOption === 'tournament' || $rankedOption === 'tournament-bracket') {
+            $effectiveGameId = $rankedGameId > 0 ? $rankedGameId : ($quest->isTournament() && !is_null($quest->tournament->gameId) ? $quest->tournament->gameId : 0);
+
+            if ($effectiveGameId <= 0) {
+                return new Response(false, "Please select a game for your ranked tournament.", null);
+            }
+
+            $hasBracket = ($rankedOption === 'tournament-bracket');
+            $tournamentName = function_exists('mb_substr') ? mb_substr($questName, 0, 255) : substr($questName, 0, 255);
+            $tournamentDescriptionSource = Str::empty($questSummary) ? ('Tournament for ' . $questName) : $questSummary;
+            $tournamentDescription = function_exists('mb_substr') ? mb_substr($tournamentDescriptionSource, 0, 255) : substr($tournamentDescriptionSource, 0, 255);
+            $hasBracketInt = $hasBracket ? 1 : 0;
+
+            if (is_null($existingTournamentId)) {
+                $tournamentStmt = $conn->prepare("INSERT INTO tournament (game_id, Name, `Desc`, hasBracket) VALUES (?, ?, ?, ?)");
+                if ($tournamentStmt === false) {
+                    return new Response(false, "Failed to prepare tournament insert statement.", null);
+                }
+
+                $tournamentStmt->bind_param('issi', $effectiveGameId, $tournamentName, $tournamentDescription, $hasBracketInt);
+
+                if (!$tournamentStmt->execute()) {
+                    $error = $tournamentStmt->error;
+                    $tournamentStmt->close();
+                    return new Response(false, "Failed to create tournament: " . $error, null);
+                }
+
+                $tournamentIdValue = $tournamentStmt->insert_id;
+                $tournamentStmt->close();
+            } else {
+                $tournamentStmt = $conn->prepare("UPDATE tournament SET game_id = ?, Name = ?, `Desc` = ?, hasBracket = ? WHERE Id = ?");
+                if ($tournamentStmt === false) {
+                    return new Response(false, "Failed to prepare tournament update statement.", null);
+                }
+
+                $tournamentStmt->bind_param('issii', $effectiveGameId, $tournamentName, $tournamentDescription, $hasBracketInt, $existingTournamentId);
+
+                if (!$tournamentStmt->execute()) {
+                    $error = $tournamentStmt->error;
+                    $tournamentStmt->close();
+                    return new Response(false, "Failed to update tournament: " . $error, null);
+                }
+
+                $tournamentIdValue = $existingTournamentId;
+                $tournamentStmt->close();
+            }
+        } else {
+            $tournamentIdValue = $existingTournamentId;
+        }
+
         // Prepare the update statement
-        $query = "UPDATE quest SET name = ?, locator = ?, host_id_2 = ?, summary = ?, end_date = ?, play_style = ?, quest_line_id = ?, `published` = 0, `being_reviewed` = 0 WHERE Id = ?";
+        $query = "UPDATE quest SET name = ?, locator = ?, host_id_2 = ?, summary = ?, end_date = ?, play_style = ?, quest_line_id = ?, tournament_id = ?, `published` = 0, `being_reviewed` = 0 WHERE Id = ?";
         $stmt = mysqli_prepare($conn, $query);
 
         // Determine the value for host_id_2 and end_date
         $host_id_2 = Str::empty($questHostId2) ? NULL : $questHostId2;
         $end_date = $hasADate && !Str::empty($dateTime) ? $dateTime : NULL;
+        $tournament_id = $tournamentIdValue;
 
         //$date = $data["edit-quest-options-datetime-date"];
         //$time = $data["edit-quest-options-datetime-time"];
         //$end_date = $hasADate && !Str::empty($date) && !Str::empty($time) ? $date . ' ' . $time . ":00": NULL;
 
         // Bind the parameters
-        mysqli_stmt_bind_param($stmt, 'ssissiii', $questName, $questLocator, $host_id_2, $questSummary, $end_date, $playStyle, $questLineIdValue, $questId->crand);
+        mysqli_stmt_bind_param($stmt, 'ssissiiii', $questName, $questLocator, $host_id_2, $questSummary, $end_date, $playStyle, $questLineIdValue, $tournament_id, $questId->crand);
 
         // Execute the statement
         $success = mysqli_stmt_execute($stmt);
@@ -842,7 +907,8 @@ class QuestController
             // Construct a data object to return more explicit information
             $responseData = (object)[
                 'locator' => $questLocator, // Always return the current locator
-                'locatorChanged' => $locatorChanged // Explicitly indicate if the locator was changed
+                'locatorChanged' => $locatorChanged, // Explicitly indicate if the locator was changed
+                'tournamentId' => $tournamentIdValue
             ];
             return (new Response(true, "Quest options updated successfully!", $responseData));
         } else {
@@ -1029,6 +1095,7 @@ class QuestController
         {
             $quest->tournament = new vTournament('', $row["tournament_id"]);
             $quest->tournament->hasBracket((bool)$row["hasBracket"]==1);
+            self::hydrateTournamentBasics($quest->tournament);
         }
 
         if ($row["end_date"] != null)
@@ -1104,6 +1171,33 @@ class QuestController
         $quest->playStyle = PlayStyle::from($row["play_style"]);
 
         return $quest;
+    }
+
+    private static function hydrateTournamentBasics(vTournament $tournament) : void
+    {
+        $conn = Database::getConnection();
+        $stmt = $conn->prepare("SELECT game_id, Name, `Desc` FROM tournament WHERE Id = ?");
+        if ($stmt === false) {
+            return;
+        }
+
+        $tournamentId = $tournament->crand;
+        $stmt->bind_param('i', $tournamentId);
+
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            if ($result !== false) {
+                $row = $result->fetch_assoc();
+                if ($row !== null) {
+                    $tournament->gameId = (int)$row['game_id'];
+                    $tournament->name = $row['Name'];
+                    $tournament->description = $row['Desc'];
+                }
+                $result->free();
+            }
+        }
+
+        $stmt->close();
     }
 
     private static function row_to_vQuestReward(array $row) : vQuestReward {

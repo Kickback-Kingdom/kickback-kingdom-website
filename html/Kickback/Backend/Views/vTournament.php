@@ -21,6 +21,10 @@ class vTournament extends vRecordId
 {
     private bool $hasBracket_;
 
+    public ?int $gameId = null;
+    public ?string $name = null;
+    public ?string $description = null;
+
     /** @var ?array<vTournamentTeam> */
     private ?array $competitors_ = null;
 
