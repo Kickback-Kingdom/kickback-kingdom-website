@@ -16,10 +16,17 @@ use Kickback\Backend\Views\vTournamentTeam;
 use Kickback\Backend\Views\vTournamentResult;
 use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vQuestApplicant;
+use Kickback\Backend\Views\vGame;
+use Kickback\Backend\Views\vDateTime;
 
 class vTournament extends vRecordId
 {
     private bool $hasBracket_;
+
+    public string $name = '';
+    public string $description = '';
+    public ?vDateTime $date = null;
+    public ?vGame $game = null;
 
     /** @var ?array<vTournamentTeam> */
     private ?array $competitors_ = null;

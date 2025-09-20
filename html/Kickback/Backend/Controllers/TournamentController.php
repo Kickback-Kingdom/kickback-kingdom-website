@@ -17,6 +17,7 @@ use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vGame;
 use Kickback\Backend\Views\vGameMatch;
 use Kickback\Backend\Views\vDateTime;
+use Kickback\Backend\Views\vMedia;
 
 class TournamentController
 {
@@ -41,17 +42,107 @@ class TournamentController
         $stmt = mysqli_prepare($conn, "SELECT * FROM v_tournament_bracket_info WHERE tournament_id = ?");
         mysqli_stmt_bind_param($stmt, "i", $tournament_id->crand);
         mysqli_stmt_execute($stmt);
-    
+
         $result = mysqli_stmt_get_result($stmt);
-        
+
         $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
-        
+
         $bracketInfo = [];
         foreach ($rows as $row) {
 
             $bracketInfo[] = self::row_to_vBracketInfo(Row::from_array($row));
         }
         return (new Response(true, "Tournament Bracket information.",  $bracketInfo ));
+    }
+
+    public static function queryTournamentById(vRecordId $tournament_id) : Response
+    {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT t.Id,
+                       t.game_id            AS tournament_game_id,
+                       t.Name               AS tournament_name,
+                       t.`Desc`             AS tournament_desc,
+                       t.`Date`             AS tournament_date,
+                       t.hasBracket,
+                       g.Id                 AS game_id,
+                       g.Name               AS game_name,
+                       g.Desc               AS game_desc,
+                       g.MinRankedMatches   AS game_min_ranked_matches,
+                       g.ShortName          AS game_short_name,
+                       g.CanRank            AS game_can_rank,
+                       g.media_icon_id      AS game_media_icon_id,
+                       g.media_banner_id    AS game_media_banner_id,
+                       g.media_banner_mobile_id AS game_media_banner_mobile_id,
+                       g.icon_path          AS game_icon_path,
+                       g.banner_path        AS game_banner_path,
+                       g.banner_mobile_path AS game_banner_mobile_path,
+                       g.locator            AS game_locator
+                FROM tournament t
+                LEFT JOIN v_game_info g ON g.Id = t.game_id
+                WHERE t.Id = ?";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return new Response(false, "Failed to prepare tournament lookup statement.", null);
+        }
+
+        $stmt->bind_param('i', $tournament_id->crand);
+        if (!$stmt->execute()) {
+            $error = $stmt->error;
+            $stmt->close();
+            return new Response(false, "Failed to execute tournament lookup: " . $error, null);
+        }
+
+        $result = $stmt->get_result();
+        if (!$result || $result->num_rows === 0) {
+            $stmt->close();
+            return new Response(false, "Tournament not found.", null);
+        }
+
+        $row = $result->fetch_assoc();
+        $stmt->close();
+
+        $tournament = new vTournament('', (int)$row['Id']);
+        $tournament->hasBracket((bool)$row['hasBracket']);
+        $tournament->name = $row['tournament_name'] ?? '';
+        $tournament->description = $row['tournament_desc'] ?? '';
+        if (!empty($row['tournament_date'])) {
+            $tournament->date = new vDateTime($row['tournament_date']);
+        }
+
+        $gameId = $row['game_id'] ?? null;
+        if (!is_null($gameId)) {
+            $game = new vGame('', (int)$gameId);
+            $game->name = $row['game_name'] ?? '';
+            $game->description = $row['game_desc'] ?? '';
+            $game->minRankedMatches = isset($row['game_min_ranked_matches']) ? (int)$row['game_min_ranked_matches'] : 0;
+            $game->shortName = $row['game_short_name'] ?? '';
+            $game->canRank = isset($row['game_can_rank']) ? ((int)$row['game_can_rank'] === 1) : false;
+            $game->locator = $row['game_locator'] ?? '';
+
+            if (!is_null($row['game_media_icon_id'])) {
+                $icon = new vMedia('', (int)$row['game_media_icon_id']);
+                $icon->setMediaPath($row['game_icon_path']);
+                $game->icon = $icon;
+            }
+
+            if (!is_null($row['game_media_banner_id'])) {
+                $banner = new vMedia('', (int)$row['game_media_banner_id']);
+                $banner->setMediaPath($row['game_banner_path']);
+                $game->banner = $banner;
+            }
+
+            if (!is_null($row['game_media_banner_mobile_id'])) {
+                $bannerMobile = new vMedia('', (int)$row['game_media_banner_mobile_id']);
+                $bannerMobile->setMediaPath($row['game_banner_mobile_path']);
+                $game->bannerMobile = $bannerMobile;
+            }
+
+            $tournament->game = $game;
+        }
+
+        return new Response(true, "Tournament information.", $tournament);
     }
     
     /**
