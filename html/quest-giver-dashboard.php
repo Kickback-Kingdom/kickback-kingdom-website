@@ -943,6 +943,16 @@ $(document).ready(function () {
         }, 'json');
     });
 
+    function initReviewInboxTooltips() {
+        $('#datatable-review-inbox [data-bs-toggle="tooltip"]').each(function () {
+            const tooltip = bootstrap.Tooltip.getInstance(this);
+            if (tooltip) {
+                tooltip.dispose();
+            }
+            new bootstrap.Tooltip(this);
+        });
+    }
+
     function loadReviewInbox() {
         if ($.fn.DataTable.isDataTable('#datatable-review-inbox')) {
             $('#datatable-review-inbox').DataTable().destroy();
@@ -1005,11 +1015,16 @@ $(document).ready(function () {
                     }
                 });
 
+                initReviewInboxTooltips();
+
                 $('#datatable-review-inbox').DataTable({
                     pageLength: 10,
                     lengthChange: true,
                     order: [[2, 'desc']],
-                    columnDefs: [{ targets: [3], orderable: false }]
+                    columnDefs: [{ targets: [3], orderable: false }],
+                    drawCallback: function () {
+                        initReviewInboxTooltips();
+                    }
                 });
             } else {
                 $('#datatable-review-inbox tbody').html('<tr><td colspan="4" class="text-danger">' + resp.message + '</td></tr>');
