@@ -702,8 +702,12 @@ $(document).ready(function() {
         <?php if (Kickback\Services\Session::isLoggedIn()) { ?>
         event.checklist.forEach(function(item) {
             let username = '';
-            if (item[1] != null)
-                username = `<a href="<?php echo Version::urlBetaPrefix(); ?>/u/${accounts[item[1]]}" class="username">${accounts[item[1]]}</a>`
+            if (item[1] != null) {
+                const accountIdAttr = String(item[1] ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                const usernameValue = accounts[item[1]] ?? '';
+                const usernameAttr = usernameValue.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                username = `<a href="<?php echo Version::urlBetaPrefix(); ?>/u/${accounts[item[1]]}" class="username" data-account-id="${accountIdAttr}" data-username="${usernameAttr}">${usernameValue}</a>`;
+            }
                 
             let icon = item[0] ? '<i class="fa-solid fa-square-check"></i>' : '<i class="fa-regular fa-square"></i>'; // Replace with your preferred icons
             checklistHtml += `<div class="checklist-item " ${item[0] ? "style='text-decoration: line-through;'" : ""} >${icon} ${username} ${item[2]}</div>`;

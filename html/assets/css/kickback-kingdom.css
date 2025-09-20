@@ -127,6 +127,17 @@ body {
     text-decoration: none;
 }
 
+.popover.player-card-popover {
+    max-width: none;
+    padding: 0;
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.45);
+    z-index: 1080;
+}
+
+.popover.player-card-popover .popover-body {
+    padding: 0;
+}
+
 .league {
     background-color: var(--bs-primary);
     border-radius: 5px;

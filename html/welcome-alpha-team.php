@@ -67,7 +67,7 @@ $coleAccount = AccountController::getAccountById(new vRecordId('', 164))->data;
                                     "Hello hello, Alpha Team! It's an honor to have you here. Since the old days of liberating entire planets from our enemies, we've stood united with our allies against all odds! Now, join us to liberate&nbsp;Palworld&nbsp;next!"
                                 </p>
                                 <p class="mb-0">
-                                    — <a href="/u/Colethedragon" class="username">Colethedragon</a>
+                                    — <a href="/u/Colethedragon" class="username" data-account-id="" data-username="Colethedragon">Colethedragon</a>
                                 </p>
                             </div>
                         </div>

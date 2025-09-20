@@ -174,19 +174,19 @@ use Kickback\Common\Version;
                             <div class="col-md-4 text-center">
                                 <blockquote class="blockquote">
                                     <p>"Lich's creative card game mechanics combined with an active board state scratched an itch for me I didn't even know was there!"</p>
-                                    <footer class="blockquote-footer"><a href="/u/devon%20:)" class="username">devon :)</a></footer>
+                                    <footer class="blockquote-footer"><a href="/u/devon%20:)" class="username" data-account-id="" data-username="devon :)">devon :)</a></footer>
                                 </blockquote>
                             </div>
                             <div class="col-md-4 text-center">
                                 <blockquote class="blockquote">
                                     <p>"L.I.C.H. is a game with a lot of potential and can be a lot of fun with friends."</p>
-                                    <footer class="blockquote-footer"><a href="/u/Kotojo" class="username">Kotojo</a></footer>
+                                    <footer class="blockquote-footer"><a href="/u/Kotojo" class="username" data-account-id="" data-username="Kotojo">Kotojo</a></footer>
                                 </blockquote>
                             </div>
                             <div class="col-md-4 text-center">
                                 <blockquote class="blockquote">
                                     <p>"The synergy between your cards and abilities is endlessly satisfying, and the dynamic board interactivity keeps every match fresh and engaging."</p>
-                                    <footer class="blockquote-footer"><a href="/u/LandoTheBarbarian" class="username">LandoTheBarbarian</a></footer>
+                                    <footer class="blockquote-footer"><a href="/u/LandoTheBarbarian" class="username" data-account-id="" data-username="LandoTheBarbarian">LandoTheBarbarian</a></footer>
                                 </blockquote>
                             </div>
                         </div>

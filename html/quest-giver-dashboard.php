@@ -1190,7 +1190,10 @@ $(document).ready(function () {
                     const item = $('<div class="list-group-item d-flex align-items-start"></div>');
                     const img = $('<img class="rounded me-3" style="width:40px;height:40px;">').attr('src', r.avatar);
                     const body = $('<div class="flex-grow-1"></div>');
-                    body.append(`<div><a href="/u/${r.username}" class="username" target="_blank">${r.username}</a></div>`);
+                    const accountId = r.accountId ?? r.account_id ?? r.crand ?? '';
+                    const accountIdAttr = String(accountId ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    const usernameAttr = (r.username ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    body.append(`<div><a href="/u/${r.username}" class="username" data-account-id="${accountIdAttr}" data-username="${usernameAttr}" target="_blank">${r.username}</a></div>`);
                     if (r.hostRating !== null) {
                         body.append('Host Rating: ' + renderStarRatingJs(r.hostRating) + '<br>');
                         body.append('Quest Rating: ' + renderStarRatingJs(r.questRating) + '<br>');

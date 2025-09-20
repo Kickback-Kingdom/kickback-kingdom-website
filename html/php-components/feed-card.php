@@ -22,6 +22,10 @@ $feedCardHasRewards = false;
 $feedCardTitle = "";
 $feedCardHostName = null;
 $feedCardHostName2 = null;
+$feedCardHostNameRaw = null;
+$feedCardHostName2Raw = null;
+$feedCardHostId = null;
+$feedCardHostId2 = null;
 $feedCardDate = new DateTime();
 $feedCardHasCreatedBy = true;
 $feedCardExpired = false;
@@ -39,10 +43,25 @@ if (isset($feedCard["text"]))
     $feedCardDesc = htmlspecialchars($feedCard["text"]);
 
 if (isset($feedCard["account_1_username"]))
-    $feedCardHostName = htmlspecialchars($feedCard["account_1_username"]);
+{
+    $feedCardHostNameRaw = $feedCard["account_1_username"];
+    $feedCardHostName = htmlspecialchars($feedCardHostNameRaw);
+}
+
+if (isset($feedCard["account_1_id"]))
+    $feedCardHostId = htmlspecialchars((string)$feedCard["account_1_id"], ENT_QUOTES, 'UTF-8');
 
 if (isset($feedCard["account_2_username"]))
-    $feedCardHostName2 = htmlspecialchars($feedCard['account_2_username']);
+{
+    $feedCardHostName2Raw = $feedCard['account_2_username'];
+    $feedCardHostName2 = htmlspecialchars($feedCardHostName2Raw);
+}
+
+if (isset($feedCard["account_2_id"]))
+    $feedCardHostId2 = htmlspecialchars((string)$feedCard["account_2_id"], ENT_QUOTES, 'UTF-8');
+
+$feedCardHostNameAttr = $feedCardHostNameRaw !== null ? htmlspecialchars($feedCardHostNameRaw, ENT_QUOTES, 'UTF-8') : '';
+$feedCardHostName2Attr = $feedCardHostName2Raw !== null ? htmlspecialchars($feedCardHostName2Raw, ENT_QUOTES, 'UTF-8') : '';
 
 if (isset($feedCard["event_date"]))
 {
@@ -284,8 +303,8 @@ $feedCardDateDetailed = date_format($feedCardDate,"M j, Y H:i:s");
                 </a>
                 <?php if ($feedCardHasCreatedBy) { ?>
                 <p class="card-text">
-                    <small class="text-body-secondary"><?php if (!$feedCardCreatedByShowOnlyDate) { ?><?php echo $feedCardCreatedByPrefix; ?> by <a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo urlencode($feedCardHostName); ?>" class="username"><?php echo $feedCardHostName; ?></a>
-                    <?php if ($feedCardHostName2 != null) { ?> and <a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo urlencode($feedCardHostName2); ?>" class="username"><?php echo $feedCardHostName2;?></a><?php } ?>
+                    <small class="text-body-secondary"><?php if (!$feedCardCreatedByShowOnlyDate) { ?><?php echo $feedCardCreatedByPrefix; ?> by <a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo urlencode($feedCardHostName); ?>" class="username" data-account-id="<?php echo $feedCardHostId ?? ''; ?>" data-username="<?php echo $feedCardHostNameAttr; ?>"><?php echo $feedCardHostName; ?></a>
+                    <?php if ($feedCardHostName2 != null) { ?> and <a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo urlencode($feedCardHostName2); ?>" class="username" data-account-id="<?php echo $feedCardHostId2 ?? ''; ?>" data-username="<?php echo $feedCardHostName2Attr; ?>"><?php echo $feedCardHostName2;?></a><?php } ?>
                     <?php } if ($feedCardHasDate) { ?>on <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom"
                         data-bs-title="<?php echo $feedCardDateDetailed; ?> UTC"><?php echo $feedCardDateBasic; ?></span><?php } else { ?>until completed<?php } ?>
                     </small>

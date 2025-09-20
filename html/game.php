@@ -454,6 +454,9 @@ $gameQuests = $gameQuestsResp->data->items;
 
                     for (const [teamName, players] of Object.entries(rowData.teams)) {
                         players.forEach(player => {
+                            const accountId = player.accountId ?? player.account_id ?? player.crand ?? '';
+                            const accountIdAttr = String(accountId ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                            const usernameAttr = (player.username ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                             const eloChange = player.match_stats[rowData.crand].eloChange;
                             const result = eloChange > 0 ? 'Win' : 'Loss';
                             const rowClass = eloChange > 0 ? 'table-success' : 'table-danger';
@@ -462,7 +465,7 @@ $gameQuests = $gameQuestsResp->data->items;
                                 `<td>
                                     <div class="d-flex align-items-center">
                                         <img src="${player.avatar.url}" alt="${player.username}" class="me-2" style="width: 40px; height: 40px;">
-                                        <a href="/u/${player.username}" class="username">${player.username}</a>
+                                        <a href="/u/${player.username}" class="username" data-account-id="${accountIdAttr}" data-username="${usernameAttr}">${player.username}</a>
                                     </div>
                                 </td>` +
                                 `<td>${teamName}</td>` +
