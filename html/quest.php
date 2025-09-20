@@ -200,6 +200,17 @@ foreach ($thisQuest->rewards as $questRewardsCategory) {
 }
 $itemInformationJSON = json_encode($itemInfos);
 
+$selectedRankedType = 'match';
+$selectedRankedGameId = '';
+if ($thisQuest->isTournament())
+{
+    $selectedRankedType = $thisQuest->tournament->hasBracket() ? 'bracket' : 'tournament';
+    if ($thisQuest->tournament->game !== null)
+    {
+        $selectedRankedGameId = (string)$thisQuest->tournament->game->crand;
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -806,14 +817,32 @@ $itemInformationJSON = json_encode($itemInfos);
                                                                     }
 
                                                                     function OnQuestOptionChanged() {
-                                                                        var bracketOptions = document.getElementById("quest-style-bracket-options");
-                                                                        bracketOptions.style.display = "none";
+                                                                        const bracketOptions = document.getElementById("quest-style-bracket-options");
+                                                                        if (bracketOptions) {
+                                                                            bracketOptions.style.display = "none";
+                                                                        }
 
-                                                                        var selectedQuestStyle = GetSelectedQuestStyle();
+                                                                        const rankedGameSelect = document.getElementById('edit-quest-options-ranked-game');
+                                                                        if (rankedGameSelect) {
+                                                                            rankedGameSelect.disabled = true;
+                                                                            rankedGameSelect.required = false;
+                                                                        }
 
-                                                                        let radioElement = document.getElementById('edit-quest-options-0-bracket');
-                                                                        if (radioElement.checked && selectedQuestStyle == '1') {
-                                                                            bracketOptions.style.display = "block";
+                                                                        const selectedQuestStyle = GetSelectedQuestStyle();
+                                                                        if (selectedQuestStyle === '1') {
+                                                                            const rankedTypeElement = document.getElementById('edit-quest-options-ranked-type');
+                                                                            const rankedTypeValue = rankedTypeElement ? rankedTypeElement.value : 'match';
+
+                                                                            if (rankedGameSelect) {
+                                                                                rankedGameSelect.disabled = false;
+                                                                                if (rankedTypeValue !== 'match') {
+                                                                                    rankedGameSelect.required = true;
+                                                                                }
+                                                                            }
+
+                                                                            if (rankedTypeValue === 'bracket' && bracketOptions) {
+                                                                                bracketOptions.style.display = "block";
+                                                                            }
                                                                         }
                                                                     }
 
@@ -978,28 +1007,25 @@ $itemInformationJSON = json_encode($itemInfos);
                                                             
                                                             <div class="row">
                                                                 <div class="col-12">
-                                                                    <div class="form-check">
-                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-ranked" value="custom" id="edit-quest-options-0-custom" <?= ($thisQuest->isBracketTournament()?"":"checked"); ?> onchange="OnQuestOptionChanged();">
-                                                                        <label class="form-check-label" for="edit-quest-options-0-custom">
-                                                                            Custom Ranked Match (Must be explained in the quest information content)
-                                                                        </label>
-                                                                    </div>
-                                                                    <div class="form-check">
-                                                                        <input class="form-check-input" type="radio" name="edit-quest-options-ranked" value="bracket" id="edit-quest-options-0-bracket" <?= ($thisQuest->isBracketTournament()?"checked":""); ?> onchange="OnQuestOptionChanged();">
-                                                                        <label class="form-check-label" for="edit-quest-options-0-bracket">
-                                                                            Bracket Elimination Tournament
-                                                                        </label>
+                                                                    <div class="form-group mb-2">
+                                                                        <label class="form-label" for="edit-quest-options-ranked-type">Ranked Match Type</label>
+                                                                        <select class="form-select" name="edit-quest-options-ranked-type" id="edit-quest-options-ranked-type" onchange="OnQuestOptionChanged()">
+                                                                            <option value="match" <?= ($selectedRankedType === 'match' ? 'selected' : ''); ?>>Custom Ranked Match (No Tournament)</option>
+                                                                            <option value="tournament" <?= ($selectedRankedType === 'tournament' ? 'selected' : ''); ?>>Tournament With No Bracket (Rally Style)</option>
+                                                                            <option value="bracket" <?= ($selectedRankedType === 'bracket' ? 'selected' : ''); ?>>Tournament With A Bracket</option>
+                                                                        </select>
                                                                     </div>
                                                                     <div class="form-group mt-2">
                                                                         <div class="input-group">
                                                                             <span class="input-group-text"><i class="fa-solid fa-gamepad"></i></span>
                                                                             <select class="form-select" name="edit-quest-options-ranked-game" id="edit-quest-options-ranked-game" aria-label="Default select example">
-                                                                                <option value="" selected>What game is being played?</option>
-                                                                                <?php 
+                                                                                <option value="" <?= ($selectedRankedGameId === '' ? 'selected' : ''); ?>>What game is being played?</option>
+                                                                                <?php
                                                                                     if ($games !== null) {
-                                                                                        foreach($games as $game) {
+                                                                                        foreach ($games as $game) {
                                                                                             if ($game->canRank) { // Only display games that can be ranked
-                                                                                                echo '<option value="' . $game->crand . '">' . $game->name . '</option>';
+                                                                                                $isSelected = ($selectedRankedGameId === (string)$game->crand) ? ' selected' : '';
+                                                                                                echo '<option value="' . $game->crand . '"' . $isSelected . '>' . htmlspecialchars($game->name, ENT_QUOTES) . '</option>';
                                                                                             }
                                                                                         }
                                                                                     }
@@ -1015,8 +1041,8 @@ $itemInformationJSON = json_encode($itemInfos);
                                                     </div>
                                                 </div>
                                             </div>
-                                            
-                                            <div class="row mb-3" id="quest-style-bracket-options">
+
+                                            <div class="row mb-3" id="quest-style-bracket-options" style="<?= ($selectedRankedType === 'bracket' && $thisQuest->playStyle == PlayStyle::Ranked ? '' : 'display: none;'); ?>">
                                                 <div class="col-12">
                                                     <div class="card">
                                                         <div class="card-body">
