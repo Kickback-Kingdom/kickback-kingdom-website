@@ -848,7 +848,7 @@ $(document).ready(function () {
         $.post('/api/v1/schedule/suggestedDates.php', { sessionToken: sessionToken, month: calMonth + 1, year: calYear }, function(resp) {
             const list = $('#suggestedDatesList');
             list.empty();
-            if (resp && resp.success && resp.data.length) {
+            if (resp && resp.success && Array.isArray(resp.data) && resp.data.length) {
                 resp.data.forEach(function(item, idx) {
                     const [y, m, d] = item.date.split('-').map(Number);
                     const dateObj = new Date(y, m - 1, d);
@@ -879,6 +879,9 @@ $(document).ready(function () {
                     list.append(li);
                 });
             } else {
+                if (resp && resp.success && !Array.isArray(resp.data)) {
+                    console.error('Suggested dates response data was not an array.', resp.data);
+                }
                 list.append('<li class="list-group-item">No suggestions available</li>');
             }
         }, 'json');
