@@ -959,9 +959,32 @@ class QuestController
 
         $existingTournamentId = $quest->isTournament() ? $quest->tournament->crand : null;
         $tournamentIdValue = null;
+
+        $canEditRankedOptions = !$quest->reviewStatus->isPublished();
+        if ($canEditRankedOptions && $quest->hasEndDate()) {
+            $questEndDate = $quest->nullableEndDate();
+            if ($questEndDate instanceof vDateTime) {
+                $canEditRankedOptions = $questEndDate->isAfter(vDateTime::now());
+            }
+        }
+
+        if (!$canEditRankedOptions) {
+            if ($quest->isTournament()) {
+                $rankedOption = $quest->tournament->hasBracket() ? 'bracket' : 'tournament';
+                if ($quest->tournament->game !== null) {
+                    $rankedGameIdValue = (int)$quest->tournament->game->crand;
+                }
+                $tournamentIdValue = $existingTournamentId;
+            } else {
+                $rankedOption = 'match';
+                $rankedGameIdValue = null;
+            }
+            $playStyle = $quest->playStyle->value;
+        }
+
         $isRankedStyle = ($playStyle === PlayStyle::Ranked->value);
 
-        if ($isRankedStyle && ($rankedOption === 'tournament' || $rankedOption === 'bracket')) {
+        if ($canEditRankedOptions && $isRankedStyle && ($rankedOption === 'tournament' || $rankedOption === 'bracket')) {
             if ($rankedGameIdValue === null || $rankedGameIdValue <= 0) {
                 return (new Response(false, "Please select a game for this ranked tournament.", null));
             }
@@ -1001,6 +1024,26 @@ class QuestController
 
                 $tournamentIdValue = (int)$conn->insert_id;
                 $stmtTournament->close();
+            }
+        } elseif ($canEditRankedOptions) {
+            if ($existingTournamentId !== null) {
+                $stmtDeleteTournament = $conn->prepare("DELETE FROM tournament WHERE Id = ?");
+                if (!$stmtDeleteTournament) {
+                    return (new Response(false, "Failed to prepare tournament deletion statement.", null));
+                }
+
+                $stmtDeleteTournament->bind_param('i', $existingTournamentId);
+                if (!$stmtDeleteTournament->execute()) {
+                    $error = $stmtDeleteTournament->error;
+                    $stmtDeleteTournament->close();
+                    return (new Response(false, "Failed to delete tournament: " . $error, null));
+                }
+
+                $stmtDeleteTournament->close();
+            }
+        } else {
+            if ($quest->isTournament()) {
+                $tournamentIdValue = $existingTournamentId;
             }
         }
 

@@ -211,6 +211,14 @@ if ($thisQuest->isTournament())
     }
 }
 
+$rankedOptionsEditable = !$thisQuest->reviewStatus->isPublished();
+if ($rankedOptionsEditable && $thisQuest->hasEndDate()) {
+    $questEndDate = $thisQuest->nullableEndDate();
+    if ($questEndDate instanceof vDateTime) {
+        $rankedOptionsEditable = $questEndDate->isAfter(vDateTime::now());
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -793,6 +801,8 @@ if ($thisQuest->isTournament())
                                                                         return document.getElementById('edit-quest-options-style').value;
                                                                     }
 
+                                                                    const canEditRankedOptions = <?= $rankedOptionsEditable ? 'true' : 'false'; ?>;
+
                                                                     function OnQuestStyleChanged() {
                                                                             // First, hide all the descriptions
                                                                         for (let i = 0; i < 4; i++) {
@@ -833,7 +843,7 @@ if ($thisQuest->isTournament())
                                                                             const rankedTypeElement = document.getElementById('edit-quest-options-ranked-type');
                                                                             const rankedTypeValue = rankedTypeElement ? rankedTypeElement.value : 'match';
 
-                                                                            if (rankedGameSelect) {
+                                                                            if (rankedGameSelect && canEditRankedOptions) {
                                                                                 rankedGameSelect.disabled = false;
                                                                                 if (rankedTypeValue !== 'match') {
                                                                                     rankedGameSelect.required = true;
@@ -1004,12 +1014,17 @@ if ($thisQuest->isTournament())
                                                     <div class="card">
                                                         <div class="card-body">
                                                             <h5 class="card-title">Ranked Options</h5>
+                                                            <?php if (!$rankedOptionsEditable) { ?>
+                                                                <div class="alert alert-warning mb-3" role="alert">
+                                                                    Ranked settings are locked once a quest is published or has begun.
+                                                                </div>
+                                                            <?php } ?>
                                                             
                                                             <div class="row">
                                                                 <div class="col-12">
                                                                     <div class="form-group mb-2">
                                                                         <label class="form-label" for="edit-quest-options-ranked-type">Ranked Match Type</label>
-                                                                        <select class="form-select" name="edit-quest-options-ranked-type" id="edit-quest-options-ranked-type" onchange="OnQuestOptionChanged()">
+                                                                        <select class="form-select" name="edit-quest-options-ranked-type" id="edit-quest-options-ranked-type" onchange="OnQuestOptionChanged()"<?= $rankedOptionsEditable ? '' : ' disabled'; ?>>
                                                                             <option value="match" <?= ($selectedRankedType === 'match' ? 'selected' : ''); ?>>Custom Ranked Match (No Tournament)</option>
                                                                             <option value="tournament" <?= ($selectedRankedType === 'tournament' ? 'selected' : ''); ?>>Tournament With No Bracket (Rally Style)</option>
                                                                             <option value="bracket" <?= ($selectedRankedType === 'bracket' ? 'selected' : ''); ?>>Tournament With A Bracket</option>
@@ -1018,7 +1033,7 @@ if ($thisQuest->isTournament())
                                                                     <div class="form-group mt-2">
                                                                         <div class="input-group">
                                                                             <span class="input-group-text"><i class="fa-solid fa-gamepad"></i></span>
-                                                                            <select class="form-select" name="edit-quest-options-ranked-game" id="edit-quest-options-ranked-game" aria-label="Default select example">
+                                                                            <select class="form-select" name="edit-quest-options-ranked-game" id="edit-quest-options-ranked-game" aria-label="Default select example"<?= $rankedOptionsEditable ? '' : ' disabled'; ?>>
                                                                                 <option value="" <?= ($selectedRankedGameId === '' ? 'selected' : ''); ?>>What game is being played?</option>
                                                                                 <?php
                                                                                     if ($games !== null) {
@@ -1057,7 +1072,7 @@ if ($thisQuest->isTournament())
                                                                         </label>
                                                                     </div>
                                                                     <div class="form-check">
-                                                                        <input class="form-check-input" type="radio" name="quest-style-bracket-options-elimination" value="double" id="quest-style-bracket-options-elimination-double" checked>
+                                                                        <input class="form-check-input" type="radio" name="quest-style-bracket-options-elimination" value="double" id="quest-style-bracket-options-elimination-double" checked<?= $rankedOptionsEditable ? '' : ' disabled'; ?>>
                                                                         <label class="form-check-label" for="quest-style-bracket-options-elimination-double">
                                                                             Double Elimination
                                                                         </label>
