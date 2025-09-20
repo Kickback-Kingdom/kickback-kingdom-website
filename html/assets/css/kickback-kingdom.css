@@ -129,6 +129,9 @@ body {
 
 .popover.player-card-popover {
     --bs-popover-max-width: 9999px;
+    --player-card-popover-arrow-size: 0.75rem;
+    --player-card-popover-arrow-bg: var(--bs-card-bg, #fff);
+    --player-card-popover-arrow-shadow: rgba(0, 0, 0, 0.45);
     max-width: none;
     width: auto;
     padding: 0;
@@ -147,9 +150,78 @@ body {
     box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.45);
 }
 
+.popover.player-card-popover .popover-arrow {
+    width: calc(var(--player-card-popover-arrow-size) * 2);
+    height: calc(var(--player-card-popover-arrow-size) * 2);
+    filter: drop-shadow(0 0.35rem 0.9rem var(--player-card-popover-arrow-shadow));
+}
+
 .popover.player-card-popover .popover-arrow::before,
 .popover.player-card-popover .popover-arrow::after {
-    display: none;
+    display: block;
+    content: "";
+    border-style: solid;
+    border-color: transparent;
+}
+
+.popover.player-card-popover[data-popper-placement^="top"] > .popover-arrow::before,
+.popover.player-card-popover[data-popper-placement^="top"] > .popover-arrow::after {
+    border-width: var(--player-card-popover-arrow-size) var(--player-card-popover-arrow-size) 0;
+}
+
+.popover.player-card-popover[data-popper-placement^="top"] > .popover-arrow::before {
+    bottom: 0;
+    border-top-color: var(--player-card-popover-arrow-shadow);
+}
+
+.popover.player-card-popover[data-popper-placement^="top"] > .popover-arrow::after {
+    bottom: 1px;
+    border-top-color: var(--player-card-popover-arrow-bg);
+}
+
+.popover.player-card-popover[data-popper-placement^="bottom"] > .popover-arrow::before,
+.popover.player-card-popover[data-popper-placement^="bottom"] > .popover-arrow::after {
+    border-width: 0 var(--player-card-popover-arrow-size) var(--player-card-popover-arrow-size);
+}
+
+.popover.player-card-popover[data-popper-placement^="bottom"] > .popover-arrow::before {
+    top: 0;
+    border-bottom-color: var(--player-card-popover-arrow-shadow);
+}
+
+.popover.player-card-popover[data-popper-placement^="bottom"] > .popover-arrow::after {
+    top: 1px;
+    border-bottom-color: var(--player-card-popover-arrow-bg);
+}
+
+.popover.player-card-popover[data-popper-placement^="left"] > .popover-arrow::before,
+.popover.player-card-popover[data-popper-placement^="left"] > .popover-arrow::after {
+    border-width: var(--player-card-popover-arrow-size) 0 var(--player-card-popover-arrow-size) var(--player-card-popover-arrow-size);
+}
+
+.popover.player-card-popover[data-popper-placement^="left"] > .popover-arrow::before {
+    right: 0;
+    border-left-color: var(--player-card-popover-arrow-shadow);
+}
+
+.popover.player-card-popover[data-popper-placement^="left"] > .popover-arrow::after {
+    right: 1px;
+    border-left-color: var(--player-card-popover-arrow-bg);
+}
+
+.popover.player-card-popover[data-popper-placement^="right"] > .popover-arrow::before,
+.popover.player-card-popover[data-popper-placement^="right"] > .popover-arrow::after {
+    border-width: var(--player-card-popover-arrow-size) var(--player-card-popover-arrow-size) var(--player-card-popover-arrow-size) 0;
+}
+
+.popover.player-card-popover[data-popper-placement^="right"] > .popover-arrow::before {
+    left: 0;
+    border-right-color: var(--player-card-popover-arrow-shadow);
+}
+
+.popover.player-card-popover[data-popper-placement^="right"] > .popover-arrow::after {
+    left: 1px;
+    border-right-color: var(--player-card-popover-arrow-bg);
 }
 
 .league {
