@@ -117,33 +117,59 @@ function renderStarRating(float $rating): string
     <div class="row text-center g-3 mt-3 mb-3">
         <div class="col-12 col-md-3">
             <div class="card h-100">
-                <div class="card-body">
+                <div class="card-body summary-card" data-summary-key="hosted">
                     <small>Total Quests Hosted</small>
-                    <h3 class="mb-0"><?= $totalHostedQuests; ?></h3>
+                    <div class="summary-spinner text-center py-2">
+                        <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="summary-error alert alert-danger d-none mt-2" role="alert"></div>
+                    <h3 class="summary-value mb-0 d-none"></h3>
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-3">
             <div class="card h-100">
-                <div class="card-body">
+                <div class="card-body summary-card" data-summary-key="uniqueParticipants">
                     <small>Total Unique Participants</small>
-                    <h3 class="mb-0"><?= $totalUniqueParticipants; ?></h3>
+                    <div class="summary-spinner text-center py-2">
+                        <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="summary-error alert alert-danger d-none mt-2" role="alert"></div>
+                    <h3 class="summary-value mb-0 d-none"></h3>
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-3">
             <div class="card h-100">
-                <div class="card-body">
+                <div class="card-body summary-card" data-summary-key="recentHost">
                     <small>Average Host Rating (Last 10)</small>
-                    <div><?= renderStarRating($avgHostRatingRecent); ?><span class="ms-1"><?= number_format($avgHostRatingRecent, 2); ?>/5</span></div>
+                    <div class="summary-spinner text-center py-2">
+                        <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="summary-error alert alert-danger d-none mt-2" role="alert"></div>
+                    <div class="summary-rating d-none"></div>
+                    <div class="summary-value text-muted d-none"></div>
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-3">
             <div class="card h-100">
-                <div class="card-body">
+                <div class="card-body summary-card" data-summary-key="recentQuest">
                     <small>Average Quest Rating (Last 10)</small>
-                    <div><?= renderStarRating($avgQuestRatingRecent); ?><span class="ms-1"><?= number_format($avgQuestRatingRecent, 2); ?>/5</span></div>
+                    <div class="summary-spinner text-center py-2">
+                        <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="summary-error alert alert-danger d-none mt-2" role="alert"></div>
+                    <div class="summary-rating d-none"></div>
+                    <div class="summary-value text-muted d-none"></div>
                 </div>
             </div>
         </div>
@@ -165,21 +191,16 @@ function renderStarRating(float $rating): string
             <div class="tab-content" id="nav-tabContent">
                 <div class="tab-pane fade show active" id="nav-upcoming" role="tabpanel" aria-labelledby="nav-upcoming-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Upcoming Quests</div>
-                    <?php if (count($futureQuests) === 0) { ?>
-                        <p>No upcoming quests.</p>
-                    <?php } else { foreach ($futureQuests as $quest) { ?>
-                        <div class="mb-4">
-                            <?php
-                                $_vFeedCard = FeedCardController::vQuest_to_vFeedCard($quest);
-                                require("php-components/vFeedCardRenderer.php");
-                            ?>
-                            <div class="text-end">
-                                <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $quest->crand; ?>" data-quest-title="<?= htmlspecialchars($quest->title); ?>">
-                                    <i class="fa-regular fa-clone me-1"></i>Clone Quest
-                                </button>
+                    <div id="upcomingSection">
+                        <div id="upcomingSpinner" class="section-spinner text-center py-3">
+                            <div class="spinner-border text-secondary" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
                         </div>
-                    <?php }} ?>
+                        <div id="upcomingError" class="alert alert-danger d-none" role="alert"></div>
+                        <p id="upcomingEmpty" class="text-muted d-none">No upcoming quests.</p>
+                        <div id="upcomingList" class="d-none"></div>
+                    </div>
                 </div>
                 <div class="tab-pane fade" id="nav-review-inbox" role="tabpanel" aria-labelledby="nav-review-inbox-tab" tabindex="0">
                     <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
@@ -202,10 +223,15 @@ function renderStarRating(float $rating): string
                 </div>
                 <div class="tab-pane fade" id="nav-reviews" role="tabpanel" aria-labelledby="nav-reviews-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Quest Reviews</div>
-                    <?php if (count($questReviewAverages) === 0) { ?>
-                        <p>No quest reviews yet.</p>
-                    <?php } else { ?>
-                        <div class="table-responsive">
+                    <div id="questReviewsSection">
+                        <div id="questReviewsSpinner" class="section-spinner text-center py-3">
+                            <div class="spinner-border text-secondary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div id="questReviewsError" class="alert alert-danger d-none" role="alert"></div>
+                        <p id="questReviewsEmpty" class="text-muted d-none">No quest reviews yet.</p>
+                        <div id="questReviewsTableWrapper" class="table-responsive d-none">
                             <table id="datatable-reviews" class="table table-striped">
                                 <thead>
                                     <tr>
@@ -217,39 +243,10 @@ function renderStarRating(float $rating): string
                                         <th>Clone</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <?php foreach ($questReviewAverages as $qr) { ?>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <img src="<?= htmlspecialchars($qr->questIcon); ?>" class="rounded me-2" style="width:40px;height:40px;" alt="">
-                                                    <a href="<?= htmlspecialchars(Version::formatUrl('/q/' . $qr->questLocator)); ?>" target="_blank"><?= htmlspecialchars($qr->questTitle); ?></a>
-                                                </div>
-                                            </td>
-                                            <?php $qd = new vDateTime($qr->questEndDate); ?>
-                                            <td data-order="<?= htmlspecialchars($qd->dbValue); ?>">
-                                                <span class="date" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="<?= htmlspecialchars($qd->formattedDetailed); ?> UTC" data-datetime-utc="<?= htmlspecialchars($qd->valueString); ?>" data-db-value="<?= htmlspecialchars($qd->dbValue); ?>"><?= htmlspecialchars($qd->formattedBasic); ?></span>
-                                            </td>
-                                            <td data-order="<?= $qr->avgHostRating; ?>" class="align-middle">
-                                                <?= renderStarRating($qr->avgHostRating); ?><span class="ms-1"><?= number_format($qr->avgHostRating, 2); ?></span>
-                                            </td>
-                                            <td data-order="<?= $qr->avgQuestRating; ?>" class="align-middle">
-                                                <?= renderStarRating($qr->avgQuestRating); ?><span class="ms-1"><?= number_format($qr->avgQuestRating, 2); ?></span>
-                                            </td>
-                                            <td class="align-middle">
-                                                <?php $btnClass = !empty($qr->hasComments) ? 'btn-primary' : 'btn-outline-secondary'; ?>
-                                                <?php $iconClass = !empty($qr->hasComments) ? 'fa-solid' : 'fa-regular'; ?>
-                                                <button class="btn btn-sm <?= $btnClass ?> view-reviews-btn" data-quest-id="<?= $qr->questId; ?>" data-quest-title="<?= htmlspecialchars($qr->questTitle); ?>" data-quest-banner="<?= htmlspecialchars($qr->questBanner); ?>"><i class="<?= $iconClass ?> fa-comments me-1"></i>View</button>
-                                            </td>
-                                            <td class="align-middle">
-                                                <button class="btn btn-sm btn-outline-secondary clone-quest-btn" data-quest-id="<?= $qr->questId; ?>" data-quest-title="<?= htmlspecialchars($qr->questTitle); ?>"><i class="fa-regular fa-clone me-1"></i>Clone</button>
-                                            </td>
-                                        </tr>
-                                    <?php } ?>
-                                </tbody>
+                                <tbody></tbody>
                             </table>
                         </div>
-                    <?php } ?>
+                    </div>
                 </div>
                 <div class="tab-pane fade" id="nav-graphs" role="tabpanel" aria-labelledby="nav-graphs-tab" tabindex="0">
                     <div class="display-6 tab-pane-title">Quest Analytics</div>
@@ -262,7 +259,14 @@ function renderStarRating(float $rating): string
                             </h2>
                             <div id="collapseRatings" class="accordion-collapse collapse show" aria-labelledby="headingRatings">
                                 <div class="accordion-body">
-                                    <canvas id="reviewChart"></canvas>
+                                    <div id="reviewChartSpinner" class="section-spinner text-center py-3">
+                                        <div class="spinner-border text-secondary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <div id="reviewChartError" class="alert alert-danger d-none" role="alert"></div>
+                                    <p id="reviewChartEmpty" class="text-muted d-none mb-0">Not enough data to render this chart.</p>
+                                    <canvas id="reviewChart" class="d-none"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -274,7 +278,14 @@ function renderStarRating(float $rating): string
                             </h2>
                             <div id="collapseRatingOverTime" class="accordion-collapse collapse" aria-labelledby="headingRatingOverTime">
                                 <div class="accordion-body">
-                                    <canvas id="ratingOverTimeChart"></canvas>
+                                    <div id="ratingOverTimeChartSpinner" class="section-spinner text-center py-3">
+                                        <div class="spinner-border text-secondary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <div id="ratingOverTimeChartError" class="alert alert-danger d-none" role="alert"></div>
+                                    <p id="ratingOverTimeChartEmpty" class="text-muted d-none mb-0">Not enough data to render this chart.</p>
+                                    <canvas id="ratingOverTimeChart" class="d-none"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -286,7 +297,14 @@ function renderStarRating(float $rating): string
                             </h2>
                             <div id="collapsePerQuest" class="accordion-collapse collapse" aria-labelledby="headingPerQuest">
                                 <div class="accordion-body">
-                                    <canvas id="participantPerQuestChart"></canvas>
+                                    <div id="participantPerQuestChartSpinner" class="section-spinner text-center py-3">
+                                        <div class="spinner-border text-secondary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <div id="participantPerQuestChartError" class="alert alert-danger d-none" role="alert"></div>
+                                    <p id="participantPerQuestChartEmpty" class="text-muted d-none mb-0">Not enough data to render this chart.</p>
+                                    <canvas id="participantPerQuestChart" class="d-none"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -911,34 +929,17 @@ function renderStarRating(float $rating): string
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
 <script>
-const questTitles = <?= json_encode($questTitles); ?>;
-const avgHostRatings = <?= json_encode($avgHostRatings); ?>;
-const avgQuestRatings = <?= json_encode($avgQuestRatings); ?>;
-const participantCounts = <?= json_encode($participantCounts); ?>;
-const participantQuestTitles = <?= json_encode($participantQuestTitles); ?>;
-const ratingDates = <?= json_encode($ratingDates); ?>;
-const avgRatingsOverTime = <?= json_encode($avgRatingsOverTime); ?>;
-
-function renderStarRatingJs(rating) {
-    const rounded = Math.round(rating * 2) / 2;
-    let stars = '<span class="star-rating" style="pointer-events: none; display: inline-block;">';
-    for (let i = 1; i <= 5; i++) {
-        let cls;
-        if (rounded >= i) {
-            cls = 'fa-solid fa-star selected';
-        } else if (rounded >= i - 0.5) {
-            cls = 'fa-solid fa-star-half-stroke selected';
-        } else {
-            cls = 'fa-regular fa-star';
-        }
-        stars += `<i class="${cls}"></i>`;
-    }
-    return stars + '</span>';
-}
-
+window.questDashboardConfig = Object.assign({}, window.questDashboardConfig || {}, {
+    sessionToken: "<?= $_SESSION['sessionToken']; ?>",
+    currentHostId: <?= $account->crand; ?>
+});
+</script>
+<script src="<?= Version::urlBetaPrefix(); ?>/assets/js/questGiverDashboard.js"></script>
+<script>
 $(document).ready(function () {
-    const sessionToken = "<?= $_SESSION['sessionToken']; ?>";
-    const currentHostId = <?= $account->crand; ?>;
+    const config = window.questDashboardConfig || {};
+    const sessionToken = config.sessionToken || '';
+    const currentHostId = config.currentHostId || 0;
 
     let globalParticipationCounts = {};
     let personalParticipationCounts = {};
@@ -1350,13 +1351,6 @@ $(document).ready(function () {
         }, 'json');
     }
 
-    $('#datatable-reviews').DataTable({
-        pageLength: 10,
-        lengthChange: true,
-        columnDefs: [{ targets: [4, 5], orderable: false }],
-        order: [[1, 'desc']]
-    });
-
     function escapeHtml(str) {
         return $('<div>').text(str ?? '').html();
     }
@@ -1522,93 +1516,6 @@ $(document).ready(function () {
                 $('#reviewModalBody').html('<div class="text-danger">' + resp.message + '</div>');
             }
         }, 'json');
-    });
-    var reviewCtx = document.getElementById('reviewChart').getContext('2d');
-    new Chart(reviewCtx, {
-        type: 'bar',
-        data: {
-            labels: questTitles,
-            datasets: [
-                {
-                    label: 'Avg Host Rating',
-                    data: avgHostRatings,
-                    backgroundColor: 'rgba(75, 192, 192, 0.6)'
-                },
-                {
-                    label: 'Avg Quest Rating',
-                    data: avgQuestRatings,
-                    backgroundColor: 'rgba(153, 102, 255, 0.6)'
-                }
-            ]
-        },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true,
-                        max: 5
-                    }
-                }]
-            }
-        }
-    });
-
-    var ratingOverTimeCtx = document.getElementById('ratingOverTimeChart').getContext('2d');
-    new Chart(ratingOverTimeCtx, {
-        type: 'line',
-        data: {
-            labels: ratingDates,
-            datasets: [{
-                label: 'Avg Quest Rating',
-                data: avgRatingsOverTime,
-                fill: false,
-                borderColor: 'rgba(255, 206, 86, 1)',
-                tension: 0.1
-            }]
-        },
-        options: {
-            scales: {
-                xAxes: [{
-                    type: 'time',
-                    time: {
-                        parser: 'YYYY-MM-DD',
-                        unit: 'day',
-                        displayFormats: {
-                            day: 'MMM D'
-                        }
-                    }
-                }],
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true,
-                        max: 5
-                    }
-                }]
-            }
-        }
-    });
-
-    var perQuestCtx = document.getElementById('participantPerQuestChart').getContext('2d');
-    new Chart(perQuestCtx, {
-        type: 'bar',
-        data: {
-            labels: participantQuestTitles,
-            datasets: [{
-                label: 'Participants',
-                data: participantCounts,
-                backgroundColor: 'rgba(54, 162, 235, 0.6)'
-            }]
-        },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true,
-                        precision: 0
-                    }
-                }]
-            }
-        }
     });
 });
 </script>

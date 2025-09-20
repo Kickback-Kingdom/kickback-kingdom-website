@@ -818,21 +818,27 @@ class QuestDashboardService
 
         $upcoming = array_map(function (vQuest $quest): array {
             $card = FeedCardController::vQuest_to_vFeedCard($quest);
-            return self::feedCardToArray($card);
+            $cardData = self::feedCardToArray($card);
+            $cardData['questId'] = $quest->crand;
+            $cardData['questLocator'] = $quest->locator;
+            return $cardData;
         }, $raw['futureQuests']);
 
         $reviewSummaries = array_map(
-            static fn(vQuestReviewSummary $summary): array => [
-                'questId' => $summary->questId,
-                'questLocator' => $summary->questLocator,
-                'questTitle' => $summary->questTitle,
-                'questEndDate' => $summary->questEndDate,
-                'questIcon' => $summary->questIcon,
-                'questBanner' => $summary->questBanner,
-                'avgHostRating' => $summary->avgHostRating,
-                'avgQuestRating' => $summary->avgQuestRating,
-                'hasComments' => $summary->hasComments,
-            ],
+            static function (vQuestReviewSummary $summary): array {
+                $endDate = new vDateTime($summary->questEndDate);
+                return [
+                    'questId' => $summary->questId,
+                    'questLocator' => $summary->questLocator,
+                    'questTitle' => $summary->questTitle,
+                    'questEndDate' => self::formatDateTime($endDate),
+                    'questIcon' => $summary->questIcon,
+                    'questBanner' => $summary->questBanner,
+                    'avgHostRating' => $summary->avgHostRating,
+                    'avgQuestRating' => $summary->avgQuestRating,
+                    'hasComments' => $summary->hasComments,
+                ];
+            },
             $data['reviews']['summaries']
         );
 
