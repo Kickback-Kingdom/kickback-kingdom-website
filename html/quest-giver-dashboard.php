@@ -599,6 +599,22 @@ $(document).ready(function () {
     const tzAbbr = new Date().toLocaleTimeString('en-us', { timeZoneName: 'short' }).split(' ').pop();
     document.getElementById('hourlyPeakInfo').textContent = 'Times shown in ' + tzAbbr + '. Loading peak hour(s)...';
 
+    function escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        return String(value).replace(/[&<>"']/g, function(match) {
+            switch (match) {
+                case '&': return '&amp;';
+                case '<': return '&lt;';
+                case '>': return '&gt;';
+                case '"': return '&quot;';
+                case "'": return '&#39;';
+                default: return match;
+            }
+        });
+    }
+
     function renderScheduleCalendar() {
         const first = new Date(calYear, calMonth, 1);
         const today = new Date();
@@ -646,7 +662,8 @@ $(document).ready(function () {
             }
             let tooltipLines = [`Participants: ${info.count}`];
             if (info.events.length > 1) { tooltipLines.push('Conflicting events'); }
-            let tooltip = `data-bs-toggle=\"tooltip\" data-bs-html=\"true\" data-bs-placement=\"bottom\" title=\"${tooltipLines.join('<br>').replace(/\"/g, '&quot;')}\"`;
+            const tooltipContent = tooltipLines.map(escapeHtml).join('<br>');
+            let tooltip = `data-bs-toggle=\"tooltip\" data-bs-html=\"true\" data-bs-placement=\"bottom\" title=\"${tooltipContent}\"`;
             if (info.events.length > 1) { cls += ' border border-danger border-2'; }
             else if (info.events.length === 1) { cls += ' border border-success border-2'; }
             let pills = '';
@@ -661,7 +678,8 @@ $(document).ready(function () {
                 const hostInfo = otherHost && e.host_name ? ` - Host: ${e.host_name}` : '';
                 const pillTip = `${e.title}${part}${hostInfo} @ ${time}`;
                 const pillClass = otherHost ? 'bg-secondary' : 'bg-primary';
-                pills += `<div class=\"badge ${pillClass} rounded-pill text-truncate mb-1 calendar-event-pill\" data-bs-toggle=\"tooltip\" title=\"${pillTip.replace(/\"/g,'&quot;')}\">${time}</div>`;
+                const pillTitle = escapeHtml(pillTip);
+                pills += `<div class=\"badge ${pillClass} rounded-pill text-truncate mb-1 calendar-event-pill\" data-bs-toggle=\"tooltip\" title=\"${pillTitle}\">${time}</div>`;
             });
             const countInfo = (!info.events.length && info.count) ? `<small>${info.count} participants</small>` : '';
             body += `<td class="${cls}" ${tooltip}><div class="schedule-calendar-cell"><div class="fw-bold">${info.date.getDate()}</div>${pills}${countInfo}</div></td>`;
