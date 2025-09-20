@@ -1,5 +1,6 @@
-<?php 
+<?php
 use Kickback\Backend\Models\NotificationType;
+use Kickback\Common\Version;
         
             if (Kickback\Services\Session::isLoggedIn() && !is_null($activeAccountInfo->notifications))
             {
@@ -61,8 +62,12 @@ use Kickback\Backend\Models\NotificationType;
                                     break;
                                 
                                 case NotificationType::QUEST_REVIEWED:
-                                    ?> 
-                                        <!--<div class="toast-body"><a class="bg-ranked-1 btn btn-sm" href="#">View</a></div>-->
+                                    ?>
+                                        <div class="toast-body">
+                                            <a class="bg-ranked-1 btn btn-sm" href="<?php echo Version::urlBetaPrefix(); ?>/quest-giver-dashboard.php">
+                                                <i class="fa-solid fa-chess-knight"></i> Quest Giver Dashboard
+                                            </a>
+                                        </div>
                                     <?php
                                     break;
                                 case NotificationType::PRESTIGE:
