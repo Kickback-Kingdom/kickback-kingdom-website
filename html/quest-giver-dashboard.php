@@ -1035,10 +1035,6 @@ $(document).ready(function () {
         }, 'json');
     }
 
-    function escapeHtml(str) {
-        return $('<div>').text(str ?? '').html();
-    }
-
     function resetCloneAlert() {
         const alertBox = $('#questCloneAlert');
         if (cloneAlertTimeout) {
