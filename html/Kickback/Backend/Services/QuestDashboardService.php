@@ -268,6 +268,9 @@ class QuestDashboardService
                     'title' => $topQuest->title,
                     'locator' => $topQuest->locator,
                     'icon' => $topQuest->icon ? $topQuest->icon->getFullPath() : '',
+                    'url' => $topQuest->url(),
+                    'viewUrl' => $topQuest->url(),
+                    'publicUrl' => $topQuest->url(),
                     'unique' => $top['unique'],
                     'loyal' => $top['loyal'],
                     'registered' => $perQuestRegisteredCounts[$topQuestId] ?? 0,
@@ -287,6 +290,7 @@ class QuestDashboardService
                     (int)$recommendedQuest['unique'],
                     (int)$recommendedQuest['loyal']
                 );
+                $recommendedQuest['message'] = self::generateSimilarQuestSuggestion($recommendedQuest);
             }
         }
 
@@ -606,6 +610,9 @@ class QuestDashboardService
                     'title' => $title,
                     'locator' => $quest->locator,
                     'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
+                    'url' => $quest->url(),
+                    'viewUrl' => $quest->url(),
+                    'publicUrl' => $quest->url(),
                     'participants' => $participants,
                     'registered' => $perQuestRegisteredCounts[$qid] ?? 0,
                     'avgQuestRating' => $avgRating,
@@ -622,6 +629,7 @@ class QuestDashboardService
             $underperformingQuest = $underperformingCandidates[0];
             $underperformingQuest['questRatingDesc'] = self::describeRating((float)$underperformingQuest['avgQuestRating']);
             $underperformingQuest['hostRatingDesc'] = self::describeRating((float)$underperformingQuest['avgHostRating']);
+            $underperformingQuest['message'] = self::generateImproveQuestSuggestion($underperformingQuest);
         }
 
         $hiddenGemQuest = null;
@@ -641,6 +649,9 @@ class QuestDashboardService
                     'title' => $title,
                     'locator' => $quest->locator,
                     'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
+                    'url' => $quest->url(),
+                    'viewUrl' => $quest->url(),
+                    'publicUrl' => $quest->url(),
                     'participants' => $participants,
                     'registered' => $perQuestRegisteredCounts[$qid] ?? 0,
                     'avgQuestRating' => $avgRating,
@@ -662,6 +673,7 @@ class QuestDashboardService
             $hiddenGemQuest = $hiddenGemCandidates[0];
             $hiddenGemQuest['questRatingDesc'] = self::describeRating((float)$hiddenGemQuest['avgQuestRating']);
             $hiddenGemQuest['hostRatingDesc'] = self::describeRating((float)$hiddenGemQuest['avgHostRating']);
+            $hiddenGemQuest['message'] = self::generatePromoteQuestSuggestion($hiddenGemQuest);
         }
 
         $bestQuestCandidates = [];
@@ -842,6 +854,41 @@ class QuestDashboardService
             $data['reviews']['summaries']
         );
 
+        $formatSuggestion = static function (?array $quest): ?array {
+            if ($quest === null) {
+                return null;
+            }
+            if (isset($quest['endDate']) && $quest['endDate'] instanceof vDateTime) {
+                $quest['endDate'] = self::formatDateTime($quest['endDate']);
+            }
+            if (isset($quest['lastRun']) && $quest['lastRun'] instanceof vDateTime) {
+                $quest['lastRun'] = self::formatDateTime($quest['lastRun']);
+            }
+            if (isset($quest['nextRun']) && $quest['nextRun'] instanceof vDateTime) {
+                $quest['nextRun'] = self::formatDateTime($quest['nextRun']);
+            }
+            $quest['icon'] = $quest['icon'] ?? '';
+            $quest['banner'] = $quest['banner'] ?? '';
+            $quest['locator'] = $quest['locator'] ?? '';
+            if (!isset($quest['url']) && !empty($quest['locator'])) {
+                $quest['url'] = '/q/' . $quest['locator'];
+            }
+            if (!isset($quest['viewUrl'])) {
+                $quest['viewUrl'] = $quest['url'] ?? (!empty($quest['locator']) ? '/q/' . $quest['locator'] : null);
+            }
+            if (!isset($quest['publicUrl'])) {
+                $quest['publicUrl'] = $quest['viewUrl'];
+            }
+            return $quest;
+        };
+
+        $suggestions = $data['suggestions'];
+        $suggestions['recommendedQuest'] = $formatSuggestion($suggestions['recommendedQuest'] ?? null);
+        $suggestions['dormantQuest'] = $formatSuggestion($suggestions['dormantQuest'] ?? null);
+        $suggestions['fanFavoriteQuest'] = $formatSuggestion($suggestions['fanFavoriteQuest'] ?? null);
+        $suggestions['hiddenGemQuest'] = $formatSuggestion($suggestions['hiddenGemQuest'] ?? null);
+        $suggestions['underperformingQuest'] = $formatSuggestion($suggestions['underperformingQuest'] ?? null);
+
         $questLines = array_map(
             static function (array $stats): array {
                 /** @var vQuestLine $line */
@@ -850,6 +897,12 @@ class QuestDashboardService
                     'id' => $line->crand,
                     'title' => $line->title,
                     'summary' => $line->summary,
+                    'locator' => $line->locator,
+                    'icon' => $line->icon ? $line->icon->getFullPath() : '',
+                    'banner' => $line->banner ? $line->banner->getFullPath() : '',
+                    'url' => $line->url(),
+                    'publicUrl' => $line->url(),
+                    'viewUrl' => $line->url(),
                     'reviewStatus' => [
                         'published' => $line->reviewStatus->published,
                         'beingReviewed' => $line->reviewStatus->beingReviewed,
@@ -868,6 +921,8 @@ class QuestDashboardService
                     'avgQuestRating' => $stats['avgQuestRating'],
                     'avgHostRating' => $stats['avgHostRating'],
                     'attendanceRate' => $stats['attendanceRate'],
+                    'participantsTotal' => $stats['participantsTotal'],
+                    'registeredTotal' => $stats['registeredTotal'],
                 ];
             },
             $data['questLines']['lines']
@@ -880,7 +935,7 @@ class QuestDashboardService
                 'summaries' => $reviewSummaries,
                 'chart' => $data['reviews']['chart'],
             ],
-            'suggestions' => $data['suggestions'],
+            'suggestions' => $suggestions,
             'questLines' => [
                 'statusCounts' => $data['questLines']['statusCounts'],
                 'lines' => $questLines,
@@ -1126,6 +1181,9 @@ class QuestDashboardService
                 'title' => $quest->title,
                 'locator' => $quest->locator,
                 'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
+                'url' => $quest->url(),
+                'viewUrl' => $quest->url(),
+                'publicUrl' => $quest->url(),
                 'participants' => $perQuestParticipantCounts[$qid] ?? 0,
                 'registered' => $perQuestRegisteredCounts[$qid] ?? 0,
                 'avgQuestRating' => $questRatingsMap[$qid] ?? 0.0,
@@ -1145,6 +1203,7 @@ class QuestDashboardService
         });
         if (!empty($dormantCandidates)) {
             $dormantQuest = $dormantCandidates[0];
+            $dormantQuest['message'] = self::generateBringBackSuggestion($dormantQuest);
         }
         return $dormantQuest;
     }
@@ -1167,6 +1226,9 @@ class QuestDashboardService
                     'title' => $quest->title,
                     'locator' => $quest->locator,
                     'icon' => $quest->icon ? $quest->icon->getFullPath() : '',
+                    'url' => $quest->url(),
+                    'viewUrl' => $quest->url(),
+                    'publicUrl' => $quest->url(),
                     'participants' => $participants,
                     'registered' => $perQuestRegisteredCounts[$qid] ?? 0,
                     'avgQuestRating' => $avgRating,
@@ -1189,6 +1251,7 @@ class QuestDashboardService
         });
         if (!empty($fanFavoriteCandidates)) {
             $fanFavoriteQuest = $fanFavoriteCandidates[0];
+            $fanFavoriteQuest['message'] = self::generateSequelSuggestion($fanFavoriteQuest);
         }
         return $fanFavoriteQuest;
     }

@@ -330,6 +330,12 @@
         if (!quest || typeof quest !== 'object') {
             return '#';
         }
+        if (quest.viewUrl) {
+            return quest.viewUrl;
+        }
+        if (quest.publicUrl) {
+            return quest.publicUrl;
+        }
         if (quest.url) {
             return quest.url;
         }
@@ -730,7 +736,7 @@
             $engagementCell.append($('<div class="small text-muted"></div>').text(`Attendance: ${attendanceText}`));
             $row.append($engagementCell);
 
-            const viewUrl = line.publicUrl || line.url || line.viewUrl || '';
+            const viewUrl = line.viewUrl || line.publicUrl || line.url || '';
             const $actionCell = $('<td class="text-end"></td>');
             if (isPublished && viewUrl) {
                 $actionCell.append($('<a class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener">View</a>').attr('href', viewUrl));
