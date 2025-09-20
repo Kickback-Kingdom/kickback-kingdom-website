@@ -853,7 +853,7 @@ class QuestDashboardService
                     'reviewStatus' => [
                         'published' => $line->reviewStatus->published,
                         'beingReviewed' => $line->reviewStatus->beingReviewed,
-                        'draft' => $line->reviewStatus->draft,
+                        'draft' => $line->reviewStatus->isDraft(),
                     ],
                     'counts' => [
                         'quests' => $stats['questCount'],
@@ -1088,7 +1088,7 @@ class QuestDashboardService
             'reviewStatus' => $card->reviewStatus ? [
                 'published' => $card->reviewStatus->published,
                 'beingReviewed' => $card->reviewStatus->beingReviewed,
-                'draft' => $card->reviewStatus->draft,
+                'draft' => $card->reviewStatus->isDraft(),
             ] : null,
         ];
     }
