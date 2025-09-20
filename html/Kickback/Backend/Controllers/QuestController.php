@@ -960,13 +960,15 @@ class QuestController
         $existingTournamentId = $quest->isTournament() ? $quest->tournament->crand : null;
         $tournamentIdValue = null;
 
-        $canEditRankedOptions = !$quest->reviewStatus->isPublished();
-        if ($canEditRankedOptions && $quest->hasEndDate()) {
+        $questHasBegun = false;
+        if ($quest->hasEndDate()) {
             $questEndDate = $quest->nullableEndDate();
             if ($questEndDate instanceof vDateTime) {
-                $canEditRankedOptions = $questEndDate->isAfter(vDateTime::now());
+                $questHasBegun = $questEndDate->isSameOrBefore(vDateTime::now());
             }
         }
+
+        $canEditRankedOptions = !($quest->reviewStatus->isPublished() && $questHasBegun);
 
         if (!$canEditRankedOptions) {
             if ($quest->isTournament()) {

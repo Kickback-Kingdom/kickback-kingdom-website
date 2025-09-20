@@ -211,13 +211,15 @@ if ($thisQuest->isTournament())
     }
 }
 
-$rankedOptionsEditable = !$thisQuest->reviewStatus->isPublished();
-if ($rankedOptionsEditable && $thisQuest->hasEndDate()) {
+$questHasBegun = false;
+if ($thisQuest->hasEndDate()) {
     $questEndDate = $thisQuest->nullableEndDate();
     if ($questEndDate instanceof vDateTime) {
-        $rankedOptionsEditable = $questEndDate->isAfter(vDateTime::now());
+        $questHasBegun = $questEndDate->isSameOrBefore(vDateTime::now());
     }
 }
+
+$rankedOptionsEditable = !($thisQuest->reviewStatus->isPublished() && $questHasBegun);
 
 ?>
 
@@ -1016,7 +1018,7 @@ if ($rankedOptionsEditable && $thisQuest->hasEndDate()) {
                                                             <h5 class="card-title">Ranked Options</h5>
                                                             <?php if (!$rankedOptionsEditable) { ?>
                                                                 <div class="alert alert-warning mb-3" role="alert">
-                                                                    Ranked settings are locked once a quest is published or has begun.
+                                                                    Ranked settings are locked once a quest is published and has begun.
                                                                 </div>
                                                             <?php } ?>
                                                             
