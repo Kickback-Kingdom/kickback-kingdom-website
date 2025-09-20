@@ -283,7 +283,14 @@
 
             if (quest && quest.dateTime) {
                 const formatted = formatDateFromPayload(quest.dateTime);
-                const meta = $('<p class="text-muted small mb-2"></p>').text(formatted.text);
+                const meta = $('<p class="text-muted small mb-2"></p>');
+                const $dateSpan = $('<span class="date"></span>').text(formatted.text);
+                if (formatted.tooltip) {
+                    $dateSpan.attr('data-bs-toggle', 'tooltip')
+                        .attr('data-bs-placement', 'bottom')
+                        .attr('data-bs-title', formatted.tooltip);
+                }
+                meta.append($dateSpan);
                 bodyCol.append(meta);
             }
 
@@ -316,6 +323,7 @@
         });
 
         $list.removeClass('d-none');
+        initializeTooltips($list);
     }
 
     const suggestionDefinitions = [
@@ -404,7 +412,7 @@
             rel: 'noopener',
             text: questTitle
         });
-        const $runSpan = $('<span></span>').text(runInfo.text || 'date TBD');
+        const $runSpan = $('<span class="date"></span>').text(runInfo.text || 'date TBD');
         if (runInfo.tooltip) {
             $runSpan.attr('data-bs-toggle', 'tooltip')
                 .attr('data-bs-placement', 'bottom')
@@ -530,7 +538,7 @@
                     $lastQuestCell.text(`${days} day${days === 1 ? '' : 's'} ago`);
                 } else if (candidate.lastQuest && typeof candidate.lastQuest === 'object') {
                     const lastInfo = formatDateFromPayload(candidate.lastQuest);
-                    const $lastSpan = $('<span></span>').text(lastInfo.text || '—');
+                    const $lastSpan = $('<span class="date"></span>').text(lastInfo.text || '—');
                     if (lastInfo.tooltip) {
                         $lastSpan.attr('data-bs-toggle', 'tooltip')
                             .attr('data-bs-placement', 'bottom')
@@ -664,7 +672,7 @@
             if (futureCount > 0) {
                 if (line.nextRun) {
                     const nextInfo = formatDateFromPayload(line.nextRun);
-                    const $nextSpan = $('<span></span>').text(nextInfo.text);
+                    const $nextSpan = $('<span class="date"></span>').text(nextInfo.text);
                     if (nextInfo.tooltip) {
                         $nextSpan.attr('data-bs-toggle', 'tooltip')
                             .attr('data-bs-placement', 'bottom')
@@ -682,7 +690,7 @@
             const $lastLine = $('<div><strong>Last:</strong> </div>');
             if (line.lastRun) {
                 const lastInfo = formatDateFromPayload(line.lastRun);
-                const $lastSpan = $('<span></span>').text(lastInfo.text);
+                const $lastSpan = $('<span class="date"></span>').text(lastInfo.text);
                 if (lastInfo.tooltip) {
                     $lastSpan.attr('data-bs-toggle', 'tooltip')
                         .attr('data-bs-placement', 'bottom')
