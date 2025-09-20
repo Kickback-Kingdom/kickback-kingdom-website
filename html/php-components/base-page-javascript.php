@@ -142,10 +142,16 @@ use Kickback\Common\Version;
         }
 
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        const tooltipList = [];
+        Array.prototype.forEach.call(tooltipTriggerList, function(tooltipTriggerEl) {
+            tooltipList.push(new bootstrap.Tooltip(tooltipTriggerEl));
+        });
 
-        const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
-        const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
+        const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
+        const popoverList = [];
+        Array.prototype.forEach.call(popoverTriggerList, function(popoverTriggerEl) {
+            popoverList.push(new bootstrap.Popover(popoverTriggerEl));
+        });
 
         (function() {
             const USERNAME_SELECTOR = '.username';
