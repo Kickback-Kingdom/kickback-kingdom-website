@@ -534,6 +534,7 @@ $account = Session::getCurrentAccount();
                                                         <thead>
                                                             <tr>
                                                                 <th>Co-Host</th>
+                                                                <th>Score</th>
                                                                 <th>Quests Co-Hosted</th>
                                                                 <th>Avg Participants</th>
                                                                 <th>Unique Participants</th>
