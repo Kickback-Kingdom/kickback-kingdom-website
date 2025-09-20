@@ -36,7 +36,8 @@ class ScheduleController
         $db = Database::getConnection();
 
         // Retrieve global calendar events for the specified month and year
-        $query = "SELECT *, NULL AS host_id, NULL AS host_name FROM calendar_events WHERE MONTH(start_date) = ? AND YEAR(start_date) = ?";
+        $query = "SELECT *, NULL AS host_id, NULL AS host_name, NULL AS host_id_2, NULL AS host2_name "
+            . "FROM calendar_events WHERE MONTH(start_date) = ? AND YEAR(start_date) = ?";
         $stmt = mysqli_prepare($db, $query);
         mysqli_stmt_bind_param($stmt, 'ii', $month, $year);
 
@@ -49,6 +50,8 @@ class ScheduleController
             $e['participants'] = null;
             $e['host_id'] = null;
             $e['host_name'] = null;
+            $e['host_id_2'] = null;
+            $e['host2_name'] = null;
         }
         unset($e);
 
@@ -60,9 +63,11 @@ class ScheduleController
                     . "q.end_date AS start_date, q.end_date AS end_date, "
                     . "'NONE' AS recurrence, NULL AS day_of_week, NULL AS day_of_month, "
                     . "NULL AS week_of_month, NULL AS month, 'QUEST' AS event_type, "
-                    . "COUNT(qa.participated) AS participants, q.host_id AS host_id, a.Username AS host_name "
+                    . "COUNT(qa.participated) AS participants, q.host_id AS host_id, h1.Username AS host_name, "
+                    . "q.host_id_2 AS host_id_2, h2.Username AS host2_name "
                     . "FROM quest q "
-                    . "JOIN account a ON a.Id = q.host_id "
+                    . "JOIN account h1 ON h1.Id = q.host_id "
+                    . "LEFT JOIN account h2 ON h2.Id = q.host_id_2 "
                     . "LEFT JOIN quest_applicants qa ON qa.quest_id = q.Id AND qa.participated = 1 "
                     . "WHERE MONTH(q.end_date) = ? AND YEAR(q.end_date) = ? "
                     . "AND q.published = 1 "
@@ -75,6 +80,21 @@ class ScheduleController
                     $result2 = mysqli_stmt_get_result($stmt2);
                     if ($result2) {
                         $questEvents = mysqli_fetch_all($result2, MYSQLI_ASSOC);
+                        foreach ($questEvents as &$event) {
+                            $event['host_id_2'] = $event['host_id_2'] ?? null;
+                            $event['host2_name'] = $event['host2_name'] ?? null;
+                            if ($questGiverId !== null) {
+                                $primaryId = isset($event['host_id']) ? (int) $event['host_id'] : null;
+                                $secondaryId = isset($event['host_id_2']) ? (int) $event['host_id_2'] : null;
+                                if ($secondaryId !== null && $secondaryId === $questGiverId) {
+                                    $event['host_id'] = $event['host_id_2'];
+                                    $event['host_name'] = $event['host2_name'];
+                                } elseif ($primaryId !== null && $primaryId === $questGiverId) {
+                                    // Already primary host; leave as-is.
+                                }
+                            }
+                        }
+                        unset($event);
                         $events = array_merge($events, $questEvents);
                     }
                     mysqli_stmt_close($stmt2);
@@ -85,9 +105,11 @@ class ScheduleController
                     . "q.end_date AS start_date, q.end_date AS end_date, "
                     . "'NONE' AS recurrence, NULL AS day_of_week, NULL AS day_of_month, "
                     . "NULL AS week_of_month, NULL AS month, 'QUEST' AS event_type, "
-                    . "COUNT(qa.participated) AS participants, q.host_id AS host_id, a.Username AS host_name "
+                    . "COUNT(qa.participated) AS participants, q.host_id AS host_id, h1.Username AS host_name, "
+                    . "q.host_id_2 AS host_id_2, h2.Username AS host2_name "
                     . "FROM quest q "
-                    . "JOIN account a ON a.Id = q.host_id "
+                    . "JOIN account h1 ON h1.Id = q.host_id "
+                    . "LEFT JOIN account h2 ON h2.Id = q.host_id_2 "
                     . "LEFT JOIN quest_applicants qa ON qa.quest_id = q.Id AND qa.participated = 1 "
                     . "WHERE (q.host_id = ? OR q.host_id_2 = ?) "
                     . "AND MONTH(q.end_date) = ? AND YEAR(q.end_date) = ? "
@@ -101,6 +123,17 @@ class ScheduleController
                     $result2 = mysqli_stmt_get_result($stmt2);
                     if ($result2) {
                         $questEvents = mysqli_fetch_all($result2, MYSQLI_ASSOC);
+                        foreach ($questEvents as &$event) {
+                            $event['host_id_2'] = $event['host_id_2'] ?? null;
+                            $event['host2_name'] = $event['host2_name'] ?? null;
+                            $primaryId = isset($event['host_id']) ? (int) $event['host_id'] : null;
+                            $secondaryId = isset($event['host_id_2']) ? (int) $event['host_id_2'] : null;
+                            if ($secondaryId !== null && $questGiverId === $secondaryId) {
+                                $event['host_id'] = $event['host_id_2'];
+                                $event['host_name'] = $event['host2_name'];
+                            }
+                        }
+                        unset($event);
                         $events = array_merge($events, $questEvents);
                     }
                     mysqli_stmt_close($stmt2);
