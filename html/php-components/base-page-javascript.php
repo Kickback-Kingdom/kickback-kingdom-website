@@ -155,7 +155,6 @@ use Kickback\Common\Version;
 
         (function() {
             const USERNAME_SELECTOR = '.username';
-            const BOUND_FLAG = 'playerCardPopoverBound';
             // Delay popover dismissal so users have time to move from the trigger
             // toward the floating card without it collapsing mid-flight.
             const SHOW_DELAY = 150;
@@ -839,83 +838,131 @@ use Kickback\Common\Version;
                 }
             }
 
-            function bindElement(element) {
-                if (!(element instanceof HTMLElement)) {
-                    return;
+            function findTrigger(event) {
+                if (!event || !(event.target instanceof Element)) {
+                    return null;
                 }
 
-                if (element.dataset[BOUND_FLAG]) {
-                    return;
+                const trigger = event.target.closest(USERNAME_SELECTOR);
+                if (!trigger || !(trigger instanceof HTMLElement)) {
+                    return null;
                 }
 
-                elementIdentifier(element);
-                element.dataset[BOUND_FLAG] = 'true';
-                getHoverState(element);
+                const root = document.body || document;
+                if (!root.contains(trigger)) {
+                    return null;
+                }
 
-                const showHandler = () => {
-                    const state = getHoverState(element);
-                    state.triggerHovered = true;
-                    debugLog(element, 'Trigger enter detected', { triggerHovered: state.triggerHovered });
-                    scheduleShow(element);
-                };
-                const hideHandler = () => {
-                    const state = getHoverState(element);
-                    state.triggerHovered = false;
-                    const popover = popoverInstances.get(element);
-                    if (popover) {
-                        const tipElement = getTipElementFromPopover(popover);
-                        if (tipElement && (isElementHovered(tipElement) || tipElement.matches(':focus-within'))) {
-                            state.popoverHovered = true;
-                            debugLog(element, 'Trigger leave ignored because tip is hovered or focused');
-                            return;
+                elementIdentifier(trigger);
+                getHoverState(trigger);
+                return trigger;
+            }
+
+            function handleTriggerEnter(element, event) {
+                const state = getHoverState(element);
+                state.triggerHovered = true;
+
+                const details = { triggerHovered: state.triggerHovered };
+                if (event && typeof event.type === 'string') {
+                    details.eventType = event.type;
+                }
+                if (event && typeof event.pointerType === 'string') {
+                    details.pointerType = event.pointerType;
+                }
+
+                debugLog(element, 'Trigger enter detected', details);
+                scheduleShow(element);
+            }
+
+            function handleTriggerLeave(element, event) {
+                const state = getHoverState(element);
+                state.triggerHovered = false;
+
+                const popover = popoverInstances.get(element);
+                if (popover) {
+                    const tipElement = getTipElementFromPopover(popover);
+                    if (tipElement && (isElementHovered(tipElement) || tipElement.matches(':focus-within'))) {
+                        state.popoverHovered = true;
+                        const ignoreDetails = { triggerHovered: state.triggerHovered };
+                        if (event && typeof event.type === 'string') {
+                            ignoreDetails.eventType = event.type;
                         }
+                        if (event && typeof event.pointerType === 'string') {
+                            ignoreDetails.pointerType = event.pointerType;
+                        }
+                        debugLog(element, 'Trigger leave ignored because tip is hovered or focused', ignoreDetails);
+                        return;
                     }
-                    debugLog(element, 'Trigger leave detected', {
-                        triggerHovered: state.triggerHovered,
-                        popoverHovered: state.popoverHovered
-                    });
-                    scheduleHide(element);
-                };
-
-                if (supportsHover) {
-                    element.addEventListener('mouseenter', showHandler);
-                    element.addEventListener('mouseleave', hideHandler);
                 }
 
-                element.addEventListener('focus', showHandler);
-                element.addEventListener('blur', hideHandler);
+                const details = {
+                    triggerHovered: state.triggerHovered,
+                    popoverHovered: state.popoverHovered
+                };
+                if (event && typeof event.type === 'string') {
+                    details.eventType = event.type;
+                }
+                if (event && typeof event.pointerType === 'string') {
+                    details.pointerType = event.pointerType;
+                }
+
+                debugLog(element, 'Trigger leave detected', details);
+                scheduleHide(element);
             }
 
-            function bindAll(root) {
-                const elements = (root instanceof Element ? root : document).querySelectorAll(USERNAME_SELECTOR);
-                elements.forEach(bindElement);
+            function createPointerEnterHandler() {
+                return event => {
+                    const trigger = findTrigger(event);
+                    if (!trigger) {
+                        return;
+                    }
+
+                    const related = event && 'relatedTarget' in event ? event.relatedTarget : null;
+                    if (related instanceof Node && trigger.contains(related)) {
+                        return;
+                    }
+
+                    handleTriggerEnter(trigger, event);
+                };
             }
 
-            function observeUsernameElements() {
-                if (!('MutationObserver' in window) || !document.body) {
+            function createPointerLeaveHandler() {
+                return event => {
+                    const trigger = findTrigger(event);
+                    if (!trigger) {
+                        return;
+                    }
+
+                    const related = event && 'relatedTarget' in event ? event.relatedTarget : null;
+                    if (related instanceof Node && trigger.contains(related)) {
+                        return;
+                    }
+
+                    handleTriggerLeave(trigger, event);
+                };
+            }
+
+            function handleFocusIn(event) {
+                const trigger = findTrigger(event);
+                if (!trigger) {
                     return;
                 }
 
-                const observer = new MutationObserver(mutations => {
-                    mutations.forEach(mutation => {
-                        mutation.addedNodes.forEach(node => {
-                            if (!(node instanceof Element)) {
-                                return;
-                            }
+                handleTriggerEnter(trigger, event);
+            }
 
-                            if (node.matches(USERNAME_SELECTOR)) {
-                                bindElement(node);
-                            }
+            function handleFocusOut(event) {
+                const trigger = findTrigger(event);
+                if (!trigger) {
+                    return;
+                }
 
-                            bindAll(node);
-                        });
-                    });
-                });
+                const related = event && 'relatedTarget' in event ? event.relatedTarget : null;
+                if (related instanceof Node && trigger.contains(related)) {
+                    return;
+                }
 
-                observer.observe(document.body, {
-                    childList: true,
-                    subtree: true
-                });
+                handleTriggerLeave(trigger, event);
             }
 
             function initialize() {
@@ -923,8 +970,15 @@ use Kickback\Common\Version;
                     return;
                 }
 
-                bindAll(document);
-                observeUsernameElements();
+                const root = document.body;
+
+                if (supportsHover) {
+                    root.addEventListener('pointerover', createPointerEnterHandler());
+                    root.addEventListener('pointerout', createPointerLeaveHandler());
+                }
+
+                root.addEventListener('focusin', handleFocusIn);
+                root.addEventListener('focusout', handleFocusOut);
             }
 
             if (document.readyState === 'loading') {
