@@ -137,6 +137,7 @@ body {
     padding: 0;
     border: none;
     background-color: transparent;
+    pointer-events: auto;
     z-index: 1080;
 }
 
