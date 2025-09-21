@@ -11,22 +11,42 @@
     <link rel="stylesheet" href="assets/css/loot-opening.css">
     <style>
         body {
-            background: radial-gradient(circle at top, #1a102b, #05020b 70%);
+            position: relative;
             min-height: 100vh;
             margin: 0;
-            color: #fff;
+            color: #fff8ff;
             font-family: 'Nunito', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 32px;
-            padding: 4rem 1rem 6rem;
+            padding: 4.5rem 1rem 6.5rem;
+            background: radial-gradient(circle at top, rgba(79, 34, 141, 0.45), rgba(10, 6, 24, 0.98) 68%) fixed,
+                radial-gradient(circle at bottom, rgba(14, 94, 166, 0.18), transparent 55%) fixed,
+                #05020b;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.12), transparent 45%),
+                radial-gradient(circle at 80% 30%, rgba(255, 214, 102, 0.18), transparent 55%),
+                radial-gradient(circle at 40% 75%, rgba(168, 85, 247, 0.12), transparent 55%);
+            opacity: 0.35;
+            mix-blend-mode: screen;
+            z-index: 0;
         }
 
         h1 {
             margin: 0;
             font-weight: 800;
             letter-spacing: 0.04em;
+            text-shadow: 0 18px 42px rgba(0, 0, 0, 0.55);
+            font-size: clamp(2.2rem, 5vw, 3.2rem);
+            z-index: 1;
         }
 
         .demo-controls {
@@ -61,14 +81,21 @@
         .demo-description {
             max-width: 760px;
             text-align: center;
-            line-height: 1.6;
-            opacity: 0.85;
+            line-height: 1.7;
+            opacity: 0.86;
+            z-index: 1;
         }
 
         .demo-event-log {
             min-height: 1.5rem;
             font-size: 0.95rem;
             opacity: 0.7;
+            z-index: 1;
+        }
+
+        #loot-root {
+            width: min(960px, 100%);
+            z-index: 1;
         }
     </style>
 </head>
