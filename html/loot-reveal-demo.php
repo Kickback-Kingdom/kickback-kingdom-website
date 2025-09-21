@@ -41,8 +41,8 @@
         }
 
         body.loot-demo .loot-reveal__backdrop {
-            background: transparent;
-            backdrop-filter: none;
+            background: rgba(5, 3, 12, 0.55);
+            backdrop-filter: blur(4px);
         }
 
         h1 {
@@ -164,6 +164,16 @@
 
         writeLog('Awaiting chest interaction.');
 
+        const startClosedChestConfetti = () => {
+            if (typeof StopConfetti === 'function') {
+                StopConfetti();
+            }
+
+            if (typeof StartConfetti === 'function') {
+                StartConfetti();
+            }
+        };
+
         const reveal = new LootReveal(root, {
             onChestOpen: (payload) => {
                 const total = Array.isArray(payload) ? payload.length : 0;
@@ -181,12 +191,6 @@
             const rewards = event.detail?.rewards ?? [];
             const total = Array.isArray(rewards) ? rewards.length : 0;
             writeLog(`Chest opened with ${total} reward${total === 1 ? '' : 's'}.`);
-            if (typeof StopConfetti === 'function') {
-                StopConfetti();
-            }
-            if (typeof StartConfetti === 'function') {
-                StartConfetti();
-            }
         });
 
         reveal.root.addEventListener('lootreveal:close', (event) => {
@@ -202,10 +206,12 @@
             button.addEventListener('click', () => {
                 const type = button.dataset.demo;
                 reveal.open(demoData[type]);
+                startClosedChestConfetti();
             });
         });
 
         reveal.open(demoData.mixed);
+        startClosedChestConfetti();
     </script>
 </body>
 </html>
