@@ -170,6 +170,7 @@ use Kickback\Common\Version;
             const hoverStates = new WeakMap();
             const DEBUG_PREFIX = '[PlayerCardPopover]';
             const DEBUG_ENABLED = true;
+            const TIP_READY_MAX_ATTEMPTS = 10;
 
             function debugLog(element, message, details = undefined) {
                 if (!DEBUG_ENABLED || typeof console === 'undefined' || typeof console.debug !== 'function') {
@@ -412,10 +413,15 @@ use Kickback\Common\Version;
                 clearTimer(showTimers, element);
 
                 const popover = popoverInstances.get(element);
+                const state = getHoverState(element);
                 if (popover && typeof popover.getTipElement === 'function') {
                     const tipElement = popover.getTipElement();
-                    if (tipElement && (isElementHovered(tipElement) || tipElement.matches(':focus-within'))) {
-                        const state = getHoverState(element);
+                    if (!tipElement) {
+                        if (state.popoverHovered) {
+                            debugLog(element, 'Skipping hide timer because tip is not ready but hover state is active');
+                            return;
+                        }
+                    } else if (isElementHovered(tipElement) || tipElement.matches(':focus-within')) {
                         state.popoverHovered = true;
                         clearTimer(hideTimers, element);
                         debugLog(element, 'Skipping hide timer because tip is hovered or focused');
@@ -548,22 +554,35 @@ use Kickback\Common\Version;
             }
 
             function handlePopoverShown(element) {
+                const state = getHoverState(element);
+                state.popoverHovered = true;
+                clearTimer(hideTimers, element);
+                debugLog(element, 'Popover shown; waiting for tip readiness');
+
                 const popover = popoverInstances.get(element);
                 if (!popover || typeof popover.getTipElement !== 'function') {
-                    debugLog(element, 'Popover shown but instance missing or tip unavailable');
+                    debugLog(element, 'Popover shown but instance missing or tip accessor unavailable');
                     return;
                 }
 
-                const tipElement = popover.getTipElement();
+                preparePopoverTip(element, popover, 0);
+            }
+
+            function preparePopoverTip(element, popover, attempt) {
+                const tipElement = typeof popover.getTipElement === 'function' ? popover.getTipElement() : null;
                 if (!tipElement) {
-                    debugLog(element, 'Popover shown but tip element missing');
+                    if (attempt >= TIP_READY_MAX_ATTEMPTS) {
+                        const state = getHoverState(element);
+                        state.popoverHovered = false;
+                        debugLog(element, 'Popover tip still unavailable after retries');
+                        return;
+                    }
+
+                    requestAnimationFrame(() => preparePopoverTip(element, popover, attempt + 1));
                     return;
                 }
 
                 const state = getHoverState(element);
-                state.popoverHovered = true;
-                clearTimer(hideTimers, element);
-                debugLog(element, 'Popover shown and hover state updated');
 
                 if (!tipElement.dataset.playerCardPopoverBound) {
                     const handleEnter = () => {
@@ -608,10 +627,24 @@ use Kickback\Common\Version;
                     tipElement.dataset.playerCardPopoverBound = 'true';
                 }
 
-                if (isElementHovered(tipElement)) {
+                const tipHovered = isElementHovered(tipElement);
+                const tipFocused = tipElement.matches(':focus-within');
+
+                if (tipHovered || tipFocused) {
                     state.popoverHovered = true;
                     clearTimer(hideTimers, element);
-                    debugLog(element, 'Tip already hovered on show, keeping hide timer cleared');
+                    debugLog(element, 'Tip ready and hover/focus detected, keeping hide timer cleared', {
+                        tipHovered,
+                        tipFocused
+                    });
+                } else {
+                    state.popoverHovered = false;
+                    debugLog(element, 'Tip ready but not hovered or focused', {
+                        triggerHovered: state.triggerHovered
+                    });
+                    if (!state.triggerHovered) {
+                        scheduleHide(element);
+                    }
                 }
 
                 if (window.bootstrap && bootstrap.Tooltip) {
