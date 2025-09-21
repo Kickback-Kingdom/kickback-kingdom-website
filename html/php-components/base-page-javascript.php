@@ -169,6 +169,26 @@ use Kickback\Common\Version;
             const supportsHover = window.matchMedia ? window.matchMedia('(hover: hover)').matches : false;
             const hoverStates = new WeakMap();
 
+            function isElementHovered(element) {
+                if (!element) {
+                    return false;
+                }
+
+                if (element.matches(':hover')) {
+                    return true;
+                }
+
+                const hoveredElements = document.querySelectorAll(':hover');
+                for (let i = hoveredElements.length - 1; i >= 0; i--) {
+                    const hovered = hoveredElements[i];
+                    if (hovered === element || element.contains(hovered)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
             function getHoverState(element) {
                 let state = hoverStates.get(element);
                 if (!state) {
@@ -367,8 +387,9 @@ use Kickback\Common\Version;
                     const popover = popoverInstances.get(element);
                     if (popover) {
                         const tipElement = typeof popover.getTipElement === 'function' ? popover.getTipElement() : null;
-                        if (tipElement && (tipElement.matches(':hover') || tipElement.matches(':focus-within'))) {
+                        if (tipElement && (isElementHovered(tipElement) || tipElement.matches(':focus-within'))) {
                             state.popoverHovered = true;
+                            clearTimer(hideTimers, element);
                             return;
                         }
 
@@ -481,6 +502,10 @@ use Kickback\Common\Version;
                         clearTimer(hideTimers, element);
                     };
                     const handleLeave = () => {
+                        if (isElementHovered(tipElement)) {
+                            return;
+                        }
+
                         state.popoverHovered = false;
                         scheduleHide(element);
                     };
@@ -508,7 +533,7 @@ use Kickback\Common\Version;
                     tipElement.dataset.playerCardPopoverBound = 'true';
                 }
 
-                if (tipElement.matches(':hover')) {
+                if (isElementHovered(tipElement)) {
                     const state = getHoverState(element);
                     state.popoverHovered = true;
                     clearTimer(hideTimers, element);
