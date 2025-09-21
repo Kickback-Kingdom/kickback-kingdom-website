@@ -18,23 +18,60 @@ class LootReveal {
 
         this.state = 'idle';
         this.normalizedRewards = [];
+        this.pendingCloseReason = null;
 
         this.#build();
     }
 
     #build() {
-        this.root.classList.add('loot-reveal');
-        this.root.setAttribute('aria-hidden', 'true');
-        this.root.innerHTML = '';
+        let modal = this.root.querySelector('[data-loot-modal]');
 
-        const backdrop = document.createElement('div');
-        backdrop.className = 'loot-reveal__backdrop';
+        if (!modal) {
+            this.root.innerHTML = `
+                <div class="modal fade loot-reveal-modal" tabindex="-1" aria-hidden="true" aria-modal="true" aria-label="Loot rewards" data-loot-modal>
+                    <div class="modal-dialog modal-dialog-centered modal-xl loot-reveal__dialog">
+                        <div class="modal-content bg-transparent border-0">
+                            <div class="modal-body p-0">
+                                <div class="loot-reveal" data-loot-container></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modal = this.root.querySelector('[data-loot-modal]');
+        }
+
+        if (!modal) {
+            throw new Error('LootReveal requires a modal container element.');
+        }
+
+        this.modalEl = modal;
+        this.modalDialogEl = this.modalEl.querySelector('.modal-dialog');
+        this.modalEl.setAttribute('role', 'dialog');
+        this.modalEl.setAttribute('aria-modal', 'true');
+
+        if (!this.modalDialogEl) {
+            throw new Error('LootReveal modal is missing a .modal-dialog element.');
+        }
+
+        let lootContainer = this.modalEl.querySelector('[data-loot-container]');
+
+        if (!lootContainer) {
+            lootContainer = document.createElement('div');
+            lootContainer.className = 'loot-reveal';
+            lootContainer.setAttribute('data-loot-container', '');
+            const modalBody = this.modalEl.querySelector('.modal-body');
+            (modalBody ?? this.modalDialogEl).appendChild(lootContainer);
+        }
+
+        this.lootContainerEl = lootContainer;
+        this.lootContainerEl.setAttribute('aria-hidden', 'true');
+        this.lootContainerEl.innerHTML = '';
 
         const panel = document.createElement('div');
         panel.className = 'loot-reveal__panel';
-        panel.setAttribute('role', 'dialog');
-        panel.setAttribute('aria-modal', 'true');
-        panel.setAttribute('aria-label', 'Loot rewards');
+        panel.setAttribute('role', 'document');
 
         const stage = document.createElement('div');
         stage.className = 'loot-reveal__stage';
@@ -70,10 +107,8 @@ class LootReveal {
         panel.appendChild(items);
         panel.appendChild(status);
 
-        this.root.appendChild(backdrop);
-        this.root.appendChild(panel);
+        this.lootContainerEl.appendChild(panel);
 
-        this.backdropEl = backdrop;
         this.panelEl = panel;
         this.stageEl = stage;
         this.chestEl = stage.querySelector('[data-chest]');
@@ -103,9 +138,40 @@ class LootReveal {
             }
         });
 
-        this.backdropEl.addEventListener('click', (event) => this.#handleBackdropInteraction(event));
+        this.modalEl.addEventListener('click', (event) => this.#handleBackdropInteraction(event));
         this.panelEl.addEventListener('click', (event) => this.#handlePanelInteraction(event));
         this.chestEl.addEventListener('click', () => this.#handleChestClick());
+
+        this.modalEl.addEventListener('hide.bs.modal', () => {
+            if (!this.pendingCloseReason) {
+                this.pendingCloseReason = 'dismissed';
+            }
+        });
+
+        this.modalEl.addEventListener('hidden.bs.modal', () => {
+            this.lootContainerEl.setAttribute('aria-hidden', 'true');
+            const reason = this.pendingCloseReason ?? 'manual';
+            this.pendingCloseReason = null;
+            this.#finalizeClose(reason);
+        });
+
+        this.modalEl.addEventListener('shown.bs.modal', () => {
+            this.lootContainerEl.setAttribute('aria-hidden', 'false');
+            this.lootContainerEl.classList.add('is-visible');
+            if (typeof this.chestEl.focus === 'function') {
+                this.chestEl.focus({ preventScroll: true });
+            }
+        });
+
+        if (typeof bootstrap === 'undefined' || !bootstrap?.Modal) {
+            throw new Error('Bootstrap Modal is required for LootReveal.');
+        }
+
+        this.modalInstance = bootstrap.Modal.getOrCreateInstance(this.modalEl, {
+            backdrop: 'static',
+            keyboard: false,
+            focus: true
+        });
     }
 
     open(rewards) {
@@ -124,44 +190,33 @@ class LootReveal {
             ? 'Tap the chest to reveal your loot'
             : 'Tap the chest to peek inside';
 
-        this.root.classList.add('is-visible');
-        this.root.setAttribute('aria-hidden', 'false');
-        if (typeof this.chestEl.focus === 'function') {
-            this.chestEl.focus({ preventScroll: true });
-        }
+        this.pendingCloseReason = null;
+        this.modalInstance.show();
     }
 
     close(reason = 'manual') {
-        if (!this.root.classList.contains('is-visible')) {
-            return;
-        }
-
         if (this.state === 'opening') {
             return;
         }
 
-        this.state = 'idle';
-        this.root.classList.remove('is-visible', 'is-opening');
-        this.root.setAttribute('aria-hidden', 'true');
-        this.statusEl.textContent = 'Awaiting chest...';
-        this.chestEl.setAttribute('aria-expanded', 'false');
-        this.#clearTrack();
-        this.stageEl.classList.remove('is-ready', 'is-open');
-        this.cardContainerEl.classList.remove('is-visible', 'is-flipping');
-        this.chestEl.classList.remove('is-activating');
-        this.#resetFeatureCard();
-        this.normalizedRewards = [];
-
-        if (typeof this.config.onChestClose === 'function') {
-            this.config.onChestClose(reason);
+        if (!this.modalInstance) {
+            return;
         }
 
-        this.root.dispatchEvent(new CustomEvent('lootreveal:close', {
-            detail: { reason }
-        }));
+        if (!this.modalEl.classList.contains('show')) {
+            this.#finalizeClose(reason);
+            return;
+        }
+
+        this.pendingCloseReason = reason;
+        this.modalInstance.hide();
     }
 
     #handleBackdropInteraction(event) {
+        if (event.target !== this.modalEl) {
+            return;
+        }
+
         if (this.state === 'ready') {
             event.preventDefault();
             event.stopPropagation();
@@ -206,7 +261,6 @@ class LootReveal {
 
         this.state = 'opening';
         this.statusEl.textContent = 'Opening...';
-        this.root.classList.remove('is-opening');
         this.#clearTrack();
         this.chestEl.disabled = true;
         this.chestEl.classList.remove('is-activating');
@@ -225,7 +279,6 @@ class LootReveal {
 
         await this.#delay(this.config.chestOpenDelay);
         this.chestEl.classList.add('is-activating');
-        this.root.classList.add('is-opening');
         this.stageEl.classList.add('is-open');
         this.cardContainerEl.classList.add('is-visible', 'is-flipping');
         await this.#delay(this.config.chestOpenDuration);
@@ -246,7 +299,6 @@ class LootReveal {
     }
 
     #prepareForReveal() {
-        this.root.classList.remove('is-opening');
         this.chestEl.disabled = false;
         this.chestEl.setAttribute('aria-expanded', 'false');
         this.#clearTrack();
@@ -267,6 +319,28 @@ class LootReveal {
                 scroller.scrollLeft = 0;
             }
         }
+    }
+
+    #finalizeClose(reason) {
+        this.state = 'idle';
+        this.statusEl.textContent = 'Awaiting chest...';
+        this.chestEl.setAttribute('aria-expanded', 'false');
+        this.#clearTrack();
+        this.stageEl.classList.remove('is-ready', 'is-open');
+        this.cardContainerEl.classList.remove('is-visible', 'is-flipping');
+        this.chestEl.classList.remove('is-activating');
+        this.#resetFeatureCard();
+        this.normalizedRewards = [];
+        this.lootContainerEl.classList.remove('is-visible');
+        this.lootContainerEl.setAttribute('aria-hidden', 'true');
+
+        if (typeof this.config.onChestClose === 'function') {
+            this.config.onChestClose(reason);
+        }
+
+        this.root.dispatchEvent(new CustomEvent('lootreveal:close', {
+            detail: { reason }
+        }));
     }
 
     #renderEmpty() {
