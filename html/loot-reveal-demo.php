@@ -40,6 +40,11 @@
             z-index: 0;
         }
 
+        body.loot-demo .loot-reveal__backdrop {
+            background: transparent;
+            backdrop-filter: none;
+        }
+
         h1 {
             margin: 0;
             font-weight: 800;
@@ -99,7 +104,7 @@
         }
     </style>
 </head>
-<body>
+<body class="loot-demo">
     <h1>Loot Reveal Prototype</h1>
     <p class="demo-description">
         Click the buttons below to simulate different chest outcomes. A full-screen overlay will appear&mdash;tap the
@@ -114,7 +119,12 @@
     </div>
     <div class="demo-event-log" id="demo-event-log" aria-live="polite"></div>
     <div id="loot-root"></div>
+    <div class="confetti-box" aria-hidden="true">
+        <div class="js-container-confetti" style="width: 100vw; height: 100vh;"></div>
+    </div>
 
+    <script src="assets/vendors/jquery/jquery-3.7.0.min.js"></script>
+    <script src="assets/js/confetti.js"></script>
     <script src="assets/js/lootOpening.js"></script>
     <script>
         const demoData = {
@@ -161,6 +171,9 @@
             },
             onChestClose: (reason) => {
                 console.log(`Chest close callback fired (${reason}).`);
+                if (typeof StopConfetti === 'function') {
+                    StopConfetti();
+                }
             }
         });
 
@@ -168,11 +181,20 @@
             const rewards = event.detail?.rewards ?? [];
             const total = Array.isArray(rewards) ? rewards.length : 0;
             writeLog(`Chest opened with ${total} reward${total === 1 ? '' : 's'}.`);
+            if (typeof StopConfetti === 'function') {
+                StopConfetti();
+            }
+            if (typeof StartConfetti === 'function') {
+                StartConfetti();
+            }
         });
 
         reveal.root.addEventListener('lootreveal:close', (event) => {
             const reason = event.detail?.reason ?? 'manual';
             writeLog(`Loot overlay closed (${reason}).`);
+            if (typeof StopConfetti === 'function') {
+                StopConfetti();
+            }
         });
 
         const buttons = document.querySelectorAll('.demo-controls button');
