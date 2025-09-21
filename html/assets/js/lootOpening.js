@@ -9,19 +9,36 @@ class LootReveal {
             chestOpenDelay: 350,
             itemRevealDelay: 420,
             countAnimationDuration: 480,
-            chestOpenDuration: 900
+            chestOpenDuration: 900,
+            onChestOpen: null,
+            onChestClose: null
         }, options);
+
+        this.state = 'idle';
+        this.normalizedRewards = [];
 
         this.#build();
     }
 
     #build() {
         this.root.classList.add('loot-reveal');
-
+        this.root.setAttribute('aria-hidden', 'true');
         this.root.innerHTML = '';
 
-        const chest = document.createElement('div');
+        const backdrop = document.createElement('div');
+        backdrop.className = 'loot-reveal__backdrop';
+
+        const panel = document.createElement('div');
+        panel.className = 'loot-reveal__panel';
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-modal', 'true');
+        panel.setAttribute('aria-label', 'Loot rewards');
+
+        const chest = document.createElement('button');
+        chest.type = 'button';
         chest.className = 'loot-reveal__chest';
+        chest.setAttribute('aria-label', 'Open loot chest');
+        chest.setAttribute('aria-expanded', 'false');
         chest.innerHTML = `
             <div class="loot-reveal__chest-body"></div>
             <div class="loot-reveal__chest-lid"></div>
@@ -40,47 +57,144 @@ class LootReveal {
         status.className = 'loot-reveal__status-text';
         status.textContent = 'Awaiting chest...';
 
-        this.root.appendChild(chest);
-        this.root.appendChild(items);
-        this.root.appendChild(status);
+        panel.appendChild(chest);
+        panel.appendChild(items);
+        panel.appendChild(status);
 
+        this.root.appendChild(backdrop);
+        this.root.appendChild(panel);
+
+        this.backdropEl = backdrop;
+        this.panelEl = panel;
         this.chestEl = chest;
         this.trackEl = items.querySelector('.loot-reveal__track');
         this.statusEl = status;
         this.cardMap = new Map();
+
+        this.backdropEl.addEventListener('click', () => this.close('backdrop'));
+        this.chestEl.addEventListener('click', () => this.#handleChestClick());
     }
 
-    async open(rewards) {
-        if (!Array.isArray(rewards) || rewards.length === 0) {
-            this.#renderEmpty();
+    open(rewards) {
+        if (!Array.isArray(rewards)) {
+            this.normalizedRewards = [];
+        } else {
+            this.normalizedRewards = rewards.map((reward) => this.#normalizeReward(reward));
+        }
+
+        this.#prepareForReveal();
+
+        this.state = 'ready';
+        this.statusEl.textContent = this.normalizedRewards.length > 0
+            ? 'Tap the chest to reveal your loot'
+            : 'Tap the chest to peek inside';
+
+        this.root.classList.add('is-visible');
+        this.root.setAttribute('aria-hidden', 'false');
+        if (typeof this.chestEl.focus === 'function') {
+            this.chestEl.focus({ preventScroll: true });
+        }
+    }
+
+    close(reason = 'manual') {
+        if (!this.root.classList.contains('is-visible')) {
             return;
         }
 
-        this.#reset();
+        if (this.state === 'opening') {
+            return;
+        }
+
+        this.state = 'idle';
+        this.root.classList.remove('is-visible', 'is-opening');
+        this.root.setAttribute('aria-hidden', 'true');
+        this.statusEl.textContent = 'Awaiting chest...';
+        this.chestEl.setAttribute('aria-expanded', 'false');
+        this.#clearTrack();
+        this.normalizedRewards = [];
+
+        if (typeof this.config.onChestClose === 'function') {
+            this.config.onChestClose(reason);
+        }
+
+        this.root.dispatchEvent(new CustomEvent('lootreveal:close', {
+            detail: { reason }
+        }));
+    }
+
+    async #handleChestClick() {
+        if (this.state === 'ready') {
+            await this.#startReveal();
+            return;
+        }
+
+        if (this.state === 'finished') {
+            this.close('chest');
+        }
+    }
+
+    async #startReveal() {
+        if (this.state !== 'ready') {
+            return;
+        }
+
+        this.state = 'opening';
         this.statusEl.textContent = 'Opening...';
+        this.root.classList.remove('is-opening');
+        this.#clearTrack();
+        this.chestEl.disabled = true;
+
+        if (typeof this.config.onChestOpen === 'function') {
+            this.config.onChestOpen(this.normalizedRewards.slice());
+        }
+
+        this.root.dispatchEvent(new CustomEvent('lootreveal:chestopen', {
+            detail: {
+                rewards: this.normalizedRewards.slice()
+            }
+        }));
 
         await this.#delay(this.config.chestOpenDelay);
         this.root.classList.add('is-opening');
-
         await this.#delay(this.config.chestOpenDuration);
 
-        for (const reward of rewards) {
-            await this.#revealReward(reward);
-            await this.#delay(this.config.itemRevealDelay);
+        if (this.normalizedRewards.length === 0) {
+            this.#renderEmpty();
+        } else {
+            for (const reward of this.normalizedRewards) {
+                await this.#revealReward(reward);
+                await this.#delay(this.config.itemRevealDelay);
+            }
         }
 
-        this.statusEl.textContent = 'Loot acquired';
+        this.state = 'finished';
+        this.statusEl.textContent = 'Tap the chest to close';
+        this.chestEl.disabled = false;
+        this.chestEl.setAttribute('aria-expanded', 'true');
     }
 
-    #reset() {
+    #prepareForReveal() {
         this.root.classList.remove('is-opening');
+        this.chestEl.disabled = false;
+        this.chestEl.setAttribute('aria-expanded', 'false');
+        this.#clearTrack();
+    }
+
+    #clearTrack() {
         this.trackEl.innerHTML = '';
         this.cardMap.clear();
+        const scroller = this.trackEl.parentElement;
+        if (scroller) {
+            if (typeof scroller.scrollTo === 'function') {
+                scroller.scrollTo({ left: 0, behavior: 'auto' });
+            } else {
+                scroller.scrollLeft = 0;
+            }
+        }
     }
 
     #renderEmpty() {
-        this.#reset();
-        this.statusEl.textContent = 'No loot found';
+        this.#clearTrack();
         const empty = document.createElement('div');
         empty.className = 'loot-reveal__empty';
         empty.textContent = 'Chest was empty... maybe next time!';

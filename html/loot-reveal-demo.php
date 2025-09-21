@@ -64,19 +64,28 @@
             line-height: 1.6;
             opacity: 0.85;
         }
+
+        .demo-event-log {
+            min-height: 1.5rem;
+            font-size: 0.95rem;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
     <h1>Loot Reveal Prototype</h1>
     <p class="demo-description">
-        Click the buttons below to simulate different chest outcomes. Identical items combine into a single card
-        with a counting animation, while unique items animate out and line up in a horizontal, scrollable spread.
+        Click the buttons below to simulate different chest outcomes. A full-screen overlay will appear&mdash;tap the
+        chest to reveal its contents, then tap it again (or the backdrop) to close. Identical items combine into a
+        single card with a counting animation, while unique items animate out and line up in a horizontal, scrollable
+        spread.
     </p>
     <div class="demo-controls">
         <button type="button" data-demo="mixed">Open Mixed Chest</button>
         <button type="button" data-demo="duplicates">Open Duplicate Heavy Chest</button>
         <button type="button" data-demo="legendary">Open Legendary Chest</button>
     </div>
+    <div class="demo-event-log" id="demo-event-log" aria-live="polite"></div>
     <div id="loot-root"></div>
 
     <script src="assets/js/lootOpening.js"></script>
@@ -106,7 +115,38 @@
         };
 
         const root = document.getElementById('loot-root');
-        const reveal = new LootReveal(root);
+        const log = document.getElementById('demo-event-log');
+
+        const writeLog = (message) => {
+            if (!log) {
+                return;
+            }
+
+            log.textContent = message;
+        };
+
+        writeLog('Awaiting chest interaction.');
+
+        const reveal = new LootReveal(root, {
+            onChestOpen: (payload) => {
+                const total = Array.isArray(payload) ? payload.length : 0;
+                console.log(`Chest open callback fired with ${total} reward${total === 1 ? '' : 's'}.`);
+            },
+            onChestClose: (reason) => {
+                console.log(`Chest close callback fired (${reason}).`);
+            }
+        });
+
+        reveal.root.addEventListener('lootreveal:chestopen', (event) => {
+            const rewards = event.detail?.rewards ?? [];
+            const total = Array.isArray(rewards) ? rewards.length : 0;
+            writeLog(`Chest opened with ${total} reward${total === 1 ? '' : 's'}.`);
+        });
+
+        reveal.root.addEventListener('lootreveal:close', (event) => {
+            const reason = event.detail?.reason ?? 'manual';
+            writeLog(`Loot overlay closed (${reason}).`);
+        });
 
         const buttons = document.querySelectorAll('.demo-controls button');
         buttons.forEach((button) => {
