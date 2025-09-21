@@ -11,7 +11,9 @@ class LootReveal {
             countAnimationDuration: 480,
             chestOpenDuration: 900,
             onChestOpen: null,
-            onChestClose: null
+            onChestClose: null,
+            assetBasePath: 'https://kickback-kingdom.com/assets/media/chests/',
+            cardBackImage: 'https://kickback-kingdom.com/assets/media/cards/card-back.png'
         }, options);
 
         this.state = 'idle';
@@ -34,15 +36,22 @@ class LootReveal {
         panel.setAttribute('aria-modal', 'true');
         panel.setAttribute('aria-label', 'Loot rewards');
 
-        const chest = document.createElement('button');
-        chest.type = 'button';
-        chest.className = 'loot-reveal__chest';
-        chest.setAttribute('aria-label', 'Open loot chest');
-        chest.setAttribute('aria-expanded', 'false');
-        chest.innerHTML = `
-            <div class="loot-reveal__chest-body"></div>
-            <div class="loot-reveal__chest-lid"></div>
-            <div class="loot-reveal__sparkle"></div>
+        const stage = document.createElement('div');
+        stage.className = 'loot-reveal__stage';
+        stage.innerHTML = `
+            <img class="loot-reveal__glow loot-reveal__glow--back" data-glow-back alt="" aria-hidden="true" />
+            <button type="button" class="loot-reveal__chest" data-chest aria-label="Open loot chest" aria-expanded="false">
+                <img class="loot-reveal__chest-image loot-reveal__chest-image--closed" data-chest-closed alt="Closed treasure chest" />
+                <img class="loot-reveal__chest-image loot-reveal__chest-image--open" data-chest-open alt="Open treasure chest" />
+                <div class="loot-reveal__card-container" data-card-container aria-hidden="true">
+                    <div class="loot-reveal__card-face loot-reveal__card-face--front" data-card-front>
+                        <div class="loot-reveal__card-thumbnail" data-card-thumbnail></div>
+                        <div class="loot-reveal__card-label" data-card-label></div>
+                    </div>
+                    <div class="loot-reveal__card-face loot-reveal__card-face--back" data-card-back></div>
+                </div>
+            </button>
+            <img class="loot-reveal__glow loot-reveal__glow--front" data-glow-front alt="" aria-hidden="true" />
         `;
 
         const items = document.createElement('div');
@@ -57,7 +66,7 @@ class LootReveal {
         status.className = 'loot-reveal__status-text';
         status.textContent = 'Awaiting chest...';
 
-        panel.appendChild(chest);
+        panel.appendChild(stage);
         panel.appendChild(items);
         panel.appendChild(status);
 
@@ -66,10 +75,33 @@ class LootReveal {
 
         this.backdropEl = backdrop;
         this.panelEl = panel;
-        this.chestEl = chest;
+        this.stageEl = stage;
+        this.chestEl = stage.querySelector('[data-chest]');
+        this.closedChestEl = stage.querySelector('[data-chest-closed]');
+        this.openChestEl = stage.querySelector('[data-chest-open]');
+        this.glowBackEl = stage.querySelector('[data-glow-back]');
+        this.glowFrontEl = stage.querySelector('[data-glow-front]');
+        this.cardContainerEl = stage.querySelector('[data-card-container]');
+        this.cardFrontEl = stage.querySelector('[data-card-front]');
+        this.cardBackEl = stage.querySelector('[data-card-back]');
+        this.cardThumbnailEl = stage.querySelector('[data-card-thumbnail]');
+        this.cardLabelEl = stage.querySelector('[data-card-label]');
         this.trackEl = items.querySelector('.loot-reveal__track');
         this.statusEl = status;
         this.cardMap = new Map();
+        this.assetBasePath = this.#normalizeBasePath(this.config.assetBasePath);
+
+        this.cardContainerEl?.addEventListener('animationend', (event) => {
+            if (event.animationName === 'flip') {
+                this.cardContainerEl.classList.remove('is-flipping');
+            }
+        });
+
+        this.chestEl.addEventListener('animationend', (event) => {
+            if (event.animationName === 'tada') {
+                this.chestEl.classList.remove('is-activating');
+            }
+        });
 
         this.backdropEl.addEventListener('click', () => this.close('backdrop'));
         this.chestEl.addEventListener('click', () => this.#handleChestClick());
@@ -83,6 +115,8 @@ class LootReveal {
         }
 
         this.#prepareForReveal();
+        this.#updateStageVisuals();
+        this.stageEl.classList.add('is-ready');
 
         this.state = 'ready';
         this.statusEl.textContent = this.normalizedRewards.length > 0
@@ -111,6 +145,10 @@ class LootReveal {
         this.statusEl.textContent = 'Awaiting chest...';
         this.chestEl.setAttribute('aria-expanded', 'false');
         this.#clearTrack();
+        this.stageEl.classList.remove('is-ready', 'is-open');
+        this.cardContainerEl.classList.remove('is-visible', 'is-flipping');
+        this.chestEl.classList.remove('is-activating');
+        this.#resetFeatureCard();
         this.normalizedRewards = [];
 
         if (typeof this.config.onChestClose === 'function') {
@@ -143,6 +181,9 @@ class LootReveal {
         this.root.classList.remove('is-opening');
         this.#clearTrack();
         this.chestEl.disabled = true;
+        this.chestEl.classList.remove('is-activating');
+        this.stageEl.classList.remove('is-open');
+        this.cardContainerEl.classList.remove('is-visible', 'is-flipping');
 
         if (typeof this.config.onChestOpen === 'function') {
             this.config.onChestOpen(this.normalizedRewards.slice());
@@ -155,7 +196,10 @@ class LootReveal {
         }));
 
         await this.#delay(this.config.chestOpenDelay);
+        this.chestEl.classList.add('is-activating');
         this.root.classList.add('is-opening');
+        this.stageEl.classList.add('is-open');
+        this.cardContainerEl.classList.add('is-visible', 'is-flipping');
         await this.#delay(this.config.chestOpenDuration);
 
         if (this.normalizedRewards.length === 0) {
@@ -178,6 +222,10 @@ class LootReveal {
         this.chestEl.disabled = false;
         this.chestEl.setAttribute('aria-expanded', 'false');
         this.#clearTrack();
+        this.stageEl.classList.remove('is-ready', 'is-open');
+        this.cardContainerEl.classList.remove('is-visible', 'is-flipping');
+        this.chestEl.classList.remove('is-activating');
+        this.#resetFeatureCard();
     }
 
     #clearTrack() {
@@ -199,6 +247,57 @@ class LootReveal {
         empty.className = 'loot-reveal__empty';
         empty.textContent = 'Chest was empty... maybe next time!';
         this.trackEl.appendChild(empty);
+    }
+
+    #updateStageVisuals() {
+        const rarityIndex = this.#determineChestRarity();
+        const rarityLabels = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic'];
+        const label = rarityLabels[rarityIndex] ?? 'Treasure';
+
+        const closed = this.#buildAssetPath(`Loot_Box_0${rarityIndex + 1}_01_Star.png`);
+        const open = this.#buildAssetPath(`Loot_Box_0${rarityIndex + 1}_02_Star.png`);
+        const glowBack = this.#buildAssetPath(`${rarityIndex}_c_s.png`);
+        const glowFront = this.#buildAssetPath(`${rarityIndex}_o_s.png`);
+
+        if (this.closedChestEl) {
+            this.closedChestEl.src = closed;
+            this.closedChestEl.alt = `${label} loot chest, closed`;
+        }
+
+        if (this.openChestEl) {
+            this.openChestEl.src = open;
+            this.openChestEl.alt = `${label} loot chest, open`;
+        }
+
+        if (this.glowBackEl) {
+            this.glowBackEl.src = glowBack;
+        }
+
+        if (this.glowFrontEl) {
+            this.glowFrontEl.src = glowFront;
+        }
+
+        if (this.cardBackEl) {
+            const backImage = this.config.cardBackImage;
+            if (backImage) {
+                this.cardBackEl.style.setProperty('--loot-card-back-image', `url("${backImage}")`);
+            }
+        }
+
+        const featured = this.#selectFeaturedReward();
+        this.#applyFeatureReward(featured);
+    }
+
+    #resetFeatureCard() {
+        if (this.cardThumbnailEl) {
+            this.cardThumbnailEl.style.removeProperty('--loot-card-thumb-image');
+            this.cardThumbnailEl.textContent = '';
+            this.cardThumbnailEl.classList.remove('has-image');
+        }
+
+        if (this.cardLabelEl) {
+            this.cardLabelEl.textContent = '';
+        }
     }
 
     async #revealReward(reward) {
@@ -332,6 +431,114 @@ class LootReveal {
 
     #delay(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    #determineChestRarity() {
+        if (!Array.isArray(this.normalizedRewards) || this.normalizedRewards.length === 0) {
+            return 0;
+        }
+
+        let highest = 0;
+        for (const reward of this.normalizedRewards) {
+            const value = this.#rarityValue(reward.rarity);
+            if (value > highest) {
+                highest = value;
+            }
+        }
+
+        return Math.min(highest, 5);
+    }
+
+    #rarityValue(rarity) {
+        const map = {
+            common: 0,
+            bronze: 0,
+            uncommon: 1,
+            silver: 1,
+            rare: 2,
+            gold: 2,
+            epic: 3,
+            platinum: 3,
+            legendary: 4,
+            mythic: 5,
+            exalted: 5
+        };
+
+        if (!rarity) {
+            return 0;
+        }
+
+        const key = String(rarity).toLowerCase();
+        return map[key] ?? 0;
+    }
+
+    #selectFeaturedReward() {
+        if (!Array.isArray(this.normalizedRewards) || this.normalizedRewards.length === 0) {
+            return null;
+        }
+
+        let selected = null;
+        let highest = -1;
+
+        for (const reward of this.normalizedRewards) {
+            const rarityScore = this.#rarityValue(reward.rarity);
+            const hasImage = reward.image ? 1 : 0;
+            const amountScore = reward.amount > 1 ? 0.1 : 0;
+            const score = rarityScore * 10 + hasImage * 2 + amountScore;
+
+            if (!selected || score > highest) {
+                selected = reward;
+                highest = score;
+            }
+        }
+
+        return selected;
+    }
+
+    #applyFeatureReward(reward) {
+        if (!reward) {
+            this.#resetFeatureCard();
+            return;
+        }
+
+        if (this.cardLabelEl) {
+            const amountText = reward.amount > 1 ? ` ×${reward.amount}` : '';
+            this.cardLabelEl.textContent = `${reward.name}${amountText}`;
+        }
+
+        if (this.cardThumbnailEl) {
+            if (reward.image) {
+                this.cardThumbnailEl.style.setProperty('--loot-card-thumb-image', `url("${reward.image}")`);
+                this.cardThumbnailEl.textContent = '';
+                this.cardThumbnailEl.classList.add('has-image');
+            } else {
+                this.cardThumbnailEl.style.removeProperty('--loot-card-thumb-image');
+                this.cardThumbnailEl.classList.remove('has-image');
+                const initial = reward.name ? reward.name.charAt(0).toUpperCase() : '?';
+                this.cardThumbnailEl.textContent = initial;
+            }
+        }
+    }
+
+    #buildAssetPath(fileName) {
+        if (!fileName) {
+            return '';
+        }
+
+        return `${this.assetBasePath}${fileName}`;
+    }
+
+    #normalizeBasePath(basePath) {
+        if (!basePath) {
+            return '';
+        }
+
+        let normalized = String(basePath).trim();
+        if (!normalized.endsWith('/')) {
+            normalized += '/';
+        }
+
+        return normalized;
     }
 }
 
