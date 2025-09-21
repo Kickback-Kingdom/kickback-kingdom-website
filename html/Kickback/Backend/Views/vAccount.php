@@ -108,7 +108,10 @@ class vAccount extends vRecordId
     }
 
     public function getAccountElement() : string {
-        return '<a href="'.$this->url().'" class="username">'.$this->username.'</a>';
+        $username = htmlspecialchars($this->username, ENT_QUOTES, 'UTF-8');
+        $accountId = htmlspecialchars((string)$this->crand, ENT_QUOTES, 'UTF-8');
+
+        return '<a href="'.$this->url().'" class="username" data-account-id="'.$accountId.'" data-username="'.$username.'">'.$username.'</a>';
     }
 
     public function getAccountTitle() : string {

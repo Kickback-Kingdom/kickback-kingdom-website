@@ -142,10 +142,511 @@ use Kickback\Common\Version;
         }
 
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        const tooltipList = [];
+        Array.prototype.forEach.call(tooltipTriggerList, function(tooltipTriggerEl) {
+            tooltipList.push(new bootstrap.Tooltip(tooltipTriggerEl));
+        });
 
-        const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
-        const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
+        const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
+        const popoverList = [];
+        Array.prototype.forEach.call(popoverTriggerList, function(popoverTriggerEl) {
+            popoverList.push(new bootstrap.Popover(popoverTriggerEl));
+        });
+
+        (function() {
+            const USERNAME_SELECTOR = '.username';
+            const BOUND_FLAG = 'playerCardPopoverBound';
+            // Delay popover dismissal so users have time to move from the trigger
+            // toward the floating card without it collapsing mid-flight.
+            const SHOW_DELAY = 150;
+            const HIDE_DELAY = 500;
+            const accountCacheByUsername = new Map();
+            const accountCacheById = new Map();
+            const pendingRequests = new Map();
+            const popoverInstances = new WeakMap();
+            const showTimers = new WeakMap();
+            const hideTimers = new WeakMap();
+            const supportsHover = window.matchMedia ? window.matchMedia('(hover: hover)').matches : false;
+            const hoverStates = new WeakMap();
+
+            function isElementHovered(element) {
+                if (!element) {
+                    return false;
+                }
+
+                if (element.matches(':hover')) {
+                    return true;
+                }
+
+                const hoveredElements = document.querySelectorAll(':hover');
+                for (let i = hoveredElements.length - 1; i >= 0; i--) {
+                    const hovered = hoveredElements[i];
+                    if (hovered === element || element.contains(hovered)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            function getHoverState(element) {
+                let state = hoverStates.get(element);
+                if (!state) {
+                    state = { triggerHovered: false, popoverHovered: false };
+                    hoverStates.set(element, state);
+                }
+
+                return state;
+            }
+
+            function normalize(value) {
+                if (value === undefined || value === null) {
+                    return '';
+                }
+
+                return String(value).trim();
+            }
+
+            function normalizeUsername(value) {
+                return normalize(value).toLowerCase();
+            }
+
+            function decodeEntities(value) {
+                if (!value || value.indexOf('&') === -1) {
+                    return value;
+                }
+
+                const textarea = decodeEntities.textarea || (decodeEntities.textarea = document.createElement('textarea'));
+                textarea.innerHTML = value;
+                return textarea.value;
+            }
+
+            function cacheAccount(account) {
+                if (!account || typeof account !== 'object') {
+                    return null;
+                }
+
+                const username = normalize(account.username ?? '');
+                const accountId = normalize(account.crand ?? account.accountId ?? account.account_id ?? '');
+
+                if (username) {
+                    accountCacheByUsername.set(normalizeUsername(username), account);
+                }
+
+                if (accountId) {
+                    accountCacheById.set(accountId, account);
+                }
+
+                return account;
+            }
+
+            function getCachedAccount(username, accountId) {
+                const normalizedId = normalize(accountId);
+                if (normalizedId && accountCacheById.has(normalizedId)) {
+                    return accountCacheById.get(normalizedId);
+                }
+
+                const normalizedUsername = normalizeUsername(username);
+                if (normalizedUsername && accountCacheByUsername.has(normalizedUsername)) {
+                    return accountCacheByUsername.get(normalizedUsername);
+                }
+
+                return null;
+            }
+
+            function getElementUsername(element) {
+                const datasetUsername = normalize(element.dataset.username ?? '');
+                if (datasetUsername) {
+                    return normalize(decodeEntities(datasetUsername));
+                }
+
+                return normalize(element.textContent ?? '');
+            }
+
+            function getElementAccountId(element) {
+                const datasetAccountId = normalize(element.dataset.accountId ?? '');
+                if (datasetAccountId) {
+                    return normalize(decodeEntities(datasetAccountId));
+                }
+
+                return null;
+            }
+
+            function getRequestKey(username, accountId) {
+                const normalizedId = normalize(accountId);
+                if (normalizedId) {
+                    return `id:${normalizedId}`;
+                }
+
+                const normalizedUsername = normalizeUsername(username);
+                if (normalizedUsername) {
+                    return `user:${normalizedUsername}`;
+                }
+
+                return null;
+            }
+
+            function fetchAccountData(searchTerm) {
+                const params = new URLSearchParams();
+                params.append('searchTerm', searchTerm);
+                params.append('page', '1');
+                params.append('itemsPerPage', '1');
+
+                return fetch('/api/v1/account/search.php?json', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: params
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.success && data.data && Array.isArray(data.data.accountItems) && data.data.accountItems.length > 0) {
+                            return cacheAccount(data.data.accountItems[0]);
+                        }
+
+                        return null;
+                    })
+                    .catch(error => {
+                        console.error('Failed to load account information for player card popover.', error);
+                        return null;
+                    });
+            }
+
+            function requestAccount(element) {
+                const username = getElementUsername(element);
+                const accountId = getElementAccountId(element);
+
+                const cached = getCachedAccount(username, accountId);
+                if (cached) {
+                    return Promise.resolve(cached);
+                }
+
+                const searchTerm = username || accountId;
+                if (!searchTerm) {
+                    return Promise.resolve(null);
+                }
+
+                const requestKey = getRequestKey(username, accountId);
+                if (requestKey && pendingRequests.has(requestKey)) {
+                    return pendingRequests.get(requestKey);
+                }
+
+                const requestPromise = fetchAccountData(searchTerm).finally(() => {
+                    if (requestKey) {
+                        pendingRequests.delete(requestKey);
+                    }
+                });
+
+                if (requestKey) {
+                    pendingRequests.set(requestKey, requestPromise);
+                }
+
+                return requestPromise;
+            }
+
+            function clearTimer(map, element) {
+                if (!map.has(element)) {
+                    return;
+                }
+
+                const timerId = map.get(element);
+                clearTimeout(timerId);
+                map.delete(element);
+            }
+
+            function scheduleShow(element) {
+                clearTimer(hideTimers, element);
+
+                if (showTimers.has(element)) {
+                    return;
+                }
+
+                const timerId = setTimeout(() => {
+                    showTimers.delete(element);
+                    ensurePopover(element).then(popover => {
+                        if (popover) {
+                            popover.show();
+                        }
+                    });
+                }, SHOW_DELAY);
+
+                showTimers.set(element, timerId);
+            }
+
+            function scheduleHide(element) {
+                clearTimer(showTimers, element);
+
+                const timerId = setTimeout(() => {
+                    hideTimers.delete(element);
+                    const state = getHoverState(element);
+                    if (state.triggerHovered || state.popoverHovered) {
+                        return;
+                    }
+
+                    const popover = popoverInstances.get(element);
+                    if (popover) {
+                        const tipElement = typeof popover.getTipElement === 'function' ? popover.getTipElement() : null;
+                        if (tipElement && (isElementHovered(tipElement) || tipElement.matches(':focus-within'))) {
+                            state.popoverHovered = true;
+                            clearTimer(hideTimers, element);
+                            return;
+                        }
+
+                        popover.hide();
+                    }
+                }, HIDE_DELAY);
+
+                hideTimers.set(element, timerId);
+            }
+
+            function ensurePopover(element) {
+                if (typeof window.generatePlayerCardHTML !== 'function') {
+                    return Promise.resolve(null);
+                }
+
+                return requestAccount(element).then(account => {
+                    if (!account) {
+                        return null;
+                    }
+
+                    const popover = getOrCreatePopover(element, account);
+                    return popover;
+                });
+            }
+
+            function getOrCreatePopover(element, account) {
+                let popover = popoverInstances.get(element);
+                const username = normalize(account.username ?? '');
+                const accountId = normalize(account.crand ?? account.accountId ?? account.account_id ?? '');
+                const usernameAttr = username.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                const accountIdAttr = accountId.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+                if (username) {
+                    element.dataset.username = usernameAttr;
+                }
+
+                if (accountId) {
+                    element.dataset.accountId = accountIdAttr;
+                }
+
+                const content = window.generatePlayerCardHTML(account);
+
+                if (!content) {
+                    return null;
+                }
+
+                if (!popover) {
+                    popover = new bootstrap.Popover(element, {
+                        trigger: 'manual',
+                        html: true,
+                        sanitize: false,
+                        customClass: 'player-card-popover',
+                        content: content
+                    });
+
+                    popoverInstances.set(element, popover);
+
+                    element.addEventListener('shown.bs.popover', () => handlePopoverShown(element));
+                    element.addEventListener('hide.bs.popover', event => {
+                        const state = getHoverState(element);
+                        const tipElement = typeof popover.getTipElement === 'function' ? popover.getTipElement() : null;
+                        const shouldKeepOpen = state.triggerHovered || state.popoverHovered ||
+                            (tipElement && (tipElement.matches(':hover') || tipElement.matches(':focus-within')));
+
+                        if (shouldKeepOpen) {
+                            event.preventDefault();
+                            return;
+                        }
+
+                        clearTimer(showTimers, element);
+                        clearTimer(hideTimers, element);
+                        state.triggerHovered = false;
+                        state.popoverHovered = false;
+                    });
+                } else if (typeof popover.setContent === 'function') {
+                    popover.setContent({ '.popover-body': content });
+                    if (typeof popover.update === 'function') {
+                        popover.update();
+                    }
+                } else {
+                    popover._config = popover._config || {};
+                    popover._config.content = content;
+                    const tip = popover.getTipElement ? popover.getTipElement() : null;
+                    if (tip) {
+                        const body = tip.querySelector('.popover-body');
+                        if (body) {
+                            body.innerHTML = content;
+                        }
+                    }
+                }
+
+                return popover;
+            }
+
+            function handlePopoverShown(element) {
+                const popover = popoverInstances.get(element);
+                if (!popover || typeof popover.getTipElement !== 'function') {
+                    return;
+                }
+
+                const tipElement = popover.getTipElement();
+                if (!tipElement) {
+                    return;
+                }
+
+                if (!tipElement.dataset.playerCardPopoverBound) {
+                    const state = getHoverState(element);
+                    const handleEnter = () => {
+                        state.popoverHovered = true;
+                        clearTimer(hideTimers, element);
+                    };
+                    const handleLeave = () => {
+                        if (isElementHovered(tipElement)) {
+                            return;
+                        }
+
+                        state.popoverHovered = false;
+                        scheduleHide(element);
+                    };
+                    const handleOver = event => {
+                        if (tipElement.contains(event.target)) {
+                            handleEnter();
+                        }
+                    };
+                    const handleOut = event => {
+                        const nextTarget = event.relatedTarget;
+                        if (nextTarget && tipElement.contains(nextTarget)) {
+                            return;
+                        }
+                        handleLeave();
+                    };
+
+                    tipElement.addEventListener('mouseenter', handleEnter);
+                    tipElement.addEventListener('mouseleave', handleLeave);
+                    tipElement.addEventListener('mouseover', handleOver);
+                    tipElement.addEventListener('mouseout', handleOut);
+                    tipElement.addEventListener('pointerenter', handleEnter);
+                    tipElement.addEventListener('pointerleave', handleLeave);
+                    tipElement.addEventListener('focusin', handleEnter);
+                    tipElement.addEventListener('focusout', handleOut);
+                    tipElement.dataset.playerCardPopoverBound = 'true';
+                }
+
+                if (isElementHovered(tipElement)) {
+                    const state = getHoverState(element);
+                    state.popoverHovered = true;
+                    clearTimer(hideTimers, element);
+                }
+
+                if (window.bootstrap && bootstrap.Tooltip) {
+                    const tooltipElements = tipElement.querySelectorAll('[data-bs-toggle="tooltip"]');
+                    tooltipElements.forEach(el => {
+                        const instance = bootstrap.Tooltip.getInstance(el);
+                        if (instance && typeof instance.update === 'function') {
+                            instance.update();
+                        } else if (typeof bootstrap.Tooltip.getOrCreateInstance === 'function') {
+                            bootstrap.Tooltip.getOrCreateInstance(el);
+                        } else {
+                            new bootstrap.Tooltip(el);
+                        }
+                    });
+                }
+
+                if (window.bootstrap && bootstrap.Popover) {
+                    const popoverElements = tipElement.querySelectorAll('[data-bs-toggle="popover"]');
+                    popoverElements.forEach(el => {
+                        const instance = bootstrap.Popover.getInstance(el);
+                        if (instance && typeof instance.update === 'function') {
+                            instance.update();
+                        } else if (typeof bootstrap.Popover.getOrCreateInstance === 'function') {
+                            bootstrap.Popover.getOrCreateInstance(el);
+                        } else {
+                            new bootstrap.Popover(el);
+                        }
+                    });
+                }
+            }
+
+            function bindElement(element) {
+                if (!(element instanceof HTMLElement)) {
+                    return;
+                }
+
+                if (element.dataset[BOUND_FLAG]) {
+                    return;
+                }
+
+                element.dataset[BOUND_FLAG] = 'true';
+                getHoverState(element);
+
+                const showHandler = () => {
+                    const state = getHoverState(element);
+                    state.triggerHovered = true;
+                    scheduleShow(element);
+                };
+                const hideHandler = () => {
+                    const state = getHoverState(element);
+                    state.triggerHovered = false;
+                    scheduleHide(element);
+                };
+
+                if (supportsHover) {
+                    element.addEventListener('mouseenter', showHandler);
+                    element.addEventListener('mouseleave', hideHandler);
+                }
+
+                element.addEventListener('focus', showHandler);
+                element.addEventListener('blur', hideHandler);
+            }
+
+            function bindAll(root) {
+                const elements = (root instanceof Element ? root : document).querySelectorAll(USERNAME_SELECTOR);
+                elements.forEach(bindElement);
+            }
+
+            function observeUsernameElements() {
+                if (!('MutationObserver' in window) || !document.body) {
+                    return;
+                }
+
+                const observer = new MutationObserver(mutations => {
+                    mutations.forEach(mutation => {
+                        mutation.addedNodes.forEach(node => {
+                            if (!(node instanceof Element)) {
+                                return;
+                            }
+
+                            if (node.matches(USERNAME_SELECTOR)) {
+                                bindElement(node);
+                            }
+
+                            bindAll(node);
+                        });
+                    });
+                });
+
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+            }
+
+            function initialize() {
+                if (!document.body) {
+                    return;
+                }
+
+                bindAll(document);
+                observeUsernameElements();
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initialize);
+            } else {
+                initialize();
+            }
+        })();
 
 
         
