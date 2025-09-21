@@ -377,13 +377,23 @@ use Kickback\Common\Version;
             function scheduleHide(element) {
                 clearTimer(showTimers, element);
 
+                const popover = popoverInstances.get(element);
+                if (popover && typeof popover.getTipElement === 'function') {
+                    const tipElement = popover.getTipElement();
+                    if (tipElement && (isElementHovered(tipElement) || tipElement.matches(':focus-within'))) {
+                        const state = getHoverState(element);
+                        state.popoverHovered = true;
+                        clearTimer(hideTimers, element);
+                        return;
+                    }
+                }
+
                 const timerId = setTimeout(() => {
                     hideTimers.delete(element);
                     const state = getHoverState(element);
                     if (state.triggerHovered || state.popoverHovered) {
                         return;
                     }
-
                     const popover = popoverInstances.get(element);
                     if (popover) {
                         const tipElement = typeof popover.getTipElement === 'function' ? popover.getTipElement() : null;
@@ -495,8 +505,11 @@ use Kickback\Common\Version;
                     return;
                 }
 
+                const state = getHoverState(element);
+                state.popoverHovered = true;
+                clearTimer(hideTimers, element);
+
                 if (!tipElement.dataset.playerCardPopoverBound) {
-                    const state = getHoverState(element);
                     const handleEnter = () => {
                         state.popoverHovered = true;
                         clearTimer(hideTimers, element);
@@ -534,7 +547,6 @@ use Kickback\Common\Version;
                 }
 
                 if (isElementHovered(tipElement)) {
-                    const state = getHoverState(element);
                     state.popoverHovered = true;
                     clearTimer(hideTimers, element);
                 }
