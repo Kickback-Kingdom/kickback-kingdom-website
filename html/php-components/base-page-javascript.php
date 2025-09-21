@@ -156,6 +156,10 @@ use Kickback\Common\Version;
         (function() {
             const USERNAME_SELECTOR = '.username';
             const BOUND_FLAG = 'playerCardPopoverBound';
+            // Delay popover dismissal so users have time to move from the trigger
+            // toward the floating card without it collapsing mid-flight.
+            const SHOW_DELAY = 150;
+            const HIDE_DELAY = 500;
             const accountCacheByUsername = new Map();
             const accountCacheById = new Map();
             const pendingRequests = new Map();
@@ -345,7 +349,7 @@ use Kickback\Common\Version;
                             popover.show();
                         }
                     });
-                }, 150);
+                }, SHOW_DELAY);
 
                 showTimers.set(element, timerId);
             }
@@ -370,7 +374,7 @@ use Kickback\Common\Version;
 
                         popover.hide();
                     }
-                }, 200);
+                }, HIDE_DELAY);
 
                 hideTimers.set(element, timerId);
             }
