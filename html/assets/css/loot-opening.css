@@ -48,7 +48,15 @@
 }
 
 .loot-reveal.is-visible .loot-reveal__panel {
-    animation: jackInTheBox 760ms both;
+    animation: jackInTheBox 1s both;
+}
+
+.loot-reveal-modal.modal-chest.show {
+    animation: jackInTheBox 1s both;
+}
+
+.loot-reveal-modal.modal-chest.show .loot-reveal__panel {
+    animation: none;
 }
 
 .loot-reveal__stage {
