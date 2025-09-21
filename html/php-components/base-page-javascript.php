@@ -433,6 +433,25 @@ use Kickback\Common\Version;
                 const timerId = setTimeout(() => {
                     hideTimers.delete(element);
                     const state = getHoverState(element);
+                    const popover = popoverInstances.get(element);
+                    let tipElement = null;
+                    let tipHovered = false;
+                    let tipFocused = false;
+
+                    if (popover && typeof popover.getTipElement === 'function') {
+                        tipElement = popover.getTipElement();
+                        if (tipElement) {
+                            tipHovered = isElementHovered(tipElement);
+                            tipFocused = tipElement.matches(':focus-within');
+                        }
+                    }
+
+                    if (!tipHovered && !tipFocused) {
+                        state.popoverHovered = false;
+                    } else if (tipHovered || tipFocused) {
+                        state.popoverHovered = true;
+                    }
+
                     debugLog(element, 'Hide timer fired', {
                         triggerHovered: state.triggerHovered,
                         popoverHovered: state.popoverHovered
@@ -444,9 +463,8 @@ use Kickback\Common\Version;
                         });
                         return;
                     }
-                    const popover = popoverInstances.get(element);
                     if (popover) {
-                        const tipElement = typeof popover.getTipElement === 'function' ? popover.getTipElement() : null;
+                        tipElement = typeof popover.getTipElement === 'function' ? popover.getTipElement() : null;
                         if (tipElement && (isElementHovered(tipElement) || tipElement.matches(':focus-within'))) {
                             state.popoverHovered = true;
                             clearTimer(hideTimers, element);
