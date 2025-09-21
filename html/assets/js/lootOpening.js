@@ -254,10 +254,10 @@ class LootReveal {
         const rarityLabels = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic'];
         const label = rarityLabels[rarityIndex] ?? 'Treasure';
 
-        const closed = this.#buildAssetPath(`Loot_Box_0${rarityIndex + 1}_01_Star.png`);
-        const open = this.#buildAssetPath(`Loot_Box_0${rarityIndex + 1}_02_Star.png`);
-        const glowBack = this.#buildAssetPath(`${rarityIndex}_c_s.png`);
-        const glowFront = this.#buildAssetPath(`${rarityIndex}_o_s.png`);
+        const closed = this.#buildAssetPath(`Loot_Box_0${rarityIndex}_01_Star.png`);
+        const open = this.#buildAssetPath(`Loot_Box_0${rarityIndex}_02_Star.png`);
+        const glowBack = this.#buildAssetPath(`${rarityIndex - 1}_c_s.png`);
+        const glowFront = this.#buildAssetPath(`${rarityIndex - 1}_o_s.png`);
 
         if (this.closedChestEl) {
             this.closedChestEl.src = closed;
