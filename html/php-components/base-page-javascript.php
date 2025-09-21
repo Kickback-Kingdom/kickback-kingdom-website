@@ -14,6 +14,7 @@ use Kickback\Common\Version;
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
     <script src="<?= Version::urlBetaPrefix(); ?>/assets/vendors/qrcode/qrcode.min.js"></script>
     <script src="<?= Version::urlBetaPrefix(); ?>/assets/js/qrcode.js"></script>
+    <script src="<?= Version::urlBetaPrefix(); ?>/assets/js/confetti.js"></script>
 
     <!--<script src="assets/owl-carousel/owl.carousel.js"></script>-->
     <script>
@@ -1396,72 +1397,6 @@ use Kickback\Common\Version;
         {
             sessionStorage.setItem('showActionModal', 'false');
         }
-        
-        const Confettiful = function (el) {
-            this.el = el;
-            this.containerEl = null;
-
-            this.confettiFrequency = 3;
-            this.confettiColors = ['#fce18a', '#ff726d', '#b48def', '#f4306d'];
-            this.confettiAnimations = ['slow', 'medium', 'fast'];
-
-            this._setupElements();
-            this._renderConfetti();
-        };
-
-        Confettiful.prototype._setupElements = function () {
-        const containerEl = document.createElement('div');
-        const elPosition = this.el.style.position;
-
-        if (elPosition !== 'relative' || elPosition !== 'absolute') {
-            this.el.style.position = 'relative';
-        }
-
-        containerEl.classList.add('confetti-container');
-        containerEl.style="pointer-events:none;z-index:10000;";
-        this.el.appendChild(containerEl);
-
-        this.containerEl = containerEl;
-        };
-
-        Confettiful.prototype._renderConfetti = function () {
-        this.confettiInterval = setInterval(() => {
-            const confettiEl = document.createElement('div');
-            const confettiSize = Math.floor(Math.random() * 3) + 7 + 'px';
-            const confettiBackground = this.confettiColors[Math.floor(Math.random() * this.confettiColors.length)];
-            const confettiLeft = Math.floor(Math.random() * this.el.offsetWidth) + 'px';
-            const confettiAnimation = this.confettiAnimations[Math.floor(Math.random() * this.confettiAnimations.length)];
-
-            confettiEl.classList.add('confetti', 'confetti--animation-' + confettiAnimation);
-            confettiEl.style.left = confettiLeft;
-            confettiEl.style.width = confettiSize;
-            confettiEl.style.height = confettiSize;
-            confettiEl.style.backgroundColor = confettiBackground;
-
-            confettiEl.removeTimeout = setTimeout(function () {
-            confettiEl.parentNode.removeChild(confettiEl);
-            }, 3000);
-
-            this.containerEl.appendChild(confettiEl);
-        }, 25);
-        };
-
-
-
-        function StartConfetti()
-        {
-
-            window.confettiful = new Confettiful(document.querySelector('.js-container-confetti'));
-        }
-
-        function StopConfetti()
-        {
-            delete window.confettiful;
-            $("#div1").remove();
-            $("div").remove(".confetti-container");
-        }
-
-
         
         function enableBeta() {
             window.location.href = "/beta/";
