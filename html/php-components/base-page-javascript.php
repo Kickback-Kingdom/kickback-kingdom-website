@@ -363,7 +363,7 @@ use Kickback\Common\Version;
                     const popover = popoverInstances.get(element);
                     if (popover) {
                         const tipElement = typeof popover.getTipElement === 'function' ? popover.getTipElement() : null;
-                        if (tipElement && tipElement.matches(':hover')) {
+                        if (tipElement && (tipElement.matches(':hover') || tipElement.matches(':focus-within'))) {
                             state.popoverHovered = true;
                             return;
                         }
@@ -471,16 +471,27 @@ use Kickback\Common\Version;
                         state.popoverHovered = false;
                         scheduleHide(element);
                     };
+                    const handleOver = event => {
+                        if (tipElement.contains(event.target)) {
+                            handleEnter();
+                        }
+                    };
+                    const handleOut = event => {
+                        const nextTarget = event.relatedTarget;
+                        if (nextTarget && tipElement.contains(nextTarget)) {
+                            return;
+                        }
+                        handleLeave();
+                    };
 
                     tipElement.addEventListener('mouseenter', handleEnter);
                     tipElement.addEventListener('mouseleave', handleLeave);
+                    tipElement.addEventListener('mouseover', handleOver);
+                    tipElement.addEventListener('mouseout', handleOut);
+                    tipElement.addEventListener('pointerenter', handleEnter);
+                    tipElement.addEventListener('pointerleave', handleLeave);
                     tipElement.addEventListener('focusin', handleEnter);
-                    tipElement.addEventListener('focusout', event => {
-                        const nextTarget = event.relatedTarget;
-                        if (!nextTarget || !tipElement.contains(nextTarget)) {
-                            handleLeave();
-                        }
-                    });
+                    tipElement.addEventListener('focusout', handleOut);
                     tipElement.dataset.playerCardPopoverBound = 'true';
                 }
 
