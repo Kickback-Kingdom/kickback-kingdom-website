@@ -99,7 +99,6 @@
         }
 
         #loot-root {
-            width: min(960px, 100%);
             z-index: 1;
         }
     </style>
