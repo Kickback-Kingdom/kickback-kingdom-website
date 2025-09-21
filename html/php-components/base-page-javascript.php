@@ -199,21 +199,17 @@ use Kickback\Common\Version;
                 return `${tag}${id}${className} username="${username}" accountId="${accountId}"`;
             }
 
-            function isElementHovered(element) {
-                if (!element) {
+            function isElementHovered(element, state = undefined, stateKey = undefined) {
+                if (!(element instanceof Element)) {
                     return false;
                 }
 
-                if (element.matches(':hover')) {
+                if (element.matches(':hover') || element.matches(':focus-within')) {
                     return true;
                 }
 
-                const hoveredElements = document.querySelectorAll(':hover');
-                for (let i = hoveredElements.length - 1; i >= 0; i--) {
-                    const hovered = hoveredElements[i];
-                    if (hovered === element || element.contains(hovered)) {
-                        return true;
-                    }
+                if (state && stateKey && state[stateKey]) {
+                    return true;
                 }
 
                 return false;
@@ -409,22 +405,6 @@ use Kickback\Common\Version;
                 showTimers.set(element, timerId);
             }
 
-            function isOwnerTipHovered(ownerId) {
-                if (!ownerId || typeof document === 'undefined') {
-                    return false;
-                }
-
-                const hoveredElements = document.querySelectorAll(':hover');
-                for (let i = hoveredElements.length - 1; i >= 0; i--) {
-                    const hovered = hoveredElements[i];
-                    if (hovered instanceof HTMLElement && hovered.dataset && hovered.dataset.playerCardOwner === ownerId) {
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-
             function getTipElementFromPopover(popover) {
                 if (!popover) {
                     return null;
@@ -540,7 +520,7 @@ use Kickback\Common\Version;
                             debugLog(element, 'Skipping hide timer because tip is not ready but hover state is active');
                             return;
                         }
-                    } else if (isElementHovered(tipElement) || tipElement.matches(':focus-within')) {
+                    } else if (isElementHovered(tipElement, state, 'popoverHovered')) {
                         state.popoverHovered = true;
                         clearTimer(hideTimers, element);
                         debugLog(element, 'Skipping hide timer because tip is hovered or focused');
@@ -553,40 +533,32 @@ use Kickback\Common\Version;
                     hideTimers.delete(element);
                     const state = getHoverState(element);
                     const popover = popoverInstances.get(element);
-                    const ownerId = elementIdentifier(element);
-                    let tipElement = null;
-                    let tipHovered = false;
-                    let tipFocused = false;
-                    let triggerHovered = false;
+                    let tipElement = popover ? getTipElementFromPopover(popover) : null;
+                    const triggerActive = isElementHovered(element, state, 'triggerHovered');
+                    let tipActive = state.popoverHovered;
+                    let tipMatchesHover = false;
+                    let tipMatchesFocusWithin = false;
 
-                    if (isElementHovered(element) || element.matches(':focus-within')) {
-                        triggerHovered = true;
-                    }
-                    if (popover) {
-                        tipElement = getTipElementFromPopover(popover);
-                        if (tipElement) {
-                            tipHovered = isElementHovered(tipElement);
-                            tipFocused = tipElement.matches(':focus-within');
-                        }
+                    if (tipElement instanceof Element) {
+                        tipMatchesHover = tipElement.matches(':hover');
+                        tipMatchesFocusWithin = tipElement.matches(':focus-within');
+                        tipActive = isElementHovered(tipElement, state, 'popoverHovered');
                     }
 
-                    state.triggerHovered = triggerHovered;
-                    if (!tipHovered && !tipFocused) {
-                        if (!tipElement && isOwnerTipHovered(ownerId)) {
-                            state.popoverHovered = true;
-                            debugLog(element, 'Hide timer aborted because fallback hover detection is still active');
-                            scheduleHide(element);
-                            return;
-                        }
-                        state.popoverHovered = false;
-                    } else if (tipHovered || tipFocused) {
-                        state.popoverHovered = true;
-                    }
+                    state.triggerHovered = triggerActive;
+                    state.popoverHovered = !!tipActive;
 
-                    debugLog(element, 'Hide timer fired', {
+                    const debugDetails = {
                         triggerHovered: state.triggerHovered,
                         popoverHovered: state.popoverHovered
-                    });
+                    };
+
+                    if (tipElement instanceof Element) {
+                        debugDetails.tipMatchesHover = tipMatchesHover;
+                        debugDetails.tipMatchesFocusWithin = tipMatchesFocusWithin;
+                    }
+
+                    debugLog(element, 'Hide timer fired', debugDetails);
                     if (state.triggerHovered || state.popoverHovered) {
                         debugLog(element, 'Hide timer aborted because hover state is still active', {
                             triggerHovered: state.triggerHovered,
@@ -595,8 +567,8 @@ use Kickback\Common\Version;
                         return;
                     }
                     if (popover) {
-                        tipElement = getTipElementFromPopover(popover);
-                        if (tipElement && (isElementHovered(tipElement) || tipElement.matches(':focus-within'))) {
+                        tipElement = tipElement || getTipElementFromPopover(popover);
+                        if (tipElement && isElementHovered(tipElement, state, 'popoverHovered')) {
                             state.popoverHovered = true;
                             clearTimer(hideTimers, element);
                             debugLog(element, 'Hide timer aborted because tip regained hover before hiding');
@@ -790,10 +762,11 @@ use Kickback\Common\Version;
                     tipElement.dataset.playerCardPopoverBound = 'true';
                 }
 
-                const tipHovered = isElementHovered(tipElement);
+                const tipHovered = tipElement.matches(':hover');
                 const tipFocused = tipElement.matches(':focus-within');
+                const tipActive = isElementHovered(tipElement, state, 'popoverHovered');
 
-                if (tipHovered || tipFocused) {
+                if (tipActive) {
                     state.popoverHovered = true;
                     clearTimer(hideTimers, element);
                     debugLog(element, 'Tip ready and hover/focus detected, keeping hide timer cleared', {
@@ -803,7 +776,9 @@ use Kickback\Common\Version;
                 } else {
                     state.popoverHovered = false;
                     debugLog(element, 'Tip ready but not hovered or focused', {
-                        triggerHovered: state.triggerHovered
+                        triggerHovered: state.triggerHovered,
+                        tipHovered,
+                        tipFocused
                     });
                     if (!state.triggerHovered) {
                         scheduleHide(element);
@@ -861,10 +836,15 @@ use Kickback\Common\Version;
                 const hideHandler = () => {
                     const state = getHoverState(element);
                     state.triggerHovered = false;
+                    state.triggerHovered = isElementHovered(element, state, 'triggerHovered');
+                    if (state.triggerHovered) {
+                        debugLog(element, 'Trigger leave ignored because trigger is still hovered or focused');
+                        return;
+                    }
                     const popover = popoverInstances.get(element);
                     if (popover) {
                         const tipElement = getTipElementFromPopover(popover);
-                        if (tipElement && (isElementHovered(tipElement) || tipElement.matches(':focus-within'))) {
+                        if (tipElement && isElementHovered(tipElement, state, 'popoverHovered')) {
                             state.popoverHovered = true;
                             debugLog(element, 'Trigger leave ignored because tip is hovered or focused');
                             return;
