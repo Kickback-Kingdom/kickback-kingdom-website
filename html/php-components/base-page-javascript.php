@@ -608,9 +608,10 @@ use Kickback\Common\Version;
                         clearTimer(hideTimers, element);
                         debugLog(element, 'Tip enter detected');
                     };
-                    const handleLeave = () => {
-                        if (isElementHovered(tipElement)) {
-                            debugLog(element, 'Tip leave ignored because hover still detected');
+                    const handleLeave = event => {
+                        const nextTarget = event && 'relatedTarget' in event ? event.relatedTarget : null;
+                        if (nextTarget && (nextTarget === tipElement || tipElement.contains(nextTarget))) {
+                            debugLog(element, 'Tip leave ignored because focus or pointer moved within tip');
                             return;
                         }
 
@@ -618,30 +619,16 @@ use Kickback\Common\Version;
                         debugLog(element, 'Tip leave detected, scheduling hide');
                         scheduleHide(element);
                     };
-                    const handleOver = event => {
-                        if (tipElement.contains(event.target)) {
-                            debugLog(element, 'Tip mouseover detected for child element');
-                            handleEnter();
-                        }
-                    };
-                    const handleOut = event => {
-                        const nextTarget = event.relatedTarget;
-                        if (nextTarget && tipElement.contains(nextTarget)) {
-                            debugLog(element, 'Tip mouseout ignored because moving inside tip');
-                            return;
-                        }
-                        debugLog(element, 'Tip mouseout detected');
-                        handleLeave();
-                    };
 
-                    tipElement.addEventListener('mouseenter', handleEnter);
-                    tipElement.addEventListener('mouseleave', handleLeave);
-                    tipElement.addEventListener('mouseover', handleOver);
-                    tipElement.addEventListener('mouseout', handleOut);
-                    tipElement.addEventListener('pointerenter', handleEnter);
-                    tipElement.addEventListener('pointerleave', handleLeave);
-                    tipElement.addEventListener('focusin', handleEnter);
-                    tipElement.addEventListener('focusout', handleOut);
+                    ['mouseenter', 'pointerenter', 'focusin'].forEach(eventName => {
+                        tipElement.addEventListener(eventName, handleEnter);
+                    });
+
+                    ['mouseleave', 'pointerleave'].forEach(eventName => {
+                        tipElement.addEventListener(eventName, handleLeave);
+                    });
+
+                    tipElement.addEventListener('focusout', handleLeave);
                     tipElement.dataset.playerCardPopoverBound = 'true';
                 }
 
