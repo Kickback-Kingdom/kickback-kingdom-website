@@ -603,20 +603,38 @@ use Kickback\Common\Version;
                 const state = getHoverState(element);
 
                 if (!tipElement.dataset.playerCardPopoverBound) {
-                    const handleEnter = () => {
+                    const handleEnter = event => {
                         state.popoverHovered = true;
                         clearTimer(hideTimers, element);
-                        debugLog(element, 'Tip enter detected');
+                        const enterDetails = {
+                            eventType: event ? event.type : 'unknown'
+                        };
+                        if (event && typeof event.pointerType === 'string') {
+                            enterDetails.pointerType = event.pointerType;
+                        }
+                        debugLog(element, 'Tip enter detected', enterDetails);
                     };
                     const handleLeave = event => {
                         const nextTarget = event && 'relatedTarget' in event ? event.relatedTarget : null;
                         if (nextTarget && (nextTarget === tipElement || tipElement.contains(nextTarget))) {
-                            debugLog(element, 'Tip leave ignored because focus or pointer moved within tip');
+                            const ignoreDetails = {
+                                eventType: event ? event.type : 'unknown'
+                            };
+                            if (event && typeof event.pointerType === 'string') {
+                                ignoreDetails.pointerType = event.pointerType;
+                            }
+                            debugLog(element, 'Tip leave ignored because focus or pointer moved within tip', ignoreDetails);
                             return;
                         }
 
                         state.popoverHovered = false;
-                        debugLog(element, 'Tip leave detected, scheduling hide');
+                        const leaveDetails = {
+                            eventType: event ? event.type : 'unknown'
+                        };
+                        if (event && typeof event.pointerType === 'string') {
+                            leaveDetails.pointerType = event.pointerType;
+                        }
+                        debugLog(element, 'Tip leave detected, scheduling hide', leaveDetails);
                         scheduleHide(element);
                     };
 
