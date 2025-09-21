@@ -168,6 +168,36 @@ use Kickback\Common\Version;
             const hideTimers = new WeakMap();
             const supportsHover = window.matchMedia ? window.matchMedia('(hover: hover)').matches : false;
             const hoverStates = new WeakMap();
+            const DEBUG_PREFIX = '[PlayerCardPopover]';
+            const DEBUG_ENABLED = true;
+            const TIP_READY_MAX_ATTEMPTS = 10;
+
+            function debugLog(element, message, details = undefined) {
+                if (!DEBUG_ENABLED || typeof console === 'undefined' || typeof console.debug !== 'function') {
+                    return;
+                }
+
+                const descriptor = describeElement(element);
+                if (details !== undefined) {
+                    console.debug(DEBUG_PREFIX, message, descriptor, details);
+                } else {
+                    console.debug(DEBUG_PREFIX, message, descriptor);
+                }
+            }
+
+            function describeElement(element) {
+                if (!(element instanceof HTMLElement)) {
+                    return '(unknown trigger)';
+                }
+
+                const tag = element.tagName ? element.tagName.toLowerCase() : 'unknown';
+                const id = element.id ? `#${element.id}` : '';
+                const className = element.className ? `.${String(element.className).trim().replace(/\s+/g, '.')}` : '';
+                const username = getElementUsername(element) || '(no username)';
+                const accountId = getElementAccountId(element) || '(no account id)';
+
+                return `${tag}${id}${className} username="${username}" accountId="${accountId}"`;
+            }
 
             function isElementHovered(element) {
                 if (!element) {
@@ -353,19 +383,24 @@ use Kickback\Common\Version;
                 const timerId = map.get(element);
                 clearTimeout(timerId);
                 map.delete(element);
+                debugLog(element, 'Cleared timer', { mapName: map === showTimers ? 'showTimers' : 'hideTimers' });
             }
 
             function scheduleShow(element) {
                 clearTimer(hideTimers, element);
 
                 if (showTimers.has(element)) {
+                    debugLog(element, 'Show timer already scheduled');
                     return;
                 }
 
+                debugLog(element, 'Scheduling show timer');
                 const timerId = setTimeout(() => {
                     showTimers.delete(element);
+                    debugLog(element, 'Show timer fired');
                     ensurePopover(element).then(popover => {
                         if (popover) {
+                            debugLog(element, 'Showing popover');
                             popover.show();
                         }
                     });
@@ -377,22 +412,49 @@ use Kickback\Common\Version;
             function scheduleHide(element) {
                 clearTimer(showTimers, element);
 
+                const popover = popoverInstances.get(element);
+                const state = getHoverState(element);
+                if (popover && typeof popover.getTipElement === 'function') {
+                    const tipElement = popover.getTipElement();
+                    if (!tipElement) {
+                        if (state.popoverHovered) {
+                            debugLog(element, 'Skipping hide timer because tip is not ready but hover state is active');
+                            return;
+                        }
+                    } else if (isElementHovered(tipElement) || tipElement.matches(':focus-within')) {
+                        state.popoverHovered = true;
+                        clearTimer(hideTimers, element);
+                        debugLog(element, 'Skipping hide timer because tip is hovered or focused');
+                        return;
+                    }
+                }
+
+                debugLog(element, 'Scheduling hide timer');
                 const timerId = setTimeout(() => {
                     hideTimers.delete(element);
                     const state = getHoverState(element);
+                    debugLog(element, 'Hide timer fired', {
+                        triggerHovered: state.triggerHovered,
+                        popoverHovered: state.popoverHovered
+                    });
                     if (state.triggerHovered || state.popoverHovered) {
+                        debugLog(element, 'Hide timer aborted because hover state is still active', {
+                            triggerHovered: state.triggerHovered,
+                            popoverHovered: state.popoverHovered
+                        });
                         return;
                     }
-
                     const popover = popoverInstances.get(element);
                     if (popover) {
                         const tipElement = typeof popover.getTipElement === 'function' ? popover.getTipElement() : null;
                         if (tipElement && (isElementHovered(tipElement) || tipElement.matches(':focus-within'))) {
                             state.popoverHovered = true;
                             clearTimer(hideTimers, element);
+                            debugLog(element, 'Hide timer aborted because tip regained hover before hiding');
                             return;
                         }
 
+                        debugLog(element, 'Hiding popover');
                         popover.hide();
                     }
                 }, HIDE_DELAY);
@@ -455,10 +517,17 @@ use Kickback\Common\Version;
                             (tipElement && (tipElement.matches(':hover') || tipElement.matches(':focus-within')));
 
                         if (shouldKeepOpen) {
+                            debugLog(element, 'Preventing hide.bs.popover because hover state is active', {
+                                triggerHovered: state.triggerHovered,
+                                popoverHovered: state.popoverHovered,
+                                tipHovered: tipElement ? tipElement.matches(':hover') : false,
+                                tipFocused: tipElement ? tipElement.matches(':focus-within') : false
+                            });
                             event.preventDefault();
                             return;
                         }
 
+                        debugLog(element, 'Allowing popover to hide');
                         clearTimer(showTimers, element);
                         clearTimer(hideTimers, element);
                         state.triggerHovered = false;
@@ -485,40 +554,65 @@ use Kickback\Common\Version;
             }
 
             function handlePopoverShown(element) {
+                const state = getHoverState(element);
+                state.popoverHovered = true;
+                clearTimer(hideTimers, element);
+                debugLog(element, 'Popover shown; waiting for tip readiness');
+
                 const popover = popoverInstances.get(element);
                 if (!popover || typeof popover.getTipElement !== 'function') {
+                    debugLog(element, 'Popover shown but instance missing or tip accessor unavailable');
                     return;
                 }
 
-                const tipElement = popover.getTipElement();
+                preparePopoverTip(element, popover, 0);
+            }
+
+            function preparePopoverTip(element, popover, attempt) {
+                const tipElement = typeof popover.getTipElement === 'function' ? popover.getTipElement() : null;
                 if (!tipElement) {
+                    if (attempt >= TIP_READY_MAX_ATTEMPTS) {
+                        const state = getHoverState(element);
+                        state.popoverHovered = false;
+                        debugLog(element, 'Popover tip still unavailable after retries');
+                        return;
+                    }
+
+                    requestAnimationFrame(() => preparePopoverTip(element, popover, attempt + 1));
                     return;
                 }
+
+                const state = getHoverState(element);
 
                 if (!tipElement.dataset.playerCardPopoverBound) {
-                    const state = getHoverState(element);
                     const handleEnter = () => {
                         state.popoverHovered = true;
                         clearTimer(hideTimers, element);
+                        debugLog(element, 'Tip enter detected');
                     };
                     const handleLeave = () => {
                         if (isElementHovered(tipElement)) {
+                            debugLog(element, 'Tip leave ignored because hover still detected');
                             return;
                         }
 
                         state.popoverHovered = false;
+                        debugLog(element, 'Tip leave detected, scheduling hide');
                         scheduleHide(element);
                     };
                     const handleOver = event => {
                         if (tipElement.contains(event.target)) {
+                            debugLog(element, 'Tip mouseover detected for child element');
                             handleEnter();
                         }
                     };
                     const handleOut = event => {
                         const nextTarget = event.relatedTarget;
                         if (nextTarget && tipElement.contains(nextTarget)) {
+                            debugLog(element, 'Tip mouseout ignored because moving inside tip');
                             return;
                         }
+                        debugLog(element, 'Tip mouseout detected');
                         handleLeave();
                     };
 
@@ -533,10 +627,24 @@ use Kickback\Common\Version;
                     tipElement.dataset.playerCardPopoverBound = 'true';
                 }
 
-                if (isElementHovered(tipElement)) {
-                    const state = getHoverState(element);
+                const tipHovered = isElementHovered(tipElement);
+                const tipFocused = tipElement.matches(':focus-within');
+
+                if (tipHovered || tipFocused) {
                     state.popoverHovered = true;
                     clearTimer(hideTimers, element);
+                    debugLog(element, 'Tip ready and hover/focus detected, keeping hide timer cleared', {
+                        tipHovered,
+                        tipFocused
+                    });
+                } else {
+                    state.popoverHovered = false;
+                    debugLog(element, 'Tip ready but not hovered or focused', {
+                        triggerHovered: state.triggerHovered
+                    });
+                    if (!state.triggerHovered) {
+                        scheduleHide(element);
+                    }
                 }
 
                 if (window.bootstrap && bootstrap.Tooltip) {
@@ -583,11 +691,25 @@ use Kickback\Common\Version;
                 const showHandler = () => {
                     const state = getHoverState(element);
                     state.triggerHovered = true;
+                    debugLog(element, 'Trigger enter detected', { triggerHovered: state.triggerHovered });
                     scheduleShow(element);
                 };
                 const hideHandler = () => {
                     const state = getHoverState(element);
                     state.triggerHovered = false;
+                    const popover = popoverInstances.get(element);
+                    if (popover && typeof popover.getTipElement === 'function') {
+                        const tipElement = popover.getTipElement();
+                        if (tipElement && (isElementHovered(tipElement) || tipElement.matches(':focus-within'))) {
+                            state.popoverHovered = true;
+                            debugLog(element, 'Trigger leave ignored because tip is hovered or focused');
+                            return;
+                        }
+                    }
+                    debugLog(element, 'Trigger leave detected', {
+                        triggerHovered: state.triggerHovered,
+                        popoverHovered: state.popoverHovered
+                    });
                     scheduleHide(element);
                 };
 
