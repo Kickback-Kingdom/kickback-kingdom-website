@@ -111,7 +111,7 @@
     </div>
     <div class="demo-event-log" id="demo-event-log" aria-live="polite"></div>
     <div id="loot-root">
-        <div class="modal fade loot-reveal-modal" id="loot-reveal-modal" tabindex="-1" aria-hidden="true" aria-modal="true" aria-label="Loot rewards" data-loot-modal>
+        <div class="modal fade modal-chest loot-reveal-modal" id="loot-reveal-modal" tabindex="-1" aria-hidden="true" aria-modal="true" aria-label="Loot rewards" data-loot-modal>
             <div class="modal-dialog modal-dialog-centered modal-xl loot-reveal__dialog">
                 <div class="modal-content bg-transparent border-0">
                     <div class="modal-body p-0">

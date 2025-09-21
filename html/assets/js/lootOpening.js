@@ -28,7 +28,7 @@ class LootReveal {
 
         if (!modal) {
             this.root.innerHTML = `
-                <div class="modal fade loot-reveal-modal" tabindex="-1" aria-hidden="true" aria-modal="true" aria-label="Loot rewards" data-loot-modal>
+                <div class="modal fade modal-chest loot-reveal-modal" tabindex="-1" aria-hidden="true" aria-modal="true" aria-label="Loot rewards" data-loot-modal>
                     <div class="modal-dialog modal-dialog-centered modal-xl loot-reveal__dialog">
                         <div class="modal-content bg-transparent border-0">
                             <div class="modal-body p-0">
@@ -47,6 +47,7 @@ class LootReveal {
         }
 
         this.modalEl = modal;
+        this.modalEl.classList.add('modal-chest', 'loot-reveal-modal');
         this.modalDialogEl = this.modalEl.querySelector('.modal-dialog');
         this.modalEl.setAttribute('role', 'dialog');
         this.modalEl.setAttribute('aria-modal', 'true');
@@ -195,11 +196,12 @@ class LootReveal {
     }
 
     close(reason = 'manual') {
-        if (this.state === 'opening') {
+        if (this.state === 'opening' || this.state === 'closing') {
             return;
         }
 
         if (!this.modalInstance) {
+            this.#finalizeClose(reason);
             return;
         }
 
@@ -208,6 +210,12 @@ class LootReveal {
             return;
         }
 
+        if (this.state === 'finished') {
+            this.statusEl.textContent = 'Closing chest...';
+        }
+
+        this.state = 'closing';
+        this.modalEl.classList.remove('chest-open-animate');
         this.pendingCloseReason = reason;
         this.modalInstance.hide();
     }
@@ -266,6 +274,7 @@ class LootReveal {
         this.chestEl.classList.remove('is-activating');
         this.stageEl.classList.remove('is-open');
         this.cardContainerEl.classList.remove('is-visible', 'is-flipping');
+        this.#triggerChestOpenAnimation();
 
         if (typeof this.config.onChestOpen === 'function') {
             this.config.onChestOpen(this.normalizedRewards.slice());
@@ -305,6 +314,7 @@ class LootReveal {
         this.stageEl.classList.remove('is-ready', 'is-open');
         this.cardContainerEl.classList.remove('is-visible', 'is-flipping');
         this.chestEl.classList.remove('is-activating');
+        this.modalEl.classList.remove('chest-open-animate');
         this.#resetFeatureCard();
     }
 
@@ -324,11 +334,13 @@ class LootReveal {
     #finalizeClose(reason) {
         this.state = 'idle';
         this.statusEl.textContent = 'Awaiting chest...';
+        this.chestEl.disabled = false;
         this.chestEl.setAttribute('aria-expanded', 'false');
         this.#clearTrack();
         this.stageEl.classList.remove('is-ready', 'is-open');
         this.cardContainerEl.classList.remove('is-visible', 'is-flipping');
         this.chestEl.classList.remove('is-activating');
+        this.modalEl.classList.remove('chest-open-animate');
         this.#resetFeatureCard();
         this.normalizedRewards = [];
         this.lootContainerEl.classList.remove('is-visible');
@@ -400,6 +412,16 @@ class LootReveal {
         if (this.cardLabelEl) {
             this.cardLabelEl.textContent = '';
         }
+    }
+
+    #triggerChestOpenAnimation() {
+        if (!this.modalEl) {
+            return;
+        }
+
+        this.modalEl.classList.remove('chest-open-animate');
+        void this.modalEl.offsetWidth;
+        this.modalEl.classList.add('chest-open-animate');
     }
 
     async #revealReward(reward) {
