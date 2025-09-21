@@ -103,7 +103,8 @@ class LootReveal {
             }
         });
 
-        this.backdropEl.addEventListener('click', () => this.close('backdrop'));
+        this.backdropEl.addEventListener('click', (event) => this.#handleBackdropInteraction(event));
+        this.panelEl.addEventListener('click', (event) => this.#handlePanelInteraction(event));
         this.chestEl.addEventListener('click', () => this.#handleChestClick());
     }
 
@@ -158,6 +159,33 @@ class LootReveal {
         this.root.dispatchEvent(new CustomEvent('lootreveal:close', {
             detail: { reason }
         }));
+    }
+
+    #handleBackdropInteraction(event) {
+        if (this.state === 'ready') {
+            event.preventDefault();
+            event.stopPropagation();
+            void this.#startReveal();
+            return;
+        }
+
+        if (this.state === 'finished') {
+            this.close('backdrop');
+        }
+    }
+
+    #handlePanelInteraction(event) {
+        if (this.state !== 'ready') {
+            return;
+        }
+
+        if (!this.panelEl.contains(event.target)) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        void this.#startReveal();
     }
 
     async #handleChestClick() {
