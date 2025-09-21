@@ -427,10 +427,19 @@ use Kickback\Common\Version;
                     popoverInstances.set(element, popover);
 
                     element.addEventListener('shown.bs.popover', () => handlePopoverShown(element));
-                    element.addEventListener('hide.bs.popover', () => {
+                    element.addEventListener('hide.bs.popover', event => {
+                        const state = getHoverState(element);
+                        const tipElement = typeof popover.getTipElement === 'function' ? popover.getTipElement() : null;
+                        const shouldKeepOpen = state.triggerHovered || state.popoverHovered ||
+                            (tipElement && (tipElement.matches(':hover') || tipElement.matches(':focus-within')));
+
+                        if (shouldKeepOpen) {
+                            event.preventDefault();
+                            return;
+                        }
+
                         clearTimer(showTimers, element);
                         clearTimer(hideTimers, element);
-                        const state = getHoverState(element);
                         state.triggerHovered = false;
                         state.popoverHovered = false;
                     });
