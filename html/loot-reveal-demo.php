@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/vendors/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="assets/css/kickback-kingdom.css">
     <link rel="stylesheet" href="assets/css/loot-opening.css">
     <style>
@@ -38,11 +39,6 @@
             opacity: 0.35;
             mix-blend-mode: screen;
             z-index: 0;
-        }
-
-        body.loot-demo .loot-reveal__backdrop {
-            background: rgba(5, 3, 12, 0.55);
-            backdrop-filter: blur(4px);
         }
 
         h1 {
@@ -117,12 +113,23 @@
         <button type="button" data-demo="legendary">Open Legendary Chest</button>
     </div>
     <div class="demo-event-log" id="demo-event-log" aria-live="polite"></div>
-    <div id="loot-root"></div>
+    <div id="loot-root">
+        <div class="modal fade loot-reveal-modal" id="loot-reveal-modal" tabindex="-1" aria-hidden="true" aria-modal="true" aria-label="Loot rewards" data-loot-modal>
+            <div class="modal-dialog modal-dialog-centered modal-xl loot-reveal__dialog">
+                <div class="modal-content bg-transparent border-0">
+                    <div class="modal-body p-0">
+                        <div class="loot-reveal" data-loot-container></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="confetti-box" aria-hidden="true">
         <div class="js-container-confetti" style="width: 100vw; height: 100vh;"></div>
     </div>
 
     <script src="assets/vendors/jquery/jquery-3.7.0.min.js"></script>
+    <script src="assets/vendors/bootstrap/bootstrap.bundle.min.js"></script>
     <script src="assets/js/confetti.js"></script>
     <script src="assets/js/lootOpening.js"></script>
     <script>
