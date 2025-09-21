@@ -163,6 +163,7 @@ use Kickback\Common\Version;
             const accountCacheById = new Map();
             const pendingRequests = new Map();
             const popoverInstances = new WeakMap();
+            const popoverTipElements = new WeakMap();
             const showTimers = new WeakMap();
             const hideTimers = new WeakMap();
             const supportsHover = window.matchMedia ? window.matchMedia('(hover: hover)').matches : false;
@@ -424,65 +425,68 @@ use Kickback\Common\Version;
                 return false;
             }
 
+            function cacheTipElementForPopover(popover, ownerId, tipElement) {
+                if (!(tipElement instanceof HTMLElement)) {
+                    return null;
+                }
+
+                if (ownerId && tipElement.dataset.playerCardOwner !== ownerId) {
+                    tipElement.dataset.playerCardOwner = ownerId;
+                }
+
+                popoverTipElements.set(popover, tipElement);
+                return tipElement;
+            }
+
             function getTipElementFromPopover(popover) {
                 if (!popover) {
                     return null;
                 }
 
                 const ownerId = elementIdentifier(popover);
+
+                if (popoverTipElements.has(popover)) {
+                    const cachedTip = popoverTipElements.get(popover);
+                    if (cachedTip instanceof HTMLElement) {
+                        if (ownerId && cachedTip.dataset.playerCardOwner !== ownerId) {
+                            cachedTip.dataset.playerCardOwner = ownerId;
+                        }
+                        return cachedTip;
+                    }
+                }
+
                 if (typeof popover.getTipElement === 'function') {
                     const tip = popover.getTipElement();
                     if (tip instanceof HTMLElement) {
-                        if (ownerId && tip.dataset.playerCardOwner !== ownerId) {
-                            tip.dataset.playerCardOwner = ownerId;
-                        }
-                        return tip;
+                        return cacheTipElementForPopover(popover, ownerId, tip);
                     }
                 }
 
                 if (popover.tip instanceof HTMLElement) {
-                    if (ownerId && popover.tip.dataset.playerCardOwner !== ownerId) {
-                        popover.tip.dataset.playerCardOwner = ownerId;
-                    }
-                    return popover.tip;
+                    return cacheTipElementForPopover(popover, ownerId, popover.tip);
                 }
 
                 if (typeof popover.tip === 'function') {
                     const tip = popover.tip();
                     if (tip instanceof HTMLElement) {
-                        if (ownerId && tip.dataset.playerCardOwner !== ownerId) {
-                            tip.dataset.playerCardOwner = ownerId;
-                        }
-                        return tip;
+                        return cacheTipElementForPopover(popover, ownerId, tip);
                     }
                 }
 
                 if (popover._tip instanceof HTMLElement) {
-                    if (ownerId && popover._tip.dataset.playerCardOwner !== ownerId) {
-                        popover._tip.dataset.playerCardOwner = ownerId;
-                    }
-                    return popover._tip;
+                    return cacheTipElementForPopover(popover, ownerId, popover._tip);
                 }
 
                 if (popover._popover && popover._popover.tip instanceof HTMLElement) {
-                    if (ownerId && popover._popover.tip.dataset.playerCardOwner !== ownerId) {
-                        popover._popover.tip.dataset.playerCardOwner = ownerId;
-                    }
-                    return popover._popover.tip;
+                    return cacheTipElementForPopover(popover, ownerId, popover._popover.tip);
                 }
 
                 if (popover._tooltip && popover._tooltip.tip instanceof HTMLElement) {
-                    if (ownerId && popover._tooltip.tip.dataset.playerCardOwner !== ownerId) {
-                        popover._tooltip.tip.dataset.playerCardOwner = ownerId;
-                    }
-                    return popover._tooltip.tip;
+                    return cacheTipElementForPopover(popover, ownerId, popover._tooltip.tip);
                 }
 
                 if (popover.tipElement instanceof HTMLElement) {
-                    if (ownerId && popover.tipElement.dataset.playerCardOwner !== ownerId) {
-                        popover.tipElement.dataset.playerCardOwner = ownerId;
-                    }
-                    return popover.tipElement;
+                    return cacheTipElementForPopover(popover, ownerId, popover.tipElement);
                 }
 
                 if (typeof document !== 'undefined') {
@@ -490,7 +494,7 @@ use Kickback\Common\Version;
                     for (let i = 0; i < allTips.length; i++) {
                         const tip = allTips[i];
                         if (tip instanceof HTMLElement && tip.dataset && tip.dataset.playerCardOwner === ownerId) {
-                            return tip;
+                            return cacheTipElementForPopover(popover, ownerId, tip);
                         }
                     }
                 }
@@ -740,6 +744,8 @@ use Kickback\Common\Version;
                 if (tipElement.dataset.playerCardOwner !== ownerId) {
                     tipElement.dataset.playerCardOwner = ownerId;
                 }
+
+                cacheTipElementForPopover(popover, ownerId, tipElement);
 
                 if (!tipElement.dataset.playerCardPopoverBound) {
                     const handleEnter = event => {
