@@ -94,9 +94,6 @@
             z-index: 1;
         }
 
-        #loot-root {
-            z-index: 1;
-        }
     </style>
 </head>
 <body class="loot-demo">
