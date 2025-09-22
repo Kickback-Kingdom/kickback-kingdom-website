@@ -468,6 +468,9 @@ class LootReveal {
 
         const ghost = this.#createCardElement(reward, { ghost: true });
         ghost.classList.add('loot-reveal__item-card--ghost');
+
+        ghost.style.width = `${targetRect.width}px`;
+        ghost.style.height = `${targetRect.height}px`;
         this.flightLayerEl.appendChild(ghost);
 
         const ghostRect = ghost.getBoundingClientRect();
@@ -487,15 +490,23 @@ class LootReveal {
             easing: 'cubic-bezier(0.22, 1, 0.36, 1)'
         });
 
+        let cleaned = false;
         const cleanup = () => {
+            if (cleaned) {
+                return;
+            }
+            cleaned = true;
             ghost.remove();
             if (typeof onFinish === 'function') {
                 onFinish();
             }
         };
 
-        animation.addEventListener('finish', cleanup, { once: true });
-        animation.addEventListener('cancel', cleanup, { once: true });
+        animation.addEventListener?.('finish', cleanup, { once: true });
+        animation.addEventListener?.('cancel', cleanup, { once: true });
+        animation.onfinish = cleanup;
+        animation.oncancel = cleanup;
+        animation.finished?.then(() => cleanup()).catch(() => cleanup());
     }
 
     #updateStageVisuals() {
