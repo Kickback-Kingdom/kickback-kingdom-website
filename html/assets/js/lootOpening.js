@@ -779,6 +779,19 @@ class LootReveal {
             card.classList.add('loot-reveal__item-card--ghost');
         }
 
+        const rarityClass = reward?.rarity
+            ? {
+                rare: 'loot-reveal__item-card--rare',
+                epic: 'loot-reveal__item-card--epic',
+                legendary: 'loot-reveal__item-card--legendary',
+                mythic: 'loot-reveal__item-card--mythic'
+            }[String(reward.rarity).toLowerCase()] ?? null
+            : null;
+
+        if (rarityClass) {
+            card.classList.add(rarityClass);
+        }
+
         const imageWrapper = document.createElement('div');
         imageWrapper.className = 'loot-reveal__item-card-image';
 
@@ -788,46 +801,14 @@ class LootReveal {
             img.alt = reward.name;
             imageWrapper.appendChild(img);
         } else {
-            const placeholder = document.createElement('div');
-            placeholder.textContent = reward.name.charAt(0).toUpperCase();
-            placeholder.style.fontSize = '2.8rem';
-            placeholder.style.fontWeight = '700';
-            placeholder.style.color = 'rgba(255, 255, 255, 0.7)';
-            imageWrapper.appendChild(placeholder);
+            imageWrapper.classList.add('loot-reveal__item-card-image--placeholder');
         }
-
-        if (reward.rarity && !ghost) {
-            const ring = document.createElement('div');
-            ring.className = 'loot-reveal__rarity-ring';
-            const rarityClass = {
-                common: '',
-                rare: 'loot-reveal__rarity-ring--rare',
-                epic: 'loot-reveal__rarity-ring--epic',
-                legendary: 'loot-reveal__rarity-ring--legendary'
-            }[String(reward.rarity).toLowerCase()];
-
-            if (rarityClass) {
-                ring.classList.add(rarityClass);
-            }
-
-            imageWrapper.appendChild(ring);
-        }
-
-        const name = document.createElement('div');
-        name.className = 'loot-reveal__item-name';
-        name.textContent = reward.name;
 
         const count = document.createElement('div');
         count.className = 'loot-reveal__item-count';
-        count.innerHTML = `
-            <span data-count>${reward.amount}</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M4.5 6.75a2.25 2.25 0 0 1 2.25-2.25h10.5A2.25 2.25 0 0 1 19.5 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 17.25V6.75zm2.25-.75a.75.75 0 0 0-.75.75v10.5c0 .414.336.75.75.75h10.5a.75.75 0 0 0 .75-.75V6.75a.75.75 0 0 0-.75-.75H6.75zm5.25 2.25a.75.75 0 0 1 .75.75v2.25H15a.75.75 0 0 1 0 1.5h-2.25V15a.75.75 0 0 1-1.5 0v-2.25H9a.75.75 0 0 1 0-1.5h2.25V9a.75.75 0 0 1 .75-.75z"></path>
-            </svg>
-        `;
+        count.innerHTML = `<span data-count>${reward.amount}</span>`;
 
         card.appendChild(imageWrapper);
-        card.appendChild(name);
         card.appendChild(count);
 
         if (!ghost) {
