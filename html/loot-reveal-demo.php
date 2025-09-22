@@ -132,25 +132,29 @@
     <script>
         const demoData = {
             mixed: [
-                { itemId: 101, name: 'Sapphire Sigil', rarity: 'rare', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=300&q=80' },
-                { itemId: 205, name: 'Arcane Dust', rarity: 'common', amount: 2 },
-                { itemId: 101, name: 'Sapphire Sigil', rarity: 'rare' },
-                { itemId: 305, name: 'Runebound Gauntlet', rarity: 'epic', image: 'https://images.unsplash.com/photo-1528821154947-1aa3d1b74963?auto=format&fit=crop&w=300&q=80' },
-                { itemId: 205, name: 'Arcane Dust', rarity: 'common' },
-                { itemId: 412, name: 'Luminous Feather', rarity: 'rare', image: 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?auto=format&fit=crop&w=300&q=80' }
+                { itemId: 1028, name: 'Embersteel Longsword', rarity: 'rare', image: 'assets/media/items/28.png' },
+                { itemId: 1030, name: 'Astral Compass', rarity: 'epic', image: 'assets/media/items/30.png' },
+                { itemId: 1028, name: 'Embersteel Longsword', rarity: 'rare' },
+                { itemId: 1032, name: 'Fae-Touched Satchel', rarity: 'rare', image: 'assets/media/items/32.png' },
+                { itemId: 2034, name: 'Royal Favor Badge', rarity: 'legendary', image: 'assets/media/badges/33.png' },
+                { itemId: 2029, name: 'Guild Scrip', rarity: 'common', amount: 2, image: 'assets/media/items/29.png' },
+                { itemId: 3049, name: 'Twilight Envoy', rarity: 'epic', image: 'assets/media/avatar/49.jpg' }
             ],
             duplicates: [
-                { itemId: 501, name: 'Gold Coin', rarity: 'common', amount: 3 },
-                { itemId: 501, name: 'Gold Coin', rarity: 'common', amount: 2 },
-                { itemId: 501, name: 'Gold Coin', rarity: 'common' },
-                { itemId: 640, name: 'Guild Voucher', rarity: 'rare' },
-                { itemId: 501, name: 'Gold Coin', rarity: 'common', amount: 5 }
+                { itemId: 4029, name: 'Guild Scrip', rarity: 'common', amount: 3, image: 'assets/media/items/29.png' },
+                { itemId: 4029, name: 'Guild Scrip', rarity: 'common', amount: 2 },
+                { itemId: 4029, name: 'Guild Scrip', rarity: 'common', amount: 4 },
+                { itemId: 5034, name: 'Auric Timepiece', rarity: 'rare', image: 'assets/media/items/34.jpg' },
+                { itemId: 2040, name: 'Merchant Crest', rarity: 'rare', image: 'assets/media/badges/40.png' },
+                { itemId: 4029, name: 'Guild Scrip', rarity: 'common', amount: 6 },
+                { itemId: 5044, name: 'Luminary Laurel', rarity: 'epic', image: 'assets/media/badges/44.png' }
             ],
             legendary: [
-                { itemId: 9001, name: 'Phoenix Crown', rarity: 'legendary', image: 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=300&q=80' },
-                { itemId: 813, name: 'Silver Bark Wand', rarity: 'epic', image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=300&q=80' },
-                { itemId: 205, name: 'Arcane Dust', rarity: 'common', amount: 4 },
-                { itemId: 305, name: 'Runebound Gauntlet', rarity: 'epic' }
+                { itemId: 5536, name: 'Dawnwatch Paladin', rarity: 'legendary', image: 'assets/media/lich/cards/The-Awakening/536.png' },
+                { itemId: 5544, name: 'Voidbound Oracle', rarity: 'legendary', image: 'assets/media/lich/cards/The-Awakening/544.png' },
+                { itemId: 5564, name: 'Stormshaper Adept', rarity: 'epic', image: 'assets/media/lich/cards/The-Awakening/564.png' },
+                { itemId: 5576, name: 'Soulbinder Arcanist', rarity: 'epic', image: 'assets/media/lich/cards/The-Awakening/576.png' },
+                { itemId: 5587, name: 'Radiant Phoenix', rarity: 'legendary', image: 'assets/media/lich/cards/The-Awakening/587.png' }
             ]
         };
 
