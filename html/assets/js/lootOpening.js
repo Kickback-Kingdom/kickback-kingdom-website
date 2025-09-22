@@ -400,9 +400,11 @@ class LootReveal {
         const targetRect = card.getBoundingClientRect();
 
         this.#playFlightAnimation(reward, targetRect, {
-            onFinish: () => {
+            onArrive: () => {
                 card.classList.remove('is-pending');
                 card.classList.add('is-visible');
+            },
+            onFinish: () => {
                 this.#pulseCard(card, { delayFrame: true });
             }
         });
@@ -422,8 +424,10 @@ class LootReveal {
         const targetRect = card.getBoundingClientRect();
 
         this.#playFlightAnimation(reward, targetRect, {
-            onFinish: () => {
+            onArrive: () => {
                 this.#animateCount(countElement, start, next);
+            },
+            onFinish: () => {
                 this.#pulseCard(card);
             }
         });
@@ -447,9 +451,12 @@ class LootReveal {
         }
     }
 
-    #playFlightAnimation(reward, targetRect, { onFinish } = {}) {
+    #playFlightAnimation(reward, targetRect, { onArrive, onFinish } = {}) {
         const chestRect = this.chestEl?.getBoundingClientRect();
         if (!this.flightLayerEl || !chestRect || !targetRect?.width || !targetRect?.height) {
+            if (typeof onArrive === 'function') {
+                onArrive();
+            }
             if (typeof onFinish === 'function') {
                 onFinish();
             }
@@ -480,22 +487,42 @@ class LootReveal {
         const startTransform = `translate(${chestPoint.x - offsetX}px, ${chestPoint.y - offsetY}px) scale(0.55)`;
         const endTransform = `translate(${targetPoint.x - offsetX}px, ${targetPoint.y - offsetY}px) scale(1)`;
 
+        const flightDuration = 720;
+        const arrivalOffset = 0.8;
+        const arrivalDelay = flightDuration * arrivalOffset;
+
         const animation = ghost.animate([
             { transform: startTransform, opacity: 0 },
             { transform: startTransform, opacity: 1, offset: 0.18 },
             { transform: endTransform, opacity: 0.95, offset: 0.8 },
             { transform: endTransform, opacity: 1 }
         ], {
-            duration: 720,
+            duration: flightDuration,
             easing: 'cubic-bezier(0.22, 1, 0.36, 1)'
         });
 
         let cleaned = false;
+        let arrived = false;
+
+        const triggerArrival = () => {
+            if (arrived) {
+                return;
+            }
+            arrived = true;
+            if (typeof onArrive === 'function') {
+                onArrive();
+            }
+        };
+
+        const arrivalTimer = setTimeout(triggerArrival, arrivalDelay);
+
         const cleanup = () => {
             if (cleaned) {
                 return;
             }
             cleaned = true;
+            clearTimeout(arrivalTimer);
+            triggerArrival();
             ghost.remove();
             if (typeof onFinish === 'function') {
                 onFinish();
