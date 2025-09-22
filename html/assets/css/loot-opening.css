@@ -267,12 +267,30 @@
     width: clamp(110px, 18vw, 152px);
     aspect-ratio: 1;
     position: relative;
-    display: block;
+    display: inline-flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
     transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1), filter 320ms ease;
     will-change: transform;
     filter: drop-shadow(0 22px 48px rgba(8, 5, 18, 0.55));
+    perspective: 1200px;
+}
+
+.loot-reveal__item-card--interactive {
+    cursor: pointer;
+}
+
+.loot-reveal__item-card--interactive:focus-visible {
+    outline: 3px solid rgba(255, 209, 102, 0.8);
+    outline-offset: 6px;
+    border-radius: 24px;
 }
 
 .loot-reveal__item-card.is-pending {
@@ -295,22 +313,63 @@
     filter: drop-shadow(0 22px 48px rgba(8, 5, 18, 0.55));
 }
 
+.loot-reveal__item-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 560ms cubic-bezier(0.22, 1, 0.36, 1);
+    border-radius: 24px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.loot-reveal__item-card[data-orientation="front"] .loot-reveal__item-card-inner {
+    transform: rotateY(180deg);
+}
+
+.loot-reveal__item-card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 24px;
+    overflow: hidden;
+}
+
+.loot-reveal__item-card-face--front {
+    transform: rotateY(180deg);
+    background: linear-gradient(160deg, rgba(36, 24, 68, 0.92), rgba(18, 12, 38, 0.95));
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+}
+
+.loot-reveal__item-card-face--back {
+    background: var(--loot-card-back-image, linear-gradient(160deg, rgba(18, 12, 38, 0.92), rgba(10, 6, 22, 0.98)));
+    background-size: cover;
+    background-position: center;
+}
+
 .loot-reveal__item-card-image {
     width: 100%;
     height: 100%;
-    border-radius: 24px;
-    overflow: hidden;
+    flex: 1 1 auto;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .loot-reveal__item-card-image img {
-    width: 100%;
-    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
     display: block;
-    object-fit: cover;
-    transform: scale(1.02);
+    object-fit: contain;
 }
 
 .loot-reveal__item-card-image--placeholder {
@@ -353,6 +412,7 @@
     display: flex;
     justify-content: center;
     box-shadow: 0 12px 28px rgba(5, 3, 12, 0.45);
+    z-index: 3;
 }
 
 .loot-reveal__item-count span {
@@ -362,6 +422,10 @@
 
 .loot-reveal__item-card.is-updating {
     animation: loot-card-pop 320ms ease;
+}
+
+.loot-reveal__item-card.is-flipping .loot-reveal__item-card-inner {
+    transition-duration: 420ms;
 }
 
 @keyframes loot-card-pop {

@@ -375,7 +375,7 @@ class LootReveal {
             return;
         }
 
-        const card = this.#createCardElement(normalized);
+        const card = this.#createCardElement(normalized, { orientation: 'back' });
         card.classList.add('is-pending');
         this.trackEl.appendChild(card);
 
@@ -384,10 +384,13 @@ class LootReveal {
             card,
             count: normalized.amount,
             countElement: card.querySelector('[data-count]'),
-            reward: Object.assign({}, normalized)
+            reward: Object.assign({}, normalized),
+            orientation: 'back'
         };
 
+        this.#setCardOrientation(entry, 'back');
         this.cardEntries.set(key, entry);
+        this.#bindCardInteraction(entry);
         this.#animateCardEntrance(entry, normalized);
     }
 
@@ -400,6 +403,7 @@ class LootReveal {
         const targetRect = card.getBoundingClientRect();
 
         this.#playFlightAnimation(reward, targetRect, {
+            orientation: entry.orientation,
             onArrive: () => {
                 card.classList.remove('is-pending');
                 card.classList.add('is-visible');
@@ -424,6 +428,7 @@ class LootReveal {
         const targetRect = card.getBoundingClientRect();
 
         this.#playFlightAnimation(reward, targetRect, {
+            orientation: entry.orientation,
             onArrive: () => {
                 this.#animateCount(countElement, start, next);
             },
@@ -451,7 +456,7 @@ class LootReveal {
         }
     }
 
-    #playFlightAnimation(reward, targetRect, { onArrive, onFinish } = {}) {
+    #playFlightAnimation(reward, targetRect, { orientation = 'front', onArrive, onFinish } = {}) {
         const chestRect = this.chestEl?.getBoundingClientRect();
         if (!this.flightLayerEl || !chestRect || !targetRect?.width || !targetRect?.height) {
             if (typeof onArrive === 'function') {
@@ -473,7 +478,7 @@ class LootReveal {
             y: targetRect.top + targetRect.height / 2
         };
 
-        const ghost = this.#createCardElement(reward, { ghost: true });
+        const ghost = this.#createCardElement(reward, { ghost: true, orientation });
         ghost.classList.add('loot-reveal__item-card--ghost');
 
         ghost.style.width = `${targetRect.width}px`;
@@ -772,11 +777,27 @@ class LootReveal {
         return `${reward.itemId}::${rarity}`;
     }
 
-    #createCardElement(reward, { ghost = false } = {}) {
-        const card = document.createElement('div');
+    #createCardElement(reward, { ghost = false, orientation = 'front' } = {}) {
+        const tagName = ghost ? 'div' : 'button';
+        const card = document.createElement(tagName);
         card.className = 'loot-reveal__item-card';
+        if (!ghost) {
+            card.type = 'button';
+        }
+
         if (ghost) {
             card.classList.add('loot-reveal__item-card--ghost');
+        }
+
+        const normalizedOrientation = orientation === 'back' ? 'back' : 'front';
+        card.dataset.orientation = normalizedOrientation;
+
+        if (!ghost) {
+            card.tabIndex = 0;
+        }
+
+        if (this.config.cardBackImage) {
+            card.style.setProperty('--loot-card-back-image', `url("${this.config.cardBackImage}")`);
         }
 
         const rarityClass = reward?.rarity
@@ -792,6 +813,15 @@ class LootReveal {
             card.classList.add(rarityClass);
         }
 
+        const inner = document.createElement('div');
+        inner.className = 'loot-reveal__item-card-inner';
+
+        const backFace = document.createElement('div');
+        backFace.className = 'loot-reveal__item-card-face loot-reveal__item-card-face--back';
+
+        const frontFace = document.createElement('div');
+        frontFace.className = 'loot-reveal__item-card-face loot-reveal__item-card-face--front';
+
         const imageWrapper = document.createElement('div');
         imageWrapper.className = 'loot-reveal__item-card-image';
 
@@ -804,11 +834,16 @@ class LootReveal {
             imageWrapper.classList.add('loot-reveal__item-card-image--placeholder');
         }
 
+        frontFace.appendChild(imageWrapper);
+
+        inner.appendChild(backFace);
+        inner.appendChild(frontFace);
+
         const count = document.createElement('div');
         count.className = 'loot-reveal__item-count';
         count.innerHTML = `<span data-count>${reward.amount}</span>`;
 
-        card.appendChild(imageWrapper);
+        card.appendChild(inner);
         card.appendChild(count);
 
         if (!ghost) {
@@ -820,6 +855,70 @@ class LootReveal {
         }
 
         return card;
+    }
+
+    #bindCardInteraction(entry) {
+        const { card, reward } = entry;
+        if (!(card instanceof HTMLElement)) {
+            return;
+        }
+
+        card.classList.add('loot-reveal__item-card--interactive');
+        if (reward?.name) {
+            card.setAttribute('aria-label', `Reveal ${reward.name}`);
+        }
+
+        const handleTransitionEnd = (event) => {
+            if (event.propertyName !== 'transform') {
+                return;
+            }
+            card.classList.remove('is-flipping');
+        };
+
+        card.addEventListener('transitionend', handleTransitionEnd);
+        card.addEventListener('click', () => this.#handleCardInteraction(entry));
+    }
+
+    #handleCardInteraction(entry) {
+        if (!entry || entry.orientation === 'front') {
+            return;
+        }
+
+        this.#setCardOrientation(entry, 'front');
+        const { card } = entry;
+        if (card instanceof HTMLElement) {
+            card.classList.add('is-flipping');
+        }
+    }
+
+    #setCardOrientation(entry, orientation) {
+        if (!entry?.card) {
+            return;
+        }
+
+        const normalized = orientation === 'front' ? 'front' : 'back';
+        const previous = entry.orientation;
+        entry.orientation = normalized;
+        entry.card.dataset.orientation = normalized;
+        entry.card.setAttribute('aria-pressed', normalized === 'front' ? 'true' : 'false');
+
+        if (entry.reward?.name) {
+            if (normalized === 'front') {
+                entry.card.setAttribute('aria-label', `${entry.reward.name} revealed`);
+            } else {
+                entry.card.setAttribute('aria-label', `Reveal ${entry.reward.name}`);
+            }
+        }
+
+        if (previous === normalized) {
+            return;
+        }
+
+        if (normalized === 'front') {
+            entry.card.classList.add('is-revealed');
+        } else {
+            entry.card.classList.remove('is-revealed');
+        }
     }
 }
 
