@@ -536,35 +536,41 @@ class LootReveal {
         const offsetX = chestX - cardX;
         const offsetY = chestY - cardY;
         const rotation = (Math.random() * 16 - 8).toFixed(2);
+        const travelDistance = Math.hypot(offsetX, offsetY);
+        const clampedDistance = Math.min(Math.max(travelDistance, 160), 720);
+        const duration = Math.round(520 + clampedDistance * 0.25);
+        const delay = Math.round(Math.random() * 90);
+        const arcHeight = Math.round(Math.min(Math.max(travelDistance * 0.35, 80), 200));
 
+        card.classList.remove('is-visible');
         card.style.setProperty('--loot-item-offset-x', `${offsetX}px`);
         card.style.setProperty('--loot-item-offset-y', `${offsetY}px`);
         card.style.setProperty('--loot-item-scale', '0.45');
         card.style.setProperty('--loot-item-rotation', `${rotation}deg`);
+        card.style.setProperty('--loot-item-flight-duration', `${duration}ms`);
+        card.style.setProperty('--loot-item-flight-delay', `${delay}ms`);
+        card.style.setProperty('--loot-item-arc', `${arcHeight}px`);
 
         requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                card.classList.add('is-visible');
-                card.style.setProperty('--loot-item-offset-x', '0px');
-                card.style.setProperty('--loot-item-offset-y', '0px');
-                card.style.setProperty('--loot-item-scale', '1');
-                card.style.setProperty('--loot-item-rotation', '0deg');
-            });
+            card.classList.add('is-visible');
         });
 
         const cleanup = (event) => {
-            if (event.target !== card || event.propertyName !== 'transform') {
+            if (event.target !== card || event.animationName !== 'loot-card-flight') {
                 return;
             }
 
-            card.removeEventListener('transitionend', cleanup);
+            card.removeEventListener('animationend', cleanup);
             card.style.removeProperty('--loot-item-offset-x');
             card.style.removeProperty('--loot-item-offset-y');
             card.style.removeProperty('--loot-item-scale');
             card.style.removeProperty('--loot-item-rotation');
+            card.style.removeProperty('--loot-item-flight-duration');
+            card.style.removeProperty('--loot-item-flight-delay');
+            card.style.removeProperty('--loot-item-arc');
         };
 
-        card.addEventListener('transitionend', cleanup);
+        card.addEventListener('animationend', cleanup);
     }
 
     #normalizeReward(reward) {
