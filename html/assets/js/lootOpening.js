@@ -538,11 +538,12 @@ class LootReveal {
         const rotation = (Math.random() * 16 - 8).toFixed(2);
         const travelDistance = Math.hypot(offsetX, offsetY);
         const clampedDistance = Math.min(Math.max(travelDistance, 160), 720);
-        const duration = Math.round(520 + clampedDistance * 0.25);
-        const delay = Math.round(Math.random() * 90);
+        const duration = Math.round(620 + clampedDistance * 0.32);
+        const delay = Math.round(Math.random() * 110);
         const arcHeight = Math.round(Math.min(Math.max(travelDistance * 0.35, 80), 200));
 
         card.classList.remove('is-visible');
+        card.classList.add('is-flying');
         card.style.setProperty('--loot-item-offset-x', `${offsetX}px`);
         card.style.setProperty('--loot-item-offset-y', `${offsetY}px`);
         card.style.setProperty('--loot-item-scale', '0.45');
@@ -568,6 +569,7 @@ class LootReveal {
             card.style.removeProperty('--loot-item-flight-duration');
             card.style.removeProperty('--loot-item-flight-delay');
             card.style.removeProperty('--loot-item-arc');
+            card.classList.remove('is-flying');
         };
 
         card.addEventListener('animationend', cleanup);
