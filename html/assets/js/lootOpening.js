@@ -446,9 +446,7 @@ class LootReveal {
         });
         this.trackEl.appendChild(card);
 
-        requestAnimationFrame(() => {
-            card.classList.add('is-visible');
-        });
+        this.#launchCardFromChest(card);
     }
 
     #createCard(reward) {
@@ -513,6 +511,60 @@ class LootReveal {
         });
 
         return card;
+    }
+
+    #launchCardFromChest(card) {
+        if (!(card instanceof HTMLElement)) {
+            return;
+        }
+
+        const chestRect = this.chestEl?.getBoundingClientRect();
+        const cardRect = card.getBoundingClientRect();
+
+        if (!chestRect || !cardRect?.width || !cardRect?.height) {
+            requestAnimationFrame(() => {
+                card.classList.add('is-visible');
+            });
+            return;
+        }
+
+        const chestX = chestRect.left + chestRect.width / 2;
+        const chestY = chestRect.top + chestRect.height * 0.6;
+        const cardX = cardRect.left + cardRect.width / 2;
+        const cardY = cardRect.top + cardRect.height / 2;
+
+        const offsetX = chestX - cardX;
+        const offsetY = chestY - cardY;
+        const rotation = (Math.random() * 16 - 8).toFixed(2);
+
+        card.style.setProperty('--loot-item-offset-x', `${offsetX}px`);
+        card.style.setProperty('--loot-item-offset-y', `${offsetY}px`);
+        card.style.setProperty('--loot-item-scale', '0.45');
+        card.style.setProperty('--loot-item-rotation', `${rotation}deg`);
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                card.classList.add('is-visible');
+                card.style.setProperty('--loot-item-offset-x', '0px');
+                card.style.setProperty('--loot-item-offset-y', '0px');
+                card.style.setProperty('--loot-item-scale', '1');
+                card.style.setProperty('--loot-item-rotation', '0deg');
+            });
+        });
+
+        const cleanup = (event) => {
+            if (event.target !== card || event.propertyName !== 'transform') {
+                return;
+            }
+
+            card.removeEventListener('transitionend', cleanup);
+            card.style.removeProperty('--loot-item-offset-x');
+            card.style.removeProperty('--loot-item-offset-y');
+            card.style.removeProperty('--loot-item-scale');
+            card.style.removeProperty('--loot-item-rotation');
+        };
+
+        card.addEventListener('transitionend', cleanup);
     }
 
     #normalizeReward(reward) {

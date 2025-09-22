@@ -251,6 +251,10 @@
 }
 
 .loot-reveal__item-card {
+    --loot-item-offset-x: 0px;
+    --loot-item-offset-y: 0px;
+    --loot-item-scale: 1;
+    --loot-item-rotation: 0deg;
     width: clamp(120px, 20vw, 168px);
     min-height: 180px;
     background: var(--loot-card-bg);
@@ -265,8 +269,9 @@
     gap: 12px;
     box-shadow: 0 18px 35px rgba(12, 8, 26, 0.6);
     opacity: 0;
-    transform: translateY(40px) scale(0.9);
-    transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1), opacity 420ms ease;
+    transform: translate3d(var(--loot-item-offset-x), var(--loot-item-offset-y), 0) scale(var(--loot-item-scale)) rotate(var(--loot-item-rotation));
+    transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1), opacity 360ms ease;
+    will-change: transform, opacity;
 }
 
 .loot-reveal__item-card::before {
@@ -282,7 +287,6 @@
 
 .loot-reveal__item-card.is-visible {
     opacity: 1;
-    transform: translateY(0) scale(1);
 }
 
 .loot-reveal__item-card.is-updating::before {
