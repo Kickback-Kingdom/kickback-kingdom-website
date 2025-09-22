@@ -240,6 +240,7 @@
 .loot-reveal__track-wrapper {
     width: 100%;
     overflow-x: auto;
+    overflow-y: visible;
     padding: 1.25rem 0.25rem 0.5rem;
     scrollbar-width: thin;
 }
@@ -255,6 +256,9 @@
     --loot-item-offset-y: 0px;
     --loot-item-scale: 1;
     --loot-item-rotation: 0deg;
+    --loot-item-arc: 120px;
+    --loot-item-flight-duration: 640ms;
+    --loot-item-flight-delay: 0ms;
     width: clamp(120px, 20vw, 168px);
     min-height: 180px;
     background: var(--loot-card-bg);
@@ -270,7 +274,7 @@
     box-shadow: 0 18px 35px rgba(12, 8, 26, 0.6);
     opacity: 0;
     transform: translate3d(var(--loot-item-offset-x), var(--loot-item-offset-y), 0) scale(var(--loot-item-scale)) rotate(var(--loot-item-rotation));
-    transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1), opacity 360ms ease;
+    transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1), opacity 320ms ease;
     will-change: transform, opacity;
 }
 
@@ -287,6 +291,7 @@
 
 .loot-reveal__item-card.is-visible {
     opacity: 1;
+    animation: loot-card-flight var(--loot-item-flight-duration) cubic-bezier(0.22, 1, 0.36, 1) var(--loot-item-flight-delay) forwards;
 }
 
 .loot-reveal__item-card.is-updating::before {
@@ -362,6 +367,21 @@
 
 .loot-reveal__item-card.is-updating {
     animation: loot-card-pop 320ms ease;
+}
+
+@keyframes loot-card-flight {
+    0% {
+        opacity: 0;
+        transform: translate3d(var(--loot-item-offset-x), var(--loot-item-offset-y), 0) scale(var(--loot-item-scale)) rotate(var(--loot-item-rotation));
+    }
+    55% {
+        opacity: 1;
+        transform: translate3d(calc(var(--loot-item-offset-x) * 0.4), calc(var(--loot-item-offset-y) * 0.5 - var(--loot-item-arc)), 0) scale(1.08) rotate(0deg);
+    }
+    100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+    }
 }
 
 @keyframes loot-card-pop {
