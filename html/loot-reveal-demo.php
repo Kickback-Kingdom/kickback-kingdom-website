@@ -1,3 +1,9 @@
+<?php
+require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
+
+$session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
+require("php-components/base-page-pull-active-account-info.php");
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -104,11 +110,7 @@
         single card with a counting animation, while unique items animate out and line up in a horizontal, scrollable
         spread.
     </p>
-    <div class="demo-controls">
-        <button type="button" data-demo="mixed">Open Mixed Chest</button>
-        <button type="button" data-demo="duplicates">Open Duplicate Heavy Chest</button>
-        <button type="button" data-demo="legendary">Open Legendary Chest</button>
-    </div>
+    <div class="demo-controls" data-chest-controls></div>
     <div class="demo-event-log" id="demo-event-log" aria-live="polite"></div>
     <div id="loot-root">
         <div class="modal fade modal-chest loot-reveal-modal" id="loot-reveal-modal" tabindex="-1" aria-hidden="true" aria-modal="true" aria-label="Loot rewards" data-loot-modal>
@@ -130,36 +132,10 @@
     <script src="assets/js/confetti.js"></script>
     <script src="assets/js/lootOpening.js"></script>
     <script>
-        const demoData = {
-            mixed: [
-                { itemId: 1028, name: 'Embersteel Longsword', rarity: 'rare', image: 'assets/media/items/28.png' },
-                { itemId: 1030, name: 'Astral Compass', rarity: 'epic', image: 'assets/media/items/30.png' },
-                { itemId: 1028, name: 'Embersteel Longsword', rarity: 'rare' },
-                { itemId: 1032, name: 'Fae-Touched Satchel', rarity: 'rare', image: 'assets/media/items/32.png' },
-                { itemId: 2034, name: 'Royal Favor Badge', rarity: 'legendary', image: 'assets/media/badges/33.png' },
-                { itemId: 2029, name: 'Guild Scrip', rarity: 'common', amount: 2, image: 'assets/media/items/29.png' },
-                { itemId: 3049, name: 'Twilight Envoy', rarity: 'epic', image: 'assets/media/avatar/49.jpg' }
-            ],
-            duplicates: [
-                { itemId: 4029, name: 'Guild Scrip', rarity: 'common', amount: 3, image: 'assets/media/items/29.png' },
-                { itemId: 4029, name: 'Guild Scrip', rarity: 'common', amount: 2 },
-                { itemId: 4029, name: 'Guild Scrip', rarity: 'common', amount: 4 },
-                { itemId: 5034, name: 'Auric Timepiece', rarity: 'rare', image: 'assets/media/items/34.jpg' },
-                { itemId: 2040, name: 'Merchant Crest', rarity: 'rare', image: 'assets/media/badges/40.png' },
-                { itemId: 4029, name: 'Guild Scrip', rarity: 'common', amount: 6 },
-                { itemId: 5044, name: 'Luminary Laurel', rarity: 'epic', image: 'assets/media/badges/44.png' }
-            ],
-            legendary: [
-                { itemId: 5536, name: 'Dawnwatch Paladin', rarity: 'legendary', image: 'assets/media/lich/cards/The-Awakening/536.png' },
-                { itemId: 5544, name: 'Voidbound Oracle', rarity: 'legendary', image: 'assets/media/lich/cards/The-Awakening/544.png' },
-                { itemId: 5564, name: 'Stormshaper Adept', rarity: 'epic', image: 'assets/media/lich/cards/The-Awakening/564.png' },
-                { itemId: 5576, name: 'Soulbinder Arcanist', rarity: 'epic', image: 'assets/media/lich/cards/The-Awakening/576.png' },
-                { itemId: 5587, name: 'Radiant Phoenix', rarity: 'legendary', image: 'assets/media/lich/cards/The-Awakening/587.png' }
-            ]
-        };
-
+        const chestData = <?php echo $activeAccountInfo->chestsJSON; ?>;
         const root = document.getElementById('loot-root');
         const log = document.getElementById('demo-event-log');
+        const controls = document.querySelector('[data-chest-controls]');
 
         const writeLog = (message) => {
             if (!log) {
@@ -170,6 +146,122 @@
         };
 
         writeLog('Awaiting chest interaction.');
+
+        const getChestLabel = (chest, index) => {
+            const rarityValue = chest?.rarity;
+            const rarityMap = {
+                0: 'Common',
+                1: 'Uncommon',
+                2: 'Rare',
+                3: 'Epic',
+                4: 'Legendary',
+                5: 'Mythic'
+            };
+
+            if (typeof rarityValue === 'string' && rarityValue.trim().length > 0) {
+                return `${rarityValue} Chest ${index + 1}`;
+            }
+
+            if (typeof rarityValue === 'number') {
+                const rarityLabel = rarityMap[rarityValue] ?? 'Chest';
+                return `${rarityLabel} Chest ${index + 1}`;
+            }
+
+            return `Chest ${index + 1}`;
+        };
+
+        const rarityFromItem = (item) => {
+            const value = item?.rarity;
+            const rarityMap = {
+                0: 'common',
+                1: 'uncommon',
+                2: 'rare',
+                3: 'epic',
+                4: 'legendary',
+                5: 'mythic'
+            };
+
+            if (typeof value === 'string') {
+                return value.toLowerCase();
+            }
+
+            if (typeof value === 'number') {
+                return rarityMap[value] ?? 'common';
+            }
+
+            if (value && typeof value === 'object' && 'value' in value) {
+                const inner = value.value;
+                if (typeof inner === 'string') {
+                    return inner.toLowerCase();
+                }
+
+                if (typeof inner === 'number') {
+                    return rarityMap[inner] ?? 'common';
+                }
+            }
+
+            return 'common';
+        };
+
+        const pickImage = (item) => {
+            const candidateImages = [
+                item?.iconSmall?.url,
+                item?.iconBig?.url,
+                item?.iconBack?.url
+            ];
+
+            return candidateImages.find((src) => typeof src === 'string' && src.trim().length > 0) ?? null;
+        };
+
+        const stackToReward = (stack) => {
+            const item = stack?.item ?? null;
+            const itemLootId = stack?.itemLootId;
+            const stackAmount = Number.isFinite(stack?.amount) ? Number(stack.amount) : 1;
+
+            const itemId = item?.crand
+                ?? item?.id
+                ?? (typeof itemLootId === 'object' && itemLootId !== null ? itemLootId.crand : undefined)
+                ?? itemLootId
+                ?? stack?.item_id
+                ?? stack?.itemId;
+
+            return {
+                itemId,
+                name: typeof stack?.nickname === 'string' && stack.nickname.trim().length > 0
+                    ? stack.nickname
+                    : (item?.name ?? 'Unknown Loot'),
+                amount: stackAmount > 0 ? Math.floor(stackAmount) : 1,
+                rarity: rarityFromItem(item),
+                image: pickImage(item)
+            };
+        };
+
+        const fetchChestRewards = async (lootId) => {
+            if (!lootId) {
+                throw new Error('Unable to load chest rewards without an id.');
+            }
+
+            const response = await fetch(`/api/v1/engine/container/open.php?lootId=${encodeURIComponent(lootId)}`, {
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Chest request failed with status ${response.status}.`);
+            }
+
+            const payload = await response.json();
+
+            if (!payload?.success) {
+                const message = typeof payload?.message === 'string' ? payload.message : 'Unknown error.';
+                throw new Error(message);
+            }
+
+            if (!Array.isArray(payload?.data)) {
+                throw new Error('Chest payload did not include item data.');
+            }
+
+            return payload.data.map(stackToReward).filter((reward) => reward?.itemId !== undefined);
+        };
 
         const startClosedChestConfetti = () => {
             if (typeof StopConfetti === 'function') {
@@ -208,17 +300,72 @@
             }
         });
 
-        const buttons = document.querySelectorAll('.demo-controls button');
-        buttons.forEach((button) => {
-            button.addEventListener('click', () => {
-                const type = button.dataset.demo;
-                reveal.open(demoData[type]);
-                startClosedChestConfetti();
-            });
-        });
+        const attachChestButtons = () => {
+            if (!controls) {
+                return;
+            }
 
-        reveal.open(demoData.mixed);
-        startClosedChestConfetti();
+            controls.innerHTML = '';
+
+            if (!Array.isArray(chestData) || chestData.length === 0) {
+                const placeholder = document.createElement('p');
+                placeholder.className = 'demo-description';
+                placeholder.textContent = 'No unopened chests are currently associated with this account.';
+                controls.appendChild(placeholder);
+                return;
+            }
+
+            chestData.forEach((chest, index) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = `Open ${getChestLabel(chest, index)}`;
+
+                const lootId = chest?.Id ?? chest?.id ?? chest?.lootId ?? chest?.loot_id;
+
+                button.addEventListener('click', async () => {
+                    if (!lootId) {
+                        writeLog('Selected chest is missing an identifier.');
+                        return;
+                    }
+
+                    writeLog(`Loading ${getChestLabel(chest, index)}...`);
+
+                    try {
+                        const rewards = await fetchChestRewards(lootId);
+                        const total = rewards.length;
+                        writeLog(`Chest ready with ${total} reward${total === 1 ? '' : 's'}. Tap the chest to reveal.`);
+                        reveal.open(rewards);
+                        startClosedChestConfetti();
+                    } catch (error) {
+                        console.error('Failed to load chest rewards', error);
+                        writeLog(`Failed to load chest: ${error?.message ?? error}`);
+                    }
+                });
+
+                controls.appendChild(button);
+            });
+        };
+
+        attachChestButtons();
+
+        if (Array.isArray(chestData) && chestData.length > 0) {
+            const initialChest = chestData[0];
+            const lootId = initialChest?.Id ?? initialChest?.id ?? initialChest?.lootId ?? initialChest?.loot_id;
+
+            if (lootId) {
+                fetchChestRewards(lootId)
+                    .then((rewards) => {
+                        const total = rewards.length;
+                        writeLog(`Chest ready with ${total} reward${total === 1 ? '' : 's'}. Tap the chest to reveal.`);
+                        reveal.open(rewards);
+                        startClosedChestConfetti();
+                    })
+                    .catch((error) => {
+                        console.error('Failed to load initial chest rewards', error);
+                        writeLog('Unable to load initial chest rewards. Select a chest to try again.');
+                    });
+            }
+        }
     </script>
 </body>
 </html>
