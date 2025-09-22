@@ -403,6 +403,7 @@ class LootReveal {
             onFinish: () => {
                 card.classList.remove('is-pending');
                 card.classList.add('is-visible');
+                this.#pulseCard(card, { delayFrame: true });
             }
         });
     }
@@ -418,18 +419,32 @@ class LootReveal {
         entry.count = next;
         entry.reward.amount = next;
 
-        card.classList.remove('is-updating');
-        void card.offsetWidth;
-        card.classList.add('is-updating');
-
         const targetRect = card.getBoundingClientRect();
 
         this.#playFlightAnimation(reward, targetRect, {
             onFinish: () => {
                 this.#animateCount(countElement, start, next);
-                card.classList.remove('is-updating');
+                this.#pulseCard(card);
             }
         });
+    }
+
+    #pulseCard(card, { delayFrame = false } = {}) {
+        if (!(card instanceof HTMLElement)) {
+            return;
+        }
+
+        const run = () => {
+            card.classList.remove('is-updating');
+            void card.offsetWidth;
+            card.classList.add('is-updating');
+        };
+
+        if (delayFrame) {
+            requestAnimationFrame(run);
+        } else {
+            run();
+        }
     }
 
     #playFlightAnimation(reward, targetRect, { onFinish } = {}) {
