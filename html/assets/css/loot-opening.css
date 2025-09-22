@@ -36,7 +36,7 @@
     padding: 2.5rem 1.25rem 4.75rem;
     border-radius: 28px;
     background: var(--loot-bg);
-    overflow: hidden;
+    overflow: visible;
     color: inherit;
     box-shadow: 0 28px 70px rgba(15, 9, 24, 0.6);
     display: flex;
@@ -238,6 +238,14 @@
     z-index: 2;
 }
 
+.loot-reveal__flight-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 8;
+    overflow: visible;
+}
+
 .loot-reveal__track-wrapper {
     width: 100%;
     overflow-x: auto;
@@ -280,9 +288,18 @@
 }
 
 .loot-reveal__item-card.is-flying {
-    z-index: 5;
+    z-index: 12;
     pointer-events: none;
     filter: drop-shadow(0 24px 48px rgba(8, 4, 20, 0.55));
+}
+
+.loot-reveal__item-card.is-landing {
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.loot-reveal__item-card--ghost {
+    box-shadow: 0 24px 60px rgba(8, 4, 20, 0.55);
+    opacity: 0;
 }
 
 .loot-reveal__item-card::before {

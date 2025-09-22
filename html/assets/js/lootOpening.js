@@ -100,6 +100,9 @@ class LootReveal {
             </div>
         `;
 
+        const flightLayer = document.createElement('div');
+        flightLayer.className = 'loot-reveal__flight-layer';
+
         const status = document.createElement('div');
         status.className = 'loot-reveal__status-text';
         status.textContent = 'Awaiting chest...';
@@ -107,6 +110,7 @@ class LootReveal {
         panel.appendChild(stage);
         panel.appendChild(items);
         panel.appendChild(status);
+        panel.appendChild(flightLayer);
 
         this.lootContainerEl.appendChild(panel);
 
@@ -123,6 +127,7 @@ class LootReveal {
         this.cardThumbnailEl = stage.querySelector('[data-card-thumbnail]');
         this.cardLabelEl = stage.querySelector('[data-card-label]');
         this.trackEl = items.querySelector('.loot-reveal__track');
+        this.flightLayerEl = flightLayer;
         this.statusEl = status;
         this.cardMap = new Map();
         this.assetBasePath = this.#normalizeBasePath(this.config.assetBasePath);
@@ -321,6 +326,9 @@ class LootReveal {
     #clearTrack() {
         this.trackEl.innerHTML = '';
         this.cardMap.clear();
+        if (this.flightLayerEl) {
+            this.flightLayerEl.innerHTML = '';
+        }
         const scroller = this.trackEl.parentElement;
         if (scroller) {
             if (typeof scroller.scrollTo === 'function') {
@@ -429,12 +437,7 @@ class LootReveal {
         const existing = this.cardMap.get(normalized.itemId);
 
         if (existing) {
-            const next = existing.count + normalized.amount;
-            this.#animateCount(existing.countElement, existing.count, next);
-            existing.count = next;
-            existing.card.classList.remove('is-updating');
-            void existing.card.offsetWidth;
-            existing.card.classList.add('is-updating');
+            this.#animateDuplicateReward(existing, normalized);
             return;
         }
 
@@ -513,15 +516,15 @@ class LootReveal {
         return card;
     }
 
-    #launchCardFromChest(card) {
-        if (!(card instanceof HTMLElement)) {
+    #launchCardFromChest(card, targetElement = card, { onComplete } = {}) {
+        if (!(card instanceof HTMLElement) || !(targetElement instanceof HTMLElement)) {
             return;
         }
 
         const chestRect = this.chestEl?.getBoundingClientRect();
-        const cardRect = card.getBoundingClientRect();
+        const targetRect = targetElement.getBoundingClientRect();
 
-        if (!chestRect || !cardRect?.width || !cardRect?.height) {
+        if (!chestRect || !targetRect?.width || !targetRect?.height) {
             requestAnimationFrame(() => {
                 card.classList.add('is-visible');
             });
@@ -530,11 +533,11 @@ class LootReveal {
 
         const chestX = chestRect.left + chestRect.width / 2;
         const chestY = chestRect.top + chestRect.height * 0.6;
-        const cardX = cardRect.left + cardRect.width / 2;
-        const cardY = cardRect.top + cardRect.height / 2;
+        const targetX = targetRect.left + targetRect.width / 2;
+        const targetY = targetRect.top + targetRect.height / 2;
 
-        const offsetX = chestX - cardX;
-        const offsetY = chestY - cardY;
+        const offsetX = chestX - targetX;
+        const offsetY = chestY - targetY;
         const rotation = (Math.random() * 16 - 8).toFixed(2);
         const travelDistance = Math.hypot(offsetX, offsetY);
         const clampedDistance = Math.min(Math.max(travelDistance, 160), 720);
@@ -554,6 +557,7 @@ class LootReveal {
 
         requestAnimationFrame(() => {
             card.classList.add('is-visible');
+            card.classList.add('is-landing');
         });
 
         const cleanup = (event) => {
@@ -570,9 +574,58 @@ class LootReveal {
             card.style.removeProperty('--loot-item-flight-delay');
             card.style.removeProperty('--loot-item-arc');
             card.classList.remove('is-flying');
+            card.classList.remove('is-landing');
+
+            if (typeof onComplete === 'function') {
+                onComplete();
+            }
         };
 
         card.addEventListener('animationend', cleanup);
+    }
+
+    #animateDuplicateReward(existingEntry, reward) {
+        const { card, count, countElement } = existingEntry;
+        if (!card || !countElement) {
+            return;
+        }
+
+        const layer = this.flightLayerEl;
+        if (!layer) {
+            const next = count + reward.amount;
+            this.#animateCount(countElement, count, next);
+            existingEntry.count = next;
+            card.classList.remove('is-updating');
+            void card.offsetWidth;
+            card.classList.add('is-updating');
+            return;
+        }
+
+        const ghost = this.#createCard({ ...reward });
+        ghost.classList.add('loot-reveal__item-card--ghost');
+
+        const layerRect = layer.getBoundingClientRect();
+        const targetRect = card.getBoundingClientRect();
+
+        ghost.style.position = 'absolute';
+        ghost.style.top = `${targetRect.top - layerRect.top}px`;
+        ghost.style.left = `${targetRect.left - layerRect.left}px`;
+        ghost.style.width = `${targetRect.width}px`;
+        ghost.style.height = `${targetRect.height}px`;
+
+        layer.appendChild(ghost);
+
+        this.#launchCardFromChest(ghost, card, {
+            onComplete: () => {
+                const next = count + reward.amount;
+                this.#animateCount(countElement, count, next);
+                existingEntry.count = next;
+                card.classList.remove('is-updating');
+                void card.offsetWidth;
+                card.classList.add('is-updating');
+                ghost.remove();
+            }
+        });
     }
 
     #normalizeReward(reward) {
