@@ -284,15 +284,11 @@
 }
 
 .loot-reveal__item-card.is-pending {
-    opacity: 0;
-    transform: translate3d(0, 18px, 0) scale(0.95);
     visibility: hidden;
     pointer-events: none;
 }
 
 .loot-reveal__item-card.is-visible {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
     visibility: visible;
 }
 
