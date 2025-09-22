@@ -481,7 +481,7 @@ class LootReveal {
             { transform: startTransform, opacity: 0 },
             { transform: startTransform, opacity: 1, offset: 0.18 },
             { transform: endTransform, opacity: 0.95, offset: 0.8 },
-            { transform: endTransform, opacity: 0 }
+            { transform: endTransform, opacity: 1 }
         ], {
             duration: 720,
             easing: 'cubic-bezier(0.22, 1, 0.36, 1)'
