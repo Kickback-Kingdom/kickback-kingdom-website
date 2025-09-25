@@ -892,7 +892,7 @@
                 },
                 {
                   "rid": "KW-PLACE-002",
-                  "text": "Invalid tiles include those occupied by walls or Death Fog.",
+                  "text": "Invalid tiles include those occupied by walls",
                   "tags": [
                     "keyword",
                     "place"
@@ -982,6 +982,53 @@
                   "tags": [
                     "keyword",
                     "damn"
+                  ]
+                }
+              ]
+            },
+            {
+            "title": "Penetrate",
+              "rules": [
+                {
+                  "rid": "ST-PEN-001",
+                  "text": "Line of sight does not stop at Avatars or Summons.",
+                  "tags": [
+                    "keyword",
+                    "los"
+                  ]
+                },
+                {
+                  "rid": "ST-PEN-002",
+                  "text": "Multiple targets along the same line of sight may be targeted.",
+                  "tags": [
+                    "keyword",
+                    "los"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Reprise",
+              "rules": [
+                {
+                  "rid": "ST-REP-001",
+                  "text": "Allows a card's Tap effect to resolve multiple separate consecutive times for a single AP.",
+                  "tags": [
+                    "status",
+                    "ap"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Overwhelm",
+              "rules": [
+                {
+                  "rid": "ST-OVR-001",
+                  "text": "If incoming damage is blocked, any damage above the amount blocked is still dealt.",
+                  "tags": [
+                    "status",
+                    "damage"
                   ]
                 }
               ]
@@ -1395,53 +1442,6 @@
           "title": "Status Definitions",
           "subsections": [
             {
-              "title": "Penetrate",
-              "rules": [
-                {
-                  "rid": "ST-PEN-001",
-                  "text": "Line of sight does not stop at Avatars or Summons.",
-                  "tags": [
-                    "status",
-                    "los"
-                  ]
-                },
-                {
-                  "rid": "ST-PEN-002",
-                  "text": "Multiple targets along the same line of sight may be targeted.",
-                  "tags": [
-                    "status",
-                    "los"
-                  ]
-                }
-              ]
-            },
-            {
-              "title": "Reprise",
-              "rules": [
-                {
-                  "rid": "ST-REP-001",
-                  "text": "Allows a card's Tap effect to resolve multiple separate consecutive times for a single AP.",
-                  "tags": [
-                    "status",
-                    "ap"
-                  ]
-                }
-              ]
-            },
-            {
-              "title": "Overwhelm",
-              "rules": [
-                {
-                  "rid": "ST-OVR-001",
-                  "text": "If incoming damage is blocked, any damage above the amount blocked is still dealt.",
-                  "tags": [
-                    "status",
-                    "damage"
-                  ]
-                }
-              ]
-            },
-            {
               "title": "Invisible",
               "rules": [
                 {
@@ -1800,7 +1800,7 @@
               "rules": [
                 {
                   "rid": "SF-SMK-001",
-                  "text": "Smoke blocks line of sight to preceding tiles.",
+                  "text": "Smoke blocks line of sight to successive tiles.",
                   "tags": [
                     "surface",
                     "los"
