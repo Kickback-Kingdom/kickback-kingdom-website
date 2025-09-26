@@ -1,13 +1,188 @@
+# TODO: Move this into phpstan-readme.md, reformat headers, add a brief intro sentence/paragraph
+# ===== Notable feature: Bespoke paths =====
+#
+# If we wish to override the project's PHPStan paths, then we
+# can do so by placing our own list of paths in either of these files:
+# ```sh
+# $PROJECT_ROOT/extra/phpstan-paths(.txt)
+# $PROJECT_ROOT/extra/phpstan-config/paths(.txt)
+# $PROJECT_ROOT/extra/phpstan-config/phpstan-paths(.txt)
+# $PROJECT_ROOT/html/scratch-pad/phpstan-paths(.txt)
+# $PROJECT_ROOT/html/scratch-pad/phpstan-config/paths(.txt)
+# $PROJECT_ROOT/html/scratch-pad/phpstan-config/phpstan-paths(.txt)
+# ```
+#
+# The `.txt` extension is optional.
+#
+# A typical use for such bespoke paths is as follows:
+#
+# By default, running either
+# `$PROJECT_ROOT/meta/phpstan.sh` or
+# `$PROJECT_ROOT/meta/phpstan.bat`
+# will cause `phpstan` to scan paths like these:
+# ```sh
+# $PROJECT_ROOT/html
+# $PROJECT_ROOT/meta/scripts
+# (and any extensionless PHP files found in $PROJECT_ROOT/html/api/v2/server)
+# ```
+#
+# This is VERY thorough and will report errors for the entire codebase.
+#
+# But, as of this writing, there are well over 1000 errors in the
+# entire codebase, and this makes it very difficult to find the ones
+# that we're working on at the moment.
+#
+# One way to do reduce the number of errors is to establish a "baseline"
+# with PHPStan. If this is done before we work on new features, we'll be
+# able to easily distinguish newly-created problems from the cacophony
+# of existing problems.
+#
+# _However_, even the baseline is somewhat inflexible: if we want to
+# remove existing errors, but only in some area-of-focus, then establishing
+# a baseline for that is difficult.
+#
+# So. Instead we will create a custom paths file.
+#
+# Out custom paths file will be found at this path:
+# `$PROJECT_ROOT/extra/phpstan-config/paths.txt`
+# ... and it will have these contents:
+# ```sh
+# #../html
+# #scripts
+# ../html/Kickback/Services
+# ../html/Kickback/Backend/Config
+# ../html/Kickback/Backend/Views
+# ```
+#
+# The # at the beginning of the first two lines indicates that we have
+# commented-out these paths. The commented-out paths are the default
+# ones that our scripts would normally place into a .neon file.
+#
+# The other two lines are the paths that PHPStan will now _actually_ scan.
+# In this case, we just want to test our classes in the `\Kickback\Services`
+# namespace, the `\Kickback\Backend\Config` namespace, and the
+# `\Kickback\Backend\Views` namespace.
+#
+# This is _considerably_ less code to cover than the entire `html` directory.
+#
+# And yet, this still allows us to see errors _in that area-of-focus_ that
+# existed before the establishment of any baseline, which allows us to
+# avoid future bugs and regressions all the more aggressively.
+#
+# ===== Notable feature: Bespoke opts (options) =====
+#
+# If we wish to override the project's PHPStan CLI options, then we
+# can do so by placing our own list of options in either of these files:
+# ```sh
+# $PROJECT_ROOT/extra/phpstan-opts(.txt)
+# $PROJECT_ROOT/extra/phpstan-config/opts(.txt)
+# $PROJECT_ROOT/extra/phpstan-config/phpstan-opts(.txt)
+# $PROJECT_ROOT/html/scratch-pad/phpstan-opts(.txt)
+# $PROJECT_ROOT/html/scratch-pad/phpstan-config/opts(.txt)
+# $PROJECT_ROOT/html/scratch-pad/phpstan-config/phpstan-opts(.txt)
+# ```
+#
+# The `.txt` extension is optional.
+#
+# A typical use for such bespoke options is as follows:
+#
+# By default, running either
+# `$PROJECT_ROOT/meta/phpstan.sh` or
+# `$PROJECT_ROOT/meta/phpstan.bat`
+# will cause `phpstan` to be invoked with arguments like these:
+# ```sh
+# $PROJECT_ROOT/path/to/phpstan/phpstan analyse -v -c "$PROJECT_ROOT/meta/phpstan.neon"
+# ```
+#
+# This is a good basic check for "how broken is the code",
+# and in most cases it will work.
+#
+# _However_, there are times when certain kinds of syntax errors cause
+# PHPStan to "give up", or it just simply emits insufficient information.
+#
+# To handle those cases, we can configure PHPStan to be more thorough.
+#
+# To do this, we place our replacement arguments into, for example,
+# `$PROJECT_ROOT/extra/phpstan-config/opts.txt`, which then looks like this:
+# ```sh
+# analyse --debug -vv -c "$PHPSTAN_NEON_CONFIG_PATH"
+# ```
+#
+# The next time we run
+# `$PROJECT_ROOT/meta/phpstan.sh` or
+# `$PROJECT_ROOT/meta/phpstan.bat`,
+# `phpstan` will be executed with arguments like these:
+# ```sh
+# $PROJECT_ROOT/path/to/phpstan/phpstan analyse --debug -vv -c "$PROJECT_ROOT/meta/phpstan.neon"
+# ```
+#
+# This causes PHPStan to emit the names of the class files that it is parsing
+# as it encounters them, and also allows the autoloader's messages to be
+# printed as well (if all is well, then the autoloader will be silent, but
+# if there's a class that couldn't be loaded, it will try to explain _why_).
+#
+# And because we specified these arguments in a non-version-controlled text
+# file, instead of directly in `phpstan.sh` or `phpstan.bat`, then we won't
+# have messy nagging changes persisting in our `git` repository.
+#
+# A simpler way to pass custom arguments into PHPStan would be to have the
+# `phpstan.bat` and `phpstan.sh` scripts accept custom arguments on the CLI.
+# However, this requires us to _remember_ what arguments we want to pass
+# every time, and makes it harder to type our PHPStan invocation from scratch.
+# As such, when this was written, no effort was made to actually make such
+# argument passing work: it simply isn't very useful, and for cases where
+# it _is_ necessary, `phpstan` can just be invoked directly.
+#
+# There are special variables available for expansion in the options:
+# * `$PHPSTAN_NEON_CONFIG_PATH` or `%PHPSTAN_NEON_CONFIG_PATH%`
+# * `$PHPSTAN_NEON_CONFIG_BASENAME` or `%PHPSTAN_NEON_CONFIG_BASENAME%`
+# * `$PHPSTAN_NEON_CONFIG_DIRECTORY` or `%PHPSTAN_NEON_CONFIG_DIRECTORY%`
+# * Everything from the caller's environment (all environment variables).
+# * Environment variables with the same names as the above will override those values.
+# * The `$foo` and `%foo%` notations are both available on all platforms.
+# * The `${foo}` syntax is not implemented.
+# * Use the percent-notation (ex: `%foo%`) for situations where one would
+#     normally use `${foo}`: it can perform substitutions when there are
+#     identifier characters directly next to the right-side of the symbol,
+#     ex: `$FOO` -> `$FOOBAR` (Error!);  `%FOO%` -> `%FOO%BAR` (Good!).
+# * Use character-doubling to escape the special characters `$` and `%`:
+#     `it-is-100%%-complete` will be matched as `it-is-100%-complete`, and
+#     `currency-is-$$USD` will be matched as `currency-is-$USD`, and neither
+#     will perform a symbolic substitution.
+#
+# ===== Implementation details explanation =====
+#
+# Note that this file lacks a `paths` element.
+# * The `paths` data comes from the includes, and those are generated by PHP scripts.
+# * The base list of paths to scan is preferentially (by default) read from
+#     the file `$PROJECT_ROOT/meta/phpstan-config/default-paths.txt`,
+#     which gets converted to `$PROJECT_ROOT/meta/tmp/phpstan-paths.neon`.
+# * However, if bespoke paths are provided, then it will take the base list
+#     of paths to scan _from those files instead_.
+# * After the base paths are determined, we must handle extensionless files.
+# * A script generates `$PROJECT_ROOT/meta/tmp/phpstan-files-without-php-extension.neon`
+#     which contains exact paths to every extensionless PHP file
+#     that was found. As of this writing, only the `$PROJECT_ROOT/html/api/v2/server`
+#     folder is scanned for extensionless PHP files.
+# * This main .neon file then `.include`'s the generated .neon files to finally
+#     acquire a comprehensive list of all (selected) PHP files in the project.
+#
+# As for PHPStan options:
+# * These are handled outside of the `phpstan.neon` file.
+# * The override logic is in `$PROJECT_ROOT/meta/scripts/phpstan-config/determine-cli-options.php`
+# * By default, `$PROJECT_ROOT/meta/phpstan-config/default-opts.txt` is used
+# * However, if bespoke options are provided, then it will use those instead.
+# * Either way, the files simply contain CLI options that
+#     will be passed onto the `phpstan` script/program.
+#
 includes:
     - ../html/vendor/composer/phpstan/phpstan-strict-rules/rules.neon
+    - tmp/phpstan-paths.neon
     - tmp/phpstan-files-without-php-extension.neon
 parameters:
     level: 9
     parallel:
         processTimeout: 3600.0
-    paths:
-        - scripts
-        - ../html
     bootstrapFiles:
         - ../html/Kickback/InitializationScripts/init_for_phpstan.php
     excludePaths:
