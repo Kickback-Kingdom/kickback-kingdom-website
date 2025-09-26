@@ -23,6 +23,7 @@ class UnittestEntryPoint
         //\Kickback\Services\Database::unittests();
         //\Kickback\Services\Session::unittests();
         \Kickback\Services\StripeService::unittests();
+        \Kickback\Services\ApiV2\Endpoint::unittests();
         echo("----- Finished ".__NAMESPACE__." unittests -----\n\n\n");
     }
 }

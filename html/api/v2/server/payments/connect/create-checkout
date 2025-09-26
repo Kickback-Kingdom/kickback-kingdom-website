@@ -3,17 +3,19 @@ declare(strict_types=1);
 
 require_once(($_SERVER['DOCUMENT_ROOT'] ?: __DIR__ . "/../../../..") . "/Kickback/init.php");
 
-use Kickback\Services\StripeService;
-use Kickback\Backend\Models\Response;
 use Kickback\Common\Exceptions\ThrowableOverrides;
+use Kickback\Backend\Models\Response;
+use Kickback\Services\ApiV2\Endpoint;
+use Kickback\Services\StripeService;
 
 \header('Content-Type: application/json');
 
+Endpoint::begin();
 try
 {
-    $request_contents_json = \file_get_contents('php://input');
+    $request_contents_json = Endpoint::file_get_contents('php://input');
     $response = null;
-    $response_code = StripeService::api_create_checkout(__FILE__, $request_contents_json, $response);
+    $response_code = StripeService::api_create_checkout($request_contents_json, $response);
     if ( $response_code !== 0 ) {
         \http_response_code($response_code);
         // Otherwise let PHP/Apache/HTTPD respond with what it feels is appropriate.
@@ -27,6 +29,9 @@ catch( \Throwable $e )
     $response = new Response(false,
         'Failed to create checkout session: ' . ThrowableOverrides::message($e),
         $e->__toString());
+}
+finally {
+    Endpoint::end();
 }
 
 echo \json_encode($response);
