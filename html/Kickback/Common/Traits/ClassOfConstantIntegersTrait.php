@@ -24,22 +24,28 @@ trait ClassOfConstantIntegersTrait
     /**
     * Returns an array mapping constant names to constant values.
     *
-    * @return array<string, self::*>
+    * @param      ?array<string, self::*>  $names_to_values
+    * @param-out  array<string, self::*>   $names_to_values
+    * @return     array<string, self::*>
     */
-    private static function generate_all_array_() : array
+    private static function
+        ClassOfConstantIntegersTrait__generate_names_to_values_array_from_reflection(?array &$names_to_values) : array
     {
         // "static::class" here does the magic
         $reflectionClass = new \ReflectionClass(static::class);
 
+        $names_to_values = $reflectionClass->getConstants();
+
         // We have to ignore PHPStan's error:
         // ```
-        // Method Kickback\Common\Traits\ClassOfConstantIntegers::generate_all_array_()
+        // Method Kickback\Common\Traits\ClassOfConstantIntegers::
+        //   ClassOfConstantIntegersTrait__generate_names_to_values_array_from_reflection()
         //     should return array<string, 1|2|3|4|5|7|8|9> but returns array<string, mixed>.
         // ```
         // Because PHPStan is not aware that `$reflectionClass->getConstants()`
         // is guaranteed (by definition) to return exactly that kind of array.
         /** @phpstan-ignore return.type */
-        return $reflectionClass->getConstants();
+        return $names_to_values;
     }
 
     /**
@@ -48,14 +54,15 @@ trait ClassOfConstantIntegersTrait
     * @return array<string, self::*>
     */
     #[KickbackGetter]
-    public static function all() : array
+    public static function names_to_values() : array
     {
-        static $all = null;
-        if (!isset($all)) {
-            $all = self::generate_all_array_();
-            assert(0 < count($all));
+        static $names_to_values = null;
+        if (isset($names_to_values)) {
+            return $names_to_values;
         }
-        return $all;
+        self::ClassOfConstantIntegersTrait__generate_names_to_values_array_from_reflection($names_to_values);
+        assert(0 < count($names_to_values));
+        return $names_to_values;
     }
 
     /**
@@ -64,7 +71,7 @@ trait ClassOfConstantIntegersTrait
     #[KickbackGetter]
     public static function count() : int
     {
-        return \count(self::all());
+        return \count(self::names_to_values());
     }
 
     /**
@@ -79,9 +86,10 @@ trait ClassOfConstantIntegersTrait
     public static function values() : array
     {
         static $values = null;
-        if (!isset($values)) {
-            $values = array_values(self::all());
+        if (isset($values)) {
+            return $values;
         }
+        $values = \array_values(self::names_to_values());
         return $values;
     }
 
@@ -95,9 +103,9 @@ trait ClassOfConstantIntegersTrait
         static $min_name  = null;
         static $min_value = \PHP_INT_MAX;
         if ($min_value === \PHP_INT_MAX) {
-            $all = self::all();
-            $idx = Int_::first_min_pair($all, $min_name, $min_value);
-            assert(0 <= $idx && $idx < count($all));
+            $n2v = self::names_to_values();
+            $idx = Int_::first_min_pair($n2v, $min_name, $min_value);
+            assert(0 <= $idx && $idx < count($n2v));
         }
         $name = $min_name;
         return $min_value;
@@ -131,9 +139,9 @@ trait ClassOfConstantIntegersTrait
         static $max_name  = null;
         static $max_value = \PHP_INT_MIN;
         if ($max_value === \PHP_INT_MIN) {
-            $all = self::all();
-            $idx = Int_::first_max_pair($all, $max_name, $max_value);
-            assert(0 <= $idx && $idx < count($all));
+            $n2v = self::names_to_values();
+            $idx = Int_::first_max_pair($n2v, $max_name, $max_value);
+            assert(0 <= $idx && $idx < count($n2v));
         }
         $name = $max_name;
         return $max_value;
@@ -164,41 +172,104 @@ trait ClassOfConstantIntegersTrait
     /**
     * Returns an array mapping constant values to constant names.
     *
-    * @return array<self::*, string>
+    * @param      array<string, self::*>   $names_to_values
+    * @param      ?array<self::*, string>  $values_to_names
+    * @param-out  array<self::*, string>   $values_to_names
+    * @return     array<self::*, string>
+    * @throws void
     */
-    private static function generate_name_lookup_() : array
+    private static function ClassOfConstantIntegersTrait__generate_name_lookup(array $names_to_values,  ?array &$values_to_names) : array
     {
-        $lookup = [];
-        $all = self::all();
-        foreach($all as $name => $value)
+        $values_to_names = [];
+        foreach($names_to_values as $name => $value)
         {
-            if (array_key_exists($value, $lookup)) {
+            if (\array_key_exists($value, $values_to_names)) {
                 // Deduplicate by preferring the constants
                 // that appear first in the class declaration.
                 continue;
             }
-            $lookup[$value] = $name;
+            $values_to_names[$value] = $name;
         }
-        return $lookup;
+        return $values_to_names;
     }
 
     /**
-    * @param  self::*  $value
+    * @return array<self::*, string>
+    * @throws void
     */
-    public static function stringize(int $value) : string
+    #[KickbackGetter]
+    public static function values_to_names() : array
     {
-        static $lookup = null;
-        if (!isset($lookup)) {
-            $lookup = self::generate_name_lookup_();
+        static $values_to_names = null;
+        if (isset($values_to_names)) {
+            return $values_to_names;
+        }
+        // Generate it as needed:
+        return self::ClassOfConstantIntegersTrait__generate_name_lookup(
+            self::names_to_values(), $values_to_names);
+    }
+
+    /**
+    * Non-throwing alternative to self::name_of
+    *
+    * If `$value` isn't in the set of constants, than the value placed
+    * into `$name` will be `\strval($value)`.
+    *
+    * @param     self::*  $value
+    * @param     ?string  $name
+    * @param-out string   $name
+    * @return bool  `false` if `$value` is not in the list of constants.
+    * @throws void
+    */
+    public static function put_name_into(int $value, ?string &$name) : bool
+    {
+        $values_to_names = self::values_to_names();
+        if (\array_key_exists($value, $values_to_names)) {
+            $name = $values_to_names[$value];
+            return true;
         }
 
-        if (array_key_exists($value, $lookup)) {
-            return $lookup[$value];
-        } else {
-            $vstr = strval($value);
-            $classname = __CLASS__;
-            throw new \ValueError("ERROR: Value $vstr is not defined in $classname");
+        // Invalid value.
+        $name = \strval($value);
+        return false;
+    }
+
+    /**
+    * Name of the constant with the given integer value
+    *
+    * Throws an \UnexpectedValueException
+    * if `$value` isn't in the set of constants.
+    *
+    * @param  self::*  $value
+    */
+    public static function name_of(int $value) : string
+    {
+        if ( self::put_name_into($value, $res) ) {
+            return $res;
         }
+
+        // Invalid value.
+        $classname = __CLASS__;
+        throw new \UnexpectedValueException("ERROR: Value $res is not defined in $classname");
+    }
+
+    /**
+    * Non-throwing version of self::name_of
+    *
+    * If `$value` isn't in the set of constants, than the returned value
+    * will be `\strval($value)`.
+    *
+    * This can make it difficult to detect if there was an error while
+    * retrieving the name. An alternative that provides non-throwing
+    * behavior and structured failure info is `put_name_into`.
+    *
+    * @param  self::*  $value
+    * @throws void
+    */
+    public static function nt_name_of(int $value) : string
+    {
+        self::put_name_into($value, $res);
+        return $res;
     }
 }
 
@@ -220,12 +291,12 @@ final class ClassOfConstantIntegers
     private const TEST_CONST_N1 = -1; // Make sure we can handle negatives...
     private const TEST_CONST_00 =  0; // ...and zero.
 
-    private static function unittest_all_array() : void
+    private static function unittest_names_to_values() : void
     {
-        $all = self::all();
+        $names_to_values = self::names_to_values();
 
         /** @phpstan-ignore isset.variable, function.alreadyNarrowedType */
-        assert(isset($all));
+        assert(isset($names_to_values));
 
         // We'll keep the `array_key_exists` tests separate from the tests
         // that actually access the elements.
@@ -233,31 +304,31 @@ final class ClassOfConstantIntegers
         // what exactly went wrong.
         // (e.g. "constant didn't exist" vs "constant has incorrect contents");
 
-        assert(array_key_exists('TEST_CONST_01', $all));
-        assert(array_key_exists('TEST_CONST_02', $all));
-        assert(array_key_exists('TEST_CONST_03', $all));
-        assert(array_key_exists('TEST_CONST_04', $all));
-        assert(array_key_exists('TEST_CONST_05', $all));
-        assert(array_key_exists('TEST_CONST_07', $all));
-        assert(array_key_exists('TEST_CONST_09', $all));
-        assert(array_key_exists('TEST_CONST_08', $all));
-        assert(array_key_exists('TEST_CONST_10', $all));
-        assert(array_key_exists('TEST_CONST_N1', $all));
-        assert(array_key_exists('TEST_CONST_00', $all));
+        assert(array_key_exists('TEST_CONST_01', $names_to_values));
+        assert(array_key_exists('TEST_CONST_02', $names_to_values));
+        assert(array_key_exists('TEST_CONST_03', $names_to_values));
+        assert(array_key_exists('TEST_CONST_04', $names_to_values));
+        assert(array_key_exists('TEST_CONST_05', $names_to_values));
+        assert(array_key_exists('TEST_CONST_07', $names_to_values));
+        assert(array_key_exists('TEST_CONST_09', $names_to_values));
+        assert(array_key_exists('TEST_CONST_08', $names_to_values));
+        assert(array_key_exists('TEST_CONST_10', $names_to_values));
+        assert(array_key_exists('TEST_CONST_N1', $names_to_values));
+        assert(array_key_exists('TEST_CONST_00', $names_to_values));
 
-        assert($all['TEST_CONST_01'] ===  1);
-        assert($all['TEST_CONST_02'] ===  2);
-        assert($all['TEST_CONST_03'] ===  3);
-        assert($all['TEST_CONST_04'] ===  4);
-        assert($all['TEST_CONST_05'] ===  5);
-        assert($all['TEST_CONST_07'] ===  7);
-        assert($all['TEST_CONST_09'] ===  9);
-        assert($all['TEST_CONST_08'] ===  8);
-        assert($all['TEST_CONST_10'] ===  3);
-        assert($all['TEST_CONST_N1'] === -1);
-        assert($all['TEST_CONST_00'] ===  0);
+        assert($names_to_values['TEST_CONST_01'] ===  1);
+        assert($names_to_values['TEST_CONST_02'] ===  2);
+        assert($names_to_values['TEST_CONST_03'] ===  3);
+        assert($names_to_values['TEST_CONST_04'] ===  4);
+        assert($names_to_values['TEST_CONST_05'] ===  5);
+        assert($names_to_values['TEST_CONST_07'] ===  7);
+        assert($names_to_values['TEST_CONST_09'] ===  9);
+        assert($names_to_values['TEST_CONST_08'] ===  8);
+        assert($names_to_values['TEST_CONST_10'] ===  3);
+        assert($names_to_values['TEST_CONST_N1'] === -1);
+        assert($names_to_values['TEST_CONST_00'] ===  0);
 
-        assert(11 === \count($all));
+        assert(11 === \count($names_to_values));
 
         echo("  ".__FUNCTION__."()\n");
     }
@@ -270,7 +341,7 @@ final class ClassOfConstantIntegers
         // if there were a way to avoid the memory allocation,
         // then that version could slightly improve overall
         // system performance.)
-        assert(\count(self::all()) === self::count());
+        assert(\count(self::names_to_values()) === self::count());
 
         echo("  ".__FUNCTION__."()\n");
     }
@@ -295,54 +366,54 @@ final class ClassOfConstantIntegers
         echo("  ".__FUNCTION__."()\n");
     }
 
-    private static function unittest_stringize() : void
+    private static function unittest_name_of() : void
     {
-        assert(self::stringize(self::TEST_CONST_01) === 'TEST_CONST_01');
-        assert(self::stringize(self::TEST_CONST_02) === 'TEST_CONST_02');
-        assert(self::stringize(self::TEST_CONST_03) === 'TEST_CONST_03');
-        assert(self::stringize(self::TEST_CONST_04) === 'TEST_CONST_04');
-        assert(self::stringize(self::TEST_CONST_05) === 'TEST_CONST_05');
-        assert(self::stringize(self::TEST_CONST_07) === 'TEST_CONST_07');
-        assert(self::stringize(self::TEST_CONST_09) === 'TEST_CONST_09');
-        assert(self::stringize(self::TEST_CONST_08) === 'TEST_CONST_08');
-        assert(self::stringize(self::TEST_CONST_10) === 'TEST_CONST_03'); // Tricky!
-        assert(self::stringize(self::TEST_CONST_N1) === 'TEST_CONST_N1');
-        assert(self::stringize(self::TEST_CONST_00) === 'TEST_CONST_00');
+        assert(self::name_of(self::TEST_CONST_01) === 'TEST_CONST_01');
+        assert(self::name_of(self::TEST_CONST_02) === 'TEST_CONST_02');
+        assert(self::name_of(self::TEST_CONST_03) === 'TEST_CONST_03');
+        assert(self::name_of(self::TEST_CONST_04) === 'TEST_CONST_04');
+        assert(self::name_of(self::TEST_CONST_05) === 'TEST_CONST_05');
+        assert(self::name_of(self::TEST_CONST_07) === 'TEST_CONST_07');
+        assert(self::name_of(self::TEST_CONST_09) === 'TEST_CONST_09');
+        assert(self::name_of(self::TEST_CONST_08) === 'TEST_CONST_08');
+        assert(self::name_of(self::TEST_CONST_10) === 'TEST_CONST_03'); // Tricky!
+        assert(self::name_of(self::TEST_CONST_N1) === 'TEST_CONST_N1');
+        assert(self::name_of(self::TEST_CONST_00) === 'TEST_CONST_00');
 
         // Out of bounds variables should throw.
         $threw = false;
         $min = self::min();
         /** @phpstan-ignore argument.type */
-        try { assert(self::stringize($min - 1) !== 'TEST_CONST_N2'); }
-        catch (\ValueError $e) { $threw = true; }
+        try { assert(self::name_of($min - 1) !== 'TEST_CONST_N2'); }
+        catch (\UnexpectedValueException $e) { $threw = true; }
         assert($threw);
 
         $threw = false;
         $max = self::max();
         /** @phpstan-ignore argument.type */
-        try { assert(self::stringize($max + 1) !== 'TEST_CONST_10_or_11'); }
-        catch (\ValueError $e) { $threw = true; }
+        try { assert(self::name_of($max + 1) !== 'TEST_CONST_10_or_11'); }
+        catch (\UnexpectedValueException $e) { $threw = true; }
         assert($threw);
 
         // We'll make sure that it still throws if the invalid value
         // is in a "hole" in the range of constants.
         $threw = false;
         /** @phpstan-ignore argument.type */
-        try { assert(self::stringize(6) !== '6'); }
-        catch (\ValueError $e) { $threw = true; }
+        try { assert(self::name_of(6) !== '6'); }
+        catch (\UnexpectedValueException $e) { $threw = true; }
         assert($threw);
 
         // Boundary value testing.
         $threw = false;
         /** @phpstan-ignore argument.type */
-        try { assert(self::stringize(\PHP_INT_MIN) !== '-9223372036854775808'); }
-        catch (\ValueError $e) { $threw = true; }
+        try { assert(self::name_of(\PHP_INT_MIN) !== '-9223372036854775808'); }
+        catch (\UnexpectedValueException $e) { $threw = true; }
         assert($threw);
 
         $threw = false;
         /** @phpstan-ignore argument.type */
-        try { assert(self::stringize(\PHP_INT_MAX) !== '9223372036854775807'); }
-        catch (\ValueError $e) { $threw = true; }
+        try { assert(self::name_of(\PHP_INT_MAX) !== '9223372036854775807'); }
+        catch (\UnexpectedValueException $e) { $threw = true; }
         assert($threw);
 
         echo("  ".__FUNCTION__."()\n");
@@ -353,11 +424,11 @@ final class ClassOfConstantIntegers
         $class_fqn = self::class;
         echo("Running `$class_fqn::unittests()`\n");
 
-        self::unittest_all_array();
+        self::unittest_names_to_values();
         self::unittest_count();
         self::unittest_min_pair();
         self::unittest_max_pair();
-        self::unittest_stringize();
+        self::unittest_name_of();
 
         echo("  ... passed.\n\n");
     }

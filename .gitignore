@@ -15,9 +15,20 @@
 !/html/assets/media/**/.gitkeep
 !/html/assets/images/**/.gitkeep
 
+# This folder contains "temporary" contents.
+# As of this writing, that includes a script-generated
+# list of files for phpstan to scan.
+# Which is basically program-state for our linting setup.
+# And such things should not be placed in version control.
+/meta/tmp/**
+
 # This is for a directory to test code and various things outside of version control 
 /html/scratch-pad/**
 !/html/scratch-pad/.gitkeep
+
+# Local development and documentation folder
+# (Like html/scratch-pad, but outside of the HTTP server's "Document Root")
+/extra/**
 
 # Ignore visual studio folder
 /.vs/**
@@ -57,5 +68,3 @@
 /html/vendor/composer/**
 !/html/vendor/composer/.gitkeep
 
-# Local development and documentation folder
-/extra/**
