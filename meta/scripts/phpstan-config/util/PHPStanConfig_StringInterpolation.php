@@ -337,15 +337,14 @@ class PHPStanConfig_StringInterpolation
             assert($pos !== false);
             assert($pos > 0);
             // if ($pos === false || $pos === 0) {
-            //     // TODO: This is probably an internal error.
+            //     // No opening '{' character.
+            //     // Or, '{' is not preceded by '$', and with no hope to find a '${' before that.
+            //     // This case would probably be an internal error.
+            //     // So we don't run code for it, we just assert.
             //     //   (This should never happen: $depth is only >0 when there was a valid '${' sequence earlier in the string.)
             //     //   (This is important because this would imply no depth change,
             //     //   yet the current version of this function assumes that
             //     //   depth has ALREADY changed, so if this calculation happens, it could lead to desync.)
-            //     // No opening '{' character.
-            //     // Or, '{' is not preceded by '$', and with no hope to find a '${' before that.
-            //     // In this case, we just assume the '}' isn't part of an expansion.
-            //     // Thus, we skip it.
             //     return \PHP_INT_MAX;
             // }
 
@@ -373,124 +372,6 @@ class PHPStanConfig_StringInterpolation
             return $pos;
         }
     }
-
-    // TODO: delete commented-out code after testing/commit
-    // /**
-    // * @param      int<0,max>     $slice_offset
-    // * @param      int<0,max>     $pos
-    // * @param      int<0,max>     $nchars
-    // * @param      int<0,max>     $tmp_outer_lo
-    // * @param      int<0,max>     $tmp_inner_lo
-    // * @param      int<0,max>     $tmp_inner_hi
-    // * @param      int<0,max>     $tmp_outer_hi
-    // * @param      int<0,max>     $depth
-    // */
-    // private static function rescan_curly_brace_expansion(
-    //     string $text,
-    //     int    $slice_offset
-    //     int    &$pos,          int &$nchars,
-    //     int    &$tmp_outer_lo,
-    //     int    &$tmp_inner_lo,
-    //     int    &$tmp_inner_hi,
-    //     int    &$tmp_outer_hi
-    //     //int    &$depth
-    // ) : void
-    // {
-    //     assert(0 < $depth);
-    //     $have_invalid_char = false;
-    //     $peek = $pos;
-    //     while(true)
-    //     {
-    //         $peek = \strrpos(\substr($text, $slice_offset, $peek - $slice_offset), '{', -1);
-    //         if ($peek === false || $peek === 0) {
-    //             // TODO: This is probably an internal error.
-    //             //   (This should never happen: $depth is only >0 when there was a valid '${' sequence earlier in the string.)
-    //             //   (This is important because this would imply no depth change,
-    //             //   yet the current version of this function assumes that
-    //             //   depth has ALREADY changed, so if this calculation happens, it could lead to desync.)
-    //             // No opening '{' character.
-    //             // Or, '{' is not preceded by '$', and with no hope to find a '${' before that.
-    //             // In this case, we just assume the '}' isn't part of an expansion.
-    //             // Thus, we skip it.
-    //             $pos++;
-    //             $nchars--;
-    //             return;
-    //         }
-    //
-    //         $peek += $slice_offset; // Crucial adjustment! (Because of above \substr needed to use \strrpos.)
-    //         $peek--; // Look 1 character before the '{'.
-    //         if ( $text[$peek] !== '$' ) {
-    //             // '{' character is not preceded by '$' character.
-    //             // This suggests a '{' appears within an expansion, like this:
-    //             // '${foo{bar}', which is illegal syntax.
-    //             // We handle this by substituting with the empty string.
-    //             // But first, we must keep searching for the proper '${',
-    //             // otherwise we don't know which region to substitute.
-    //             // (And if we don't find it, then we just treat this all
-    //             // as non-syntax and skip+ignore it, per the earlier check.)
-    //             $have_invalid_char = true;
-    //             continue;
-    //         }
-    //
-    //         // phpstan-ignore  function.alreadyNarrowedType
-    //         assert($text[$peek] === '$');
-    //
-    //         // TODO: We shouldn't requier depth to change here.
-    //         //   (In principle, it has already changed by the time this is called.)
-    //         // // At this point we have SOME kind of ${...} construct,
-    //         // // so we can reduce depth, because after substitution
-    //         // // of that ${...}, we'll be in the enclosing scope.
-    //         // $depth--;
-    //
-    //         // Now we begin figuring out syntax bounds and do validation.
-    //         $tmp_outer_lo = $peek;
-    //         $tmp_inner_lo = $peek + 2; // Skip the '${'
-    //         if ( $have_invalid_char ) {
-    //             // Expansion contains illegal '{' character not preceded by '$'.
-    //             // Substitute with empty string. ($tmp_inner_lo === $tmp_inner_hi)
-    //             $tmp_inner_hi = $tmp_inner_lo;
-    //             return;
-    //         }
-    //
-    //         // Attempt whitespace+identifier parsing.
-    //         $nchars = $tmp_inner_hi - $tmp_inner_lo;
-    //         $tmp_inner_lo += \strspn($text, " \r\n\t", $tmp_inner_lo, $nchars); // Skip whitespace.
-    //         if ( $tmp_inner_lo === $tmp_inner_hi ) {
-    //             // We expected to see an identifier, and we did not.
-    //             // So we'll substitute with empty string.
-    //             $tmp_inner_hi = $tmp_inner_lo;
-    //             return;
-    //         }
-    //         // We don't do strict identifier checking.
-    //         // After all, things like $0 are valid, so ${0} should also be valid.
-    //         //$ch0 = $text[$tmp_inner_lo];
-    //         //if ( !\ctype_alpha($ch0) && $ch0 !== '_' ) {
-    //         //    // Not a valid start character for an identifier.
-    //         //    // So we'll substitute with empty string.
-    //         //    $tmp_inner_hi = $tmp_inner_lo;
-    //         //    return;
-    //         //}
-    //         $pos    = $tmp_inner_lo;
-    //         $nchars = $tmp_inner_hi - $tmp_inner_lo;
-    //         $identifier_len = \strspn($text, self::IDENTIFIER_CHARS, $tmp_inner_lo, $nchars); // Identifier.
-    //         $pos    += $identifier_len;
-    //         $nchars -= $identifier_len;
-    //         $nchars -= \strspn($text, " \r\n\t", $pos, $nchars); // Skip whitespace.
-    //         if ( $nchars !== 0 ) {
-    //             // Expansion contents invalid in some way, ex:
-    //             // `${ foo 4}` or `${ foo bar }` or `${foo%}`
-    //             // So we'll substitute with empty string.
-    //             $tmp_inner_hi = $tmp_inner_lo;
-    //             return;
-    //         }
-    //
-    //         // Trim off any whitespace on the right side of the identifier.
-    //         $tmp_inner_hi = $tmp_inner_lo + $identifier_len;
-    //
-    //         // Done. The caller now has the correct indices for expansion.
-    //         return;
-    //     }
-    // }
 
     private const ESC_HEX     = 0xFE;
     private const ESC_UNICODE = 0xFF;
@@ -649,11 +530,6 @@ class PHPStanConfig_StringInterpolation
         return true;
     }
 
-    // TODO: Delete unnecessary comments after testing/commit
-    // TODO: probably can't opportunistically the whitespace escapse here.
-    // That's because we need to emit a "depth increase" event first.
-    // This also opportunistically tokenizes whitespace escape sequences.
-
     /**
     * Function that looks for any presence of expansion or escape sequences.
     *
@@ -733,11 +609,6 @@ class PHPStanConfig_StringInterpolation
                     // characters in the string.
                     return false;
                 }
-
-                // TODO: $depth should already be set by caller, right? (for symmetry with rescan function)
-                // // In either case, we'll need subsequent substitutions.
-                // // So note the depth increase, then proceed.
-                // $depth++;
 
                 // Check for valid whitespace sequences.
                 // Note that we can't opportunistically tokenize them,
@@ -859,40 +730,6 @@ class PHPStanConfig_StringInterpolation
         // inner slice -> An identifier to look up in the environment/dictionary.
         // outer slice -> Segment of text to replace with the lookup result.
         return true;
-
-        // // Why each character can halt scanning:
-        // // * '$' indicates a nested substitution.
-        // // * '}' indicates the end of the expansion.
-        // $skip_len = \strcspn($text, '$}', $pos, $nchars);
-        // if ($skip_len === 0) {
-        //     $outstr .= '${}';
-        //     $pos++;
-        //     $nchars--;
-        //     continue;
-        // }
-        //
-        // // Expand the variable with the given name.
-        // $name .= \substr($text, $pos, $skip_len);
-        // $pos    += $skip_len;
-        // $nchars -= $skip_len;
-        //
-        // // A more sophisiticated version would interpolate $name
-        // // here, but at time of writing, we don't need that.
-        //
-        // if (\array_key_exists($name, $env)) {
-        //
-        // }
-        // // TODO: the expansion itself
-        // // (Also handle all 3 cases:
-        // // * Key/name does not exist
-        // // * Key/name is empty string
-        // // * Key/name is valid
-        //
-        // // Skip the '}'
-        // assert($text[$pos] === '}');
-        // $pos++;
-        // $nchars--;
-        // continue;
     }
 
 
@@ -1636,11 +1473,16 @@ class PHPStanConfig_StringInterpolation
             //   have already been performed. This is what
             //   `interpolate`+`interpolate_first` will do,
             //   and it saves us from having to do bracket-matching/counting.
-
-            // TODO: New logic: The caller is responsible for calling `find_start_of_bracketed_expansion`
-            //   (Because the caller will want to call it on their _working_ string, not this function's `$text` argument.)
-            // Signal to the caller that they must call `find_start_of_bracketed_expansion`
-            // and then perform the outer substitution on their working string.
+            //
+            // Notably, the caller is responsible for calling `find_start_of_bracketed_expansion`
+            // (Because the caller will want to call it on their _working_ string,
+            // not this function's `$text` argument.)
+            // Then the caller should perform the outer substitution on their working string.
+            //
+            // We will signal to the caller that they must call `find_start_of_bracketed_expansion`
+            // by returning a zero-width slice with a different `depth`
+            // value than before. This is the conventional way to emit
+            // a "depth decrease" event.
             $depth--;
 
             // We position to just after the '}' and ensure a zero-width match,
@@ -1652,24 +1494,6 @@ class PHPStanConfig_StringInterpolation
             //$tmp_inner_hi = $pos; // ditto
             $tmp_outer_hi = $pos;
             return true;
-
-            // $tmp_outer_lo = $slice_offset;
-            // $tmp_inner_lo = $slice_offset;
-            // $tmp_inner_hi = $pos;
-            // $tmp_outer_hi = $pos+1;
-            // self::rescan_curly_brace_expansion(
-            //     $text, $slice_offset, $pos, $nchars,
-            //     $tmp_outer_lo, $tmp_inner_lo, $tmp_inner_hi, $tmp_outer_hi
-            // );
-            //
-            // // If $pos ended up within the expansion,
-            // // then we know that we _aren't_ skipping it as non-syntax.
-            // if ( $pos < $tmp_outer_hi ) {
-            //     break;
-            // }
-            //
-            // // Restart scanning from just after the '}'.
-            // continue;
         }
 
         assert(self::debug_msg(''));
@@ -1771,15 +1595,6 @@ class PHPStanConfig_StringInterpolation
         }
 
         assert(self::debug_msg('')); // @phpstan-ignore function.alreadyNarrowedType
-        // TODO: This comment is now wrong.
-        //       Delete it when committing finished code.
-        // // Three possibilities are before us:
-        // // * Bracket expansions like `${FOO}`, so ch0='$' and ch1='{'
-        // // * Simple expressions like `$FOO` and `%FOO%`.
-        // // * Invalid sequences like `$&` and `%&` and `%{`.
-        // //
-        // // In either case, we will want to skip `ch1`.
-        // // So we can safely advance at this point.
 
         // Handle bracketed expansion.
         if ($ch0 === self::CH_DOLLAR && $ch1 === self::CH_CURLY_OPEN)
@@ -1808,21 +1623,6 @@ class PHPStanConfig_StringInterpolation
             // pattern will not require caller intervention if the
             // pattern is a shallow expansion.
 
-
-            // TODO: This is wrong.
-            // We should try to scan for a shallow bracket expression FIRST.
-            // If it's not shallow, THEN we increment depth and return
-            // a zero-width anchor indicating the start of a nested expansion.
-            // WAIT
-            // Actually this is right.
-            // If the caller doesn't optimize, this will end up doing
-            // the correct thing, because the next call will provide
-            // exactly the right substitution coordinates.
-            // If the caller optimizes, then they should notice that
-            // depth decrease in the same caller-frame as it increased,
-            // thus absolving the caller of needing to append intermediate
-            // expansions onto its working string.
-
             // Advance past the '{'
             $pos++;
             $nchars--;
@@ -1836,39 +1636,6 @@ class PHPStanConfig_StringInterpolation
                 $tmp_outer_lo, $tmp_inner_lo, $tmp_inner_hi, $tmp_outer_hi,
                 $depth);
             return $res;
-
-            // // The bracket parser is confident that the '${'
-            // // can be treated as invalid stuff to leave in the string,
-            // // AND that there is no more syntax in the rest of the string.
-            // // (Case where we hit EOS before completing the ${...} expansion.)
-            // if ( !$have_syntax ) {
-            //     return false;
-            // }
-            //
-            // // A zero-length slice would indicate that there is no substitution,
-            // // and that the parser should advance to the location of the slice.
-            // // So we check for the opposite case: a non-zero-length slice,
-            // // which suggests we need to stop and perform a substitution.
-            // if ( $tmp_outer_lo < $tmp_outer_hi )
-            // {
-            //     // Suggest to the caller that they should perform a substitution.
-            //     return true;
-            // }
-            //
-            // // This means the bracket parser
-            // // wants us to continue scanning.
-            // // It has set $depth, $pos, and $nchars
-            // // to whatever the scanner needs to see.
-            // // This will mean that the bracket parser hit
-            // // nested substitutions and it needs to reset
-            // // the enclosing context after increasing depth,
-            // // OR it encountered some kind of invalid sequence
-            // // without knowing where the closing '}' is,
-            // // so it needs the scanner to reset at the point
-            // // just past the invalid sequence and progress towards
-            // // the '}' with the knowledge that there can
-            // // be arbitrary syntax before the '}'.
-            // continue;
         }
 
         assert(self::debug_msg('')); // @phpstan-ignore  function.alreadyNarrowedType
@@ -2168,80 +1935,6 @@ class PHPStanConfig_StringInterpolation
         $inner_hi = $tmp_inner_hi;
         $outer_hi = $tmp_outer_hi;
         return true;
-
-        // while(true)
-        // {
-        //     $skip_len = \strcspn($text, '$%\\', $pos, $nchars);
-        //     if ( 0 < $skip_len ) {
-        //         $outstr .= \substr($text, $pos, $skip_len);
-        //     }
-        //     $pos    += $skip_len;
-        //     $nchars -= $skip_len;
-        //
-        //
-        //     if ($nchars === 1) {
-        //         $outstr .= $text[$pos];
-        //         return $outstr;
-        //     }
-        //
-        //     // Scan 1 character and peek a 2nd.
-        //     $ch0 = $text[$pos];
-        //     $pos++;
-        //     $nchars--;
-        //     $ch1 = $text[$pos];
-        //
-        //     // Output escape-sequence replacements.
-        //     if (($ch0 === '\\')
-        //     ||  ($ch0 === '%'  && $ch1 === '%')
-        //     ||  ($ch0 === '$'  && $ch1 === '$'))
-        //     {
-        //         $outstr .= $ch1;
-        //         $pos++;
-        //         $nchars--;
-        //         continue;
-        //     }
-        //
-        //     // Handle environment-variable expansion.
-        //     if ($ch1 === '{') {
-        //         $pos++;
-        //         $nchars--;
-        //         $skip_len = \strcspn($text, '}', $pos, $nchars);
-        //         if ($skip_len === 0) {
-        //             $outstr .= '${}';
-        //             $pos++;
-        //             $nchars--;
-        //             continue;
-        //         }
-        //
-        //         // Expand the variable with the given name.
-        //         $name .= \substr($text, $pos, $skip_len);
-        //         $pos    += $skip_len;
-        //         $nchars -= $skip_len;
-        //
-        //         // A more sophisiticated version would interpolate $name
-        //         // here, but at time of writing, we don't need that.
-        //
-        //         if (\array_key_exists($name, $env)) {
-        //
-        //         }
-        //         // TODO: the expansion itself
-        //         // (Also handle all 3 cases:
-        //         // * Key/name does not exist
-        //         // * Key/name is empty string
-        //         // * Key/name is valid
-        //
-        //         // Skip the '}'
-        //         assert($text[$pos] === '}');
-        //         $pos++;
-        //         $nchars--;
-        //         continue;
-        //     }
-        //
-        //     if ( $ch0 === '%' ) {
-        //     }
-        // }
-        //
-        // return true;
     }
 
     private static function interpolator_val_to_string(mixed  $val) : string

@@ -71,7 +71,6 @@ class determine_cli_options extends PHPStanConfig_TextListScript
         }
     }
 
-    // TODO: Call \getenv and provide $ENV_VAR and %ENV_VAR% substitution.
     // Also ensure that there is a $PHPSTAN_NEON_CONFIG_FILE variable always defined.
     private function extract_phpstan_opts_from_line(string $path, int $line_number, string $line_contents) : bool
     {
