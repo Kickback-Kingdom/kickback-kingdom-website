@@ -19,11 +19,11 @@ class UnittestEntryPoint
         // * Dependency order as a priority
         // * Alphabetic when packages are peers
 
-        echo ("STUB: ".__METHOD__." is missing unittest implementation(s).\n");
-        // echo("===== Running all ".__NAMESPACE__." unittests =====\n\n");
-        // \Kickback\Services\Database::unittests();
-        // \Kickback\Services\Session::unittests();
-        // echo("----- Finished ".__NAMESPACE__." unittests -----\n\n\n");
+        echo("===== Running all ".__NAMESPACE__." unittests =====\n\n");
+        //\Kickback\Services\Database::unittests();
+        //\Kickback\Services\Session::unittests();
+        \Kickback\Services\StripeService::unittests();
+        echo("----- Finished ".__NAMESPACE__." unittests -----\n\n\n");
     }
 }
 ?>
