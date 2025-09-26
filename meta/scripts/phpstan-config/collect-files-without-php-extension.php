@@ -36,9 +36,30 @@ class collect_files_without_php_extension extends PHPStanConfig_Script
     {
         $this->parse_args($args);
         $resolved_paths = $this->resolve_paths();
+        if (0 === \count($resolved_paths)) {
+            $this->ensure_empty_file_exists();
+            return; // Nothing to scan.
+        }
         $this->output->open();
         $this->scope_exit(fn() => $this->output->close());
         $this->scan_for_php_files_within_roots($resolved_paths);
+    }
+
+    /**
+    * This gets called if we didn't have any input files.
+    *
+    * In this case, we ensure that the `phpstan-files-without-php-extension.neon`
+    * (or whatever it's called) file exists, so that PHPStan won't crash
+    * when the main .neon file tries to include a non-existing file.
+    */
+    private function ensure_empty_file_exists() : void
+    {
+        $this->output->open(); // This will mkdir for us, if needed.
+        try {
+            $this->output->ftruncate(0);
+        } finally {
+            $this->output->close();
+        }
     }
 
     /**
@@ -92,9 +113,18 @@ class collect_files_without_php_extension extends PHPStanConfig_Script
             }
         }
 
-        if (0 === \count($resolved_paths)) {
-            $this->err->abort("Error: no valid paths provided.\n");
-        }
+        // This error has been disabled and replaced with logic elsewhere
+        // that just makes the output file exist and then aborts.
+        // It just seems to alarmist when encountered.
+        // This probably doesn't need to be an "Error" because the subsequent
+        // execution of PHPStan will work fine as long as the output
+        // file _exists_ (even if it has nothing in it).
+        // Earlier logic will already emit a warning stating that the
+        // the folder we're looking in doesn't exist, and that will
+        // be plenty of notice to the user (e.g. ourselves).
+        // if (0 === \count($resolved_paths)) {
+        //     $this->err->abort("Error: no valid paths provided.\n");
+        // }
 
         return $resolved_paths;
     }

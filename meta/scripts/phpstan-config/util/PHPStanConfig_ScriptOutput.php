@@ -49,6 +49,14 @@ class PHPStanConfig_ScriptOutput
         \fwrite(\STDOUT, $msg);
     }
 
+    public function ftruncate(int $to_size) : void
+    {
+        if ( isset($this->file_handle) ) {
+            \ftruncate($this->file_handle, $to_size);
+            return;
+        }
+    }
+
     public function open() : void
     {
         if (!isset($this->output_path)) {
