@@ -223,8 +223,16 @@ final class ServiceCredentials implements \ArrayAccess
         // Kickback Kingdom auth info; used to establish sessions with backend API
         $error_count += (int)!$this->credential_string_exists       ("kk_service_key");
 
-        //ipinfo_api_key used for analytics
+        // ipinfo_api_key used for analytics
         $error_count += (int)!$this->credential_string_exists       ("ipinfo_api_key");
+
+        // Stripe thingies
+        $error_count += (int)!$this->credential_string_exists       ("stripe_publishable_key");
+        $error_count += (int)!$this->credential_string_exists       ("stripe_secret_key");
+        $error_count += (int)!$this->credential_of_given_type_exists("stripe_redirect_uri", "URL", FILTER_VALIDATE_URL);
+
+        // OpenAI API key for image generation
+        $error_count += (int)!$this->credential_string_exists       ("openai_api_key");
 
         return ($error_count > 0);
     }
@@ -462,6 +470,27 @@ final class ServiceCredentials implements \ArrayAccess
     public static function get_steam_web_api_key() : ?string
     {
         $val = self::get('steam_web_api_key');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_stripe_publishable_key() : ?string
+    {
+        $val = self::get('stripe_publishable_key');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_stripe_secret_key() : ?string
+    {
+        $val = self::get('stripe_secret_key');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_stripe_redirect_uri() : ?string
+    {
+        $val = self::get('stripe_redirect_uri');
         return is_string($val) ? $val : null;
     }
 
