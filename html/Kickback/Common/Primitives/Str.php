@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Primitives;
 
+use Kickback\Common\Primitives\Int_;
+
 /**
 * Extended functionality for the `string` type.
 *
@@ -1837,6 +1839,364 @@ final class Str
             fn(string $fqdn):string => $fqdn);
     }
 
+    /**
+    * @param   string            $dest
+    * @param   int<0,max>        $offset
+    * @param   int<0,max>        $nbytes
+    * @param   non-empty-string  $default_fill
+    */
+    public static function grow_destination_string_as_needed(
+        ?string  &$dest,
+        int      $offset,
+        int      $nbytes,
+        string   $default_fill
+    ) : void
+    {
+        if (isset($dest)) {
+            $len = \strlen($dest);
+        } else {
+            $len = 0;
+        }
+
+        // have = \strlen($dest) - $offset
+        // Note that it's possible to "have" negative characters.
+        // This happens when there is a gap between the end of the buffer
+        // and the requested start offset. We shall fill such gaps.
+        // Thankfully, that folds effortlessly into the general case.
+        $need = $nbytes - ($len - $offset); // need = requested - have
+        $fill_len = \strlen($default_fill);
+
+        if (!isset($dest)) {
+            if ($need < $fill_len) {
+                $dest = \substr($default_fill, 0, $need);
+                return;
+            }
+            $dest = $default_fill;
+            $need -= $fill_len;
+        }
+
+        while ($fill_len <= $need) { // e.g. we can't do it in one fill
+            $dest .= $default_fill;
+            $need -= $fill_len;
+        }
+        if ($need > 0) {
+            $dest .= \substr($default_fill, 0, $need);
+        }
+        assert($offset + $nbytes <= \strlen($dest));
+    }
+
+    /**
+    * @param  int<0,max>  $pos
+    * @param  int<0,max>  $len
+    */
+    private static function testfill_grow_destination_string_as_needed(
+        string $s,  int $pos,  int $len
+    ) : string
+    {
+        $testfill = '####';
+        self::grow_destination_string_as_needed($s, $pos, $len, $testfill);
+        return $s;
+    }
+
+    private static function unittest_grow_destination_string_as_needed() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        $grow = self::testfill_grow_destination_string_as_needed(...);
+
+        // Cases where resize isn't needed.
+        assert($grow('1234', 0, 4) === '1234');
+        assert($grow('1234', 1, 3) === '1234');
+        assert($grow('1234', 0, 3) === '1234');
+
+        // Extension resizing.
+        assert($grow('',    0, 4) === '####');
+        assert($grow('A',   0, 4) === 'A###');
+        assert($grow('AB',  0, 4) === 'AB##');
+        assert($grow('ABC', 0, 4) === 'ABC#');
+        assert($grow('',    0, 1) === '#');
+
+        // Ditto, but starting not at the beginning of string.
+        assert($grow('123',    3, 4)  === '123####');
+        assert($grow('123A',   3, 4)  === '123A###');
+        assert($grow('123AB',  3, 4)  === '123AB##');
+        assert($grow('123ABC', 3, 4)  === '123ABC#');
+
+        // Allocating at an offset past end-of-string.
+        assert($grow('',    4, 4) === '########');
+        assert($grow('A',   4, 4) === 'A#######');
+        assert($grow('AB',  4, 4) === 'AB######');
+        assert($grow('ABC', 4, 4) === 'ABC#####');
+        assert($grow('123',    7, 4)  === '123########');
+        assert($grow('123A',   7, 4)  === '123A#######');
+        assert($grow('123AB',  7, 4)  === '123AB######');
+        assert($grow('123ABC', 7, 4)  === '123ABC#####');
+
+        // Allocating more than $testfill='####'.
+        assert($grow('',    0, 5) === '#####');
+        assert($grow('A',   0, 5) === 'A####');
+        assert($grow('AB',  0, 5) === 'AB###');
+        assert($grow('ABC', 0, 5) === 'ABC##');
+        assert($grow('',    0, 6) === '######');
+        assert($grow('A',   0, 6) === 'A#####');
+        assert($grow('AB',  0, 6) === 'AB####');
+        assert($grow('ABC', 0, 6) === 'ABC###');
+        assert($grow('',    0, 7) === '#######');
+        assert($grow('A',   0, 7) === 'A######');
+        assert($grow('AB',  0, 7) === 'AB#####');
+        assert($grow('ABC', 0, 7) === 'ABC####');
+        assert($grow('',    0, 8) === '########');
+        assert($grow('A',   0, 8) === 'A#######');
+        assert($grow('AB',  0, 8) === 'AB######');
+        assert($grow('ABC', 0, 8) === 'ABC#####');
+
+        // Allocating more than $testfill='####', nonzero offset.
+        assert($grow('123',    3, 5)  === '123#####');
+        assert($grow('123A',   3, 5)  === '123A####');
+        assert($grow('123AB',  3, 5)  === '123AB###');
+        assert($grow('123ABC', 3, 5)  === '123ABC##');
+        assert($grow('123',    3, 8)  === '123########');
+        assert($grow('123A',   3, 8)  === '123A#######');
+        assert($grow('123AB',  3, 8)  === '123AB######');
+        assert($grow('123ABC', 3, 8)  === '123ABC#####');
+
+        // Allocating more than $testfill='####', offset past end-of-string.
+        assert($grow('',    4, 5) === '#########');
+        assert($grow('A',   4, 5) === 'A########');
+        assert($grow('AB',  4, 5) === 'AB#######');
+        assert($grow('ABC', 4, 5) === 'ABC######');
+        assert($grow('',    4, 8) === '############');
+        assert($grow('A',   4, 8) === 'A###########');
+        assert($grow('AB',  4, 8) === 'AB##########');
+        assert($grow('ABC', 4, 8) === 'ABC#########');
+        assert($grow('123',    7, 10)  === '123##############');
+        assert($grow('123A',   7, 10)  === '123A#############');
+        assert($grow('123AB',  7, 10)  === '123AB############');
+        assert($grow('123ABC', 7, 10)  === '123ABC###########');
+
+        // `dst` with a `null` value.
+        $dst=null;
+        $offset=0;
+        $width_in_chars=1;
+        self::grow_destination_string_as_needed(
+            $dst, $offset, $width_in_chars, self::ZERO_DIGITS_16);
+        assert($dst === '0');
+    }
+
+    private const ZERO_DIGITS_16 = '0000000000000000';
+    //private const NYBBLE_TO_UPPER_HEX =
+    //    [0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 // '0' - '9'
+    //    ,0x41, 0x42, 0x43, 0x44, 0x45, 0x46]; // 'A' - 'F'
+    private const NYBBLE_TO_UPPER_HEX_CHAR = '0123456789ABCDEF';
+
+    // TODO: Document these functions. (They are potentially quite handy.)
+    /**
+    * @param      int         $intval
+    * @param      int<0,max>  $width_in_chars
+    * @param      ?string     $dst
+    * @param-out  string      $dst
+    * @param      int<0,max>  $offset
+    */
+    public static function write_as_hex_pad0(
+        int      $intval,
+        int      $width_in_chars,
+        ?string  &$dst = null,
+        int      &$offset = 0
+    ) : string
+    {
+        self::grow_destination_string_as_needed(
+            $dst, $offset, $width_in_chars, self::ZERO_DIGITS_16);
+
+        $hex_digit_lookup = self::NYBBLE_TO_UPPER_HEX_CHAR;
+        $start = $offset;
+        $end = $offset + $width_in_chars;
+        $shift = $width_in_chars * 4; // 16 chars -> 64-bit, 8 chars -> 32-bit, etc.
+        while($offset < $end) {
+            $shift -= 4;
+            $src_nybble = ($intval >> $shift) & 0xF;
+            $hex_rep = $hex_digit_lookup[$src_nybble];
+            $dst[$offset++] = $hex_rep;
+        }
+
+        return \substr($dst, $start, $width_in_chars);
+    }
+
+    private static function unittest_write_as_hex_pad0() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        //$write_as_hex_pad0 = function(int $v, int $w) : string
+        //{
+        //    $dst = null;
+        //    $offset = 0;
+        //    return self::write_as_hex_pad0($v, $w, $dst, $offset);
+        //};
+
+        assert(self::write_as_hex_pad0( 0, 1) === '0');
+        assert(self::write_as_hex_pad0( 1, 1) === '1');
+        assert(self::write_as_hex_pad0( 1, 2) === '01');
+        assert(self::write_as_hex_pad0( 9, 1) === '9');
+        assert(self::write_as_hex_pad0( 9, 2) === '09');
+        assert(self::write_as_hex_pad0(15, 1) === 'F');
+        assert(self::write_as_hex_pad0(15, 2) === '0F');
+        assert(self::write_as_hex_pad0( 0, 0) === '');
+        assert(self::write_as_hex_pad0(15, 0) === '');
+
+        assert(self::write_as_hex_pad0(0xCAFEBABE, 8)  === 'CAFEBABE');
+        assert(self::write_as_hex_pad0(0xCAFEBABE, 12) === '0000CAFEBABE');
+        assert(self::write_as_hex_pad0(0xCAFEBABE, 2)  === 'BE');
+        assert(self::write_as_hex_pad0(0x0AFEBABE, 8)  === '0AFEBABE');
+        assert(self::write_as_hex_pad0(0x0AFEBABE, 7)  === 'AFEBABE');
+        assert(self::write_as_hex_pad0(0x0AFEBABE, 6)  === 'FEBABE');
+
+        $pos    = 10;
+        $buffer = 'The quick brown fox jumped over the lazy dog.';
+        assert(self::write_as_hex_pad0(0xF100F, 5, $buffer, $pos) === 'F100F'); $pos++;
+        assert($buffer === 'The quick F100F fox jumped over the lazy dog.');
+        assert(self::write_as_hex_pad0(0xEEF,   3, $buffer, $pos) === 'EEF'); $pos++;
+        assert($buffer === 'The quick F100F EEF jumped over the lazy dog.');
+        assert(self::write_as_hex_pad0(0xF1EEF, 6, $buffer, $pos) === '0F1EEF'); $pos++;
+        assert($buffer === 'The quick F100F EEF 0F1EEF over the lazy dog.');
+        assert(self::write_as_hex_pad0(0, 1, $buffer, $pos) === '0');
+        assert($buffer === 'The quick F100F EEF 0F1EEF 0ver the lazy dog.');
+    }
+
+    /**
+    * @param      int         $intval
+    * @param      ?string     $dst
+    * @param-out  string      $dst
+    * @param      int<0,max>  $offset
+    */
+    public static function write_as_hex_no_pad(
+        int      $intval,
+        ?string  &$dst = null,
+        int      &$offset = 0
+    ) : string
+    {
+        // The number of nybbles is the same as the number of characters
+        // that we will need to print to display $intval.
+        $width_in_chars = Int_::number_of_nybbles_needed_to_represent($intval);
+
+        // We can use this function now because we've calculated exactly
+        // how many characters it will output without padding, so it
+        // won't have any padding to print.
+        return self::write_as_hex_pad0($intval, $width_in_chars, $dst, $offset);
+    }
+
+    private static function unittest_write_as_hex_no_pad() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        $write_as_hex_no_pad = function(int $v) : string
+        {
+            $dst = null;
+            $offset = 0;
+            return self::write_as_hex_no_pad($v, $dst, $offset);
+        };
+
+        assert($write_as_hex_no_pad( 0)  === '0');
+        assert($write_as_hex_no_pad( 1)  === '1');
+        assert($write_as_hex_no_pad( 9)  === '9');
+        assert($write_as_hex_no_pad(15)  === 'F');
+        assert($write_as_hex_no_pad(16)  === '10');
+        assert($write_as_hex_no_pad(255) === 'FF');
+        assert($write_as_hex_no_pad(256) ===  '100');
+        assert($write_as_hex_no_pad(4095) === 'FFF');
+        assert($write_as_hex_no_pad(4096) ===  '1000');
+        assert($write_as_hex_no_pad(65535) === 'FFFF');
+        assert($write_as_hex_no_pad(65536) === '10000');
+
+        assert($write_as_hex_no_pad(0xCAFEBABE) === 'CAFEBABE');
+        assert($write_as_hex_no_pad(0x0AFEBABE) === 'AFEBABE');
+
+        $pos    = 10;
+        $buffer = 'The quick brown fox jumped over the lazy dog.';
+        assert(self::write_as_hex_no_pad(0xF100F, $buffer, $pos) === 'F100F'); $pos++;
+        assert($buffer === 'The quick F100F fox jumped over the lazy dog.');
+        assert(self::write_as_hex_no_pad(0xEEF,   $buffer, $pos) === 'EEF'); $pos++;
+        assert($buffer === 'The quick F100F EEF jumped over the lazy dog.');
+        assert(self::write_as_hex_no_pad(0xF1EEF, $buffer, $pos) === 'F1EEF');
+        assert($buffer === 'The quick F100F EEF F1EEFd over the lazy dog.');
+    }
+
+    private const NONPRINTABLE_ASCII_ESCAPE_LOOKUP = [
+        '\\0',    '\\1',   '\\2',   '\\3',   '\\4',   '\\5',   '\\6',   '\\7',
+        '\\10',   '\\t',   '\\n',   '\\v',   '\\f',   '\\r',  '\\16',  '\\17',
+        '\\20',  '\\21',  '\\22',  '\\23',  '\\24',  '\\25',  '\\26',  '\\27',
+        '\\30',  '\\31',  '\\32',   '\\e',  '\\34',  '\\35',  '\\36',  '\\37'];
+
+    public static function escape_nonprintable_ascii(string $str) : string
+    {
+        static $printable_chars =
+            ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'.
+            '[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
+
+        $lookup = self::NONPRINTABLE_ASCII_ESCAPE_LOOKUP;
+        $lookup_len = 32;
+        $pos = 0;
+        $len = \strspn($str, $printable_chars, $pos);
+        $output = \substr($str, $pos, $len);
+        $pos += $len;
+        while($pos < \strlen($str)) {
+            $ch = $str[$pos];
+            $chcode = \ord($ch);
+            switch(true)
+            {
+                case $chcode <  32:  $output .= $lookup[$chcode]; break;
+                case $chcode >= 127: $output .= \sprintf('\\x%02X', $chcode); break;
+                default: $output .= $ch;
+            }
+            $pos++;
+            $len = \strspn($str, $printable_chars, $pos);
+            $output .= \substr($str, $pos, $len);
+            $pos += $len;
+        }
+
+        return $output;
+    }
+
+    private static function unittest_escape_nonprintable_ascii() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        // Shorthand.
+        $eggscape = fn(string $s) => self::escape_nonprintable_ascii($s);
+
+        // baseline
+        assert($eggscape('') === '');
+        assert($eggscape('0') === '0');
+        assert($eggscape('a') === 'a');
+
+        // isolated easy stuff
+        assert($eggscape("\0") === '\\0');
+        assert($eggscape("\r") === '\\r');
+        assert($eggscape("\n") === '\\n');
+        assert($eggscape("\t") === '\\t');
+        assert($eggscape("\e") === '\\e');
+
+        // octal codes for lower range control sequences
+        assert($eggscape("\1")  === '\\1');
+        assert($eggscape("\7")  === '\\7');
+        assert($eggscape("\10") === '\\10');
+        assert($eggscape("\17") === '\\17');
+        assert($eggscape("\20") === '\\20');
+        assert($eggscape("\27") === '\\27');
+        assert($eggscape("\30") === '\\30');
+        assert($eggscape("\37") === '\\37');
+
+        // hex for DEL and the stuff above ascii range
+        assert($eggscape("\x7E") === '~');
+        assert($eggscape("\x7F") === '\\x7F');
+        assert($eggscape("\x80") === '\\x80');
+        assert($eggscape("\xFF") === '\\xFF');
+
+        // now for some actual strings
+        assert($eggscape("Hello world!\n") === 'Hello world!\\n');
+        assert($eggscape("1\n2\n3") === '1\\n2\\n3');
+        assert($eggscape("fld1\0fld2\0") === 'fld1\\0fld2\\0');
+        assert($eggscape("foo\r\nbaz\nqux\rquux") === 'foo\\r\\nbaz\\nqux\\rquux');
+        assert($eggscape("\0\1\2\3\4\5\6\7") === '\\0\\1\\2\\3\\4\\5\\6\\7');
+    }
 
 
     /**
@@ -1860,6 +2220,10 @@ final class Str
         self::unittest_substr_replace_inplace();
         self::unittest_fqdn_bounds_from_url();
         self::unittest_fqdn_from_url();
+        self::unittest_grow_destination_string_as_needed();
+        self::unittest_write_as_hex_pad0();
+        self::unittest_write_as_hex_no_pad();
+        self::unittest_escape_nonprintable_ascii();
         //self::unittest_to_string($runner);
 
         // $runner->note("  ... passed.\n\n");
