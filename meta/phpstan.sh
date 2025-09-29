@@ -8,7 +8,7 @@ PHPSTAN_SCRIPT_BASENAME=$(basename "$PHPSTAN_SCRIPT_PATH")
 KK_DOCUMENT_ROOT="$PHPSTAN_SCRIPT_DIRECTORY/../html"
 
 if [ -z "$KK_PROJECT_ROOT" ]; then
-    KK_PROJECT_ROOT=$(dirname "$THIS_SCRIPT_DIR")
+    KK_PROJECT_ROOT=$(dirname "$PHPSTAN_SCRIPT_DIRECTORY")
 fi
 
 # Convert paths to absolute paths.
