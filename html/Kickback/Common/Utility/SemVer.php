@@ -744,7 +744,7 @@ final class SemVer
             }
         };
 
-        assert(self::ARG_WILDCARD === -1);
+        assert(self::ARG_WILDCARD === -1); // @phpstan-ignore function.alreadyNarrowedType
         assert($fmt_deconstruct('1.2.*') === '(1) (2) (-1) () ()');
         assert($fmt_deconstruct('1.2.3-*') === '(1) (2) (3) (*) ()');
         assert($fmt_deconstruct('1.2.3-*+*') === '(1) (2) (3) (*) (*)');
@@ -985,8 +985,8 @@ final class SemVer
     * @param      semver_a      $semver
     * @param      int<0,max>    $pos
     * @param-out  int<0,max>    $pos
-    * @param      int<0,max>    $slice_len
-    * @param-out  int<0,max>    $slice_len
+    * @param      int<0,max>    $rest
+    * @param-out  int<0,max>    $rest
     * @param      int<0,6>      $n_components
     * @param-out  int<0,6>      $n_components
     * @param      svnum_optp_a  $major
@@ -1835,11 +1835,11 @@ final class SemVer
     }
 
     /**
-    * @param     semver_a  $ver
-    * @param     string    $part
+    * @param     semver_a     $ver
+    * @param     string       $part
     * @param     self::IDX_MAJOR|self::IDX_MINOR|self::IDX_PATCH  $part_idx
-    * @param     ?string   $error
-    * @param-out string    $error
+    * @param     ?string      $error
+    * @param-out string       $error
     * @throws    void
     */
     private static function err_part_nondigits(string $ver, string $part, int $part_idx, ?string &$error) : void {
@@ -1848,11 +1848,11 @@ final class SemVer
     }
 
     /**
-    * @param     semver_a  $ver
-    * @param     string    $part
-    * @param     self::IDX_MAJOR|self::IDX_MINOR|self::IDX_PATCH  $part_idx
-    * @param     ?string   $error
-    * @param-out string    $error
+    * @param     semver_a     $ver
+    * @param     string       $part
+    * @param     self::IDX_*  $part_idx
+    * @param     ?string      $error
+    * @param-out string       $error
     * @throws    void
     */
     private static function err_part_leading_zeroes(string $ver, string $part, int $part_idx, ?string &$error) : void {
@@ -1861,11 +1861,11 @@ final class SemVer
     }
 
     /**
-    * @param     semver_a  $ver
-    * @param     string    $part
+    * @param     semver_a     $ver
+    * @param     string       $part
     * @param     self::IDX_PRERELEASE|self::IDX_BUILD    $part_idx
-    * @param     ?string   $error
-    * @param-out string    $error
+    * @param     ?string      $error
+    * @param-out string       $error
     * @throws    void
     */
     private static function err_part_nonalphanum(string $ver, string $part, int $part_idx, ?string &$error) : void {
@@ -2001,7 +2001,7 @@ final class SemVer
 
         // From: https://github.com/semver/semver/issues/981
         assert(SemVer::valid('0.0.4'));
-        assert(SemVer::valid('1.2.3'));
+        assert(SemVer::valid('1.2.3')); // @phpstan-ignore function.alreadyNarrowedType
         assert(SemVer::valid('10.20.30'));
         assert(SemVer::valid('1.1.2-prerelease+meta'));
         assert(SemVer::valid('1.1.2+meta'));
@@ -2173,7 +2173,7 @@ final class SemVer
         }
 
         if ( 1 < $partlen && $part[0] === '0' ) {
-            if ($report_errors) { self::err_part_leading_zeroes($ver, $part, $i, $error); }
+            if ($report_errors) { self::err_part_leading_zeroes($ver, $part, self::IDX_PATCH, $error); }
             return false;
         }
 
@@ -3851,9 +3851,11 @@ final class SemVer
 
                 // The docs claim we don't need to.
                 // But the unittests say we do!
+                // @phpstan-ignore smaller.alwaysFalse
                 if ( $res < -1 ) {
                     $res = -1;
                 } else
+                // @phpstan-ignore greater.alwaysFalse
                 if ( $res >  1 ) {
                     $res = 1;
                 }
