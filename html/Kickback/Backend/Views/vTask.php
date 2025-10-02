@@ -74,7 +74,7 @@ class vTask extends vRecordId
     /**
      * Determines if the task is expired at a given point in time.
      */
-    public function isExpired(vDateTime $now = null): bool
+    public function isExpired(?vDateTime $now = null): bool
     {
         if ($this->expiresAt === null) {
             return false;

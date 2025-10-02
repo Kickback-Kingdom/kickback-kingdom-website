@@ -5,14 +5,18 @@ namespace Kickback\Common\Exceptions\Fatal;
 
 use Kickback\Common\Version;
 use Kickback\Common\Exceptions\KickbackThrowableTrait;
+use Kickback\Common\Exceptions\Fatal\IKickbackFatalError;
 
 /**
 * Assists with defining errors when extending PHP or 3rd party exceptions.
+*
+* @phpstan-require-implements  \Kickback\Common\Exceptions\Fatal\IKickbackFatalError
 *
 * @see KickbackFatalError
 */
 trait KickbackFatalErrorTrait
 {
+    /** @use KickbackThrowableTrait<\Throwable> */
     use KickbackThrowableTrait;
 
     /**
@@ -138,6 +142,7 @@ trait KickbackFatalErrorTrait
     }
 
     /**
+    * @param  array<mixed>  $args
     * @return never
     */
     public static function __callStatic(string $method_name, array $args) : void
@@ -158,7 +163,10 @@ trait KickbackFatalErrorTrait
         }
     }
 
-    /** @return never */
+    /**
+    * @param  array<mixed>  $args
+    * @return never
+    */
     public function __call(string $method_name, array $args) : void
     {
         switch($method_name)
