@@ -11,14 +11,18 @@ class Trade extends RecordId
     public ForeignRecordId $fromAccountId;
     public ForeignRecordId $toAccountId;
     public ForeignRecordId $lootId;
+    public int $quantity;
     
     public function __construct(
         vRecordId $fromAccountId,
         vRecordId $toAccountId,
-        vRecordId $lootId
+        vRecordId $lootId,
+        int $quantity
     )
     {
         parent::__construct();
+
+        $this->quantity = $quantity;
 
         $this->fromAccountId = $fromAccountId->getForeignRecordId();
         $this->toAccountId = $toAccountId->getForeignRecordId();

@@ -6,28 +6,35 @@ namespace Kickback\Backend\Models;
 
 use Exception;
 use InvalidArgumentException;
+use Kickback\Backend\Views\vMedia;
+use Kickback\Backend\Views\vPrice;
+use Kickback\Backend\Views\vStore;
 
 class Product extends RecordId
 {
-    public string $name;
-    public string $description;
-    public string $locator;
-    public string $ref_store_ctime;
-    public int $ref_store_crand;
-    public string $ref_item_ctime;
-    public int $ref_item_crand;
+    public ?string $name;
+    public ?string $description;
+    public ?string $locator;
+    public ?vStore $store;
+
+    public ?vMedia $largeMedia;
+    public ?vMedia $smallMedia;
+    public ?vMedia $backMedia;
+
+    public bool $removed;
 
     public array $prices;
 
     public function __construct(
-        string $name,
-        string $description,
-        string $locator,
-        string $ref_store_ctime,
-        int $ref_store_crand,
-        string $ref_item_ctime,
-        int $ref_item_crand,
-        array $prices
+        string $name = '',
+        string $description = '',
+        bool $removed = false,
+        string $locator = '',
+        ?vStore $store = null,
+        array $prices = [],
+        ?vMedia $largeMedia = null,
+        ?vMedia $smallMedia = null,
+        ?vMedia $backMedia = null,
     )
     {
         parent::__construct();
@@ -35,10 +42,13 @@ class Product extends RecordId
         $this->name = $name;
         $this->description = $description;
         $this->locator = $locator;
-        $this->ref_store_ctime = $ref_store_ctime;
-        $this->ref_store_crand = $ref_store_crand;
-        $this->ref_item_ctime = $ref_item_ctime;
-        $this->ref_item_crand = $ref_item_crand;
+        $this->store = $store;
+
+        $this->removed = $removed;
+
+        $this->largeMedia = $largeMedia;
+        $this->smallMedia = $smallMedia;
+        $this->backMedia = $backMedia;
 
         $this->prices = static::validatePrices($prices) ? $prices : throw new InvalidArgumentException("Prices Array must contain only prices");
     }
@@ -47,7 +57,7 @@ class Product extends RecordId
     {
         foreach($prices as $price)
         {
-            if(!$price instanceof Price)
+            if(!$price instanceof vPrice)
             {
                 return false;
             }

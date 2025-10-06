@@ -15,10 +15,12 @@ class vCart extends vRecordId
     public vStore $store;
     public vTransaction $transaction;
 
+
+
     public bool $checkedOut;
     public bool $void;
 
-    public array $cartItems;
+    public array $cartProducts;
 
     public array $totals;
 }

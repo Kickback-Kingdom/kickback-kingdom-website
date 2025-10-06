@@ -371,7 +371,7 @@ abstract class DatabaseController
     /**
      * Executes the prepared batch insertion in the controller
      * @return Response 
-     */
+     *//*
     public static function executeBatchInsertion() : Response
     {   
         $response = new Response(false, "Unknown error in executing prepared queries", null);
@@ -397,7 +397,7 @@ abstract class DatabaseController
         }
 
         return $response;
-    }
+    }*/
 
     /**
      * Adds the object to the list of batch insertions being prepared for the controller

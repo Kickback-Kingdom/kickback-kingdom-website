@@ -17,6 +17,7 @@ class vLoot extends vRecordId
     public ?vLoot $containerLoot;
     public string $nickname;
     public string $description;
+    public int $quantity;
     
     function __construct(string $ctime = '', int $crand = -1)
     {

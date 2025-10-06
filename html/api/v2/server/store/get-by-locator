@@ -1,0 +1,37 @@
+<?php
+declare(strict_types=1);
+
+require_once(($_SERVER['DOCUMENT_ROOT'] ?: __DIR__ . "/../../../..") . "/Kickback/init.php");
+
+use Kickback\Common\Exceptions\ThrowableOverrides;
+use Kickback\Backend\Models\Response;
+use Kickback\Services\ApiV2\Endpoint;
+use Kickback\Services\StoreService;
+
+\header('Content-Type: application/json');
+
+Endpoint::begin();
+try
+{
+    $queryString = $_SERVER['QUERY_STRING'];
+    $response = null;
+    $response_code = StoreService::get_store_by_locator($queryString, $response);
+    if ( $response_code !== 0 ) {
+        \http_response_code($response_code);
+        // Otherwise let PHP/Apache/HTTPD respond with what it feels is appropriate.
+    }
+}
+catch( \Throwable $e )
+{
+    $code = ThrowableOverrides::code($e);
+    $code = ($code === 0) ? 500 : $code;
+    \http_response_code($code);
+    $response = new Response(false,
+        'Failed to create checkout session: ' . ThrowableOverrides::message($e),
+        $e->__toString());
+}
+finally {
+    Endpoint::end();
+}
+
+echo \json_encode($response);

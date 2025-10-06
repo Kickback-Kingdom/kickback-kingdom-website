@@ -696,8 +696,6 @@ class LootController
         $crand = (int)($row["Id"] ?? -1);
         $ctime = $row["ctime"] ?? '';
 
-
-
         $loot = new vLoot($ctime, $crand);
         $loot->opened = (bool)($row["opened"] ?? false);
         $loot->ownerId = new vRecordId('', (int)($row["account_id"] ?? -1));
@@ -718,6 +716,11 @@ class LootController
             $loot->containerLoot = new vLoot('', intval($row["container_loot_id"]));
         } else {
             $loot->containerLoot = null;
+        }
+
+        if(array_key_exists('quantity', $row) && $row["quantity"] != null)
+        {
+            $loot->quantity = $row["quantity"];
         }
 
         $loot->nickname = $row["nickname"] ?? '';

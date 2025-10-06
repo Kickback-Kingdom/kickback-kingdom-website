@@ -11,6 +11,8 @@ class vStore extends vRecordId
     public ?string $description;
     public ?string $ownerUsername;
     public ?vAccount $owner;
+    
+    public array $products;
 
     public function __construct(string $ctime = '', int $crand = 0)
     {
