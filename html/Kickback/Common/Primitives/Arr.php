@@ -351,22 +351,6 @@ final class Arr
         ||  ($array instanceof \ArrayAccess && $array->offsetExists($key));
     }
 
-        // TODO: Delete this comment when git commit or confident
-        // The last argument is the "stack depth" for `enforce` to use when
-        // figuring out the caller's file/func/line. By default it is 0,
-        // which would be this very line below the comment. But that isn't
-        // helpful for _our_ caller.
-        // So it's a value of 2 because there are two layers here:
-        // * One layer within the `Arr` class:
-        //     * We entered through `validate_key_exists` or `validate_is_string`
-        //         (or anything else that needs to validate key existence),
-        //         so whichever it is, that will contribute 1 stack frame.
-        // * One layer external to `Arr`:
-        //     * The code, that called whichever above function was chosen,
-        //         (`validate_key_exists, `validate_is_string`, etc)
-        //         is the _actual_ caller's file/func/line, so
-        //         that will also contribute 1 stack frame.
-
     // TODO: I'm not sure if the validate_* functions are actually "impure".
     // They modify the $errors parameter (reference param).
     // But otherwise, if they the same inputs are passed, the same output
