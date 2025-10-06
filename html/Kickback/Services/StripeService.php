@@ -34,6 +34,7 @@ use Kickback\Services\ApiV2\Endpoint;
 *
 * @phpstan-type  create_checkout_kickback_request_a  array{
 *       kk_api_ver              : string,
+*       kk_need_session?        : bool,
 *       account_id              : string,
 *       product_name            : string,
 *       unit_amount             : int,
@@ -190,12 +191,13 @@ class StripeService
 
 
     private const CHECKOUT_REQUEST_FIELDS = [
-        'kk_api_ver'   => '',
-        'account_id'   => '',
-        'product_name' => '',
-        'unit_amount'  => 0,
-        'currency'     => '',
-        'quantity'     => 0,
+        'kk_api_ver'      => '',
+        'kk_need_session' => true,
+        'account_id'      => '',
+        'product_name'    => '',
+        'unit_amount'     => 0,
+        'currency'        => '',
+        'quantity'        => 0,
         'application_fee_amount' => 0
     ];
 
@@ -219,7 +221,8 @@ class StripeService
         // Guaranteed by call to `Report::enforce` above.
         assert($request_contents !== false);
 
-        Arr::validate_key_exists($request_contents, 'kk_api_ver',   $report);
+        Arr::validate_key_exists($request_contents, 'kk_api_ver',        $report);
+        //Arr::validate_key_exists($request_contents, 'kk_need_session',   $report); optional
         Arr::validate_key_exists($request_contents, 'account_id',   $report);
         Arr::validate_key_exists($request_contents, 'product_name', $report);
         Arr::validate_key_exists($request_contents, 'unit_amount',  $report);
@@ -241,6 +244,18 @@ class StripeService
         Arr::validate_is_int_and_pos_nonzero($request_contents, 'unit_amount',  $report);
         Arr::validate_is_int_and_pos_nonzero($request_contents, 'quantity',     $report);
         Arr::validate_is_int_and_pos_nonzero($request_contents, 'application_fee_amount', $report);
+
+        if (\array_key_exists('kk_need_session',$request_contents))
+        {
+            $need_session = $request_contents['kk_need_session'];
+            $type = 'bool';
+            if ( !is_bool($need_session) ) {
+                $type = \get_debug_type($need_session);
+            }
+            Report::enforce($report,
+                is_bool($need_session),
+                "Optional field `kk_need_session` must be of type `bool`, got `$type` instead.");
+        }
 
         if (\array_key_exists('currency',$request_contents)
         &&  is_string($request_contents['currency']))
@@ -282,6 +297,7 @@ class StripeService
     * Request body (JSON):
     *   {
     *     "kk_api_ver": "1.0.0",
+    *     "kk_need_session" : true|false
     *     "account_id": "acct_...",      // Connected account ID
     *     "product_name": "Sword of Dawn",
     *     "unit_amount": 1999,            // cents
@@ -299,21 +315,11 @@ class StripeService
         string        $request_contents_json,
         ?Response     &$response) : int
     {
-        Session::ensureSessionStarted();
-
-        if (!Session::isLoggedIn()) {
-            $endpoint_name = Endpoint::calculate_endpoint_resource_name();
-            $response = new Response(false, "$endpoint_name: Authentication required");
-            return 401;
-        }
-
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $endpoint_name = Endpoint::calculate_endpoint_resource_name();
             $response = new Response(false, "$endpoint_name: Method not allowed");
             return 405;
         }
-
-        StripeService::initialize();
 
         $request_contents =
             Endpoint::decode_json_record($request_contents_json);
@@ -329,12 +335,86 @@ class StripeService
             throw $exc;
         }
 
-        $stripe_account_id = $request_contents['account_id'];
-        $product_name      = \trim($request_contents['product_name']);
-        $amount            = $request_contents['unit_amount'];
-        $currency          = \strtoupper($request_contents['currency']);
-        $quantity          = $request_contents['quantity'];
-        $appFee            = $request_contents['application_fee_amount'];
+        // TODO: This logic should be in its own function somewhere.
+        // TODO: This logic should look for an override in credentials.ini (e.g.: "allow_sessionless_api")
+        // For server-side code (beta/production), the client MUST have a session.
+        //    ... and we should ignore any `kk_need_session` value from the client.
+        // For dev-machine purposes, we'll accept the `kk_need_session` value.
+        // NOTE: DO NOT trust the contents of $_SERVER for this.
+        //   Do not use $_SERVER['HTTP_HOST'] or $_SERVER['REQUEST_URI'].
+        //   They can potentially be manipulated by the client:
+        //     https://stackoverflow.com/a/6768831
+        //   Use only values from the `credentials.ini` file, since
+        //   these would be difficult for an attacker to manipulate.
+        //   (Unless they have server access, filesystem access, and
+        //   sufficiently escalated privileges, in which case we would
+        //   have more important problems to worry about!)
+        $root_url = self::redirect_uri();
+        $fqdn = Str::fqdn_from_url($root_url);
+        if (\array_key_exists('kk_need_session', $request_contents)
+        &&  ($fqdn === 'localhost' || $fqdn === '127.0.0.2')) {
+            // Dev machine. Allow session elision.
+            $need_session = $request_contents['kk_need_session'];
+        } else {
+            // Server-side. ALWAYS require a session.
+            $need_session = true;
+        }
+
+        if ($need_session) {
+            Session::ensureSessionStarted();
+
+            if (!Session::isLoggedIn()) {
+                $endpoint_name = Endpoint::calculate_endpoint_resource_name();
+                $response = new Response(false, "$endpoint_name: Authentication required");
+                return 401;
+            }
+        }
+
+        $stripe_account_id      = $request_contents['account_id'];
+        $kk_price_per_unit      = $request_contents['unit_amount'];
+        $kk_application_fee     = $request_contents['application_fee_amount'];
+        $kk_product_id          = \trim($request_contents['product_name']);
+        $iso4127_currency_code  = \strtoupper($request_contents['currency']);
+        $qty_purchased          = $request_contents['quantity'];
+
+        $stripe_session_id  = null;
+        $stripe_session_url = null;
+        self::create_checkout(
+            $stripe_account_id,
+            $kk_product_id,
+            $kk_price_per_unit,
+            $kk_application_fee,
+            $qty_purchased,
+            $iso4127_currency_code,
+            $stripe_session_id, // return value
+            $stripe_session_url // return value
+        );
+
+        $response = new Response(true, '', [
+            'id' => $stripe_session_id,
+            'url' => $stripe_session_url
+        ]);
+        return 0; // Success / don't change HTTP response code.
+    }
+
+    /**
+    * @param      ?string   $stripe_session_id
+    * @param-out  string    $stripe_session_id
+    * @param      ?string   $stripe_session_url
+    * @param-out  string    $stripe_session_url
+    */
+    public static function create_checkout(
+        string   $stripe_account_id,
+        string   $kk_product_id,
+        int      $kk_price_per_unit,
+        int      $kk_application_fee,
+        int      $purchase_qty,
+        string   $iso4127_currency_code,
+        ?string  &$stripe_session_id,
+        ?string  &$stripe_session_url
+    ) : void
+    {
+        StripeService::initialize();
 
         // Root URL for redirects
         $root_url = self::redirect_uri();
@@ -350,17 +430,17 @@ class StripeService
             // as evidenced by Stripe's code found in github)
             'mode' => 'payment',
             'line_items' => [[
-                'quantity' => $quantity,
+                'quantity' => $purchase_qty,
                 'price_data' => [
-                    'currency' => $currency,
-                    'unit_amount' => $amount,
+                    'currency' => $iso4127_currency_code,
+                    'unit_amount' => $kk_price_per_unit,
                     'product_data' => [
-                        'name' => $product_name,
+                        'name' => $kk_product_id,
                     ],
                 ],
             ]],
             'payment_intent_data' => [
-                'application_fee_amount' => $appFee, // platform monetization
+                'application_fee_amount' => $kk_application_fee, // platform monetization
             ],
             // TODO: Implement these endpoints. They should probably be in the API tree, not at root.
             'success_url' => $root_url . '/success?session_id={CHECKOUT_SESSION_ID}',
@@ -370,11 +450,8 @@ class StripeService
             'stripe_account' => $stripe_account_id,
         ]);
 
-        $response = new Response(true, '', [
-            'id' => $session->id,
-            'url' => $session->url
-        ]);
-        return 0; // Success / don't change HTTP response code.
+        $stripe_session_id  = $session->id;
+        $stripe_session_url = $session->url;
     }
 
     /**
