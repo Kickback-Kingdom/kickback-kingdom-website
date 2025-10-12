@@ -137,6 +137,18 @@ require("php-components/base-page-pull-active-account-info.php");
         const log = document.getElementById('demo-event-log');
         const controls = document.querySelector('[data-chest-controls]');
 
+        const getLootId = (chest) => chest?.Id ?? chest?.id ?? chest?.lootId ?? chest?.loot_id;
+
+        const collectLootIds = () => {
+            if (!Array.isArray(chestData)) {
+                return [];
+            }
+
+            return chestData
+                .map((chest) => getLootId(chest))
+                .filter((lootId) => typeof lootId === 'string' || typeof lootId === 'number');
+        };
+
         const writeLog = (message) => {
             if (!log) {
                 return;
@@ -146,29 +158,6 @@ require("php-components/base-page-pull-active-account-info.php");
         };
 
         writeLog('Awaiting chest interaction.');
-
-        const getChestLabel = (chest, index) => {
-            const rarityValue = chest?.rarity;
-            const rarityMap = {
-                0: 'Common',
-                1: 'Uncommon',
-                2: 'Rare',
-                3: 'Epic',
-                4: 'Legendary',
-                5: 'Mythic'
-            };
-
-            if (typeof rarityValue === 'string' && rarityValue.trim().length > 0) {
-                return `${rarityValue} Chest ${index + 1}`;
-            }
-
-            if (typeof rarityValue === 'number') {
-                const rarityLabel = rarityMap[rarityValue] ?? 'Chest';
-                return `${rarityLabel} Chest ${index + 1}`;
-            }
-
-            return `Chest ${index + 1}`;
-        };
 
         const rarityFromItem = (item) => {
             const value = item?.rarity;
@@ -289,7 +278,7 @@ require("php-components/base-page-pull-active-account-info.php");
         reveal.root.addEventListener('lootreveal:chestopen', (event) => {
             const rewards = event.detail?.rewards ?? [];
             const total = Array.isArray(rewards) ? rewards.length : 0;
-            writeLog(`Chest opened with ${total} reward${total === 1 ? '' : 's'}.`);
+            writeLog(`Combined chest opened with ${total} item${total === 1 ? '' : 's'}.`);
         });
 
         reveal.root.addEventListener('lootreveal:close', (event) => {
@@ -299,6 +288,54 @@ require("php-components/base-page-pull-active-account-info.php");
                 StopConfetti();
             }
         });
+
+        const loadAllRewards = async (lootIds) => {
+            if (!Array.isArray(lootIds) || lootIds.length === 0) {
+                writeLog('No loot identifiers are available for the combined chest.');
+                return;
+            }
+
+            try {
+                const results = await Promise.all(
+                    lootIds.map((lootId) =>
+                        fetchChestRewards(lootId)
+                            .then((rewards) => ({ status: 'fulfilled', rewards }))
+                            .catch((error) => {
+                                console.error(`Failed to load chest rewards for lootId ${lootId}`, error);
+                                return { status: 'rejected', reason: error, lootId };
+                            })
+                    )
+                );
+
+                const aggregatedRewards = [];
+                let failedCount = 0;
+
+                results.forEach((result) => {
+                    if (result.status === 'fulfilled') {
+                        aggregatedRewards.push(...result.rewards);
+                    } else {
+                        failedCount += 1;
+                    }
+                });
+
+                if (aggregatedRewards.length === 0) {
+                    writeLog('Unable to load rewards from any chests. Please try again.');
+                    return;
+                }
+
+                const total = aggregatedRewards.length;
+                const failureSuffix = failedCount > 0
+                    ? ` (failed to load ${failedCount} chest${failedCount === 1 ? '' : 's'})`
+                    : '';
+
+                writeLog(`Combined chest ready with ${total} item${total === 1 ? '' : 's'}${failureSuffix}. Tap the chest to reveal.`);
+                reveal.open(aggregatedRewards);
+                startClosedChestConfetti();
+            } catch (error) {
+                console.error('Unexpected error while loading combined chest rewards', error);
+                writeLog('An unexpected error occurred while loading chests. Please try again.');
+            }
+        };
 
         const attachChestButtons = () => {
             if (!controls) {
@@ -315,56 +352,31 @@ require("php-components/base-page-pull-active-account-info.php");
                 return;
             }
 
-            chestData.forEach((chest, index) => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.textContent = `Open ${getChestLabel(chest, index)}`;
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = 'Open All Loot';
 
-                const lootId = chest?.Id ?? chest?.id ?? chest?.lootId ?? chest?.loot_id;
+            button.addEventListener('click', () => {
+                const lootIds = collectLootIds();
 
-                button.addEventListener('click', async () => {
-                    if (!lootId) {
-                        writeLog('Selected chest is missing an identifier.');
-                        return;
-                    }
+                if (lootIds.length === 0) {
+                    writeLog('No loot identifiers are available for the combined chest.');
+                    return;
+                }
 
-                    writeLog(`Loading ${getChestLabel(chest, index)}...`);
-
-                    try {
-                        const rewards = await fetchChestRewards(lootId);
-                        const total = rewards.length;
-                        writeLog(`Chest ready with ${total} reward${total === 1 ? '' : 's'}. Tap the chest to reveal.`);
-                        reveal.open(rewards);
-                        startClosedChestConfetti();
-                    } catch (error) {
-                        console.error('Failed to load chest rewards', error);
-                        writeLog(`Failed to load chest: ${error?.message ?? error}`);
-                    }
-                });
-
-                controls.appendChild(button);
+                writeLog('Loading combined chest rewards...');
+                loadAllRewards(lootIds);
             });
+
+            controls.appendChild(button);
         };
 
         attachChestButtons();
 
-        if (Array.isArray(chestData) && chestData.length > 0) {
-            const initialChest = chestData[0];
-            const lootId = initialChest?.Id ?? initialChest?.id ?? initialChest?.lootId ?? initialChest?.loot_id;
-
-            if (lootId) {
-                fetchChestRewards(lootId)
-                    .then((rewards) => {
-                        const total = rewards.length;
-                        writeLog(`Chest ready with ${total} reward${total === 1 ? '' : 's'}. Tap the chest to reveal.`);
-                        reveal.open(rewards);
-                        startClosedChestConfetti();
-                    })
-                    .catch((error) => {
-                        console.error('Failed to load initial chest rewards', error);
-                        writeLog('Unable to load initial chest rewards. Select a chest to try again.');
-                    });
-            }
+        const initialLootIds = collectLootIds();
+        if (initialLootIds.length > 0) {
+            writeLog('Loading combined chest rewards...');
+            loadAllRewards(initialLootIds);
         }
     </script>
 </body>
