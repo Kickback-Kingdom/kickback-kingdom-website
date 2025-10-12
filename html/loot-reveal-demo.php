@@ -230,7 +230,7 @@ require("php-components/base-page-pull-active-account-info.php");
                 throw new Error('Unable to load chest rewards without an id.');
             }
 
-            const response = await fetch(`/api/v1/engine/container/open.php?lootId=${encodeURIComponent(lootId)}`, {
+            const response = await fetch(`/api/v1/container/open.php?lootId=${encodeURIComponent(lootId)}`, {
                 credentials: 'include'
             });
 
@@ -239,17 +239,18 @@ require("php-components/base-page-pull-active-account-info.php");
             }
 
             const payload = await response.json();
+            const { success, data, message } = payload ?? {};
 
-            if (!payload?.success) {
-                const message = typeof payload?.message === 'string' ? payload.message : 'Unknown error.';
-                throw new Error(message);
+            if (!success) {
+                const errorMessage = typeof message === 'string' ? message : 'Unknown error.';
+                throw new Error(errorMessage);
             }
 
-            if (!Array.isArray(payload?.data)) {
+            if (!Array.isArray(data)) {
                 throw new Error('Chest payload did not include item data.');
             }
 
-            return payload.data.map(stackToReward).filter((reward) => reward?.itemId !== undefined);
+            return data.map(stackToReward).filter((reward) => reward?.itemId !== undefined);
         };
 
         const startClosedChestConfetti = () => {
@@ -300,10 +301,7 @@ require("php-components/base-page-pull-active-account-info.php");
                     lootIds.map((lootId) =>
                         fetchChestRewards(lootId)
                             .then((rewards) => ({ status: 'fulfilled', rewards }))
-                            .catch((error) => {
-                                console.error(`Failed to load chest rewards for lootId ${lootId}`, error);
-                                return { status: 'rejected', reason: error, lootId };
-                            })
+                            .catch((error) => ({ status: 'rejected', reason: error, lootId }))
                     )
                 );
 
