@@ -12,6 +12,9 @@ class LootReveal {
             chestOpenDuration: 900,
             onChestOpen: null,
             onChestClose: null,
+            onRewardsLoaded: null,
+            onRewardsError: null,
+            requestRewards: null,
             assetBasePath: 'https://kickback-kingdom.com/assets/media/chests/',
             cardBackImage: 'https://kickback-kingdom.com/assets/media/cards/card-back.png'
         }, options);
@@ -20,6 +23,12 @@ class LootReveal {
         this.normalizedRewards = [];
         this.cardEntries = new Map();
         this.pendingCloseReason = null;
+        this.rewardCache = new Map();
+        this.rewardRequestContext = null;
+        this.rewardRequestCacheKey = null;
+        this.rewardRequestPromise = null;
+        this.rewardsLoaded = true;
+        this.rewardMetadata = null;
 
         this.#build();
     }
@@ -180,15 +189,54 @@ class LootReveal {
         });
     }
 
-    open(rewards) {
-        this.normalizedRewards = this.#normalizeRewards(rewards);
+    open(input) {
+        this.rewardRequestContext = null;
+        this.rewardRequestCacheKey = null;
+        this.rewardRequestPromise = null;
+        this.rewardMetadata = null;
+        this.rewardsLoaded = true;
+
+        if (Array.isArray(input)) {
+            this.#storeRewards(input, null, { cache: false, emit: false });
+        } else if (input && typeof input === 'object') {
+            const { rewards, metadata = null, cacheKey = null, ...context } = input;
+
+            if (cacheKey !== null && cacheKey !== undefined && cacheKey !== '') {
+                this.rewardRequestCacheKey = String(cacheKey);
+            }
+
+            if (this.rewardRequestCacheKey && this.rewardCache.has(this.rewardRequestCacheKey) && !Array.isArray(rewards)) {
+                const cached = this.rewardCache.get(this.rewardRequestCacheKey);
+                this.#storeRewards(cached.rewards, cached.metadata, { cache: false, emit: false });
+            }
+
+            if (Array.isArray(rewards)) {
+                this.#storeRewards(rewards, metadata, { cache: Boolean(this.rewardRequestCacheKey), emit: false });
+            } else if (!(this.rewardRequestCacheKey && this.rewardCache.has(this.rewardRequestCacheKey))) {
+                this.normalizedRewards = [];
+                this.rewardsLoaded = false;
+            }
+
+            this.rewardRequestContext = context;
+        } else {
+            this.normalizedRewards = [];
+            this.rewardsLoaded = true;
+        }
+
+        if (this.rewardsLoaded && !this.rewardRequestPromise) {
+            this.rewardRequestPromise = Promise.resolve({
+                rewards: this.normalizedRewards.slice(),
+                metadata: this.rewardMetadata
+            });
+        }
 
         this.#prepareForReveal();
         this.#updateStageVisuals();
         this.stageEl.classList.add('is-ready');
 
         this.state = 'ready';
-        this.statusEl.textContent = this.normalizedRewards.length > 0
+        const hasRewards = this.normalizedRewards.length > 0;
+        this.statusEl.textContent = (!this.rewardsLoaded || hasRewards)
             ? 'Tap the chest to reveal your loot'
             : 'Tap the chest to peek inside';
 
@@ -269,21 +317,84 @@ class LootReveal {
         }
 
         this.state = 'opening';
-        this.statusEl.textContent = 'Opening...';
+        this.statusEl.textContent = 'Preparing loot...';
         this.#clearTrack();
         this.chestEl.disabled = true;
         this.chestEl.classList.remove('is-activating');
         this.stageEl.classList.remove('is-open');
         this.cardContainerEl.classList.remove('is-visible', 'is-flipping');
+
+        if (!this.rewardsLoaded) {
+            const requestRewards = this.config.requestRewards;
+
+            if (typeof requestRewards !== 'function') {
+                console.error('LootReveal is missing a requestRewards callback.');
+                this.state = 'ready';
+                this.chestEl.disabled = false;
+                this.statusEl.textContent = 'Tap the chest to try again';
+                return;
+            }
+
+            this.statusEl.textContent = 'Loading rewards...';
+
+            if (!this.rewardRequestPromise) {
+                try {
+                    const result = requestRewards(this.rewardRequestContext ?? {});
+                    this.rewardRequestPromise = Promise.resolve(result);
+                } catch (error) {
+                    this.rewardRequestPromise = Promise.reject(error);
+                }
+            }
+
+            let rewardResult;
+            try {
+                rewardResult = await this.rewardRequestPromise;
+            } catch (error) {
+                this.rewardRequestPromise = null;
+                this.state = 'ready';
+                this.chestEl.disabled = false;
+                this.statusEl.textContent = 'Tap the chest to try again';
+                this.root.dispatchEvent(new CustomEvent('lootreveal:rewardserror', {
+                    detail: { error }
+                }));
+                if (typeof this.config.onRewardsError === 'function') {
+                    this.config.onRewardsError(error);
+                }
+                return;
+            }
+
+            try {
+                const { rewards, metadata } = this.#extractRewardResult(rewardResult);
+                this.#storeRewards(rewards, metadata, {
+                    cache: Boolean(this.rewardRequestCacheKey),
+                    emit: true
+                });
+            } catch (error) {
+                this.rewardRequestPromise = null;
+                this.state = 'ready';
+                this.chestEl.disabled = false;
+                this.statusEl.textContent = 'Tap the chest to try again';
+                this.root.dispatchEvent(new CustomEvent('lootreveal:rewardserror', {
+                    detail: { error }
+                }));
+                if (typeof this.config.onRewardsError === 'function') {
+                    this.config.onRewardsError(error);
+                }
+                return;
+            }
+        }
+
+        this.statusEl.textContent = 'Opening...';
         this.#triggerChestOpenAnimation();
 
         if (typeof this.config.onChestOpen === 'function') {
-            this.config.onChestOpen(this.normalizedRewards.slice());
+            this.config.onChestOpen(this.normalizedRewards.slice(), this.rewardMetadata);
         }
 
         this.root.dispatchEvent(new CustomEvent('lootreveal:chestopen', {
             detail: {
-                rewards: this.normalizedRewards.slice()
+                rewards: this.normalizedRewards.slice(),
+                metadata: this.rewardMetadata ?? null
             }
         }));
 
@@ -357,6 +468,12 @@ class LootReveal {
         this.normalizedRewards = [];
         this.lootContainerEl.classList.remove('is-visible');
         this.lootContainerEl.setAttribute('aria-hidden', 'true');
+
+        this.rewardRequestContext = null;
+        this.rewardRequestCacheKey = null;
+        this.rewardRequestPromise = null;
+        this.rewardMetadata = null;
+        this.rewardsLoaded = true;
 
         if (typeof this.config.onChestClose === 'function') {
             this.config.onChestClose(reason);
@@ -781,6 +898,56 @@ class LootReveal {
         }
 
         return normalized;
+    }
+
+    #storeRewards(rewards, metadata = null, { cache = true, emit = false } = {}) {
+        const normalized = this.#normalizeRewards(rewards);
+
+        this.normalizedRewards = normalized;
+        this.rewardMetadata = metadata ?? null;
+        this.rewardsLoaded = true;
+
+        if (cache && this.rewardRequestCacheKey) {
+            this.rewardCache.set(this.rewardRequestCacheKey, {
+                rewards: normalized.slice(),
+                metadata: this.rewardMetadata
+            });
+        }
+
+        this.rewardRequestPromise = Promise.resolve({
+            rewards: normalized.slice(),
+            metadata: this.rewardMetadata
+        });
+
+        if (emit) {
+            if (typeof this.config.onRewardsLoaded === 'function') {
+                this.config.onRewardsLoaded(normalized.slice(), this.rewardMetadata);
+            }
+
+            this.root.dispatchEvent(new CustomEvent('lootreveal:rewardsloaded', {
+                detail: {
+                    rewards: normalized.slice(),
+                    metadata: this.rewardMetadata ?? null
+                }
+            }));
+        }
+    }
+
+    #extractRewardResult(result) {
+        if (Array.isArray(result)) {
+            return { rewards: result, metadata: null };
+        }
+
+        if (result && typeof result === 'object') {
+            const rewards = Array.isArray(result.rewards) ? result.rewards : null;
+
+            if (rewards) {
+                const metadata = result.metadata ?? result.meta ?? null;
+                return { rewards, metadata };
+            }
+        }
+
+        throw new Error('requestRewards must resolve to an array of rewards or an object containing a rewards array.');
     }
 
     #normalizeRewards(rewards) {
