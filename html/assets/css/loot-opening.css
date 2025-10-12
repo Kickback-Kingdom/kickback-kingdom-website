@@ -246,26 +246,34 @@
     overflow: visible;
 }
 
+
 .loot-reveal__track-wrapper {
     width: 100%;
-    overflow-x: auto;
-    overflow-y: visible;
-    padding: 1.25rem 0.25rem 0.5rem;
+    max-height: min(520px, 60vh);
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 1rem 0.75rem 1.5rem;
     scrollbar-width: thin;
+    scrollbar-gutter: stable both-edges;
 }
 
 .loot-reveal__track {
-    display: inline-flex;
-    gap: 18px;
-    padding: 0 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(clamp(120px, 22vw, 180px), 1fr));
+    gap: clamp(16px, 3vw, 26px);
+    padding: 0;
+    margin: 0;
     position: relative;
     z-index: 4;
+    align-items: stretch;
+    justify-items: center;
+    align-content: start;
 }
 
 
 .loot-reveal__item-card {
-    width: clamp(110px, 18vw, 152px);
-    aspect-ratio: 1;
+    width: min(100%, 188px);
+    aspect-ratio: 5 / 7;
     position: relative;
     display: inline-flex;
     align-items: stretch;
@@ -281,6 +289,10 @@
     will-change: transform;
     filter: drop-shadow(0 22px 48px rgba(8, 5, 18, 0.55));
     perspective: 1200px;
+}
+
+.loot-reveal__track > .loot-reveal__item-card {
+    justify-self: stretch;
 }
 
 .loot-reveal__item-card--interactive {
@@ -560,6 +572,7 @@
 /* Horizontal scrollbar styling for WebKit */
 .loot-reveal__track-wrapper::-webkit-scrollbar {
     height: 8px;
+    width: 8px;
 }
 
 .loot-reveal__track-wrapper::-webkit-scrollbar-thumb {

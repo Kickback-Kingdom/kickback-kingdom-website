@@ -296,10 +296,19 @@ class LootReveal {
         if (this.normalizedRewards.length === 0) {
             this.#renderEmpty();
         } else {
-            for (const reward of this.normalizedRewards) {
-                await this.#revealReward(reward);
-                await this.#delay(this.config.itemRevealDelay);
-            }
+            const concurrency = this.normalizedRewards.length <= 2 ? 2 : (this.normalizedRewards.length >= 9 ? 4 : 3);
+            const baseDelay = Math.max(220, this.config.itemRevealDelay * 0.85);
+            const inBatchSpacing = baseDelay / concurrency;
+
+            const launches = this.normalizedRewards.map((reward, index) => {
+                const batchIndex = Math.floor(index / concurrency);
+                const offsetIndex = index % concurrency;
+                const launchDelay = batchIndex * baseDelay + offsetIndex * inBatchSpacing;
+
+                return this.#delay(launchDelay).then(() => this.#revealReward(reward));
+            });
+
+            await Promise.allSettled(launches);
         }
 
         this.state = 'finished';
@@ -326,9 +335,10 @@ class LootReveal {
         const scroller = this.trackEl.parentElement;
         if (scroller) {
             if (typeof scroller.scrollTo === 'function') {
-                scroller.scrollTo({ left: 0, behavior: 'auto' });
+                scroller.scrollTo({ left: 0, top: 0, behavior: 'auto' });
             } else {
                 scroller.scrollLeft = 0;
+                scroller.scrollTop = 0;
             }
         }
     }
@@ -371,8 +381,7 @@ class LootReveal {
         const existing = this.cardEntries.get(key);
 
         if (existing) {
-            this.#animateDuplicateReward(existing, normalized);
-            return;
+            return this.#animateDuplicateReward(existing, normalized);
         }
 
         const card = this.#createCardElement(normalized, { orientation: 'back' });
@@ -391,18 +400,18 @@ class LootReveal {
         this.#setCardOrientation(entry, 'back');
         this.cardEntries.set(key, entry);
         this.#bindCardInteraction(entry);
-        this.#animateCardEntrance(entry, normalized);
+        return this.#animateCardEntrance(entry, normalized);
     }
 
     #animateCardEntrance(entry, reward) {
         const { card } = entry;
         if (!(card instanceof HTMLElement)) {
-            return;
+            return Promise.resolve();
         }
 
         const targetRect = card.getBoundingClientRect();
 
-        this.#playFlightAnimation(reward, targetRect, {
+        return this.#playFlightAnimation(reward, targetRect, {
             orientation: entry.orientation,
             onArrive: () => {
                 card.classList.remove('is-pending');
@@ -417,7 +426,7 @@ class LootReveal {
     #animateDuplicateReward(entry, reward) {
         const { card, count, countElement } = entry;
         if (!card || !countElement) {
-            return;
+            return Promise.resolve();
         }
 
         const start = count;
@@ -427,7 +436,7 @@ class LootReveal {
 
         const targetRect = card.getBoundingClientRect();
 
-        this.#playFlightAnimation(reward, targetRect, {
+        return this.#playFlightAnimation(reward, targetRect, {
             orientation: entry.orientation,
             onArrive: () => {
                 this.#animateCount(countElement, start, next);
@@ -465,80 +474,121 @@ class LootReveal {
             if (typeof onFinish === 'function') {
                 onFinish();
             }
-            return;
+            return Promise.resolve();
         }
 
-        const chestPoint = {
-            x: chestRect.left + chestRect.width / 2,
-            y: chestRect.top + chestRect.height * 0.6
-        };
+        return new Promise((resolve) => {
+            const chestPoint = {
+                x: chestRect.left + chestRect.width / 2,
+                y: chestRect.top + chestRect.height * 0.6
+            };
 
-        const targetPoint = {
-            x: targetRect.left + targetRect.width / 2,
-            y: targetRect.top + targetRect.height / 2
-        };
+            const targetPoint = {
+                x: targetRect.left + targetRect.width / 2,
+                y: targetRect.top + targetRect.height / 2
+            };
 
-        const ghost = this.#createCardElement(reward, { ghost: true, orientation });
-        ghost.classList.add('loot-reveal__item-card--ghost');
+            const ghost = this.#createCardElement(reward, { ghost: true, orientation });
+            ghost.classList.add('loot-reveal__item-card--ghost');
+            ghost.style.width = `${targetRect.width}px`;
+            ghost.style.height = `${targetRect.height}px`;
+            ghost.style.willChange = 'transform, opacity';
+            this.flightLayerEl.appendChild(ghost);
 
-        ghost.style.width = `${targetRect.width}px`;
-        ghost.style.height = `${targetRect.height}px`;
-        this.flightLayerEl.appendChild(ghost);
+            const ghostRect = ghost.getBoundingClientRect();
+            const offsetX = ghostRect.width / 2;
+            const offsetY = ghostRect.height / 2;
 
-        const ghostRect = ghost.getBoundingClientRect();
-        const offsetX = ghostRect.width / 2;
-        const offsetY = ghostRect.height / 2;
+            const buildTransform = (x, y, scale, rotation) => `translate(${x}px, ${y}px) scale(${scale}) rotate(${rotation}deg)`;
 
-        const startTransform = `translate(${chestPoint.x - offsetX}px, ${chestPoint.y - offsetY}px) scale(0.55)`;
-        const endTransform = `translate(${targetPoint.x - offsetX}px, ${targetPoint.y - offsetY}px) scale(1)`;
+            const scatterMagnitude = Math.max(targetRect.width, targetRect.height) * (0.6 + Math.random() * 0.7);
+            const scatterAngle = (Math.random() - 0.5) * (Math.PI / 2.4);
+            const arcHeight = 110 + Math.random() * 90;
 
-        const flightDuration = 720;
-        const arrivalOffset = 0.8;
-        const arrivalDelay = flightDuration * arrivalOffset;
+            const viaPoint = {
+                x: chestPoint.x + Math.cos(scatterAngle) * scatterMagnitude,
+                y: chestPoint.y - arcHeight - Math.abs(Math.sin(scatterAngle) * scatterMagnitude * 0.25)
+            };
 
-        const animation = ghost.animate([
-            { transform: startTransform, opacity: 0 },
-            { transform: startTransform, opacity: 1, offset: 0.18 },
-            { transform: endTransform, opacity: 0.95, offset: 0.8 },
-            { transform: endTransform, opacity: 1 }
-        ], {
-            duration: flightDuration,
-            easing: 'cubic-bezier(0.22, 1, 0.36, 1)'
+            const landingJitterX = (Math.random() - 0.5) * targetRect.width * 0.35;
+            const landingJitterY = Math.random() * 32;
+            const startRotation = (Math.random() - 0.5) * 18;
+            const midRotation = startRotation * 0.35;
+
+            const startTransform = buildTransform(chestPoint.x - offsetX, chestPoint.y - offsetY, 0.55, startRotation);
+            const midTransform = buildTransform(viaPoint.x - offsetX, viaPoint.y - offsetY, 0.72, midRotation);
+            const preLandingTransform = buildTransform(
+                targetPoint.x - offsetX + landingJitterX,
+                targetPoint.y - offsetY - 28 - landingJitterY,
+                1,
+                midRotation * 0.4
+            );
+            const endTransform = buildTransform(targetPoint.x - offsetX, targetPoint.y - offsetY, 1, 0);
+
+            const flightDuration = 640 + Math.random() * 260;
+            const flightDelay = Math.random() * 140;
+            const arrivalOffset = 0.72;
+            const arrivalDelay = flightDelay + flightDuration * arrivalOffset;
+
+            const keyframes = [
+                { transform: startTransform, opacity: 0 },
+                { transform: startTransform, opacity: 1, offset: 0.12 },
+                { transform: midTransform, opacity: 1, offset: 0.52 },
+                { transform: preLandingTransform, opacity: 1, offset: 0.85 },
+                { transform: endTransform, opacity: 1 }
+            ];
+
+            const animationOptions = {
+                duration: flightDuration,
+                delay: flightDelay,
+                easing: 'cubic-bezier(0.24, 0.82, 0.25, 1)',
+                fill: 'both'
+            };
+
+            let cleaned = false;
+            let arrived = false;
+            let fallbackTimer = null;
+
+            const triggerArrival = () => {
+                if (arrived) {
+                    return;
+                }
+                arrived = true;
+                if (typeof onArrive === 'function') {
+                    onArrive();
+                }
+            };
+
+            const arrivalTimer = setTimeout(triggerArrival, arrivalDelay);
+
+            const cleanup = () => {
+                if (cleaned) {
+                    return;
+                }
+                cleaned = true;
+                clearTimeout(arrivalTimer);
+                if (fallbackTimer !== null) {
+                    clearTimeout(fallbackTimer);
+                }
+                triggerArrival();
+                ghost.remove();
+                if (typeof onFinish === 'function') {
+                    onFinish();
+                }
+                resolve();
+            };
+
+            if (typeof ghost.animate === 'function') {
+                const animation = ghost.animate(keyframes, animationOptions);
+                animation.addEventListener?.('finish', cleanup, { once: true });
+                animation.addEventListener?.('cancel', cleanup, { once: true });
+                animation.onfinish = cleanup;
+                animation.oncancel = cleanup;
+                animation.finished?.then(() => cleanup()).catch(() => cleanup());
+            } else {
+                fallbackTimer = setTimeout(cleanup, flightDelay + flightDuration + 20);
+            }
         });
-
-        let cleaned = false;
-        let arrived = false;
-
-        const triggerArrival = () => {
-            if (arrived) {
-                return;
-            }
-            arrived = true;
-            if (typeof onArrive === 'function') {
-                onArrive();
-            }
-        };
-
-        const arrivalTimer = setTimeout(triggerArrival, arrivalDelay);
-
-        const cleanup = () => {
-            if (cleaned) {
-                return;
-            }
-            cleaned = true;
-            clearTimeout(arrivalTimer);
-            triggerArrival();
-            ghost.remove();
-            if (typeof onFinish === 'function') {
-                onFinish();
-            }
-        };
-
-        animation.addEventListener?.('finish', cleanup, { once: true });
-        animation.addEventListener?.('cancel', cleanup, { once: true });
-        animation.onfinish = cleanup;
-        animation.oncancel = cleanup;
-        animation.finished?.then(() => cleanup()).catch(() => cleanup());
     }
 
     #updateStageVisuals() {
