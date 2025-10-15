@@ -27,7 +27,7 @@ catch( \Throwable $e )
     $code = ($code === 0) ? 500 : $code;
     \http_response_code($code);
     $response = new Response(false,
-        'Failed to create checkout session: ' . ThrowableOverrides::message($e),
+        'Failed to get cart: ' . ThrowableOverrides::message($e),
         $e->__toString());
 }
 finally {

@@ -6,6 +6,7 @@ namespace Kickback\Backend\Controllers;
 
 use BadFunctionCallException;
 use DateTime;
+use DomainException;
 use \Kickback\Backend\Models\Response;
 use \Kickback\Backend\Models\Store;
 use Kickback\Backend\Models\Product;
@@ -13,22 +14,30 @@ use Kickback\Backend\Models\Product;
 use \Exception;
 use InvalidArgumentException;
 use Kickback\Backend\Models\Cart;
+use Kickback\Backend\Models\CartProductCouponLink;
 use Kickback\Backend\Models\CartProductLink;
 use Kickback\Backend\Models\CartProductPriceLink;
+use Kickback\Backend\Models\Coupon;
+use Kickback\Backend\Models\CouponAccountUse;
 use Kickback\Backend\Models\LootReservation;
 use Kickback\Backend\Models\Price;
 use Kickback\Backend\Models\ProductLootLink;
 use Kickback\Backend\Models\ProductReservation;
 use Kickback\Backend\Models\RecordId;
 use Kickback\Backend\Models\Trade;
+use Kickback\Backend\Models\CouponPriceLink;
 
 use Kickback\Backend\Models\Enums\CurrencyCode;
-
+use Kickback\Backend\Models\ProductPriceLink;
 use Kickback\Backend\Views\vProductLootLink;
 use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vCart;
 use Kickback\Backend\Views\vCartItem;
+use Kickback\Backend\Views\vCartProductCouponLink;
 use Kickback\Backend\Views\vCartProductLink;
+use Kickback\Backend\Views\vCartProductPriceLink;
+use Kickback\Backend\Views\vCoupon;
+use Kickback\Backend\Views\vCouponAccountUse;
 use Kickback\Backend\Views\vItem;
 use Kickback\Backend\Views\vLoot;
 use Kickback\Backend\Views\vLootReservation;
@@ -39,6 +48,7 @@ use Kickback\Backend\Views\vProductReservation;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Views\vStore;
 use Kickback\Backend\Views\vTransaction;
+use Kickback\Common\Exceptions\Fatal\LogicError;
 use Kickback\Services\Database;
 use LogicException;
 use mysqli_result;
@@ -338,7 +348,14 @@ class StoreController
             static::markCartProductsAsCheckedOut($cart);
             static::markCartProductPricesAsCheckedOut($cart);
 
+            //Coupons
+            static::markUsesForCartCoupons($cart);
+            static::markCouponCartProductLinksAsCheckedOut($cart);
+
             $conn->commit();
+
+            $resp->success = true;
+            $resp->message = "Transacted Cart";
         }
         catch(Exception $e)
         {
@@ -350,13 +367,305 @@ class StoreController
         return $resp;
     }
 
+    private static function markCouponCartProductLinksAsCheckedOut(vCart $cart) : void
+    {
+        $params = [];
+        $selectTable = static::createSelectTableForMarkCouponCartProductLinksAsCheckedOut($cart->cartProducts, $params);
+        $sql = "UPDATE coupon_cart_product_link ccpl JOIN ($selectTable) st ON st.cart_product_link_ctime = ccpl.ref_cart_product_link_ctime AND st.cart_product_link_crand SET checked_out = 1 WHERE ccpl.removed = 0 AND ccpl.checked_out = 0";
+        
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new Exception("result returned false while marking coupon cart product liks as checked out");
+    }
+
+    private static function createSelectTableForMarkCouponCartProductLinksAsCheckedOut(array $cartProducts, array &$params) : string
+    {
+        $selectTable = "";
+
+        for($i = 0; $i < count($cartProducts); $i++)
+        {
+            $cartProduct = $cartProducts[$i];
+
+            array_push($params, $cartProduct->ctime, $cartProduct->crand);
+
+            if($i===0)
+            {
+                $selectTable .= "(SELECT ? as cart_product_link_ctime, ? as cart_product_link_crand)";
+                continue;
+            }
+
+            $selectTable .= "UNION ALL (SELECT ?, ?)";
+        }
+
+        return $selectTable;
+    }
+
+    private static function markUsesForCartCoupons(vCart $cart) : void
+    {
+        $coupons = static::returnAllCouponsInCart($cart);
+
+        if(count($coupons) <= 0) return;
+
+        $aggregatedCoupons = static::aggregateCouponsInCart($coupons);
+
+        if(count($aggregatedCoupons) <= 0) throw new LogicException("If coupon array had at least one element, the aggregate must aswell");
+
+        $existingCouponAccountUses = static::getUpdatedCouponAccountUsesForAggregateCouponArray($aggregatedCoupons, $cart->account);
+        $nonExistingCouponAccountUses = static::getNonExistingCouponAccountUses($aggregatedCoupons, $existingCouponAccountUses, $cart->account);
+
+        if(count($existingCouponAccountUses) <= 0 && count($nonExistingCouponAccountUses) <= 0) throw new LogicException("If coupon array had at least one element, at least one element must exist between the existing and non existing coupon use references");
+
+        if(count($existingCouponAccountUses) > 0)static::updateExistingAccountCouponUses($existingCouponAccountUses);
+        if(count($nonExistingCouponAccountUses) > 0)static::insertNonExistingAccountCouponUses($nonExistingCouponAccountUses);
+    }
+
+    private static function updateExistingAccountCouponUses(array $accountUses) : void
+    {
+        $params = [];
+        $selectTable = static::createSelectTableForUpdateExistingAccountCouponUses($accountUses, $params);
+        $sql = "UPDATE coupon_account_use cau JOIN ($selectTable) st ON st.ctime = cau.ctime AND st.crand = cau.crand SET times_used = st.times_used";
+
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new Exception("result returned false while updating exsting account coupon uses");
+    }
+
+    private static function createSelectTableForUpdateExistingAccountCouponUses(array $accountUses, array &$params) : string
+    {
+        $selectTable = "";
+
+        for($i = 0; $i < count($accountUses); $i++)
+        {
+            $accountUse = $accountUses[$i];
+
+            array_push($params, $accountUse->ctime, $accountUse->crand);
+
+            if($i === 0)
+            {
+                $selectTable .= "(SELECT ? as ctime, ? as crand)";
+                continue;
+            }
+
+            $selectTable .= "UNION ALL (SELECT ?, ?)";
+        }
+
+        return $selectTable;
+    }
+
+    private static function insertNonExistingAccountCouponUses(array $accountUses) : void
+    {
+        $params = [];
+        $valueClause = static::createValueClauseForInsertNonExistingAccountCouponUses($accountUses, $params);
+        $sql = "INSERT INTO coupon_account_use (ctime, crand, ref_coupon_ctime, ref_coupon_crand, ref_account_ctime, ref_account_crand, times_used) VALUES $valueClause";
+
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new Exception("result returned false while inserting non existing account coupon uses");
+    }
+
+    private static function createValueClauseForInsertNonExistingAccountCouponUses(array $accountUses, array &$params) : string
+    {
+        $valueClause = "";
+
+        for($i = 0; $i < count($accountUses); $i++)
+        {
+            $accountUse = $accountUses[$i];
+
+            array_push($params, $accountUse->ctime, $accountUse->crand, $accountUse->couponId->ctime, $accountUse->couponId->crand, $accountUse->accountId->ctime, $accountUse->accountId->crand, $accountUse->timesUsed);
+
+            if($i === 0)
+            {
+                $valueClause .= "(?,?,?,?,?,?,?)";
+                continue;
+            }
+
+            $valueClause .= ", (?,?,?,?,?,?,?)";
+        }
+
+        return $valueClause;
+    }
+
+    private static function getNonExistingCouponAccountUses(array $aggregatedCoupons, array $existingCouponAccountUses, vAccount $account) : array
+    {
+        $nonExistingCouponAccountUses = [];
+
+        foreach($aggregatedCoupons as $couponGroup)
+        {
+            $exists = false;
+            for($i = 0; $i < count($existingCouponAccountUses); $i++)
+            {
+                $couponAccountUse = $existingCouponAccountUses[$i];
+
+                if($couponAccountUse->coupon->ctime === $couponGroup["coupon"]->ctime 
+                && $couponAccountUse->$couponGroup->crand === $couponGroup["coupon"]->crand)
+                {
+                    $exists = true;
+                    break;
+                }
+            }
+
+            if(!$exists)
+            {
+                $accountUse = new CouponAccountUse();
+                $accountUse->timesUsed = $couponGroup["quantity"];
+                $accountUse->couponId = $couponGroup["coupon"]->getForeignRecordId();
+                $accountUse->accountId = $account->getForeignRecordId();
+
+                array_push($nonExistingCouponAccountUses, $accountUse);
+            }
+        }
+
+        return $nonExistingCouponAccountUses;
+    }
+    
+    private static function getUpdatedCouponAccountUsesForAggregateCouponArray(array $aggregatedCoupons, vAccount $account) : array
+    {
+        if(count($aggregatedCoupons) === 0) return [];        
+
+        $params = [];
+        $selectTable = static::createSelectTableForGetCouponAccountUsesForCouponArray($aggregatedCoupons, $account, $params);
+
+        $sql = "SELECT 
+            vcau.ctime,
+            vcau.crand, 
+            vcau.coupon_ctime,
+            vcau.coupon_crand,
+            vcau.code,
+            vcau.description,
+            vcau.required_quantity_of_product,
+            vcau.product_ctime,
+            vcau.product_crand,
+            vcau.max_times_used_per_account,
+            vcau.remaining_uses,
+            (vcau.account_times_used + st.quantity) as account_times_used,
+            vcau.expiry_time,
+            vcau.removed,
+            vcau.account_ctime,
+            vcau.account_crand
+            FROM v_coupon_account_use vcau
+            JOIN ($selectTable) st 
+            ON st.coupon_ctime = vcau.coupon_ctime 
+            AND st.coupon_crand = vcau.coupon_crand 
+            AND st.account_ctime = vcau.account_ctime
+            AND st.account_crand = vcau.account_crand
+        ";
+
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new Exception("result returned false while getting coupon account uses for coupon array");
+        
+        $couponAccountUses = [];
+
+        while($row = $result->fetch_assoc())
+        {
+            array_push($couponAccountUses, static::rowToVCouponAccountUse($row));
+        }
+
+        return $couponAccountUses;
+    }
+
+    private static function createSelectTableForGetCouponAccountUsesForCouponArray(array $aggregatedCoupons, vAccount $account, array &$params) : string
+    {
+        if(count($aggregatedCoupons) <= 0) throw new InvalidArgumentException("\$aggregatedCoupons array must have at least one element");
+
+        $selectTable = "";
+
+        for($i = 0; $i < count($aggregatedCoupons); $i++)
+        {
+            $coupon = ($aggregatedCoupons[$i])["coupon"];
+            $quantity = ($aggregatedCoupons[$i])["quantity"];
+
+            if($i === 0)
+            {
+                $selectTable .= "(SELECT ? as coupon_ctime, ? as coupon_crand, ? as account_ctime, ? as account_crand, ? as quantity)";
+                array_push($params, $coupon->ctime, $coupon->crand, $account->ctime, $account->crand, $quantity);
+                continue;
+            }
+
+            $selectTable .= "UNION ALL (SELECT ?, ?, ?, ?, ?)";
+            array_push($params, $coupon->ctime, $coupon->crand, $account->ctime, $account->crand, $quantity);
+        }
+
+        return $selectTable;
+    }
+
+    private static function aggregateCouponsInCart(array $coupons) : array
+    {
+        $couponsWithQuantity = [];
+
+        foreach($coupons as $coupon)
+        {
+            $foundGroup = false;
+
+            for($i = 0; $i < count($couponsWithQuantity); $i++)
+            {
+                $group = $couponsWithQuantity[$i];
+                $groupCoupon = $group["coupon"];
+
+                if($groupCoupon->ctime == $coupon->ctime
+                && $groupCoupon->crand == $coupon->crand)
+                {
+                    $couponsWithQuantity[$i] = [
+                        "coupon"=>$coupon, 
+                        "quantity"=>$group["quantity"]++
+                    ];
+
+                    $foundGroup = true;
+
+                    break;
+                }
+            }
+
+            if(!$foundGroup)
+            {
+                array_push($couponsWithQuantity, ["coupon"=>$coupon, "quantity"=>1]);
+            }
+        }
+
+        return $couponsWithQuantity;
+    }
+
+    private static function returnAllCouponsInCart(vCart $cart) : array
+    {
+        $coupons = [];
+        $groupIds = [];
+
+        foreach($cart->cartProducts as $product)
+        {
+            if(is_null($product->coupon)) continue;
+
+            $couponGroupAlreadyLogged = false;
+
+            for($i = 0; $i < count($groupIds); $i++)
+            {
+                $groupId = $groupIds[$i];
+
+                if($groupId->ctime === $product->couponGroupAssignmentId->ctime 
+                && $groupId->crand === $product->couponGroupAssignmentId->crand)
+                {
+                    $couponGroupAlreadyLogged = true;
+                    break;
+                }
+            }
+
+            if(!$couponGroupAlreadyLogged)
+            {
+                array_push($groupIds, $product->couponGroupAssignmentId);
+                array_push($coupons, $product->coupon);
+            }
+        }
+
+        return $coupons;
+    }
+
     private static function markCartProductPricesAsCheckedOut(vCart $cart) : void
     {
         $params = [];
         $selectTable = static::createSelectTableForMarkCartProductPricesAsCheckedOut($cart->cartProducts, $params);
         $sql = "UPDATE cart_product_price_link cppl
-        JOIN ($selectTable) pl ON cppl.ref_cart_product_link_ctime = pl.ctime AND cppl.ref_cart_product_link_crand = pl.crand 
-        SET checked_out = 1;";
+        JOIN ($selectTable) pl ON cppl.ref_cart_product_link_ctime = pl.ctime AND cppl.ref_cart_product_link_crand = pl.crand
+        SET checked_out = 1
+        WHERE removed = 0 AND checked_out = 0;";
 
 
         $result = Database::executeSqlQuery($sql, $params);
@@ -2298,7 +2607,7 @@ class StoreController
                         $price->currencyCode == $total->currencyCode)
                     )
                     {
-                        $priceAlreadyExists == $total;
+                        $priceAlreadyExists = $total;
                         break;
                     }
                 }
@@ -2437,6 +2746,57 @@ class StoreController
         return $valueClause;
     }
 
+    public static function getProductByLocator(string $locator) : Response
+    {
+        $resp = new Response(false, "Unkown eror in getting product by id", null);
+
+        $sql = "SELECT 
+            ".static::$columnsInProductView."
+        FROM v_product 
+        WHERE locator = ? 
+        LIMIT 1;";
+
+
+        $params = [$locator];
+
+        try
+        {
+            $result = Database::executeSqlQuery($sql, $params);
+
+            if($result->num_rows > 0)
+            {
+                $product = static::rowToVProduct($result->fetch_assoc());
+
+                $pricesResp = static::getBasePricesForProduct($product);
+
+                if($pricesResp->success)
+                {
+                    $product->prices = $pricesResp->data;
+
+                    $resp->success = true;
+                    $resp->message = "Product found and returned";
+                    $resp->data = $product;
+                }
+                else
+                {
+                    $resp->message = "failed to get prices for product by locator : $pricesResp->message";
+                }
+
+                
+            }
+            else
+            {
+                $resp->message = "Product not found";
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while getting product by locator : $e");
+        }
+
+        return $resp;
+    }
+
     /**
      * Marks a link of a product to a cart as removed
      * The ID of cart items is the same as its product cart link so cart item ID may be passed aswell
@@ -2445,28 +2805,38 @@ class StoreController
      * 
      * @return Response the response object which will return successful if the link has been successfully marked as removed
      */
-    public static function removeProductFromCart(vRecordId $productCartLink) : Response
+    public static function removeProductFromCart(vCartItem $cartProduct) : Response
     {
         $resp = new Response(false, "unkown error in removing product from cart", null);
 
         try
         {
+            $conn = Database::getConnection();
+            $conn->begin_transaction();
+
             $sql = "UPDATE cart_product_link SET removed = 1 WHERE ctime = ? AND crand = ?;";
 
-            $result = Database::executeSqlQuery($sql, [$productCartLink->ctime, $productCartLink->crand]);
+            $result = Database::executeSqlQuery($sql, [$cartProduct->ctime, $cartProduct->crand]);
+            if(!$result) throw new Exception("result returned false while removing product from cart");
 
-            if($result)
+            if(!is_null($cartProduct->coupon)) 
             {
-                $resp->success = true;
-                $resp->message = "Product removed from cart";
+                if(is_null($cartProduct->couponGroupAssignmentId)) throw new LogicException("Coupon group assignment id cannot be null if a coupon as been applied to the cart product");
+            
+                $removeCouponResp = static::removeCouponFromCartByGroupAssignmentId($cartProduct->couponGroupAssignmentId);
+                
+                if(!$removeCouponResp->success)
+                {
+                    throw new Exception("Failed to remove coupon while removing cart product with applied coupon");
+                }
             }
-            else
-            {
-                $resp->message = "Sql error in removing product from cart";
-            }
+
+            $resp->success = true;
+            $resp->message = "Product removed from cart";
         }
         catch(Exception $e)
         {
+            $conn->rollback();
             throw new Exception("exception caught while removing product from cart : $e");
         }
 
@@ -2766,7 +3136,20 @@ class StoreController
             price_media_path_large,
             price_media_path_back,
             price_item_ctime, 
-            price_item_crand";
+            price_item_crand,
+            price_item_is_fungible,
+            coupon_ctime,
+            coupon_crand,
+            coupon_code,
+            coupon_description,
+            coupon_required_quantity_of_product,
+            coupon_times_used,
+            coupon_max_times_used,
+            coupon_max_times_used_per_account,
+            coupon_expiry_time,
+            coupon_removed,
+            coupon_assignment_group_ctime,
+            coupon_assignment_group_crand";
 
     /**
      * gets all the matching rows from v_cart_item.
@@ -2789,44 +3172,17 @@ class StoreController
 
             if($result)
             {
-                $cartItems = []; 
-
                 if($result->num_rows > 0)
                 {
-                    while($row = $result->fetch_assoc())
-                    {
-                        $cartItemAlreadyProccessed = null;
-                        
-                        foreach($cartItems as $cartItem)
-                        {
-                            if($row["cart_product_link_ctime"] == $cartItem->ctime && $row["cart_product_link_crand"] == $cartItem->crand)
-                            {
-                                $cartItemAlreadyProccessed = $cartItem;
-                                break;
-                            }
-                        }
-
-                        if(is_null($cartItemAlreadyProccessed))
-                        {
-                            array_push($cartItems, static::cartItemToView($row));
-                        }
-                        else
-                        {
-                            $price = static::cartItemToPriceView($row);
-
-                            array_push($cartItemAlreadyProccessed->prices, $price);
-                        }
-                    }
-
                     $resp->success = true;
                     $resp->message = "Items returned";
-                    $resp->data = $cartItems;
+                    $resp->data = static::cartItemResultToViews($result);
                 }
                 else
                 {
                     $resp->success = true;
                     $resp->message = "no items in cart";
-                    $resp->data = $cartItems;
+                    $resp->data = [];
                 }
             }
             else
@@ -2842,6 +3198,38 @@ class StoreController
         return $resp;
     }
 
+    public static function cartItemResultToViews(mysqli_result $result) : array
+    {
+        $cartItems = [];
+
+        while($row = $result->fetch_assoc())
+        {
+            $cartItemAlreadyProccessed = null;
+            
+            foreach($cartItems as $cartItem)
+            {
+                if($row["cart_product_link_ctime"] == $cartItem->ctime && $row["cart_product_link_crand"] == $cartItem->crand)
+                {
+                    $cartItemAlreadyProccessed = $cartItem;
+                    break;
+                }
+            }
+
+            if(is_null($cartItemAlreadyProccessed))
+            {
+                array_push($cartItems, static::cartItemToView($row));
+            }
+            else
+            {
+                $price = static::cartItemToPriceView($row);
+
+                array_push($cartItemAlreadyProccessed->prices, $price);
+            }
+        }
+
+        return $cartItems;
+    }
+
     private static function cartItemToView(array $row) : vCartItem
     {
         $cartItem = new vCartItem();
@@ -2849,29 +3237,48 @@ class StoreController
         $price = static::cartItemToPriceView($row);
 
         $product = new vProduct($row["product_ctime"], $row["product_crand"]);
-        $product->prices = [$price];
-        $product->stock = $row["product_stock"];
-        $product->locator = $row["product_locator"];
-        $product->name = $row["product_name"];
-        $product->description = $row["product_description"];
+            $product->prices = [$price];
+            $product->stock = $row["product_stock"];
+            $product->locator = $row["product_locator"];
+            $product->name = $row["product_name"];
+            $product->description = $row["product_description"];
 
-        $product->mediaSmall = new vMedia();
-        $product->mediaSmall->setMediaPath($row["product_small_media_path"]);
-        $product->mediaLarge = new vMedia();
-        $product->mediaLarge->setMediaPath($row["product_large_media_path"]);
-        $product->mediaBack = new vMedia();
-        $product->mediaBack->setMediaPath($row["product_back_media_path"]);
+            $product->mediaSmall = new vMedia();
+            $product->mediaSmall->setMediaPath($row["product_small_media_path"]);
+            $product->mediaLarge = new vMedia();
+            $product->mediaLarge->setMediaPath($row["product_large_media_path"]);
+            $product->mediaBack = new vMedia();
+            $product->mediaBack->setMediaPath($row["product_back_media_path"]);
         $cartItem->product = $product;
 
         $cart = new vCart();
-        $cart->ctime = $row["cart_ctime"];
-        $cart->crand = $row["cart_crand"];
+            $cart->ctime = $row["cart_ctime"];
+            $cart->crand = $row["cart_crand"];
         $cartItem->cart = $cart;
+
+        if(!is_null($row["coupon_ctime"]) && !is_null($row["coupon_crand"]))
+        {
+            $coupon = new vCoupon($row["coupon_ctime"], $row["coupon_crand"]);
+                $coupon->code = $row["coupon_code"];
+                $coupon->description = $row["coupon_description"];
+                $coupon->requiredQuantityOfProduct = $row["coupon_required_quantity_of_product"];
+                $coupon->productId = new vRecordId($row["product_ctime"], $row["product_crand"]);
+                $coupon->timesUsed = $row["coupon_times_used"];
+                $coupon->maxTimesUsed = $row["coupon_max_times_used"];
+                $coupon->maxTimesUsedPerAccount = $row["coupon_max_times_used_per_account"];
+                $coupon->expiryTime = is_null($row["coupon_expiry_time"]) ? null : DateTime::createFromFormat('Y-m-d H:i:s.u', $row["expiry_time"]);
+                $coupon->removed = boolval($row["coupon_removed"]);
+
+            $cartItem->coupon = $coupon;
+
+            $cartItem->couponGroupAssignmentId = new vRecordId($row["coupon_assignment_group_ctime"], $row["coupon_assignment_group_crand"]);
+        }
         
         $cartItem->ctime = $row["cart_product_link_ctime"];
         $cartItem->crand = $row["cart_product_link_crand"];
         $cartItem->removed = boolval($row["removed"]);
         $cartItem->checkedOut = boolval($row["checked_out"]);
+        $cartItem->prices = [$price];
 
         return $cartItem;
     }
@@ -2896,6 +3303,8 @@ class StoreController
             $item->iconSmall = $smallMedia;
             $item->iconBig = $largeMedia;
             $item->iconBack = $backMedia;
+
+            $item->fungible = boolval($row["price_item_is_fungible"]);
 
             $price->item = $item;
         }
@@ -3475,11 +3884,12 @@ class StoreController
             vp.currency_code, 
             vp.item_ctime, 
             vp.item_crand, 
-            vp.item_name,
-            vp.item_desc, 
+            vp.item_name, 
+            vp.item_desc,  
             vp.media_path_small, 
             vp.media_path_large, 
-            vp.media_path_back
+            vp.media_path_back,
+            vp.item_is_fungible
             FROM v_price vp 
             JOIN product_price_link ppl ON ppl.ref_price_ctime = vp.ctime AND ppl.ref_price_crand = vp.crand
             WHERE ppl.ref_product_ctime = ? AND ppl.ref_product_crand = ?;";
@@ -3731,7 +4141,7 @@ class StoreController
 
             $valueClause = static::returnValueClauseForLinkingProductToPrices($prices);
 
-            $sql = "INSERT IGNORE INTO product_price_link (ref_product_ctime, ref_product_crand, ref_price_ctime, ref_price_crand) VALUES $valueClause";
+            $sql = "INSERT IGNORE INTO product_price_link (ctime, crand, ref_product_ctime, ref_product_crand, ref_price_ctime, ref_price_crand) VALUES $valueClause";
 
             $params = static::returnInsertionParamsForLinkingProductToPrices($product, $prices);
 
@@ -3891,17 +4301,17 @@ class StoreController
     {
         if(empty($prices)) throw new InvalidArgumentException("Prices array cannot be empty");
 
-        $valueClause = "(?,?,?,?)";
+        $valueClause = "(?,?,?,?,?,?)";
 
         for($i = 1; $i > count($prices); $i++)
         {
-            $valueClause .= ", (?,?,?,?)";
+            $valueClause .= ", (?,?,?,?,?,?)";
         }
 
         return $valueClause;
     }
 
-    private static function returnInsertionParamsForLinkingProductToPrices(vRecordId $productId, array $prices) : array
+    private static function returnInsertionParamsForLinkingProductToPrices(vRecordId $productId, array $prices, bool $testing = false) : array
     {
         if(empty($prices)) throw new InvalidArgumentException("Prices array cannot be empty");
 
@@ -3909,7 +4319,15 @@ class StoreController
 
         foreach($prices as $price)
         {
-            array_push($bindingArray, $productId->ctime, $productId->crand, $price->ctime, $price->crand);
+            $link = new ProductPriceLink();
+            
+            if($testing) //exclude the link ctime and crand as it's hard to 'test' those
+            {
+                array_push($bindingArray, $productId->ctime, $productId->crand, $price->ctime, $price->crand);
+                continue;  
+            }
+
+            array_push($bindingArray, $link->ctime, $link->crand, $productId->ctime, $productId->crand, $price->ctime, $price->crand);
         }
 
         return $bindingArray;
@@ -3921,13 +4339,13 @@ class StoreController
         $price = new Price();
         $prices = [$price];
 
-        $actual = json_encode(static::returnInsertionParamsForLinkingProductToPrices($productId, $prices));
+        $actual = json_encode(static::returnInsertionParamsForLinkingProductToPrices($productId, $prices, true));
         $expected = json_encode([$productId->ctime, $productId->crand, $price->ctime, $price->crand]);
         assert($actual === $expected, "UNIT TEST FAILED | actual : $actual | expected : $expected");
 
         $prices = [$price, $price];
 
-        $actual = json_encode(static::returnInsertionParamsForLinkingProductToPrices($productId, $prices));
+        $actual = json_encode(static::returnInsertionParamsForLinkingProductToPrices($productId, $prices, true));
         $expected = json_encode([$productId->ctime, $productId->crand, $price->ctime, $price->crand, $productId->ctime, $productId->crand, $price->ctime, $price->crand]);
         assert($actual === $expected, "UNIT TEST FAILED | actual : $actual | expected : $expected");
     }
@@ -3966,6 +4384,20 @@ class StoreController
     }
 
     //PRICE
+
+    public static string $allViewPriceColumns = "
+        ctime, 
+        crand, 
+        amount, 
+        currency_code, 
+        item_ctime, 
+        item_crand, 
+        item_name, 
+        item_desc,  
+        media_path_small, 
+        media_path_large, 
+        media_path_back,
+        item_is_fungible";
 
     public static function getPrices(array $prices) : Response
     {
@@ -4049,17 +4481,7 @@ class StoreController
         $whereClause = static::constructWhereClauseForGetPricesByCurrencyAndItemAmount($prices);
 
         $sql = "SELECT 
-        ctime, 
-        crand, 
-        amount, 
-        currency_code, 
-        item_ctime, 
-        item_crand, 
-        item_name, 
-        item_desc,  
-        media_path_small, 
-        media_path_large, 
-        media_path_back 
+        ".static::$allViewPriceColumns." 
         FROM v_price 
         WHERE $whereClause";
 
@@ -4160,13 +4582,16 @@ class StoreController
             
             $insertParams = static::returnParamsForInsertionForNonExistingPrices($prices);
 
+            
+        if($insertParams[5] !== 4)throw new Exception($insertSql." | ".json_encode($insertParams));
+
             $insertResult = Database::executeSqlQuery($insertSql, $insertParams);
 
             if($insertResult != false)
             {
                 $whereClause = static::constructWhereClauseForGetPricesByCurrencyAndItemAmount($prices);    
 
-                $selectSql = "SELECT ctime, crand, amount, currency_code, item_ctime, item_crand, item_name, item_desc,  media_path_small, media_path_large, media_path_back FROM v_price WHERE $whereClause;";
+                $selectSql = "SELECT ".static::$allViewPriceColumns." FROM v_price WHERE $whereClause;";
                 $selectParams = static::returnWhereClauseBindingArrayForSelectPriceArrayAfterInsertion($prices);
 
                 $selectResult = Database::executeSqlQuery($selectSql, $selectParams);
@@ -4328,11 +4753,12 @@ class StoreController
         if(!empty($row["media_path_back"]))$iconBack->setMediaPath($row["media_path_back"]);
 
         $item = new vItem($row["item_ctime"], $row["item_crand"]);
-        $item->name = $row["item_name"];
-        $item->description = $row["item_desc"];
-        $item->iconSmall = $iconSmall;
-        $item->iconBig = $iconLarge;
-        $item->iconBack = $iconBack;
+            $item->name = $row["item_name"];
+            $item->description = $row["item_desc"];
+            $item->iconSmall = $iconSmall;
+            $item->iconBig = $iconLarge;
+            $item->iconBack = $iconBack;
+            $item->fungible = boolval($row["item_is_fungible"]);
 
         $currencyCode = $row["currency_code"] != null ? CurrencyCode::from($row["currency_code"]) : null;
 
@@ -4350,6 +4776,48 @@ class StoreController
     private static string $columnsInStoreTable = "ctime, crand, name, locator, description, ref_owner_ctime, ref_owner_crand";
     private static string $columnsInStoreView = "ctime, crand, name, locator, description, owner_username, owner_ctime, owner_crand";
 
+
+    public static function getStoreByAccountId(vRecordId $accountId) : Response
+    {
+      $resp = new Response(false, "Unkown error in getting store by Account Id", null);
+
+        try
+        {
+            $sql = "SELECT ".static::$columnsInStoreView." FROM v_store WHERE owner_crand = ? LIMIT 1;";
+
+            $params = [$accountId->crand];
+
+            $result = Database::executeSqlQuery($sql, $params);
+
+            if(!$result) throw new Exception("Result returned false when selecting for store");
+            
+            if($result->num_rows > 0)
+            {
+                $store = static::rowToVStore($result->fetch_assoc());
+                $products = static::getStoreProductsById($store);
+                
+                if(count($products) > 0)static::populateProductsWithBasePrices($products);
+
+                $store->products = $products;
+
+                $resp->success = true;
+                $resp->message = "Store Returned";
+                $resp->data = $store;
+            }
+            else
+            {
+                $resp->success = true;
+                $resp->message = "Store Not Found";
+            }
+            
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while getting store by account Id : $e");
+        }
+
+        return $resp;  
+    }
 
     public static function getStoreByLocator(string $locator) : Response
     {
@@ -4659,4 +5127,890 @@ class StoreController
 
         return $response;
     } 
+
+    private static function linkBasePricesToArrayOfCartProducts(array $cartProducts) : void
+    {
+
+        $params = [];
+        $selectTable = static::createSelectTableForPopulateBasePricesToArrayOfCartProducts($cartProducts, $params);
+        $sql = "SELECT
+            vp.ctime, 
+            vp.crand, 
+            vp.amount, 
+            vp.currency_code, 
+            vp.item_ctime, 
+            vp.item_crand, 
+            vp.item_name, 
+            vp.item_desc,  
+            vp.media_path_small, 
+            vp.media_path_large, 
+            vp.media_path_back,
+            vp.item_is_fungible,
+            st.cart_product_link_ctime,
+            st.cart_product_link_crand
+        FROM v_price vp
+        JOIN product_price_link ppl ON ppl.ref_price_ctime = vp.ctime AND ppl.ref_price_crand = vp.crand
+        JOIN ($selectTable) st ON st.product_ctime = ppl.ref_product_ctime AND st.product_crand = ppl.ref_product_crand
+        WHERE ppl.void = 0;
+        ";
+
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new Exception("result returned false while populating base prices to array of cart products");
+
+        $cartProductPricePairs = [];
+
+        while($row = $result->fetch_assoc())
+        {
+            $price = static::rowToVPrice($row);
+            $cartProduct = new vRecordId($row["cart_product_link_ctime"], $row["cart_product_link_crand"]);
+
+            array_push($cartProductPricePairs, ["price"=>$price, "cartProductId"=>$cartProduct]);
+        }
+
+        static::linkCartProductPricePairs($cartProductPricePairs);
+    }
+
+    private static function linkCartProductPricePairs(array $cartProductPricePairs) : void
+    {
+        $params = [];
+        $valueClause = static::createValueClauseForLinkCartProductPricePairs($cartProductPricePairs, $params);
+        $sql = "INSERT INTO cart_product_price_link (ctime, crand, ref_cart_product_link_ctime, ref_cart_product_link_crand, ref_price_ctime, ref_price_crand, removed, checked_out) VALUES $valueClause";
+
+        $result = database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new Exception("result returned false while linking cart product price pairs");
+    }
+
+    private static function createValueClauseForLinkCartProductPricePairs(array $cartProductPricePairs, &$params) : string
+    {
+        $valueClause = "";
+
+        for($i = 0; $i < count($cartProductPricePairs); $i++)
+        {
+            $pair = $cartProductPricePairs[$i];
+            $cartProductId = $pair["cartProductId"];
+            $price = $pair["price"];
+
+            $link = new recordId();
+
+            array_push($params, $link->ctime, $link->crand, $cartProductId->ctime, $cartProductId->crand, $price->ctime, $price->crand);
+
+            if($i === 0)
+            {
+                $valueClause .= "(?,?,?,?,?,?,0,0)";
+                continue;
+            }
+
+            $valueClause .= ", (?,?,?,?,?,?,0,0)";
+        }
+
+        return $valueClause;
+    }
+
+    private static function createSelectTableForPopulateBasePricesToArrayOfCartProducts(array $cartProducts, array &$params) : string
+    {
+        $selectTable = "";
+
+        for($i = 0; $i < count($cartProducts); $i++)
+        {
+            $cartProduct = $cartProducts[$i];
+
+            array_push($params, $cartProduct->ctime, $cartProduct->crand, $cartProduct->product->ctime, $cartProduct->product->crand);
+
+            if($i===0)
+            {
+                $selectTable .= "(SELECT ? as cart_product_link_ctime, ? as cart_product_link_Crand, ? as product_ctime, ? as product_crand)";
+                continue;
+            }
+
+            $selectTable .= "UNION ALL (SELECT ?, ?, ?, ?)"; 
+        }
+
+        return $selectTable;
+    }
+
+    public static function removeCouponFromCartByGroupAssignmentId(vRecordId $couponGroupId) : Response
+    {
+        $resp = new Response(false, "unkown error in removing coupon from cart by group assignment id");
+
+        try
+        {
+            $cartProducts = static::getCartProductsByCouponGroupAssignmentId($couponGroupId);
+
+            $sql = "UPDATE coupon_cart_product_link SET removed = 1 WHERE coupon_assignment_group_ctime = ? AND coupon_assignment_group_crand = ?;";
+            $params = [$couponGroupId->ctime, $couponGroupId->crand];
+
+            $result = Database::executeSqlQuery($sql, $params);
+
+            if($result) throw new Exception("result returned false while removing coupon from cart by group assignment id");
+
+            static::linkBasePricesToArrayOfCartProducts($cartProducts);
+
+            $resp->success = true;
+            $resp->message = "Removed coupon from cart";
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("exception caught while removing coupon from cart by group assignment id");
+        }
+
+        return $resp;
+    }
+
+    private static function getCartProductsByCouponGroupAssignmentId(vRecordId $couponGroupId) : array
+    {
+        $sql = "SELECT 
+            ".static::$columnsInCartItemView."
+            FROM v_cart_item WHERE coupon_assignment_group_ctime = ? AND coupon_assignment_group_crand = ? AND removed = 0 AND checked_out = 0)
+        ";
+
+        $result = Database::executeSqlQuery($sql, [$couponGroupId->ctime, $couponGroupId->crand]);
+
+        if(!$result) throw new Exception("result returned false while getting cart prodcut by coupon group assignment id");
+
+        $cartItems = static::cartItemResultToViews($result);
+
+        return $cartItems;
+    }
+
+    public static function clearCouponsFromCart(vCart $cart) : Response
+    {
+        $resp = new Response(false, "unkown error in clearing coupons from cart");
+
+        try
+        {
+
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("exception caught while clearing coupons from cart : $e");
+        }
+
+        return $resp;
+    }
+
+    public static function removeCouponByAssignedCartProduct(vCartItem $cartProduct) : Response
+    {
+        $resp = new Response(false, "Unkown error in removing coupon by assigned cart produt");
+
+        try
+        {
+            if(is_null($cartProduct->couponGroupAssignmentId) || is_null($cartProduct->coupon))
+            {
+                $resp->message = "CartProduct does not have an assigned coupon";
+                return $resp;
+            }
+
+            $removeCoupon = static::removeCouponFromCartByGroupAssignmentId($cartProduct->couponGroupAssignmentId);
+
+            if(!$removeCoupon->success) throw new Exception("Failed to remove coupon by assigned cart products group assignment id");
+
+            $resp->success = true;
+            $resp->message = "Removed Coupon by assigned cart product";
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Exception cuaght removing coupon by assigned cart product : $e");
+        }
+
+        return $resp;
+    }
+
+    /**
+     * Tries to apply the given coupon to cart 
+     * @param vCart $cart the cart to which the coupon will try to be applied
+     * @param vCoupon $counon the coupon that will try to be applied
+     * 
+     * @return Response the response in which the success indicate the precense of an error. 
+     * The data of the resopnse will indicate whether the coupon was actually applied
+     */
+    public static function tryApplyCouponToCart(vCart $cart, vCoupon $coupon) : Response
+    {
+        $resp = new Response(false, "unkown error in attempting to apply coupon to cart");
+
+        try
+        {
+            if($coupon->removed)
+            {
+                $resp->message = "Coupon is removed";
+                return $resp;
+            }
+
+            if(!is_null($coupon->timesUsed) && !is_null($coupon->maxTimesUsed) && $coupon->timesUsed >= $coupon->maxTimesUsed)
+            {
+                $resp->success = true;
+                $resp->message = "Coupon is out of uses";
+                $resp->data = false;
+                return $resp;
+            }
+
+            $now = new DateTime();
+            if(!is_null($coupon->expiryTime) && $now > $coupon->expiryTime)
+            {
+                $resp->success = true;
+                $resp->message = "Coupon is expired";
+                $resp->data = false;
+                return $resp;
+            }
+
+            if(!static::doesCartMeetCouponProductRequirements($cart, $coupon)) 
+            {
+                $resp->success = true;
+                $resp->message = "Cart does not have the required products";
+                $resp->data = false;
+                return $resp;
+            };
+
+            $accountCouponUseResp = static::getAccountCouponUse($cart->account, $coupon);
+
+            if(!$accountCouponUseResp->success)
+            {
+                $resp->message = "failed to get account coupon use : $accountCouponUseResp->message";
+                return $resp;
+            }
+
+            if($accountCouponUseResp->data !== false && $accountCouponUseResp->data->remainingUses <= 0)
+            {
+                $resp->success = true;
+                $resp->message = "Account is out of individual uses for this coupon";
+                $resp->data = false;
+                return $resp;
+            }
+
+
+            //Coupon is avialable to be used by this account
+
+            $applyResp = static::applyCouponToCart($cart, $coupon);
+
+            if(!$applyResp->success)
+            {
+                $resp->message = "Failed to apply validated and available coupon to cart";
+                return $resp;
+            }
+
+            $resp->success = true;
+            $resp->message = "Applied coupon to cart";
+            $resp->data = true;
+        }   
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while attempting to apply coupon : $e");
+        }
+
+        return $resp;
+    }
+
+    public static function applyCouponToCart(vCart $cart, vCoupon $coupon) : Response
+    {
+        $resp = new Response(false, "unknown error in applying coupon to cart");
+
+        try
+        {
+        
+            $conn = Database::getConnection();
+
+            $conn->begin_transaction();
+
+            $couponedProducts = static::getCartProductsToApplyCoupon($cart, $coupon);
+
+            $couponCartProductLinks = [];
+            static::executeQueriesToRemoveCurrentCouponCartProductLinksForCoupon($couponedProducts);
+            static::executeQueriesToLinkCartProductsToCoupon($couponedProducts, $coupon, $couponCartProductLinks);
+            static::executeQueriesToRemoveCurrentPricesFromCartProducts($couponedProducts);
+            static::executeQueriesToAddCouponPricesToProducts($couponedProducts, $coupon);
+
+            if(!$conn->commit()) throw new exception("Transaction returned false while attempting to apply coupon to cart");
+
+            $resp->success = true;
+            $resp->message = "applied coupon to cart";
+        }
+        catch(Exception $e)
+        {
+            $conn->rollback();
+            throw new Exception("Exception caught while applying coupon to cart : $e");
+        }
+
+        return $resp;
+    }
+
+    private static function executeQueriesToRemoveCurrentCouponCartProductLinksForCoupon(array $couponedProducts) : void
+    {
+        if(count($couponedProducts) <= 0) return;
+        
+        $params = [];
+        $selectTable = static::createSelectTableForExecuteQueriesToRemoveCurrentCouponCartProductLinksForCoupon($couponedProducts, $params);
+        $sql = "UPDATE coupon_cart_product_link ccpl JOIN ($selectTable) st ON st.cart_product_link_ctime = ccpl.ref_cart_product_link_ctime AND st.cart_product_link_crand = ccpl.ref_cart_product_link_crand SET removed = 1";
+
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new Exception("result returned false while executing queries to remove current coupon cart product links for coupon");
+    }
+
+    private static function createSelectTableForExecuteQueriesToRemoveCurrentCouponCartProductLinksForCoupon(array $couponedProducts, array &$params) : string
+    {
+        if(count($couponedProducts) <= 0) throw new InvalidArgumentException("\$couponedProducts array must contain at least one element");
+
+        $selectTable = "";
+
+        for($i = 0; $i < count($couponedProducts); $i++)
+        {
+            $cartProduct = $couponedProducts[$i];
+
+            array_push($params, $cartProduct->ctime, $cartProduct->crand);
+            
+            if($i===0)
+            {
+                $selectTable .= "(SELECT ? as cart_product_link_ctime, ? as cart_product_link_crand)";
+                continue;
+            }
+
+            $selectTable .= "UNION ALL (SELECT ?, ?)";
+        }
+
+        return $selectTable;
+    }
+
+    private static function executeQueriesToAddCouponPricesToProducts(array $cartProductLinksToApplyCouponTo, vCoupon $coupon) : void
+    {
+        $params = [];
+        $valueClause = static::createValueClauseForExecuteQueriesToAddCouponPricesToProducts($cartProductLinksToApplyCouponTo, $coupon, $params);
+        $sql = "INSERT INTO cart_product_price_link (ctime, crand, ref_cart_product_link_ctime, ref_cart_product_link_crand, ref_price_ctime, ref_price_crand, removed, checked_out) ($valueClause)";
+
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new Exception("result returned false while executing query to add coupon prices to cart products");
+    }
+
+    private static function createValueClauseForExecuteQueriesToAddCouponPricesToProducts(array $cartProductLinksToApplyCouponTo, vCoupon $coupon, array &$params) : string
+    {
+        $valueClause = "";
+
+        for($i = 0; $i < count($cartProductLinksToApplyCouponTo); $i++)
+        {
+            $cartProductLink = $cartProductLinksToApplyCouponTo[$i];
+
+            $link = new CartProductPriceLink();
+
+            array_push($params, $link->ctime, $link->crand, $cartProductLink->ctime, $cartProductLink->crand, $coupon->ctime, $coupon->crand);
+
+            if($i === 0)
+            {
+                $valueClause .= "(SELECT ? as ctime, ? as crand, ? as ref_cart_product_link_ctime, ? as ref_cart_product_link_crand, cpl.ref_price_ctime, cpl.ref_price_crand, 0 as removed, 0 as checked_out FROM coupon_price_link cpl WHERE cpl.ref_coupon_ctime = ? AND cpl.ref_coupon_crand = ?)";
+                continue;
+            }
+
+            $valueClause .= "UNION ALL (SELECT ?, ?, ?, ?, cpl.ref_price_ctime, cpl.ref_price_crand, 0, 0 FROM coupon_price_link cpl WHERE cpl.ref_coupon_ctime = ? AND cpl.ref_coupon_crand = ?)";
+        }
+
+        return $valueClause;
+    }
+
+    private static function getCartProductsToApplyCoupon(vCart $cart, vCoupon $coupon) : array
+    {
+        $limit = $coupon->requiredQuantityOfProduct;
+        if(!is_int($limit) || $limit < 0) throw new InvalidArgumentException("Limit must be a positive integer or zero. Type : ".gettype($limit));
+        //limit is now specifically validated to prevent SQL injection as parameterization with LIMIT clauses is not supported
+
+        $sql = "SELECT 
+            cpl.ctime,
+            cpl.ctime,
+            cpl.crand,
+            cpl.crand,
+            cpl.product_name,
+            cpl.product_name,
+            cpl.product_description,
+            cpl.product_description,
+            cpl.product_locator,
+            cpl.product_locator,
+            cpl.removed,
+            cpl.removed,
+            cpl.checked_out,
+            cpl.checked_out,
+            cpl.account_username,
+            cpl.account_username,
+            cpl.store_name,
+            cpl.store_name,
+            cpl.store_locator,
+            cpl.store_locator,
+            cpl.cart_ctime,
+            cpl.cart_ctime,
+            cpl.cart_crand,
+            cpl.cart_crand,
+            cpl.product_ctime,
+            cpl.product_ctime,
+            cpl.product_crand,
+            cpl.product_crand,
+            cpl.account_ctime,
+            cpl.account_ctime,
+            cpl.account_crand,
+            cpl.account_crand,
+            cpl.store_ctime,
+            cpl.store_ctime,
+            cpl.store_crand,
+            cpl.store_crand,
+            cpl.large_media_media_path,
+            cpl.large_media_media_path,
+            cpl.small_media_media_path,
+            cpl.small_media_media_path,
+            cpl.back_media_media_path,
+            cpl.back_media_media_path,
+            cpl.coupon_ctime,
+            cpl.coupon_ctime,
+            cpl.coupon_crand,
+            cpl.coupon_crand,
+            cpl.coupon_code,
+            cpl.coupon_code,
+            cpl.coupon_description,
+            cpl.coupon_description,
+            cpl.coupon_required_quantity_of_product,
+            cpl.coupon_required_quantity_of_product,
+            cpl.coupon_times_used,
+            cpl.coupon_times_used,
+            cpl.coupon_max_times_used,
+            cpl.coupon_max_times_used,
+            cpl.coupon_max_times_used_per_account,
+            cpl.coupon_max_times_used_per_account,
+            cpl.coupon_expiry_time,
+            cpl.coupon_expiry_time,
+            cpl.coupon_removed,
+            cpl.coupon_removed 
+        FROM v_cart_product_link cpl 
+        JOIN v_coupon c ON c.product_ctime = cpl.product_ctime AND c.product_crand = cpl.product_crand 
+        WHERE c.ctime = ? AND c.crand = ? LIMIT $limit;";
+
+        $params = [$coupon->ctime, $coupon->crand];
+
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new Exception("result returned false returning products to apply coupon");
+
+        if($result->num_rows !== $coupon->requiredQuantityOfProduct) throw new Exception("Select query returned incorrect number of rows. Expected : $limit | Actual : $result->num_rows");
+
+        $productLinks = [];
+
+        while($row = $result->fetch_assoc())
+        {
+            array_push($productLinks, static::rowToVCartProductLink($row));
+        }
+
+        return $productLinks;
+    }
+
+    private static function rowToVCartProductLink($row) : vCartProductLink
+    {
+        $link = new vCartProductLink($row["ctime"], $row["crand"]);
+
+        $link->removed = boolval($row["removed"]);
+        $link->checkedOut = boolval($row["checked_out"]);
+
+        $product = new vProduct($row["product_ctime"], $row["product_crand"]);
+            $product->name = $row["product_name"];
+            $product->description = $row["product_description"];
+            $product->locator = $row["product_locator"];
+
+                $store = new vStore($row["store_ctime"], $row["store_crand"]);
+                $store->name = $row["store_name"];
+            $product->store = $store;
+        $link->product = $product;
+
+        if(!is_null($row["coupon_ctime"]))
+        {
+            $coupon = new vCoupon($row["coupon_ctime"], $row["coupon_crand"]);
+                $coupon->code = $row["coupon_code"];
+                $coupon->description = $row["coupon_description"];
+                $coupon->requiredQuantityOfProduct = $row["coupon_required_quantity_of_product"];
+                $coupon->productId = new vRecordId($row["product_ctime"], $row["product_crand"]);
+                $coupon->timesUsed = $row["coupon_times_used"];
+                $coupon->maxTimesUsed = $row["coupon_max_times_used"];
+                $coupon->maxTimesUsedPerAccount = $row["coupon_max_times_used_per_account"];
+
+                $coupon->expiryTime = is_null($row["coupon_expiry_time"]) ? null :  DateTime::createFromFormat('Y-m-d H:i:s.u', $row["coupon_expiry_time"]);
+                $coupon->removed = boolval($row["coupon_removed"]);
+
+            $link->coupon = $coupon;
+        }
+
+        return $link;
+    }
+
+    private static function executeQueriesToLinkCartProductsToCoupon(array $cartProductToApplyCouponTo, vCoupon $coupon, array &$couponCartProductLinks) : void
+    {
+        $params = [];
+        $valueClause = static::createValueCluaseForExecuteQueriesToLinkCartProductsToCoupon($cartProductToApplyCouponTo, $coupon, $params, $couponCartProductLinks);
+        $sql = "INSERT INTO coupon_cart_product_link (
+            ctime,
+            crand,
+            ref_coupon_ctime,
+            ref_coupon_crand,
+            ref_cart_product_link_ctime,
+            ref_cart_product_link_crand,
+            coupon_assignment_group_ctime,
+            coupon_assignment_group_crand,
+            removed,
+            checked_out
+            ) VALUES $valueClause";
+
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new exception("result returend false when inserting cartProductCouponLinks");
+    }
+
+    private static function createValueCluaseForExecuteQueriesToLinkCartProductsToCoupon(array $cartProductsToApplyCouponTo, vCoupon $coupon, array &$params, array &$couponCartProductLinks) : string
+    {
+        $valueClause = "";
+
+        $groupId = new RecordId();
+
+        for($i = 0; $i < $coupon->requiredQuantityOfProduct; $i++)
+        {
+            $link = new CartProductCouponLink();
+
+            $cartProduct = $cartProductsToApplyCouponTo[$i];
+
+            $linkView = new vCartProductCouponLink($link->ctime, $link->crand);
+            $linkView->couponId = new vRecordId($coupon->ctime, $coupon->crand);
+            $linkView->cartProductId = new vRecordId($cartProduct->ctime, $cartProduct->crand);
+            array_push($couponCartProductLinks, $linkView);
+
+            if($i !== 0)
+            {
+                $valueClause .= ", ";
+            }
+
+            $valueClause .= "(?, ?, ?, ?, ?, ?, ?, ?, 0, 0)";
+            array_push($params,
+                $link->ctime,
+                $link->crand,
+                $coupon->ctime,
+                $coupon->crand,
+                $cartProduct->ctime,
+                $cartProduct->crand,
+                $groupId->ctime,
+                $groupId->crand,
+            );
+        }
+
+        return $valueClause;
+    }
+
+    private static function executeQueriesToRemoveCurrentPricesFromCartProducts(array $couponedProducts) : void
+    {
+        $params = [];
+        $selectTable = static::createSelectTableForExecuteQueriesToRemoveCurrentPricesFromCartProducts($couponedProducts, $params);
+        $sql = "UPDATE cart_product_price_link cpl JOIN ($selectTable) st ON st.ctime = cpl.ctime AND st.crand = cpl.crand SET cpl.removed = 1;";
+
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new Exception("result returned false while executing queries to remove current prices from cart products");
+    }
+
+    private static function createSelectTableForExecuteQueriesToRemoveCurrentPricesFromCartProducts(array $couponedProducts, array &$params) : string
+    {
+        $selectTable = "";
+
+        for($i = 0; $i < count($couponedProducts); $i++)
+        {
+            $product = $couponedProducts[$i];
+            array_push($params, $product->ctime, $product->crand);
+
+            if($i === 0)
+            {
+                $selectTable .= "(SELECT ctime, crand FROM cart_product_price_link WHERE ref_cart_product_link_ctime = ? AND ref_cart_product_link_crand = ?)";
+                continue;
+            }
+
+            $selectTable .= " UNION ALL (SELECT ctime, crand FROM cart_product_price_link WHERE ref_cart_product_link_ctime = ? AND ref_cart_product_link_crand = ?)";
+        }
+
+        return $selectTable;
+    }
+
+    public static function getAccountCouponUse(vAccount $account, vCoupon $coupon) : Response
+    {
+        $resp = new Response(false, "unkown error in getting account coupon use");
+
+        try
+        {
+            $sql = "SELECT
+            ctime,
+            crand, 
+            coupon_ctime,
+            coupon_crand,
+            code,
+            `description`,
+            required_quantity_of_product,
+            product_ctime,
+            product_crand,
+            max_times_used_per_account,
+            remaining_uses,
+            account_times_used,
+            expiry_time,
+            removed,
+            account_ctime,
+            account_crand
+            FROM v_coupon_account_use
+            WHERE account_crand = ? 
+            AND coupon_ctime = ? AND coupon_crand = ?
+            LIMIT 1;";
+
+            $params = [$account->crand, $coupon->ctime, $coupon->crand];
+
+            $result = Database::executeSqlQuery($sql, $params);
+
+            if(!$result) throw new Exception("result returned false while getting account coupon use");
+
+            if($result->num_rows === 0)
+            {
+                $resp->success = true;
+                $resp->message = "Account has not used this coupon";
+                $resp->data = false;
+            }
+            else
+            {
+                $couponAccountUse = static::rowToVCouponAccountUse($result->fetch_assoc());
+
+                $resp->success = true;
+                $resp->message = "Returned Account Coupon Use";
+                $resp->data = $couponAccountUse;
+            }
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while account coupon use : $e");
+        }
+
+        return $resp;
+    }
+
+    private static function rowToVCouponAccountUse(array $row) : vCouponAccountUse
+    {
+        $use = new vCouponAccountUse($row["ctime"], $row["crand"]);
+
+        $use->coupon =  static::rowToVCoupon($row);
+
+        $use->accountId = new vRecordId($row["account_ctime"], $row["account_crand"]);
+
+        $use->remainingUses = $row["remaining_uses"];
+        $use->accountTimesUsed = $row["account_times_used"];
+
+        return $use;
+    }
+
+    private static function doesCartMeetCouponProductRequirements(vCart $cart, vCoupon $coupon) : bool
+    {
+        $productId = $coupon->productId;
+
+        $numOfProductInCart = 0;
+
+        foreach($cart->cartProducts as $cartProduct)
+        {
+            $product = $cartProduct->product;
+            if($product->ctime !== $productId->ctime || $product->crand !== $productId->crand) continue;
+
+            $numOfProductInCart++;
+        }
+
+        return ($numOfProductInCart >= $coupon->requiredQuantityOfProduct);
+    }
+
+    
+    public static function addCoupon(Coupon $coupon) : Response
+    {
+        $resp = new Response(false, "unkown error in adding coupon");
+
+        try
+        {
+            $sql = "INSERT INTO coupon (
+                ctime,
+                crand,
+                code,
+                `description`,
+                required_quantity_of_product,
+                ref_product_ctime,
+                ref_product_crand,
+                times_used,
+                max_times_used,
+                max_times_used_per_account,
+                expiry_time,
+                removed) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+            ";
+
+            $expiryTime = is_null($coupon->expiryTime) ? null : $coupon->expiryTime->format('Y-m-d H:i:s.u');
+            
+            $params = [$coupon->ctime,
+                $coupon->crand,
+                $coupon->code,
+                $coupon->description,
+                $coupon->requiredQuantityOfProduct,
+                $coupon->productId->ctime,
+                $coupon->productId->crand,
+                $coupon->timesUsed,
+                $coupon->maxTimesUsed,
+                $coupon->maxTimesUsedPerAccount,
+                $expiryTime,
+                $coupon->removed
+            ];
+
+            $conn = Database::getConnection();
+            $conn->begin_transaction();
+
+            Database::executeSqlQuery($sql, $params);
+
+            if(count($coupon->prices) > 0)static::linkPricesToCouponInsertionTransaction($coupon);
+
+            $success = $conn->commit();
+
+            if(!$success) throw new Exception("transaction returned false while adding coupon");
+
+            $resp->success = true;
+            $resp->message = "Coupon Added";
+        }
+        catch(Exception $e)
+        {
+            $conn->rollback();
+            throw new Exception("Exception caught while adding coupon : $e");
+        }
+
+        return $resp;
+    }
+
+    public static function linkPricesToCouponInsertionTransaction(Coupon $coupon) : void
+    {
+        $params = [];
+        $valueClause = static::createValueClauseForLinkPricesToCouponInsertionTransaction($coupon, $params);
+        $sql = "INSERT INTO coupon_price_link (ctime, crand, ref_coupon_ctime, ref_coupon_crand, ref_price_ctime, ref_price_crand) VALUES $valueClause";
+
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new exception("result returned false while inserting coupon price links");
+    }
+
+    public static function createValueClauseForLinkPricesToCouponInsertionTransaction(Coupon $coupon, array &$params) : string
+    {
+        $prices = $coupon->prices;
+
+        if(count($prices) <= 0) throw new InvalidArgumentException("counpon prices must have at least one element");
+
+        $valueClause = "";
+
+        for($i = 0; $i < count($prices); $i++)
+        {
+            $price = $prices[$i];
+            $link = new CouponPriceLink();
+
+            array_push($params, $link->ctime, $link->crand, $coupon->ctime, $coupon->crand, $price->ctime, $price->crand);
+
+            if($i===0)
+            {
+                $valueClause .= "(?,?,?,?,?,?)";
+                continue;
+            }
+
+            $valueClause .= ", (?,?,?,?,?,?)";
+        }
+
+        return $valueClause;
+    }
+
+    public static function getCouponByCode(string $code) : Response
+    {
+        $resp = new Response(false, "unkown error in getting coupon by code");
+
+        try
+        {
+            $sql = "SELECT 
+            ctime,
+            crand,
+            code,
+            `description`,
+            required_quantity_of_product,
+            product_ctime,
+            product_crand,
+            times_used,
+            max_times_used,
+            max_times_used_per_account,
+            expiry_time,
+            removed
+            FROM v_coupon
+            WHERE code = ? AND removed = 0 AND (expiry_time IS NULL OR expiry_time > NOW()) 
+            LIMIT 1;";
+
+            $params = [$code];
+
+            $result = Database::executeSqlQuery($sql, $params);
+
+            if(!$result) throw new Exception("result returned false while getting coupon by code");
+
+            if($result->num_rows < 1)
+            {
+                $resp->message = "Coupon not found";
+                return $resp;
+            }
+
+            $coupon = static::rowToVCoupon($result->fetch_assoc());
+
+            $coupon->prices = static::getCouponPrices($coupon);
+
+            $resp->success = true;
+            $resp->message = "Coupon returned";
+            $resp->data = $coupon;
+        }
+        catch(Exception $e)
+        {   
+            throw new Exception("Exception caught while getting coupon by code : $e");
+        }
+
+        return $resp;
+    }
+
+    private static function getCouponPrices(vCoupon $coupon) : array
+    {
+        $sql = "SELECT
+            vp.ctime, 
+            vp.crand, 
+            vp.amount, 
+            vp.currency_code, 
+            vp.item_ctime, 
+            vp.item_crand, 
+            vp.item_name, 
+            vp.item_desc,  
+            vp.media_path_small, 
+            vp.media_path_large, 
+            vp.media_path_back,
+            vp.item_is_fungible
+        FROM v_price vp
+        JOIN coupon_price_link cpl ON cpl.ref_price_ctime = vp.ctime AND cpl.ref_price_crand 
+        WHERE cpl.ref_coupon_ctime = ? AND cpl.ref_coupon_crand = ?";
+
+        $result = Database::executeSqlQuery($sql, [$coupon->ctime, $coupon->crand]);
+
+        if(!$result) throw new Exception("result returned false while getting coupon prices");
+
+        $prices = [];
+        
+        while($row = $result->fetch_assoc())
+        {
+            array_push($prices, static::rowToVPrice($row));
+        }
+
+        return $prices;
+    }
+
+    private static function rowToVCoupon(array $row) : vCoupon
+    {
+        $coupon = new vCoupon($row["ctime"], $row["crand"]);
+
+        $coupon->code = $row["code"];
+        $coupon->description = $row["description"];
+        $coupon->requiredQuantityOfProduct = $row["required_quantity_of_product"];
+        $coupon->productId = new vRecordId($row["product_ctime"], $row["product_crand"]);
+        $coupon->timesUsed = $row["times_used"];
+        $coupon->maxTimesUsed = $row["max_times_used"];
+        $coupon->maxTimesUsedPerAccount = $row["max_times_used_per_account"];
+        $coupon->expiryTime = is_null($row["expiry_time"]) ? null : DateTime::createFromFormat('Y-m-d H:i:s.u', $row["expiry_time"]);
+        $coupon->removed = boolval($row["removed"]);
+
+        return $coupon;
+    }
 }

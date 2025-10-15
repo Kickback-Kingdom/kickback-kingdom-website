@@ -46,7 +46,7 @@ class Database {
         return self::$conn;
     }
 
-    public static function executeSqlQuery(string $stmt, array $params)
+    public static function executeSqlQuery(string $stmt, array $params = [])
     { 
         try
         {

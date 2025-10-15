@@ -46,6 +46,173 @@ class StoreClient {
         }
     }
 
+    static async getStoreByAccount(accountId){
+        
+    }
+
+    static async getCart(AccountId){
+        if (!AccountId) {
+            throw new Error('Account ID is required');
+        }
+
+        try {
+            const response = await fetch(`api/v2/server/store/get-cart?accountId=${AccountId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.text();
+            let jsonData;
+            
+            try {
+                jsonData = JSON.parse(data);
+            } catch (parseError) {
+                throw new Error('Invalid JSON response from server');
+            }
+
+            if (!jsonData.success) {
+                throw new Error(jsonData.message || `Failed to get cart for account ${AccountId}`);
+            }
+
+            return jsonData;
+
+        } catch (error) {
+            console.error(`Store.getCart(${AccountId}) failed:`, error);
+            throw error;
+        }
+    }
+
+    static async addProductToCartById(cart, productId){
+        if (!cart) {
+            throw new Error('Cart is required');
+        }
+
+        try {
+            const response = await fetch(`api/v2/server/store/add-product-to-cart-by-id`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body:{
+                    cart,
+                    productId
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.text();
+            let jsonData;
+            
+            try {
+                jsonData = JSON.parse(data);
+            } catch (parseError) {
+                throw new Error('Invalid JSON response from server');
+            }
+
+            if (!jsonData.success) {
+                throw new Error(jsonData.message || `Failed to add product to cart by id`);
+            }
+
+            return jsonData;
+
+        } catch (error) {
+            console.error(`Store.addProductToCartById(${cart}, ${productId}) failed:`, error);
+            throw error;
+        }
+    }
+
+    static async addProductToCartByLocator(cart, productLocator){
+        if (!cart) {
+            throw new Error('Cart is required');
+        }
+
+        try {
+            const response = await fetch(`api/v2/server/store/add-product-to-cart-by-locator`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body:{
+                    cart,
+                    productLocator
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.text();
+            let jsonData;
+            
+            try {
+                jsonData = JSON.parse(data);
+            } catch (parseError) {
+                throw new Error('Invalid JSON response from server');
+            }
+
+            if (!jsonData.success) {
+                throw new Error(jsonData.message || `Failed to add product to cart`);
+            }
+
+            return jsonData;
+
+        } catch (error) {
+            console.error(`Store.addProductToCartByLocator(${cart}, ${productLocator}) failed:`, error);
+            throw error;
+        }
+    }
+
+    static async removeProductFromCart(cartProduct){
+        if (!cartProduct) {
+            throw new Error('CartProduct is required');
+        }
+
+        try {
+            const response = await fetch(`api/v2/server/store/remove-product-from-cart`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body:{
+                    cartProduct
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.text();
+            let jsonData;
+            
+            try {
+                jsonData = JSON.parse(data);
+            } catch (parseError) {
+                throw new Error('Invalid JSON response from server');
+            }
+
+            if (!jsonData.success) {
+                throw new Error(jsonData.message || `Failed to remove product from cart`);
+            }
+
+            return jsonData;
+
+        } catch (error) {
+            console.error(`Store.removeProductFromCart(${cartProduct}) failed:`, error);
+            throw error;
+        }
+    }
+
     static async checkoutCart(cart){
         if (!cart) {
             throw new Error('Cart is required');

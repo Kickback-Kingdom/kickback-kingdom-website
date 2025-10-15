@@ -15,8 +15,6 @@ class vCart extends vRecordId
     public vStore $store;
     public vTransaction $transaction;
 
-
-
     public bool $checkedOut;
     public bool $void;
 

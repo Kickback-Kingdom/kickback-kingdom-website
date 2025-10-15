@@ -11,6 +11,7 @@ class vCartProductLink extends vRecordId
 
     public vProduct $product;
     public vCart $cart;
+    public ?vCoupon $coupon;
 
 }
 

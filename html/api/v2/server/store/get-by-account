@@ -13,9 +13,9 @@ use Kickback\Services\StoreService;
 Endpoint::begin();
 try
 {
-    $request_contents_json = Endpoint::file_get_contents('php://input');
+    $queryString = $_SERVER['QUERY_STRING'];
     $response = null;
-    $response_code = StoreService::checkout_cart($request_contents_json, $response);
+    $response_code = StoreService::get_store_by_account($queryString, $response);
     if ( $response_code !== 0 ) {
         \http_response_code($response_code);
         // Otherwise let PHP/Apache/HTTPD respond with what it feels is appropriate.
@@ -27,7 +27,7 @@ catch( \Throwable $e )
     $code = ($code === 0) ? 500 : $code;
     \http_response_code($code);
     $response = new Response(false,
-        'Failed to checkout cart: ' . ThrowableOverrides::message($e),
+        'Failed to get store by account: ' . ThrowableOverrides::message($e),
         $e->__toString());
 }
 finally {
