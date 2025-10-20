@@ -151,7 +151,7 @@ class StoreService
         }
     }
 
-    public static function get_store_by_locator(string $queryString, ?Response &$resp) : int
+    public static function get_store_by_locator(string $request_contents_json, ?Response &$resp) : int
     {
         $resp = new Response(false, "Unkown error encountered while returning store by locator");
 
@@ -161,36 +161,30 @@ class StoreService
             return 401;
         }
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $endpoint_name = Endpoint::calculate_endpoint_resource_name();
             $resp = new Response(false, "$endpoint_name: Method not allowed");
             return 405;
         }
 
-        if(empty($queryString))
-        {
-            $resp->message = "Query string cannot be empty"; 
-            return 400;
-        } 
+        $body = json_decode($request_contents_json, true);
 
-        $paramaters = [];
-        parse_str($queryString, $parameters);
-
-        if(!key_exists("locator", $parameters))
+        if(!key_exists("locator", $body))
         {
-            $resp->message = "Query string must contain the key : 'locator'";
+            $resp->message = "Request body must contain the key : 'locator'";
             return 400;
         }
 
-        $locator = json_decode($parameters["locator"]);
-
-        if(empty($locator))
+        if(empty($body["locator"]))
         {
-            $resp->message = "Locator cannot be empty"; 
+            $resp->message = "locator cannot be empty"; 
             return 400;
         }
+
 
         StoreService::initialize();
+
+        $locator = $body["locator"];
 
         $storeResp = StoreController::getStoreByLocator($locator);
         if(!$storeResp->success)
@@ -215,7 +209,7 @@ class StoreService
         }
     }
 
-    public static function get_cart_for_account(string $queryString, ?Response &$resp) : int
+    public static function get_cart_for_account(string $request_contents_json, ?Response &$resp) : int
     {
         $resp = new Response(false, "Unkown error encountered while returning cart for account");
 
@@ -225,51 +219,50 @@ class StoreService
             return 401;
         }*/
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $endpoint_name = Endpoint::calculate_endpoint_resource_name();
             $resp = new Response(false, "$endpoint_name: Method not allowed");
             return 405;
         }
 
-        if(empty($queryString))
+        if(empty($request_contents_json))
         {
-            $resp->message = "Query string cannot be empty"; 
+            $resp->message = "Request body cannot be empty"; 
             return 400;
         } 
 
-        $paramaters = [];
-        parse_str($queryString, $parameters);
 
-        if(!key_exists("accountId", $parameters))
+        $body = json_decode($request_contents_json, true);
+
+        if(!key_exists("accountId", $body))
         {
-            $resp->message = "Query string must contain the key : 'accountId'";
+            $resp->message = "Request body must contain the key : 'accountId'";
             return 400;
         }
 
-        if(!key_exists("storeLocator", $parameters))
+        if(empty($body["accountId"]))
         {
-            $resp->message = "Query string must contain the key : 'storeLocator'";
+            $resp->message = "accountId cannot be empty"; 
             return 400;
         }
 
-        $accountId = json_decode($parameters["accountId"]);
-        $storeLocator = json_decode($parameters["storeLocator"]);
-
-        if(empty($accountId))
+        if(!key_exists("storeLocator", $body))
         {
-            $resp->message = "AccountId cannot be empty"; 
+            $resp->message = "Request body must contain the key : 'storeLocator'";
             return 400;
         }
 
-        if(empty($storeLocator))
+        if(empty($body["storeLocator"]))
         {
-            $resp->message = "StoreLocator cannot be empty"; 
+            $resp->message = "storeLocator cannot be empty"; 
             return 400;
         }
+
 
         StoreService::initialize();
 
-        $id = new vRecordId('',$accountId);
+        $id = new vRecordId('',$body["accountId"]);
+        $storeLocator = $body["storeLocator"];
         $accountResp = AccountController::getAccountById($id);
         if(!$accountResp->success)
         {
@@ -279,6 +272,7 @@ class StoreService
         }
 
         $storeResp = StoreController::getStoreByLocator($storeLocator);
+
         if(!$storeResp->success)
         {
             $endpoint_name = Endpoint::calculate_endpoint_resource_name();
@@ -286,19 +280,26 @@ class StoreService
             return 500;
         }
 
-        $storeResp = StoreController::getCartForAccount($accountResp->data, $storeResp->data);
-        if(!$storeResp->success)
+        if($storeResp->data === false)
+        {
+            $endpoint_name = Endpoint::calculate_endpoint_resource_name();
+            $resp = new Response(false, "$endpoint_name: Store not found with locator '$storeLocator'");
+            return 500;
+        }
+
+        $storeCartResp = StoreController::getCartForAccount($accountResp->data, $storeResp->data);
+        if(!$storeCartResp->success)
         {
             $endpoint_name = Endpoint::calculate_endpoint_resource_name();
             $resp = new Response(false, "$endpoint_name: Failed to Retrieve Store By Locator");
             return 500;
         }
 
-        if(!is_null($storeResp->data))
+        if(!is_null($storeCartResp->data))
         {
             $resp->success = true;
             $resp->message = "Returned Cart For Account : ".$accountResp->data->username;
-            $resp->data = $storeResp->data;
+            $resp->data = $storeCartResp->data;
             return 200;
         }
         else
@@ -309,48 +310,47 @@ class StoreService
         }
     }
 
-    public static function get_store_by_account(string $queryString, ?Response &$resp) : int
+    public static function get_store_by_account(string $request_contents_json, ?Response &$resp) : int
     {
         $resp = new Response(false, "Unkown error encountered while returning store by locator");
 
-        if (!Session::isLoggedIn()) {
+        /*if (!Session::isLoggedIn()) {
             $endpoint_name = Endpoint::calculate_endpoint_resource_name();
             $resp = new Response(false, "$endpoint_name: Authentication required");
             return 401;
-        }
+        }*/
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $endpoint_name = Endpoint::calculate_endpoint_resource_name();
             $resp = new Response(false, "$endpoint_name: Method not allowed");
             return 405;
         }
 
-        if(empty($queryString))
+        if(empty($request_contents_json))
         {
-            $resp->message = "Query string cannot be empty"; 
+            $resp->message = "Request body cannot be empty"; 
             return 400;
         } 
 
-        $paramaters = [];
-        parse_str($queryString, $parameters);
 
-        if(!key_exists("accountId", $parameters))
+        $body = json_decode($request_contents_json, true);
+
+        if(!key_exists("accountId", $body))
         {
-            $resp->message = "Query string must contain the key : 'accountId'";
+            $resp->message = "Request body must contain the key : 'accountId'";
             return 400;
         }
 
-        $accountId = json_decode($parameters["accountId"]);
-
-        if(empty($accountId))
+        if(empty($body["accountId"]))
         {
-            $resp->message = "accountId cannot be empty"; 
+            $resp->message = "Cart cannot be empty"; 
             return 400;
         }
+
+
+        $accountId = new vRecordId('', $body["accountId"]);
 
         StoreService::initialize();
-
-        $accountId = new vRecordId('', $accountId);
 
         $storeResp = StoreController::getStoreByAccountId($accountId);
         if(!$storeResp->success)
@@ -465,11 +465,11 @@ class StoreService
     {
         $resp = new Response(false, "Unkown error encountered while adding product to cart");
 
-        /*if (!Session::isLoggedIn()) {
+        if (!Session::isLoggedIn()) {
             $endpoint_name = Endpoint::calculate_endpoint_resource_name();
             $resp = new Response(false, "$endpoint_name: Authentication required");
             return 401;
-        }*/
+        }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $endpoint_name = Endpoint::calculate_endpoint_resource_name();

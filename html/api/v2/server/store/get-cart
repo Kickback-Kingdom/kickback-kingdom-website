@@ -13,9 +13,9 @@ use Kickback\Services\StoreService;
 Endpoint::begin();
 try
 {
-    $queryString = $_SERVER['QUERY_STRING'];
+    $request_contents_json = Endpoint::file_get_contents('php://input');
     $response = null;
-    $response_code = StoreService::get_cart_for_account($queryString, $response);
+    $response_code = StoreService::get_cart_for_account($request_contents_json, $response);
     if ( $response_code !== 0 ) {
         \http_response_code($response_code);
         // Otherwise let PHP/Apache/HTTPD respond with what it feels is appropriate.

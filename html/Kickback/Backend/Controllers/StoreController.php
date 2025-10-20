@@ -4850,6 +4850,7 @@ class StoreController
             {
                 $resp->success = true;
                 $resp->message = "Store Not Found";
+                $resp->data = false;
             }
             
         }
