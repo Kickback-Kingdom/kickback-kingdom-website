@@ -4582,8 +4582,7 @@ class StoreController
             
             $insertParams = static::returnParamsForInsertionForNonExistingPrices($prices);
 
-            
-        if($insertParams[5] !== 4)throw new Exception($insertSql." | ".json_encode($insertParams));
+        
 
             $insertResult = Database::executeSqlQuery($insertSql, $insertParams);
 

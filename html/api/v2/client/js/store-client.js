@@ -14,10 +14,13 @@ class StoreClient {
         }
 
         try {
-            const response = await fetch(`api/v2/server/store/get-by-locator?locator=${locator}`, {
-                method: 'GET',
+            const response = await fetch(`api/v2/server/store/get-by-locator`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
+                },
+                body:{
+                    locator
                 }
             });
 
@@ -47,19 +50,18 @@ class StoreClient {
     }
 
     static async getStoreByAccount(accountId){
-        
-    }
-
-    static async getCart(AccountId){
-        if (!AccountId) {
+        if (!locator) {
             throw new Error('Account ID is required');
         }
 
         try {
-            const response = await fetch(`api/v2/server/store/get-cart?accountId=${AccountId}`, {
-                method: 'GET',
+            const response = await fetch(`api/v2/server/store/get-by-account`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
+                },
+                body:{
+                    accountId
                 }
             });
 
@@ -77,13 +79,55 @@ class StoreClient {
             }
 
             if (!jsonData.success) {
-                throw new Error(jsonData.message || `Failed to get cart for account ${AccountId}`);
+                throw new Error(jsonData.message || `Failed to get store by account ID  ${accountId}`);
             }
 
             return jsonData;
 
         } catch (error) {
-            console.error(`Store.getCart(${AccountId}) failed:`, error);
+            console.error(`Store.getByAccount(${accountId}) failed:`, error);
+            throw error;
+        }
+    }
+
+    static async getCart(accountId, storeLocator){
+        if (!accountId) {
+            throw new Error('Account ID is required');
+        }
+
+        try {
+            const response = await fetch(`api/v2/server/store/get-cart`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body:{
+                    accountId,
+                    storeLocator
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.text();
+            let jsonData;
+            
+            try {
+                jsonData = JSON.parse(data);
+            } catch (parseError) {
+                throw new Error('Invalid JSON response from server');
+            }
+
+            if (!jsonData.success) {
+                throw new Error(jsonData.message || `Failed to get cart for account ${accountId} and store locator ${storeLocator}`);
+            }
+
+            return jsonData;
+
+        } catch (error) {
+            console.error(`Store.getCart(${accountId}, ${storeLocator}) failed:`, error);
             throw error;
         }
     }
@@ -250,6 +294,95 @@ class StoreClient {
 
         } catch (error) {
             console.error(`Store.checkoutCart failed:`, error);
+            throw error;
+        }
+    }
+
+    static async applyCoupon(cart, couponCode)
+    {
+        if (!cart) {
+            throw new Error('Cart is required');
+        }
+
+        if (!couponCode) {
+            throw new Error('Coupon Code is required');
+        }
+
+        try {
+            const response = await fetch(`api/v2/server/store/apply-coupon`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body:{
+                    cart,
+                    couponCode
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.text();
+            let jsonData;
+            
+            try {
+                jsonData = JSON.parse(data);
+            } catch (parseError) {
+                throw new Error('Invalid JSON response from server');
+            }
+
+            if (!jsonData.success) {
+                throw new Error(jsonData.message || `Failed to apply coupon to cart`);
+            }
+
+            return jsonData;
+
+        } catch (error) {
+            console.error(`Store.applyCoupon(${cart}, ${couponCode}) failed:`, error);
+            throw error;
+        }
+    }
+
+    static async removeCouponFromProduct(cartProduct)
+    {
+        if (!cartProduct) {
+            throw new Error('CartProduct is required');
+        }
+
+        try {
+            const response = await fetch(`api/v2/server/store/remove-coupon-from-product`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body:{
+                    cartProduct
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.text();
+            let jsonData;
+            
+            try {
+                jsonData = JSON.parse(data);
+            } catch (parseError) {
+                throw new Error('Invalid JSON response from server');
+            }
+
+            if (!jsonData.success) {
+                throw new Error(jsonData.message || `Failed to remove coupon from product`);
+            }
+
+            return jsonData;
+
+        } catch (error) {
+            console.error(`Store.removeCouponFromProduct(${cartProduct}) failed:`, error);
             throw error;
         }
     }
