@@ -23,7 +23,7 @@ $cart = null;
 $account = Session::getCurrentAccount();
 $locator = $_GET["store-locator"] ?? "kickback-market";
 
-$storeResp = StoreController::getWhere(["locator" => $locator]);
+$storeResp = StoreController::getStoreByLocator($locator);
 if (!$storeResp || !$storeResp->success || empty($storeResp->data)) {
     throw new Exception("Failed to retrieve store with locator: $locator - {$storeResp->message}");
 }
@@ -31,16 +31,7 @@ if (!$storeResp || !$storeResp->success || empty($storeResp->data)) {
 $store = $storeResp->data[0];
 
 // Retrieve products for the store
-$productsResp = ProductController::getWhere([
-    "ref_store_ctime" => $store->ctime,
-    "ref_store_crand" => $store->crand
-]);
-
-if (!$productsResp || !$productsResp->success) {
-    throw new Exception("Failed to retrieve products for store: {$productsResp->message}");
-}
-
-$products = $productsResp->data;
+$productsResp = $store->products;
 
 
 
@@ -48,7 +39,7 @@ $products = $productsResp->data;
 if (Session::isLoggedIn()) {
     
     // Retrieve cart for the account and store
-    $cartResp = CartController::getAccountStoreCart($account, $store);
+    $cartResp = StoreController::getCartForAccount($account, $store);
 
     if (!$cartResp || !$cartResp->success) {
         throw new Exception("Failed to retrieve cart for account: {$cartResp->message}");
