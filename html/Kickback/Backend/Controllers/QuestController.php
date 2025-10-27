@@ -25,11 +25,28 @@ use Kickback\Backend\Views\vQuestApplicant;
 use Kickback\Backend\Views\vRaffle;
 use Kickback\Backend\Controllers\AccountController;
 use Kickback\Backend\Controllers\SocialMediaController;
+use Kickback\Common\Primitives\Str;
 
 class QuestController
 {
 
-    public static function getQuestById(vRecordId $recordId): Response {
+    /**
+    * @phpstan-assert-if-true =vQuest $quest
+    */
+    public static function queryQuestByIdInto(vRecordId $recordId, ?vQuest &$quest): bool
+    {
+        $resp = self::queryQuestByIdAsResponse($recordId);
+        if ( $resp->success ) {
+            $quest = $resp->data;
+            return true;
+        } else {
+            $quest = null;
+            return false;
+        }
+    }
+
+    public static function queryQuestByIdAsResponse(vRecordId $recordId): Response
+    {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_quest_info WHERE Id = ?";
     
@@ -64,8 +81,35 @@ class QuestController
     
         return new Response(false, "We couldn't find a quest with that id", null);
     }
+
+    /**
+    * @phpstan-assert-if-true =vQuest $quest
+    */
+    public static function queryQuestByLocatorInto(string $locator, ?vQuest &$quest): bool
+    {
+        $resp = self::queryQuestByLocatorAsResponse($locator);
+        if ( $resp->success ) {
+            $quest = $resp->data;
+            return true;
+        } else {
+            $quest = null;
+            return false;
+        }
+    }
+
+    public static function queryQuestByLocator(string $locator) : vQuest
+    {
+        $resp = self::queryQuestByLocatorAsResponse($locator);
+        if ($resp->success) {
+            // @phpstan-ignore return.type
+            return $resp->data;
+        } else {
+            throw new \Exception($resp->message);
+        }
+    }
     
-    public static function getQuestByLocator(string $locator): Response {
+    public static function queryQuestByLocatorAsResponse(string $locator): Response
+    {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_quest_info WHERE locator = ?";
 
@@ -78,7 +122,7 @@ class QuestController
         $stmt->execute();
         $result = $stmt->get_result();
 
-        if ($result && $result->num_rows > 0) {
+        if ($result !== false && $result->num_rows > 0) {
             $row = $result->fetch_assoc();
             return new Response(true, "Quest Information.", self::row_to_vQuest($row));
         }
@@ -86,11 +130,10 @@ class QuestController
         return new Response(false, "Couldn't find a quest with that locator", null);
     }
 
-    function getAvailableQuests() : Response {
-        $id = mysqli_real_escape_string($GLOBALS["conn"], $id);
+    function getAvailableQuests() : Response
+    {
         $sql = "SELECT * FROM kickbackdb.v_quest_info  WHERE end_date > CURRENT_TIMESTAMP and published = 1 order by end_date asc";
 
-        
         $result = mysqli_query($GLOBALS["conn"],$sql);
 
         $num_rows = mysqli_num_rows($result);
@@ -99,11 +142,10 @@ class QuestController
         return (new Response(true, "Available Quests",  $rows ));
     }
         
-    function getArchivedQuests() : Response {
-        $id = mysqli_real_escape_string($GLOBALS["conn"], $id);
+    function getArchivedQuests() : Response
+    {
         $sql = "SELECT * FROM kickbackdb.v_quest_info  WHERE end_date <= CURRENT_TIMESTAMP and published = 1 and finished = 1 order by end_date desc";
 
-        
         $result = mysqli_query($GLOBALS["conn"],$sql);
 
         $num_rows = mysqli_num_rows($result);
@@ -161,7 +203,22 @@ class QuestController
         }
     }
 
-    public static function getQuestsByQuestLineId(vRecordId $questLineId, int $page = 1, int $itemsPerPage = 10): Response {
+    /**
+    * @return array<vQuest>
+    */
+    public static function queryQuestsByQuestLineId(vRecordId $questLineId, int $page = 1, int $itemsPerPage = 10): array
+    {
+        $resp = self::queryQuestsByQuestLineIdAsResponse($questLineId, $page, $itemsPerPage);
+        if ($resp->success) {
+            // @phpstan-ignore return.type
+            return $resp->data;
+        } else {
+            throw new \Exception($resp->message);
+        }
+    }
+
+    public static function queryQuestsByQuestLineIdAsResponse(vRecordId $questLineId, int $page = 1, int $itemsPerPage = 10): Response
+    {
         $conn = Database::getConnection();
         $offset = ($page - 1) * $itemsPerPage;
         $sql = "SELECT * FROM v_quest_info where quest_line_id = ? LIMIT ? OFFSET ?";
@@ -212,8 +269,19 @@ class QuestController
         return new Response(false, "We couldn't find a quest with that raffle id", null);
     }
 
-    
-    public static function getQuestByKickbackUpcoming(): Response {
+    public static function queryQuestByKickbackUpcoming(): vQuest
+    {
+        $resp = self::queryQuestByKickbackUpcomingAsResponse();
+        if ($resp->success) {
+            // @phpstan-ignore return.type
+            return $resp->data;
+        } else {
+            throw new \Exception($resp->message);
+        }
+    }
+
+    public static function queryQuestByKickbackUpcomingAsResponse(): Response
+    {
         $conn = Database::getConnection();
         $stmt = $conn->prepare("SELECT * FROM v_quest_info WHERE (host_id = 46 or host_id_2 = 46) and finished = 0 and published = 1 order by end_date LIMIT 1");
         if ($stmt === false) {
@@ -231,7 +299,22 @@ class QuestController
         return new Response(false, "We couldn't find a quest with that raffle id", null);
     }
 
-    public static function getQuestRewardsByQuestId(vRecordId $questId) : Response {
+    /**
+    * @return array<vQuestReward>
+    */
+    public static function queryQuestRewardsByQuestId(vRecordId $questId) : array
+    {
+        $questRewardsResp = QuestController::queryQuestRewardsByQuestIdAsResponse($questId);
+        if ($questRewardsResp->success) {
+            // @phpstan-ignore-next-line
+            return $questRewardsResp->data;
+        } else {
+            throw new \Exception($questRewardsResp->message);
+        }
+    }
+
+    public static function queryQuestRewardsByQuestIdAsResponse(vRecordId $questId) : Response
+    {
         $conn = Database::getConnection();
         $sql = "SELECT * FROM v_quest_reward_info WHERE quest_id = ?";
 
@@ -244,18 +327,34 @@ class QuestController
         $stmt->execute();
         $result = $stmt->get_result();
 
-        if ($result) {
-            $rewards = [];
-            while ($row = $result->fetch_assoc()) {
-                $rewards[] = self::row_to_vQuestReward($row);
-            }
-            return new Response(true, "Quest Rewards Loaded", $rewards);
+        if ($result === false) {
+            return new Response(false, "Couldn't find rewards for that quest id", null);
         }
 
-        return new Response(false, "Couldn't find rewards for that quest id", null);
+        $rewards = [];
+        while ($row = $result->fetch_assoc()) {
+            $rewards[] = self::row_to_vQuestReward($row);
+        }
+
+        return new Response(true, "Quest Rewards Loaded", $rewards);
     }
 
-    public static function getQuestApplicants(vQuest $quest): Response {
+    /**
+    * @return array<vQuestApplicant>
+    */
+    public static function queryQuestApplicants(vQuest $quest): array
+    {
+        $questApplicantsResponse = self::queryQuestApplicantsAsResponse($quest);
+        if (!$questApplicantsResponse->success) {
+            throw new \Exception($questApplicantsResponse->message);
+        }
+
+        // @phpstan-ignore-next-line
+        return $questApplicantsResponse->data;
+    }
+
+    public static function queryQuestApplicantsAsResponse(vQuest $quest): Response
+    {
         $conn = Database::getConnection();
         //$sql = "SELECT * FROM kickbackdb.v_quest_applicants_account WHERE quest_id = ? ORDER BY seed ASC, exp DESC, prestige DESC";
         $sql = "select 
@@ -316,15 +415,16 @@ class QuestController
         $stmt->execute();
         $result = $stmt->get_result();
 
-        if ($result) {
-            $applicants = [];
-            while ($row = $result->fetch_assoc()) {
-                $applicants[] = self::row_to_vQuestApplicant($row);
-            }
-            return new Response(true, "Quest Applicants", $applicants);
+        if ($result === false) {
+            return new Response(false, "Couldn't find applicants for that quest id", null);
         }
 
-        return new Response(false, "Couldn't find applicants for that quest id", null);
+        $applicants = [];
+        while ($row = $result->fetch_assoc()) {
+            $applicants[] = self::row_to_vQuestApplicant($row);
+        }
+
+        return new Response(true, "Quest Applicants", $applicants);
     }
 
     public static function getTotalUnusedRaffleTickets(vAccount $account) : Response {
@@ -365,7 +465,7 @@ class QuestController
         $current_date = new \DateTime();
         $current_date->modify('+10 seconds');
         // Check if the date from the DB has passed
-        if ($quest->endDate->value <= $current_date) {
+        if ($quest->endDate()->value <= $current_date) {
             self::chooseRaffleWinner($quest->raffle);
         }
     }
@@ -545,11 +645,13 @@ class QuestController
         return new Response(true, "Raffle Participants", $accounts);
     }
 
-    public static function removeStandardParticipationRewards(vRecordId $questId) : Response {
-        $questResp = self::getQuestById($questId);
-        $quest = $questResp->data;
-        if (!$quest->canEdit())
-        {
+    public static function removeStandardParticipationRewards(vRecordId $questId) : Response
+    {
+        if (!self::queryQuestByIdInto($questId, $quest)) {
+            return new Response(false, "Could not find quest with that ID; can't remove standard participation rewards.", null);
+        }
+
+        if (!$quest->canEdit()) {
             return new Response(false, "You do not have permissions to remove standard participation rewards from this quest.", null);
         }
 
@@ -581,7 +683,8 @@ class QuestController
         }
     }
         
-    public static function setupStandardParticipationRewards(vRecordId $questId) : Response {
+    public static function setupStandardParticipationRewards(vRecordId $questId) : Response
+    {
         $resp = self::removeStandardParticipationRewards($questId);
 
         if ($resp->success)
@@ -595,11 +698,13 @@ class QuestController
 
     }
 
-    public static function addStandardParticipationRewards($questId) : Response {
-        $questResp = self::getQuestById($questId);
-        $quest = $questResp->data;
-        if (!$quest->canEdit())
-        {
+    public static function addStandardParticipationRewards(vRecordId $questId) : Response
+    {
+        if (!self::queryQuestByIdInto($questId, $quest)) {
+            return new Response(false, "Could not find quest with that ID; can't add standard participation rewards.", null);
+        }
+
+        if (!$quest->canEdit()) {
             return new Response(false, "You do not have permissions to add standard participation rewards to this quest.", null);
         }
         
@@ -608,7 +713,6 @@ class QuestController
         {
             return $addRewardResp;
         }
-
 
         $conn = Database::getConnection();
         // Predefined standard reward IDs
@@ -632,7 +736,8 @@ class QuestController
 
             if (!$result) {
                 $success = false;
-                $errorMessages[] = "Failed to insert reward ID $rewardId for quest ID $questId: " . mysqli_error($conn);
+                $questIdStr = strval($questId->crand);
+                $errorMessages[] = "Failed to insert reward ID $rewardId for quest ID $questIdStr: " . mysqli_error($conn);
                 // Optionally break here to stop at the first error, or remove to try inserting all rewards
                 break;
             }
@@ -647,7 +752,8 @@ class QuestController
         }
     }
 
-    public static function rejectQuestReviewById(vRecordId $questId) : Response {
+    public static function rejectQuestReviewById(vRecordId $questId) : Response
+    {
         $conn = Database::getConnection();
          // Prepare the SQL statement to mark the quest as being reviewed
          $stmt = $conn->prepare("UPDATE quest SET published = 0, being_reviewed = 0 WHERE Id = ? and (being_reviewed = 1 or published = 1)");
@@ -673,8 +779,8 @@ class QuestController
          return new Response(true, "Quest publish rejected.", null);
     }
 
-    public static function updateQuestOptions($data) : Response {
-        
+    public static function updateQuestOptions(array $data) : Response
+    {
         $conn = Database::getConnection();
 
         $questId = new vRecordId('', (int)$data["edit-quest-id"]);
@@ -685,18 +791,18 @@ class QuestController
         $hasADate = isset($data["edit-quest-options-has-a-date"]);
         $dateTime = $data["edit-quest-options-datetime"];
         $playStyle = $data["edit-quest-options-style"];
-        $questLineId = $data["edit-quest-options-questline"];
-        $questLineIdValue = empty($questLineId) ? NULL : $questLineId;
+        if ( array_key_exists('edit-quest-options-questline', $data) && isset($data["edit-quest-options-questline"]) ) {
+            $questLineId = $data["edit-quest-options-questline"];
+            $questLineIdValue = intval($questLineId) === 0 ? null : intval($questLineId);
+        } else {
+            $questLineIdValue = null;
+        }
 
-        $questResp = self::getQuestById($questId);
-
-        if (!$questResp->success)
-        {
+        if (!self::queryQuestByIdInto($questId, $quest)) {
             return (new Response(false, "Error updating quest. Could not find quest by Id.", null));
         }
-        $quest = $questResp->data;
 
-        if (StringStartsWith($questLocator, 'new-quest-'))
+        if (str_starts_with($questLocator, 'new-quest-'))
         {
             if ($questLocator != 'new-quest-'.$quest->host1->crand)
             {
@@ -714,16 +820,15 @@ class QuestController
         $stmt = mysqli_prepare($conn, $query);
 
         // Determine the value for host_id_2 and end_date
-        $host_id_2 = empty($questHostId2) ? NULL : $questHostId2;
-        $end_date = $hasADate && !empty($dateTime) ? $dateTime : NULL;
-        
+        $host_id_2 = Str::empty($questHostId2) ? NULL : $questHostId2;
+        $end_date = $hasADate && !Str::empty($dateTime) ? $dateTime : NULL;
+
         //$date = $data["edit-quest-options-datetime-date"];
         //$time = $data["edit-quest-options-datetime-time"];
-        //$end_date = $hasADate && !empty($date) && !empty($time) ? $date . ' ' . $time . ":00": NULL;
+        //$end_date = $hasADate && !Str::empty($date) && !Str::empty($time) ? $date . ' ' . $time . ":00": NULL;
 
         // Bind the parameters
         mysqli_stmt_bind_param($stmt, 'ssissiii', $questName, $questLocator, $host_id_2, $questSummary, $end_date, $playStyle, $questLineIdValue, $questId->crand);
-
 
         // Execute the statement
         $success = mysqli_stmt_execute($stmt);
@@ -745,17 +850,13 @@ class QuestController
         }
     }
     
-    public static function updateQuestImages(vRecordId $questId,vRecordId  $desktop_banner_id,vRecordId  $mobile_banner_id,vRecordId  $icon_id) : Response {
-
+    public static function updateQuestImages(vRecordId $questId,vRecordId  $desktop_banner_id,vRecordId  $mobile_banner_id,vRecordId  $icon_id) : Response
+    {
         $conn = Database::getConnection();
 
-        $questResp = self::getQuestById($questId);
-
-        if (!$questResp->success)
-        {
+        if (!self::queryQuestByIdInto($questId, $quest)) {
             return (new Response(false, "Error updating quest. Could not find quest by Id.", null));
         }
-        $quest = $questResp->data;
 
         if (!$quest->canEdit())
         {
@@ -787,13 +888,10 @@ class QuestController
 
         $conn = Database::getConnection();
 
-        
-        $questResp = self::getQuestById($questId); 
-        if (!$questResp->success) {
+        if (!self::queryQuestByIdInto($questId, $quest)) {
             return new Response(false, "Quest submission failed. Quest not found.", null);
         }
 
-        $quest = $questResp->data;
         if (!$quest->canEdit()) {
             return new Response(false, "Submission denied. Insufficient permissions to edit this quest.", null);
         }
@@ -886,7 +984,8 @@ class QuestController
         }
     }
 
-    public static function applyOrRegisterForQuest(vRecordId $account_id, vRecordId $quest_id) : Response {
+    public static function applyOrRegisterForQuest(vRecordId $account_id, vRecordId $quest_id) : Response
+    {
         $conn = Database::getConnection();
         // Check if the account has already registered or applied for the quest
         $checkResponse = self::accountHasRegisteredOrAppliedForQuest($account_id, $quest_id);
@@ -899,8 +998,10 @@ class QuestController
         mysqli_stmt_bind_param($stmt, 'ii', $account_id->crand, $quest_id->crand);
         if (mysqli_stmt_execute($stmt)) {
             $account = AccountController::getAccountById($account_id)->data;
-            $quest = self::getQuestById($quest_id)->data;
-            SocialMediaController::DiscordWebHook(FlavorTextController::GetRandomGreeting() . ', ' . $account->username . ' just signed up for the ' . $quest->title . ' quest.');
+            if (!self::queryQuestByIdInto($quest_id, $quest)) {
+                return new Response(false, "Could not find quest with that ID; failed to register for quest.", null);
+            }
+            SocialMediaController::DiscordWebHook(FlavorTextController::getRandomGreeting() . ', ' . $account->username . ' just signed up for the ' . $quest->title . ' quest.');
             mysqli_stmt_close($stmt);
             return (new Response(true, "Registered for quest successfully", null));
         } else {
@@ -927,12 +1028,12 @@ class QuestController
         if ($row["tournament_id"] != null)
         {
             $quest->tournament = new vTournament('', $row["tournament_id"]);
-            $quest->tournament->hasBracket = (bool)$row["hasBracket"]==1;
+            $quest->tournament->hasBracket((bool)$row["hasBracket"]==1);
         }
 
         if ($row["end_date"] != null)
         {
-            $quest->endDate = new vDateTime($row["end_date"]);
+            $quest->endDate(new vDateTime($row["end_date"]));
         }
 
         if ($row["image_id"] != null)
@@ -1054,7 +1155,7 @@ class QuestController
         $questApplicant->account = AccountController::row_to_vAccount($row);
 
         $questApplicant->seed = $row["seed"];
-        $questApplicant->rank = ((int)$row["rank"] ?? -1);
+        $questApplicant->rank = (int)($row["rank"] ?? -1);
         return $questApplicant;
     }
 
@@ -1098,53 +1199,139 @@ class QuestController
         return (new Response(true, "Feedback submitted and rewards converted successfully", null));
     }
 
-    public static function insertNewQuest() : Response {
-        if (Session::isQuestGiver())
-        {
-            
-            $questName = "New Quest";
-            $questLocator = "new-quest-".Session::getCurrentAccount()->crand;
-
-            $questResp = self::getQuestByLocator($questLocator);
-            if (!$questResp->success)
-            {
-                $questModel = new Quest();
-                $questModel->title = $questName;
-                $questModel->locator = $questLocator;
-                $insertResp = self::insert($questModel);
-                $quest = $insertResp->data;
-            }
-            else
-            {
-                $quest = $questResp->data;
-            }
-            if (!$quest->hasPageContent())
-            {
-                $newContentId = ContentController::insertNewContent();
-                
-                self::updateQuestContent($quest,new vRecordId('', $newContentId));
-
-                $questResp = self::getQuestByLocator($questLocator);
-            }
-
-            return (new Response(true, "New quest created.", $questResp->data));
-        }
-        else
-        {
+    public static function insertNewQuest() : Response
+    {
+        if (!Session::isQuestGiver()) {
             return (new Response(false, "You do not have permissions to post a new quest.", null));
         }
+
+        $questName = "New Quest";
+        $questLocator = "new-quest-".Session::getCurrentAccount()->crand;
+
+        if (!self::queryQuestByLocatorInto($questLocator, $quest))
+        {
+            $questModel = new Quest();
+            $questModel->title = $questName;
+            $questModel->locator = $questLocator;
+            $insertResp = self::insert($questModel);
+            $quest = $insertResp->data;
+        }
+
+        if (!$quest->hasPageContent())
+        {
+            $newContentId = ContentController::insertNewContent();
+
+            self::updateQuestContent($quest,new vRecordId('', $newContentId));
+
+            $quest = self::queryQuestByLocator($questLocator);
+        }
+
+        return (new Response(true, "New quest created.", $quest));
     }
 
-    public static function insert(Quest $quest) : Response {
+    public static function insert(Quest $quest) : Response
+    {
         $conn = Database::getConnection();
         $stmt = $conn->prepare("INSERT INTO quest (name, locator, host_id) values (?,?,?)");
         mysqli_stmt_bind_param($stmt, 'ssi', $quest->title, $quest->locator, Session::getCurrentAccount()->crand);
         mysqli_stmt_execute($stmt);
         //$newId = mysqli_insert_id($conn);
-        $questResp = self::getQuestByLocator($quest->locator);
+        $questResp = self::queryQuestByLocatorAsResponse($quest->locator);
         $rewardResp = self::setupStandardParticipationRewards($questResp->data);
-        $questResp = self::getQuestByLocator($quest->locator);
+        $questResp = self::queryQuestByLocatorAsResponse($quest->locator);
         return $questResp;
     }
+
+    public static function countQuestParticipations(int $accountId): int
+    {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT COUNT(*) FROM quest_applicants
+                WHERE account_id = ? AND participated = 1";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+
+        $stmt->bind_param("i", $accountId);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+    
+    public static function countQuestParticipationsBetween(int $accountId, string $startDate, string $endDate): int
+    {
+        $conn = Database::getConnection();
+    
+        $sql = "SELECT COUNT(*) FROM quest_applicants qa
+                JOIN quest q ON qa.quest_id = q.Id
+                WHERE qa.account_id = ?
+                  AND qa.participated = 1
+                  AND q.end_date BETWEEN ? AND ?";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+    
+        $stmt->bind_param("iss", $accountId, $startDate, $endDate);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+    
+        return (int)$count;
+    }
+    public static function countRaffleEntries(int $accountId): int
+    {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT COUNT(*) 
+                FROM raffle_submissions rs
+                JOIN loot l ON rs.loot_id = l.Id
+                WHERE l.account_id = ?";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+
+        $stmt->bind_param("i", $accountId);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+    public static function countRaffleEntriesBetween(int $accountId, string $startDate, string $endDate): int
+    {
+        $conn = Database::getConnection();
+    
+        $sql = "SELECT COUNT(*)
+                FROM raffle_submissions rs
+                JOIN loot l ON rs.loot_id = l.Id
+                JOIN quest q ON rs.raffle_id = q.raffle_id
+                WHERE l.account_id = ?
+                  AND q.end_date BETWEEN ? AND ?";
+    
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+    
+        $stmt->bind_param("iss", $accountId, $startDate, $endDate);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+    
+        return (int)$count;
+    }
+    
 }
 ?>

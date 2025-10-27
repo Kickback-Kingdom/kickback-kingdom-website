@@ -166,29 +166,29 @@ $eventData = [
 <?php require("php-components/base-page-head.php"); ?>
 
 <body class="bg-body-secondary container p-0">
-    
-    <?php 
-    
-    require("php-components/base-page-components.php"); 
-    
-    require("php-components/ad-carousel.php"); 
-    
+
+    <?php
+
+    require("php-components/base-page-components.php");
+
+    require("php-components/ad-carousel.php");
+
     ?>
 
-    
+
 
     <!--MAIN CONTENT-->
     <main class="container pt-3 bg-body" style="margin-bottom: 56px;">
         <div class="row">
             <div class="col-12 col-xl-9">
-                
-                
-                <?php 
-                
-                
+
+
+                <?php
+
+
                 $activePageName = "Steward's Guild";
-                require("php-components/base-page-breadcrumbs.php"); 
-                
+                require("php-components/base-page-breadcrumbs.php");
+
                 ?>
 
                 <?php if (Session::isSteward()) { ?>
@@ -279,10 +279,10 @@ foreach ($divisionData as $division) {
                         break;
                     }
                 }
-            
+
                 // Conditionally add the class
                 $cardClass = $allGoalsComplete ? 'bg-ranked-1' : '';
-            
+
                 echo "
                 <div class='col-md-6'>
                     <div class='card border-0 shadow-sm h-100 {$cardClass}'>
@@ -294,7 +294,7 @@ foreach ($divisionData as $division) {
                                     <span class='badge bg-light text-dark border ms-2'>{$member['role']}</span>
                                 </div>
                             </h6>";
-            
+
                 foreach ($member['goals'] as $goal) {
                     $progress = $goal['progress'];
                     echo "
@@ -308,12 +308,12 @@ foreach ($divisionData as $division) {
                         </div>
                     </div>";
                 }
-            
+
                 echo "      </div>
                     </div>
                 </div>";
             }
-            
+
             echo "</div>";
         }
         ?>
@@ -361,7 +361,7 @@ foreach ($divisionData as $division) {
                                 <td><?= $event->endDate->formattedBasic ?></td>
                                 <td class="text-muted small"><?= htmlspecialchars($event->desc) ?></td>
                                 <td class="text-end">
-                                    <a href="<?= $event->getURL() ?>" class="btn btn-sm btn-outline-primary">
+                                    <a href="<?= $event->url() ?>" class="btn btn-sm btn-outline-primary">
                                         <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View
                                     </a>
                                     <?php if ($event->canEdit()): ?>
@@ -394,7 +394,7 @@ foreach ($divisionData as $division) {
 
                             <!-- Access Restricted Title with the Warning Icon -->
                             <h5><i class="fa-solid fa-exclamation-triangle fa-lg me-2 text-muted"></i> Access Restricted</h5>
-                        
+
                             <p class="mb-4">You must be logged in to gain access to the Stewards' Guild.</p>
 
                             <!-- Login Button -->
@@ -404,13 +404,13 @@ foreach ($divisionData as $division) {
                     </div>
                 <?php } ?>
             </div>
-            
+
             <?php require("php-components/base-page-discord.php"); ?>
         </div>
         <?php require("php-components/base-page-footer.php"); ?>
     </main>
 
-    
+
     <?php require("php-components/base-page-javascript.php"); ?>
 
 </body>

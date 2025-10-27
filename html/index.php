@@ -10,10 +10,13 @@ use Kickback\Backend\Controllers\QuoteController;
 
 $homeFeedResp = FeedController::getNewsFeed(1, 20);
 $homeFeed = $homeFeedResp->data;
+
+header('Content-Type: text/html');
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 
 
 <?php require("php-components/base-page-head.php"); ?>

@@ -5,6 +5,8 @@ $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession
 require("php-components/base-page-pull-active-account-info.php");
 
 use Kickback\Backend\Controllers\FeedController;
+use Kickback\Backend\Controllers\FeedCardController;
+use Kickback\Backend\Controllers\MerchantGuildController;
 
 if (!Kickback\Services\Session::isAdmin())
 {
@@ -14,13 +16,13 @@ if (!Kickback\Services\Session::isAdmin())
 
 
 $targetDate = date("Y-m", strtotime("+1 month")) . "-01";
-$merchantGuildTasks = PullMerchantGuildProcessingTasks();
+$merchantGuildTasks = MerchantGuildController::PullMerchantGuildProcessingTasks()->data;
 
 $merchantGuildTasksToProcess = null;
 $currentStatementTiedToTask = null;
 
 foreach ($merchantGuildTasks as $merchantGuildTask) {
-    if (!$merchantGuildTask['processed']) {
+    if (!$merchantGuildTask->processed) {
         $merchantGuildTasksToProcess = $merchantGuildTask;
         break;
     }
@@ -28,13 +30,13 @@ foreach ($merchantGuildTasks as $merchantGuildTask) {
 
 if ($merchantGuildTasksToProcess != null)
 {
-    if ($merchantGuildTasksToProcess["TaskType"] == 0)
+    if ($merchantGuildTasksToProcess->TaskType == 0)
     {
-            $currentStatementTiedToTask = BuildStatement($merchantGuildTasksToProcess['account_id'], $merchantGuildTasksToProcess['execution_date'], false);
+            $currentStatementTiedToTask = MerchantGuildController::BuildStatement($merchantGuildTasksToProcess->sharePurchase->account, $merchantGuildTasksToProcess->sharePurchase->PurchaseDate, false);
 
 
 
-        $preProcessData = PreProcessPurchase($merchantGuildTasksToProcess, $currentStatementTiedToTask);
+        $preProcessData = MerchantGuildController::PreProcessPurchase($merchantGuildTasksToProcess, $currentStatementTiedToTask);
     }
 }
 
@@ -79,7 +81,7 @@ $reviewFeed = $reviewFeedResp->data;
                     <div style="margin-bottom: 20px;">
                         <strong style="display: block; margin-bottom: 10px;">Last Statement:</strong>
                         <ul style="list-style-type: none; padding-left: 0;">
-                            <li style="margin-bottom: 5px;">Date: <span id="fullSharesOwned"><?php echo $preProcessData["last_statement_date"]; ?></span></li>
+                            <li style="margin-bottom: 5px;">Date: <span id="fullSharesOwned"><?= $preProcessData->lastStatementDate->formattedDetailed; ?></span></li>
                         </ul>
                     </div>
 
@@ -87,7 +89,7 @@ $reviewFeed = $reviewFeedResp->data;
                     <div style="margin-bottom: 20px;">
                         <strong style="display: block; margin-bottom: 10px;">Current Statement:</strong>
                         <ul style="list-style-type: none; padding-left: 0;">
-                            <li style="margin-bottom: 5px;">JSON: <span id="fullSharesOwned"><?php echo $preProcessData["currentStatementJSON"]; ?></span></li>
+                            <li style="margin-bottom: 5px;">JSON: <span id="fullSharesOwned"><?= $preProcessData->currentStatementJSON; ?></span></li>
                         </ul>
                     </div>
 
@@ -95,8 +97,8 @@ $reviewFeed = $reviewFeedResp->data;
                     <div style="margin-bottom: 20px;">
                         <strong style="display: block; margin-bottom: 10px;">Pre-Owned Shares:</strong>
                         <ul style="list-style-type: none; padding-left: 0;">
-                            <li style="margin-bottom: 5px;">Full: <span id="fullSharesOwned"><?php echo $preProcessData["preOwnedFullShares"]; ?></span></li>
-                            <li>Partial: <span id="partialSharesOwned"><?php echo $preProcessData["preOwnedPartialShares"]; ?></span></li>
+                            <li style="margin-bottom: 5px;">Full: <span id="fullSharesOwned"><?= $preProcessData->preOwnedFullShares; ?></span></li>
+                            <li>Partial: <span id="partialSharesOwned"><?= $preProcessData->preOwnedPartialShares; ?></span></li>
                         </ul>
                     </div>
                     
@@ -104,27 +106,27 @@ $reviewFeed = $reviewFeedResp->data;
                     <div style="margin-bottom: 20px;">
                         <strong style="display: block; margin-bottom: 10px;">Newly Purchased Shares:</strong>
                         <ul style="list-style-type: none; padding-left: 0;">
-                            <li style="margin-bottom: 5px;">Full: <span id="fullSharesPurchased"><?php echo $preProcessData["fullSharesPurchased"]; ?></span></li>
-                            <li>Partial: <span id="partialSharesPurchased"><?php echo $preProcessData["partialSharesPurchased"]; ?></span></li>
+                            <li style="margin-bottom: 5px;">Full: <span id="fullSharesPurchased"><?= $preProcessData->fullSharesPurchased; ?></span></li>
+                            <li>Partial: <span id="partialSharesPurchased"><?= $preProcessData->partialSharesPurchased; ?></span></li>
                         </ul>
                     </div>
 
                     <!-- Financial Summary -->
                     <div style="margin-bottom: 20px;">
-                        <strong>Amount Spent:</strong> <span id="amountSpent"><?php echo $merchantGuildTasksToProcess["Amount"]; ?></span> <span id="currencyUsed"><?php echo $merchantGuildTasksToProcess["Currency"]; ?></span>
+                        <strong>Amount Spent:</strong> <span id="amountSpent"><?= $merchantGuildTasksToProcess->sharePurchase->Amount; ?></span> <span id="currencyUsed"><?=  $merchantGuildTasksToProcess->sharePurchase->Currency; ?></span>
                     </div>
 
                     <div style="margin-bottom: 20px;">
-                        <strong>ADA Value:</strong> <span id="adaConversionValue"><?php echo $merchantGuildTasksToProcess["ADAValue"]; ?> ADA</span>
+                        <strong>ADA Value:</strong> <span id="adaConversionValue"><?= $merchantGuildTasksToProcess->sharePurchase->ADAValue; ?> ADA</span>
                     </div>
 
                     <!-- Share Summary -->
                     <div style="margin-bottom: 20px;">
                         <strong style="display: block; margin-bottom: 10px;">Share Summary:</strong>
                         <ul style="list-style-type: none; padding-left: 0;">
-                            <li style="margin-bottom: 5px;">Newly Completed Full Shares: <span id="fullSharesCompleted"><?php echo $preProcessData["completedShares"]; ?></span></li>
-                            <li style="margin-bottom: 5px;">Remaining Partial Shares: <span id="remainingPartialShares"><?php echo $preProcessData["remainingPartialShares"]; ?></span></li>
-                            <li>Certificates To Be Issued: <span id="shareCertificatesToBeGiven"><?php echo $preProcessData["shareCertificatesToBeGivien"]; ?></span></li>
+                            <li style="margin-bottom: 5px;">Newly Completed Full Shares: <span id="fullSharesCompleted"><?= $preProcessData->completedShares; ?></span></li>
+                            <li style="margin-bottom: 5px;">Remaining Partial Shares: <span id="remainingPartialShares"><?= $preProcessData->remainingPartialShares; ?></span></li>
+                            <li>Certificates To Be Issued: <span id="shareCertificatesToBeGiven"><?= $preProcessData->shareCertificatesToBeGiven; ?></span></li>
                         </ul>
                     </div>
                 </div>
@@ -134,7 +136,7 @@ $reviewFeed = $reviewFeedResp->data;
                 <button type="button" class="btn btn-primary"  data-bs-dismiss="modal" >Cancel</button>
                 <form method="POST">
                     <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                    <input type="hidden" name="purchase_id" value="<?php echo $merchantGuildTasksToProcess["purchase_id"]; ?>"/>
+                    <input type="hidden" name="purchase_id" value="<?= $merchantGuildTasksToProcess->sharePurchase->crand; ?>"/>
                     <input type="submit" name="process-purchase" class="btn bg-ranked-1" id="processButton" value="Process">
                 </form>
             </div>
@@ -154,7 +156,7 @@ $reviewFeed = $reviewFeedResp->data;
             </div>
             <?php
                 // Assuming $merchantGuildTasksToProcess["statement_date"] is in the format 'YYYY-MM-DD'
-                $statement_date = new DateTime($merchantGuildTasksToProcess["statement_date"]);
+                $statement_date = $merchantGuildTasksToProcess->statement_date->value;
                 $period_start_date = clone $statement_date;
                 $period_start_date->modify('-1 month');
             ?>
@@ -169,8 +171,8 @@ $reviewFeed = $reviewFeedResp->data;
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary"  data-bs-dismiss="modal" >Cancel</button>
                 <form method="POST">
-                    <input type="hidden" name="form_token" value="<?php echo $_SESSION['form_token']; ?>">
-                    <input type="hidden" name="statement-date" value="<?php echo $merchantGuildTasksToProcess["statement_date"]; ?>"/>
+                    <input type="hidden" name="form_token" value="<?= $_SESSION['form_token']; ?>">
+                    <input type="hidden" name="statement-date" value="<?=  $merchantGuildTasksToProcess->statement_date->dbValue; ?>"/>
                     <input type="submit" name="process-statements" class="btn bg-ranked-1"  value="Process">
                 </form>
             </div>
@@ -251,21 +253,21 @@ $reviewFeed = $reviewFeedResp->data;
                                         <?php 
                                         $firstItem = true;
                                         foreach ($merchantGuildTasks as $merchantGuildTask): 
-                                            if ($merchantGuildTask["TaskType"] == 0) {
+                                            if ($merchantGuildTask->TaskType == 0) {
                                         ?>
                                             <tr>
-                                                <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="/assets/media/<?php echo GetAccountProfilePicture($merchantGuildTask); ?>"/><a href="<?php echo Version::urlBetaPrefix(); ?>/u/<?php echo $merchantGuildTask['Username']; ?>" class="username"><?php echo $merchantGuildTask['Username']; ?></a></td>
-                                                <td><?php echo $merchantGuildTask['SharesPurchased']; ?></td>
-                                                <td><?php echo $merchantGuildTask['execution_date']; ?></td>
-                                                <td><?php echo $merchantGuildTask['Amount']." ".$merchantGuildTask['Currency']; ?></td>
-                                                <td><?php echo $merchantGuildTask['ADAValue']; ?></td>
-                                                <td><?php echo $merchantGuildTask['purchase_id']; ?></td>
+                                                <td><img class="img-fluid img-thumbnail" style="width:64px;margin-right: 10px;" src="<?= $merchantGuildTask->sharePurchase->account->profilePictureURL(); ?>"/><?= $merchantGuildTask->sharePurchase->account->getAccountElement(); ?></td>
+                                                <td><?= $merchantGuildTask->sharePurchase->SharesPurchased; ?></td>
+                                                <td><?= $merchantGuildTask->sharePurchase->PurchaseDate->formattedYmd; ?></td>
+                                                <td><?= $merchantGuildTask->sharePurchase->Amount." ".$merchantGuildTask->sharePurchase->Currency; ?></td>
+                                                <td><?= $merchantGuildTask->sharePurchase->ADAValue; ?></td>
+                                                <td><?= $merchantGuildTask->sharePurchase->crand; ?></td>
                                                 <td><?php 
                                                 
                                                 if ($firstItem)
                                                 {
                                                     ?>
-                                                        <button type="button" class="btn bg-ranked-1" onclick="OpenMerchantGuildTaskProcessingModal(<?php echo $merchantGuildTask['purchase_id']; ?>,'<?php echo $merchantGuildTask['execution_date']; ?>',0)">Process</button>
+                                                        <button type="button" class="btn bg-ranked-1" onclick="OpenMerchantGuildTaskProcessingModal(<?= $merchantGuildTask->sharePurchase->crand; ?>,'<?= $merchantGuildTask->sharePurchase->PurchaseDate->dbValue; ?>',0)">Process</button>
                                                     <?php
                                                 }
                                                 else{
@@ -280,7 +282,7 @@ $reviewFeed = $reviewFeedResp->data;
                                             <tr>
                                                 <td class="text-bg-primary">Monthly Statement</td>
                                                 <td class="text-bg-primary"></td>
-                                                <td class="text-bg-primary"><?php echo $merchantGuildTask['execution_date']; ?></td>
+                                                <td class="text-bg-primary"><?= $merchantGuildTask->statement_date->dbValue; ?></td>
                                                 <td class="text-bg-primary"></td>
                                                 <td class="text-bg-primary"></td>
                                                 <td class="text-bg-primary"></td>

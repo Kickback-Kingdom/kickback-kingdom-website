@@ -7,24 +7,31 @@ require("php-components/base-page-pull-active-account-info.php");
 use Kickback\Backend\Controllers\BlogController;
 use Kickback\Backend\Controllers\FeedController;
 use Kickback\Common\Version;
+use Kickback\Services\Session;
 
 if (isset($_GET['locator'])){
         
     $locator = $_GET['locator'];
-    $blogResp = BlogController::getBlogByLocator($locator);
-    $thisBlog = $blogResp->data;
-
+    BlogController::queryBlogByLocatorInto($locator, $thisBlog);
     
     $blogPostsResp = FeedController::getBlogFeed($locator);
 
     $blogPosts = $blogPostsResp->data;
 }
 else{
+    $thisBlog = null;
+    $blogPosts = null;
     echo "no locator!";
 }
 
-$isBlogManager = $thisBlog->isManager();
-$isBlogWriter = $thisBlog->isWriter();
+if(isset($thisBlog)) {
+    $isBlogManager = $thisBlog->isManager();
+    $isBlogWriter = $thisBlog->isWriter();
+} else {
+    $isBlogManager = false;
+    $isBlogWriter = false;
+}
+
 
 ?>
 
@@ -53,7 +60,6 @@ $isBlogWriter = $thisBlog->isWriter();
                 
                 
                 <?php 
-                
                 
                 $activePageName = $thisBlog->title;
                 require("php-components/base-page-breadcrumbs.php"); 

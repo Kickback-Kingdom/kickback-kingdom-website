@@ -1,0 +1,68 @@
+{
+  "GUID": "437cd7",
+  "Name": "Custom_Model",
+  "Transform": {
+    "posX": -0.000187599682,
+    "posY": -42.2,
+    "posZ": 0.00018766518,
+    "rotX": -0.00024980685,
+    "rotY": 180,
+    "rotZ": -0.0007672871,
+    "scaleX": 4,
+    "scaleY": 4,
+    "scaleZ": 4
+  },
+  "Nickname": "Board",
+  "Description": "",
+  "GMNotes": "",
+  "AltLookAngle": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "ColorDiffuse": {
+    "r": 1,
+    "g": 1,
+    "b": 1
+  },
+  "LayoutGroupSortIndex": 0,
+  "Value": 0,
+  "Locked": true,
+  "Grid": false,
+  "Snap": false,
+  "IgnoreFoW": false,
+  "MeasureMovement": false,
+  "DragSelectable": true,
+  "Autoraise": false,
+  "Sticky": true,
+  "Tooltip": false,
+  "GridProjection": true,
+  "HideWhenFaceDown": false,
+  "Hands": false,
+  "CustomMesh": {
+    "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/868496425808310268/383523E82AF9E082DDB776F54C025C71A30E098F/",
+    "DiffuseURL": "",
+    "NormalURL": "",
+    "ColliderURL": "",
+    "Convex": true,
+    "MaterialIndex": 3,
+    "TypeIndex": 4,
+    "CastShadows": true
+  },
+  "LuaScript": "function onLoad()\r\n    self.interactable = false;\r\n    self.createButton({\r\n    label = \"CUSTOMIZE BOARD\",\r\n    click_function = \"onButtonClick\",\r\n    function_owner = self,\r\n    width = 750,\r\n    height = 75,\r\n    color = {1, 1, 1, 1.0},\r\n    position = {-15.5, 10, -5},\r\n    rotation = {180, 270, 80},\r\n    font_size = 75\r\n})\r\nend\r\n\r\nfunction onButtonClick()\r\n    if self.interactable == false then\r\n        self.interactable = true;\r\n        self.setColorTint({1, 1, 1})\r\n        self.editButton({ label = \"LOCK BOARD\" })\r\n\r\n    else\r\n        self.interactable = false;\r\n        self.editButton({ label = \"CUSTOMIZE BOARD\"})\r\n\r\n    end\r\nend\r\n",
+  "LuaScriptState": "",
+  "XmlUI": "",
+  "PhysicsMaterial": {
+    "StaticFriction": 0.6,
+    "DynamicFriction": 0.6,
+    "Bounciness": 0,
+    "FrictionCombine": 0,
+    "BounceCombine": 0
+  },
+  "Rigidbody": {
+    "Mass": 1.75,
+    "Drag": 1000000000000,
+    "AngularDrag": 10000000000000,
+    "UseGravity": false
+  }
+}

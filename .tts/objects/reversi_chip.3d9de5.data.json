@@ -1,0 +1,45 @@
+{
+  "GUID": "3d9de5",
+  "Name": "reversi_chip",
+  "Transform": {
+    "posX": -6.72923326,
+    "posY": 1.83304,
+    "posZ": -27.90285,
+    "rotX": -0.000005008956,
+    "rotY": 0.000005008956,
+    "rotZ": 0.000005008956,
+    "scaleX": 1,
+    "scaleY": 1,
+    "scaleZ": 1
+  },
+  "Nickname": "",
+  "Description": "",
+  "GMNotes": "",
+  "AltLookAngle": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "ColorDiffuse": {
+    "r": 0.757352948,
+    "g": 0.757352948,
+    "b": 0.757352948
+  },
+  "LayoutGroupSortIndex": 0,
+  "Value": 0,
+  "Locked": true,
+  "Grid": true,
+  "Snap": true,
+  "IgnoreFoW": false,
+  "MeasureMovement": false,
+  "DragSelectable": true,
+  "Autoraise": true,
+  "Sticky": true,
+  "Tooltip": true,
+  "GridProjection": false,
+  "HideWhenFaceDown": false,
+  "Hands": false,
+  "LuaScript": "function onButtonPress()\r\n    local rotation = {self.getRotation().x + 180, self.getRotation().y, self.getRotation().z}\r\n\r\n    self.setRotationSmooth(rotation, false, true)\r\nend\r\n\r\nfunction onLoad()\r\n\r\n    self.lock()\r\n\r\n    self.createButton({\r\n        click_function = \"onButtonPress\",\r\n        function_owner = self,\r\n        label = \"\",\r\n        position = {0, 0.15, 0},\r\n        rotation = {0, 0, 0},\r\n        width = 800,\r\n        height = 800,\r\n        font_size = 300,\r\n        color = {1, 0, 0, 0},\r\n        font_color = {1, 1, 1, 1}\r\n    })\r\n\r\n    self.createButton({\r\n        click_function = \"onButtonPress\",\r\n        function_owner = self,\r\n        label = \"\",\r\n        position = {0, -0.15, 0},\r\n        rotation = {180, 0, 0},\r\n        width = 800,\r\n        height = 800,\r\n        font_size = 300,\r\n        color = {1, 0, 0, 0},\r\n        font_color = {1, 1, 1, 1}\r\n    })\r\n\r\n    \r\nend",
+  "LuaScriptState": "",
+  "XmlUI": ""
+}

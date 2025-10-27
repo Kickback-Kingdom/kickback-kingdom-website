@@ -20,7 +20,7 @@ class vTreasureHuntObject extends vRecordId
         parent::__construct($ctime, $crand);
     }
 
-    public function getURL() : string {
+    public function url() : string {
         return "/treasure-hunt/".$this->locator;
     }
 }

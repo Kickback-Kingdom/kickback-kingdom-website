@@ -6,9 +6,50 @@ use Kickback\Backend\Controllers\MediaController;
 use Kickback\Backend\Controllers\TreasureHuntController;
 use Kickback\Backend\Models\NotificationType;
 use Kickback\Common\Version;
+use Kickback\Backend\Controllers\TaskController;
+use Kickback\Services\Session;
 
-$mediaDirsResp = MediaController::getMediaDirectories();
-$mediaDirs = $mediaDirsResp->data;
+$mediaDirs = MediaController::queryMediaDirectories();
+
+$recurringTasks = [];
+$achievements = [];
+$unclaimedRecurringCount = 0;
+$unclaimedAchievementsCount = 0;
+
+if (Session::isLoggedIn()) {
+    $account = Session::getCurrentAccount();
+
+    TaskController::ensureRecurringTasks($account);
+    // Fetch recurring tasks (daily, weekly, monthly)
+    $recurringResponse = TaskController::getAccountTasks($account);
+    if ($recurringResponse->success) {
+        $recurringTasks = $recurringResponse->data;
+
+        foreach ($recurringTasks as $task) {
+            if ($task->isCompleted && !$task->isClaimed) {
+                $unclaimedRecurringCount++;
+            }
+        }
+    }
+
+    // Fetch all achievements (assigned + unassigned)
+    $achievementResponse = TaskController::getAchievementTasks($account);
+    if ($achievementResponse->success) {
+        $achievements = $achievementResponse->data;
+
+        foreach ($achievements as $task) {
+            if ($task->isCompleted && !$task->isClaimed) {
+                $unclaimedAchievementsCount++;
+            }
+        }
+    }
+}
+
+
+$totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
+
+
+
 ?>
 
 <!--CONFETTI-->
@@ -22,9 +63,9 @@ $mediaDirs = $mediaDirsResp->data;
 
 
 
-<?php if(Kickback\Services\Session::isLoggedIn()) { ?>
+<?php if(Session::isLoggedIn()) { ?>
 
-
+    <?php require(\Kickback\SCRIPT_ROOT . "/php-components/base-cart-handler.php"); ?>
 
     <?php require(\Kickback\SCRIPT_ROOT . "/php-components/league-viewer.php"); ?>
 
@@ -200,7 +241,7 @@ $mediaDirs = $mediaDirsResp->data;
                                         <?php
 
                                             foreach($mediaDirs as $dir) {
-                                                echo "<option value='{$dir["Directory"]}'>{$dir["Directory"]}</option>";
+                                                echo "<option value='{$dir}'>{$dir}</option>";
                                             }
                                         ?>
                                     </select>
@@ -451,6 +492,22 @@ $mediaDirs = $mediaDirsResp->data;
     </div>
 </div>
 
+
+<!--Tasks and Achievements-->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasMenuRightTasks" aria-labelledby="offcanvasMenuRightTasksLabel">
+    <div class="offcanvas-header bg-primary">
+        <h5 class="offcanvas-title text-white" id="offcanvasMenuRightTasksLabel">Tasks & Achievements</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+            aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+
+    
+    <?php require(\Kickback\SCRIPT_ROOT . "/php-components/base-page-components-tasks.php"); ?>
+    
+    </div>
+</div>
+
 <?php } ?>
 
 <!--ITEM MODAL-->
@@ -573,7 +630,7 @@ $mediaDirs = $mediaDirsResp->data;
 
 <?php if (Kickback\Services\Session::isEventOrganizer()) { 
     
-    $currentAndUpComingTreasureHunts = TreasureHuntController::getCurrentEventsAndUpcoming()->data;
+    $currentAndUpComingTreasureHunts = TreasureHuntController::queryCurrentEventsAndUpcoming();
     ?>
 <!--Treasure hunt hide object modal-->
 <div class="modal fade" id="treasureHuntHideObjectModal" tabindex="-1" aria-labelledby="treasureHuntHideObjectModalLabel" aria-hidden="true">
@@ -770,14 +827,19 @@ $mediaDirs = $mediaDirsResp->data;
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/town-square.php"><i class="nav-icon fa-regular fa-address-card"></i> Town Square <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
-            <!--<li class="nav-item">
+            <!--
+            <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
-            </li>-->
+            </li>
+            -->
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities<i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/servers.php"><i class="nav-icon fa-regular fa-server"></i> Community Servers <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/business-plan.php"><i class="nav-icon fa-regular fa-file-lines"></i> Business Plan <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
@@ -788,12 +850,18 @@ $mediaDirs = $mediaDirsResp->data;
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/guild-halls.php"><i class="nav-icon fa-solid fa-signs-post"></i> Guild Halls <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
+            <?php
+
+            if (Session::isAdmin())
+            {
+                ?>
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/admin-dashboard.php"><i class="nav-icon fa-solid fa-shield-halved"></i> Admin Dashboard <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
+            <?php } ?>
             <?php
 
-            if (Kickback\Services\Session::isLoggedIn())
+            if (Session::isLoggedIn())
             {
                 ?>
 
@@ -857,7 +925,7 @@ $mediaDirs = $mediaDirsResp->data;
 
         <?php 
 
-            if (Kickback\Services\Session::isLoggedIn())
+            if (Session::isLoggedIn())
             {
                 ?>
 
@@ -905,6 +973,8 @@ $mediaDirs = $mediaDirsResp->data;
                         <!--<li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges</a></li>-->
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs</a></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities</a></li>
+                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/servers.php"><i class="nav-icon fa-solid fa-server"></i> Community Servers</a></li>
+
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/guild-halls.php"><i class="nav-icon fa-solid fa-landmark"></i> Guild Halls</a></li>
                         <!--<li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/adventurers-guild.php"><i class="nav-icon fa-solid fa-person-hiking"></i> Adventurers Guild</a></li>
@@ -912,6 +982,20 @@ $mediaDirs = $mediaDirsResp->data;
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/craftsmen-guild.php"><i class="nav-icon fa-solid fa-hammer"></i> Craftsmen Guild</a></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/apprentices-guild.php"><i class="nav-icon fa-solid fa-user-graduate"></i> Apprentices Guild</a></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/stewards-guild.php"><i class="nav-icon fa-solid fa-person-digging"></i> Stewards Guild</a></li>-->
+                    </ul>
+                </li>
+                <li class="nav-item dropdown" data-bs-theme="light">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <i class="nav-icon fa-solid fa-university "></i> Store
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/market.php?store-locator=kickback_market"><i class="nav-icon fa-solid fa fa-shopping-bag"></i>Kickback Market</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/market.php"><i class="nav-icon fa-solid fa fa-space-shuttle"></i>Emberwood Dashboard</a>
+                        </li>
                     </ul>
                 </li>
                 <li class="nav-item dropdown" data-bs-theme="light">
@@ -940,19 +1024,35 @@ $mediaDirs = $mediaDirsResp->data;
                         <i class="fa-brands fa-discord"></i>
                     </a>
                 </li>
-                <?php if (Kickback\Services\Session::isLoggedIn()) { ?>
+
+                <?php if (Session::isLoggedIn()) { ?>
+                    
                     <li class="nav-item">
                         <button class="btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas"
-                            data-bs-target="#offcanvasMenuRightShoppingCart" aria-controls="offcanvasMenuRightShoppingCart"
-                            aria-label="Toggle navigation">
-                            <i class="fa-solid fa-cart-shopping"></i>
-                            <?php if (Kickback\Services\Session::isAdmin()) { ?>
-                            <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill">
-                                99+
-                                <span class="visually-hidden">unread messages</span>
+                            data-bs-target="#offcanvasMenuRightTasks" aria-controls="offcanvasMenuRightTasks"
+                            aria-label="Toggle navigation" style="background-color: transparent !important; border-color: transparent;">
+                            <i class="fa-solid fa-scroll"></i>
+                            <?php if ($totalUnclaimedTasks > 0) { ?>
+                            <span class="badge bg-secondary position-absolute top-0 start-100 translate-middle rounded-pill"
+                                style="z-index: 2;">
+                                <?= $totalUnclaimedTasks; ?>
+                                <span class="visually-hidden">unclaimed rewards</span>
                             </span>
                             <?php } ?>
+
                         </button>
+                    </li>
+                    <li class="nav-item">
+                    <a class="btn btn-primary position-relative"
+                        href="<?php echo Version::urlBetaPrefix(); ?>/cart.php">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <?php if (true/*Kickback\Services\Session::isAdmin()*/) { ?>
+                        <span class="badge bg-secondary position-absolute top-0 start-100 translate-middle rounded-pill">
+                            99
+                            <span class="visually-hidden">unread messages</span>
+                        </span>
+                        <?php } ?>
+                    </a>
                     </li>
                     <li class="nav-item">
                         <button class="btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas"
@@ -971,10 +1071,10 @@ $mediaDirs = $mediaDirsResp->data;
                     <a class="btn dropdown-toggle btn-primary" type="button" style="height: 38px;background-color: transparent !important;border-color: transparent;" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" >
                         <?php
 
-                            if (Kickback\Services\Session::isLoggedIn())
+                            if (Session::isLoggedIn())
                             {
                         ?>
-                        <img class="rounded-circle" style="height: 100%;width: auto;" src="<?= Kickback\Services\Session::getCurrentAccount()->getProfilePictureURL(); ?>"/>
+                        <img class="rounded-circle" style="height: 100%;width: auto;" src="<?= Kickback\Services\Session::getCurrentAccount()->profilePictureURL(); ?>"/>
                         <?php
                             }
                             else
@@ -988,7 +1088,7 @@ $mediaDirs = $mediaDirsResp->data;
                     <ul class="dropdown-menu dropdown-menu-end" data-bs-theme="light">
                         <?php
 
-                            if (Kickback\Services\Session::isLoggedIn())
+                            if (Session::isLoggedIn())
                             {
                         ?>
 

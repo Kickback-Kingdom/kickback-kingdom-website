@@ -18,6 +18,9 @@ class vLichSet extends vRecordId
 
     function __construct(string $ctime = '', int $crand = -1)
     {
+        $this->name = '';
+        $this->locator = '';
+        $this->description = '';
         parent::__construct($ctime, $crand);
     }
 
@@ -26,8 +29,8 @@ class vLichSet extends vRecordId
         return $this->content->hasPageContent();
     }
 
-    public function getPageContent() : vPageContent {
-        return $this->content->pageContent;
+    public function pageContent() : vPageContent {
+        return $this->content->pageContent();
     }
 
     public function canEdit() : bool {

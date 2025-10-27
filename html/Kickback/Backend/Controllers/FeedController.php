@@ -46,6 +46,9 @@ class FeedController
     
         $totalItemsResult = $totalItemsStmt->get_result();
         $totalItemsRow = $totalItemsResult->fetch_assoc();
+        if (!isset($totalItemsRow)) {
+            return new Response(false, "Failed retrieve rows from SQL response: " . $conn->error, []);
+        }
         $totalItems = (int)$totalItemsRow['total'];
         $totalItemsStmt->close();
     
@@ -85,8 +88,8 @@ class FeedController
     public static function getAvailableQuestsFeed(int $page = 1, int $itemsPerPage = 10) : Response {
         $conn = Database::getConnection();
         $offset = ($page - 1) * $itemsPerPage;
-        $sql = "SELECT * FROM kickbackdb.v_feed WHERE type = 'QUEST' AND date > CURRENT_TIMESTAMP AND published = 1 ORDER BY date ASC LIMIT ? OFFSET ?";
-
+        $sql = "SELECT * FROM kickbackdb.v_feed WHERE type COLLATE utf8mb4_unicode_ci in ('QUEST' COLLATE utf8mb4_unicode_ci,'BLOG-POST' COLLATE utf8mb4_unicode_ci) and published = 1 LIMIT ? OFFSET ?";
+        
         $stmt = $conn->prepare($sql);
         if ($stmt === false) {
             return new Response(false, "Failed to prepare statement: " . $conn->error, []);
@@ -111,7 +114,7 @@ class FeedController
     public static function getArchivedQuestsFeed(int $page = 1, int $itemsPerPage = 10) : Response {
         $conn = Database::getConnection();
         $offset = ($page - 1) * $itemsPerPage;
-        $sql = "SELECT * FROM kickbackdb.v_feed WHERE type = 'QUEST' AND date <= CURRENT_TIMESTAMP AND published = 1 AND finished = 1 ORDER BY date DESC LIMIT ? OFFSET ?";
+        $sql = "SELECT * FROM kickbackdb.v_feed WHERE type COLLATE utf8mb4_unicode_ci = 'QUEST' COLLATE utf8mb4_unicode_ci AND date <= CURRENT_TIMESTAMP AND published = 1 AND finished = 1 ORDER BY date DESC LIMIT ? OFFSET ?";
 
         $stmt = $conn->prepare($sql);
         if ($stmt === false) {
@@ -143,14 +146,14 @@ class FeedController
         }
 
         if (Session::isMagisterOfTheAdventurersGuild()) {
-            $sql = "SELECT * FROM kickbackdb.v_feed WHERE type = 'QUEST' AND published = 0 ORDER BY date DESC LIMIT ? OFFSET ?";
+            $sql = "SELECT * FROM kickbackdb.v_feed WHERE type COLLATE utf8mb4_unicode_ci = 'QUEST' COLLATE utf8mb4_unicode_ci AND published = 0 ORDER BY date DESC LIMIT ? OFFSET ?";
             $stmt = $conn->prepare($sql);
             if ($stmt === false) {
                 return new Response(false, "Failed to prepare statement: " . $conn->error, []);
             }
             $stmt->bind_param('ii', $itemsPerPage, $offset);
         } else {
-            $sql = "SELECT * FROM kickbackdb.v_feed WHERE type = 'QUEST' AND published = 0 AND (account_1_id = ? OR account_2_id = ?) ORDER BY date DESC LIMIT ? OFFSET ?";
+            $sql = "SELECT * FROM kickbackdb.v_feed WHERE type COLLATE utf8mb4_unicode_ci = 'QUEST' COLLATE utf8mb4_unicode_ci AND published = 0 AND (account_1_id = ? OR account_2_id = ?) ORDER BY date DESC LIMIT ? OFFSET ?";
             $stmt = $conn->prepare($sql);
             if ($stmt === false) {
                 return new Response(false, "Failed to prepare statement: " . $conn->error, []);
@@ -174,7 +177,7 @@ class FeedController
     public static function getAvailableQuestLinesFeed(int $page = 1, int $itemsPerPage = 10) : Response {
         $conn = Database::getConnection();
         $offset = ($page - 1) * $itemsPerPage;
-        $sql = "SELECT * FROM kickbackdb.v_feed WHERE type = 'QUEST-LINE' ORDER BY date ASC LIMIT ? OFFSET ?";
+        $sql = "SELECT * FROM kickbackdb.v_feed WHERE type COLLATE utf8mb4_unicode_ci = 'QUEST-LINE' COLLATE utf8mb4_unicode_ci ORDER BY date ASC LIMIT ? OFFSET ?";
     
         $stmt = $conn->prepare($sql);
         if ($stmt === false) {
@@ -243,7 +246,7 @@ class FeedController
     public static function getBlogsFeed(int $page = 1,int $itemsPerPage = 10) : Response {
         $conn = Database::getConnection();
         $offset = ($page - 1) * $itemsPerPage;
-        $sql = "SELECT * FROM kickbackdb.v_feed WHERE type = 'BLOG'";
+        $sql = "SELECT * FROM kickbackdb.v_feed WHERE type COLLATE utf8mb4_unicode_ci = 'BLOG' COLLATE utf8mb4_unicode_ci";
     
         
         $result = mysqli_query($conn,$sql);
@@ -260,7 +263,7 @@ class FeedController
         $conn = Database::getConnection();
         $offset = ($page - 1) * $itemsPerPage;
 
-        $sql = "SELECT * FROM kickbackdb.v_feed WHERE type in ('QUEST','BLOG-POST') and published = 1 LIMIT ? OFFSET ?";
+        $sql = "SELECT * FROM kickbackdb.v_feed WHERE type COLLATE utf8mb4_unicode_ci in ('QUEST' COLLATE utf8mb4_unicode_ci,'BLOG-POST' COLLATE utf8mb4_unicode_ci) and published = 1 LIMIT ? OFFSET ?";
 
         // Prepare the statement
         $stmt = mysqli_prepare($conn, $sql);
@@ -303,7 +306,7 @@ class FeedController
         // Prepare the SQL query with placeholders
         $conn = Database::getConnection();
         $offset = ($page - 1) * $itemsPerPage;
-        $sql = "SELECT * FROM kickbackdb.v_feed WHERE type = 'BLOG-POST' and `locator` LIKE ?";
+        $sql = "SELECT * FROM kickbackdb.v_feed WHERE type COLLATE utf8mb4_unicode_ci = 'BLOG-POST' COLLATE utf8mb4_unicode_ci and `locator` LIKE ?";
 
         // Prepare the statement
         $stmt = mysqli_prepare($conn, $sql);
@@ -337,13 +340,27 @@ class FeedController
         return (new Response(true, "blog feed", $rows));
     }
 
-    private static function row_to_vFeedRecord(array $row) : vFeedRecord {
+    private static function row_to_vFeedRecord(array $row) : vFeedRecord
+    {
         $news = new vFeedRecord();
         $news->type = $row["type"];
-        if (!is_null($row["date"]))
+        $dateTime = new vDateTime();
+        $dateStr = $row["date"];
+        $haveDate = false;
+        if (isset($dateStr))
         {
-            $dateTime = new vDateTime();
-            $dateTime->setDateTimeFromString($row["date"]);
+            $dateTime->setDateTimeFromString($dateStr);
+            $haveDate = true;
+        }
+        else
+        {
+            // Unix epoch. It should be representable in most systems,
+            // and is also unusualy enough that it suggests an error occurred
+            // (because an error did occur: $questLine->dateCreated is
+            // considered not-nullable, and it's used in webpage code
+            // without being checked for null values).
+            $dateTime->setDateTimeFromString("@0000000000");
+            $haveDate = false;
         }
 
         if ($news->type == "QUEST-LINE")
@@ -377,8 +394,9 @@ class FeedController
             $quest->summary = is_null($row["text"]) ? "" : $row["text"];
             $quest->reviewStatus = new vReviewStatus((bool) $row["published"]);
             
-            if (isset($dateTime))
-                $quest->endDate = $dateTime;
+            if ($haveDate) {
+                $quest->endDate($dateTime);
+            }
 
             $quest->playStyle = PlayStyle::from((int)$row["style"]);
 
@@ -429,7 +447,7 @@ class FeedController
             $author->username = $row["account_1_username"];
             $blogPost->author = $author;
 
-            if (!empty($row["image"]))
+            if (array_key_exists('image', $row) && isset($row['image']))
             {
                 $icon = new vMedia();
                 $icon->setMediaPath($row["image"]);
@@ -448,7 +466,7 @@ class FeedController
             $blog->description = $row["text"];
             $blog->locator = $row["locator"];
 
-            if (isset($dateTime))
+            if ($haveDate)
                 $blog->lastPostDate = $dateTime;
 
             if ($row["account_1_id"] != null)
@@ -459,7 +477,7 @@ class FeedController
             }
 
 
-            if (!empty($row["image"]))
+            if (array_key_exists('image', $row) && isset($row['image']))
             {
                 $icon = new vMedia();
                 $icon->setMediaPath($row["image"]);

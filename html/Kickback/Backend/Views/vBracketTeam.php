@@ -11,7 +11,7 @@ class vBracketTeam
     public int $seed;
     public string $displayName;
     public int $rank;
-    public vMedia $icon;
+    public ?vMedia $icon;
 }
 
 ?>

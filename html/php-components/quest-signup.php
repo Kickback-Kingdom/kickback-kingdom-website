@@ -86,7 +86,7 @@ if ($thisQuest->requiresApplication)
 <div class="modal fade" id="actionModal" tabindex="-1" role="dialog" aria-labelledby="actionModal" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered" role="document">
         <div class="modal-content">
-            <form method="post" action="<?= $thisQuest->getURL(); ?>">
+            <form method="post" action="<?= $thisQuest->url(); ?>">
                 <input type="hidden" name="sessionToken" value="<?php echo $_SESSION["sessionToken"]; ?>">
                 <input type="hidden" name="serviceKey" value="<?php echo $_SESSION["serviceKey"]; ?>">
                 <div class="modal-header">

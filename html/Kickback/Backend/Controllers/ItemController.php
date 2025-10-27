@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Kickback\Backend\Controllers;
 
+use Exception;
 use Kickback\Backend\Views\vItem;
 use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vRecordId;
@@ -38,9 +39,10 @@ class ItemController
                 is_container,
                 container_size,
                 container_item_category,
-                item_category
+                item_category,
+                is_fungible
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ";
     
         $stmt = $conn->prepare($sql);
@@ -50,21 +52,23 @@ class ItemController
     
         $equipmentSlot = $item->equipmentSlot?->value;
         $nominatedById = $item->nominatedBy?->crand;
-        $collectionId = $item->collection?->crand;
+        $collectionId  = $item->collection?->crand;
         $containerItemCategory = $item->containerItemCategory?->value;
-        $itemCategory = $item->itemCategory?->value;
+        $itemCategory  = $item->itemCategory?->value;
     
-        $typeValue = (int) $item->type->value; 
-        $rarityValue = (int) $item->rarity->value;
+        $typeValue   = $item->type->value;
+        $rarityValue = $item->rarity->value;
 
         $mediaIdBack = $item->mediaLarge->crand;
+
+        $isFungible = $item->fungible ?? false;
 
         if ($item->mediaBack != null)
         {
             $mediaIdBack = $item->mediaBack->crand;
         }
         $stmt->bind_param(
-            'iiiiissiiiiiiiiii',
+            'iiiiissiiiiiiiiiii',
             $typeValue,
             $rarityValue,
             $item->mediaLarge->crand,
@@ -81,7 +85,8 @@ class ItemController
             $item->isContainer,
             $item->containerSize,
             $containerItemCategory,
-            $itemCategory
+            $itemCategory,
+            $isFungible
         );
     
         if (!$stmt->execute()) {
@@ -162,7 +167,76 @@ class ItemController
         }
     }
 
-    public static function usePrestigeToken(vRecordId $fromAccountId, vRecordId $toAccountId, bool $commend, string $desc) : Response {
+    /**
+     * Gets all the items with the specified name, returning them in an array
+     * 
+     * @param string $name items with this name will be returned
+     * 
+     * @return Response the response object whose data holds the array of vItems which have the specified name
+     */
+    public static function getItemsByName(string $name) : Response
+    {
+        $resp = new Response(false, "unkown error in getting items by name", null);
+
+        try
+        {
+            $sql = "SELECT 
+            Id, 
+            `type`,
+            rarity,
+            media_id_large,
+            media_id_small,
+            `desc`,
+            `name`,
+            nominated_by_id,
+            collection_id,
+            item_collection_name,
+            item_collection_desc,
+            equipable,
+            equipment_slot,
+            redeemable,
+            useable,
+            is_fungible,
+            large_image,
+            small_image,
+            artist,
+            artist_id,
+            nominator,
+            nominator_id,
+            DateCreated 
+            FROM v_item_info
+            WHERE `name` = ?;";
+
+            $params = [$name];
+
+            $result = Database::executeSqlQuery($sql, $params);
+
+            if(!$result) throw new Exception("result returned false while attempting to get items with name");
+
+            $items = [];
+
+            while($row = $result->fetch_assoc())
+            {
+                $itemId = new vRecordId($row["DateCreated"], $row["Id"]);
+                $item = static::row_to_vItem($row, $itemId);
+
+                array_push($items, $item);
+            }
+
+            $resp->success = true;
+            $resp->message = "items returned with name : $name";
+            $resp->data = $items;
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while getting items by name : $e");
+        }
+
+        return $resp;
+    }
+
+    public static function usePrestigeToken(vRecordId $fromAccountId, vRecordId $toAccountId, bool $commend, string $desc) : Response
+    {
         if ($fromAccountId == null) {
             return new Response(false, "Failed to use prestige token because you provided a null fromAccountId.", $fromAccountId);
         }
@@ -172,13 +246,7 @@ class ItemController
         if ($fromAccountId->crand == $toAccountId->crand) {
             return new Response(false, "You cannot leave a review on yourself.", $toAccountId);
         }
-        if ($commend === null) {
-            return new Response(false, "Failed to use prestige token because you provided a null rating.", $commend);
-        }
-        if ($desc == null) {
-            return new Response(false, "Failed to use prestige token because you provided a null review.", $desc);
-        }
-    
+
         $conn = Database::getConnection();
         // Get unused prestige token
         $prestigeTokenResp = AccountController::getPrestigeTokens($fromAccountId);
@@ -217,6 +285,13 @@ class ItemController
             $item->ctime = $itemId->ctime;
             $item->crand = $itemId->crand;
         }
+
+        if(array_key_exists("is_fungible", $row) && $row["is_fungible"] !== null)
+        {
+            $item->fungible = boolval($row["is_fungible"]);
+        }
+
+        
 
         if (array_key_exists("item_id",$row) && $row["item_id"] != null)
         {

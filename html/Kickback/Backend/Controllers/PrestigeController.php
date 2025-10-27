@@ -14,69 +14,88 @@ use Kickback\Backend\Views\vDateTime;
 
 class PrestigeController
 {
-    public static function getPrestigeReviewsByAccountTo(vRecordId $recordId) : Response {
+    /**
+    * @param ?array<vPrestigeReview> &$reviews
+    *
+    * @phpstan-assert-if-true =array<vPrestigeReview> $reviews
+    */
+    public static function convertPrestigeReviewsResponseInto(Response $prestige_reviews_response, ?array &$reviews) : bool
+    {
+        $resp = $prestige_reviews_response;
+        if ( $resp->success ) {
+            $reviews = $resp->data;
+            return true;
+        } else {
+            $reviews = null;
+            return false;
+        }
+    }
+
+    public static function queryPrestigeReviewsByAccountAsResponse(vRecordId $recordId) : Response
+    {
         $conn = Database::getConnection();
-        
+
         // Debugging: Log the value of $recordId->crand
         error_log("Account ID to: " . $recordId->crand);
-    
+
         $stmt = mysqli_prepare($conn, "SELECT * FROM v_prestige_info WHERE account_id_to = ?");
         if ($stmt === false) {
             return new Response(false, "Failed to prepare the statement: " . mysqli_error($conn), []);
         }
-    
-        // Ensure $recordId->crand is an integer
-        $accountIdTo = (int) $recordId->crand;
-        mysqli_stmt_bind_param($stmt, "i", $accountIdTo);
-    
-        if (mysqli_stmt_execute($stmt)) {
-            $result = mysqli_stmt_get_result($stmt);
-            if ($result === false) {
-                return new Response(false, "Failed to get result: " . mysqli_stmt_error($stmt), []);
-            }
-    
-            $prestigeReviews = mysqli_fetch_all($result, MYSQLI_ASSOC);
-    
-            // Debugging: Log the number of rows fetched
-            error_log("Number of rows fetched: " . count($prestigeReviews));
-    
-            $prestigeReviewObjects = [];
-            foreach ($prestigeReviews as $row) {
-                $prestigeReview = self::row_to_vPrestigeReview($row);
-                $prestigeReviewObjects[] = $prestigeReview;
-            }
-    
-            return new Response(true, "Account Prestige Reviews", $prestigeReviewObjects);
-        } else {
+
+        mysqli_stmt_bind_param($stmt, "i", $recordId->crand);
+
+        if (!mysqli_stmt_execute($stmt)) {
             return new Response(false, "Failed to execute the statement: " . mysqli_stmt_error($stmt), []);
         }
-    }
-    
 
-    public static function getAccountPrestigeValue($prestigeReviews)
-    {
-        $prestigeNet = 0;
-        for ($i=0; $i < count($prestigeReviews); $i++) { 
-            $review = $prestigeReviews[$i];
-    
-            if ($review->commend == 1)
-            {
-                $prestigeNet++;
-            }
-            else{
-                $prestigeNet--;
-            }
+        $result = mysqli_stmt_get_result($stmt);
+        if ($result === false) {
+            return new Response(false, "Failed to get result: " . mysqli_stmt_error($stmt), []);
         }
-    
-        return $prestigeNet;
+
+        $prestigeReviews = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+        // Debugging: Log the number of rows fetched
+        error_log("Number of rows fetched: " . count($prestigeReviews));
+
+        $prestigeReviewObjects = [];
+        foreach ($prestigeReviews as $row) {
+            $prestigeReview = self::row_to_vPrestigeReview($row);
+            $prestigeReviewObjects[] = $prestigeReview;
+        }
+
+        return new Response(true, "Account Prestige Reviews", $prestigeReviewObjects);
     }
+
+    // // Dead code?
+    // /**
+    // * @param array<vPrestigeReview> $prestigeReviews
+    // */
+    // public static function getAccountPrestigeValue(array $prestigeReviews) : int
+    // {
+    //     $prestigeNet = 0;
+    //     for ($i=0; $i < count($prestigeReviews); $i++) {
+    //         $review = $prestigeReviews[$i];
+    //
+    //         if ($review->commend == 1)
+    //         {
+    //             $prestigeNet++;
+    //         }
+    //         else{
+    //             $prestigeNet--;
+    //         }
+    //     }
+    //
+    //     return $prestigeNet;
+    // }
 
     public static function markPrestigeAsViewed(vRecordId $prestigeId, vRecordId $accountId) : Response {
         $conn = Database::getConnection();
     
         // Ensure prestigeId and accountId are integers
-        $prestigeIdValue = (int) $prestigeId->crand;
-        $accountIdValue = (int) $accountId->crand;
+        $prestigeIdValue = $prestigeId->crand;
+        $accountIdValue  = $accountId->crand;
     
         // Prepare update statement
         $stmt = mysqli_prepare($conn, "UPDATE prestige SET viewed = 1 WHERE Id = ? AND account_id_to = ? and viewed = 0");
@@ -103,7 +122,7 @@ class PrestigeController
 
         $prestigeReview = new vPrestigeReview();
 
-        $prestigeReview->commend = (bool) ($row["commend"] == "1");
+        $prestigeReview->commend = ($row["commend"] == "1");
         $prestigeReview->message = (string) $row["desc"];
         $prestigeReview->dateTime = new vDateTime();
         $prestigeReview->dateTime->setDateTimeFromString($row["date"]);
@@ -134,5 +153,48 @@ class PrestigeController
 
         return $prestigeReview;
     }
+    
+    public static function countPrestigeGiven(int $accountId): int
+    {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT COUNT(*) FROM prestige 
+                WHERE account_id_from = ?";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+
+        $stmt->bind_param("i", $accountId);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+
+    public static function countPrestigeGivenBetween(int $accountId, string $startDate, string $endDate): int
+    {
+        $conn = Database::getConnection();
+
+        $sql = "SELECT COUNT(*) FROM prestige 
+                WHERE account_id_from = ? AND date BETWEEN ? AND ?";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+
+        $stmt->bind_param("iss", $accountId, $startDate, $endDate);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return (int)$count;
+    }
+
 }
 ?>

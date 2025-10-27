@@ -18,6 +18,12 @@ class vMedia extends vRecordId
 
     function __construct(string $ctime = '', int $crand = -1)
     {
+        $this->name         = '';
+        $this->desc         = '';
+        $this->extension    = '';
+        $this->directory    = '';
+        $this->mediaPath    = '';
+        $this->url          = '';
         parent::__construct($ctime, $crand);
 
         if ($crand == 221)
@@ -26,22 +32,27 @@ class vMedia extends vRecordId
         }
     }
 
-    public function getFullPath()
+    public function getFullPath() : string
     {
         return "/assets/media/".$this->mediaPath;
     }
 
-    public function setFullPath(string $fullPath)
+    public function setFullPath(string $fullPath) : void
     {
         $this->url = $fullPath;
         $this->mediaPath = str_replace("/assets/media/", '', $fullPath);
-
     }
 
-    public function setMediaPath(string $path)
+    public function setMediaPath(string $path) : void
     {
         $this->mediaPath = $path;
         $this->url = $this->getFullPath();
+    }
+    
+    public static function fromUrl(string $url): vMedia {
+        $media = new vMedia();
+        $media->setFullPath($url);
+        return $media;
     }
     
     public static function defaultIcon() : vMedia {

@@ -1,4 +1,7 @@
 <?php
+use Kickback\Backend\Controllers\MerchantGuildController;
+use Kickback\Backend\Views\vRecordId;
+
 if (Kickback\Services\Session::isLoggedIn())
 {
     if (Kickback\Services\Session::isAdmin())
@@ -11,17 +14,17 @@ if (Kickback\Services\Session::isLoggedIn())
             if ($tokenResponse->success) {
     
             $pid = $_POST["purchase_id"];
-            $purchaseToProcess = PullMerchantGuildPurchaseInformation($pid);
-            $currentStatementTiedToPTP = BuildStatement($purchaseToProcess['account_id'], $purchaseToProcess['execution_date'], false);
-            $preProcessData = PreProcessPurchase($purchaseToProcess, $currentStatementTiedToPTP);
+            $purchaseToProcess = MerchantGuildController::PullMerchantGuildPurchaseInformation(new vRecordId('', (int)$pid))->data;
+            $currentStatementTiedToPTP = MerchantGuildController::BuildStatement($purchaseToProcess->sharePurchase->account, $purchaseToProcess->sharePurchase->PurchaseDate, false);
+            $preProcessData = MerchantGuildController::PreProcessPurchase($purchaseToProcess, $currentStatementTiedToPTP);
     
-    
-            $sharesToBeGiven = $preProcessData["shareCertificatesToBeGivien"];
-    
-            //for each share to be given
-            //$giveLootResp = GiveMerchantGuildShare($purchaseToProcess['account_id'],$purchaseToProcess['execution_date']);
-            $processResp = ProcessMerchantSharePurchase($pid, $sharesToBeGiven);
-    
+            $sharesToBeGiven = $preProcessData->shareCertificatesToBeGiven;
+
+            $processResp = MerchantGuildController::ProcessMerchantSharePurchase(
+                new vRecordId('', (int)$pid),
+                (int)$sharesToBeGiven
+            );
+            
             if ($processResp->success)
             {
     
@@ -54,8 +57,10 @@ if (Kickback\Services\Session::isLoggedIn())
             $tokenResponse = Kickback\Common\Utility\FormToken::useFormToken();
 
             if ($tokenResponse->success) {
-                $statement_date = $_POST["statement-date"];
-                $processResp = ProcessMonthlyStatements($statement_date);
+
+                $statementDate = Kickback\Backend\Views\vDateTime::fromDB($_POST["statement-date"]);
+
+                $processResp = MerchantGuildController::ProcessMonthlyStatements($statementDate);
                 if ($processResp->success)
                 {
                     $showPopUpSuccess = true;

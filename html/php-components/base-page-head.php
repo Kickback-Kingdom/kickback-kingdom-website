@@ -31,7 +31,7 @@ if (isset($thisQuestLine))
 if (isset($thisProfile))
 {
     $pageTitle = $thisProfile->username;
-    $pageImage = "https://kickback-kingdom.com".$thisProfile->getProfilePictureURL();
+    $pageImage = "https://kickback-kingdom.com".$thisProfile->profilePictureURL();
     $pageDesc = $thisProfile->title." in Kickback Kingdom";
     $pageVisitId = '/u/'.$thisProfile->crand;
 }

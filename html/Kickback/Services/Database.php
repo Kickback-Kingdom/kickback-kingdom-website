@@ -17,7 +17,7 @@ class Database {
             $username = ServiceCredentials::get("sql_username");
             $password = ServiceCredentials::get("sql_password");
             $database = ServiceCredentials::get("sql_server_db_name");
-
+            
             // This documents the types of the variables, and also makes PHPStan happy.
             assert(is_string($servername));
             assert(is_string($username));
@@ -31,16 +31,41 @@ class Database {
             if (!is_null(self::$conn->connect_error)) {
                 throw new \Exception("Connection failed: " . self::$conn->connect_error);
             }
+            
+             // Set charset and collation to ensure consistency
+             if (!self::$conn->set_charset("utf8mb4")) {
+                throw new \Exception("Error setting charset: " . self::$conn->error);
+            }
+            
+            // Set the collation to utf8mb4_unicode_ci for consistency
+            if (!self::$conn->query("SET collation_connection = 'utf8mb4_unicode_ci'")) {
+                throw new \Exception("Error setting collation: " . self::$conn->error);
+            }
         }
 
         return self::$conn;
     }
 
-    public static function executeSqlQuery(string $stmt, array $params)
-    {
-        $connection = Database::getConnection();
+    public static function executeSqlQuery(string $stmt, array $params = [])
+    { 
+        try
+        {
+            $connection = Database::getConnection();
 
-        $result = mysqli_execute_query($connection, $stmt, $params);
+            if(count($params) > 0)
+            {
+                $result = mysqli_execute_query($connection, $stmt, $params);
+            }
+            else
+            {
+                mysqli_options($connection, MYSQLI_OPT_INT_AND_FLOAT_NATIVE, 1); //to ensure type casting occurs properly; without this, everything returns as a string
+                $result = mysqli_query($connection, $stmt);
+            }
+        }   
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while executing sql query : $e");
+        }    
 
         return $result;
     }
@@ -59,7 +84,7 @@ class Database {
     //  this function may only be used when batch inserting in the same table
     //  the function takes a single insertion statment which is used to insert
     //  each set of parameters defined in the paramSets variable
-    */
+    *//*
     public static function executeBatchInsertion(string $stmt, array $paramSets, ?string $databaseName = null)
     {
         $conn = self::getConnection();
@@ -82,7 +107,7 @@ class Database {
 
         $conn->commit();
         mysqli_autocommit($conn, true);
-    }
+    }*/
 
     private static function prepareAndExecuteQuery($stmt, $params)
     {
@@ -134,11 +159,12 @@ class Database {
         return $datatypeString;
     }
 
-    private static function handleStmtError(mysqli_stmt $stmt, string $message): Response {
-        error_log($stmt->error);
-        $stmt->close();
-        return new Response(false, $message, null);
-    }
+    // Dead code?
+    // private static function handleStmtError(\mysqli_stmt $stmt, string $message): Response {
+    //     error_log($stmt->error);
+    //     $stmt->close();
+    //     return new Response(false, $message, null);
+    // }
     
 }
 ?>

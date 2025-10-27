@@ -18,9 +18,22 @@ use Kickback\Backend\Models\PlayStyle;
 
 class NotificationController
 {
-    
-    public static function getNotificationsByAccount(vRecordId $accountId) : Response {
-        
+    /**
+    * @return array<vNotification>
+    */
+    public static function queryNotificationsByAccount(vRecordId $accountId) : array
+    {
+        $resp = self::queryNotificationsByAccountAsResponse($accountId);
+        if ($resp->success) {
+            // @phpstan-ignore-next-line
+            return $resp->data;
+        } else {
+            throw new \Exception($resp->message);
+        }
+    }
+
+    public static function queryNotificationsByAccountAsResponse(vRecordId $accountId) : Response
+    {
         $conn = Database::getConnection();
         $stmt = mysqli_prepare($conn, "SELECT * FROM v_notifications WHERE account_id = ?");
         
@@ -68,6 +81,9 @@ class NotificationController
 
 
             $not->quest = $quest;
+        }
+        else{
+            $not->quest = null;
         }
         
         if ($not->type == NotificationType::PRESTIGE)

@@ -26,13 +26,14 @@ class Item extends RecordId
 
     public bool $isContainer;
     public int $containerSize; // -1 = infinite
+    public bool $fungible;
 
     public ?ItemCategory $containerItemCategory = null;
     public ?ItemCategory $itemCategory = null;
 
-    public function __construct(string $ctime = '', int $crand = -1)
+    public function __construct()
     {
-        parent::__construct($ctime, $crand);
+        parent::__construct();
 
         $this->type = ItemType::Standard;
         $this->rarity = ItemRarity::Common;

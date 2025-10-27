@@ -5,7 +5,7 @@ namespace Kickback\Common;
 
 use \SplFixedArray;
 
-use Kickback\Common\Str;
+use Kickback\Common\Primitives\Str;
 
 /**
 * Class containing version info and history for the Kickback Kingdom website, backend, and API.
@@ -55,8 +55,8 @@ final class Version
     }
     public static function isLocalhost(): bool {
         $whitelist = ['127.0.0.1', '::1', 'localhost'];
-        return in_array($_SERVER['REMOTE_ADDR'] ?? '', $whitelist) || 
-               in_array($_SERVER['SERVER_NAME'] ?? '', $whitelist);
+        return in_array($_SERVER['REMOTE_ADDR'] ?? '', $whitelist, true) ||
+               in_array($_SERVER['SERVER_NAME'] ?? '', $whitelist, true);
     }
     
 
@@ -150,7 +150,6 @@ final class Version
             // TODO: Print error message(s) if there are duplicate version numbers?
         }
 
-        // @phpstan-ignore assign.propertyType
         self::$history_ = $hist_by_index;
         self::$history_by_number_ = $hist_by_number;
         self::$history_by_blogpost_locator_ = $hist_by_locator;
@@ -233,5 +232,31 @@ final class Version
 
     // #website-only
     public static bool $client_is_viewing_blogpost_for_current_version_update = false;
+
+    /**
+    * System-wide hint for whether debug code should execute.
+    */
+    public static function in_debug_mode() : bool {
+        // We base this on the value of `zend.assertions` since the enabling
+        // of assertions is a clear signal that we are in an environment
+        // where "fail early" is a strategy preferred over "don't fail".
+        // This is also very likely to coincide with whether we want
+        // extra verbose output regarding program-state.
+        static $in_debug_mode = null;
+        if ( isset($in_debug_mode) ) {
+            return $in_debug_mode;
+        }
+        $in_debug_mode = \ini_get('zend.assertions') === '1';
+        return $in_debug_mode;
+
+        // Note:
+        // It's prettier to write it like this:
+        //   static $in_debug_mode = null;
+        //   return $in_debug_mode ??= (ini_get('zend.assertions') === '1');
+        // BUT
+        // that generates some uglier PHP bytecode that requires it to
+        // do the negative check first and do a jmp on the positive path.
+        // This could get called A LOT, so we want it to be fast.
+    }
 }
 ?>

@@ -10,6 +10,7 @@ use Kickback\Backend\Views\vDateTime;
 use Kickback\Backend\Views\vReviewStatus;
 use Kickback\Services\Session;
 use Kickback\Common\Version;
+use Kickback\Common\Primitives\Str;
 
 
 class vBlogPost extends vRecordId
@@ -36,7 +37,8 @@ class vBlogPost extends vRecordId
         parent::__construct($ctime, $crand);
     }
 
-    public function setLocator(string $locator) {
+    public function setLocator(string $locator) : void
+    {
         $parts = explode('/', $locator);
         if (count($parts) >= 2) {
             $this->blogLocator = $parts[0];
@@ -46,14 +48,16 @@ class vBlogPost extends vRecordId
         }
     }
 
-    public function getURL() : string {
+    public function url() : string {
         return Version::formatUrl('/blog/'.$this->blogLocator.'/'.$this->postLocator);
     }
 
     public function isWriter() : bool {
         if (Session::isLoggedIn())
         {
-            return ($this->blog->isManager() || Session::getCurrentAccount()->crand == $this->author->crand) && !isset($_GET['borderless']);
+            return ($this->blog->isManager() ||
+                (!is_null(Session::getCurrentAccount()) && Session::getCurrentAccount()->crand == $this->author->crand)
+            ) && !isset($_GET['borderless']);
         }
         else
         {
@@ -61,9 +65,9 @@ class vBlogPost extends vRecordId
         }
     }
         
-    public function titleIsValid()
+    public function titleIsValid() : bool
     {
-        $valid = StringIsValid($this->title, 10);
+        $valid = Str::is_longer_than($this->title, 10);
         if ($valid) 
         {
             if (strtolower($this->title) == "new blog post")
@@ -73,15 +77,16 @@ class vBlogPost extends vRecordId
         return $valid;
     }
 
-    public function summaryIsValid() {
-        $valid = StringIsValid($this->summary, 200);
+    public function summaryIsValid() : bool
+    {
+        $valid = Str::is_longer_than($this->summary, 200);
 
         return $valid;
     }
 
-    public function locatorIsValid()
+    public function locatorIsValid() : bool
     {
-        $valid = StringIsValid($this->postLocator, 5);
+        $valid = Str::is_longer_than($this->postLocator, 5);
         if ($valid) 
         {
             if (strpos(strtolower($this->postLocator), 'new-post-') === 0) {
@@ -92,12 +97,12 @@ class vBlogPost extends vRecordId
         return $valid;
     }
 
-    public function iconIsValid()
+    public function iconIsValid() : bool
     {
         return $this->icon->isValid();
     }
 
-    public function isValidForPublish()
+    public function isValidForPublish() : bool
     {
         return $this->titleIsValid() && $this->summaryIsValid() && $this->locatorIsValid() && $this->pageContentIsValid() && $this->iconIsValid();
     }
@@ -117,8 +122,8 @@ class vBlogPost extends vRecordId
     public function hasPageContent() : bool {
         return $this->content->hasPageContent();
     }
-    public function getPageContent() : vPageContent {
-        return $this->content->pageContent;
+    public function pageContent() : vPageContent {
+        return $this->content->pageContent();
     }
 }
 
