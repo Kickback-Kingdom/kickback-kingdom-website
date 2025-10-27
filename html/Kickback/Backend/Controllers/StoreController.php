@@ -3940,6 +3940,8 @@ class StoreController
         `description` = ?, 
         removed = ?,
         locator = ?, 
+        tags = ?,
+        banners = ?,
         ref_store_ctime = ?, 
         ref_store_crand = ?,
         ref_media_id_large = ?,
@@ -3952,6 +3954,8 @@ class StoreController
             $product->description,
             $product->removed,
             $product->locator,
+            json_encode($product->tags),
+            json_encode($product->banners),
             $product->store->ctime,
             $product->store->crand,
             $product->largeMedia->crand,
@@ -3987,13 +3991,15 @@ class StoreController
             `name`,
             `description`,
             locator,
+            tags,
+            banners,
             ref_store_ctime,
             ref_store_crand,
             ref_media_id_large,
             ref_media_id_small,
             ref_media_id_back
             )values
-            (?,?,?,?,?,?,?,?,?,?)";
+            (?,?,?,?,?,?,?,?,?,?,?,?)";
 
         $params = [
             $product->ctime,
@@ -4001,6 +4007,8 @@ class StoreController
             $product->name,
             $product->description,
             $product->locator,
+            json_encode($product->tags),
+            json_encode($product->banners),
             $product->store->ctime,
             $product->store->crand,
             $product->largeMedia->crand,

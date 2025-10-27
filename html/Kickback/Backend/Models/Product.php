@@ -25,11 +25,16 @@ class Product extends RecordId
 
     public array $prices;
 
+    public array $tags;
+    public array $banners;
+
     public function __construct(
         string $name = '',
         string $description = '',
         bool $removed = false,
         string $locator = '',
+        array $tags = [],
+        array $banners = [],
         ?vStore $store = null,
         array $prices = [],
         ?vMedia $largeMedia = null,
@@ -44,6 +49,9 @@ class Product extends RecordId
         $this->locator = $locator;
         $this->store = $store;
 
+        $this->tags = $this->validateStringArray("tags", $tags);
+        $this->banners = $this->validateStringArray("banners", $banners);
+
         $this->removed = $removed;
 
         $this->largeMedia = $largeMedia;
@@ -51,6 +59,16 @@ class Product extends RecordId
         $this->backMedia = $backMedia;
 
         $this->prices = static::validatePrices($prices) ? $prices : throw new InvalidArgumentException("Prices Array must contain only prices");
+    }
+
+    private static function validateStringArray(string $fieldName, array $stringArray) : array
+    {
+        foreach($stringArray as $object)
+        {
+            if(!is_string($object)) throw new InvalidArgumentException("$fieldName must only contain strings");
+        }
+
+        return $stringArray;
     }
 
     private static function validatePrices(array $prices) : bool

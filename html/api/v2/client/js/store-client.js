@@ -298,8 +298,7 @@ class StoreClient {
         }
     }
 
-    static async applyCoupon(cart, couponCode)
-    {
+    static async applyCoupon(cart, couponCode){
         if (!cart) {
             throw new Error('Cart is required');
         }
@@ -345,8 +344,7 @@ class StoreClient {
         }
     }
 
-    static async removeCouponFromProduct(cartProduct)
-    {
+    static async removeCouponFromProduct(cartProduct){
         if (!cartProduct) {
             throw new Error('CartProduct is required');
         }
