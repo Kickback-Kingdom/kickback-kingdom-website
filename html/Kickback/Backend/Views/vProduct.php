@@ -18,6 +18,9 @@ class vProduct extends vRecordId
 
     public array $prices;
 
+    public array $tags;
+    public array $banners;
+
     public int $stock;
     public int $amountAvailable; //stock - amount_reserved
 
