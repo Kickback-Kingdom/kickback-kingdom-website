@@ -1,0 +1,65 @@
+{
+  "GUID": "0b2ed0",
+  "Name": "Custom_Assetbundle",
+  "Transform": {
+    "posX": 2.32830644e-9,
+    "posY": -41.99,
+    "posZ": 1.16415322e-9,
+    "rotX": 0,
+    "rotY": 180,
+    "rotZ": 0,
+    "scaleX": 1,
+    "scaleY": 1,
+    "scaleZ": 1
+  },
+  "Nickname": "The Kraken Table",
+  "Description": "",
+  "GMNotes": "",
+  "AltLookAngle": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "ColorDiffuse": {
+    "r": 1,
+    "g": 1,
+    "b": 1
+  },
+  "LayoutGroupSortIndex": 0,
+  "Value": 0,
+  "Locked": true,
+  "Grid": false,
+  "Snap": false,
+  "IgnoreFoW": false,
+  "MeasureMovement": false,
+  "DragSelectable": true,
+  "Autoraise": false,
+  "Sticky": true,
+  "Tooltip": false,
+  "GridProjection": false,
+  "HideWhenFaceDown": false,
+  "Hands": false,
+  "CustomAssetbundle": {
+    "AssetbundleURL": "https://steamusercontent-a.akamaihd.net/ugc/868496425808380193/6D743C154CD681FA1AC3535C6F55A62FBDB2C620/",
+    "AssetbundleSecondaryURL": "",
+    "MaterialIndex": 1,
+    "TypeIndex": 4,
+    "LoopingEffectIndex": 0
+  },
+  "LuaScript": "function onLoad()\r\n    self.interactable = false;\r\nend\r",
+  "LuaScriptState": "",
+  "XmlUI": "",
+  "PhysicsMaterial": {
+    "StaticFriction": 0.6,
+    "DynamicFriction": 0.6,
+    "Bounciness": 0,
+    "FrictionCombine": 0,
+    "BounceCombine": 0
+  },
+  "Rigidbody": {
+    "Mass": 118,
+    "Drag": 115,
+    "AngularDrag": 100000000000000,
+    "UseGravity": false
+  }
+}

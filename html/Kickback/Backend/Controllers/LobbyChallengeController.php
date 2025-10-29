@@ -602,7 +602,7 @@ class LobbyChallengeController
         }
     }
 
-    public static function insertChallenger(vRecordId $LobbyChallenge, vAccount $challenger, \mysqli $conn = null): Response
+    public static function insertChallenger(vRecordId $LobbyChallenge, vAccount $challenger, ?\mysqli $conn = null): Response
     {
         if ($conn == null)
         {

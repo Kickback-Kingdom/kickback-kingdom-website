@@ -5,20 +5,26 @@ namespace Kickback\Backend\Controllers;
 
 use Kickback\Common\Utility\IDCrypt;
 
-use Kickback\Backend\Models\Account;
 use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vRecordId;
 use Kickback\Backend\Views\vMedia;
-use Kickback\Backend\Views\vMatchStats;
-use Kickback\Backend\Models\Response;
-use Kickback\Services\Database;
-use Kickback\Services\Session;
-use Kickback\Backend\Controllers\LootController;
-use Kickback\Backend\Config\ServiceCredentials;
 use Kickback\Backend\Views\vRaffle;
 use Kickback\Backend\Views\vGameStats;
+use Kickback\Backend\Views\vMatchStats;
+
+use Kickback\Backend\Models\Response;
+use Kickback\Backend\Models\Account;
+
+use Kickback\Services\Database;
+use Kickback\Services\Session;
+
+use Kickback\Backend\Controllers\LootController;
 use Kickback\Backend\Controllers\SocialMediaController;
 use Kickback\Common\Primitives\Str;
+
+use Kickback\Backend\Config\ServiceCredentials;
+
+use Exception;
 
 class AccountController
 {

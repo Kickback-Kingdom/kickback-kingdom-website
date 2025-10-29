@@ -49,6 +49,12 @@ class vMedia extends vRecordId
         $this->url = $this->getFullPath();
     }
     
+    public static function fromUrl(string $url): vMedia {
+        $media = new vMedia();
+        $media->setFullPath($url);
+        return $media;
+    }
+    
     public static function defaultIcon() : vMedia {
         $media = new vMedia('',221);
         $media->setMediaPath('items/221.png');

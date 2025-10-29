@@ -3,7 +3,7 @@
     "type": "project",
     "license": "Boost",
     "require": {
-        "stripe/stripe-php": "^13.16",
+        "stripe/stripe-php": "^17.1",
         "cboden/ratchet": "^0.4"
     },
     "config": {

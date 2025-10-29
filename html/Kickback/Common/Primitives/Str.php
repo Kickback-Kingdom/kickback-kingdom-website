@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Kickback\Common\Primitives;
 
+use Kickback\Common\Primitives\Int_;
+
 /**
 * Extended functionality for the `string` type.
 *
@@ -263,6 +265,61 @@ final class Str
         // End of D standard library unittests.
     }
 
+    /**
+    * Removes `$prefix` from the given file system path, `$path`.
+    *
+    * The returned value will be a relative path, and thus will never start
+    * with the `/` character.
+    *
+    * This function will not do any path normalization, nor will it check
+    * that the `$prefix` is actually a prefix of the `$path`. It is the caller's
+    * responsibility to ensure that paths are normalized as needed, and that
+    * the `$prefix` is actually a prefix of `$path`.
+    */
+    public static function remove_path_prefix(string $path, string|int $prefix) : string
+    {
+        if ( is_string($prefix) ) {
+            $prefix_len = \strlen($prefix);
+            assert(\str_starts_with($path, $prefix));
+        } else {
+            $prefix_len = $prefix;
+            assert($prefix_len <= \strlen($path));
+        }
+        $relpath    = \substr($path, $prefix_len);
+        if ( \str_starts_with($relpath, '/') ) {
+            $relpath = \substr($relpath, 1);
+        }
+        return $relpath;
+    }
+
+    private static function unittest_remove_path_prefix() : void
+    {
+        echo("  ".__FUNCTION__."()\n");
+
+        assert(self::remove_path_prefix('',         '') === '');
+        assert(self::remove_path_prefix('/',        '') === '');
+        assert(self::remove_path_prefix('/foo',     '') === 'foo');
+        assert(self::remove_path_prefix('/foo',     '/foo')  === '');
+        assert(self::remove_path_prefix('foo',      'foo')   === '');
+        assert(self::remove_path_prefix('/foo/bar', '/foo/') === 'bar');
+        assert(self::remove_path_prefix('/foo/bar', '/foo')  === 'bar');
+        assert(self::remove_path_prefix('foo/bar',  'foo/')  === 'bar');
+        assert(self::remove_path_prefix('foo/bar',  'foo')   === 'bar');
+        assert(self::remove_path_prefix('/foo/bar/baz/qux/quux', '')  === 'foo/bar/baz/qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/baz/qux/quux', '/') === 'foo/bar/baz/qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/baz/qux/quux', '/foo')  === 'bar/baz/qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/baz/qux/quux', '/foo/bar')  === 'baz/qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/baz/qux/quux', '/foo/bar/baz')  === 'qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/baz/qux/quux', '/foo/bar/baz/qux')  === 'quux');
+        assert(self::remove_path_prefix('/foo/bar/baz/qux/quux', '/foo/bar/baz/qux/quux') === '');
+        assert(self::remove_path_prefix('/foo/bar/../qux/quux', '')  === 'foo/bar/../qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/../qux/quux', '/') === 'foo/bar/../qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/../qux/quux', '/foo')  === 'bar/../qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/../qux/quux', '/foo/bar')  === '../qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/../qux/quux', '/foo/bar/..')  === 'qux/quux');
+        assert(self::remove_path_prefix('/foo/bar/../qux/quux', '/foo/bar/../qux')  === 'quux');
+        assert(self::remove_path_prefix('/foo/bar/../qux/quux', '/foo/bar/../qux/quux') === '');
+    }
 
     /**
     * Scans `$msg` for the first newline sequence at or after `$cursor`.
@@ -537,6 +594,1611 @@ final class Str
         assert(!self::is_ascii_identifier('hello', 2, 0));      // ''
     }
 
+    public static function unchecked_blit_fwd(string &$dst, int $dst_offset, string $src, int $src_offset, int $nchars) : void
+    {
+        // This is needed in the autoloader, so rather than duplicate code,
+        // we simply forward calls to the autoloader's function.
+        \Kickback\InitializationScripts\autoloader_str_unchecked_blit_fwd($dst, $dst_offset, $src, $src_offset, $nchars);
+    }
+
+    private static function common_unittest_unchecked_blit(\Closure  $str_unchecked_blit) : void
+    {
+        assert($str_unchecked_blit('123.456.789',0,'abc.pqr.xyz',0,0) === '123.456.789');
+        assert($str_unchecked_blit('123.456.789',4,'abc.pqr.xyz',0,0) === '123.456.789');
+        assert($str_unchecked_blit('123.456.789',8,'abc.pqr.xyz',0,0) === '123.456.789');
+
+        assert($str_unchecked_blit('123.456.789',0,'abc.pqr.xyz',0,3) === 'abc.456.789');
+        assert($str_unchecked_blit('123.456.789',4,'abc.pqr.xyz',0,3) === '123.abc.789');
+        assert($str_unchecked_blit('123.456.789',8,'abc.pqr.xyz',0,3) === '123.456.abc');
+        assert($str_unchecked_blit('123.456.789',0,'abc.pqr.xyz',4,3) === 'pqr.456.789');
+        assert($str_unchecked_blit('123.456.789',4,'abc.pqr.xyz',4,3) === '123.pqr.789');
+        assert($str_unchecked_blit('123.456.789',8,'abc.pqr.xyz',4,3) === '123.456.pqr');
+        assert($str_unchecked_blit('123.456.789',0,'abc.pqr.xyz',8,3) === 'xyz.456.789');
+        assert($str_unchecked_blit('123.456.789',4,'abc.pqr.xyz',8,3) === '123.xyz.789');
+        assert($str_unchecked_blit('123.456.789',8,'abc.pqr.xyz',8,3) === '123.456.xyz');
+
+        assert($str_unchecked_blit('123.456.789',0,'abc.pqr.xyz',0,7) === 'abc.pqr.789');
+        assert($str_unchecked_blit('123.456.789',4,'abc.pqr.xyz',0,7) === '123.abc.pqr');
+        assert($str_unchecked_blit('123.456.789',0,'abc.pqr.xyz',4,7) === 'pqr.xyz.789');
+        assert($str_unchecked_blit('123.456.789',4,'abc.pqr.xyz',4,7) === '123.pqr.xyz');
+    }
+
+    private static function unittest_unchecked_blit_fwd() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        $str_unchecked_blit_fwd =
+            function(string $dst, int $dst_offset, string $src, int $src_offset, int $nchars) : string
+        {
+            self::unchecked_blit_fwd($dst, $dst_offset, $src, $src_offset, $nchars);
+            return $dst;
+        };
+
+        self::common_unittest_unchecked_blit($str_unchecked_blit_fwd);
+
+        $foo = 'abcdef';
+        assert($str_unchecked_blit_fwd($foo,0,$foo,6,0) === 'abcdef');
+        assert($str_unchecked_blit_fwd($foo,0,$foo,5,1) === 'fbcdef');
+        assert($str_unchecked_blit_fwd($foo,0,$foo,4,2) === 'efcdef');
+        assert($str_unchecked_blit_fwd($foo,0,$foo,3,3) === 'defdef');
+        assert($str_unchecked_blit_fwd($foo,0,$foo,2,4) === 'cdefef');
+        assert($str_unchecked_blit_fwd($foo,0,$foo,1,5) === 'bcdeff');
+        assert($str_unchecked_blit_fwd($foo,0,$foo,0,6) === 'abcdef');
+        assert($str_unchecked_blit_fwd($foo,2,$foo,6,0) === 'abcdef');
+        assert($str_unchecked_blit_fwd($foo,2,$foo,5,1) === 'abfdef');
+        assert($str_unchecked_blit_fwd($foo,2,$foo,4,2) === 'abefef');
+        assert($str_unchecked_blit_fwd($foo,2,$foo,3,3) === 'abdeff');
+        assert($str_unchecked_blit_fwd($foo,2,$foo,2,4) === 'abcdef');
+    }
+
+    public static function unchecked_blit_rev(string &$dst, int $dst_offset, string $src, int $src_offset, int $nchars) : void
+    {
+        // This is needed in the autoloader, so rather than duplicate code,
+        // we simply forward calls to the autoloader's function.
+        \Kickback\InitializationScripts\autoloader_str_unchecked_blit_rev($dst, $dst_offset, $src, $src_offset, $nchars);
+    }
+
+    private static function unittest_unchecked_blit_rev() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        $str_unchecked_blit_rev =
+            function(string $dst, int $dst_offset, string $src, int $src_offset, int $nchars) : string
+        {
+            self::unchecked_blit_rev($dst, $dst_offset, $src, $src_offset, $nchars);
+            return $dst;
+        };
+
+        self::common_unittest_unchecked_blit($str_unchecked_blit_rev);
+
+        $foo = 'abcdef';
+        assert($str_unchecked_blit_rev($foo,6,$foo,0,0) === 'abcdef');
+        assert($str_unchecked_blit_rev($foo,5,$foo,0,1) === 'abcdea');
+        assert($str_unchecked_blit_rev($foo,4,$foo,0,2) === 'abcdab');
+        assert($str_unchecked_blit_rev($foo,3,$foo,0,3) === 'abcabc');
+        assert($str_unchecked_blit_rev($foo,2,$foo,0,4) === 'ababcd');
+        assert($str_unchecked_blit_rev($foo,1,$foo,0,5) === 'aabcde');
+        assert($str_unchecked_blit_rev($foo,0,$foo,0,6) === 'abcdef');
+        assert($str_unchecked_blit_rev($foo,4,$foo,0,0) === 'abcdef');
+        assert($str_unchecked_blit_rev($foo,3,$foo,0,1) === 'abcaef');
+        assert($str_unchecked_blit_rev($foo,2,$foo,0,2) === 'ababef');
+        assert($str_unchecked_blit_rev($foo,1,$foo,0,3) === 'aabcef');
+        assert($str_unchecked_blit_rev($foo,0,$foo,0,4) === 'abcdef');
+    }
+
+    public static function unchecked_shift_by(string &$subject, int $by, int $offset, int $nchars) : void
+    {
+        // This is needed in the autoloader, so rather than duplicate code,
+        // we simply forward calls to the autoloader's function.
+        \Kickback\InitializationScripts\autoloader_str_unchecked_shift_by($subject, $by, $offset, $nchars);
+    }
+
+    public static function unchecked_blit(string &$dst, int $dst_offset, string $src, int $src_offset, int $nchars) : void
+    {
+        self::unchecked_blit_fwd($dst, $dst_offset, $src, $src_offset, $nchars);
+    }
+
+    private static function unittest_unchecked_blit() : void
+    {
+        $str_unchecked_blit =
+            function(string $dst, int $dst_offset, string $src, int $src_offset, int $nchars) : string
+        {
+            self::unchecked_blit($dst, $dst_offset, $src, $src_offset, $nchars);
+            return $dst;
+        };
+
+        self::common_unittest_unchecked_blit($str_unchecked_blit);
+    }
+
+    public static function blit(string &$dst, int $dst_offset, string $src, int $src_offset, int $limit = PHP_INT_MAX) : int
+    {
+        $nchars = \strlen($src) - $src_offset;
+        if ( $nchars > $limit ) {
+            $nchars = $limit;
+        }
+        $dst_nchars = \strlen($dst) - $dst_offset;
+        if ( $nchars > $dst_nchars ) {
+            $nchars = $dst_nchars;
+        }
+
+        self::unchecked_blit($dst, $dst_offset, $src, $src_offset, $nchars);
+        return $nchars;
+    }
+
+    /**
+    * This is similar to `\substr_replace`, except that it modifies its argument instead of return the result.
+    *
+    * The semantics of this function (and meanings of parameters) are otherwise
+    * almost identical to the PHP pre-defined `\substr_replace` function.
+    *
+    * When the replacement has a length identical to the `$length` parameter
+    * (or its implied value), then `autoloader_str_unchecked_blit` will be
+    * used instead of `\substr_replace`, thus avoiding the unnecessary memory
+    * allocations that `\substr_replace` must perform.
+    *
+    * That makes this function potentially much faster whenever the `$subject`
+    * string's length is likely to be unchanged by this operation.
+    *
+    * (In the future, this may also attempt to optimize the case where
+    * the `$subject` string is shrinking, since that can also be performed
+    * without memory allocation, though it will require potentially many
+    * more individual character assignments.)
+    */
+    public static function substr_replace_inplace(string &$subject, string $replacement, int $offset, ?int $length = null) : void
+    {
+        // This is needed in the autoloader, so rather than duplicate code,
+        // we simply forward calls to the autoloader's function.
+        \Kickback\InitializationScripts\autoloader_substr_replace_inplace($subject, $replacement, $offset, $length);
+    }
+
+    public static function unittest_substr_replace_inplace() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        $substr_replace_inplace =
+            function(string $subject, string $replacement, int $offset, ?int $length) : string
+        {
+            self::substr_replace_inplace($subject, $replacement, $offset, $length);
+            return $subject;
+        };
+
+        // Tests taken from the PHP documentation for `\substr_replace`:
+        // (This function should mirror the behavior of `\substr_replace`
+        // in every regard except for the "in-place" characteristic
+        // and its subsequent optimization opportunities.)
+        // https://www.php.net/manual/en/function.substr-replace.php
+        $var = 'ABCDEFGH:/MNRPQR/';
+        assert($substr_replace_inplace($var,'bob',0,null) === 'bob');
+        assert($substr_replace_inplace($var,'bob',0,\strlen($var)) === 'bob');
+        assert($substr_replace_inplace($var,'bob',0,0) === 'bobABCDEFGH:/MNRPQR/');
+        assert($substr_replace_inplace($var,'bob',10,-1) === 'ABCDEFGH:/bob/');
+        assert($substr_replace_inplace($var,'bob',-7,-1) === 'ABCDEFGH:/bob/');
+        assert($substr_replace_inplace($var,'',10,-1) === 'ABCDEFGH://');
+
+        // From comment by `elloromtz at gmail dot com`
+        // https://www.php.net/manual/en/function.substr-replace.php#97401
+        // "It's worth noting that when start and length are both negative
+        // -and- the length is less than or equal to start, the length
+        // will have the effect of being set as 0."
+        assert($substr_replace_inplace('eggs','x',-1,-1) === 'eggxs');
+        assert($substr_replace_inplace('eggs','x',-1,-2) === 'eggxs');
+        assert($substr_replace_inplace('eggs','x',-1, 0) === 'eggxs');
+        assert($substr_replace_inplace('huevos','x',-2,-2) === 'huevxos');
+        assert($substr_replace_inplace('huevos','x',-2,-3) === 'huevxos');
+        assert($substr_replace_inplace('huevos','x',-2, 0) === 'huevxos');
+
+        // "Another note, if length is negative and start offsets
+        // the same position as length, length (yet again) will have
+        // the effect as being set as 0."
+        assert($substr_replace_inplace('abcd', 'x', 0, -4) === 'xabcd');
+        assert($substr_replace_inplace('abcd', 'x', 0,  0) === 'xabcd');
+        assert($substr_replace_inplace('abcd', 'x', 1, -3) === 'axbcd');
+        assert($substr_replace_inplace('abcd', 'x', 1,  0) === 'axbcd');
+
+        // Homegrown tests:
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz',   0,  3) ===  'xyz bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x',   0,  3) ===    'x bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs',   0,  3) === 'pqrs bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz', -11,  3) ===  'xyz bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x', -11,  3) ===    'x bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs', -11,  3) === 'pqrs bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz',   0, -8) ===  'xyz bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x',   0, -8) ===    'x bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs',   0, -8) === 'pqrs bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz', -11, -8) ===  'xyz bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x', -11, -8) ===    'x bbb ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs', -11, -8) === 'pqrs bbb ccc');
+
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz',  4,  3) ===  'aaa xyz ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x',  4,  3) ===    'aaa x ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs',  4,  3) === 'aaa pqrs ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz', -7,  3) ===  'aaa xyz ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x', -7,  3) ===    'aaa x ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs', -7,  3) === 'aaa pqrs ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz',  4, -4) ===  'aaa xyz ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x',  4, -4) ===    'aaa x ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs',  4, -4) === 'aaa pqrs ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz', -7, -4) ===  'aaa xyz ccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x', -7, -4) ===    'aaa x ccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs', -7, -4) === 'aaa pqrs ccc');
+
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz',  8,  3) ===  'aaa bbb xyz');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x',  8,  3) ===    'aaa bbb x');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs',  8,  3) === 'aaa bbb pqrs');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz', -3,  3) ===  'aaa bbb xyz');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x', -3,  3) ===    'aaa bbb x');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs', -3,  3) === 'aaa bbb pqrs');
+
+        // The last few cases demonstrate the incongruity of the '0'-length case.
+        // Going from length=-1 to length=0 causes the match to go from
+        // "possibly as long as the entire string" to "always 0" with one increment.
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz',  8,  0) ===  'aaa bbb xyzccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x',  8,  0) ===    'aaa bbb xccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs',  8,  0) === 'aaa bbb pqrsccc');
+        assert($substr_replace_inplace('aaa bbb ccc',  'xyz', -3,  0) ===  'aaa bbb xyzccc');
+        assert($substr_replace_inplace('aaa bbb ccc',    'x', -3,  0) ===    'aaa bbb xccc');
+        assert($substr_replace_inplace('aaa bbb ccc', 'pqrs', -3,  0) === 'aaa bbb pqrsccc');
+
+        // This was causing
+        // `Meta::unittest_eponymous_interfaces_transform`
+        // to fail an assertion.
+        assert($substr_replace_inplace('_IA', '', 1, 1) === '_A');
+    }
+
+    private static function fqdn_is_ambiguous(string $fqdn, bool $at_start_of_str) : bool
+    {
+        return $at_start_of_str &&
+            (  $fqdn === 'http' || $fqdn === 'https'
+            || $fqdn === 'ftp'  || $fqdn === 'sftp'
+            || $fqdn === 'ssh'  || $fqdn === 'smtp'
+            || $fqdn === 'file' || $fqdn === 'mailto');
+    }
+
+    private static bool $do_fqdn_debug = false;
+
+    private static function fqdn_debug_line_str() : string
+    {
+        $trace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS,2);
+        $frame = $trace[1];
+        if ( \array_key_exists('line',$frame) ) {
+            $line = $frame['line'];
+            $line_str = \strval($line).': ';
+        } else {
+            $line_str ='';
+        }
+        return $line_str;
+    }
+
+    /**
+    * @param  non-empty-string  $url
+    * @return bool
+    */
+    private static function fqdn_debug(string $prefix, string $url, int $pos, int $end_pos) : bool
+    {
+        if (!self::$do_fqdn_debug) {
+            return true;
+        }
+
+        $line_str = self::fqdn_debug_line_str();
+        $slice = \substr($url, $pos, $end_pos-$pos);
+        echo "$line_str{$prefix}pos=$pos;  {$prefix}end=$end_pos;  slice=$slice\n";
+        return true;
+    }
+
+    /**
+    * @return bool
+    */
+    private static function fqdn_debug_print(string $msg) : bool
+    {
+        if (!self::$do_fqdn_debug) {
+            return true;
+        }
+        $line_str = self::fqdn_debug_line_str();
+        echo $line_str;
+        echo $msg;
+        echo "\n";
+        return true;
+    }
+
+    /**
+    * @param  non-empty-string  $name
+    * @return bool
+    */
+    private static function fqdn_debug_bool(string $name, bool $value) : bool
+    {
+        if (!self::$do_fqdn_debug) {
+            return true;
+        }
+        $line_str = self::fqdn_debug_line_str();
+        $str = $value ? 'true' : 'false';
+        echo ("$line_str$name = $str\n");
+        return true;
+    }
+
+    /**
+    * Scans the URL for the Fully Qualified Domain Name (FQDN) and returns its integer position and length.
+    *
+    * This is a lower-level version of `Str::fqdn_from_url` which is useful
+    * if string processing is required beyond simply extracting the FQDN.
+    *
+    * The `$fqdn_offset` and `$fqdn_length` parameters will only be modified
+    * when the function successfully identifies an FQDN
+    * (and, if `$validate_result === true`, only when it finds a _valid_ FQDN).
+    *
+    * If this function does not find an FQDN, then
+    * `$fqdn_offset` and `fqdn_length` will not be modified.
+    *
+    * This function has the same memory and portability guarantees
+    * as `Str::fqdn_from_url`, since that function is implemented
+    * using this function.
+    *
+    * @see fqdn_from_url
+    *
+    * @param      int         $fqdn_offset  Scanning will begin at the position passed into this parameter.
+    * @param-out  int<0,max>  $fqdn_offset
+    * @param      int<0,max>  $fqdn_length  As an input: only `$fqdn_length` characters will be scanned. As an output: This is the length of the FQDN found.
+    * @param-out  int<0,max>  $fqdn_length
+    *
+    * @return bool  `true` if a FQDN was found; or `false` if it wasn't, or if `$validate_result === true` and the FQDN was invalid.
+    *
+    * @phpstan-pure
+    * @throws void
+    */
+    public static function fqdn_bounds_from_url(
+        string  $url,
+        int     &$fqdn_offset  = 0,
+        int     &$fqdn_length  = \PHP_INT_MAX,
+        bool    $validate_result = true
+    ) : bool
+    {
+        assert(self::fqdn_debug_print("fqdn_bounds_from_url(url='$url', fqdn_offset=$fqdn_offset, fqdn_length=$fqdn_length, ...)"));
+
+        // Calculation that doesn't require `$fqdn_offset` or `$fqdn_length`.
+        $url_length = \strlen($url);
+        if ( $url_length === 0 ) {
+            return false;
+        }
+        assert(0 < \strlen($url)); // To make PHPStan happy.
+
+        // Mostly-atomic read of caller's state.
+        $len     = $fqdn_length;
+        $pos     = $fqdn_offset;
+
+        // Input clipping
+        assert(self::fqdn_debug_print("pos=$pos, len=$len"));
+        if ( $pos < 0 ) {
+            $pos = (-$pos) % $url_length; // Handle wrapping.
+            if ( $pos !== 0 ) {
+                $pos = $url_length - $pos;
+            }
+        }
+        assert(self::fqdn_debug_print("pos=$pos, len=$len"));
+        // We do `$url_length - $len < $pos` instead of `$url_length < $pos + $len`
+        // because $len can (and often will) be \PHP_INT_MAX, which would
+        // cause $pos+$len might overflow.
+        if ( $url_length - $len < $pos ) {
+            $len = $url_length - $pos;
+            $end_pos = $url_length;
+        } else {
+            $end_pos = $pos + $len;
+        }
+        assert(self::fqdn_debug_print("pos=$pos, len=$len, end=$end_pos"));
+        if ( $len === 0 || $end_pos <= $pos ) {
+            return false;
+        }
+        $end_pos = $pos + $len;
+
+        // Parsing logic.
+        assert(self::fqdn_debug('in.',$url, $pos, $end_pos));
+        $success = self::fqdn_bounds_from_url_parse(
+            $url, $pos, $end_pos);
+        if ( !$success ) {
+            assert(self::fqdn_debug_print("returning `false`"));
+            return false;
+        }
+
+        // Varying degrees of validation logic.
+        $len = $end_pos - $pos;
+        assert(self::fqdn_debug('out.',$url, $pos, $end_pos));
+
+        $fqdn = \substr($url, $pos, $len);
+        $at_start_of_str = ($fqdn_offset === $pos);
+        if ( self::fqdn_is_ambiguous($fqdn, $at_start_of_str) ) {
+            assert(self::fqdn_debug_print("returning `false`"));
+            return false;
+        }
+
+        if ( !$validate_result ) {
+            assert(self::fqdn_debug_print("returning `true`; pos=$pos, len=$len"));
+            $fqdn_offset = $pos;
+            $fqdn_length = $len;
+            return true;
+        }
+
+        $valid_fqdn = \filter_var($fqdn, FILTER_VALIDATE_DOMAIN, FILTER_NULL_ON_FAILURE);
+        if (isset($valid_fqdn)) {
+            assert(self::fqdn_debug_print("returning `true`; pos=$pos, len=$len"));
+            $fqdn_offset = $pos;
+            $fqdn_length = $len;
+            return true;
+        }
+        assert(self::fqdn_debug_print("returning `false`"));
+        return false;
+    }
+
+    // Ideally it's like this:
+    // param  non-empty-string  $url
+    // param  int<0,max>        $pos
+    // param  int<$pos+1,max>   $end_pos
+    // (But PHPStan doesn't allow `$pos` as an int range parameter.)
+
+    /**
+    * @param  non-empty-string  $url
+    * @param  int<0,max>        $pos
+    * @param  int<1,max>        $end_pos
+    */
+    private static function fqdn_bounds_from_url_parse(
+        string  $url,
+        int     &$pos,
+        int     &$end_pos
+    ) : bool
+    {
+        assert(self::fqdn_debug('in.',$url, $pos, $end_pos));
+        $peek_pos = $pos + \strcspn($url, ':/@', $pos, $end_pos-$pos);
+
+        // Early return if there's no syntax to parse, and it's just an FQDN.
+        if ( $peek_pos === $end_pos ) {
+            return true;
+        }
+        assert(self::fqdn_debug('',$url, $peek_pos, $end_pos));
+
+        // Otherwise, $url[$peek_pos] exists, and we have more parsing to do.
+        $ch = $url[$peek_pos];
+
+        // Check for user@host possibility.
+        // This happens FIRST because '@' is the least-ambiguous
+        // syntax token in the URL. Both ':' and '/' can mean different
+        // things depending on where they appear relative to other
+        // tokens, but '@' can only mean one thing. (Though it CAN appear
+        // in the resource identifier portion of the URL, but we've
+        // excluded that possibility by allowing our scanner to stop
+        // at '/' first, and it didn't, so this @ genuinely comes first.)
+        if ( $ch === '@' ) {
+            $pos = $peek_pos + 1;
+            return self::fqdn_from_start_of_url($url, $pos, $end_pos);
+        }
+
+        // Now we check for things like 'fqdn/path' and 'fqdn/path?foo=bar'
+        // Note that stuff like 'fqdn/path@foo' is allowed, but we don't
+        // have to do anything special for it, because the '@' is part
+        // of the URI path in that/this situation.
+        if ( $ch === '/' ) {
+            if ( $pos === $peek_pos ) {
+                // Zero-length FQDN = invalid.
+                return false;
+            }
+            $end_pos = $peek_pos;
+            return true;
+        }
+
+        // Why just this one, phpstan??
+        // @phpstan-ignore  function.alreadyNarrowedType
+        assert(self::fqdn_debug('',$url, $peek_pos, $end_pos));
+
+        // Now things get slightly more complicated, because ':' can mean
+        // a bunch of different things, depending on where it appears
+        // and what comes after it.
+        assert($ch === ':');
+        if ( \str_starts_with(\substr($url, $peek_pos, $end_pos-$peek_pos), '://') ) {
+            // Confirmed that there's a schema.
+            $peek_pos += 3;
+            assert(self::fqdn_debug('',$url, $peek_pos, $end_pos));
+
+            if ( $peek_pos < $end_pos && $url[$peek_pos] === '/'
+            &&  \str_starts_with(\substr($url, $pos, $end_pos-$pos), 'file:///') ) {
+                // Special exception for the `file:///` scheme where
+                // triple-slashes are allowed.
+                $peek_pos++;
+            }
+
+            // If there's also login info, we can skip it and the schema.
+            // (Note that our scanner stops at '/' also, because
+            // 'foo/bar@baz' has a hostname 'foo' with NO user/login info.)
+            $pos = $peek_pos;
+            $peek_pos = $pos + \strcspn($url, '/@', $pos, $end_pos-$pos);
+            if ( $peek_pos < $end_pos && $url[$peek_pos] === '@' ) {
+                $pos = $peek_pos + 1;
+            }
+
+            // Parse the rest.
+            assert(self::fqdn_debug('',$url, $pos, $end_pos));
+            return self::fqdn_from_start_of_url($url, $pos, $end_pos);
+        }
+
+        // Non-schema things.
+        // We've found a ':', which is either the delimiter for
+        // a 'username:password' string, or the delimiter for a
+        // 'fqdn:port' string, (or something invalid)
+        // 'and we have to determine which.
+        $start_pos = $pos;
+        $pos = $peek_pos;
+        assert(self::fqdn_debug('',$url, $pos, $end_pos));
+        $peek_pos++; // Skip the ':'
+        $peek_pos += \strcspn($url, '/@', $peek_pos, $end_pos-$peek_pos);
+        if ( $peek_pos === $end_pos ) {
+            // EOS.
+            // Saying it's '/' is a lie. But it's the correct lie.
+            // Because the implications for '/' and EOS are the same.
+            $ch = '/';
+        } else {
+            $ch = $url[$peek_pos];
+        }
+
+        // If the next character is '/' or we're at EOS, then
+        // it's a string like `fqdn:port/path` or `fqdn:port`.
+        // (No @ past the ':' implies it's not a `user:pass` string.)
+        if ( $ch === '/' ) {
+            // We can treat the stuff before ':' as a hostname/fqdn.
+            if ( $start_pos === $pos ) { // Zero-length FQDN.
+                return false;
+            }
+            // Move our {$pos,$end_pos} back to before the ':'.
+            // (Beware: Order of operations.)
+            $end_pos = $pos;
+            $pos = $start_pos;
+            return true;
+        }
+
+        // This case is `username:password@fqdn:pORt/whatever`.
+        // Which is easy enough because we've identified where the start
+        // of the FQDN would be. We just need to truncate the '@' and
+        // everything before it from the result.
+        assert($ch === '@');
+        $pos = $peek_pos;
+        $pos++; // skip the '@'
+
+        // Parse the rest.
+        assert(self::fqdn_debug('',$url, $pos, $end_pos));
+        return self::fqdn_from_start_of_url($url, $pos, $end_pos);
+    }
+
+    // Ideally it's like this:
+    // param  non-empty-string  $url
+    // param  int<0,max>        $pos
+    // param  int<$pos,max>     $end_pos
+    // (But PHPStan doesn't allow `$pos` as an int range parameter.)
+    // (Also, we use `int<1,max>` because $end_pos actually shouldn't be 0,
+    // though if it's non-zero, then it CAN be equal to $pos.)
+
+    /**
+    * @param  non-empty-string  $url
+    * @param  int<0,max>        $pos
+    * @param  int<1,max>        $end_pos
+    */
+    private static function fqdn_from_start_of_url(
+        string  $url,
+        int     &$pos,
+        int     &$end_pos
+    ) : bool
+    {
+        $peek_pos = $pos + \strcspn($url, ':/', $pos, $end_pos-$pos);
+        if ( $pos === $peek_pos ) { // Zero-length FQDN.
+            return false;
+        }
+
+        assert(self::fqdn_debug('',$url, $pos, $peek_pos));
+        if ( $peek_pos === $end_pos ) {
+            // EOS.
+            // Once again, the implications for '/' and EOS are the same.
+            $ch = '/';
+        } else {
+            $ch = $url[$peek_pos];
+        }
+
+        // If the next character is '/' or we're at EOS, then
+        // it's a string like `fqdn/path` or `fqdn`.
+        if ( $ch === '/' ) {
+            // $pos = $pos
+            $end_pos = $peek_pos;
+            return true;
+        }
+
+        assert($ch === ':');
+        if ( \str_starts_with(\substr($url, $peek_pos, $end_pos), '://') ) {
+            $peek_pos += 3;
+            if ( $peek_pos < $end_pos && $url[$peek_pos] !== '/' ) {
+                // Reject invalid: this function shall not be called with
+                // a URL contain a schema. (In the broader context, this means
+                // that a schema separator token is appearing in a place
+                // where it shouldn't. And we consider the schema separator
+                // to be unambiguous enough that it isn't just a missing
+                // port followed by a couple missing URI path segments.)
+                return false;
+            }
+        }
+
+        // We've excluded all of the other possibilities now.
+        // Everything up to the ':' is the FQDN.
+        // $pos = $pos
+        $end_pos = $peek_pos;
+        assert(self::fqdn_debug('',$url, $pos, $end_pos));
+        return true;
+    }
+
+    private static int  $total_permutations = 0;
+    private static int  $n_permutations_passed = 0;
+    private static bool $do_tests = true;
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function print_fqdn_func_test_details(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value,
+        bool   $expect_pass,
+        string $text,
+        string $url,
+        int    $offset,
+        int    $length,
+        string $prefix, // Part of string before the URL to ignore
+        string $suffix, // Part of string after the URL to ignore
+        string $schema, // AKA protocol, including '://'
+        string $user,   // Username, including ':' if providing password, otherwise including '@'
+        string $pass,   // Password, including '@'
+        string $fqdn,   // The Fully Qualified Domain Name
+        string $port,   // Port, with preceding ':'
+        string $rpath,  // Resource path; with preceding '/'
+        bool   $validate
+    ) : string
+    {
+        $total_tests  = \strval(self::$total_permutations);
+        $n_passed_str = \strval(self::$n_permutations_passed);
+        $percent_pass = \intdiv(self::$n_permutations_passed * 1000, self::$total_permutations);
+        $percent_pass_str = \strval(\intdiv($percent_pass,10)) .'.'. \strval($percent_pass % 10);
+        $validate_str = $validate ? 'true' : 'false';
+        $offset_str = \strval($offset);
+        $length_str = ($length === \PHP_INT_MAX) ? '\PHP_INT_MAX' : \strval($length);
+        return "\n".
+            "  details:\n".
+            "    text:   '$text'\n".
+            "    url:    '$url'\n".
+            "    offset: $offset_str\n".
+            "    length: $length_str\n".
+            "    prefix: '$prefix'\n".
+            "    suffix: '$suffix'\n".
+            "    schema: '$schema'\n".
+            "    user:   '$user'\n".
+            "    pass:   '$pass'\n".
+            "    fqdn:   '$fqdn'\n".
+            "    port:   '$port'\n".
+            "    rpath:  '$rpath'\n".
+            "    validate: $validate_str\n".
+            "\n".
+            "  testing progress for $func_name:\n".
+            "    $n_passed_str other parametric assertions passed.\n".
+            "    $total_tests total parametric assertions possible for this function.\n".
+            "    Percentage passed: $percent_pass_str%\n".
+            "\n";
+    }
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function test_fqdn_func_with_params(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value,
+        bool   $valid_schema,
+        string $prefix, // Part of string before the URL to ignore
+        string $suffix, // Part of string after the URL to ignore
+        string $schema, // AKA protocol, including '://'
+        string $user,   // Username, including ':' if providing password, otherwise including '@'
+        string $pass,   // Password, including '@'
+        string $fqdn,   // The Fully Qualified Domain Name
+        string $port,   // Port, with preceding ':'
+        string $rpath,  // Resource path; with preceding '/'
+        bool   $validate
+    ) : bool
+    {
+        if (!self::$do_tests) {
+            self::$n_permutations_passed++;
+            return true;
+        }
+
+        // Unfortunately, the various URL components can combine
+        // to form URLs that have entirely different components.
+        // Example:
+        //   schema='http:' + user='user@' + pass='' + fqdn='foo'
+        // creates the url 'http:user@foo', which is ambiguous with
+        //   schema='' + user='http:' + pass='user@' + fqdn='foo'
+        // (Which is valid, albeit a bit weird.)
+        //
+        // To work around these things, we must do some calculations
+        // to figure out _what actually SHOULD pass_, as well as what
+        // the actual FQDN in the tested URL would look like to the
+        // parser.
+        $expect_fqdn = $fqdn;
+
+        if (\str_ends_with($schema,':/') && 0 < \strlen($rpath)
+        &&  0 === \strlen($user) &&  0 === \strlen($pass)
+        &&  0 === \strlen($fqdn) &&  0 === \strlen($port) ) {
+            // This set of circumstances causes false-pos.
+            // Because it results in things like url='http://foo',
+            // which is valid as a whole, but did not have a valid schema ('http:/').
+            $valid_schema = true;
+            $expect_fqdn = \substr($rpath, 1);
+        }
+
+        // The '@' character easily dictates where the FQDN/hostname are
+        // in a URL. If it's present, then we _know_ that what follows it
+        // is the FQDN.
+        $have_at = ($valid_schema || \str_ends_with($schema, ':')) && (\str_ends_with($user,'@') || \str_ends_with($pass,'@'));
+        assert(self::fqdn_debug_bool('have_at', $have_at));
+
+        // These can disambiguate an ambiguous FQDN, so we need to know if they exist.
+        $at_start_of_str = (0 === \strlen($schema) && 0 === \strlen($user) && 0 === \strlen($pass));
+        assert(self::fqdn_debug_bool('at_start_of_str', $at_start_of_str));
+
+        // Ambiguity is important for testing FQDNs.
+        $fqdn_is_ambiguous = (!$valid_schema || 0 === \strlen($schema)) && !$have_at && self::fqdn_is_ambiguous($expect_fqdn, $at_start_of_str);
+        assert(self::fqdn_debug_bool('fqdn_is_ambiguous', $fqdn_is_ambiguous));
+
+        // Most basic passing condition: have an unambiguous FQDN.
+        $expect_pass = (0 < \strlen($expect_fqdn)) && !$fqdn_is_ambiguous;
+        assert(self::fqdn_debug_bool('expect_pass', $expect_pass));
+        assert(self::fqdn_debug_bool('valid_schema', $valid_schema));
+
+        // If we have a nonzero-length schema like the "foo" in `foo:`, then that
+        // can be interpreted as an incomplete URL (or malformed URL) where
+        // the port is missing or incorrect. (We also check $have_at because
+        // it would supercede anything involving the schema.)
+        if ( !$have_at && !$valid_schema ) {
+            // This works because both ':' and '/' can come after a hostname/FQDN:
+            // 'foo:' is 'host:port' notation, and 'foo/bar' is a host with a resource.
+            $tmp_fqdn_endpos = \strcspn($schema,':/');
+            if ( 0 === $tmp_fqdn_endpos ) {
+                $expect_pass = false; // If it's unambiguously a borked schema, then don't pass it.
+            } else {
+                $tmp_fqdn = \substr($schema, 0, $tmp_fqdn_endpos);
+                $expect_pass = !self::fqdn_is_ambiguous($tmp_fqdn, true);
+                if ($expect_pass) {
+                    $expect_fqdn = $tmp_fqdn;
+                }
+            }
+        }
+
+        assert(self::fqdn_debug_bool('expect_pass', $expect_pass));
+        if (!$expect_pass) {
+            $expect_fqdn = '';
+        }
+
+        // Now that we know what to expect, we can begin the test.
+        $prefix_len = \strlen($prefix);
+        $suffix_len = \strlen($suffix);
+        $url  = $schema . $user . $pass . $fqdn . $port . $rpath;
+        $text = $prefix . $url . $suffix;
+        $offset = $prefix_len;
+        $length = \strlen($url);
+        $pos    = $offset;
+        $nchars = $length;
+
+        $result = $fqdn_func($text, $pos, $nchars, $validate);
+        $result_str = is_string($result) ? "'".$result."'"
+            : (is_bool($result) ? ($result ? '`true`' : '`false`')
+            : \strval($result));
+
+        if ( $expect_pass ) {
+            $expected = $fqdn_to_return_value($expect_fqdn);
+            $expected_str = is_string($expected) ? "'".$expected."'"
+                : (is_bool($expected) ? ($expected ? '`true`' : '`false`')
+                : \strval($expected));
+
+            assert($result === $expected, "\n".
+                "  $func_name('$text',...)\n".
+                "    returned $result_str\n".
+                "    expected $expected_str\n".
+                self::print_fqdn_func_test_details(
+                    $func_name, $fqdn_func, $fqdn_to_return_value, $expect_pass, $text, $url, $offset, $length,
+                    $prefix, $suffix, $schema, $user, $pass, $fqdn, $port, $rpath, $validate)
+            );
+        } else {
+            assert($result === false || $result === '', "\n".
+                "  $func_name('$text',...)\n".
+                "    returned $result_str\n".
+                "    expected `false` or empty string\n".
+                self::print_fqdn_func_test_details(
+                    $func_name, $fqdn_func, $fqdn_to_return_value, $expect_pass, $text, $url, $offset, $length,
+                    $prefix, $suffix, $schema, $user, $pass, $fqdn, $port, $rpath, $validate)
+                );
+        }
+
+        self::$n_permutations_passed++;
+
+        // Return bool just so that we can call this from inside an arrow function.
+        return true;
+    }
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function test_fqdn_func_with_fqdn_as(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value,
+        bool   $valid_schema,
+        string $prefix, // Part of string before the URL to ignore
+        string $suffix, // Part of string after the URL to ignore
+        string $schema, // AKA protocol, including '://'
+        string $user,   // Username, including ':' if providing password, otherwise including '@'
+        string $pass,   // Password, including '@'
+        string $fqdn,   // The Fully Qualified Domain Name
+        string $port,   // Port, with preceding ':'
+        string $rpath,  // Resource path; with preceding '/'
+        bool   $validate
+    ) : bool
+    {
+        try
+        {
+            return self::test_fqdn_func_with_params(
+                $func_name, $fqdn_func, $fqdn_to_return_value, $valid_schema,
+                $prefix, $suffix, $schema, $user, $pass, $fqdn, $port, $rpath, $validate);
+        }
+        catch(\Throwable $e)
+        {
+            self::$do_fqdn_debug = true;
+            return self::test_fqdn_func_with_params(
+                $func_name, $fqdn_func, $fqdn_to_return_value, $valid_schema,
+                $prefix, $suffix, $schema, $user, $pass, $fqdn, $port, $rpath, $validate);
+        }
+    }
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function test_fqdn_func_with_affixes_as(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value,
+        bool   $valid_schema,
+        string $prefix, // Part of string before the URL to ignore
+        string $suffix, // Part of string after the URL to ignore
+        string $schema, // AKA protocol, including '://'
+        string $user,   // Username, including ':' if providing password, otherwise including '@'
+        string $pass,   // Password, including '@'
+        string $port,   // Port, with preceding ':'
+        string $rpath,  // Resource path; with preceding '/'
+        bool   $validate
+    ) : bool
+    {
+        $test = fn(string $fqdn):bool =>
+            self::test_fqdn_func_with_fqdn_as(
+                $func_name, $fqdn_func, $fqdn_to_return_value, $valid_schema,
+                $prefix, $suffix, $schema, $user, $pass, $fqdn, $port, $rpath, $validate);
+
+        $test('foo')          ;
+        $test('foo.bar')      ;
+        $test('foo.bar.com')  ;
+        $test('bar')          ;
+        $test('bar.baz')      ;
+        $test('bar.baz.com')  ;
+        $test('localhost')    ;
+        $test('localhost.com');
+        $test('127.0.0.1')    ;
+
+        $test('http');
+        $test('https');
+
+        $test('');
+
+        // Return bool just so that we can call this from inside an arrow function.
+        return true;
+    }
+
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function test_fqdn_func_with_schema_as(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value,
+        bool   $valid_schema,
+        string $schema,
+        string $user,
+        string $pass,
+        string $port,
+        string $rpath,
+        bool $validate) : void
+    {
+        $test = fn(string $prefix, string $suffix):bool =>
+            self::test_fqdn_func_with_affixes_as(
+                $func_name, $fqdn_func, $fqdn_to_return_value, $valid_schema,
+                $prefix, $suffix, $schema, $user, $pass, $port, $rpath, $validate);
+
+        $test(   '',   '');
+        $test(   '','foo');
+        $test('foo',   '');
+        $test('abc','def');
+
+        $test(   '','/foo');
+        $test('abc','/def');
+        $test(   '','/foo/bar');
+        $test('abc','/def/ghi');
+
+        $test(       '','http://');
+        $test('http://',       '');
+        $test('http://','http://');
+
+        $test(                   '','http://example.com');
+        $test('http://example.com/',                  '');
+        $test('http://example.com/','http://example.com');
+    }
+
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function test_fqdn_func_with_fqdn_params_as(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value,
+        string $user,
+        string $pass,
+        string $port,
+        string $rpath,
+        bool $validate) : void
+    {
+        $ftrv = $fqdn_to_return_value;
+        //                                                              valid_schema,  schema,  user,  pass,  port,  rpath,  validate
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,    true,        '', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,   false,       ':', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,   false,       '/', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,   false,      '//', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,    true,     '://', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,   false,   'http:', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,   false,  'http:/', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,    true, 'http://', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,   false,    'foo:', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,   false,   'foo:/', $user, $pass, $port, $rpath, $validate);
+        self::test_fqdn_func_with_schema_as($func_name, $fqdn_func, $ftrv,    true,  'foo://', $user, $pass, $port, $rpath, $validate);
+    }
+
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function test_fqdn_func_with_validate_as(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value,
+        bool $validate
+    ) : void
+    {
+        $ftrv = $fqdn_to_return_value;
+        //                                                                         user,   password,  port,  rpath, validate
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv,      '',         '',    '',     '', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv,      '',         '',    '', '/foo', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv,      '',         '', ':80',     '', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv,      '',         '', ':80', '/foo', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user@',         '',    '',     '', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user@',         '',    '', '/foo', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user@',         '', ':80',     '', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user@',         '', ':80', '/foo', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user:', 'hunter2@',    '',     '', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user:', 'hunter2@',    '', '/foo', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user:', 'hunter2@', ':80',     '', $validate);
+        self::test_fqdn_func_with_fqdn_params_as($func_name, $fqdn_func, $ftrv, 'user:', 'hunter2@', ':80', '/foo', $validate);
+    }
+
+    /**
+    * @template T of scalar
+    * @param \Closure(string,int,int<0,max>,bool):T  $fqdn_func
+    * @param \Closure(string):T  $fqdn_to_return_value
+    */
+    private static function test_fqdn_func_parametrically(
+        string   $func_name,
+        \Closure $fqdn_func,
+        \Closure $fqdn_to_return_value
+    ) : void
+    {
+        $ftrv = $fqdn_to_return_value;
+
+        // First pass: get total permutations.
+        self::$total_permutations = 0;
+        self::$n_permutations_passed = 0;
+        self::$do_tests = false;
+
+        self::test_fqdn_func_with_validate_as($func_name, $fqdn_func, $ftrv, true);
+        self::test_fqdn_func_with_validate_as($func_name, $fqdn_func, $ftrv, false);
+
+        // Second pass: run the tests.
+        self::$total_permutations = self::$n_permutations_passed;
+        self::$n_permutations_passed = 0;
+        self::$do_tests = true;
+
+        self::test_fqdn_func_with_validate_as($func_name, $fqdn_func, $ftrv, true);
+        self::test_fqdn_func_with_validate_as($func_name, $fqdn_func, $ftrv, false);
+
+        //$n_passed = self::$n_permutations_passed;
+        //echo "$func_name passed $n_passed parametric tests\n";
+    }
+
+    private static function test_fqdn_bounds_from_url(bool $validate) : void
+    {
+        $does_fqdn_parse =
+            function(string $url)
+            use($validate)
+                :bool
+        {
+            $dummy_fqdn_offset = 0;
+            $dummy_fqdn_length = \PHP_INT_MAX;
+            return
+                self::fqdn_bounds_from_url(
+                    $url, $dummy_fqdn_offset, $dummy_fqdn_length, $validate);
+        };
+
+        $xfail =
+            function(string $url)
+            use($validate, $does_fqdn_parse)
+                :void
+        {
+            $validate_str = $validate ? 'true' : 'false';
+            assert(!$does_fqdn_parse($url),
+                "fqdn_bounds_from_url('$url', 0, \PHP_INT_MAX, $validate_str) returned `true`; expected `false`.");
+        };
+
+        $xfail('');
+        $xfail('https');
+        $xfail('https:');
+        $xfail('https:/');
+        $xfail('https://');
+        $xfail('https:///');
+        $xfail('https:///foo');
+        $xfail('/localhost');
+        $xfail('//localhost');
+        //$xfail('localhost:'); // somewhat valid: it's just a hostname with a missing port.
+        $xfail('/localhost:');
+        $xfail('//localhost::');
+        $xfail('/localhost://');
+        //$xfail('foo:bar'); // regretably valid: the function does not validate URLs ('foo' is the hostname, 'bar' is an invalid port)
+    }
+
+    private static function unittest_fqdn_bounds_from_url() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        self::test_fqdn_bounds_from_url(true);
+        self::test_fqdn_bounds_from_url(false);
+
+        self::test_fqdn_func_parametrically(
+            'fqdn_bounds_from_url',
+            self::fqdn_bounds_from_url(...),
+            fn(string $fqdn):bool => 0 < \strlen($fqdn));
+    }
+
+    /**
+    * Extracts the Fully Qualified Domain Name component of the URL.
+    *
+    * In cases where the fqdn is also the hostname (ex: localhost), this
+    * can serve as a way to extract the hostname:
+    * ```
+    * assert(Str::fqdn_from_url('https://localhost/foo') === 'localhost');
+    * ```
+    *
+    * Note that in more complicated scenarios, it will return more than
+    * just the hostname, in accordance with the definition of a domain:
+    * ```
+    * assert(Str::fqdn_from_url('https://foo.bar.com') === 'foo.bar.com');
+    * // (The hostname itself would be considered 'foo'.)
+    * ```
+    *
+    * Returns an empty string if no valid fqdn was found.
+    *
+    * If `$validate_result` is set to `false`, this may return part of the
+    * `$url` string instead of an empty string for some invalid fqdns/hostnames.
+    *
+    * Features:
+    * * Performs no explicit memory allocation.
+    * * Does not depend on PCRE extension (portability).
+    * * Works on partial, incomplete, or malformed URLs (as long as it's unambiguous).
+    * * Thread-safe and reentrant.
+    * * Handles URLs with unicode characters (when `$validate_result = false`).
+    *
+    * This function avoids any explicit memory allocation.
+    * (Caveat: Setting $validate_result to `true` will cause `\filter_var`
+    * to be called with `FILTER_VALIDATE_DOMAIN`, and it is unknown if that
+    * allocates. Although unlikely, it may even perform I/O. We don't know.)
+    *
+    * The avoidance of explicit memory allocation is why this function
+    * might be preferred over the built-in `parse_url` function.
+    *
+    * Caveat: This might not be directly _faster_ than `parse_url`, because
+    * this function is not implemented directly in the Zend engine.
+    * Microbenchmarks _might_ prefer `parse_url`. (It's easily possible.)
+    * However, because this function does not require memory allocations,
+    * it will allow a process to behave better "under pressure" and reduces
+    * cache misses in other areas of code, thus potentially making
+    * "whole program" performance considerable better.
+    *
+    * This function also does NOT depend on the PCRE extension, which makes
+    * it portable to environments without that. (It is also likely that
+    * the PCRE extension would need to allocate memory, if it were to be used.
+    * And if no other PHP code uses it, then we can avoid loading the
+    * entire .so/extension into memory.)
+    *
+    * The `$offset` and `$length` parameters determine which part of the
+    * string will be scanned.
+    *
+    *
+    * @param  int<0,max>  $length
+    *
+    * @phpstan-pure
+    * @throws void
+    */
+    public static function fqdn_from_url(
+        string  $url,
+        bool    $validate_result = true,
+        int     $offset          = 0,
+        int     $length          = \PHP_INT_MAX
+    ) : string
+    {
+        $fqdn_pos = $offset;
+        $fqdn_len = $length;
+        $success = self::fqdn_bounds_from_url(
+            $url, $fqdn_pos, $fqdn_len, $validate_result);
+        if ($success) {
+            assert(self::fqdn_debug_print("returning `true`; fqdn_pos=$fqdn_pos, fqdn_len=$fqdn_len"));
+            return \substr($url, $fqdn_pos, $fqdn_len);
+        }
+        assert(self::fqdn_debug_print("returning `false`"));
+        return '';
+    }
+
+    private static function unittest_fqdn_from_url() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        //self::$do_fqdn_debug = true;
+
+        // Fundamentals.
+        assert(self::fqdn_from_url('',           false) === '');
+        assert(self::fqdn_from_url('foo',        false) === 'foo');
+        assert(self::fqdn_from_url('http://foo', false) === 'foo');
+
+        // Positive offsets. No wrap-around allowed.
+        assert(self::fqdn_from_url('foo', false, 0)  === 'foo');
+        assert(self::fqdn_from_url('foo', false, 3)  === '');
+        assert(self::fqdn_from_url('foo', false, 4)  === '');
+        assert(self::fqdn_from_url('foo', false, 6)  === '');
+
+        // Negative offsets and wrap-around behavior.
+        assert(self::fqdn_from_url('foo', false, -3) === 'foo');
+        assert(self::fqdn_from_url('foo', false, -6) === 'foo');
+        assert(self::fqdn_from_url('foo', false, -9) === 'foo');
+        assert(self::fqdn_from_url('foo', false, -1) === 'o');
+        assert(self::fqdn_from_url('foo', false, -4) === 'o');
+        assert(self::fqdn_from_url('foo', false, -7) === 'o');
+        assert(self::fqdn_from_url('foo', false, -2) === 'oo');
+        assert(self::fqdn_from_url('foo', false, -5) === 'oo');
+        assert(self::fqdn_from_url('foo', false, -8) === 'oo');
+
+        // Length bounding.
+        assert(self::fqdn_from_url('abc', false, 0, 0)  === '');
+        assert(self::fqdn_from_url('abc', false, 0, 1)  === 'a');
+        assert(self::fqdn_from_url('abc', false, 0, 2)  === 'ab');
+        assert(self::fqdn_from_url('abc', false, 0, 3)  === 'abc');
+        assert(self::fqdn_from_url('abc', false, 0, 4)  === 'abc');
+        assert(self::fqdn_from_url('abc', false, 0, 6)  === 'abc');
+        assert(self::fqdn_from_url('abc', false, 0, \PHP_INT_MAX)  === 'abc');
+
+        // Length bounding + offsets
+        assert(self::fqdn_from_url('abc', false, 1, 0)  === '');
+        assert(self::fqdn_from_url('abc', false, 1, 1)  === 'b');
+        assert(self::fqdn_from_url('abc', false, 1, 2)  === 'bc');
+        assert(self::fqdn_from_url('abc', false, 1, 3)  === 'bc');
+        assert(self::fqdn_from_url('abc', false, 1, 4)  === 'bc');
+        assert(self::fqdn_from_url('abc', false, 1, 6)  === 'bc');
+        assert(self::fqdn_from_url('abc', false, 1, \PHP_INT_MAX)  === 'bc');
+
+        assert(self::fqdn_from_url('abc', false, -1, 0)  === '');
+        assert(self::fqdn_from_url('abc', false, -1, 1)  === 'c');
+        assert(self::fqdn_from_url('abc', false, -1, 2)  === 'c');
+        assert(self::fqdn_from_url('abc', false, -1, 3)  === 'c');
+        assert(self::fqdn_from_url('abc', false, -1, 4)  === 'c');
+        assert(self::fqdn_from_url('abc', false, -1, 6)  === 'c');
+        assert(self::fqdn_from_url('abc', false, -1, \PHP_INT_MAX)  === 'c');
+
+        // Corner cases
+        assert(self::fqdn_from_url('foo:bar',  false) === 'foo');
+        assert(self::fqdn_from_url('foo:bar',  true)  === 'foo');
+
+        // File schema is a special-case that allows triple-slashes.
+        assert(self::fqdn_from_url('file:///foo', false) === 'foo');
+        assert(self::fqdn_from_url('http:///foo', false) === '');
+
+        // Parametric testing to be very thorough.
+        self::test_fqdn_func_parametrically(
+            'fqdn_from_url',
+            fn(string  $url, int $offset, int $length, $validate)
+                => self::fqdn_from_url($url, $validate, $offset, $length),
+            fn(string $fqdn):string => $fqdn);
+    }
+
+    /**
+    * @param   string            $dest
+    * @param   int<0,max>        $offset
+    * @param   int<0,max>        $nbytes
+    * @param   non-empty-string  $default_fill
+    */
+    public static function grow_destination_string_as_needed(
+        ?string  &$dest,
+        int      $offset,
+        int      $nbytes,
+        string   $default_fill
+    ) : void
+    {
+        if (isset($dest)) {
+            $len = \strlen($dest);
+        } else {
+            $len = 0;
+        }
+
+        // have = \strlen($dest) - $offset
+        // Note that it's possible to "have" negative characters.
+        // This happens when there is a gap between the end of the buffer
+        // and the requested start offset. We shall fill such gaps.
+        // Thankfully, that folds effortlessly into the general case.
+        $need = $nbytes - ($len - $offset); // need = requested - have
+        $fill_len = \strlen($default_fill);
+
+        if (!isset($dest)) {
+            if ($need < $fill_len) {
+                $dest = \substr($default_fill, 0, $need);
+                return;
+            }
+            $dest = $default_fill;
+            $need -= $fill_len;
+        }
+
+        while ($fill_len <= $need) { // e.g. we can't do it in one fill
+            $dest .= $default_fill;
+            $need -= $fill_len;
+        }
+        if ($need > 0) {
+            $dest .= \substr($default_fill, 0, $need);
+        }
+        assert($offset + $nbytes <= \strlen($dest));
+    }
+
+    /**
+    * @param  int<0,max>  $pos
+    * @param  int<0,max>  $len
+    */
+    private static function testfill_grow_destination_string_as_needed(
+        string $s,  int $pos,  int $len
+    ) : string
+    {
+        $testfill = '####';
+        self::grow_destination_string_as_needed($s, $pos, $len, $testfill);
+        return $s;
+    }
+
+    private static function unittest_grow_destination_string_as_needed() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        $grow = self::testfill_grow_destination_string_as_needed(...);
+
+        // Cases where resize isn't needed.
+        assert($grow('1234', 0, 4) === '1234');
+        assert($grow('1234', 1, 3) === '1234');
+        assert($grow('1234', 0, 3) === '1234');
+
+        // Extension resizing.
+        assert($grow('',    0, 4) === '####');
+        assert($grow('A',   0, 4) === 'A###');
+        assert($grow('AB',  0, 4) === 'AB##');
+        assert($grow('ABC', 0, 4) === 'ABC#');
+        assert($grow('',    0, 1) === '#');
+
+        // Ditto, but starting not at the beginning of string.
+        assert($grow('123',    3, 4)  === '123####');
+        assert($grow('123A',   3, 4)  === '123A###');
+        assert($grow('123AB',  3, 4)  === '123AB##');
+        assert($grow('123ABC', 3, 4)  === '123ABC#');
+
+        // Allocating at an offset past end-of-string.
+        assert($grow('',    4, 4) === '########');
+        assert($grow('A',   4, 4) === 'A#######');
+        assert($grow('AB',  4, 4) === 'AB######');
+        assert($grow('ABC', 4, 4) === 'ABC#####');
+        assert($grow('123',    7, 4)  === '123########');
+        assert($grow('123A',   7, 4)  === '123A#######');
+        assert($grow('123AB',  7, 4)  === '123AB######');
+        assert($grow('123ABC', 7, 4)  === '123ABC#####');
+
+        // Allocating more than $testfill='####'.
+        assert($grow('',    0, 5) === '#####');
+        assert($grow('A',   0, 5) === 'A####');
+        assert($grow('AB',  0, 5) === 'AB###');
+        assert($grow('ABC', 0, 5) === 'ABC##');
+        assert($grow('',    0, 6) === '######');
+        assert($grow('A',   0, 6) === 'A#####');
+        assert($grow('AB',  0, 6) === 'AB####');
+        assert($grow('ABC', 0, 6) === 'ABC###');
+        assert($grow('',    0, 7) === '#######');
+        assert($grow('A',   0, 7) === 'A######');
+        assert($grow('AB',  0, 7) === 'AB#####');
+        assert($grow('ABC', 0, 7) === 'ABC####');
+        assert($grow('',    0, 8) === '########');
+        assert($grow('A',   0, 8) === 'A#######');
+        assert($grow('AB',  0, 8) === 'AB######');
+        assert($grow('ABC', 0, 8) === 'ABC#####');
+
+        // Allocating more than $testfill='####', nonzero offset.
+        assert($grow('123',    3, 5)  === '123#####');
+        assert($grow('123A',   3, 5)  === '123A####');
+        assert($grow('123AB',  3, 5)  === '123AB###');
+        assert($grow('123ABC', 3, 5)  === '123ABC##');
+        assert($grow('123',    3, 8)  === '123########');
+        assert($grow('123A',   3, 8)  === '123A#######');
+        assert($grow('123AB',  3, 8)  === '123AB######');
+        assert($grow('123ABC', 3, 8)  === '123ABC#####');
+
+        // Allocating more than $testfill='####', offset past end-of-string.
+        assert($grow('',    4, 5) === '#########');
+        assert($grow('A',   4, 5) === 'A########');
+        assert($grow('AB',  4, 5) === 'AB#######');
+        assert($grow('ABC', 4, 5) === 'ABC######');
+        assert($grow('',    4, 8) === '############');
+        assert($grow('A',   4, 8) === 'A###########');
+        assert($grow('AB',  4, 8) === 'AB##########');
+        assert($grow('ABC', 4, 8) === 'ABC#########');
+        assert($grow('123',    7, 10)  === '123##############');
+        assert($grow('123A',   7, 10)  === '123A#############');
+        assert($grow('123AB',  7, 10)  === '123AB############');
+        assert($grow('123ABC', 7, 10)  === '123ABC###########');
+
+        // `dst` with a `null` value.
+        $dst=null;
+        $offset=0;
+        $width_in_chars=1;
+        self::grow_destination_string_as_needed(
+            $dst, $offset, $width_in_chars, self::ZERO_DIGITS_16);
+        assert($dst === '0');
+    }
+
+    private const ZERO_DIGITS_16 = '0000000000000000';
+    //private const NYBBLE_TO_UPPER_HEX =
+    //    [0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 // '0' - '9'
+    //    ,0x41, 0x42, 0x43, 0x44, 0x45, 0x46]; // 'A' - 'F'
+    private const NYBBLE_TO_UPPER_HEX_CHAR = '0123456789ABCDEF';
+
+    // TODO: Document these functions. (They are potentially quite handy.)
+    /**
+    * @param      int         $intval
+    * @param      int<0,max>  $width_in_chars
+    * @param      ?string     $dst
+    * @param-out  string      $dst
+    * @param      int<0,max>  $offset
+    */
+    public static function write_as_hex_pad0(
+        int      $intval,
+        int      $width_in_chars,
+        ?string  &$dst = null,
+        int      &$offset = 0
+    ) : string
+    {
+        self::grow_destination_string_as_needed(
+            $dst, $offset, $width_in_chars, self::ZERO_DIGITS_16);
+
+        $hex_digit_lookup = self::NYBBLE_TO_UPPER_HEX_CHAR;
+        $start = $offset;
+        $end = $offset + $width_in_chars;
+        $shift = $width_in_chars * 4; // 16 chars -> 64-bit, 8 chars -> 32-bit, etc.
+        while($offset < $end) {
+            $shift -= 4;
+            $src_nybble = ($intval >> $shift) & 0xF;
+            $hex_rep = $hex_digit_lookup[$src_nybble];
+            $dst[$offset++] = $hex_rep;
+        }
+
+        return \substr($dst, $start, $width_in_chars);
+    }
+
+    private static function unittest_write_as_hex_pad0() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        //$write_as_hex_pad0 = function(int $v, int $w) : string
+        //{
+        //    $dst = null;
+        //    $offset = 0;
+        //    return self::write_as_hex_pad0($v, $w, $dst, $offset);
+        //};
+
+        assert(self::write_as_hex_pad0( 0, 1) === '0');
+        assert(self::write_as_hex_pad0( 1, 1) === '1');
+        assert(self::write_as_hex_pad0( 1, 2) === '01');
+        assert(self::write_as_hex_pad0( 9, 1) === '9');
+        assert(self::write_as_hex_pad0( 9, 2) === '09');
+        assert(self::write_as_hex_pad0(15, 1) === 'F');
+        assert(self::write_as_hex_pad0(15, 2) === '0F');
+        assert(self::write_as_hex_pad0( 0, 0) === '');
+        assert(self::write_as_hex_pad0(15, 0) === '');
+
+        assert(self::write_as_hex_pad0(0xCAFEBABE, 8)  === 'CAFEBABE');
+        assert(self::write_as_hex_pad0(0xCAFEBABE, 12) === '0000CAFEBABE');
+        assert(self::write_as_hex_pad0(0xCAFEBABE, 2)  === 'BE');
+        assert(self::write_as_hex_pad0(0x0AFEBABE, 8)  === '0AFEBABE');
+        assert(self::write_as_hex_pad0(0x0AFEBABE, 7)  === 'AFEBABE');
+        assert(self::write_as_hex_pad0(0x0AFEBABE, 6)  === 'FEBABE');
+
+        $pos    = 10;
+        $buffer = 'The quick brown fox jumped over the lazy dog.';
+        assert(self::write_as_hex_pad0(0xF100F, 5, $buffer, $pos) === 'F100F'); $pos++;
+        assert($buffer === 'The quick F100F fox jumped over the lazy dog.');
+        assert(self::write_as_hex_pad0(0xEEF,   3, $buffer, $pos) === 'EEF'); $pos++;
+        assert($buffer === 'The quick F100F EEF jumped over the lazy dog.');
+        assert(self::write_as_hex_pad0(0xF1EEF, 6, $buffer, $pos) === '0F1EEF'); $pos++;
+        assert($buffer === 'The quick F100F EEF 0F1EEF over the lazy dog.');
+        assert(self::write_as_hex_pad0(0, 1, $buffer, $pos) === '0');
+        assert($buffer === 'The quick F100F EEF 0F1EEF 0ver the lazy dog.');
+    }
+
+    /**
+    * @param      int         $intval
+    * @param      ?string     $dst
+    * @param-out  string      $dst
+    * @param      int<0,max>  $offset
+    */
+    public static function write_as_hex_no_pad(
+        int      $intval,
+        ?string  &$dst = null,
+        int      &$offset = 0
+    ) : string
+    {
+        // The number of nybbles is the same as the number of characters
+        // that we will need to print to display $intval.
+        $width_in_chars = Int_::number_of_nybbles_needed_to_represent($intval);
+
+        // We can use this function now because we've calculated exactly
+        // how many characters it will output without padding, so it
+        // won't have any padding to print.
+        return self::write_as_hex_pad0($intval, $width_in_chars, $dst, $offset);
+    }
+
+    private static function unittest_write_as_hex_no_pad() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        $write_as_hex_no_pad = function(int $v) : string
+        {
+            $dst = null;
+            $offset = 0;
+            return self::write_as_hex_no_pad($v, $dst, $offset);
+        };
+
+        assert($write_as_hex_no_pad( 0)  === '0');
+        assert($write_as_hex_no_pad( 1)  === '1');
+        assert($write_as_hex_no_pad( 9)  === '9');
+        assert($write_as_hex_no_pad(15)  === 'F');
+        assert($write_as_hex_no_pad(16)  === '10');
+        assert($write_as_hex_no_pad(255) === 'FF');
+        assert($write_as_hex_no_pad(256) ===  '100');
+        assert($write_as_hex_no_pad(4095) === 'FFF');
+        assert($write_as_hex_no_pad(4096) ===  '1000');
+        assert($write_as_hex_no_pad(65535) === 'FFFF');
+        assert($write_as_hex_no_pad(65536) === '10000');
+
+        assert($write_as_hex_no_pad(0xCAFEBABE) === 'CAFEBABE');
+        assert($write_as_hex_no_pad(0x0AFEBABE) === 'AFEBABE');
+
+        $pos    = 10;
+        $buffer = 'The quick brown fox jumped over the lazy dog.';
+        assert(self::write_as_hex_no_pad(0xF100F, $buffer, $pos) === 'F100F'); $pos++;
+        assert($buffer === 'The quick F100F fox jumped over the lazy dog.');
+        assert(self::write_as_hex_no_pad(0xEEF,   $buffer, $pos) === 'EEF'); $pos++;
+        assert($buffer === 'The quick F100F EEF jumped over the lazy dog.');
+        assert(self::write_as_hex_no_pad(0xF1EEF, $buffer, $pos) === 'F1EEF');
+        assert($buffer === 'The quick F100F EEF F1EEFd over the lazy dog.');
+    }
+
+    private const NONPRINTABLE_ASCII_ESCAPE_LOOKUP = [
+        '\\0',    '\\1',   '\\2',   '\\3',   '\\4',   '\\5',   '\\6',   '\\7',
+        '\\10',   '\\t',   '\\n',   '\\v',   '\\f',   '\\r',  '\\16',  '\\17',
+        '\\20',  '\\21',  '\\22',  '\\23',  '\\24',  '\\25',  '\\26',  '\\27',
+        '\\30',  '\\31',  '\\32',   '\\e',  '\\34',  '\\35',  '\\36',  '\\37'];
+
+    public static function escape_nonprintable_ascii(string $str) : string
+    {
+        static $printable_chars =
+            ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'.
+            '[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
+
+        $lookup = self::NONPRINTABLE_ASCII_ESCAPE_LOOKUP;
+        $lookup_len = 32;
+        $pos = 0;
+        $len = \strspn($str, $printable_chars, $pos);
+        $output = \substr($str, $pos, $len);
+        $pos += $len;
+        while($pos < \strlen($str)) {
+            $ch = $str[$pos];
+            $chcode = \ord($ch);
+            switch(true)
+            {
+                case $chcode <  32:  $output .= $lookup[$chcode]; break;
+                case $chcode >= 127: $output .= \sprintf('\\x%02X', $chcode); break;
+                default: $output .= $ch;
+            }
+            $pos++;
+            $len = \strspn($str, $printable_chars, $pos);
+            $output .= \substr($str, $pos, $len);
+            $pos += $len;
+        }
+
+        return $output;
+    }
+
+    private static function unittest_escape_nonprintable_ascii() : void
+    {
+        echo ("  ".__FUNCTION__."()\n");
+
+        // Shorthand.
+        $eggscape = fn(string $s) => self::escape_nonprintable_ascii($s);
+
+        // baseline
+        assert($eggscape('') === '');
+        assert($eggscape('0') === '0');
+        assert($eggscape('a') === 'a');
+
+        // isolated easy stuff
+        assert($eggscape("\0") === '\\0');
+        assert($eggscape("\r") === '\\r');
+        assert($eggscape("\n") === '\\n');
+        assert($eggscape("\t") === '\\t');
+        assert($eggscape("\e") === '\\e');
+
+        // octal codes for lower range control sequences
+        assert($eggscape("\1")  === '\\1');
+        assert($eggscape("\7")  === '\\7');
+        assert($eggscape("\10") === '\\10');
+        assert($eggscape("\17") === '\\17');
+        assert($eggscape("\20") === '\\20');
+        assert($eggscape("\27") === '\\27');
+        assert($eggscape("\30") === '\\30');
+        assert($eggscape("\37") === '\\37');
+
+        // hex for DEL and the stuff above ascii range
+        assert($eggscape("\x7E") === '~');
+        assert($eggscape("\x7F") === '\\x7F');
+        assert($eggscape("\x80") === '\\x80');
+        assert($eggscape("\xFF") === '\\xFF');
+
+        // now for some actual strings
+        assert($eggscape("Hello world!\n") === 'Hello world!\\n');
+        assert($eggscape("1\n2\n3") === '1\\n2\\n3');
+        assert($eggscape("fld1\0fld2\0") === 'fld1\\0fld2\\0');
+        assert($eggscape("foo\r\nbaz\nqux\rquux") === 'foo\\r\\nbaz\\nqux\\rquux');
+        assert($eggscape("\0\1\2\3\4\5\6\7") === '\\0\\1\\2\\3\\4\\5\\6\\7');
+    }
+
+
     /**
     * Runs all unittests defined in the Str class.
     */
@@ -549,8 +2211,19 @@ final class Str
 
         self::unittest_is_longer_than();
         self::unittest_normalize_path();
+        self::unittest_remove_path_prefix();
         self::unittest_next_newline();
         self::unittest_is_ascii_identifier();
+        self::unittest_unchecked_blit_fwd();
+        self::unittest_unchecked_blit_rev();
+        self::unittest_unchecked_blit();
+        self::unittest_substr_replace_inplace();
+        self::unittest_fqdn_bounds_from_url();
+        self::unittest_fqdn_from_url();
+        self::unittest_grow_destination_string_as_needed();
+        self::unittest_write_as_hex_pad0();
+        self::unittest_write_as_hex_no_pad();
+        self::unittest_escape_nonprintable_ascii();
         //self::unittest_to_string($runner);
 
         // $runner->note("  ... passed.\n\n");

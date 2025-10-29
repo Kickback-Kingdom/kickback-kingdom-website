@@ -11,9 +11,13 @@ use Kickback\Backend\Views\vQuest;
 use Kickback\Backend\Views\vMedia;
 use Kickback\Backend\Views\vDateTime;
 use Kickback\Backend\Views\vRecordId;
+
 use Kickback\Backend\Models\Response;
+
 use Kickback\Services\Database;
 use Kickback\Services\Session;
+
+use Exception;
 
 class LootController
 {
@@ -692,8 +696,6 @@ class LootController
         $crand = (int)($row["Id"] ?? -1);
         $ctime = $row["ctime"] ?? '';
 
-
-
         $loot = new vLoot($ctime, $crand);
         $loot->opened = (bool)($row["opened"] ?? false);
         $loot->ownerId = new vRecordId('', (int)($row["account_id"] ?? -1));
@@ -714,6 +716,11 @@ class LootController
             $loot->containerLoot = new vLoot('', intval($row["container_loot_id"]));
         } else {
             $loot->containerLoot = null;
+        }
+
+        if(array_key_exists('quantity', $row) && $row["quantity"] != null)
+        {
+            $loot->quantity = $row["quantity"];
         }
 
         $loot->nickname = $row["nickname"] ?? '';
@@ -875,6 +882,124 @@ class LootController
             'artPath' => $row['_lich_card_frontImageURL'] ?? '',
         ];
     }
+
+     //item array is an associative array in the format : {"Id"=>{item id}, "DateObtained"={DateTime string or null}}
+     public static function giveLootArray(vRecordId $accountId, array $items, ?string $databaseName = null) : Response
+     {
+         $resp = new Response(false, "unkown error in giving loot array to account", null);
+ 
+         $query = "INSERT INTO loot (item_id, opened, account_id, dateObtained) VALUES ";
+ 
+         $params = [];
+ 
+         foreach($items as $item)
+         {
+             if ($item["DateObtained"] === null) 
+             {
+                 $item["DateObtained"] = date('Y-m-d H:i:s');
+             }
+ 
+             $query .= "(?,0,?,?),";
+             array_push($params, $item["Id"]->crand, $accountId->crand, $item["DateObtained"] );
+         }
+ 
+         $query = substr($query,0,strlen($query)-1);
+ 
+         $query .= ";";
+ 
+         
+ 
+         try
+         {
+             if($databaseName != null)
+             {
+                 Database::changeDatabase($databaseName);
+             }
+ 
+             $executeResp = DatabaseController::executeQuery($query, $params);
+ 
+             if($executeResp->success)
+             {
+                 $resp->success = true;
+                 $resp->message = "successfully gave item array to account";
+             }
+             else
+             {
+                 $resp->message = "Failed to execute query to give item array to account : ".$executeResp->message;
+             }
+         }
+         catch(Exception $e)
+         {
+             throw new Exception("Exception caught while giving item array to account : ".$e);
+         }
+         
+ 
+         return $resp;
+     }
+ 
+     public static function getTotalsInLoot(array $totalsItemIdArray, vRecordId $accountId, ?string $databaseName = null) : Response
+     {
+         if($databaseName != null)
+         {
+             Database::changeDatabase($databaseName);
+         }
+ 
+         $resp = new Response(false, "Unkown error in getting totals that are in loot", null);
+ 
+         $query = 
+             "   SELECT item.Id, COALESCE(COUNT(loot.item_id),0) AS Amount
+                 FROM item 
+                 LEFT JOIN loot 
+                 ON loot.item_id = item.id AND loot.account_id = ?
+                 WHERE item.Id IN ".LootController::getWhereForGetTotalsInLoot($totalsItemIdArray)."
+                 GROUP BY item.Id;
+             ";
+ 
+ 
+         try
+         {
+             $params = [$accountId->crand];
+ 
+             foreach($totalsItemIdArray as $item)
+             {
+                 $params[] = $item["Id"];
+             }
+ 
+ 
+             $executeResp = DatabaseController::executeQuery($query, $params);
+ 
+             if($executeResp->success)
+             {
+                 $resp->success = true;
+                 $resp->message = "Successfully returned totals held in loot";
+                 $resp->data = $executeResp->data;
+             }
+             else
+             {
+                 $resp->message = "Error in executing query to get totals in loot : ".$executeResp->message;
+             }
+         }
+         catch(Exception $e)
+         {
+             throw new Exception("Exception caught while getting totals in loot : ".$e);
+         }
+ 
+         return $resp;
+     }
+ 
+     private static function getWhereForGetTotalsInLoot(array $totalsItemIdArray) : string
+     {
+         $whereClause = "(?";
+ 
+         for($i = 1; $i < count($totalsItemIdArray); $i++)
+         {
+             $whereClause .= ",?";
+         }
+ 
+         $whereClause .= ") ";
+ 
+         return $whereClause;
+     }
 
 }
 ?>

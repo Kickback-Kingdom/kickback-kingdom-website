@@ -65,7 +65,7 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
 
 <?php if(Session::isLoggedIn()) { ?>
 
-
+    <?php require(\Kickback\SCRIPT_ROOT . "/php-components/base-cart-handler.php"); ?>
 
     <?php require(\Kickback\SCRIPT_ROOT . "/php-components/league-viewer.php"); ?>
 
@@ -839,6 +839,9 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities<i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
+                <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/servers.php"><i class="nav-icon fa-regular fa-server"></i> Community Servers <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/business-plan.php"><i class="nav-icon fa-regular fa-file-lines"></i> Business Plan <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
             <li class="nav-item">
@@ -847,9 +850,15 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/guild-halls.php"><i class="nav-icon fa-solid fa-signs-post"></i> Guild Halls <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
+            <?php
+
+            if (Session::isAdmin())
+            {
+                ?>
             <li class="nav-item">
                 <a class="nav-link mobile-menu-item" href="<?php echo Version::urlBetaPrefix(); ?>/admin-dashboard.php"><i class="nav-icon fa-solid fa-shield-halved"></i> Admin Dashboard <i class="fa-solid fa-chevron-right mobile-menu-item-arrow"></i></a>
             </li>
+            <?php } ?>
             <?php
 
             if (Session::isLoggedIn())
@@ -964,6 +973,8 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         <!--<li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/challenges.php"><i class="nav-icon fa-solid fa-trophy"></i> Ranked Challenges</a></li>-->
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/blogs.php"><i class="nav-icon fa-solid fa-newspaper"></i> Blogs</a></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/games.php"><i class="nav-icon fa-solid fa-gamepad"></i> Games & Activities</a></li>
+                        <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/servers.php"><i class="nav-icon fa-solid fa-server"></i> Community Servers</a></li>
+
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/guild-halls.php"><i class="nav-icon fa-solid fa-landmark"></i> Guild Halls</a></li>
                         <!--<li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/adventurers-guild.php"><i class="nav-icon fa-solid fa-person-hiking"></i> Adventurers Guild</a></li>
@@ -971,6 +982,20 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/craftsmen-guild.php"><i class="nav-icon fa-solid fa-hammer"></i> Craftsmen Guild</a></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/apprentices-guild.php"><i class="nav-icon fa-solid fa-user-graduate"></i> Apprentices Guild</a></li>
                         <li><a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/stewards-guild.php"><i class="nav-icon fa-solid fa-person-digging"></i> Stewards Guild</a></li>-->
+                    </ul>
+                </li>
+                <li class="nav-item dropdown" data-bs-theme="light">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <i class="nav-icon fa-solid fa-university "></i> Store
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/market.php?store-locator=kickback_market"><i class="nav-icon fa-solid fa fa-shopping-bag"></i>Kickback Market</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="<?php echo Version::urlBetaPrefix(); ?>/market.php"><i class="nav-icon fa-solid fa fa-space-shuttle"></i>Emberwood Dashboard</a>
+                        </li>
                     </ul>
                 </li>
                 <li class="nav-item dropdown" data-bs-theme="light">
@@ -1018,17 +1043,16 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         </button>
                     </li>
                     <li class="nav-item">
-                        <button class="btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas"
-                            data-bs-target="#offcanvasMenuRightShoppingCart" aria-controls="offcanvasMenuRightShoppingCart"
-                            aria-label="Toggle navigation">
-                            <i class="fa-solid fa-cart-shopping"></i>
-                            <?php if (Kickback\Services\Session::isAdmin()) { ?>
-                            <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill">
-                                99+
-                                <span class="visually-hidden">unread messages</span>
-                            </span>
-                            <?php } ?>
-                        </button>
+                    <a class="btn btn-primary position-relative"
+                        href="<?php echo Version::urlBetaPrefix(); ?>/cart.php">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <?php if (true/*Kickback\Services\Session::isAdmin()*/) { ?>
+                        <span class="badge bg-secondary position-absolute top-0 start-100 translate-middle rounded-pill">
+                            99
+                            <span class="visually-hidden">unread messages</span>
+                        </span>
+                        <?php } ?>
+                    </a>
                     </li>
                     <li class="nav-item">
                         <button class="btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas"

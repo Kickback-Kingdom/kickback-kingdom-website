@@ -1,0 +1,58 @@
+{
+  "GUID": "e72072",
+  "Name": "CardCustom",
+  "Transform": {
+    "posX": 52.97405,
+    "posY": 1.71080887,
+    "posZ": -17.318573,
+    "rotX": -0.0000243681752,
+    "rotY": 270.003,
+    "rotZ": 0.0000556556042,
+    "scaleX": 1.93762064,
+    "scaleY": 1,
+    "scaleZ": 1.93762064
+  },
+  "Nickname": "",
+  "Description": "",
+  "GMNotes": "",
+  "AltLookAngle": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "ColorDiffuse": {
+    "r": 0.713235259,
+    "g": 0.713235259,
+    "b": 0.713235259
+  },
+  "LayoutGroupSortIndex": 0,
+  "Value": 0,
+  "Locked": true,
+  "Grid": true,
+  "Snap": true,
+  "IgnoreFoW": false,
+  "MeasureMovement": false,
+  "DragSelectable": true,
+  "Autoraise": true,
+  "Sticky": true,
+  "Tooltip": true,
+  "GridProjection": false,
+  "HideWhenFaceDown": true,
+  "Hands": true,
+  "CardID": 92200,
+  "SidewaysCard": false,
+  "CustomDeck": {
+    "922": {
+      "FaceURL": "https://steamusercontent-a.akamaihd.net/ugc/17307685702651876427/0B48C3AD0A39D4C6482D5DEDDCC84B28BA5562E0/",
+      "BackURL": "https://steamusercontent-a.akamaihd.net/ugc/17547105071102553/3CC3A2D8211C357861D5C1803B265F73C2B99868/",
+      "NumWidth": 1,
+      "NumHeight": 1,
+      "BackIsHidden": true,
+      "UniqueBack": false,
+      "Type": 0
+    }
+  },
+  "LuaScript": "API_URL = \"https://kickback-kingdom.com/api/v1/lich/get-deck.php?lootId=9636\"\r\n\r\n\r\nfunction fetchDeckData()\r\n    if(generating == false)then\r\n        print(\"Fetching deck data from API...\")\r\n\r\n        WebRequest.get(API_URL, function(response)\r\n            if response.is_error then\r\n                print(\"API request failed: \" .. response.error)\r\n                return\r\n            end\r\n    \r\n            local data = JSON.decode(response.text)\r\n    \r\n\r\n            if not data then\r\n                print(\"Failed to parse JSON response!\")\r\n                return\r\n            end\r\n\r\n            generateDeck(data)\r\n            generating = true\r\n            \r\n        end)\r\n    end\r\n    \r\nend\r\n\r\nfunction generateDeck(data)\r\n    local buttons = self.getButtons()\r\n\r\n    if not buttons or #buttons == 0 then\r\n        print(\"No buttons found on this object!\")\r\n        return\r\n    end\r\n\r\n    local buttonPosition = buttons[1].position\r\n\r\n    local spawnPosition = {\r\n        self.getPosition().x + buttonPosition[1],\r\n        self.getPosition().y + buttonPosition[2] - 0.9,\r\n        self.getPosition().z + buttonPosition[3]\r\n    }\r\n\r\n    local cards = data.cards\r\n\r\n    local cardObjects = {}\r\n    \r\n    local backImageURL = data.backImageUrl\r\n\r\n    for i, card in ipairs(cards) do\r\n\r\n        local typesString = \"\"\r\n\r\n        if(cards[i].types != nil) then\r\n            typesString = table.concat(cards[i].types, \", \")..\" \"\r\n        end\r\n\r\n        if(cards[i].types == nil) then\r\n            print(\"Card has no types!\")\r\n        end\r\n\r\n\r\n        local cardData = {\r\n            name = cards[i].name..\" | \"..typesString,\r\n            description = cards[i].description,\r\n            face = cards[i].frontImageURL,\r\n            back = backImageURL,\r\n            type = 0,\r\n            quantity = cards[i].quantity\r\n        }\r\n\r\n        cardObjects[i] = cardData\r\n    end\r\n\r\n    local deckSize = getDeckSize(cardObjects)\r\n\r\n    spawnCoroutine(cardObjects, spawnPosition, deckSize)\r\nend\r\n\r\nfunction spawnCoroutine(cardObjects, spawnPosition, deckSize)\r\n    local index = 1\r\n    local numberOfCardsAlreadyGenerated = 0\r\n\r\n    local function spawnNext()\r\n        if index > #cardObjects then \r\n            generating = false\r\n            return \r\n        end\r\n\r\n        spawnCardDuplicates(cardObjects[index], spawnPosition, deckSize, numberOfCardsAlreadyGenerated, function()\r\n            index = index + 1\r\n            spawnNext()\r\n        end)\r\n\r\n        numberOfCardsAlreadyGenerated = numberOfCardsAlreadyGenerated + cardObjects[index].quantity\r\n    end\r\n\r\n    spawnNext()\r\nend\r\n\r\nfunction spawnCardDuplicates(cardData, spawnPosition, deckSize, numberOfCardsAlreadyGenerated, onDoneCallback)\r\n    local index = 1\r\n\r\n    local function spawnDuplicate()\r\n        if index > cardData.quantity then\r\n            if onDoneCallback then onDoneCallback() end\r\n            return\r\n        end\r\n\r\n        local spawnRotation = {0,-90,0}\r\n\r\n        local cardObjectData = {\r\n            name = cardData.name,\r\n            description = cardData.description,\r\n            face = cardData.face,\r\n            back = cardData.back,\r\n            type = cardData.type\r\n        }\r\n\r\n        local percentDone = (index + numberOfCardsAlreadyGenerated) / deckSize\r\n\r\n        local pos = {\r\n            spawnPosition[1], \r\n            spawnPosition[2] + (percentDone * 40), \r\n            spawnPosition[3]\r\n        }\r\n\r\n        updatePercentDoneText(percentDone)\r\n        createCardObject(cardObjectData, pos, spawnRotation)\r\n\r\n        index = index + 1\r\n        Wait.time(spawnDuplicate,  0.08)\r\n    end\r\n\r\n    spawnDuplicate()\r\nend\r\n\r\nfunction createCardObject(cardData, spawnPosition, spawnRotation)\r\n\r\n    local newCard = spawnObject({\r\n        type = \"CardCustom\",\r\n        position = spawnPosition,\r\n        rotation = spawnRotation\r\n    })\r\n\r\n    if newCard then\r\n        newCard.setCustomObject(cardData)\r\n        newCard.setName(cardData.name)\r\n        newCard.setDescription(cardData.description)\r\n        newCard.reload()\r\n    else\r\n        print(\"Card creation failed!\")\r\n    end\r\nend\r\n\r\nfunction createButton()\r\n    self.createButton({\r\n        click_function = \"fetchDeckData\",\r\n        function_owner = self,\r\n        label = \"\",\r\n        position = {0, 1, 0},\r\n        rotation = {0, 0, 0},\r\n        width = 1050,\r\n        height = 1500,\r\n        font_size = 300,\r\n        color = {0, 0, 0, 0},\r\n        font_color = {1, 1, 1, 1}\r\n    })\r\nend\r\n\r\nfunction updatePercentDoneText(percentDone)\r\n    local percentText = \" \"\r\n\r\n    if(percentDone < 1 and percentDone > 0) then\r\n        percentText = tostring(math.floor(percentDone * 100))..\"%\"\r\n    end\r\n\r\n    percentDoneObject.TextTool.setValue(percentText)\r\n    percentDoneObject.TextTool.setFontColor({1 - percentDone, percentDone, 0})\r\nend\r\n\r\nfunction createPercentDoneTextObject()\r\n    local buttons = self.getButtons()\r\n\r\n        if not buttons or #buttons == 0 then\r\n            print(\"No buttons found on this object!\")\r\n            return\r\n        end\r\n\r\n        local buttonPosition = buttons[1].position\r\n\r\n        local spawnPosition = {\r\n            self.getPosition().x + buttonPosition[1] - 3,\r\n            self.getPosition().y + buttonPosition[2] - 0.9,\r\n            self.getPosition().z + buttonPosition[3] \r\n        }\r\n\r\n        local spawnRotation = {90,90,0}\r\n\r\n    local object = spawnObject({\r\n        type = \"3DText\",\r\n        position = spawnPosition,\r\n        rotation = spawnRotation,\r\n        scale = {1, 1, 1},\r\n        sound = false,\r\n        snap_to_grid = false,\r\n        callback_function = function(obj)\r\n            percentDoneObject = obj\r\n            obj.TextTool.setValue(\" \")\r\n            obj.TextTool.setFontSize(100)\r\n            obj.TextTool.setFontColor({1, 1, 1})\r\n        end\r\n    })\r\n\r\n    return object\r\nend\r\n\r\nfunction getDeckSize(cardObjects)\r\n    local size = 0\r\n\r\n    for i, object in ipairs(cardObjects) do\r\n        size = size + object.quantity\r\n    end\r\n\r\n    return size\r\nend\r\n\r\nfunction onLoad()\r\n    generating = false\r\n    createButton()\r\n    createPercentDoneTextObject()\r\nend",
+  "LuaScriptState": "",
+  "XmlUI": ""
+}

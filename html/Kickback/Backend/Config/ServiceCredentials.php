@@ -28,22 +28,30 @@ final class ServiceCredentials implements \ArrayAccess
             "/etc/kickback-kingdom/config.ini",
         ];
 
-    // List of file locations to try when reading the credentials files.
-    // The first element is tried first, the second element second, and so on.
-    // The first file it encounters is the one that will be used.
-    //
-    // The service credentials file is MANDATORY.
-    // Some values in this file cannot have default values due to security
-    // concerns. At the same time, these same values tend to be required
-    // for connecting to services that must exist for the server to
-    // function at all (ex: SQL server).
-    //
-    // For an example of this config file, check out the
-    // `meta/config-examples/credentials.ini` file,
-    // as specified from the root of the project.
-    //
-    /** @var array<string> */
-    private const SERVICE_CREDENTIAL_SOURCES =
+    // SERVICE_CREDENTIAL_SOURCES is defined as `public` because it is
+    // useful to be able to reference it in error messages that tell the
+    // user where it looks for credentials files.
+    // If we ever acquire a more general, less-security-sensitive, config
+    // file, then CONFIG_SOURCES should probably be made public, too.
+    /**
+    * List of file locations to check for a credentials file.
+    *
+    * The first element is tried first, then second element second, and so on.
+    * The first file it encounters is the one that will be used.
+    *
+    * The service credentials file is MANDATORY.
+    * Some values in this file cannot have default values due to security
+    * concerns. At the same time, these same values tend to be required
+    * for connecting to services that must exist for the server to
+    * function at all (ex: SQL server).
+    *
+    * For an example of this config file, check out the
+    * `meta/config-examples/credentials.ini` file,
+    * as specified from the root of the project.
+    *
+    * @var array<string>
+    */
+    public const SERVICE_CREDENTIAL_SOURCES =
         [
             "/srv/kickback-kingdom/credentials.ini",
             "/etc/kickback-kingdom/credentials.ini",
@@ -90,17 +98,17 @@ final class ServiceCredentials implements \ArrayAccess
     */
     private function credential_item_exists(string $item) : bool
     {
-        if ( !array_key_exists($item, $this->entries) ) {
+        if ( !\array_key_exists($item, $this->entries) ) {
             $this->error("ERROR: Missing credential item '" . $item . "'");
             return false;
         }
-        else
-        if ( is_null($this->entries[$item]) ) {
-            $this->error("ERROR: Credential item '" . $item . "' is NULL.");
-            return false;
+
+        if ( isset($this->entries[$item]) ) {
+            return true;
         }
 
-        return true;
+        $this->error("ERROR: Credential item '" . $item . "' is NULL.");
+        return false;
     }
 
     /**
@@ -111,14 +119,14 @@ final class ServiceCredentials implements \ArrayAccess
     {
         if ( !$this->credential_item_exists($item) )
                 return false;
-        else
-        if ( !is_string($this->entries[$item]) ) {
-            // NOTE: For security reasons, we must NOT output the value associated with the key.
-            $this->error("ERROR: '" . $item . "' set to something that is not a string, but it should be.");
-            return false;
+
+        if ( is_string($this->entries[$item]) ) {
+            return true;
         }
 
-        return true;
+        // NOTE: For security reasons, we must NOT output the value associated with the key.
+        $this->error("ERROR: '" . $item . "' set to something that is not a string, but it should be.");
+        return false;
     }
 
     /**
@@ -132,14 +140,15 @@ final class ServiceCredentials implements \ArrayAccess
     {
         if ( !$this->credential_item_exists($item) )
                 return false;
-        else
-        if ( is_null(filter_var($this->entries[$item], $filter, $flags | FILTER_NULL_ON_FAILURE)) ) {
-            // NOTE: For security reasons, we must NOT output the value associated with the key.
-            $this->error("ERROR: '" . $item . "' set to something that is not a/an " . $type_name . ", but it should be.");
-            return false;
+
+        $item_if_valid = \filter_var($this->entries[$item], $filter, $flags | FILTER_NULL_ON_FAILURE);
+        if ( isset($item_if_valid) ) {
+            return true;
         }
 
-        return true;
+        // NOTE: For security reasons, we must NOT output the value associated with the key.
+        $this->error("ERROR: '" . $item . "' set to something that is not a/an " . $type_name . ", but it should be.");
+        return false;
     }
 
     /**
@@ -174,13 +183,56 @@ final class ServiceCredentials implements \ArrayAccess
         // Discord auth info; used for sending notifications about events and stuff.
         $error_count += (int)!$this->credential_string_exists       ("discord_api_url"); // https://discord.com/api/webhooks/<some_number>
         $error_count += (int)!$this->credential_string_exists       ("discord_api_key"); // Concatenated with `discord_api_url` to get the full URL for discord API access.
+        if (\array_key_exists('discord_api_url_beta', $this->entries)) {
+            $error_count += (int)!$this->credential_string_exists('discord_api_url_beta');
+        }
+        if (\array_key_exists('discord_api_key_beta', $this->entries)) {
+            $error_count += (int)!$this->credential_string_exists('discord_api_key_beta');
+        }
+
+        // Discord OAuth info; used for login and guild interactions.
+        $error_count += (int)!$this->credential_string_exists       ("discord_oauth_client_id");
+        $error_count += (int)!$this->credential_string_exists       ("discord_oauth_client_secret");
+
+        $envRedirect = \getenv('DISCORD_REDIRECT_URI');
+        if ($envRedirect === false || filter_var($envRedirect, FILTER_VALIDATE_URL) === false) {
+            $error_count += (int)!$this->credential_of_given_type_exists("discord_redirect_uri", "URL", FILTER_VALIDATE_URL);
+        }
+
+        $error_count += (int)!$this->credential_string_exists       ("discord_guild_id");
+        $error_count += (int)!$this->credential_string_exists       ("discord_bot_token");
+        $error_count += (int)!$this->credential_string_exists       ("discord_verified_role_id");
+        if (\array_key_exists('discord_guild_id_beta', $this->entries)) {
+            $error_count += (int)!$this->credential_string_exists('discord_guild_id_beta');
+        }
+        if (\array_key_exists('discord_verified_role_id_beta', $this->entries)) {
+            $error_count += (int)!$this->credential_string_exists('discord_verified_role_id_beta');
+        }
+        if (\array_key_exists('discord_link_channel_id_beta', $this->entries)) {
+            $error_count += (int)!$this->credential_string_exists('discord_link_channel_id_beta');
+        }
+
+        // Steam OAuth info; used for login.
+        $error_count += (int)!$this->credential_string_exists       ("steam_oauth_client_id");
+        $error_count += (int)!$this->credential_string_exists       ("steam_oauth_client_secret");
+        $error_count += (int)!$this->credential_of_given_type_exists("steam_redirect_uri", "URL", FILTER_VALIDATE_URL);
+        if (\array_key_exists('steam_web_api_key', $this->entries)) {
+            $error_count += (int)!$this->credential_string_exists   ("steam_web_api_key");
+        }
 
         // Kickback Kingdom auth info; used to establish sessions with backend API
         $error_count += (int)!$this->credential_string_exists       ("kk_service_key");
 
-
-        //ipinfo_api_key used for analytics
+        // ipinfo_api_key used for analytics
         $error_count += (int)!$this->credential_string_exists       ("ipinfo_api_key");
+
+        // Stripe thingies
+        $error_count += (int)!$this->credential_string_exists       ("stripe_publishable_key");
+        $error_count += (int)!$this->credential_string_exists       ("stripe_secret_key");
+        $error_count += (int)!$this->credential_of_given_type_exists("stripe_redirect_uri", "URL", FILTER_VALIDATE_URL);
+
+        // OpenAI API key for image generation
+        $error_count += (int)!$this->credential_string_exists       ("openai_api_key");
 
         return ($error_count > 0);
     }
@@ -263,6 +315,13 @@ final class ServiceCredentials implements \ArrayAccess
         // (Technically we could use `!is_null($kickback_service_credentials)` as
         // the condition here, but we use `isset` just in case caller code unsets
         // the global value for some reason, and we need to reload it.)
+        // (Update: `isset` is superior to `is_null` because it will never
+        // emit a "warning" regardless of the state of the variable it is
+        // checking. `is_null`, on the other hand, may emit a warning.
+        // See the chart in this post: https://stackoverflow.com/a/45389115
+        // `empty` is also non-warning-emitting, but also checks for "falsey"
+        // values, which involves PHP's weird boolean equivalence rules,
+        // and is thus less predictable, and using it is an error in PHPStan.)
         if ( !isset(self::$instance) )
             self::load_new_service_credentials();
 
@@ -282,11 +341,157 @@ final class ServiceCredentials implements \ArrayAccess
     public static function get(string $entry_name)
     {
         $entries = self::get_all();
-        if ( is_null($entries) ) {
-            return null;
-        } else {
+        if ( isset($entries) && \array_key_exists($entry_name, $entries) ) {
             return $entries[$entry_name];
         }
+        return null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_oauth_client_id() : ?string
+    {
+        $val = self::get('discord_oauth_client_id');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_oauth_client_secret() : ?string
+    {
+        $val = self::get('discord_oauth_client_secret');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_redirect_uri() : ?string
+    {
+        $env = \getenv('DISCORD_REDIRECT_URI');
+        if (is_string($env) && $env !== '') {
+            return $env;
+        }
+
+        $val = self::get('discord_redirect_uri');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_api_url() : ?string
+    {
+        if (Version::isBeta()) {
+            $beta = self::get('discord_api_url_beta');
+            if (is_string($beta) && $beta !== '') {
+                return $beta;
+            }
+        }
+        $val = self::get('discord_api_url');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_api_key() : ?string
+    {
+        if (Version::isBeta()) {
+            $beta = self::get('discord_api_key_beta');
+            if (is_string($beta) && $beta !== '') {
+                return $beta;
+            }
+        }
+        $val = self::get('discord_api_key');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_guild_id() : ?string
+    {
+        if (Version::isBeta()) {
+            $beta = self::get('discord_guild_id_beta');
+            if (is_string($beta) && $beta !== '') {
+                return $beta;
+            }
+        }
+        $val = self::get('discord_guild_id');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_bot_token() : ?string
+    {
+        $val = self::get('discord_bot_token');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_verified_role_id() : ?string
+    {
+        if (Version::isBeta()) {
+            $beta = self::get('discord_verified_role_id_beta');
+            if (is_string($beta) && $beta !== '') {
+                return $beta;
+            }
+        }
+        $val = self::get('discord_verified_role_id');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_discord_link_channel_id() : ?string
+    {
+        if (Version::isBeta()) {
+            $beta = self::get('discord_link_channel_id_beta');
+            if (is_string($beta) && $beta !== '') {
+                return $beta;
+            }
+        }
+        $val = self::get('discord_link_channel_id');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_steam_oauth_client_id() : ?string
+    {
+        $val = self::get('steam_oauth_client_id');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_steam_oauth_client_secret() : ?string
+    {
+        $val = self::get('steam_oauth_client_secret');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_steam_redirect_uri() : ?string
+    {
+        $val = self::get('steam_redirect_uri');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_steam_web_api_key() : ?string
+    {
+        $val = self::get('steam_web_api_key');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_stripe_publishable_key() : ?string
+    {
+        $val = self::get('stripe_publishable_key');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_stripe_secret_key() : ?string
+    {
+        $val = self::get('stripe_secret_key');
+        return is_string($val) ? $val : null;
+    }
+
+    /** @return null|string */
+    public static function get_stripe_redirect_uri() : ?string
+    {
+        $val = self::get('stripe_redirect_uri');
+        return is_string($val) ? $val : null;
     }
 
     public static function instance() : ServiceCredentials
@@ -302,29 +507,34 @@ final class ServiceCredentials implements \ArrayAccess
     // (Unfortunately, this only works for object instances, not for static access.
     // So we still need (=want) things like `get` and `get_all`, declared earlier.)
     /**
-    * @param mixed  $offset
-    * @param mixed  $value
+    * @param ?string  $offset
+    * @param mixed    $value
     */
     public function offsetSet(mixed $offset, mixed $value) : void {
         echo "<!-- ERROR: Attempt to set element on read-only ServiceCredentials object. -->";
     }
 
-    /// @param mixed  $offset
+    /// @param string  $offset
     public function offsetExists(mixed $offset) : bool {
-        return isset($this->entries[$offset]);
+        return \array_key_exists($offset, $this->entries);
     }
 
-    /// @param mixed  $offset
+    /// @param string  $offset
     public function offsetUnset(mixed $offset) : void {
-        unset($this->entries[$offset]);
+        echo "<!-- ERROR: Attempt to clear an element on read-only ServiceCredentials object. -->";
+        //unset($this->entries[$offset]);
     }
 
     /**
-    * @param mixed  $offset
+    * @param  string  $offset
     * @return mixed
     */
     public function offsetGet(mixed $offset) : mixed {
-        return isset($this->entries[$offset]) ? $this->entries[$offset] : null;
+        $entries = $this->entries;
+        if ( \array_key_exists($offset, $entries) ) {
+            return $entries[$offset];
+        }
+        return null;
     }
 }
 ?>
