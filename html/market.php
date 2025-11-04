@@ -397,8 +397,8 @@ if (Session::isLoggedIn()) {
           class="store-grid"
           data-store-ctime="<?= htmlspecialchars($store->ctime ?? '') ?>"
           data-store-crand="<?= htmlspecialchars((string)($store->crand ?? '')) ?>"
-          data-cart-ctime="<?= htmlspecialchars($cart->ctime ?? '') ?>"
-          data-cart-crand="<?= htmlspecialchars((string)($cart->crand ?? '')) ?>"
+          data-cart-ctime="<?= htmlspecialchars($cart?->ctime ?? '') ?>"
+          data-cart-crand="<?= htmlspecialchars((string)($cart?->crand ?? '')) ?>"
         >
           <?php foreach ($products as $product): ?>
             <?php
@@ -500,27 +500,55 @@ if (Session::isLoggedIn()) {
                 console.log("refresh products");
             }
 
-            document.addEventListener('submit', async(event) =>
-            {
-                if(!event.target.matches('.add-product-to-cart')) return;
+            const requireLogin = cartCtime === '' || cartCrand === '';
 
-                event.preventDefault();
+            function showModal(modalId, message)
+            {
+                const modalBody = document.getElementById(modalId + "Message");
+                if(modalBody)
+                {
+                    modalBody.textContent = message;
+                }
+
+                const modalElement = document.getElementById(modalId);
+                if(modalElement)
+                {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            }
+
+            async function addProductToCart(productCtime, productCrand)
+            {
+                if(productCtime === undefined || productCrand === undefined || productCtime === '' || productCrand === '')
+                {
+                    console.error("Missing product identifiers for cart action");
+                    return;
+                }
+
+                if(requireLogin)
+                {
+                    showModal("errorModal", "You must be logged in to add items to your cart.");
+                    return;
+                }
 
                 try
                 {
-                    const formData = new FormData(event.target);
+                    const formData = new FormData();
 
                     formData.append("storeCtime", storeCtime);
                     formData.append("storeCrand", storeCrand);
                     formData.append("cartCtime", cartCtime);
                     formData.append("cartCrand", cartCrand);
+                    formData.append("productCtime", productCtime);
+                    formData.append("productCrand", productCrand);
 
                     const response = await fetch('/php-components/store/add-to-cart.php',
                         {
                             method: 'POST',
                             body: formData
                         }
-                    )
+                    );
 
                     if(response.ok)
                     {
@@ -529,46 +557,39 @@ if (Session::isLoggedIn()) {
 
                         if(respJson.success === true)
                         {
-                            const modalBody = document.getElementById("successModalMessage");
-
-                            modalBody.textContent = "Successfully Product Added To Cart";
-
-                            const modal = new bootstrap.Modal(document.getElementById("successModal"));
-                            modal.show();
-
+                            showModal("successModal", "Successfully added product to cart.");
                             await refreshProducts();
                         }
                         else
                         {
-                            const modalBody = document.getElementById("errorModalMessage");
-
-                            modalBody.textContent = "Error Adding Product to Cart : " + message;
-
-                            const modal = new bootstrap.Modal(document.getElementById("errorModal"));
-                            modal.show();
-
-                            console.error("Failed to product to cart", message);
-                        }  
+                            showModal("errorModal", "Error adding product to cart: " + message);
+                            console.error("Failed to add product to cart", message);
+                        }
                     }
                     else
                     {
-                        const modalBody = document.getElementById("errorModalMessage");
-
-                        modalBody.textContent = "An Error Occurred Attempting to Add Product To Cart";
-
-                        const modal = new bootstrap.Modal(document.getElementById("errorModal"));
-                        modal.show();
-
-                        console.error("Failed to product to cart : ", await response.text());
+                        showModal("errorModal", "An error occurred attempting to add product to cart.");
+                        console.error("Failed to add product to cart:", await response.text());
                     }
-
-                    
                 }
                 catch(e)
                 {
-                    console.error("Exception caught while adding product to cart", e)
+                    console.error("Exception caught while adding product to cart", e);
+                    showModal("errorModal", "An unexpected error occurred while adding the product to your cart.");
                 }
-            })
+            }
+
+            productsGrid.querySelectorAll('.buy-btn').forEach((button) =>
+            {
+                button.addEventListener('click', async(event) =>
+                {
+                    event.preventDefault();
+
+                    const productCtime = button.dataset.productCtime;
+                    const productCrand = button.dataset.productCrand;
+                    await addProductToCart(productCtime, productCrand);
+                });
+            });
         })();
         
     </script>
