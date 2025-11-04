@@ -382,7 +382,7 @@ if (Session::isLoggedIn()) {
     <div class="col-12">
       <section class="emberwood-store theme-default">
         <header class="store-header">
-          <img src="/assets/images/emberwoodtradingco.png" class="store-logo" alt="Emberwood Trading Company">
+          <img src="/assets/images/store/store-logo.png" class="store-logo" alt="Emberwood Trading Company">
           <div class="category-pills">
             <?= StoreCategory::renderCategoryPills() ?>
           </div>
@@ -411,12 +411,12 @@ if (Session::isLoggedIn()) {
               $imageUrl = $product->mediaLarge->getFullPath() ?? "/assets/media/default.png";
               $altText = htmlspecialchars($product->name);
               $descText = htmlspecialchars($product->description);
-              $stockCount = "?";//$product->stock_quantity ?? null;
+              $stockCount = $product->amountAvailable;
               $stockLabel = is_null($stockCount) ? "" : "<div class='item-stock'>In Stock: $stockCount</div>";
-              $tagSlug = StoreTag::getRandomTagSlug();//strtolower($product->label ?? '');
+              $tagSlug = $product->tag;
               $ribbonHtml = StoreTag::renderRibbon($tagSlug);
 
-              $categoryList = StoreCategory::getRandomCategorySlugList(2);//array_map('trim', explode(',', strtolower($product->category ?? 'general')));
+              $categoryList = $product->categories;
               $categoryAttr = htmlspecialchars(implode(' ', $categoryList));
 
 

@@ -4007,7 +4007,7 @@ class StoreController
             $product->name,
             $product->description,
             $product->locator,
-            $product->tags,
+            $product->tag,
             json_encode($product->categories),
             $product->store->ctime,
             $product->store->crand,
@@ -4377,6 +4377,8 @@ class StoreController
 
         $product= new vProduct($row['ctime'],(int)$row['crand']);
             $product->locator = $row["locator"];
+            $product->tag = $row["tag"];
+            $product->categories = [];
             $product->name = $row["name"];
             $product->description = $row["description"];
             $product->stock = $row["stock"];
@@ -4919,6 +4921,8 @@ class StoreController
                 `name`,
                 `description`,
                 locator,
+                tag,
+                categories,
                 stock,
                 amount_available,
                 removed,

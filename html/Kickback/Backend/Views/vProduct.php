@@ -18,6 +18,9 @@ class vProduct extends vRecordId
 
     public array $prices;
 
+    public string $tag;
+    public array $categories;
+
     public int $stock;
     public int $amountAvailable; //stock - amount_reserved
 
@@ -31,6 +34,8 @@ class vProduct extends vRecordId
         string $name = '',
         string $description = '',
         ?string $locator = null,
+        string $tag = '',
+        array $categories = [],
         int $stock = -1,
         int $amountAvailable = -1,
         $removed = false,
@@ -47,6 +52,10 @@ class vProduct extends vRecordId
         $this->description = $description;
 
         $this->locator = $locator;
+
+        $this->tag = $tag;
+        $this->categories = $categories;
+
         $this->stock = $stock;
         $this->amountAvailable = $amountAvailable;
         $this->removed = $removed;

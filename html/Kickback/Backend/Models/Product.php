@@ -49,7 +49,7 @@ class Product extends RecordId
         $this->locator = $locator;
         $this->store = $store;
 
-        $this->tags = $this->validateStringArray("tag", $tags);
+        $this->tag = $tag;
         $this->categories = $this->validateStringArray("categories", $categories);
 
         $this->removed = $removed;
