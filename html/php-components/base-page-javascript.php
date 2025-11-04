@@ -12,6 +12,7 @@ use Kickback\Common\Version;
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
     <script src="<?= Version::urlBetaPrefix(); ?>/assets/vendors/qrcode/qrcode.min.js"></script>
     <script src="<?= Version::urlBetaPrefix(); ?>/assets/js/qrcode.js"></script>
+    <script src="<?= Version::urlBetaPrefix(); ?>/api/v2/client/js/store-client.js"></script>
 
     <!--<script src="assets/owl-carousel/owl.carousel.js"></script>-->
     <script>
