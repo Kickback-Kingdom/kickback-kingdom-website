@@ -13,6 +13,7 @@ use Kickback\Common\Version;
     <script src="<?= Version::urlBetaPrefix(); ?>/assets/vendors/qrcode/qrcode.min.js"></script>
     <script src="<?= Version::urlBetaPrefix(); ?>/assets/js/qrcode.js"></script>
     <script src="<?= Version::urlBetaPrefix(); ?>/api/v2/client/js/store-client.js"></script>
+    <script src="<?= Version::urlBetaPrefix(); ?>/api/v2/client/js/kickback-client.js"></script>
 
     <!--<script src="assets/owl-carousel/owl.carousel.js"></script>-->
     <script>
