@@ -799,7 +799,7 @@ class StoreService
             $vTransaction->description = $transaction->description;
             $vTransaction->complete = $transaction->complete;
             $vTransaction->void = $transaction->void;
-            $vTransaction->prices = $transaction->prices;
+            $vTransaction->price = $transaction->price;
         $vCart->transaction = $vTransaction;
 
         $vCart->cartProducts = [];
@@ -818,10 +818,10 @@ class StoreService
 
             $product = (object)$cartItem->product;
 
-            $prices = static::vPriceArrayFromJson($product->prices);
+            $price = static::vPriceComponentArrayFromJson($product->price);
 
                 $vProduct = new vProduct($cartItem->product->ctime, $cartItem->product->crand);
-                $vProduct->prices = $prices;
+                $vProduct->price = $price;
                 $vProduct->stock = $cartItem->product->stock;
                 $vProduct->locator = $cartItem->product->locator;
                 $vProduct->name = $cartItem->product->name;
@@ -853,7 +853,7 @@ class StoreService
         $vProduct = new vProduct($product->ctime, $product->crand);
 
         $vProduct = new vProduct($product->ctime, $product->crand);
-            $vProduct->prices = static::vPriceArrayFromJson($product->prices);
+            $vProduct->price = static::vPriceComponentArrayFromJson($product->price);
             $vProduct->stock = $product->stock;
             $vProduct->locator = $product->locator;
             $vProduct->name = $product->name;
@@ -866,27 +866,27 @@ class StoreService
         return $vProduct;
     }
 
-    private static function vPriceArrayFromJson(array $prices) : array
+    private static function vPriceComponentArrayFromJson(array $price) : array
     {
-        $vPrices = [];
+        $vPriceComponents = [];
 
-        foreach($prices as $price)
+        foreach($price as $priceComponent)
         {
-            array_push($vPrices, static::vPriceFromJson($price));
+            array_push($vPriceComponents, static::vPriceFromJson($priceComponent));
         }
 
-        return $vPrices;
+        return $vPriceComponents;
     }
 
-    private static function vPriceFromJson(object $price) : vPrice
+    private static function vPriceFromJson(object $priceComponent) : vPriceComponent
     {
-        $vPrice = new vPrice();
+        $vPriceComponent = new vPriceComponent();
 
-        $vPrice->amount = $price->amount;
-        $vPrice->item = is_null($price->item) ? null : static::vItemFromJson($price->item);
-        $vPrice->currencyCode = is_null($price->currencyCode) ? null : CurrencyCode::from($price->currencyCode);
+        $vPriceComponent->amount = $priceComponent->amount;
+        $vPriceComponent->item = is_null($priceComponent->item) ? null : static::vItemFromJson($priceComponent->item);
+        $vPriceComponent->currencyCode = is_null($priceComponent->currencyCode) ? null : CurrencyCode::from($priceComponent->currencyCode);
 
-        return $vPrice;
+        return $vPriceComponent;
     }
 
     private static function vItemFromJson(object $item) : vItem

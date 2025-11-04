@@ -65,7 +65,6 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
 
 <?php if(Session::isLoggedIn()) { ?>
 
-    <?php require(\Kickback\SCRIPT_ROOT . "/php-components/base-cart-handler.php"); ?>
 
     <?php require(\Kickback\SCRIPT_ROOT . "/php-components/league-viewer.php"); ?>
 

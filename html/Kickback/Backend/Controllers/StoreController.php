@@ -20,7 +20,7 @@ use Kickback\Backend\Models\CartProductPriceLink;
 use Kickback\Backend\Models\Coupon;
 use Kickback\Backend\Models\CouponAccountUse;
 use Kickback\Backend\Models\LootReservation;
-use Kickback\Backend\Models\Price;
+use Kickback\Backend\Models\PriceComponent;
 use Kickback\Backend\Models\ProductLootLink;
 use Kickback\Backend\Models\ProductReservation;
 use Kickback\Backend\Models\RecordId;
@@ -42,7 +42,7 @@ use Kickback\Backend\Views\vItem;
 use Kickback\Backend\Views\vLoot;
 use Kickback\Backend\Views\vLootReservation;
 use Kickback\Backend\Views\vMedia;
-use Kickback\Backend\Views\vPrice;
+use Kickback\Backend\Views\vPriceComponent;
 use Kickback\Backend\Views\vProduct;
 use Kickback\Backend\Views\vProductReservation;
 use Kickback\Backend\Views\vRecordId;
@@ -2185,9 +2185,9 @@ class StoreController
 
     private static function unittest_getParamsForGetLootForPricesForCart() : void
     {
-        $mockTotal = new vPrice();
+        $mockTotal = new vPriceComponent();
         $mockTotal->item = new vItem('x',1);
-        $mockNullTotal = new vPrice();
+        $mockNullTotal = new vPriceComponent();
         $accountId = new vRecordId();
         assert([$accountId->crand, $mockTotal->item->crand] === static::getParamsForGetLootForPricesForCart($accountId, [$mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
         assert([$accountId->crand, $mockTotal->item->crand, $mockTotal->item->crand] === static::getParamsForGetLootForPricesForCart($accountId, [$mockTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
@@ -2492,11 +2492,11 @@ class StoreController
 
         foreach($cart->cartProducts as $cartItem)
         {
-            foreach($cartItem->product->prices as $price)
+            foreach($cartItem->product->price as $priceComponent)
             {
-                if(is_null($price->item)) continue;
+                if(is_null($priceComponent->item)) continue;
 
-                array_push($params, $price->item->crand);
+                array_push($params, $priceComponent->item->crand);
             }
             
         }
@@ -2511,17 +2511,17 @@ class StoreController
 
         $cartItem = new vCartItem();
         $cartItem->product = new vProduct();
-        $price = new vPrice();
-        $price->item = new vItem('',4);
+        $priceComponent = new vPriceComponent();
+        $priceComponent->item = new vItem('',4);
 
-        $cartItem->product->prices = [$price];
+        $cartItem->product->price = [$priceComponent];
         $cart->cartProducts = [$cartItem];
         assert(static::returnParamsForCanAccountAffordItemPricesForCart($cart) === [-1,4], new Exception("UNIT TEST FAILED : returned params did not match expected for returnParamsForCanAccountAffordItemPricesForCart"));
 
         $cart->cartProducts = [$cartItem,$cartItem];
         assert(static::returnParamsForCanAccountAffordItemPricesForCart($cart) === [-1,4,4], new Exception("UNIT TEST FAILED : returned params did not match expected for returnParamsForCanAccountAffordItemPricesForCart"));
         
-        $cartItem->product->prices = [$price, $price];
+        $cartItem->product->price = [$priceComponent, $priceComponent];
         $cart->cartProducts = [$cartItem];       
         assert(static::returnParamsForCanAccountAffordItemPricesForCart($cart) === [-1,4,4], new Exception("UNIT TEST FAILED : returned params did not match expected for returnParamsForCanAccountAffordItemPricesForCart"));
     }
@@ -2534,9 +2534,9 @@ class StoreController
         {
             $priceWhereClause = "(";
 
-            foreach($cartItem->product->prices as $price)
+            foreach($cartItem->product->price as $priceComponent)
             {
-                if(is_null($price->item)) continue;
+                if(is_null($priceComponent->item)) continue;
 
                 $priceWhereClause .= "item_id = ? OR ";
             }
@@ -2562,18 +2562,18 @@ class StoreController
     {
         $cartItem = new vCartItem();
         $cartItem->product = new vProduct();
-        $price = new vPrice();
-        $price->item = new vItem('',4);
+        $priceComponent = new vPriceComponent();
+        $priceComponent->item = new vItem('',4);
 
-        $cartItem->product->prices = [$price];
+        $cartItem->product->price = [$priceComponent];
         $cartItems = [$cartItem];
         assert(static::returnWhereClauseForCanAccountAffordItemPricesInCart($cartItems) === " AND ((item_id = ?))", new Exception("UNIT TEST FAILED : returned where clause for can account afford item prices in cart did not match expected"));
 
-        $cartItem->product->prices = [$price, $price];
+        $cartItem->product->price = [$priceComponent, $priceComponent];
         $cartItems = [$cartItem];
         assert(static::returnWhereClauseForCanAccountAffordItemPricesInCart($cartItems) === " AND ((item_id = ? OR item_id = ?))",  new Exception("UNIT TEST FAILED : returned where clause for can account afford item prices in cart did not match expected"));
 
-        $cartItem->product->prices = [$price, $price];
+        $cartItem->product->price = [$priceComponent, $priceComponent];
         $cartItems = [$cartItem, $cartItem];
         assert(static::returnWhereClauseForCanAccountAffordItemPricesInCart($cartItems) === " AND ((item_id = ? OR item_id = ?) OR (item_id = ? OR item_id = ?))",  new Exception("UNIT TEST FAILED : returned where clause for can account afford item prices in cart did not match expected"));    
     }
@@ -2589,9 +2589,9 @@ class StoreController
 
         foreach($cartItems as $cartItem)
         {
-            $prices = $cartItem->product->prices;
+            $price = $cartItem->product->price;
 
-            foreach($prices as $price)
+            foreach($price as $priceComponent)
             {
                 $priceAlreadyExists = null;
 
@@ -2600,11 +2600,11 @@ class StoreController
 
                     //Does price being checked match an already existing total
                     if(
-                        (!is_null($price->item) && !is_null($total->item) 
-                        && $price->item->ctime == $total->item->ctime && $price->item->crand == $total->item->crand)
+                        (!is_null($priceComponent->item) && !is_null($total->item) 
+                        && $priceComponent->item->ctime == $total->item->ctime && $priceComponent->item->crand == $total->item->crand)
                         ||
-                        (!is_null($price->currencyCode) && !is_null($total->currencyCode) &&
-                        $price->currencyCode == $total->currencyCode)
+                        (!is_null($priceComponent->currencyCode) && !is_null($total->currencyCode) &&
+                        $priceComponent->currencyCode == $total->currencyCode)
                     )
                     {
                         $priceAlreadyExists = $total;
@@ -2615,11 +2615,11 @@ class StoreController
                 //Add amount of already existing total or create new total
                 if(is_null($priceAlreadyExists))
                 {
-                    array_push($totalPrices, $price);
+                    array_push($totalPrices, $priceComponent);
                 }
                 else
                 {
-                    $priceAlreadyExists->amount = $priceAlreadyExists->amount + $price->amount;
+                    $priceAlreadyExists->amount = $priceAlreadyExists->amount + $priceComponent->amount;
                 }
             }
         }
@@ -2767,11 +2767,11 @@ class StoreController
             {
                 $product = static::rowToVProduct($result->fetch_assoc());
 
-                $pricesResp = static::getBasePricesForProduct($product);
+                $priceResp = static::getBasePricesForProduct($product);
 
-                if($pricesResp->success)
+                if($priceResp->success)
                 {
-                    $product->prices = $pricesResp->data;
+                    $product->price = $priceResp->data;
 
                     $resp->success = true;
                     $resp->message = "Product found and returned";
@@ -2779,7 +2779,7 @@ class StoreController
                 }
                 else
                 {
-                    $resp->message = "failed to get prices for product by locator : $pricesResp->message";
+                    $resp->message = "failed to get prices for product by locator : $priceResp->message";
                 }
 
                 
@@ -3221,9 +3221,9 @@ class StoreController
             }
             else
             {
-                $price = static::cartItemToPriceView($row);
+                $priceComponent = static::cartItemToPriceComponentView($row);
 
-                array_push($cartItemAlreadyProccessed->prices, $price);
+                array_push($cartItemAlreadyProccessed->price, $priceComponent);
             }
         }
 
@@ -3234,10 +3234,10 @@ class StoreController
     {
         $cartItem = new vCartItem();
 
-        $price = static::cartItemToPriceView($row);
+        $priceComponent = static::cartItemToPriceComponentView($row);
 
         $product = new vProduct($row["product_ctime"], $row["product_crand"]);
-            $product->prices = [$price];
+            $product->price = [$priceComponent];
             $product->stock = $row["product_stock"];
             $product->locator = $row["product_locator"];
             $product->name = $row["product_name"];
@@ -3278,14 +3278,14 @@ class StoreController
         $cartItem->crand = $row["cart_product_link_crand"];
         $cartItem->removed = boolval($row["removed"]);
         $cartItem->checkedOut = boolval($row["checked_out"]);
-        $cartItem->prices = [$price];
+        $cartItem->price = [$priceComponent];
 
         return $cartItem;
     }
     
-    private static function cartItemToPriceView(array $row) : vPrice
+    private static function cartItemToPriceComponentView(array $row) : vPriceComponent
     {
-        $price = new vPrice();
+        $priceComponent = new vPriceComponent();
 
         if(!is_null($row["price_item_ctime"]) && !is_null($row["price_item_crand"]))
         {
@@ -3306,19 +3306,19 @@ class StoreController
 
             $item->fungible = boolval($row["price_item_is_fungible"]);
 
-            $price->item = $item;
+            $priceComponent->item = $item;
         }
         
         if(!empty($row["price_currency_code"]))
         {
-            $price = CurrencyCode::from($row["price_currency_code"]);
+            $priceComponent = CurrencyCode::from($row["price_currency_code"]);
         }
 
-        $price->ctime = $row["price_ctime"];
-        $price->crand = $row["price_crand"];
-        $price->amount = $row["price_amount"];
+        $priceComponent->ctime = $row["price_ctime"];
+        $priceComponent->crand = $row["price_crand"];
+        $priceComponent->amount = $row["price_amount"];
 
-        return $price;
+        return $priceComponent;
         
     }
 
@@ -3691,9 +3691,9 @@ class StoreController
                 $getProduct = static::getProduct($viewProduct);
                 if(!$getProduct->success) throw new Exception("Failed to get product for linking prices after update");
 
-                $linkPricesResp = static::linkProductToPrices($getProduct->data, $product->prices);
+                $linkPriceResp = static::linkProductToPrices($getProduct->data, $product->price);
 
-                if($linkPricesResp->success)
+                if($linkPriceResp->success)
                 {
                     $resp->success = true;
                     $resp->message = "Product was updated as it already existed";
@@ -3714,9 +3714,9 @@ class StoreController
                     return $resp;
                 }
 
-                $linkPricesResp = static::linkProductToPrices($product, $product->prices);
+                $linkPriceResp = static::linkProductToPrices($product, $product->price);
 
-                if($linkPricesResp->success)
+                if($linkPriceResp->success)
                 {
                     $resp->success = true;
                     $resp->message = "Product was inserted as it did not exist"; 
@@ -3789,11 +3789,11 @@ class StoreController
             {
                 $product = static::rowToVProduct($result->fetch_assoc());
 
-                $pricesResp = static::getBasePricesForProduct($product);
+                $priceResp = static::getBasePriceForProduct($product);
 
-                if($pricesResp->success)
+                if($priceResp->success)
                 {
-                    $product->prices = $pricesResp->data;
+                    $product->price = $priceResp->data;
 
                     $resp->success = true;
                     $resp->message = "Product found and returned";
@@ -3801,7 +3801,7 @@ class StoreController
                 }
                 else
                 {
-                    $resp->message = "failed to get prices for product by id : $pricesResp->message";
+                    $resp->message = "failed to get prices for product by id : $priceResp->message";
                 }
 
                 
@@ -3840,11 +3840,11 @@ class StoreController
             {
                 $product = static::rowToVProduct($result->fetch_assoc());
 
-                $pricesResp = static::getBasePricesForProduct($product);
+                $priceResp = static::getBasePriceForProduct($product);
 
-                if($pricesResp->success)
+                if($priceResp->success)
                 {
-                    $product->prices = $pricesResp->data;
+                    $product->price = $priceResp->data;
 
                     $resp->success = true;
                     $resp->message = "Product found and returned";
@@ -3852,7 +3852,7 @@ class StoreController
                 }
                 else
                 {
-                    $resp->message = "failed to get prices for product by id : $pricesResp->message";
+                    $resp->message = "failed to get prices for product by id : $priceResp->message";
                 }
 
                 
@@ -4020,13 +4020,13 @@ class StoreController
         {
             Database::executeSqlQuery($sql, $params);
 
-            $pricesResp = static::InsertAndSelectPrices($product->prices);
+            $priceResp = static::InsertAndSelectPrice($product->price);
 
 
-            if($pricesResp->success)
+            if($priceResp->success)
             {
-                $prices = static::convertPriceViewArrayToModels($pricesResp->data);
-                $linkResp = static::linkProductToPrices($product, $prices);
+                $price = static::convertPriceViewArrayToModels($priceResp->data);
+                $linkResp = static::linkProductToPrice($product, $price);
 
                 if($linkResp->success)
                 {
@@ -4378,7 +4378,7 @@ class StoreController
         $product= new vProduct($row['ctime'],(int)$row['crand']);
             $product->locator = $row["locator"];
             $product->tag = $row["tag"];
-            $product->categories = [];
+            $product->categories = json_decode($row["categories"]);
             $product->name = $row["name"];
             $product->description = $row["description"];
             $product->stock = $row["stock"];
@@ -4771,7 +4771,7 @@ class StoreController
 
         $currencyCode = $row["currency_code"] != null ? CurrencyCode::from($row["currency_code"]) : null;
 
-        return new vPrice(
+        return new vPriceComponent(
             $row["ctime"], 
             $row["crand"],
             $row["amount"],
@@ -4993,7 +4993,7 @@ class StoreController
 
         if(!$result) throw new Exception("result returned false attempting to populate cart products with base prices");
 
-        $prices = static::createAssocProductIdToPricesArrayForPopulateProductsWithBasePrices($result);
+        $priceArray = static::createAssocProductIdToPricesArrayForPopulateProductsWithBasePrices($result);
 
         for($i = 0; $i < count($products); $i++)
         {
@@ -5002,16 +5002,16 @@ class StoreController
             $foundPriceArray = null;
 
             //find matching set of prices for the product
-            foreach($prices as $price)
+            foreach($priceArray as $priceComponent)
             {
-                if($price["productId"]->ctime !== $product->ctime || $price["productId"]->crand !== $product->crand) continue;
-                $foundPriceArray = $price["prices"];
+                if($priceComponent["productId"]->ctime !== $product->ctime || $priceComponent["productId"]->crand !== $product->crand) continue;
+                $foundPriceArray = $priceComponent["prices"];
                 break;
             }
 
             if(is_null($foundPriceArray)) throw new RuntimeException("no price array was found for product while populating prodcuts with base prices");
 
-            $product->prices = $foundPriceArray;
+            $product->price = $foundPriceArray;
 
             $products[$i] = $product;
         }  
@@ -5023,7 +5023,7 @@ class StoreController
 
         while($row = $result->fetch_assoc())
         {
-            $vPrice = static::rowToVPrice($row);
+            $vPrice = static::rowTovPriceComponent($row);
             $productId = new vRecordId($row["product_ctime"], $row["product_crand"]);
 
             $alreadyExistingPricedProduct = null;
@@ -5050,9 +5050,9 @@ class StoreController
         return $prices;
     }
 
-    private static function rowToVPrice(array $row) : vPrice
+    private static function rowTovPriceComponent(array $row) : vPriceComponent
     {
-        $price = new vPrice($row["ctime"], $row["crand"]);
+        $price = new vPriceComponent($row["ctime"], $row["crand"]);
 
         $price->amount = $row["amount"];
         $price->currencyCode = empty($row["currency_code"]) ? null : CurrencyCode::from($row["currency_code"]);
@@ -5174,7 +5174,7 @@ class StoreController
 
         while($row = $result->fetch_assoc())
         {
-            $price = static::rowToVPrice($row);
+            $price = static::rowTovPriceComponent($row);
             $cartProduct = new vRecordId($row["cart_product_link_ctime"], $row["cart_product_link_crand"]);
 
             array_push($cartProductPricePairs, ["price"=>$price, "cartProductId"=>$cartProduct]);
@@ -5869,7 +5869,7 @@ class StoreController
 
             Database::executeSqlQuery($sql, $params);
 
-            if(count($coupon->prices) > 0)static::linkPricesToCouponInsertionTransaction($coupon);
+            if(count($coupon->price) > 0)static::linkPriceToCouponInsertionTransaction($coupon);
 
             $success = $conn->commit();
 
@@ -5890,7 +5890,7 @@ class StoreController
     public static function linkPricesToCouponInsertionTransaction(Coupon $coupon) : void
     {
         $params = [];
-        $valueClause = static::createValueClauseForLinkPricesToCouponInsertionTransaction($coupon, $params);
+        $valueClause = static::createValueClauseForLinkPriceToCouponInsertionTransaction($coupon, $params);
         $sql = "INSERT INTO coupon_price_link (ctime, crand, ref_coupon_ctime, ref_coupon_crand, ref_price_ctime, ref_price_crand) VALUES $valueClause";
 
         $result = Database::executeSqlQuery($sql, $params);
@@ -5898,20 +5898,20 @@ class StoreController
         if(!$result) throw new exception("result returned false while inserting coupon price links");
     }
 
-    public static function createValueClauseForLinkPricesToCouponInsertionTransaction(Coupon $coupon, array &$params) : string
+    public static function createValueClauseForLinkPriceToCouponInsertionTransaction(Coupon $coupon, array &$params) : string
     {
-        $prices = $coupon->prices;
+        $price = $coupon->price;
 
-        if(count($prices) <= 0) throw new InvalidArgumentException("counpon prices must have at least one element");
+        if(count($price) <= 0) throw new InvalidArgumentException("counpon prices must have at least one element");
 
         $valueClause = "";
 
-        for($i = 0; $i < count($prices); $i++)
+        for($i = 0; $i < count($price); $i++)
         {
-            $price = $prices[$i];
+            $priceComponent = $price[$i];
             $link = new CouponPriceLink();
 
-            array_push($params, $link->ctime, $link->crand, $coupon->ctime, $coupon->crand, $price->ctime, $price->crand);
+            array_push($params, $link->ctime, $link->crand, $coupon->ctime, $coupon->crand, $priceComponent->ctime, $priceComponent->crand);
 
             if($i===0)
             {
@@ -5962,7 +5962,7 @@ class StoreController
 
             $coupon = static::rowToVCoupon($result->fetch_assoc());
 
-            $coupon->prices = static::getCouponPrices($coupon);
+            $coupon->price = static::getCouponPrice($coupon);
 
             $resp->success = true;
             $resp->message = "Coupon returned";
@@ -6003,7 +6003,7 @@ class StoreController
         
         while($row = $result->fetch_assoc())
         {
-            array_push($prices, static::rowToVPrice($row));
+            array_push($prices, static::rowTovPriceComponent($row));
         }
 
         return $prices;

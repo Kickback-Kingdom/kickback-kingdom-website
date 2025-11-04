@@ -12,6 +12,7 @@ use \Kickback\Backend\Views\vRecordId;
 use \Kickback\Backend\Views\vMedia;
 use \Kickback\Services\Session;
 use \Kickback\Backend\Config\StoreTag;
+use \Kickback\Common\Version;
 
 $products = [];
 $store = null;
@@ -378,6 +379,15 @@ if (Session::isLoggedIn()) {
 
 <!-- HTML -->
 <main class="container pt-3 bg-body" style="margin-bottom: 56px;">
+  
+  <div class="row">
+    <div class="col-12">
+      <button id="open-store-json" class="btn btn-primary">
+        Open Store JSON
+      </button>
+    </div>
+  </div>
+
   <div class="row">
     <div class="col-12">
       <section class="emberwood-store theme-default">
@@ -528,7 +538,10 @@ if (Session::isLoggedIn()) {
 
                 if(requireLogin)
                 {
+                    const redirectUrl = encodeURIComponent("market.php");
+                    window.location.href = `<?= Version::urlBetaPrefix(); ?>/login.php?redirect=${redirectUrl}`;
                     showModal("errorModal", "You must be logged in to add items to your cart.");
+                    
                     return;
                 }
 
@@ -712,6 +725,34 @@ document.querySelectorAll('.pill-btn').forEach(btn => {
 });
 
     </script>
+<script>
+(function () {
+  const btn = document.getElementById('open-store-json');
+  if (!btn) return;
+
+  // Serialize the PHP response into JS
+  const storeResp = <?= json_encode(
+      $storeResp,
+      JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION
+  ); ?>;
+
+  btn.addEventListener('click', () => {
+    try {
+      const pretty = JSON.stringify(storeResp, null, 2);
+      const blob = new Blob([pretty], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      // Open in a new tab
+      window.open(url, '_blank', 'noopener');
+
+      // Clean up the blob URL later
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    } catch (e) {
+      console.error('Failed to open store JSON', e);
+    }
+  });
+})();
+</script>
 
 </body>
 

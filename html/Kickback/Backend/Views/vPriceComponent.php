@@ -7,7 +7,7 @@ namespace Kickback\Backend\Views;
 use Kickback\Backend\Models\Enums\CurrencyCode;
 use Kickback\Backend\Models\Item;
 
-class vPrice extends vRecordId
+class vPriceComponent extends vRecordId
 {
     public int $amount;
     public? vItem $item;

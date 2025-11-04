@@ -9,7 +9,7 @@ class vTransaction extends vRecordId
     public ?string $description;
     public bool $complete;
     public bool $void;
-    public array $prices;
+    public array $price;
 
     public function __construct(
         string $ctime = '', 
@@ -17,21 +17,21 @@ class vTransaction extends vRecordId
         ?string $description = null, 
         bool $complete = false, 
         bool $void = false, 
-        array $prices = [])
+        array $price = [])
     {
         parent::__construct($ctime, $crand);
 
         $this->description = $description;
         $this->complete = $complete;
         $this->void = $void;
-        $this->prices = $prices;
+        $this->price = $price;
     }
 
-    private function pricesJsonToObjectArray(string $pricesJson)
+    private function priceJsonToObjectArray(string $priceJson)
     {
-        $array = json_decode($pricesJson);
+        $array = json_decode($priceJson);
 
-        $prices = new vPrice();
+        $price = new vPriceComponent();
     }
 }
 

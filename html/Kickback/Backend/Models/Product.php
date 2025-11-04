@@ -58,7 +58,7 @@ class Product extends RecordId
         $this->smallMedia = $smallMedia;
         $this->backMedia = $backMedia;
 
-        $this->prices = static::validatePrices($prices) ? $prices : throw new InvalidArgumentException("Prices Array must contain only prices");
+        $this->price = static::validatePrice($price) ? $prices : throw new InvalidArgumentException("Price Array must contain only price componets");
     }
 
     private static function validateStringArray(string $fieldName, array $stringArray) : array
@@ -71,11 +71,11 @@ class Product extends RecordId
         return $stringArray;
     }
 
-    private static function validatePrices(array $prices) : bool
+    private static function validatePrice(array $prices) : bool
     {
-        foreach($prices as $price)
+        foreach($price as $priceComponent)
         {
-            if(!$price instanceof vPrice)
+            if(!$priceComponent instanceof vPriceComponent)
             {
                 return false;
             }
