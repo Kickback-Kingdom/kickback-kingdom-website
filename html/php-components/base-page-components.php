@@ -1042,16 +1042,14 @@ $totalUnclaimedTasks = $unclaimedRecurringCount + $unclaimedAchievementsCount;
                         </button>
                     </li>
                     <li class="nav-item">
-                    <a class="btn btn-primary position-relative"
-                        href="<?php echo Version::urlBetaPrefix(); ?>/cart.php">
-                        <i class="fa-solid fa-cart-shopping"></i>
-                        <?php if (true/*Kickback\Services\Session::isAdmin()*/) { ?>
-                        <span class="badge bg-secondary position-absolute top-0 start-100 translate-middle rounded-pill">
-                            99
-                            <span class="visually-hidden">unread messages</span>
-                        </span>
-                        <?php } ?>
-                    </a>
+                        <button class="btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasMenuRightShoppingCart" aria-controls="offcanvasMenuRightShoppingCart" aria-label="Toggle navigation" style="background-color: transparent !important; border-color: transparent;">
+                            
+                            <i class="fa-solid fa-cart-shopping"></i>
+                            <span class="badge bg-secondary position-absolute top-0 start-100 translate-middle rounded-pill">
+                                99
+                                <span class="visually-hidden">unread messages</span>
+                            </span>
+                        </button>
                     </li>
                     <li class="nav-item">
                         <button class="btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas"
