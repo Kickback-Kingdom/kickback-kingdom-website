@@ -392,7 +392,14 @@ if (Session::isLoggedIn()) {
           </div>
 
         </header>
-        <div class="store-grid">
+        <div
+          id="store-grid"
+          class="store-grid"
+          data-store-ctime="<?= htmlspecialchars($store->ctime ?? '') ?>"
+          data-store-crand="<?= htmlspecialchars((string)($store->crand ?? '')) ?>"
+          data-cart-ctime="<?= htmlspecialchars($cart->ctime ?? '') ?>"
+          data-cart-crand="<?= htmlspecialchars((string)($cart->crand ?? '')) ?>"
+        >
           <?php foreach ($products as $product): ?>
             <?php
               $priceAmount = $product->price->smallCurrencyUnit ?? 0;
@@ -477,10 +484,16 @@ if (Session::isLoggedIn()) {
     <script>
         (function(){
             const productsGrid = document.getElementById('store-grid');
-            const storeCtime = productsGrid.dataset.storeCtime;
-            const storeCrand = productsGrid.dataset.storeCrand;
-            const cartCtime = productsGrid.dataset.cartCtime;
-            const cartCrand = productsGrid.dataset.cartCrand;
+            if(!productsGrid)
+            {
+                console.warn('Store grid element not found. Cart actions are disabled.');
+                return;
+            }
+
+            const storeCtime = productsGrid.dataset.storeCtime || '';
+            const storeCrand = productsGrid.dataset.storeCrand || '';
+            const cartCtime = productsGrid.dataset.cartCtime || '';
+            const cartCrand = productsGrid.dataset.cartCrand || '';
 
             async function refreshProducts()
             {
