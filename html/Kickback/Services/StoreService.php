@@ -213,11 +213,11 @@ class StoreService
     {
         $resp = new Response(false, "Unkown error encountered while returning cart for account");
 
-        /*if (!Session::isLoggedIn()) {
+        if (!Session::isLoggedIn()) {
             $endpoint_name = Endpoint::calculate_endpoint_resource_name();
             $resp = new Response(false, "$endpoint_name: Authentication required");
             return 401;
-        }*/
+        }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $endpoint_name = Endpoint::calculate_endpoint_resource_name();
@@ -314,11 +314,11 @@ class StoreService
     {
         $resp = new Response(false, "Unkown error encountered while returning store by locator");
 
-        /*if (!Session::isLoggedIn()) {
+        if (!Session::isLoggedIn()) {
             $endpoint_name = Endpoint::calculate_endpoint_resource_name();
             $resp = new Response(false, "$endpoint_name: Authentication required");
             return 401;
-        }*/
+        }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $endpoint_name = Endpoint::calculate_endpoint_resource_name();

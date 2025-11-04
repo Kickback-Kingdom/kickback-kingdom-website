@@ -36,7 +36,7 @@ class StoreTester
     {
         StoreController::runUnitTests();
         
-        //static::createBlankTestDatabase();
+        static::createBlankTestDatabase();
 
         //static::temp_populate_DB();
         
