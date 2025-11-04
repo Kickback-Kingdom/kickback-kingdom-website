@@ -12,6 +12,7 @@ use \Kickback\Backend\Views\vRecordId;
 use \Kickback\Backend\Views\vMedia;
 use \Kickback\Services\Session;
 use \Kickback\Backend\Config\StoreTag;
+use \Kickback\Backend\Models\Enums\CurrencyCode;
 use \Kickback\Common\Version;
 
 $products = [];
@@ -286,6 +287,11 @@ if (Session::isLoggedIn()) {
   gap: 0.4rem;
 }
 
+.price-plus {
+  margin: 0 0.3rem;
+  color: #33f7ffcc;
+}
+
 .currency-icon {
   width: 16px;
   height: 16px;
@@ -412,12 +418,43 @@ if (Session::isLoggedIn()) {
         >
           <?php foreach ($products as $product): ?>
             <?php
-              $priceAmount = $product->price->smallCurrencyUnit ?? 0;
-              $isAda = !isset($product->currency_item) || $product->currency_item->crand < 0;
-              $formattedAmount = $isAda ? number_format((float)$priceAmount, 2) : (int)$priceAmount;
-              $currencyDisplay = $isAda
-                ? "<span class='price-text'>{$formattedAmount} ₳</span>"
-                : "<span class='price-text'>{$formattedAmount} <img src='" . $product->currency_item->iconSmall->getFullPath() . "' class='currency-icon' alt='Currency'></span>";
+              $priceComponents = is_array($product->price) ? $product->price : [];
+              $priceDisplayParts = [];
+
+              foreach ($priceComponents as $priceComponent) {
+                $amount = $priceComponent->amount ?? 0;
+
+                if ($priceComponent->currencyCode instanceof CurrencyCode) {
+                  $symbol = match ($priceComponent->currencyCode) {
+                    CurrencyCode::ADA => '₳',
+                    CurrencyCode::USD => '$',
+                    default => $priceComponent->currencyCode->value,
+                  };
+
+                  $precision = (floor((float) $amount) == (float) $amount) ? 0 : 2;
+                  $formattedAmount = number_format((float) $amount, $precision);
+                  $priceDisplayParts[] = "<span class='price-text'>{$formattedAmount} {$symbol}</span>";
+                  continue;
+                }
+
+                if (isset($priceComponent->item) && $priceComponent->item instanceof \Kickback\Backend\Views\vItem) {
+                  $amountText = number_format((float) $amount, 0);
+                  $iconPath = $priceComponent->item->iconSmall?->getFullPath() ?: '';
+                  $itemName = htmlspecialchars($priceComponent->item->name ?? '', ENT_QUOTES);
+                  if (!empty($iconPath)) {
+                    $iconHtml = "<img src='{$iconPath}' class='currency-icon' alt='{$itemName}'>";
+                  } else {
+                    $iconHtml = $itemName;
+                  }
+                  $priceDisplayParts[] = "<span class='price-text'>{$amountText} {$iconHtml}</span>";
+                }
+              }
+
+              if (empty($priceDisplayParts)) {
+                $priceDisplayParts[] = "<span class='price-text'>Free</span>";
+              }
+
+              $currencyDisplay = implode("<span class='price-plus'>+</span>", $priceDisplayParts);
               $imageUrl = $product->mediaLarge->getFullPath() ?? "/assets/media/default.png";
               $altText = htmlspecialchars($product->name);
               $descText = htmlspecialchars($product->description);
