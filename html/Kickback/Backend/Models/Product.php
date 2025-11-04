@@ -25,16 +25,16 @@ class Product extends RecordId
 
     public array $prices;
 
-    public array $tags;
-    public array $banners;
+    public string $tag;
+    public array $categories;
 
     public function __construct(
         string $name = '',
         string $description = '',
         bool $removed = false,
         string $locator = '',
-        array $tags = [],
-        array $banners = [],
+        string $tag = '',
+        array $categories = [],
         ?vStore $store = null,
         array $prices = [],
         ?vMedia $largeMedia = null,
@@ -49,8 +49,8 @@ class Product extends RecordId
         $this->locator = $locator;
         $this->store = $store;
 
-        $this->tags = $this->validateStringArray("tags", $tags);
-        $this->banners = $this->validateStringArray("banners", $banners);
+        $this->tags = $this->validateStringArray("tag", $tags);
+        $this->categories = $this->validateStringArray("categories", $categories);
 
         $this->removed = $removed;
 

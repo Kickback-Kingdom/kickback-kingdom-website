@@ -28,10 +28,10 @@ if (!$storeResp || !$storeResp->success || empty($storeResp->data)) {
     throw new Exception("Failed to retrieve store with locator: $locator - {$storeResp->message}");
 }
 
-$store = $storeResp->data[0];
+$store = $storeResp->data;
 
 // Retrieve products for the store
-$productsResp = $store->products;
+$products = $store->products;
 
 
 
@@ -401,7 +401,7 @@ if (Session::isLoggedIn()) {
               $currencyDisplay = $isAda
                 ? "<span class='price-text'>{$formattedAmount} ₳</span>"
                 : "<span class='price-text'>{$formattedAmount} <img src='" . $product->currency_item->iconSmall->getFullPath() . "' class='currency-icon' alt='Currency'></span>";
-              $imageUrl = $product->ref_large_image_path->getFullPath() ?? "/assets/media/default.png";
+              $imageUrl = $product->mediaLarge->getFullPath() ?? "/assets/media/default.png";
               $altText = htmlspecialchars($product->name);
               $descText = htmlspecialchars($product->description);
               $stockCount = "?";//$product->stock_quantity ?? null;
@@ -476,7 +476,7 @@ if (Session::isLoggedIn()) {
 
     <script>
         (function(){
-            const productsGrid = document.getElementById('products-grid');
+            const productsGrid = document.getElementById('store-grid');
             const storeCtime = productsGrid.dataset.storeCtime;
             const storeCrand = productsGrid.dataset.storeCrand;
             const cartCtime = productsGrid.dataset.cartCtime;
