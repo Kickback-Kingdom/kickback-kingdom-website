@@ -20,7 +20,7 @@ class vCoupon extends vRecordId
     public ?DateTime $expiryTime = null;
     public ?bool $removed = null;
 
-    public array $prices;
+    public array $priceComponents;
 
     public function __construct(string $ctime = '', int $crand = -1)
     {

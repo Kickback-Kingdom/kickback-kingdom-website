@@ -4,15 +4,17 @@ declare(strict_types = 1);
 
 namespace Kickback\Backend\Models;
 
-class ProductPriceLink extends recordId
+class CouponPriceComponentLink extends RecordId
 {
-    public ?ForeignRecordId $productId;
-    public ?ForeignRecordId $priceId;
+    public ?ForeignRecordId $couponId;
+    public ?ForeignRecordId $priceComponentId;
 
     public function __construct()
     {
         parent::__construct();
     }
+
 }
+
 
 ?>

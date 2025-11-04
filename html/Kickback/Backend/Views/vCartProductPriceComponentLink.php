@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Kickback\Backend\Views;
 
-class vCartProductPriceLink extends vRecordId
+class vCartProductPriceComponentLink extends vRecordId
 {
     public bool $removed;
     public bool $checkedOut;

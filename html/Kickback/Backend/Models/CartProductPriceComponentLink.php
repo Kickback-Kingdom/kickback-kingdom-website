@@ -6,13 +6,13 @@ namespace Kickback\Backend\Models;
 
 use Kickback\Backend\Views\vRecordId;
 
-class CartProductPriceLink extends RecordId
+class CartProductPriceComponentLink extends RecordId
 {
     public bool $removed;
     public bool $checkedOut;
 
     public vRecordId $cartProductLinkId;
-    public vRecordId $priceId;
+    public vRecordId $priceComponentId;
 
     public function __construct()
     {

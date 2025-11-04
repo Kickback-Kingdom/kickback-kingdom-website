@@ -7,7 +7,7 @@ namespace Kickback\Backend\Models;
 use Exception;
 use InvalidArgumentException;
 use Kickback\Backend\Views\vMedia;
-use Kickback\Backend\Views\vPrice;
+use Kickback\Backend\Views\vPriceComponent;
 use Kickback\Backend\Views\vStore;
 
 class Product extends RecordId
@@ -23,7 +23,7 @@ class Product extends RecordId
 
     public bool $removed;
 
-    public array $prices;
+    public array $priceComponents;
 
     public string $tag;
     public array $categories;
@@ -36,7 +36,7 @@ class Product extends RecordId
         string $tag = '',
         array $categories = [],
         ?vStore $store = null,
-        array $prices = [],
+        array $priceComponents = [],
         ?vMedia $largeMedia = null,
         ?vMedia $smallMedia = null,
         ?vMedia $backMedia = null,
@@ -58,7 +58,7 @@ class Product extends RecordId
         $this->smallMedia = $smallMedia;
         $this->backMedia = $backMedia;
 
-        $this->price = static::validatePrice($price) ? $prices : throw new InvalidArgumentException("Price Array must contain only price componets");
+        $this->priceComponents = static::validatePrice($priceComponents) ? $priceComponents : throw new InvalidArgumentException("\$priceComponents Array must contain only price components");
     }
 
     private static function validateStringArray(string $fieldName, array $stringArray) : array
@@ -71,9 +71,9 @@ class Product extends RecordId
         return $stringArray;
     }
 
-    private static function validatePrice(array $prices) : bool
+    private static function validatePrice(array $priceComponents) : bool
     {
-        foreach($price as $priceComponent)
+        foreach($priceComponents as $priceComponent)
         {
             if(!$priceComponent instanceof vPriceComponent)
             {

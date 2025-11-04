@@ -16,7 +16,7 @@ use InvalidArgumentException;
 use Kickback\Backend\Models\Cart;
 use Kickback\Backend\Models\CartProductCouponLink;
 use Kickback\Backend\Models\CartProductLink;
-use Kickback\Backend\Models\CartProductPriceLink;
+use Kickback\Backend\Models\CartProductPriceComponentLink;
 use Kickback\Backend\Models\Coupon;
 use Kickback\Backend\Models\CouponAccountUse;
 use Kickback\Backend\Models\LootReservation;
@@ -25,17 +25,17 @@ use Kickback\Backend\Models\ProductLootLink;
 use Kickback\Backend\Models\ProductReservation;
 use Kickback\Backend\Models\RecordId;
 use Kickback\Backend\Models\Trade;
-use Kickback\Backend\Models\CouponPriceLink;
+use Kickback\Backend\Models\CouponPriceComponentLink;
 
 use Kickback\Backend\Models\Enums\CurrencyCode;
-use Kickback\Backend\Models\ProductPriceLink;
+use Kickback\Backend\Models\ProductPriceComponentLink;
 use Kickback\Backend\Views\vProductLootLink;
 use Kickback\Backend\Views\vAccount;
 use Kickback\Backend\Views\vCart;
 use Kickback\Backend\Views\vCartItem;
 use Kickback\Backend\Views\vCartProductCouponLink;
 use Kickback\Backend\Views\vCartProductLink;
-use Kickback\Backend\Views\vCartProductPriceLink;
+use Kickback\Backend\Views\vCartProductPriceComponentLink;
 use Kickback\Backend\Views\vCoupon;
 use Kickback\Backend\Views\vCouponAccountUse;
 use Kickback\Backend\Views\vItem;
@@ -60,19 +60,19 @@ class StoreController
 
     public static function runUnitTests() : void
     {
-        static::unittest_constructWhereClauseForGetPricesByCurrencyAndItemAmount();
-        static::unittest_returnWhereClauseBindingArrayForGetPricesByCurrencyAndItemAmount();
+        static::unittest_constructWhereClauseForGetpriceByCurrencyAndItemAmount();
+        static::unittest_returnWhereClauseBindingArrayForGetpriceByCurrencyAndItemAmount();
         static::unittest_returnWhereClauseForRemovingVoidLinksToProduct();
-        static::unittest_returnParamsForInsertionForNonExistingPrices();
-        static::unittest_returnWhereClauseBindingArrayForSelectPriceArrayAfterInsertion();
-        static::unittest_constructInsertionValueClauseForPrices();
-        static::unittest_returnInsertionParamsForLinkingProductToPrices();
+        static::unittest_returnParamsForInsertionForNonExistingprice();
+        static::unittest_returnWhereClauseBindingArrayForSelectPriceComponentArrayAfterInsertion();
+        static::unittest_constructInsertionValueClauseForprice();
+        static::unittest_returnInsertionParamsForLinkingProductToprice();
         static::unittest_returnParamsForRemovingOldLinksToProduct();
         static::unittest_getNumberOfProductInCartById();
-        static::unittest_returnWhereClauseForCanAccountAffordItemPricesInCart();
-        static::unittest_returnParamsForCanAccountAffordItemPricesForCart();
-        static::unittest_getWhereArrayClauseForGetLootForPricesForCart();
-        static::unittest_getParamsForGetLootForPricesForCart();
+        static::unittest_returnWhereClauseForcanAccountAffordItemPriceComponentsInCart();
+        static::unittest_returnParamsForCanAccountAffordItemPriceComponentsForCart();
+        static::unittest_getWhereArrayClauseForGetLootForpriceForCart();
+        static::unittest_getParamsForGetLootForpriceForCart();
         static::unittest_getWhereArrayClauseForGetStoreOwnerCartItemsLoot();
         static::unittest_getAreCartItemsAvailableWhereClause();
         static::unittest_getAreCartItemsAvailableParameterArray();
@@ -81,7 +81,7 @@ class StoreController
         static::unittest_createInsertParamsForLinkLootsToProductAsStock();
         static::unittest_returnValueClauseForReservingProductStock();
         static::unittest_returnParamsForReservingProductStock();
-        static::unittest_returnValueClauseForReserveLootForPrices();
+        static::unittest_returnValueClauseForReserveLootForprice();
         static::unittest_returnWhereClauseForRemoveProductReservations();
     }
 
@@ -100,16 +100,16 @@ class StoreController
 
             //Can account afford transactable items
             
-            $canAccountAffordItemPricesResp = static::canAccountAffordItemPricesInCart($cart);
-            if(!$canAccountAffordItemPricesResp->success) 
+            $canAccountAffordItempriceResp = static::canAccountAffordItemPriceComponentsInCart($cart);
+            if(!$canAccountAffordItempriceResp->success) 
             {
-                $resp->message = "Error in getting if account can afford cart prices : $canAccountAffordItemPricesResp->message"; 
+                $resp->message = "Error in getting if account can afford cart price : $canAccountAffordItempriceResp->message"; 
                 return $resp; 
             }
 
-            if(!$canAccountAffordItemPricesResp->data) 
+            if(!$canAccountAffordItempriceResp->data) 
             {
-                $resp->message = "Account cannot afford item prices to checkout cart : $canAccountAffordItemPricesResp->message"; 
+                $resp->message = "Account cannot afford item price to checkout cart : $canAccountAffordItempriceResp->message"; 
                 return $resp; 
             }
 
@@ -122,7 +122,7 @@ class StoreController
 
             try
             {
-                $reserveLootResp = static::reserveLootForPrices($cart);
+                $reserveLootResp = static::reserveLootForPriceComponentsInCart($cart);
             }
             catch(Exception $e)
             {
@@ -139,8 +139,8 @@ class StoreController
             }
 
             //Process lovelace transactions
-            $lovelacePriceOfCart = static::returnCartLovelacePrice($cart);
-            if($lovelacePriceOfCart < 0) throw new RuntimeException("Returned LoveLace amount in cart is negative");
+            $lovelacePriceComponentOfCart = static::returnCartLovelacePriceComponent($cart);
+            if($lovelacePriceComponentOfCart < 0) throw new RuntimeException("Returned LoveLace amount in cart is negative");
 
             if(!$completeItemTransaction)
             {
@@ -149,7 +149,7 @@ class StoreController
                 return $resp;
             }
 
-            if($lovelacePriceOfCart > 0)
+            if($lovelacePriceComponentOfCart > 0)
             {
                 //HAVE STRIPE CONTROLLER MAKE CALL TO STRIPE TO COMPLETE TRANSACTION AND HIT ENDPOINT TO THEN TRANSACT ITEMS IF SUCCESSFUL
                 //$stripeResp = StripeController::IsTransactionComplete($stripeTransactionId);
@@ -311,7 +311,7 @@ class StoreController
         new Exception("UNIT TEST FAILED | expected : '(ctime = ? AND crand = ?) OR (ctime = ? AND crand = ?) OR (ctime = ? AND crand = ?)' | actual : ".static::returnWhereClauseForRemoveProductReservations($reservations)));
     }
 
-    public static function transactProductReservations(vCart $cart, array $productReservations, array $priceReservations) : Response
+    public static function transactProductReservations(vCart $cart, array $productReservations, array $priceComponentReservations) : Response
     {
         $resp = new Response(false, "unkown error in transacting items", null);
 
@@ -324,8 +324,8 @@ class StoreController
             $productLootsResp = static::materializeProductReservations($productReservations, $productLootReservations);
             $productLoots = $productLootsResp->data;
 
-            $priceLootsResp = static::materializePriceReservations($priceReservations);
-            $priceLoots = $priceLootsResp->data;
+            $priceComponentLootsResp = static::materializePriceComponentReservations($priceComponentReservations);
+            $priceComponentLoots = $priceComponentLootsResp->data;
  
             $conn->begin_transaction();
 
@@ -335,18 +335,18 @@ class StoreController
             static::executeQueriesToCloseProductReservations($productReservations);
 
             //Trades
-            static::executeQueriesToCreateTradeEntriesForReservations($cart, $productLoots, $priceReservations);
+            static::executeQueriesToCreateTradeEntriesForReservations($cart, $productLoots, $priceComponentReservations);
 
-            //Price loot
-            static::executeQueriesToTransactMaterializedLootsForPrices($cart, $priceLoots);
+            //PriceComponent loot
+            static::executeQueriesToTransactMaterializedLootsForprice($cart, $priceComponentLoots);
 
-            $lootReservations = array_merge($productLootReservations, $priceReservations);
+            $lootReservations = array_merge($productLootReservations, $priceComponentReservations);
             static::executeQueriesToCloseLootReservations($lootReservations);
 
             //Cart
             static::markCartAsCheckedOut($cart);
             static::markCartProductsAsCheckedOut($cart);
-            static::markCartProductPricesAsCheckedOut($cart);
+            static::markCartProductpriceAsCheckedOut($cart);
 
             //Coupons
             static::markUsesForCartCoupons($cart);
@@ -658,11 +658,11 @@ class StoreController
         return $coupons;
     }
 
-    private static function markCartProductPricesAsCheckedOut(vCart $cart) : void
+    private static function markCartProductpriceAsCheckedOut(vCart $cart) : void
     {
         $params = [];
-        $selectTable = static::createSelectTableForMarkCartProductPricesAsCheckedOut($cart->cartProducts, $params);
-        $sql = "UPDATE cart_product_price_link cppl
+        $selectTable = static::createSelectTableForMarkCartProductpriceAsCheckedOut($cart->cartProducts, $params);
+        $sql = "UPDATE cart_product_price_component_link cppl
         JOIN ($selectTable) pl ON cppl.ref_cart_product_link_ctime = pl.ctime AND cppl.ref_cart_product_link_crand = pl.crand
         SET checked_out = 1
         WHERE removed = 0 AND checked_out = 0;";
@@ -670,10 +670,10 @@ class StoreController
 
         $result = Database::executeSqlQuery($sql, $params);
 
-        if(!$result) throw new Exception("result returned false while marking cart product price links as checked out");
+        if(!$result) throw new Exception("result returned false while marking cart product priceComponent links as checked out");
     }
 
-    private static function createSelectTableForMarkCartProductPricesAsCheckedOut(array $products, array &$params) : string
+    private static function createSelectTableForMarkCartProductpriceAsCheckedOut(array $products, array &$params) : string
     {
         $selectTable = "";
 
@@ -736,17 +736,17 @@ class StoreController
         if(!$result) throw new Exception("result returned false while marking cart as checked out");
     }
 
-    private static function materializePriceReservations(array $priceReservations) : Response
+    private static function materializePriceComponentReservations(array $priceComponentReservations) : Response
     {
-        $resp = new Response(false, "unkowner error in materializing price reservation", null);
+        $resp = new Response(false, "unkowner error in materializing priceComponent reservation", null);
 
         try
         {
             $params = [];
-            $selectTable = static::createSelectTableForMaterializePriceReservations($priceReservations, $params);
+            $selectTable = static::createSelectTableForMaterializePriceComponentReservations($priceComponentReservations, $params);
 
             $sql = "
-                WITH priceReservations (loot_id, quantity) AS(
+                WITH priceComponentReservations (loot_id, quantity) AS(
                     $selectTable
                 )
 
@@ -769,14 +769,14 @@ class StoreController
                 vi.is_fungible
                 FROM v_loot_item vli
                 JOIN v_item_info vi ON vli.item_id = vi.Id
-                JOIN priceReservations pr on pr.loot_id = vli.Id
+                JOIN priceComponentReservations pr on pr.loot_id = vli.Id
             ";
 
             //throw new Exception($sql. " | ".json_encode($params));
 
             $result = Database::executeSqlQuery($sql, $params);
 
-            if(!$result) throw new Exception("result returned false attempting to materialize price reservations");
+            if(!$result) throw new Exception("result returned false attempting to materialize priceComponent reservations");
 
             $loots = [];
 
@@ -787,24 +787,24 @@ class StoreController
             }
 
             $resp->success = true;
-            $resp->message = "price reservations materialized";
+            $resp->message = "priceComponent reservations materialized";
             $resp->data = $loots;
         }
         catch(Exception $e)
         {
-            throw new Exception("Exception caught while attempting to materialize price reservations : $e");
+            throw new Exception("Exception caught while attempting to materialize priceComponent reservations : $e");
         }
 
         return $resp;
     }
 
-    private static function createSelectTableForMaterializePriceReservations(array $priceReservations, array &$params) : string
+    private static function createSelectTableForMaterializePriceComponentReservations(array $priceComponentReservations, array &$params) : string
     {
         $selectTable = "";
 
-        for($i = 0; $i < count($priceReservations); $i ++)
+        for($i = 0; $i < count($priceComponentReservations); $i ++)
         {
-            $reservation = $priceReservations[$i];
+            $reservation = $priceComponentReservations[$i];
 
             if($i !== 0)
             {
@@ -1127,26 +1127,26 @@ class StoreController
         }
     }
 
-    //reassign price loots to seller
-    private static function executeQueriesToTransactMaterializedLootsForPrices(vCart $cart, array $priceLoots) : void
+    //reassign priceComponent loots to seller
+    private static function executeQueriesToTransactMaterializedLootsForprice(vCart $cart, array $priceComponentLoots) : void
     {
         $fungibleLoots = [];
         $nonFungibleLoots = [];
 
-        static::seperateLootsByFungiblity($priceLoots, $fungibleLoots, $nonFungibleLoots);
+        static::seperateLootsByFungiblity($priceComponentLoots, $fungibleLoots, $nonFungibleLoots);
 
         if(count($fungibleLoots) > 0)static::transactFungibleLoots($cart->account, $cart->store->owner, $fungibleLoots);
         if(count($nonFungibleLoots) > 0)static::transactNonFungibleLoot($cart->store->owner, $nonFungibleLoots);
     }
 
-    //create trade entries for both price and product reservations
-    private static function executeQueriesToCreateTradeEntriesForReservations(vCart $cart, array $productLoots, array $priceLootReservations) : void
+    //create trade entries for both priceComponent and product reservations
+    private static function executeQueriesToCreateTradeEntriesForReservations(vCart $cart, array $productLoots, array $priceComponentLootReservations) : void
     {
         $buyer = $cart->account;
         $seller = $cart->store->owner;
 
         static::createTradeEntriesForProductReservations($buyer, $seller, $productLoots);
-        static::createTradeEntriesForPriceReservations($buyer, $seller, $priceLootReservations);
+        static::createTradeEntriesForPriceComponentReservations($buyer, $seller, $priceComponentLootReservations);
     } 
 
     private static function createTradeEntriesForProductReservations(vAccount $buyer, vAccount $seller, array $productLoots) : void
@@ -1185,24 +1185,24 @@ class StoreController
         return $valueClause;
     }
     
-    private static function createTradeEntriesForPriceReservations(vAccount $buyer, vAccount $seller, array $priceLootReservations) : void
+    private static function createTradeEntriesForPriceComponentReservations(vAccount $buyer, vAccount $seller, array $priceComponentLootReservations) : void
     {
         $params = [];
-        $valueClause = static::createValueClauseForCreateTradeEntriesForPriceReservations($buyer, $seller, $priceLootReservations, $params);
+        $valueClause = static::createValueClauseForCreateTradeEntriesForPriceComponentReservations($buyer, $seller, $priceComponentLootReservations, $params);
         $sql = "INSERT INTO trade (id, from_account_id, to_account_id, loot_id, trade_date, from_account_obtain_date, quantity) $valueClause;";
 
         $result = Database::executeSqlQuery($sql, $params);
 
-        if(!$result) throw new Exception("Result returned false attempting to create trade entries for price reservations");
+        if(!$result) throw new Exception("Result returned false attempting to create trade entries for priceComponent reservations");
     }
 
-    private static function createValueClauseForCreateTradeEntriesForPriceReservations(vAccount $buyer, vAccount $seller, array $priceLootReservations, array &$params) : string
+    private static function createValueClauseForCreateTradeEntriesForPriceComponentReservations(vAccount $buyer, vAccount $seller, array $priceComponentLootReservations, array &$params) : string
     {
         $valueClause = "";
 
-        for($i = 0; $i < count($priceLootReservations); $i ++)
+        for($i = 0; $i < count($priceComponentLootReservations); $i ++)
         {
-            $reservation = $priceLootReservations[$i];
+            $reservation = $priceComponentLootReservations[$i];
 
             $trade = new trade($buyer, $seller, $reservation->lootId, $reservation->quantity);
 
@@ -1291,7 +1291,7 @@ class StoreController
         return $valueClause;
     }
 
-    //close price loot reservations
+    //close priceComponent loot reservations
     private static function executeQueriesToCloseLootReservations(array $lootReservations) : void
     {
         $params = [];
@@ -1340,7 +1340,7 @@ class StoreController
                 $loot = $lootForTotals[$i];
   
                 
-                //Add the loot if it matches the prices; adding up to the amount in the total for fungible loots
+                //Add the loot if it matches the price; adding up to the amount in the total for fungible loots
                 if($loot->item->crand !== $total->item->crand)
                 {
                     if($i === count($lootForTotals)-1 && $totalAmount !== 0) throw new RuntimeException("Cart owner did not have enough loot to satisfy cart totals");
@@ -1369,14 +1369,14 @@ class StoreController
         return $consolidatedLoot;
     }
 
-    private static function reserveLootForPrices(vCart $cart) : Response
+    private static function reserveLootForPriceComponentsInCart(vCart $cart) : Response
     {
-        $resp = new Response(false, "unkowner error in reserving loot for prices", null);
+        $resp = new Response(false, "unkowner error in reserving loot for price", null);
 
         try
         {   
 
-            $valueClause = static::returnValueClauseForReserveLootForPrices($cart->totals);
+            $valueClause = static::returnValueClauseForReserveLootForprice($cart->totals);
             $sql = "INSERT INTO loot_reservation (ctime,
                 crand,
                 ref_loot_ctime,
@@ -1387,28 +1387,28 @@ class StoreController
                 VALUES ($valueClause)
             ";
 
-            // Get the loot which matches needed items for prices
-            $lootsForPrices = static::getLootForPricesForCart($cart); 
+            // Get the loot which matches needed items for price
+            $lootsForprice = static::getLootForpriceForCart($cart); 
 
             // Consolidate loot to only the amount needed for the totals
-            $consolidatedLootForCartTotals = static::consolidateLootForCartTotals($cart->totals, $lootsForPrices); 
+            $consolidatedLootForCartTotals = static::consolidateLootForCartTotals($cart->totals, $lootsForprice); 
 
-            $params = static::returnParamsForReserveLootForPrices($cart->totals, $consolidatedLootForCartTotals); 
+            $params = static::returnParamsForReserveLootForprice($cart->totals, $consolidatedLootForCartTotals); 
 
             $result = Database::executeSqlQuery($sql, $params);
 
-            if(!$result) throw new Exception("Result returned false attempting to reserve loots for prices");
+            if(!$result) throw new Exception("Result returned false attempting to reserve loots for price");
 
             $reservations = static::getLootReservationsAfterInsertion($params);
 
             $resp->success = true;
-            $resp->message = "Loot for prices are reserved";
+            $resp->message = "Loot for price are reserved";
             $resp->data = $reservations;
             
         }
         catch(Exception $e)
         {
-            throw new Exception("Exception caught while reserving loot for prices : $e");
+            throw new Exception("Exception caught while reserving loot for price : $e");
         }
 
         return $resp;
@@ -1447,7 +1447,7 @@ class StoreController
         return $reservations;
     }
 
-    private static function returnParamsForReserveLootForPrices(array $cartTotals, array $cartOwnerCartLoot) : array
+    private static function returnParamsForReserveLootForprice(array $cartTotals, array $cartOwnerCartLoot) : array
     {
         $params = [];
 
@@ -1503,33 +1503,33 @@ class StoreController
         return $params;
     }
 
-    private static function returnValueClauseForReserveLootForPrices(array $cartPrices) : string
+    private static function returnValueClauseForReserveLootForprice(array $cartprice) : string
     {
-        if(count($cartPrices) === 0) throw new InvalidArgumentException("\$cartPrices array must contain at least one element");
+        if(count($cartprice) === 0) throw new InvalidArgumentException("\$cartprice array must contain at least one element");
 
         $valueClause = "";
 
-        for($i = 0; $i < count($cartPrices); $i++)
+        for($i = 0; $i < count($cartprice); $i++)
         {
             $valueClause .= "?,?,?,?,?,?,?";
 
-            if($i != count($cartPrices)-1) $valueClause .= ",";
+            if($i != count($cartprice)-1) $valueClause .= ",";
         }
 
         return $valueClause;
     }
 
-    private static function unittest_returnValueClauseForReserveLootForPrices() : void
+    private static function unittest_returnValueClauseForReserveLootForprice() : void
     {
         $cartProducts = [0];
-        assert("?,?,?,?,?,?,?" === static::returnValueClauseForReserveLootForPrices($cartProducts), 
-        new Exception("UNIT TEST FAILED : Expected '?,?,?,?,?,?,?' | Actual : '".static::returnValueClauseForReserveLootForPrices($cartProducts))."'");
+        assert("?,?,?,?,?,?,?" === static::returnValueClauseForReserveLootForprice($cartProducts), 
+        new Exception("UNIT TEST FAILED : Expected '?,?,?,?,?,?,?' | Actual : '".static::returnValueClauseForReserveLootForprice($cartProducts))."'");
         $cartProducts = [0,0];
-        assert("?,?,?,?,?,?,?,?,?,?,?,?,?,?" === static::returnValueClauseForReserveLootForPrices($cartProducts), 
-        new Exception("UNIT TEST FAILED : Expected '?,?,?,?,?,?,?,?,?,?,?,?,?,?' | Actual : '".static::returnValueClauseForReserveLootForPrices($cartProducts))."'");
+        assert("?,?,?,?,?,?,?,?,?,?,?,?,?,?" === static::returnValueClauseForReserveLootForprice($cartProducts), 
+        new Exception("UNIT TEST FAILED : Expected '?,?,?,?,?,?,?,?,?,?,?,?,?,?' | Actual : '".static::returnValueClauseForReserveLootForprice($cartProducts))."'");
         $cartProducts = [0,0,0];
-        assert("?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" === static::returnValueClauseForReserveLootForPrices($cartProducts), 
-        new Exception("UNIT TEST FAILED : Expected '?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?' | Actual : '".static::returnValueClauseForReserveLootForPrices($cartProducts))."'");
+        assert("?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" === static::returnValueClauseForReserveLootForprice($cartProducts), 
+        new Exception("UNIT TEST FAILED : Expected '?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?' | Actual : '".static::returnValueClauseForReserveLootForprice($cartProducts))."'");
     }
 
 
@@ -1878,20 +1878,20 @@ class StoreController
     }
 
     /**
-     * Extracts all of the prices for all of the cart items, adding common prices together
-     * @param vCart $cart the cart for which the cart items and prices need to be transacted
+     * Extracts all of the price for all of the cart items, adding common price together
+     * @param vCart $cart the cart for which the cart items and price need to be transacted
      * @return Response $resp the response object in which no data is returned however success is indicated
      */
     private static function transactItemsForCart(vCart $cart) : Response
     {
-        $resp = new Response(false, "unkown error in pay item prices for cart", null);
+        $resp = new Response(false, "unkown error in pay item price for cart", null);
 
         $conn = Database::getConnection();
         mysqli_autocommit($conn, false);
 
         try
         {
-            $allLootsForPricesInCart = static::getLootForPricesForCart($cart);
+            $allLootsForpriceInCart = static::getLootForpriceForCart($cart);
             $allLootsForCartItemsFromStoreOwner = static::getStoreOwnerCartItemsLoot($cart);
 
 
@@ -1901,7 +1901,7 @@ class StoreController
 
             $conn->begin_transaction();
 
-            static::payItemPricesForCart($cart, $allLootsForPricesInCart);
+            static::payItempriceForCart($cart, $allLootsForpriceInCart);
 
             static::addPurchasedCartProductsToInventory($cart, $allLootsForCartItemsFromStoreOwner);
 
@@ -1914,7 +1914,7 @@ class StoreController
         {  
             $conn->rollback();
             mysqli_autocommit($conn, true);
-            throw new Exception("Exception caught while paying for item prices for cart : $e");
+            throw new Exception("Exception caught while paying for item price for cart : $e");
         }
 
         mysqli_autocommit($conn, true);
@@ -2049,11 +2049,11 @@ class StoreController
     }
 
     /**
-     * Transacts all of the prices in the cart, adding trade records as needed
-     * @param vCart $cart the cart for which to pay the total prices
-     * @param array $allLootsForPricesInCart the array of the loot held within the cart owner's inventory that match a price in their cart
+     * Transacts all of the price in the cart, adding trade records as needed
+     * @param vCart $cart the cart for which to pay the total price
+     * @param array $allLootsForpriceInCart the array of the loot held within the cart owner's inventory that match a priceComponent in their cart
      */
-    private static function payItemPricesForCart(vCart $cart, array $allLootsForPricesInCart) : void
+    private static function payItempriceForCart(vCart $cart, array $allLootsForpriceInCart) : void
     {
         foreach($cart->totals as $total)
         {   
@@ -2066,18 +2066,18 @@ class StoreController
                 $foundKey = null;
 
                 // Find the first matching loot item
-                foreach ($allLootsForPricesInCart as $key => $loot) {
+                foreach ($allLootsForpriceInCart as $key => $loot) {
                     if ($loot->item->crand === $total->item->crand) {
                         $foundKey = $key;
                         break;
                     }
                 }
 
-                //throw new Exception(json_encode($allLootsForPricesInCart));
+                //throw new Exception(json_encode($allLootsForpriceInCart));
 
                 if (is_null($foundKey)) throw new RuntimeException("No loot item found for crand {$total->item->crand}");
 
-                $lootItem = $allLootsForPricesInCart[$foundKey];
+                $lootItem = $allLootsForpriceInCart[$foundKey];
 
                 //if item is fungible, the amount is the quantity of the fungible items reassigned which is different from multiple of non-fungible items
                 //so we pass the amount which need to be transferred to the appropriate methods and break out of the for loop for this total
@@ -2085,7 +2085,7 @@ class StoreController
                 {
                     static::logTrade($lootItem, $cart->store->owner, $amount);
                     static::reassignLoot($lootItem, $cart->store->owner, $amount);
-                    unset($allLootsForPricesInCart[$foundKey]);
+                    unset($allLootsForpriceInCart[$foundKey]);
                     break;
                 }
 
@@ -2093,7 +2093,7 @@ class StoreController
                 static::reassignLoot($lootItem, $cart->store->owner);
 
                 //unset the index of the loot that was just transacted as to not re-transact it
-                unset($allLootsForPricesInCart[$foundKey]);
+                unset($allLootsForpriceInCart[$foundKey]);
             }
         }
     }
@@ -2103,9 +2103,9 @@ class StoreController
      * @param vCart $cart the cart to get the loot from
      * @return array the array populated with vLoot of the appropriate loot
      */
-    private static function getLootForPricesForCart(vCart $cart) : array
+    private static function getLootForpriceForCart(vCart $cart) : array
     {
-        $whereArrayClause = static::getWhereArrayClauseForGetLootForPricesForCart($cart->totals);
+        $whereArrayClause = static::getWhereArrayClauseForGetLootForpriceForCart($cart->totals);
 
         $sql = "
         SELECT 
@@ -2130,11 +2130,11 @@ class StoreController
         JOIN v_item_info vi ON vli.item_id = vi.id
         WHERE account_id = ? AND vli.quantity_available > 0 AND item_id IN ($whereArrayClause);";
 
-        $params = static::getParamsForGetLootForPricesForCart($cart->account, $cart->totals);
+        $params = static::getParamsForGetLootForpriceForCart($cart->account, $cart->totals);
 
         $result = Database::executeSqlQuery($sql, $params);
 
-        if(!$result) throw new Exception("result returned false for getting loot for prices for cart");
+        if(!$result) throw new Exception("result returned false for getting loot for price for cart");
 
         $loot = [];
 
@@ -2147,7 +2147,7 @@ class StoreController
         return $loot;
     }
 
-    private static function getWhereArrayClauseForGetLootForPricesForCart(array $totalsItemIds) : string
+    private static function getWhereArrayClauseForGetLootForpriceForCart(array $totalsItemIds) : string
     {
         if(count($totalsItemIds) <= 0) throw new InvalidArgumentException("totalsItemIds array must contain at least one element");
 
@@ -2161,16 +2161,16 @@ class StoreController
         return $whereClause;
     }
 
-    private static function unittest_getWhereArrayClauseForGetLootForPricesForCart() : void
+    private static function unittest_getWhereArrayClauseForGetLootForpriceForCart() : void
     {
-        assert("?" === static::getWhereArrayClauseForGetLootForPricesForCart([0]), "UNIT TEST FAILED : returned where clause did match expected");
-        assert("?,?" === static::getWhereArrayClauseForGetLootForPricesForCart([0,0]), "UNIT TEST FAILED : returned where clause did match expected");
-        assert("?,?,?" === static::getWhereArrayClauseForGetLootForPricesForCart([0,0,0]), "UNIT TEST FAILED : returned where clause did match expected");
-        assert("?,?,?,?" === static::getWhereArrayClauseForGetLootForPricesForCart([0,0,0,0]), "UNIT TEST FAILED : returned where clause did match expected");
-        assert("?,?,?,?,?" === static::getWhereArrayClauseForGetLootForPricesForCart([0,0,0,0,0]), "UNIT TEST FAILED : returned where clause did match expected");
+        assert("?" === static::getWhereArrayClauseForGetLootForpriceForCart([0]), "UNIT TEST FAILED : returned where clause did match expected");
+        assert("?,?" === static::getWhereArrayClauseForGetLootForpriceForCart([0,0]), "UNIT TEST FAILED : returned where clause did match expected");
+        assert("?,?,?" === static::getWhereArrayClauseForGetLootForpriceForCart([0,0,0]), "UNIT TEST FAILED : returned where clause did match expected");
+        assert("?,?,?,?" === static::getWhereArrayClauseForGetLootForpriceForCart([0,0,0,0]), "UNIT TEST FAILED : returned where clause did match expected");
+        assert("?,?,?,?,?" === static::getWhereArrayClauseForGetLootForpriceForCart([0,0,0,0,0]), "UNIT TEST FAILED : returned where clause did match expected");
     }
 
-    private static function getParamsForGetLootForPricesForCart(vRecordId $accountId, array $totals) : array
+    private static function getParamsForGetLootForpriceForCart(vRecordId $accountId, array $totals) : array
     {
         $params = [$accountId->crand];
 
@@ -2183,21 +2183,21 @@ class StoreController
         return $params;
     }
 
-    private static function unittest_getParamsForGetLootForPricesForCart() : void
+    private static function unittest_getParamsForGetLootForpriceForCart() : void
     {
         $mockTotal = new vPriceComponent();
         $mockTotal->item = new vItem('x',1);
         $mockNullTotal = new vPriceComponent();
         $accountId = new vRecordId();
-        assert([$accountId->crand, $mockTotal->item->crand] === static::getParamsForGetLootForPricesForCart($accountId, [$mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
-        assert([$accountId->crand, $mockTotal->item->crand, $mockTotal->item->crand] === static::getParamsForGetLootForPricesForCart($accountId, [$mockTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
-        assert([$accountId->crand, $mockTotal->item->crand, $mockTotal->item->crand, $mockTotal->item->crand] === static::getParamsForGetLootForPricesForCart($accountId, [$mockTotal, $mockTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
-        assert([$accountId->crand] === static::getParamsForGetLootForPricesForCart($accountId, [$mockNullTotal]), "UNIT TEST FAILED : returned param array did not match expected");
-        assert([$accountId->crand] === static::getParamsForGetLootForPricesForCart($accountId, [$mockNullTotal, $mockNullTotal]), "UNIT TEST FAILED : returned param array did not match expected");
-        assert([$accountId->crand, $mockTotal->item->crand] === static::getParamsForGetLootForPricesForCart($accountId, [$mockNullTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
-        assert([$accountId->crand, $mockTotal->item->crand] === static::getParamsForGetLootForPricesForCart($accountId, [$mockNullTotal, $mockNullTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
-        assert([$accountId->crand, $mockTotal->item->crand, $mockTotal->item->crand] === static::getParamsForGetLootForPricesForCart($accountId, [$mockTotal, $mockNullTotal, $mockNullTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
-        assert([$accountId->crand, $mockTotal->item->crand, $mockTotal->item->crand, $mockTotal->item->crand] === static::getParamsForGetLootForPricesForCart($accountId, [$mockTotal, $mockNullTotal, $mockTotal, $mockNullTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([$accountId->crand, $mockTotal->item->crand] === static::getParamsForGetLootForpriceForCart($accountId, [$mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([$accountId->crand, $mockTotal->item->crand, $mockTotal->item->crand] === static::getParamsForGetLootForpriceForCart($accountId, [$mockTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([$accountId->crand, $mockTotal->item->crand, $mockTotal->item->crand, $mockTotal->item->crand] === static::getParamsForGetLootForpriceForCart($accountId, [$mockTotal, $mockTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([$accountId->crand] === static::getParamsForGetLootForpriceForCart($accountId, [$mockNullTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([$accountId->crand] === static::getParamsForGetLootForpriceForCart($accountId, [$mockNullTotal, $mockNullTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([$accountId->crand, $mockTotal->item->crand] === static::getParamsForGetLootForpriceForCart($accountId, [$mockNullTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([$accountId->crand, $mockTotal->item->crand] === static::getParamsForGetLootForpriceForCart($accountId, [$mockNullTotal, $mockNullTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([$accountId->crand, $mockTotal->item->crand, $mockTotal->item->crand] === static::getParamsForGetLootForpriceForCart($accountId, [$mockTotal, $mockNullTotal, $mockNullTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
+        assert([$accountId->crand, $mockTotal->item->crand, $mockTotal->item->crand, $mockTotal->item->crand] === static::getParamsForGetLootForpriceForCart($accountId, [$mockTotal, $mockNullTotal, $mockTotal, $mockNullTotal, $mockTotal]), "UNIT TEST FAILED : returned param array did not match expected");
     }
 
     /**
@@ -2385,7 +2385,7 @@ class StoreController
     }
 
 
-    private static function returnCartLovelacePrice(vCart $cart) : int
+    private static function returnCartLovelacePriceComponent(vCart $cart) : int
     {
         $lovelace = 0;
 
@@ -2417,14 +2417,14 @@ class StoreController
         return 0;
     }
 
-    public static function canAccountAffordItemPricesInCart(vCart $cart) : Response
+    public static function canAccountAffordItemPriceComponentsInCart(vCart $cart) : Response
     {
-        $resp = new Response(false, "Unkown error in checking if account can afford item prices in cart", null);
+        $resp = new Response(false, "Unkown error in checking if account can afford item price in cart", null);
 
         try
         {
             
-            $lootForCart = static::returnLootAmountOfPricesInCart($cart);
+            $lootForCart = static::returnLootAmountOfPriceComponentsInCart($cart);
 
             $canAccountAffordItems = true;
 
@@ -2447,33 +2447,33 @@ class StoreController
             if($canAccountAffordItems)
             {
                 $resp->success = true;
-                $resp->message = "Account can afford item prices";
+                $resp->message = "Account can afford item price";
                 $resp->data = true;
             }
             else
             {
                 $resp->success = true;
-                $resp->message = "Account cannot afford Item Prices : ".json_encode($lootForCart)." : ".json_encode($cart->totals);
+                $resp->message = "Account cannot afford Item price : ".json_encode($lootForCart)." : ".json_encode($cart->totals);
                 $resp->data = false;
             }
         }
         catch(Exception $e)
         {
-            throw new Exception("Exception caught while checking if account can afford item prices in cart : $e");
+            throw new Exception("Exception caught while checking if account can afford item price in cart : $e");
         }
 
         return $resp;
     }
 
     /**
-     * Returns the loots item_id and amount for each price in the cart
-     * @param vCart $cart the cart to reference the prices
+     * Returns the loots item_id and amount for each priceComponent in the cart
+     * @param vCart $cart the cart to reference the price
      * @return array $lootForCart the array of associative arrays returned with [ {(item_id),(amount)} ]
      */
-    private static function returnLootAmountOfPricesInCart(vCart $cart) : array
+    private static function returnLootAmountOfPriceComponentsInCart(vCart $cart) : array
     {
-        $whereClause = static::returnWhereClauseForCanAccountAffordItemPricesInCart($cart->cartProducts);
-        $params = static::returnParamsForCanAccountAffordItemPricesForCart($cart);
+        $whereClause = static::returnWhereClauseForcanAccountAffordItemPriceComponentsInCart($cart->cartProducts);
+        $params = static::returnParamsForCanAccountAffordItemPriceComponentsForCart($cart);
 
         $sql = "SELECT item_id, SUM(Quantity) AS `amount` FROM loot WHERE account_id = ? AND opened = 1 AND redeemed = 1$whereClause GROUP BY item_id;";
 
@@ -2486,13 +2486,13 @@ class StoreController
         return $lootForCart;
     }
 
-    private static function returnParamsForCanAccountAffordItemPricesForCart(vCart $cart) : array
+    private static function returnParamsForCanAccountAffordItemPriceComponentsForCart(vCart $cart) : array
     {
         $params = [$cart->account->crand];
 
         foreach($cart->cartProducts as $cartItem)
         {
-            foreach($cartItem->product->price as $priceComponent)
+            foreach($cartItem->product->priceComponents as $priceComponent)
             {
                 if(is_null($priceComponent->item)) continue;
 
@@ -2504,7 +2504,7 @@ class StoreController
         return $params;
     }
 
-    private static function unittest_returnParamsForCanAccountAffordItemPricesForCart() : void
+    private static function unittest_returnParamsForCanAccountAffordItemPriceComponentsForCart() : void
     {
         $cart = new vCart();
         $cart->account = new vAccount();
@@ -2514,39 +2514,39 @@ class StoreController
         $priceComponent = new vPriceComponent();
         $priceComponent->item = new vItem('',4);
 
-        $cartItem->product->price = [$priceComponent];
+        $cartItem->product->priceComponents = [$priceComponent];
         $cart->cartProducts = [$cartItem];
-        assert(static::returnParamsForCanAccountAffordItemPricesForCart($cart) === [-1,4], new Exception("UNIT TEST FAILED : returned params did not match expected for returnParamsForCanAccountAffordItemPricesForCart"));
+        assert(static::returnParamsForCanAccountAffordItemPriceComponentsForCart($cart) === [-1,4], new Exception("UNIT TEST FAILED : returned params did not match expected for returnParamsForCanAccountAffordItemPriceComponentsForCart"));
 
         $cart->cartProducts = [$cartItem,$cartItem];
-        assert(static::returnParamsForCanAccountAffordItemPricesForCart($cart) === [-1,4,4], new Exception("UNIT TEST FAILED : returned params did not match expected for returnParamsForCanAccountAffordItemPricesForCart"));
+        assert(static::returnParamsForCanAccountAffordItemPriceComponentsForCart($cart) === [-1,4,4], new Exception("UNIT TEST FAILED : returned params did not match expected for returnParamsForCanAccountAffordItemPriceComponentsForCart"));
         
-        $cartItem->product->price = [$priceComponent, $priceComponent];
+        $cartItem->product->priceComponents = [$priceComponent, $priceComponent];
         $cart->cartProducts = [$cartItem];       
-        assert(static::returnParamsForCanAccountAffordItemPricesForCart($cart) === [-1,4,4], new Exception("UNIT TEST FAILED : returned params did not match expected for returnParamsForCanAccountAffordItemPricesForCart"));
+        assert(static::returnParamsForCanAccountAffordItemPriceComponentsForCart($cart) === [-1,4,4], new Exception("UNIT TEST FAILED : returned params did not match expected for returnParamsForCanAccountAffordItemPriceComponentsForCart"));
     }
 
-    private static function returnWhereClauseForCanAccountAffordItemPricesInCart(array $cartItems) : string
+    private static function returnWhereClauseForcanAccountAffordItemPriceComponentsInCart(array $cartItems) : string
     {
         $whereClause = " AND (";
 
         foreach($cartItems as $cartItem)
         {
-            $priceWhereClause = "(";
+            $priceComponentWhereClause = "(";
 
-            foreach($cartItem->product->price as $priceComponent)
+            foreach($cartItem->product->priceComponents as $priceComponent)
             {
                 if(is_null($priceComponent->item)) continue;
 
-                $priceWhereClause .= "item_id = ? OR ";
+                $priceComponentWhereClause .= "item_id = ? OR ";
             }
 
             //trim the last "OR" off
-            $priceWhereClause = substr($priceWhereClause, 0, -4);
+            $priceComponentWhereClause = substr($priceComponentWhereClause, 0, -4);
 
-            $priceWhereClause = $priceWhereClause.")";
+            $priceComponentWhereClause = $priceComponentWhereClause.")";
 
-            $whereClause = $whereClause.$priceWhereClause." OR ";
+            $whereClause = $whereClause.$priceComponentWhereClause." OR ";
             
         }
 
@@ -2558,47 +2558,47 @@ class StoreController
         return $whereClause;
     }
 
-    private static function unittest_returnWhereClauseForCanAccountAffordItemPricesInCart() : void
+    private static function unittest_returnWhereClauseForcanAccountAffordItemPriceComponentsInCart() : void
     {
         $cartItem = new vCartItem();
         $cartItem->product = new vProduct();
         $priceComponent = new vPriceComponent();
         $priceComponent->item = new vItem('',4);
 
-        $cartItem->product->price = [$priceComponent];
+        $cartItem->product->priceComponents = [$priceComponent];
         $cartItems = [$cartItem];
-        assert(static::returnWhereClauseForCanAccountAffordItemPricesInCart($cartItems) === " AND ((item_id = ?))", new Exception("UNIT TEST FAILED : returned where clause for can account afford item prices in cart did not match expected"));
+        assert(static::returnWhereClauseForcanAccountAffordItemPriceComponentsInCart($cartItems) === " AND ((item_id = ?))", new Exception("UNIT TEST FAILED : returned where clause for can account afford item price in cart did not match expected"));
 
-        $cartItem->product->price = [$priceComponent, $priceComponent];
+        $cartItem->product->priceComponents = [$priceComponent, $priceComponent];
         $cartItems = [$cartItem];
-        assert(static::returnWhereClauseForCanAccountAffordItemPricesInCart($cartItems) === " AND ((item_id = ? OR item_id = ?))",  new Exception("UNIT TEST FAILED : returned where clause for can account afford item prices in cart did not match expected"));
+        assert(static::returnWhereClauseForcanAccountAffordItemPriceComponentsInCart($cartItems) === " AND ((item_id = ? OR item_id = ?))",  new Exception("UNIT TEST FAILED : returned where clause for can account afford item price in cart did not match expected"));
 
-        $cartItem->product->price = [$priceComponent, $priceComponent];
+        $cartItem->product->priceComponents = [$priceComponent, $priceComponent];
         $cartItems = [$cartItem, $cartItem];
-        assert(static::returnWhereClauseForCanAccountAffordItemPricesInCart($cartItems) === " AND ((item_id = ? OR item_id = ?) OR (item_id = ? OR item_id = ?))",  new Exception("UNIT TEST FAILED : returned where clause for can account afford item prices in cart did not match expected"));    
+        assert(static::returnWhereClauseForcanAccountAffordItemPriceComponentsInCart($cartItems) === " AND ((item_id = ? OR item_id = ?) OR (item_id = ? OR item_id = ?))",  new Exception("UNIT TEST FAILED : returned where clause for can account afford item price in cart did not match expected"));    
     }
 
     /**
-     * Calculates the totals for the prices in the cart
+     * Calculates the totals for the price in the cart
      * @param array $cartItems all of the items in the cart, an array of vCartItems
-     * @return array $totalPrices the returned array which contains the prices of the totals in vPrice objects
+     * @return array $totalprice the returned array which contains the price of the totals in vPriceComponent objects
      */
-    public static function calculateCartTotalPrices(array $cartItems) : array
+    public static function calculateCartTotalPriceCompnents(array $cartItems) : array
     {
-        $totalPrices = [];
+        $totalprice = [];
 
         foreach($cartItems as $cartItem)
         {
-            $price = $cartItem->product->price;
+            $priceComponents = $cartItem->product->priceComponents;
 
-            foreach($price as $priceComponent)
+            foreach($priceComponents as $priceComponent)
             {
-                $priceAlreadyExists = null;
+                $priceComponentAlreadyExists = null;
 
-                foreach($totalPrices as $total)
+                foreach($totalprice as $total)
                 {
 
-                    //Does price being checked match an already existing total
+                    //Does priceComponent being checked match an already existing total
                     if(
                         (!is_null($priceComponent->item) && !is_null($total->item) 
                         && $priceComponent->item->ctime == $total->item->ctime && $priceComponent->item->crand == $total->item->crand)
@@ -2607,24 +2607,24 @@ class StoreController
                         $priceComponent->currencyCode == $total->currencyCode)
                     )
                     {
-                        $priceAlreadyExists = $total;
+                        $priceComponentAlreadyExists = $total;
                         break;
                     }
                 }
 
                 //Add amount of already existing total or create new total
-                if(is_null($priceAlreadyExists))
+                if(is_null($priceComponentAlreadyExists))
                 {
-                    array_push($totalPrices, $priceComponent);
+                    array_push($totalprice, $priceComponent);
                 }
                 else
                 {
-                    $priceAlreadyExists->amount = $priceAlreadyExists->amount + $priceComponent->amount;
+                    $priceComponentAlreadyExists->amount = $priceComponentAlreadyExists->amount + $priceComponent->amount;
                 }
             }
         }
 
-        return $totalPrices;
+        return $totalprice;
     }
 
     public static string $columnsInCartView = "
@@ -2686,7 +2686,7 @@ class StoreController
 
             $linkResp = static::linkProductToCart($product, $cart);
 
-            static::linkBasePricesToCartProduct($linkResp->data);
+            static::linkBasepriceToCartProduct($linkResp->data);
 
             if($linkResp->success)
             {
@@ -2708,39 +2708,39 @@ class StoreController
         return $resp;
     }
 
-    private static function linkBasePricesToCartProduct(vCartProductLink $link) : void
+    private static function linkBasepriceToCartProduct(vCartProductLink $link) : void
     {
         $productId = new vRecordId($link->product->ctime, $link->product->crand);
-        $getBasePricesResp = static::getBasePricesForProduct($productId);
+        $getBasepriceResp = static::getBasePriceComponentsForProduct($productId);
 
-        if(!$getBasePricesResp->success) throw new Exception("Failed to get base prices while attempting to add base prices to cart product");
+        if(!$getBasepriceResp->success) throw new Exception("Failed to get base price while attempting to add base price to cart product");
 
         $params = [];
-        $valueClause = static::createValueClauseForAddBasePriceToCartProduct($link, $getBasePricesResp->data, $params);
-        $sql = "INSERT INTO cart_product_price_link (ctime, crand, ref_cart_product_link_ctime, ref_cart_product_link_crand, ref_price_ctime, ref_price_crand, removed, checked_out) VALUES 
+        $valueClause = static::createValueClauseForAddBasePriceComponentToCartProduct($link, $getBasepriceResp->data, $params);
+        $sql = "INSERT INTO cart_product_price_component_link (ctime, crand, ref_cart_product_link_ctime, ref_cart_product_link_crand, ref_price_component_ctime, ref_price_component_crand, removed, checked_out) VALUES 
         $valueClause";
 
         $result = Database::executeSqlQuery($sql, $params);
 
-        if(!$result) throw new Exception("result returned false while attempting to link base prices to cart product");
+        if(!$result) throw new Exception("result returned false while attempting to link base price to cart product");
     }
 
-    private static function createValueClauseForAddBasePriceToCartProduct(vCartProductLink $link, array $basePrices, array &$params) : string
+    private static function createValueClauseForAddBasePriceComponentToCartProduct(vCartProductLink $link, array $baseprice, array &$params) : string
     {
         $valueClause = "";
 
-        for($i = 0 ; $i < count($basePrices); $i++)
+        for($i = 0 ; $i < count($baseprice); $i++)
         {
-            $price = $basePrices[$i];
+            $priceComponent = $baseprice[$i];
 
-            $cartProductPricelink = new CartProductPriceLink();
-            $cartProductPricelink->cartProductLinkId = $link;
-            $cartProductPricelink->priceId = $price;
+            $cartProductPriceComponentlink = new CartProductPriceComponentLink();
+            $cartProductPriceComponentlink->cartProductLinkId = $link;
+            $cartProductPriceComponentlink->priceComponentId = $priceComponent;
 
             if($i !== 0) $valueClause .= ", ";
 
             $valueClause .= "(?,?,?,?,?,?,0,0)";
-            array_push($params, $cartProductPricelink->ctime, $cartProductPricelink->crand, $link->ctime, $link->crand, $price->ctime, $price->crand);
+            array_push($params, $cartProductPriceComponentlink->ctime, $cartProductPriceComponentlink->crand, $link->ctime, $link->crand, $priceComponent->ctime, $priceComponent->crand);
         }
 
         return $valueClause;
@@ -2767,11 +2767,11 @@ class StoreController
             {
                 $product = static::rowToVProduct($result->fetch_assoc());
 
-                $priceResp = static::getBasePricesForProduct($product);
+                $priceComponentResp = static::getBasePriceComponentsForProduct($product);
 
-                if($priceResp->success)
+                if($priceComponentResp->success)
                 {
-                    $product->price = $priceResp->data;
+                    $product->priceComponents = $priceComponentResp->data;
 
                     $resp->success = true;
                     $resp->message = "Product found and returned";
@@ -2779,7 +2779,7 @@ class StoreController
                 }
                 else
                 {
-                    $resp->message = "failed to get prices for product by locator : $priceResp->message";
+                    $resp->message = "failed to get price for product by locator : $priceComponentResp->message";
                 }
 
                 
@@ -2816,7 +2816,9 @@ class StoreController
 
             $sql = "UPDATE cart_product_link SET removed = 1 WHERE ctime = ? AND crand = ?;";
 
-            $result = Database::executeSqlQuery($sql, [$cartProduct->ctime, $cartProduct->crand]);
+            $params = [$cartProduct->ctime, $cartProduct->crand];
+
+            $result = Database::executeSqlQuery($sql, $params);
             if(!$result) throw new Exception("result returned false while removing product from cart");
 
             if(!is_null($cartProduct->coupon)) 
@@ -2830,6 +2832,14 @@ class StoreController
                     throw new Exception("Failed to remove coupon while removing cart product with applied coupon");
                 }
             }
+
+            $sql = "UPDATE cart_product_price_component_link SET removed = 1 WHERE ref_cart_product_link_ctime = ? AND ref_cart_product_link_crand = ?;";
+            $params = [$cartProduct->ctime, $cartProduct->crand];
+
+            $result = Database::executeSqlQuery($sql, $params);
+            if(!$result) throw new Exception("result returned false while removing product price components from cart");
+
+            $conn->commit();
 
             $resp->success = true;
             $resp->message = "Product removed from cart";
@@ -3096,7 +3106,7 @@ class StoreController
 
             $cartView->cartProducts = $cartItemsResp->data;
 
-            $cartView->totals = static::calculateCartTotalPrices($cartView->cartProducts);
+            $cartView->totals = static::calculateCartTotalPriceCompnents($cartView->cartProducts);
 
             $resp->success = true;
             $resp->message = "Cart returned for account";
@@ -3126,18 +3136,18 @@ class StoreController
             product_large_media_path,
             product_back_media_path,
             product_stock,
-            price_ctime,
-            price_crand,
-            price_amount,
-            price_currency_code,
-            price_item_name,
-            price_item_desc,
-            price_media_path_small,
-            price_media_path_large,
-            price_media_path_back,
-            price_item_ctime, 
-            price_item_crand,
-            price_item_is_fungible,
+            price_component_ctime,
+            price_component_crand,
+            price_component_amount,
+            price_component_currency_code,
+            price_component_item_name,
+            price_component_item_desc,
+            price_component_media_path_small,
+            price_component_media_path_large,
+            price_component_media_path_back,
+            price_component_item_ctime, 
+            price_component_item_crand,
+            price_component_item_is_fungible,
             coupon_ctime,
             coupon_crand,
             coupon_code,
@@ -3154,7 +3164,7 @@ class StoreController
     /**
      * gets all the matching rows from v_cart_item.
      * It then conglomerates rows of the same cart product link into vCartItem objects 
-     * since the cart item view lists the cart items as units of the prices of the products in the cart
+     * since the cart item view lists the cart items as units of the price of the products in the cart
      */
     public static function getItemsInCart(vRecordId $cart) : Response
     {
@@ -3223,7 +3233,7 @@ class StoreController
             {
                 $priceComponent = static::cartItemToPriceComponentView($row);
 
-                array_push($cartItemAlreadyProccessed->price, $priceComponent);
+                array_push($cartItemAlreadyProccessed->priceComponents, $priceComponent);
             }
         }
 
@@ -3237,7 +3247,7 @@ class StoreController
         $priceComponent = static::cartItemToPriceComponentView($row);
 
         $product = new vProduct($row["product_ctime"], $row["product_crand"]);
-            $product->price = [$priceComponent];
+            $product->priceComponents = [$priceComponent];
             $product->stock = $row["product_stock"];
             $product->locator = $row["product_locator"];
             $product->name = $row["product_name"];
@@ -3278,7 +3288,7 @@ class StoreController
         $cartItem->crand = $row["cart_product_link_crand"];
         $cartItem->removed = boolval($row["removed"]);
         $cartItem->checkedOut = boolval($row["checked_out"]);
-        $cartItem->price = [$priceComponent];
+        $cartItem->priceComponents = [$priceComponent];
 
         return $cartItem;
     }
@@ -3287,36 +3297,36 @@ class StoreController
     {
         $priceComponent = new vPriceComponent();
 
-        if(!is_null($row["price_item_ctime"]) && !is_null($row["price_item_crand"]))
+        if(!is_null($row["price_component_item_ctime"]) && !is_null($row["price_component_item_crand"]))
         {
             $item = new vItem();
-            $item->ctime = $row["price_item_ctime"];
-            $item->crand = $row["price_item_crand"];
-            $item->name = $row["price_item_name"];
-            $item->description = $row["price_item_desc"]; 
+            $item->ctime = $row["price_component_item_ctime"];
+            $item->crand = $row["price_component_item_crand"];
+            $item->name = $row["price_component_item_name"];
+            $item->description = $row["price_component_item_desc"]; 
                 $smallMedia = new vMedia();
-                $smallMedia->setMediaPath($row["price_media_path_small"]);
+                $smallMedia->setMediaPath($row["price_component_media_path_small"]);
                 $largeMedia = new vMedia();
-                $largeMedia->setMediaPath($row["price_media_path_large"]);
+                $largeMedia->setMediaPath($row["price_component_media_path_large"]);
                 $backMedia = new vMedia();
-                if(!empty($row["price_media_path_back"]))$backMedia->setMediaPath($row["price_media_path_back"]);
+                if(!empty($row["price_component_media_path_back"]))$backMedia->setMediaPath($row["price_component_media_path_back"]);
             $item->iconSmall = $smallMedia;
             $item->iconBig = $largeMedia;
             $item->iconBack = $backMedia;
 
-            $item->fungible = boolval($row["price_item_is_fungible"]);
+            $item->fungible = boolval($row["price_component_item_is_fungible"]);
 
             $priceComponent->item = $item;
         }
         
-        if(!empty($row["price_currency_code"]))
+        if(!empty($row["price_component_currency_code"]))
         {
-            $priceComponent = CurrencyCode::from($row["price_currency_code"]);
+            $priceComponent = CurrencyCode::from($row["price_component_currency_code"]);
         }
 
-        $priceComponent->ctime = $row["price_ctime"];
-        $priceComponent->crand = $row["price_crand"];
-        $priceComponent->amount = $row["price_amount"];
+        $priceComponent->ctime = $row["price_component_ctime"];
+        $priceComponent->crand = $row["price_component_crand"];
+        $priceComponent->amount = $row["price_component_amount"];
 
         return $priceComponent;
         
@@ -3386,11 +3396,13 @@ class StoreController
     //PRODUCT
 
     public static string $columnsInProductView = "
-            ctime, 
-            crand, 
+            ctime,
+            crand,
             `name`,
-            `description`, 
+            `description`,
             locator,
+            tag,
+            categories,
             stock,
             amount_available,
             removed,
@@ -3601,7 +3613,7 @@ class StoreController
 
         try
         {
-            $linkVoidResp = static::markPriceLinksAsVoid($productId);
+            $linkVoidResp = static::markPriceComponentLinksAsVoid($productId);
 
             if($linkVoidResp->success)
             {
@@ -3616,7 +3628,7 @@ class StoreController
             }
             else
             {
-                $resp->message = "Failed to removed price links to product before deleting product : $linkVoidResp->message";
+                $resp->message = "Failed to removed priceComponent links to product before deleting product : $linkVoidResp->message";
             }
         }
         catch(Exception $e)
@@ -3629,16 +3641,16 @@ class StoreController
 
 
     /**
-     * Version of removePricesLinksToProduct that simply marks a boolean "void" flag instead of removing the product-price-link
-     * this change is done to hopefully preserve data for possible analytics of prices for products in the future
+     * Version of removepriceLinksToProduct that simply marks a boolean "void" flag instead of removing the product-priceComponent-link
+     * this change is done to hopefully preserve data for possible analytics of price for products in the future
      */
-    private static function markPriceLinksAsVoid(vRecordId $product) : response
+    private static function markPriceComponentLinksAsVoid(vRecordId $product) : response
     {
-        $resp = new Response(false, "unkown error in marking price links as void", null);
+        $resp = new Response(false, "unkown error in marking priceComponent links as void", null);
 
         try
         {
-            $sql = "UPDATE product_price_link SET void = 1 WHERE ref_product_ctime = ? AND ref_product_crand = ?;";
+            $sql = "UPDATE product_price_component_link SET void = 1 WHERE ref_product_ctime = ? AND ref_product_crand = ?;";
 
             $params = [$product->ctime, $product->crand];
 
@@ -3646,15 +3658,15 @@ class StoreController
 
             if(!$result)
             {
-                throw new Exception("Failed to mark price links as void");
+                throw new Exception("Failed to mark priceComponent links as void");
             }
 
             $resp->success = true;
-            $resp->message = "voided all price link to product";
+            $resp->message = "voided all priceComponent link to product";
         }
         catch(Exception $e)
         {
-            throw new Exception("Exception caught while marking price links as void : $e");
+            throw new Exception("Exception caught while marking priceComponent links as void : $e");
         }
 
         return $resp;
@@ -3689,18 +3701,18 @@ class StoreController
                 $viewProduct->locator = $product->locator;
 
                 $getProduct = static::getProduct($viewProduct);
-                if(!$getProduct->success) throw new Exception("Failed to get product for linking prices after update");
+                if(!$getProduct->success) throw new Exception("Failed to get product for linking price after update");
 
-                $linkPriceResp = static::linkProductToPrices($getProduct->data, $product->price);
+                $linkPriceComponentResp = static::linkProductToPriceComponents($getProduct->data, $product->priceComponents);
 
-                if($linkPriceResp->success)
+                if($linkPriceComponentResp->success)
                 {
                     $resp->success = true;
                     $resp->message = "Product was updated as it already existed";
                 }
                 else
                 {
-                    $resp->message = "product was updates however there was an error in linking the updated prices";
+                    $resp->message = "product was updates however there was an error in linking the updated price";
                 }
                 
             }
@@ -3714,16 +3726,16 @@ class StoreController
                     return $resp;
                 }
 
-                $linkPriceResp = static::linkProductToPrices($product, $product->price);
+                $linkPriceComponentResp = static::linkProductToPriceComponents($product, $product->priceComponents);
 
-                if($linkPriceResp->success)
+                if($linkPriceComponentResp->success)
                 {
                     $resp->success = true;
                     $resp->message = "Product was inserted as it did not exist"; 
                 }
                 else
                 {
-                    $resp->message = "product was inserted however there was an error with linking the prices";
+                    $resp->message = "product was inserted however there was an error with linking the price";
                 }
             }
             
@@ -3789,11 +3801,11 @@ class StoreController
             {
                 $product = static::rowToVProduct($result->fetch_assoc());
 
-                $priceResp = static::getBasePriceForProduct($product);
+                $priceComponentResp = static::getBasePriceComponentsForProduct($product);
 
-                if($priceResp->success)
+                if($priceComponentResp->success)
                 {
-                    $product->price = $priceResp->data;
+                    $product->priceComponents = $priceComponentResp->data;
 
                     $resp->success = true;
                     $resp->message = "Product found and returned";
@@ -3801,7 +3813,7 @@ class StoreController
                 }
                 else
                 {
-                    $resp->message = "failed to get prices for product by id : $priceResp->message";
+                    $resp->message = "failed to get price for product by id : $priceComponentResp->message";
                 }
 
                 
@@ -3840,11 +3852,11 @@ class StoreController
             {
                 $product = static::rowToVProduct($result->fetch_assoc());
 
-                $priceResp = static::getBasePriceForProduct($product);
+                $priceComponentResp = static::getBasePriceComponentsForProduct($product);
 
-                if($priceResp->success)
+                if($priceComponentResp->success)
                 {
-                    $product->price = $priceResp->data;
+                    $product->priceComponents = $priceComponentResp->data;
 
                     $resp->success = true;
                     $resp->message = "Product found and returned";
@@ -3852,7 +3864,7 @@ class StoreController
                 }
                 else
                 {
-                    $resp->message = "failed to get prices for product by id : $priceResp->message";
+                    $resp->message = "failed to get price for product by id : $priceComponentResp->message";
                 }
 
                 
@@ -3871,9 +3883,9 @@ class StoreController
     }
 
 
-    private static function getBasePricesForProduct(vRecordId $product) : Response
+    private static function getBasePriceComponentsForProduct(vRecordId $product) : Response
     {
-        $resp = new Response(false, "unkown error in getting prices for product");
+        $resp = new Response(false, "unkown error in getting price for product");
 
         try
         {
@@ -3890,8 +3902,8 @@ class StoreController
             vp.media_path_large, 
             vp.media_path_back,
             vp.item_is_fungible
-            FROM v_price vp 
-            JOIN product_price_link ppl ON ppl.ref_price_ctime = vp.ctime AND ppl.ref_price_crand = vp.crand
+            FROM v_price_component vp 
+            JOIN product_price_component_link ppl ON ppl.ref_price_component_ctime = vp.ctime AND ppl.ref_price_component_crand = vp.crand
             WHERE ppl.ref_product_ctime = ? AND ppl.ref_product_crand = ?;";
 
             $params = [$product->ctime, $product->crand];
@@ -3902,30 +3914,30 @@ class StoreController
             {
                 if($result->num_rows > 0)
                 {
-                    $prices = [];
+                    $price = [];
 
                     while($row = $result->fetch_assoc())
                     {
-                        array_push($prices, static::priceToView($row));
+                        array_push($price, static::priceComponentToView($row));
                     }
 
                     $resp->success = true;
-                    $resp->message = "prices returned for product";
-                    $resp->data = $prices;
+                    $resp->message = "price returned for product";
+                    $resp->data = $price;
                 }
                 else
                 {
-                    $resp->message = "No prices found for product";
+                    $resp->message = "No price found for product";
                 }
             }
             else
             {
-                $resp->message = "Sql error in getting prices for product";
+                $resp->message = "Sql error in getting price for product";
             }
         }
         catch(Exception $e)
         {
-            throw new Exception("Exception caught while getting prices for product : $e");
+            throw new Exception("Exception caught while getting price for product : $e");
         }
 
         return $resp;
@@ -4020,13 +4032,13 @@ class StoreController
         {
             Database::executeSqlQuery($sql, $params);
 
-            $priceResp = static::InsertAndSelectPrice($product->price);
+            $priceComponentResp = static::InsertAndSelectPriceComponents($product->priceComponents);
 
 
-            if($priceResp->success)
+            if($priceComponentResp->success)
             {
-                $price = static::convertPriceViewArrayToModels($priceResp->data);
-                $linkResp = static::linkProductToPrice($product, $price);
+                $priceComponents = static::convertPriceComponentViewArrayToModels($priceComponentResp->data);
+                $linkResp = static::linkProductToPriceComponents($product, $priceComponents);
 
                 if($linkResp->success)
                 {
@@ -4035,12 +4047,12 @@ class StoreController
                 }
                 else
                 {
-                    $resp->message = "failed to link prices to product after insertion";
+                    $resp->message = "failed to link price to product after insertion";
                 }
             }
             else
             {
-                $resp->message = "Failed to get prices of product during insertion";
+                $resp->message = "Failed to get price of product during insertion";
             }
 
             
@@ -4053,206 +4065,206 @@ class StoreController
         return $resp;
     }
 
-    private static function convertPriceViewArrayToModels(array $priceViews) : array
+    private static function convertPriceComponentViewArrayToModels(array $priceComponentViews) : array
     {
-        $priceModels = [];
+        $priceComponentModels = [];
 
-        foreach($priceViews as $view)
+        foreach($priceComponentViews as $view)
         {
-            $model = new Price($view->amount, $view->currencyCode, $view->item);
+            $model = new PriceComponent($view->amount, $view->currencyCode, $view->item);
             $model->ctime = $view->ctime;
             $model->crand = $view->crand;
 
-            array_push($priceModels, $model);
+            array_push($priceComponentModels, $model);
         }
 
-        return $priceModels;
+        return $priceComponentModels;
     }
 
      /**
-     * Returns an array of vPrices from an array of prices.
-     * Inserts any prices that don't already exist.
+     * Returns an array of vprice from an array of price.
+     * Inserts any price that don't already exist.
      * This function should be used when making new products as it will ensure if there is
-     * already a duplicate price in the database, the already existing price will be used for the product, saving memory and query time
+     * already a duplicate priceComponent in the database, the already existing priceComponent will be used for the product, saving memory and query time
      * 
-     * @param array $prices the array of prices to be inserted
-     * @return Response the response object whose data holds the array of vPrices
+     * @param array $price the array of price to be inserted
+     * @return Response the response object whose data holds the array of vprice
      */
-    public static function InsertAndSelectPrices(array $prices) : Response
+    public static function InsertAndSelectPriceComponents(array $price) : Response
     {
-        $resp = new Response(false, "unkown error in getting prices", null);
+        $resp = new Response(false, "unkown error in getting price", null);
 
-        if(static::validatePriceArray($prices) == false) throw new Exception("prices array must contain only prices");
+        if(static::validatePriceComponentArray($price) == false) throw new Exception("price array must contain only price");
 
         try
         {
-            $gotResp = static::getPricesByCurrencyAndItemAmount($prices);
+            $gotResp = static::getpriceByCurrencyAndItemAmount($price);
 
             if($gotResp->success)
             {
-                if(count($gotResp->data) == count($prices))
+                if(count($gotResp->data) == count($price))
                 {
                     $resp->success = true;
-                    $resp->message = "Prices returned";
+                    $resp->message = "price returned";
                     $resp->data = $gotResp->data; 
                 }
                 else
                 {
-                    $nonExistingPrices = static::returnNonExistingPrices($prices, $gotResp->data);
+                    $nonExistingprice = static::returnNonExistingprice($price, $gotResp->data);
 
-                    $insertResp = static::insertPriceArrayAndReturnInsertion($nonExistingPrices);
+                    $insertResp = static::insertPriceComponentArrayAndReturnInsertion($nonExistingprice);
 
                     if($insertResp->success)
                     {
-                        $allPrices = array_merge($gotResp->data, $insertResp->data) ;
+                        $allprice = array_merge($gotResp->data, $insertResp->data) ;
 
 
                         $resp->success = true;
-                        $resp->message = "Prices returned";
-                        $resp->data = $allPrices;
+                        $resp->message = "price returned";
+                        $resp->data = $allprice;
                     }
                     else
                     {
-                        $resp->message = "Error in inserting and returning non existant prices : $insertResp->message";
+                        $resp->message = "Error in inserting and returning non existant price : $insertResp->message";
                     } 
                 } 
             }
             else
             {
-                $resp->message = "error in getting prices : $gotResp->message";
+                $resp->message = "error in getting price : $gotResp->message";
             }
         }
         catch(Exception $e)
         {
-            throw new Exception("Exception caught while getting price : $e");
+            throw new Exception("Exception caught while getting priceComponent : $e");
         }
 
         return $resp;   
     }
 
     /**
-     * Inserts new linking record between a product and prices
-     * Removes old linking records not found in the provided prices array
+     * Inserts new linking record between a product and price
+     * Removes old linking records not found in the provided price array
      * 
-     * @param vRecordId $product the product of which the prices will be linked to
-     * @param array $prices the prices which will be linked to the product. These must be either Price or vPrice objects
+     * @param vRecordId $product the product of which the price will be linked to
+     * @param array $price the price which will be linked to the product. These must be either PriceComponent or vPriceComponent objects
      * 
      * @return Response the response object which will returne true success if the linking was successful
      */
-    private static function linkProductToPrices(vRecordId $product, array $prices) : Response
+    private static function linkProductToPriceComponents(vRecordId $product, array $price) : Response
     {
-        $resp = new Response(false, "unkown error in linking products to prices", null);
+        $resp = new Response(false, "unkown error in linking products to price", null);
 
         try
         {
-            if(static::validatePriceArray($prices) == false) throw new Exception("Price array must contain only price or vPrice objects");
+            if(static::validatePriceComponentArray($price) == false) throw new Exception("PriceComponent array must contain only priceComponent or vPriceComponent objects");
 
-            $valueClause = static::returnValueClauseForLinkingProductToPrices($prices);
+            $valueClause = static::returnValueClauseForLinkingProductToprice($price);
 
-            $sql = "INSERT IGNORE INTO product_price_link (ctime, crand, ref_product_ctime, ref_product_crand, ref_price_ctime, ref_price_crand) VALUES $valueClause";
+            $sql = "INSERT IGNORE INTO product_price_component_link (ctime, crand, ref_product_ctime, ref_product_crand, ref_price_component_ctime, ref_price_component_crand) VALUES $valueClause";
 
-            $params = static::returnInsertionParamsForLinkingProductToPrices($product, $prices);
+            $params = static::returnInsertionParamsForLinkingProductToprice($product, $price);
 
             $insertResult = Database::executeSqlQuery($sql, $params);
 
             if($insertResult)
             {
-                $removeOldResp = static::removeOldLinksToProduct($product, $prices);
+                $removeOldResp = static::removeOldLinksToProduct($product, $price);
 
                 if($removeOldResp->success)
                 {
                     $resp->success = true;
-                    $resp->message = "Product has been linked to prices";
+                    $resp->message = "Product has been linked to price";
                 }
                 else
                 {
-                    $resp->message = "error in removing void product price links";
+                    $resp->message = "error in removing void product priceComponent links";
                 }
             }
             else
             {
-                $resp->message = "Sql error in inserting product price links";
+                $resp->message = "Sql error in inserting product priceComponent links";
             }
 
             
         }
         catch(Exception $e)
         {
-            throw new Exception("execption caught while linking products to prices. $e");
+            throw new Exception("execption caught while linking products to price. $e");
         }
 
         return $resp;
     }
 
-    private static function removeOldLinksToProduct(vRecordId $product, array $prices) : Response
+    private static function removeOldLinksToProduct(vRecordId $product, array $price) : Response
     {
-        $resp = new Response(false, "unkown error in clearing orphan prices", null);
+        $resp = new Response(false, "unkown error in clearing orphan price", null);
 
         try
         {
-            $whereClause = static::returnWhereClauseForRemovingOldLinksToProduct($prices);
+            $whereClause = static::returnWhereClauseForRemovingOldLinksToProduct($price);
 
-            $sql = "DELETE ppl FROM product_price_link ppl WHERE $whereClause";
+            $sql = "DELETE ppl FROM product_price_component_link ppl WHERE $whereClause";
 
-            $params = static::returnParamsForRemovingOldLinksToProduct($product, $prices);
+            $params = static::returnParamsForRemovingOldLinksToProduct($product, $price);
 
             $result = Database::executeSqlQuery($sql, $params);
 
             if(!$result)
             {
-                throw new Exception("Delete failed in clearing old price links for product");
+                throw new Exception("Delete failed in clearing old priceComponent links for product");
             }
 
-            $clearResp = static::ClearOrphanPrices();
+            $clearResp = static::ClearOrphanprice();
 
             if($clearResp->success)
             {
                 $resp->success = true;
-                $resp->message = "Old price links cleared";
+                $resp->message = "Old priceComponent links cleared";
             }
             else
             {
-                $resp->message = "failed to clear orphan prices after clearing links";
+                $resp->message = "failed to clear orphan price after clearing links";
             }
 
             
         }
         catch(exception $e)
         {
-            throw new Exception("Exception caught in clearing orphan prices : $e");
+            throw new Exception("Exception caught in clearing orphan price : $e");
         }
 
         return $resp;
     }
 
-    private static function ClearOrphanPrices() : Response
+    private static function ClearOrphanprice() : Response
     {
-        $resp = new Response(false, "unkown error in clearing orphan prices", null);
+        $resp = new Response(false, "unkown error in clearing orphan price", null);
 
         try
         {
-            $sql = "DELETE p FROM price p WHERE NOT EXISTS ( SELECT ctime FROM product_price_link pl WHERE pl.ref_price_ctime = p.ctime AND pl.ref_price_crand = p.crand);";
+            $sql = "DELETE p from price_component p WHERE NOT EXISTS ( SELECT ctime FROM product_price_component_link pl WHERE pl.ref_price_component_ctime = p.ctime AND pl.ref_price_component_crand = p.crand);";
 
             Database::executeSqlQuery($sql, []);
 
             $resp->success = true;
-            $resp->message = "Orphan prices cleared";
+            $resp->message = "Orphan price cleared";
         }
         catch(Exception $e)
         {
-            throw new Exception("exception caught while clearing orphan prices : $e");
+            throw new Exception("exception caught while clearing orphan price : $e");
         }
 
         return $resp;
     }
 
-    private static function returnParamsForRemovingOldLinksToProduct(vRecordId $product, array $prices) : array
+    private static function returnParamsForRemovingOldLinksToProduct(vRecordId $product, array $price) : array
     {
         $params = [$product->ctime, $product->crand];
 
-        foreach($prices as $price)
+        foreach($price as $priceComponent)
         {
-            array_push($params, $price->ctime, $price->crand);
+            array_push($params, $priceComponent->ctime, $priceComponent->crand);
         }
 
         return $params;
@@ -4261,33 +4273,33 @@ class StoreController
     private static function unittest_returnParamsForRemovingOldLinksToProduct() : void
     {
         $product = new RecordId();
-        $price = new Price();
-        $prices = [$price];
+        $priceComponent = new PriceComponent();
+        $price = [$priceComponent];
 
-        $actual = json_encode(static::returnParamsForRemovingOldLinksToProduct($product, $prices));
-        $expected = json_encode([$product->ctime, $product->crand, $price->ctime, $price->crand]);
+        $actual = json_encode(static::returnParamsForRemovingOldLinksToProduct($product, $price));
+        $expected = json_encode([$product->ctime, $product->crand, $priceComponent->ctime, $priceComponent->crand]);
         assert($actual === $expected, "UNIT TEST FAILED | actual : $actual | expected : $expected");
 
-        $prices = [$price,$price];
+        $price = [$priceComponent,$priceComponent];
 
-        $actual = json_encode(static::returnParamsForRemovingOldLinksToProduct($product, $prices));
-        $expected = json_encode([$product->ctime, $product->crand, $price->ctime, $price->crand, $price->ctime, $price->crand]);
+        $actual = json_encode(static::returnParamsForRemovingOldLinksToProduct($product, $price));
+        $expected = json_encode([$product->ctime, $product->crand, $priceComponent->ctime, $priceComponent->crand, $priceComponent->ctime, $priceComponent->crand]);
         assert($actual === $expected, "UNIT TEST FAILED | actual : $actual | expected : $expected");
 
-        $prices = [$price,$price,$price];
+        $price = [$priceComponent,$priceComponent,$priceComponent];
 
-        $actual = json_encode(static::returnParamsForRemovingOldLinksToProduct($product, $prices));
-        $expected = json_encode([$product->ctime, $product->crand, $price->ctime, $price->crand, $price->ctime, $price->crand, $price->ctime, $price->crand]);
+        $actual = json_encode(static::returnParamsForRemovingOldLinksToProduct($product, $price));
+        $expected = json_encode([$product->ctime, $product->crand, $priceComponent->ctime, $priceComponent->crand, $priceComponent->ctime, $priceComponent->crand, $priceComponent->ctime, $priceComponent->crand]);
         assert($actual === $expected, "UNIT TEST FAILED | actual : $actual | expected : $expected");
     }
 
-    private static function returnWhereClauseForRemovingOldLinksToProduct(array $prices) : string
+    private static function returnWhereClauseForRemovingOldLinksToProduct(array $price) : string
     {
         $whereClause = "(ref_product_ctime = ? AND ref_product_crand = ?)";
 
-        foreach($prices as $price)
+        foreach($price as $priceComponent)
         {
-            $whereClause .= " AND (ref_price_ctime <> ? AND ref_price_crand <> ?)";
+            $whereClause .= " AND (ref_price_component_ctime <> ? AND ref_price_component_crand <> ?)";
         }
 
         $whereClause .= ";";
@@ -4297,21 +4309,21 @@ class StoreController
 
     private static function unittest_returnWhereClauseForRemovingVoidLinksToProduct() : void
     {
-        $prices = [1];
+        $price = [1];
 
-        $clause = static::returnWhereClauseForRemovingOldLinksToProduct($prices);
-        $expected = "(ref_product_ctime = ? AND ref_product_crand = ?) AND (ref_price_ctime <> ? AND ref_price_crand <> ?);";
+        $clause = static::returnWhereClauseForRemovingOldLinksToProduct($price);
+        $expected = "(ref_product_ctime = ? AND ref_product_crand = ?) AND (ref_price_component_ctime <> ? AND ref_price_component_crand <> ?);";
 
         assert($clause ===  $expected, new Exception("UNIT TEST FAILED | Actual : '".$clause."' | Expected : '".$expected."'))"));
     }
 
-    private static function returnValueClauseForLinkingProductToPrices(array $prices) : string
+    private static function returnValueClauseForLinkingProductToprice(array $price) : string
     {
-        if(empty($prices)) throw new InvalidArgumentException("Prices array cannot be empty");
+        if(empty($price)) throw new InvalidArgumentException("price array cannot be empty");
 
         $valueClause = "(?,?,?,?,?,?)";
 
-        for($i = 1; $i > count($prices); $i++)
+        for($i = 1; $i > count($price); $i++)
         {
             $valueClause .= ", (?,?,?,?,?,?)";
         }
@@ -4319,42 +4331,42 @@ class StoreController
         return $valueClause;
     }
 
-    private static function returnInsertionParamsForLinkingProductToPrices(vRecordId $productId, array $prices, bool $testing = false) : array
+    private static function returnInsertionParamsForLinkingProductToprice(vRecordId $productId, array $price, bool $testing = false) : array
     {
-        if(empty($prices)) throw new InvalidArgumentException("Prices array cannot be empty");
+        if(empty($price)) throw new InvalidArgumentException("price array cannot be empty");
 
         $bindingArray = [];
 
-        foreach($prices as $price)
+        foreach($price as $priceComponent)
         {
-            $link = new ProductPriceLink();
+            $link = new ProductPriceComponentLink();
             
             if($testing) //exclude the link ctime and crand as it's hard to 'test' those
             {
-                array_push($bindingArray, $productId->ctime, $productId->crand, $price->ctime, $price->crand);
+                array_push($bindingArray, $productId->ctime, $productId->crand, $priceComponent->ctime, $priceComponent->crand);
                 continue;  
             }
 
-            array_push($bindingArray, $link->ctime, $link->crand, $productId->ctime, $productId->crand, $price->ctime, $price->crand);
+            array_push($bindingArray, $link->ctime, $link->crand, $productId->ctime, $productId->crand, $priceComponent->ctime, $priceComponent->crand);
         }
 
         return $bindingArray;
     }
 
-    private static function unittest_returnInsertionParamsForLinkingProductToPrices() : void
+    private static function unittest_returnInsertionParamsForLinkingProductToprice() : void
     {
         $productId = new RecordId();
-        $price = new Price();
-        $prices = [$price];
+        $priceComponent = new PriceComponent();
+        $price = [$priceComponent];
 
-        $actual = json_encode(static::returnInsertionParamsForLinkingProductToPrices($productId, $prices, true));
-        $expected = json_encode([$productId->ctime, $productId->crand, $price->ctime, $price->crand]);
+        $actual = json_encode(static::returnInsertionParamsForLinkingProductToprice($productId, $price, true));
+        $expected = json_encode([$productId->ctime, $productId->crand, $priceComponent->ctime, $priceComponent->crand]);
         assert($actual === $expected, "UNIT TEST FAILED | actual : $actual | expected : $expected");
 
-        $prices = [$price, $price];
+        $price = [$priceComponent, $priceComponent];
 
-        $actual = json_encode(static::returnInsertionParamsForLinkingProductToPrices($productId, $prices, true));
-        $expected = json_encode([$productId->ctime, $productId->crand, $price->ctime, $price->crand, $productId->ctime, $productId->crand, $price->ctime, $price->crand]);
+        $actual = json_encode(static::returnInsertionParamsForLinkingProductToprice($productId, $price, true));
+        $expected = json_encode([$productId->ctime, $productId->crand, $priceComponent->ctime, $priceComponent->crand, $productId->ctime, $productId->crand, $priceComponent->ctime, $priceComponent->crand]);
         assert($actual === $expected, "UNIT TEST FAILED | actual : $actual | expected : $expected");
     }
 
@@ -4395,7 +4407,7 @@ class StoreController
 
     //PRICE
 
-    public static string $allViewPriceColumns = "
+    public static string $allViewPriceComponentColumns = "
         ctime, 
         crand, 
         amount, 
@@ -4409,139 +4421,139 @@ class StoreController
         media_path_back,
         item_is_fungible";
 
-    public static function getPrices(array $prices) : Response
+    public static function getprice(array $price) : Response
     {
-        $resp = new Response(false, "unkown error in getting prices", null);
+        $resp = new Response(false, "unkown error in getting price", null);
 
         try
         {
-            $gotResp = static::getPricesByCurrencyAndItemAmount($prices);
+            $gotResp = static::getpriceByCurrencyAndItemAmount($price);
 
             if($gotResp->success)
             {
-                if(count($gotResp->data) == count($prices))
+                if(count($gotResp->data) == count($price))
                 {
                     $resp->success = true;
-                    $resp->message = "Prices returned";
+                    $resp->message = "price returned";
                     $resp->data = $gotResp->data; 
                 }
                 else
                 {
-                   $nonExistingPrices = static::returnNonExistingPrices($prices, $gotResp->data);
+                   $nonExistingprice = static::returnNonExistingprice($price, $gotResp->data);
 
-                    $insertResp = static::insertPriceArrayAndReturnInsertion($nonExistingPrices);
+                    $insertResp = static::insertPriceComponentArrayAndReturnInsertion($nonExistingprice);
 
                     if($insertResp->success)
                     {
-                        $allPrices = array_push($gotResp->data, $insertResp->data) ;
+                        $allprice = array_push($gotResp->data, $insertResp->data) ;
 
                         $resp->success = true;
-                        $resp->message = "Prices returned";
-                        $resp->data = $allPrices;
+                        $resp->message = "price returned";
+                        $resp->data = $allprice;
                     }
                     else
                     {
-                        $resp->message = "Error in inserting and returning non existant prices : $insertResp->message";
+                        $resp->message = "Error in inserting and returning non existant price : $insertResp->message";
                     } 
                 } 
             }
             else
             {
-                $resp->message = "error in getting prices : $gotResp->message";
+                $resp->message = "error in getting price : $gotResp->message";
             }
         }
         catch(Exception $e)
         {
-            throw new Exception("Exception caught while getting price : $e");
+            throw new Exception("Exception caught while getting priceComponent : $e");
         }
 
         return $resp;   
     }
 
-    private static function returnNonExistingPrices($prices, $gotPrices) : array
+    private static function returnNonExistingprice($price, $gotprice) : array
     {
-        $gotPricesKeyedArray = [];
+        $gotpriceKeyedArray = [];
 
-        foreach ($gotPrices as $gotPrice) 
+        foreach ($gotprice as $gotPriceComponent) 
         {
-            $key = $gotPrice->ctime."#".(string)$gotPrice->crand;
-            $gotPricesKeyedArray[$key] = true;
+            $key = $gotPriceComponent->ctime."#".(string)$gotPriceComponent->crand;
+            $gotpriceKeyedArray[$key] = true;
         }
 
-        $nonExistingPrices = [];
-        foreach ($prices as $price) 
+        $nonExistingprice = [];
+        foreach ($price as $priceComponent) 
         {
-            $key = $price->ctime."#".(string)$price->crand;
+            $key = $priceComponent->ctime."#".(string)$priceComponent->crand;
 
-            if (!isset($gotPricesKeyedArray[$key])) 
+            if (!isset($gotpriceKeyedArray[$key])) 
             {
-                $nonExistingPrices[] = $price;
+                $nonExistingprice[] = $priceComponent;
             }
         }
 
-        return $nonExistingPrices;     
+        return $nonExistingprice;     
     }
 
-    private static function getPricesByCurrencyAndItemAmount(array $prices) : Response
+    private static function getpriceByCurrencyAndItemAmount(array $price) : Response
     {
-        $resp = new Response(false, "unkown error in getting prices", null);
+        $resp = new Response(false, "unkown error in getting price", null);
 
-        if(!Static::validatePriceArray($prices)) throw new InvalidArgumentException("Price array must be of either Price or vPrice objects");
+        if(!Static::validatePriceComponentArray($price)) throw new InvalidArgumentException("PriceComponent array must be of either PriceComponent or vPriceComponent objects");
 
-        $whereClause = static::constructWhereClauseForGetPricesByCurrencyAndItemAmount($prices);
+        $whereClause = static::constructWhereClauseForGetpriceByCurrencyAndItemAmount($price);
 
         $sql = "SELECT 
-        ".static::$allViewPriceColumns." 
-        FROM v_price 
+        ".static::$allViewPriceComponentColumns." 
+        FROM v_price_component 
         WHERE $whereClause";
 
-        $params = static::returnWhereClauseBindingArrayForGetPricesByCurrencyAndItemAmount($prices);
+        $params = static::returnWhereClauseBindingArrayForGetpriceByCurrencyAndItemAmount($price);
 
         try
         {
             $result = Database::executeSqlQuery($sql, $params);
 
-            $gotPrices = [];
+            $gotprice = [];
             
             while($row = $result->fetch_assoc())
             {
-                array_push($gotPrices, static::priceToView($row));    
+                array_push($gotprice, static::priceComponentToView($row));    
             }
 
             $resp->success = true;
-            $resp->message = "Prices returned";
-            $resp->data = $gotPrices;
+            $resp->message = "price returned";
+            $resp->data = $gotprice;
         }
         catch(Exception $e)
         {
-            throw new Exception("Exception caught while getting prices : $e");
+            throw new Exception("Exception caught while getting price : $e");
         }   
 
         return $resp;
     }
 
-    private static function returnWhereClauseBindingArrayForGetPricesByCurrencyAndItemAmount(array $prices) : array
+    private static function returnWhereClauseBindingArrayForGetpriceByCurrencyAndItemAmount(array $price) : array
     {
-        if(empty($prices)) throw new InvalidArgumentException("Prices array cannot be empty");
-        if(!static::validatePriceArray($prices)) throw new InvalidArgumentException("price array must be of Price or vPrice objects");
+        if(empty($price)) throw new InvalidArgumentException("price array cannot be empty");
+        if(!static::validatePriceComponentArray($price)) throw new InvalidArgumentException("priceComponent array must be of PriceComponent or vPriceComponent objects");
 
         $bindingArray = [];
 
-        foreach($prices as $price)
+        foreach($price as $priceComponent)
         {
-            $item = $price instanceof price ? $price->itemId : $price->item;
+            $item = $priceComponent instanceof priceComponent ? $priceComponent->itemId : $priceComponent->item;
 
             [$refItemCtime, $refItemCrand] = is_null($item) ? [null, null] : [$item->ctime, $item->crand];
 
-            array_push($bindingArray, $price->amount, $price->currencyCode, $refItemCtime, $refItemCrand);
+            array_push($bindingArray, $priceComponent->amount, $priceComponent->currencyCode, $refItemCtime, $refItemCrand);
         }
 
         return $bindingArray;
     }
 
-    private static function unittest_returnWhereClauseBindingArrayForGetPricesByCurrencyAndItemAmount() : void
+    private static function unittest_returnWhereClauseBindingArrayForGetpriceByCurrencyAndItemAmount() : void
     {
-        $bindingArray = static::returnWhereClauseBindingArrayForGetPricesByCurrencyAndItemAmount([new Price()]);
+        $bindingArray = static::returnWhereClauseBindingArrayForGetpriceByCurrencyAndItemAmount([new PriceComponent()]);
         $expected = [0,null,null,null];
 
         $expectedJson = json_encode($expected);
@@ -4549,13 +4561,13 @@ class StoreController
         assert($bindingArray === $expected, "unit test failed : return where cluase array did not match expected. Excepted : '$expectedJson' | Actual : '$actualJson'");
     }
 
-    private static function constructWhereClauseForGetPricesByCurrencyAndItemAmount(array $prices) : string
+    private static function constructWhereClauseForGetpriceByCurrencyAndItemAmount(array $price) : string
     {
-        if(empty($prices)) throw new InvalidArgumentException("Prices array cannot be empty");
+        if(empty($price)) throw new InvalidArgumentException("price array cannot be empty");
 
         $whereClause = "(amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?)))";
 
-        for($i = 1; $i < count($prices); $i++)
+        for($i = 1; $i < count($price); $i++)
         {
             $whereClause .= " OR (amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?)))";
         }
@@ -4563,34 +4575,34 @@ class StoreController
         return $whereClause;
     }
 
-    private static function unittest_constructWhereClauseForGetPricesByCurrencyAndItemAmount() : void
+    private static function unittest_constructWhereClauseForGetpriceByCurrencyAndItemAmount() : void
     {
-        $whereClause = static::constructWhereClauseForGetPricesByCurrencyAndItemAmount([new Price()]);
+        $whereClause = static::constructWhereClauseForGetpriceByCurrencyAndItemAmount([new PriceComponent()]);
         $expected = "(amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?)))";
         assert($whereClause === $expected, "unit test failed : return where cluase did not match expected. Excepted : '$expected' | Actual : '$whereClause'");
 
-        $whereClause = static::constructWhereClauseForGetPricesByCurrencyAndItemAmount([new Price(), new Price()]);
+        $whereClause = static::constructWhereClauseForGetpriceByCurrencyAndItemAmount([new PriceComponent(), new PriceComponent()]);
         $expected = "(amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?))) OR (amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?)))";
         assert($whereClause === $expected, "unit test failed : return where cluase did not match expected. Excepted : '$expected' | Actual : '$whereClause'");
 
-        $whereClause = static::constructWhereClauseForGetPricesByCurrencyAndItemAmount([new Price(), new Price(), new Price()]);
+        $whereClause = static::constructWhereClauseForGetpriceByCurrencyAndItemAmount([new PriceComponent(), new PriceComponent(), new PriceComponent()]);
         $expected = "(amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?))) OR (amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?))) OR (amount = ? AND (currency_code = ? OR (item_ctime = ? AND item_crand = ?)))";
         assert($whereClause === $expected, "unit test failed : return where cluase did not match expected. Excepted : '$expected' | Actual : '$whereClause'");
     }
 
-    private static function insertPriceArrayAndReturnInsertion(array $prices) : Response
+    private static function insertPriceComponentArrayAndReturnInsertion(array $price) : Response
     {
-        $resp = new Response(false, "Unkown error in inserting price array", null);
+        $resp = new Response(false, "Unkown error in inserting priceComponent array", null);
         
         try
         {
-            if(static::validatePriceArray($prices) == false) throw new InvalidArgumentException("prices array must contain only prices");
+            if(static::validatePriceComponentArray($price) == false) throw new InvalidArgumentException("price array must contain only price");
 
-            $insertionValueClause = static::constructInsertionValueClauseForPrices($prices);
+            $insertionValueClause = static::constructInsertionValueClauseForprice($price);
 
-            $insertSql = "INSERT INTO price (ctime, crand, amount, currency_code, ref_item_ctime, ref_item_crand) VALUES $insertionValueClause;";
+            $insertSql = "INSERT INTO price_component (ctime, crand, amount, currency_code, ref_item_ctime, ref_item_crand) VALUES $insertionValueClause;";
             
-            $insertParams = static::returnParamsForInsertionForNonExistingPrices($prices);
+            $insertParams = static::returnParamsForInsertionForNonExistingprice($price);
 
         
 
@@ -4598,49 +4610,49 @@ class StoreController
 
             if($insertResult != false)
             {
-                $whereClause = static::constructWhereClauseForGetPricesByCurrencyAndItemAmount($prices);    
+                $whereClause = static::constructWhereClauseForGetpriceByCurrencyAndItemAmount($price);    
 
-                $selectSql = "SELECT ".static::$allViewPriceColumns." FROM v_price WHERE $whereClause;";
-                $selectParams = static::returnWhereClauseBindingArrayForSelectPriceArrayAfterInsertion($prices);
+                $selectSql = "SELECT ".static::$allViewPriceComponentColumns." FROM v_price_component WHERE $whereClause;";
+                $selectParams = static::returnWhereClauseBindingArrayForSelectPriceComponentArrayAfterInsertion($price);
 
                 $selectResult = Database::executeSqlQuery($selectSql, $selectParams);
 
                 if($selectResult->num_rows > 0)
                 {
-                    $gotPrices = [];
+                    $gotprice = [];
                     while($row = $selectResult->fetch_assoc())
                     {
-                        $gotPrice = static::priceToView($row);
-                        array_push($gotPrices, $gotPrice);
+                        $gotPriceComponent = static::priceComponentToView($row);
+                        array_push($gotprice, $gotPriceComponent);
                     }
 
                     $resp->success = true;
-                    $resp->message = "Prices inserted and returned";
-                    $resp->data = $gotPrices;
+                    $resp->message = "price inserted and returned";
+                    $resp->data = $gotprice;
                 }
                 else
                 {
-                    $resp->message = "Prices were not found after insertion";
+                    $resp->message = "price were not found after insertion";
                 }
             }
             else
             {
-                $resp->message = "Prices insertion failed";
+                $resp->message = "price insertion failed";
             }
         }
         catch(Exception $e)
         {
-            throw new Exception("Exception caught while inserting and returning price array : $e");
+            throw new Exception("Exception caught while inserting and returning priceComponent array : $e");
         }
 
         return $resp;
     }
 
-    private static function constructInsertionValueClauseForPrices(array $prices) : string
+    private static function constructInsertionValueClauseForprice(array $price) : string
     {
         $insertionValueClause = "(?,?,?,?,?,?)";
 
-        for($i = 1; $i < count($prices); $i++)
+        for($i = 1; $i < count($price); $i++)
         {
             $insertionValueClause .= ",(?,?,?,?,?,?)";
         }
@@ -4648,88 +4660,88 @@ class StoreController
         return $insertionValueClause;
     }
 
-    private static function unittest_constructInsertionValueClauseForPrices() : void
+    private static function unittest_constructInsertionValueClauseForprice() : void
     {
-        $price = new Price();
-        $prices = [$price];
+        $priceComponent = new PriceComponent();
+        $price = [$priceComponent];
 
-        $actual = static::constructInsertionValueClauseForPrices($prices);
+        $actual = static::constructInsertionValueClauseForprice($price);
         $expected = "(?,?,?,?,?,?)";
         assert($actual === $expected, new Exception("UNIT TEST FAILED | actual : $actual | expected : $expected"));
 
-        $price = new Price();
-        $prices = [$price,$price];
+        $priceComponent = new PriceComponent();
+        $price = [$priceComponent,$priceComponent];
 
-        $actual = static::constructInsertionValueClauseForPrices($prices);
+        $actual = static::constructInsertionValueClauseForprice($price);
         $expected = "(?,?,?,?,?,?),(?,?,?,?,?,?)";
         assert($actual === $expected, new Exception("UNIT TEST FAILED | actual : $actual | expected : $expected"));
 
-        $price = new Price();
-        $prices = [$price, $price, $price];
+        $priceComponent = new PriceComponent();
+        $price = [$priceComponent, $priceComponent, $priceComponent];
 
-        $actual = static::constructInsertionValueClauseForPrices($prices);
+        $actual = static::constructInsertionValueClauseForprice($price);
         $expected = "(?,?,?,?,?,?),(?,?,?,?,?,?),(?,?,?,?,?,?)";
         assert($actual === $expected, new Exception("UNIT TEST FAILED | actual : $actual | expected : $expected"));
 
     }
 
-    private static function returnWhereClauseBindingArrayForSelectPriceArrayAfterInsertion(array $prices) : array
+    private static function returnWhereClauseBindingArrayForSelectPriceComponentArrayAfterInsertion(array $price) : array
     {
-        if(empty($prices)) throw new InvalidArgumentException("Prices array cannot be empty");
+        if(empty($price)) throw new InvalidArgumentException("price array cannot be empty");
 
         $bindingArray = [];
 
-        foreach($prices as $price)
+        foreach($price as $priceComponent)
         {
-            [$refItemCtime, $refItemCrand] = is_null($price->itemId) ? [null, null] : [$price->itemId->ctime, $price->itemId->crand];
+            [$refItemCtime, $refItemCrand] = is_null($priceComponent->itemId) ? [null, null] : [$priceComponent->itemId->ctime, $priceComponent->itemId->crand];
 
-            array_push($bindingArray, $price->amount, $price->currencyCode, $refItemCtime, $refItemCrand);
+            array_push($bindingArray, $priceComponent->amount, $priceComponent->currencyCode, $refItemCtime, $refItemCrand);
         }
 
         return $bindingArray;
     }
 
-    private static function unittest_returnWhereClauseBindingArrayForSelectPriceArrayAfterInsertion() : void
+    private static function unittest_returnWhereClauseBindingArrayForSelectPriceComponentArrayAfterInsertion() : void
     {
-        $price = new Price();
-        $prices = [$price];
+        $priceComponent = new PriceComponent();
+        $price = [$priceComponent];
 
-        $actual = json_encode(static::returnWhereClauseBindingArrayForSelectPriceArrayAfterInsertion($prices));
+        $actual = json_encode(static::returnWhereClauseBindingArrayForSelectPriceComponentArrayAfterInsertion($price));
         $expected = json_encode([0,null,null,null]);
 
         assert($actual === $expected, new Exception("UNIT TEST FAIELD | actual : $actual | expected : $expected"));
     }
 
-    private static function returnParamsForInsertionForNonExistingPrices(array $prices) : array
+    private static function returnParamsForInsertionForNonExistingprice(array $price) : array
     {
         $params = [];
 
-        foreach($prices as $price)
+        foreach($price as $priceComponent)
         {
-            [$refItemCtime, $refItemCrand] = is_null($price->itemId) ? [null, null] : [$price->itemId->ctime, $price->itemId->crand];
+            [$refItemCtime, $refItemCrand] = is_null($priceComponent->itemId) ? [null, null] : [$priceComponent->itemId->ctime, $priceComponent->itemId->crand];
 
-            array_push($params, $price->ctime, $price->crand, $price->amount, (string)$price->currencyCode, $refItemCtime, $refItemCrand);
+            array_push($params, $priceComponent->ctime, $priceComponent->crand, $priceComponent->amount, (string)$priceComponent->currencyCode, $refItemCtime, $refItemCrand);
         }
 
         return $params;
     }
 
-    private static function unittest_returnParamsForInsertionForNonExistingPrices() : void
+    private static function unittest_returnParamsForInsertionForNonExistingprice() : void
     {
-        $price = new Price();
-        $prices = [$price];
+        $priceComponent = new PriceComponent();
+        $price = [$priceComponent];
 
-        $actual = json_encode(static::returnParamsForInsertionForNonExistingPrices($prices));
-        $expected = json_encode([$price->ctime, $price->crand, 0, "", null, null]);
+        $actual = json_encode(static::returnParamsForInsertionForNonExistingprice($price));
+        $expected = json_encode([$priceComponent->ctime, $priceComponent->crand, 0, "", null, null]);
 
         assert($actual === $expected, new exception("UNIT TEST FAILED | actual : $actual | expected : $expected"));
     }
 
-    private static function constructInsertionValueClauseForNonExistingPrices(array $prices) : string
+    private static function constructInsertionValueClauseForNonExistingprice(array $price) : string
     {
         $insertionValueClause = "(?,?,?,?,?,?)";
 
-        for($i = 1; $i < count($prices); $i++)
+        for($i = 1; $i < count($price); $i++)
         {
             $insertionValueClause .= ",(?,?,?,?,?,?)";
         }
@@ -4737,11 +4749,11 @@ class StoreController
         return $insertionValueClause;
     }
 
-    private static function validatePriceArray(array $prices) : bool
+    private static function validatePriceComponentArray(array $price) : bool
     {
-        foreach($prices as $price)
+        foreach($price as $priceComponent)
         {
-            if(!($price instanceof Price || $price instanceof vPrice))
+            if(!($priceComponent instanceof PriceComponent || $priceComponent instanceof vPriceComponent))
             {
                 return false;
             }
@@ -4750,7 +4762,7 @@ class StoreController
         return true;
     }
 
-    private static function priceToView(array $row) : vPrice
+    private static function priceComponentToView(array $row) : vPriceComponent
     {
         $iconSmall = new vMedia();
         $iconSmall->setMediaPath($row["media_path_small"]);
@@ -4805,7 +4817,7 @@ class StoreController
                 $store = static::rowToVStore($result->fetch_assoc());
                 $products = static::getStoreProductsById($store);
                 
-                if(count($products) > 0)static::populateProductsWithBasePrices($products);
+                if(count($products) > 0)static::populateProductsWithBaseprice($products);
 
                 $store->products = $products;
 
@@ -4847,7 +4859,7 @@ class StoreController
                 $store = static::rowToVStore($result->fetch_assoc());
                 $products = static::getStoreProductsById($store);
                 
-                if(count($products) > 0)static::populateProductsWithBasePrices($products);
+                if(count($products) > 0)static::populateProductsWithBaseprice($products);
 
                 $store->products = $products;
 
@@ -4890,7 +4902,7 @@ class StoreController
                 $store = static::rowToVStore($result->fetch_assoc());
                 $products = static::getStoreProductsById($storeId);
                 
-                if(count($products) > 0)static::populateProductsWithBasePrices($products);
+                if(count($products) > 0)static::populateProductsWithBaseprice($products);
 
                 $store->products = $products;
 
@@ -4967,15 +4979,15 @@ class StoreController
         return [];
     }
 
-    private static function populateProductsWithBasePrices(array &$products) : void
+    private static function populateProductsWithBaseprice(array &$products) : void
     {
         $params = [];
-        $selectTable = static::createSelectTableForPopulateProductsWithBasePrices($products, $params);
+        $selectTable = static::createSelectTableForPopulateProductsWithBaseprice($products, $params);
         $sql = "SELECT 
         vppl.product_ctime,
         vppl.product_crand,
-        vppl.price_ctime as `ctime`,
-        vppl.price_crand as `crand`,
+        vppl.price_component_ctime as `ctime`,
+        vppl.price_component_crand as `crand`,
         vppl.amount,
         vppl.currency_code,
         vppl.item_ctime,
@@ -4985,77 +4997,77 @@ class StoreController
         vppl.media_path_small,
         vppl.media_path_large,
         vppl.media_path_back
-        FROM v_product_price_link vppl
+        FROM v_product_price_component_link vppl
         JOIN ($selectTable) pt
         WHERE pt.product_ctime = vppl.product_ctime AND pt.product_crand = vppl.product_crand";
 
         $result = Database::executeSqlQuery($sql, $params);
 
-        if(!$result) throw new Exception("result returned false attempting to populate cart products with base prices");
+        if(!$result) throw new Exception("result returned false attempting to populate cart products with base price");
 
-        $priceArray = static::createAssocProductIdToPricesArrayForPopulateProductsWithBasePrices($result);
+        $priceComponentArray = static::createAssocProductIdTopriceArrayForPopulateProductsWithBaseprice($result);
 
         for($i = 0; $i < count($products); $i++)
         {
             $product = $products[$i];
 
-            $foundPriceArray = null;
+            $foundPriceComponentArray = null;
 
-            //find matching set of prices for the product
-            foreach($priceArray as $priceComponent)
+            //find matching set of price for the product
+            foreach($priceComponentArray as $priceComponent)
             {
                 if($priceComponent["productId"]->ctime !== $product->ctime || $priceComponent["productId"]->crand !== $product->crand) continue;
-                $foundPriceArray = $priceComponent["prices"];
+                $foundPriceComponentArray = $priceComponent["price"];
                 break;
             }
 
-            if(is_null($foundPriceArray)) throw new RuntimeException("no price array was found for product while populating prodcuts with base prices");
+            if(is_null($foundPriceComponentArray)) throw new RuntimeException("no priceComponent array was found for product while populating prodcuts with base price");
 
-            $product->price = $foundPriceArray;
+            $product->priceComponents = $foundPriceComponentArray;
 
             $products[$i] = $product;
         }  
     }
 
-    private static function createAssocProductIdToPricesArrayForPopulateProductsWithBasePrices(mysqli_result $result) : array
+    private static function createAssocProductIdTopriceArrayForPopulateProductsWithBaseprice(mysqli_result $result) : array
     {
-        $prices = [];
+        $price = [];
 
         while($row = $result->fetch_assoc())
         {
-            $vPrice = static::rowTovPriceComponent($row);
+            $vPriceComponent = static::rowTovPriceComponent($row);
             $productId = new vRecordId($row["product_ctime"], $row["product_crand"]);
 
-            $alreadyExistingPricedProduct = null;
+            $alreadyExistingPriceComponentdProduct = null;
 
-            for($i = 0; $i < count($prices); $i++)
+            for($i = 0; $i < count($price); $i++)
             {
-                $price = $prices[$i];
-                if($price["productId"]->ctime !== $productId->ctime || $price["productId"]->crand !== $productId->crand) 
+                $priceComponent = $price[$i];
+                if($priceComponent["productId"]->ctime !== $productId->ctime || $priceComponent["productId"]->crand !== $productId->crand) 
                 {
                     continue;
                 }
 
-                array_push($price["prices"], $price); 
-                $alreadyExistingPricedProduct = $i; 
+                array_push($priceComponent["price"], $priceComponent); 
+                $alreadyExistingPriceComponentdProduct = $i; 
                 break;
             }
 
-            if($alreadyExistingPricedProduct === null)
+            if($alreadyExistingPriceComponentdProduct === null)
             {
-                array_push($prices, ["productId"=>$productId, "prices"=>[$vPrice]]);
+                array_push($price, ["productId"=>$productId, "price"=>[$vPriceComponent]]);
             }
         }
 
-        return $prices;
+        return $price;
     }
 
     private static function rowTovPriceComponent(array $row) : vPriceComponent
     {
-        $price = new vPriceComponent($row["ctime"], $row["crand"]);
+        $priceComponent = new vPriceComponent($row["ctime"], $row["crand"]);
 
-        $price->amount = $row["amount"];
-        $price->currencyCode = empty($row["currency_code"]) ? null : CurrencyCode::from($row["currency_code"]);
+        $priceComponent->amount = $row["amount"];
+        $priceComponent->currencyCode = empty($row["currency_code"]) ? null : CurrencyCode::from($row["currency_code"]);
        
             $item = new vItem($row["item_ctime"], $row["item_crand"]);
             $item->name = $row["item_name"];
@@ -5069,12 +5081,12 @@ class StoreController
             $item->iconSmall = $iconSmall;
             $item->iconBig = $iconBig;
             $item->iconBack = $iconBack;
-        $price->item = $item;
+        $priceComponent->item = $item;
         
-        return $price;
+        return $priceComponent;
     }
 
-    private static function createSelectTableForPopulateProductsWithBasePrices(array $products, array &$params) : string
+    private static function createSelectTableForPopulateProductsWithBaseprice(array $products, array &$params) : string
     {
         if(count($products) <= 0) throw new InvalidArgumentException("\$products array must contain at least one element");
         
@@ -5140,11 +5152,11 @@ class StoreController
         return $response;
     } 
 
-    private static function linkBasePricesToArrayOfCartProducts(array $cartProducts) : void
+    private static function linkBasepriceToArrayOfCartProducts(array $cartProducts) : void
     {
 
         $params = [];
-        $selectTable = static::createSelectTableForPopulateBasePricesToArrayOfCartProducts($cartProducts, $params);
+        $selectTable = static::createSelectTableForPopulateBasepriceToArrayOfCartProducts($cartProducts, $params);
         $sql = "SELECT
             vp.ctime, 
             vp.crand, 
@@ -5160,53 +5172,53 @@ class StoreController
             vp.item_is_fungible,
             st.cart_product_link_ctime,
             st.cart_product_link_crand
-        FROM v_price vp
-        JOIN product_price_link ppl ON ppl.ref_price_ctime = vp.ctime AND ppl.ref_price_crand = vp.crand
+        FROM v_price_component vp
+        JOIN product_price_component_link ppl ON ppl.ref_price_component_ctime = vp.ctime AND ppl.ref_price_component_crand = vp.crand
         JOIN ($selectTable) st ON st.product_ctime = ppl.ref_product_ctime AND st.product_crand = ppl.ref_product_crand
         WHERE ppl.void = 0;
         ";
 
         $result = Database::executeSqlQuery($sql, $params);
 
-        if(!$result) throw new Exception("result returned false while populating base prices to array of cart products");
+        if(!$result) throw new Exception("result returned false while populating base price to array of cart products");
 
-        $cartProductPricePairs = [];
+        $cartProductPriceComponentPairs = [];
 
         while($row = $result->fetch_assoc())
         {
-            $price = static::rowTovPriceComponent($row);
+            $priceComponent = static::rowTovPriceComponent($row);
             $cartProduct = new vRecordId($row["cart_product_link_ctime"], $row["cart_product_link_crand"]);
 
-            array_push($cartProductPricePairs, ["price"=>$price, "cartProductId"=>$cartProduct]);
+            array_push($cartProductPriceComponentPairs, ["priceComponent"=>$priceComponent, "cartProductId"=>$cartProduct]);
         }
 
-        static::linkCartProductPricePairs($cartProductPricePairs);
+        static::linkCartProductPriceComponentPairs($cartProductPriceComponentPairs);
     }
 
-    private static function linkCartProductPricePairs(array $cartProductPricePairs) : void
+    private static function linkCartProductPriceComponentPairs(array $cartProductPriceComponentPairs) : void
     {
         $params = [];
-        $valueClause = static::createValueClauseForLinkCartProductPricePairs($cartProductPricePairs, $params);
-        $sql = "INSERT INTO cart_product_price_link (ctime, crand, ref_cart_product_link_ctime, ref_cart_product_link_crand, ref_price_ctime, ref_price_crand, removed, checked_out) VALUES $valueClause";
+        $valueClause = static::createValueClauseForLinkCartProductPriceComponentPairs($cartProductPriceComponentPairs, $params);
+        $sql = "INSERT INTO cart_product_price_component_link (ctime, crand, ref_cart_product_link_ctime, ref_cart_product_link_crand, ref_price_component_ctime, ref_price_component_crand, removed, checked_out) VALUES $valueClause";
 
         $result = database::executeSqlQuery($sql, $params);
 
-        if(!$result) throw new Exception("result returned false while linking cart product price pairs");
+        if(!$result) throw new Exception("result returned false while linking cart product priceComponent pairs");
     }
 
-    private static function createValueClauseForLinkCartProductPricePairs(array $cartProductPricePairs, &$params) : string
+    private static function createValueClauseForLinkCartProductPriceComponentPairs(array $cartProductPriceComponentPairs, &$params) : string
     {
         $valueClause = "";
 
-        for($i = 0; $i < count($cartProductPricePairs); $i++)
+        for($i = 0; $i < count($cartProductPriceComponentPairs); $i++)
         {
-            $pair = $cartProductPricePairs[$i];
+            $pair = $cartProductPriceComponentPairs[$i];
             $cartProductId = $pair["cartProductId"];
-            $price = $pair["price"];
+            $priceComponent = $pair["priceComponent"];
 
             $link = new recordId();
 
-            array_push($params, $link->ctime, $link->crand, $cartProductId->ctime, $cartProductId->crand, $price->ctime, $price->crand);
+            array_push($params, $link->ctime, $link->crand, $cartProductId->ctime, $cartProductId->crand, $priceComponent->ctime, $priceComponent->crand);
 
             if($i === 0)
             {
@@ -5220,7 +5232,7 @@ class StoreController
         return $valueClause;
     }
 
-    private static function createSelectTableForPopulateBasePricesToArrayOfCartProducts(array $cartProducts, array &$params) : string
+    private static function createSelectTableForPopulateBasepriceToArrayOfCartProducts(array $cartProducts, array &$params) : string
     {
         $selectTable = "";
 
@@ -5257,7 +5269,7 @@ class StoreController
 
             if($result) throw new Exception("result returned false while removing coupon from cart by group assignment id");
 
-            static::linkBasePricesToArrayOfCartProducts($cartProducts);
+            static::linkBasepriceToArrayOfCartProducts($cartProducts);
 
             $resp->success = true;
             $resp->message = "Removed coupon from cart";
@@ -5429,8 +5441,8 @@ class StoreController
             $couponCartProductLinks = [];
             static::executeQueriesToRemoveCurrentCouponCartProductLinksForCoupon($couponedProducts);
             static::executeQueriesToLinkCartProductsToCoupon($couponedProducts, $coupon, $couponCartProductLinks);
-            static::executeQueriesToRemoveCurrentPricesFromCartProducts($couponedProducts);
-            static::executeQueriesToAddCouponPricesToProducts($couponedProducts, $coupon);
+            static::executeQueriesToRemoveCurrentpriceFromCartProducts($couponedProducts);
+            static::executeQueriesToAddCouponpriceToProducts($couponedProducts, $coupon);
 
             if(!$conn->commit()) throw new exception("Transaction returned false while attempting to apply coupon to cart");
 
@@ -5483,18 +5495,18 @@ class StoreController
         return $selectTable;
     }
 
-    private static function executeQueriesToAddCouponPricesToProducts(array $cartProductLinksToApplyCouponTo, vCoupon $coupon) : void
+    private static function executeQueriesToAddCouponpriceToProducts(array $cartProductLinksToApplyCouponTo, vCoupon $coupon) : void
     {
         $params = [];
-        $valueClause = static::createValueClauseForExecuteQueriesToAddCouponPricesToProducts($cartProductLinksToApplyCouponTo, $coupon, $params);
-        $sql = "INSERT INTO cart_product_price_link (ctime, crand, ref_cart_product_link_ctime, ref_cart_product_link_crand, ref_price_ctime, ref_price_crand, removed, checked_out) ($valueClause)";
+        $valueClause = static::createValueClauseForExecuteQueriesToAddCouponpriceToProducts($cartProductLinksToApplyCouponTo, $coupon, $params);
+        $sql = "INSERT INTO cart_product_price_component_link (ctime, crand, ref_cart_product_link_ctime, ref_cart_product_link_crand, ref_price_component_ctime, ref_price_component_crand, removed, checked_out) ($valueClause)";
 
         $result = Database::executeSqlQuery($sql, $params);
 
-        if(!$result) throw new Exception("result returned false while executing query to add coupon prices to cart products");
+        if(!$result) throw new Exception("result returned false while executing query to add coupon price to cart products");
     }
 
-    private static function createValueClauseForExecuteQueriesToAddCouponPricesToProducts(array $cartProductLinksToApplyCouponTo, vCoupon $coupon, array &$params) : string
+    private static function createValueClauseForExecuteQueriesToAddCouponpriceToProducts(array $cartProductLinksToApplyCouponTo, vCoupon $coupon, array &$params) : string
     {
         $valueClause = "";
 
@@ -5502,17 +5514,17 @@ class StoreController
         {
             $cartProductLink = $cartProductLinksToApplyCouponTo[$i];
 
-            $link = new CartProductPriceLink();
+            $link = new CartProductPriceComponentLink();
 
             array_push($params, $link->ctime, $link->crand, $cartProductLink->ctime, $cartProductLink->crand, $coupon->ctime, $coupon->crand);
 
             if($i === 0)
             {
-                $valueClause .= "(SELECT ? as ctime, ? as crand, ? as ref_cart_product_link_ctime, ? as ref_cart_product_link_crand, cpl.ref_price_ctime, cpl.ref_price_crand, 0 as removed, 0 as checked_out FROM coupon_price_link cpl WHERE cpl.ref_coupon_ctime = ? AND cpl.ref_coupon_crand = ?)";
+                $valueClause .= "(SELECT ? as ctime, ? as crand, ? as ref_cart_product_link_ctime, ? as ref_cart_product_link_crand, cpl.ref_price_component_ctime, cpl.ref_price_component_crand, 0 as removed, 0 as checked_out FROM coupon_price_component_link cpl WHERE cpl.ref_coupon_ctime = ? AND cpl.ref_coupon_crand = ?)";
                 continue;
             }
 
-            $valueClause .= "UNION ALL (SELECT ?, ?, ?, ?, cpl.ref_price_ctime, cpl.ref_price_crand, 0, 0 FROM coupon_price_link cpl WHERE cpl.ref_coupon_ctime = ? AND cpl.ref_coupon_crand = ?)";
+            $valueClause .= "UNION ALL (SELECT ?, ?, ?, ?, cpl.ref_price_component_ctime, cpl.ref_price_component_crand, 0, 0 FROM coupon_price_component_link cpl WHERE cpl.ref_coupon_ctime = ? AND cpl.ref_coupon_crand = ?)";
         }
 
         return $valueClause;
@@ -5706,18 +5718,18 @@ class StoreController
         return $valueClause;
     }
 
-    private static function executeQueriesToRemoveCurrentPricesFromCartProducts(array $couponedProducts) : void
+    private static function executeQueriesToRemoveCurrentpriceFromCartProducts(array $couponedProducts) : void
     {
         $params = [];
-        $selectTable = static::createSelectTableForExecuteQueriesToRemoveCurrentPricesFromCartProducts($couponedProducts, $params);
-        $sql = "UPDATE cart_product_price_link cpl JOIN ($selectTable) st ON st.ctime = cpl.ctime AND st.crand = cpl.crand SET cpl.removed = 1;";
+        $selectTable = static::createSelectTableForExecuteQueriesToRemoveCurrentpriceFromCartProducts($couponedProducts, $params);
+        $sql = "UPDATE cart_product_price_component_link cpl JOIN ($selectTable) st ON st.ctime = cpl.ctime AND st.crand = cpl.crand SET cpl.removed = 1;";
 
         $result = Database::executeSqlQuery($sql, $params);
 
-        if(!$result) throw new Exception("result returned false while executing queries to remove current prices from cart products");
+        if(!$result) throw new Exception("result returned false while executing queries to remove current price from cart products");
     }
 
-    private static function createSelectTableForExecuteQueriesToRemoveCurrentPricesFromCartProducts(array $couponedProducts, array &$params) : string
+    private static function createSelectTableForExecuteQueriesToRemoveCurrentpriceFromCartProducts(array $couponedProducts, array &$params) : string
     {
         $selectTable = "";
 
@@ -5728,11 +5740,11 @@ class StoreController
 
             if($i === 0)
             {
-                $selectTable .= "(SELECT ctime, crand FROM cart_product_price_link WHERE ref_cart_product_link_ctime = ? AND ref_cart_product_link_crand = ?)";
+                $selectTable .= "(SELECT ctime, crand FROM cart_product_price_component_link WHERE ref_cart_product_link_ctime = ? AND ref_cart_product_link_crand = ?)";
                 continue;
             }
 
-            $selectTable .= " UNION ALL (SELECT ctime, crand FROM cart_product_price_link WHERE ref_cart_product_link_ctime = ? AND ref_cart_product_link_crand = ?)";
+            $selectTable .= " UNION ALL (SELECT ctime, crand FROM cart_product_price_component_link WHERE ref_cart_product_link_ctime = ? AND ref_cart_product_link_crand = ?)";
         }
 
         return $selectTable;
@@ -5869,7 +5881,7 @@ class StoreController
 
             Database::executeSqlQuery($sql, $params);
 
-            if(count($coupon->price) > 0)static::linkPriceToCouponInsertionTransaction($coupon);
+            if(count($coupon->priceComponents) > 0)static::linkPriceComponentToCouponInsertionTransaction($coupon);
 
             $success = $conn->commit();
 
@@ -5887,29 +5899,29 @@ class StoreController
         return $resp;
     }
 
-    public static function linkPricesToCouponInsertionTransaction(Coupon $coupon) : void
+    public static function linkPriceComponentToCouponInsertionTransaction(Coupon $coupon) : void
     {
         $params = [];
-        $valueClause = static::createValueClauseForLinkPriceToCouponInsertionTransaction($coupon, $params);
-        $sql = "INSERT INTO coupon_price_link (ctime, crand, ref_coupon_ctime, ref_coupon_crand, ref_price_ctime, ref_price_crand) VALUES $valueClause";
+        $valueClause = static::createValueClauseForLinkPriceComponentToCouponInsertionTransaction($coupon, $params);
+        $sql = "INSERT INTO coupon_price_component_link (ctime, crand, ref_coupon_ctime, ref_coupon_crand, ref_price_component_ctime, ref_price_component_crand) VALUES $valueClause";
 
         $result = Database::executeSqlQuery($sql, $params);
 
-        if(!$result) throw new exception("result returned false while inserting coupon price links");
+        if(!$result) throw new exception("result returned false while inserting coupon priceComponent links");
     }
 
-    public static function createValueClauseForLinkPriceToCouponInsertionTransaction(Coupon $coupon, array &$params) : string
+    public static function createValueClauseForLinkPriceComponentToCouponInsertionTransaction(Coupon $coupon, array &$params) : string
     {
-        $price = $coupon->price;
+        $priceComponents = $coupon->priceComponents;
 
-        if(count($price) <= 0) throw new InvalidArgumentException("counpon prices must have at least one element");
+        if(count($priceComponents) <= 0) throw new InvalidArgumentException("counpon price components must have at least one element");
 
         $valueClause = "";
 
-        for($i = 0; $i < count($price); $i++)
+        for($i = 0; $i < count($priceComponents); $i++)
         {
-            $priceComponent = $price[$i];
-            $link = new CouponPriceLink();
+            $priceComponent = $priceComponents[$i];
+            $link = new CouponPriceComponentLink();
 
             array_push($params, $link->ctime, $link->crand, $coupon->ctime, $coupon->crand, $priceComponent->ctime, $priceComponent->crand);
 
@@ -5962,7 +5974,7 @@ class StoreController
 
             $coupon = static::rowToVCoupon($result->fetch_assoc());
 
-            $coupon->price = static::getCouponPrice($coupon);
+            $coupon->priceComponents = static::getCouponPriceComponent($coupon);
 
             $resp->success = true;
             $resp->message = "Coupon returned";
@@ -5976,7 +5988,7 @@ class StoreController
         return $resp;
     }
 
-    private static function getCouponPrices(vCoupon $coupon) : array
+    private static function getCouponPriceComponent(vCoupon $coupon) : array
     {
         $sql = "SELECT
             vp.ctime, 
@@ -5991,22 +6003,22 @@ class StoreController
             vp.media_path_large, 
             vp.media_path_back,
             vp.item_is_fungible
-        FROM v_price vp
-        JOIN coupon_price_link cpl ON cpl.ref_price_ctime = vp.ctime AND cpl.ref_price_crand 
+        FROM v_price_component vp
+        JOIN coupon_price_component_link cpl ON cpl.ref_price_component_ctime = vp.ctime AND cpl.ref_price_component_crand 
         WHERE cpl.ref_coupon_ctime = ? AND cpl.ref_coupon_crand = ?";
 
         $result = Database::executeSqlQuery($sql, [$coupon->ctime, $coupon->crand]);
 
-        if(!$result) throw new Exception("result returned false while getting coupon prices");
+        if(!$result) throw new Exception("result returned false while getting coupon price");
 
-        $prices = [];
+        $price = [];
         
         while($row = $result->fetch_assoc())
         {
-            array_push($prices, static::rowTovPriceComponent($row));
+            array_push($price, static::rowTovPriceComponent($row));
         }
 
-        return $prices;
+        return $price;
     }
 
     private static function rowToVCoupon(array $row) : vCoupon

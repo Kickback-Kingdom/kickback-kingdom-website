@@ -16,7 +16,7 @@ class vProduct extends vRecordId
     public ?vMedia $mediaLarge;
     public ?vMedia $mediaBack;
 
-    public array $price;
+    public array $priceComponents;
 
     public string $tag;
     public array $categories;
