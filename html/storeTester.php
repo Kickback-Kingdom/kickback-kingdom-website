@@ -1188,9 +1188,9 @@ class StoreTester
 
         if(count($prices) > 0 && count($accountLootAmount) == 0) return false;
 
-        for($priceIndex = 0; $priceIndex < count($prices); $priceIndex++)
+        for($priceComponentIndex = 0; $priceComponentIndex < count($prices); $priceComponentIndex++)
         {
-            $price = $prices[$priceIndex];
+            $price = $prices[$priceComponentIndex];
 
             for($i = 0; $i < count($accountLootAmount); $i++)
             {
@@ -1206,7 +1206,7 @@ class StoreTester
                 if(is_null($matchingPrice))
                 {
                     throw new Exception("got here");
-                    if($priceIndex === count($prices)-1) return false;
+                    if($priceComponentIndex === count($prices)-1) return false;
                     continue;
                 }
 

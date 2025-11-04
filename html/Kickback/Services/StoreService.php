@@ -868,14 +868,14 @@ class StoreService
 
     private static function vPriceComponentArrayFromJson(array $price) : array
     {
-        $vPriceComponents = [];
+        $vPrice = [];
 
         foreach($price as $priceComponent)
         {
-            array_push($vPriceComponents, static::vPriceFromJson($priceComponent));
+            array_push($vPrice, static::vPriceFromJson($priceComponent));
         }
 
-        return $vPriceComponents;
+        return $vPrice;
     }
 
     private static function vPriceFromJson(object $priceComponent) : vPriceComponent

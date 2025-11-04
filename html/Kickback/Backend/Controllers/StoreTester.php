@@ -122,14 +122,14 @@ class StoreTester
 
                     //OVERRIDE COUPON
             $overrideCoupon = static::createMockInfiniteOverrideCoupon($mockProduct, $mockOverrideCouponPrices);
-            if(count($overrideCoupon->priceComponents) !== count($mockOverrideCouponPrices)) throw new Exception("COMPONENT TEST FAILED : override coupon does not have all of the mockOverrideCouponPrices. Expected : ".count($mockOverrideCouponPrices)." | Actual : ".count($overrideCoupon->priceComponents));
+            if(count($overrideCoupon->price) !== count($mockOverrideCouponPrices)) throw new Exception("COMPONENT TEST FAILED : override coupon does not have all of the mockOverrideCouponPrices. Expected : ".count($mockOverrideCouponPrices)." | Actual : ".count($overrideCoupon->price));
             if(is_null($overrideCoupon)) throw new Exception("COMPONENT TEST FAILED : failed to return mock coupon after creation");
 
             if(!static::doesCouponHaveLinksToPrices($overrideCoupon, $mockOverrideCouponPrices)) throw new Exception("COMPONENT TEST FAILED : override coupon does not have expected links");
             
                     //COUPON
             $coupon = static::createMockInfiniteCoupon($mockProduct, $mockCouponPrices);
-            if(count($coupon->priceComponents) !== count($mockCouponPrices)) throw new Exception("COMPONENT TEST FAILED : coupon does not have all of the mockCouponPrices. Expected : ".count($mockCouponPrices)." | Actual : ".count($coupon->priceComponents));
+            if(count($coupon->price) !== count($mockCouponPrices)) throw new Exception("COMPONENT TEST FAILED : coupon does not have all of the mockCouponPrices. Expected : ".count($mockCouponPrices)." | Actual : ".count($coupon->price));
             if(is_null($coupon)) throw new Exception("COMPONENT TEST FAILED : failed to return mock coupon after creation");
             
             if(!static::doesCouponHaveLinksToPrices($coupon, $mockCouponPrices)) throw new Exception("COMPONENT TEST FAILED : coupon does not have expected links");
@@ -167,7 +167,7 @@ class StoreTester
             $reserveResp = StoreController::checkoutCart($cart);
             if(!$reserveResp->success) throw new Exception("COMPONENT TEST FAILED : failed to reserve loots : $reserveResp->message");
 
-            $mockProduct->priceComponents = $overrideCoupon->priceComponents;
+            $mockProduct->price = $overrideCoupon->price;
             $doesAccountHaveLootForPrices = static::doesAccountHavePricesOfProduct($mockProduct, $mockSellerAccount);
             if(!$doesAccountHaveLootForPrices) throw new Exception("COMPONENT TEST FAILED : seller did not receive loots for product prices");
             
@@ -226,7 +226,7 @@ class StoreTester
             $cart = $cartResp->data;
             
             $coupon = static::createMockInfiniteCoupon($mockProduct, $mockCouponPrices);
-            if(count($coupon->priceComponents) !== count($mockCouponPrices)) throw new Exception("COMPONENT TEST FAILED : coupon does not have all of the mockCouponPrices. Expected : ".count($mockCouponPrices)." | Actual : ".count($coupon->priceComponents));
+            if(count($coupon->price) !== count($mockCouponPrices)) throw new Exception("COMPONENT TEST FAILED : coupon does not have all of the mockCouponPrices. Expected : ".count($mockCouponPrices)." | Actual : ".count($coupon->price));
 
             if(is_null($coupon)) throw new Exception("COMPONENT TEST FAILED : failed to return mock coupon after creation");
 
@@ -249,7 +249,7 @@ class StoreTester
             $reserveResp = StoreController::checkoutCart($cart);
             if(!$reserveResp->success) throw new Exception("COMPONENT TEST FAILED : failed to reserve loots : $reserveResp->message");
 
-            $mockProduct->priceComponents = $coupon->priceComponents;
+            $mockProduct->price = $coupon->price;
             $doesAccountHaveLootForPrices = static::doesAccountHavePricesOfProduct($mockProduct, $mockSellerAccount);
             if(!$doesAccountHaveLootForPrices) throw new Exception("COMPONENT TEST FAILED : seller did not receive loots for product prices");
             
@@ -525,7 +525,7 @@ class StoreTester
 
             $raffleTicketPrice = static::returnMockPriceComponentObject("raffleticket");
 
-            $foundPriceResp = StoreController::InsertAndSelectPriceComponents([$raffleTicketPrice]);
+            $foundPriceResp = StoreController::InsertAndSelectPrice([$raffleTicketPrice]);
 
             if(!$foundPriceResp->success) throw new Exception("COMPONENT TEST FAILED : getting prices failed : $foundPriceResp->message");
             if(count($foundPriceResp->data) !== 1) throw new Exception("COMPONENT TEST FAILED : expected a single price to be returned : $foundPriceResp->message");
@@ -633,13 +633,13 @@ class StoreTester
             $linkLootsResp = StoreController::linkLootsToProductAsStock($mockProduct, $mockLoots);
             if(!$linkLootsResp->success) throw new Exception("COMPONENT TEST FAILED : failed to link loots to product as stock : $linkLootsResp->message");
 
-            $canAccountAffordItemPricesResp = StoreController::canAccountAffordItemPriceComponentsInCart($cartResp->data);
+            $canAccountAffordItemPricesResp = StoreController::canAccountAffordItemPriceInCart($cartResp->data);
             if(!$canAccountAffordItemPricesResp->success) throw new Exception("COPMONENT TEST FAILED : failed to check if account could afford cart products");
             if($canAccountAffordItemPricesResp->data !== false) throw new Exception("COMPONET TEST FAILED : account returned to be able to afford cart products when it was expected not to : $canAccountAffordItemPricesResp->message");
 
             static::giveNumberOfRaffleTicketsToAccount($mockBuyerAccount, 3);
 
-            $canAccountAffordItemPricesResp = StoreController::canAccountAffordItemPriceComponentsInCart($cartResp->data);
+            $canAccountAffordItemPricesResp = StoreController::canAccountAffordItemPriceInCart($cartResp->data);
             if(!$canAccountAffordItemPricesResp->success) throw new Exception("COPMONENT TEST FAILED : failed to check if account could afford cart products");
             if($canAccountAffordItemPricesResp->data !== true) throw new Exception("COMPONET TEST FAILED : account returned to not be able to afford cart products when it was expected to : $canAccountAffordItemPricesResp->message");
 
@@ -694,12 +694,12 @@ class StoreTester
 
         $cartItem = $cartItems[0];
 
-        for($i = 0; $i < count($cartItem->priceComponents); $i++)
+        for($i = 0; $i < count($cartItem->price); $i++)
         {
-            $priceComponent = $cartItem->priceComponents[$i];
+            $priceComponent = $cartItem->price[$i];
 
             $priceComponentFound = false;
-            foreach($coupon->priceComponents as $couponPriceComponent)
+            foreach($coupon->price as $couponPriceComponent)
             {
                 if($priceComponent->ctime === $couponPriceComponent->ctime && $priceComponent->crand === $couponPriceComponent->crand)
                 {
@@ -1183,15 +1183,15 @@ class StoreTester
 
     private static function doesAccountHavePricesOfProduct(vProduct $product, vAccount $account) : bool
     {
-        $prices = $product->priceComponents;
+        $prices = $product->price;
 
         $accountLootAmount = static::returnAmountsOfPricesLootInAccountInventory($prices, $account);
 
         if(count($prices) > 0 && count($accountLootAmount) == 0) return false;
 
-        for($priceIndex = 0; $priceIndex < count($prices); $priceIndex++)
+        for($priceComponentIndex = 0; $priceComponentIndex < count($prices); $priceComponentIndex++)
         {
-            $price = $prices[$priceIndex];
+            $price = $prices[$priceComponentIndex];
 
             for($i = 0; $i < count($accountLootAmount); $i++)
             {
@@ -1207,7 +1207,7 @@ class StoreTester
                 if(is_null($matchingPrice))
                 {
                     throw new Exception("got here");
-                    if($priceIndex === count($prices)-1) return false;
+                    if($priceComponentIndex === count($prices)-1) return false;
                     continue;
                 }
 
@@ -1322,7 +1322,7 @@ class StoreTester
             $coupon->timesUsed = 0;
             $coupon->removed = false;
 
-            $coupon->priceComponents = $prices;
+            $coupon->price = $prices;
 
         return $coupon;
     }
@@ -1338,7 +1338,7 @@ class StoreTester
             $coupon->timesUsed = 0;
             $coupon->removed = false;
 
-            $coupon->priceComponents = $prices;
+            $coupon->price = $prices;
 
         return $coupon;
     }
@@ -1533,7 +1533,7 @@ class StoreTester
     {
         $raffleTicketPriceComponent = static::returnMockPriceComponentObject("raffleticket");
 
-        $foundPriceResp = StoreController::InsertAndSelectPriceComponents([$raffleTicketPriceComponent]);
+        $foundPriceResp = StoreController::InsertAndSelectPrice([$raffleTicketPriceComponent]);
 
         if(!$foundPriceResp->success) throw new Exception("COMPONENT TEST FAILED : getting prices failed : $foundPriceResp->message");
         if(count($foundPriceResp->data) !== 1) throw new Exception("COMPONENT TEST FAILED : expected a single price to be returned : $foundPriceResp->message");
@@ -1582,7 +1582,7 @@ class StoreTester
     {
         $coinsTicketPrice = static::returnMockPriceComponentObject("fungibleCoins", $amount);
 
-        $foundPriceResp = StoreController::InsertAndSelectPriceComponents([$coinsTicketPrice]);
+        $foundPriceResp = StoreController::InsertAndSelectPrice([$coinsTicketPrice]);
 
         if(!$foundPriceResp->success) throw new Exception("COMPONENT TEST FAILED : getting prices failed : $foundPriceResp->message");
         if(count($foundPriceResp->data) !== 1) throw new Exception("COMPONENT TEST FAILED : expected a single price to be returned : $foundPriceResp->message");
@@ -1601,7 +1601,7 @@ class StoreTester
     public static function createMockCouponPrices(vItem $item, int $amount = 1) : array
     {
         $price = static::returnMockPriceCouponObject($item, $amount);
-        $foundPriceResp = StoreController::InsertAndSelectPriceComponents([$price]);
+        $foundPriceResp = StoreController::InsertAndSelectPrice([$price]);
 
         if(!$foundPriceResp->success) throw new Exception("COMPONENT TEST FAILED : getting prices failed : $foundPriceResp->message");
         if(count($foundPriceResp->data) !== 1) throw new Exception("COMPONENT TEST FAILED : expected a single price to be returned : $foundPriceResp->message");
@@ -1977,11 +1977,11 @@ class StoreTester
 
         for($i = 0; $i < $amount; $i++)
         {
-            for($p = 0; $p < count($coupon->priceComponents); $p++)
+            for($p = 0; $p < count($coupon->price); $p++)
             {
                 $id = new RecordId();
 
-                $price = $coupon->priceComponents[$p];
+                $price = $coupon->price[$p];
                 $priceItem = $price->item;
 
                 if($i === 0 && $p === 0)

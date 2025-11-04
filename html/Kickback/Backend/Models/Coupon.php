@@ -20,7 +20,7 @@ class Coupon extends RecordId
     public ?DateTime $expiryTime = null;
     public ?bool $removed = null;
 
-    public array $priceComponents = [];
+    public array $price = [];
 
     public function __construct()
     {

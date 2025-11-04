@@ -13,7 +13,7 @@ class vCartItem extends vRecordId
     public ?vCoupon $coupon = null;
     public ?vRecordId $couponGroupAssignmentId;
 
-    public $priceComponents;
+    public $price;
 
     public function __construct(string $ctime = '', int $crand = -1)
     {

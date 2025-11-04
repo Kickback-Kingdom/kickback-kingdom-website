@@ -23,7 +23,7 @@ class Product extends RecordId
 
     public bool $removed;
 
-    public array $priceComponents;
+    public array $price;
 
     public string $tag;
     public array $categories;
@@ -36,7 +36,7 @@ class Product extends RecordId
         string $tag = '',
         array $categories = [],
         ?vStore $store = null,
-        array $priceComponents = [],
+        array $price = [],
         ?vMedia $largeMedia = null,
         ?vMedia $smallMedia = null,
         ?vMedia $backMedia = null,
@@ -58,7 +58,7 @@ class Product extends RecordId
         $this->smallMedia = $smallMedia;
         $this->backMedia = $backMedia;
 
-        $this->priceComponents = static::validatePrice($priceComponents) ? $priceComponents : throw new InvalidArgumentException("\$priceComponents Array must contain only price components");
+        $this->price = static::validatePrice($price) ? $price : throw new InvalidArgumentException("\$price Array must contain only price components");
     }
 
     private static function validateStringArray(string $fieldName, array $stringArray) : array
@@ -71,9 +71,9 @@ class Product extends RecordId
         return $stringArray;
     }
 
-    private static function validatePrice(array $priceComponents) : bool
+    private static function validatePrice(array $price) : bool
     {
-        foreach($priceComponents as $priceComponent)
+        foreach($price as $priceComponent)
         {
             if(!$priceComponent instanceof vPriceComponent)
             {
