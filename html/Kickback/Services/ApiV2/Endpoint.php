@@ -3,11 +3,15 @@ declare(strict_types=1);
 
 namespace Kickback\Services\ApiV2;
 
+use Exception;
+use Kickback\Backend\Controllers\AccountController;
+use Kickback\Backend\Views\vAccount;
 use Kickback\Common\Primitives\Str;
 use Kickback\Common\Exceptions\JSON_DecodeException;
 use Kickback\Common\Exceptions\KickbackException;
 use Kickback\Common\Exceptions\UnexpectedEmptyException;
 use Kickback\Common\Exceptions\UnexpectedTypeException;
+use Kickback\Services\Session;
 
 /**
 * Miscellaneous API-v2 related functions.
@@ -20,10 +24,76 @@ class Endpoint
 
     /**
     * Called at the beginning of endpoint execution.
+    *
+    * We could have several of these for the API Methods (GET, POST, PUT...)
     */
     public static function begin() : void
     {
         self::$have_buffering_ = \ob_start();
+    }
+
+    /**
+     * Validates the Authorization Bearer token header.
+     *
+     * @return string The extracted bearer token.
+     * @throws Exception If the header is missing or invalid.
+    */
+    public static function requireBearerToken() : string 
+    {
+        $headers = getallheaders();
+
+        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? null;
+
+        if (!$authHeader) {
+            throw new KickbackException("Missing Authorization header", 401);
+        }
+
+        if (!preg_match('/Bearer\s+(\S+)/', $authHeader, $matches)) {
+            throw new KickbackException("Invalid Authorization header format", 400);
+        }
+
+        return $matches[1];
+    }
+
+    public static function requireAccountSession() : vAccount
+    {
+        if(self::authHeaderExists())
+        {
+            $sessionToken = self::requireBearerToken();
+
+            $kk_service_key = \Kickback\Backend\Config\ServiceCredentials::get("kk_service_key");
+
+            $loginResp = AccountController::getAccountBySession($kk_service_key, $sessionToken);
+            if (!$loginResp->success)
+            {
+                throw new KickbackException($loginResp->message, 401);
+            }
+
+            return $loginResp->data;
+        }
+        else
+        {
+            Session::ensureSessionStarted();
+            if(!Session::isLoggedIn()) throw new Exception("Not Logged In", 401);
+            
+            $sessionAccount = Session::getCurrentAccount();
+
+            return $sessionAccount;
+        }
+    }
+
+    private static function getAuthHeader() : ?string
+    {
+        $headers = getAllheaders();
+
+        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? null;
+    
+        return $authHeader;
+    }
+
+    private static function authHeaderExists() : bool
+    {
+        return self::getAuthHeader() != null;
     }
 
     /**

@@ -13,9 +13,10 @@ use Kickback\Services\StoreService;
 Endpoint::begin();
 try
 {
+    $sessionAccount = Endpoint::requireAccountSession();
     $request_contents_json = Endpoint::file_get_contents('php://input');
     $response = null;
-    $response_code = StoreService::remove_coupon_from_cart_product($request_contents_json, $response);
+    $response_code = StoreService::remove_coupon_from_cart_product($sessionAccount, $request_contents_json, $response);
     if ( $response_code !== 0 ) {
         \http_response_code($response_code);
         // Otherwise let PHP/Apache/HTTPD respond with what it feels is appropriate.

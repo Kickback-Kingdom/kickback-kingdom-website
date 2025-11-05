@@ -18,6 +18,7 @@ use Kickback\Backend\Views\vStore;
 use Kickback\Backend\Views\vTransaction;
 use Kickback\Common\Primitives\Obj;
 use Kickback\Services\ApiV2\Endpoint;
+use LogicException;
 
 class StoreService
 {
@@ -32,14 +33,13 @@ class StoreService
         self::$initialized = true;
     }
 
-    public static function remove_product_from_cart(string $request_contents_json, ?Response &$resp) : int
+    public static function remove_product_from_cart(?vAccount $account, string $request_contents_json, ?Response &$resp) : int
     {
         $resp = new Response(false, "Unkown error encountered while removing product from cart");
 
-        if (!Session::isLoggedIn()) {
-            $endpoint_name = Endpoint::calculate_endpoint_resource_name();
-            $resp = new Response(false, "$endpoint_name: Authentication required");
-            return 401;
+        if (is_null($account))
+        {
+            throw new LogicException("Account cannot be null. Require an Account Session before calling this function");
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -53,7 +53,6 @@ class StoreService
             $resp->message = "Request body cannot be empty"; 
             return 400;
         } 
-
 
         $body = json_decode($request_contents_json);
 
@@ -71,9 +70,15 @@ class StoreService
 
         StoreService::initialize();
 
-        $product = static::vCartItemFromJson($body);
+        $cartProduct = static::vCartItemFromJson($body);
 
-        $removeProductToCartResp = StoreController::removeProductFromCart($product);
+        if(StoreController::doesCartProductBelongToAccount($account, $cartProduct))
+        {
+            $resp->message = "Cart Product does not belong to account";
+            return 403;
+        }
+
+        $removeProductToCartResp = StoreController::removeProductFromCart($cartProduct);
 
         if(!$removeProductToCartResp->success)
         {
@@ -209,14 +214,13 @@ class StoreService
         }
     }
 
-    public static function get_cart_for_account(string $request_contents_json, ?Response &$resp) : int
+    public static function get_cart_for_account(?vAccount $account, string $request_contents_json, ?Response &$resp) : int
     {
         $resp = new Response(false, "Unkown error encountered while returning cart for account");
 
-        if (!Session::isLoggedIn()) {
-            $endpoint_name = Endpoint::calculate_endpoint_resource_name();
-            $resp = new Response(false, "$endpoint_name: Authentication required");
-            return 401;
+        if (is_null($account))
+        {
+            throw new LogicException("Account cannot be null. Require an Account Session before calling this function");
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -231,20 +235,7 @@ class StoreService
             return 400;
         } 
 
-
         $body = json_decode($request_contents_json, true);
-
-        if(!key_exists("accountId", $body))
-        {
-            $resp->message = "Request body must contain the key : 'accountId'";
-            return 400;
-        }
-
-        if(empty($body["accountId"]))
-        {
-            $resp->message = "accountId cannot be empty"; 
-            return 400;
-        }
 
         if(!key_exists("storeLocator", $body))
         {
@@ -258,18 +249,9 @@ class StoreService
             return 400;
         }
 
-
         StoreService::initialize();
 
-        $id = new vRecordId('',$body["accountId"]);
         $storeLocator = $body["storeLocator"];
-        $accountResp = AccountController::getAccountById($id);
-        if(!$accountResp->success)
-        {
-            $endpoint_name = Endpoint::calculate_endpoint_resource_name();
-            $resp = new Response(false, "$endpoint_name: Failed to Retrieve Account By Id While Getting Cart For Account");
-            return 500;
-        }
 
         $storeResp = StoreController::getStoreByLocator($storeLocator);
 
@@ -287,7 +269,8 @@ class StoreService
             return 500;
         }
 
-        $storeCartResp = StoreController::getCartForAccount($accountResp->data, $storeResp->data);
+        $storeCartResp = StoreController::getCartForAccount($account, $storeResp->data);
+
         if(!$storeCartResp->success)
         {
             $endpoint_name = Endpoint::calculate_endpoint_resource_name();
@@ -298,7 +281,7 @@ class StoreService
         if(!is_null($storeCartResp->data))
         {
             $resp->success = true;
-            $resp->message = "Returned Cart For Account : ".$accountResp->data->username;
+            $resp->message = "Returned Cart For Account : ".$account->username;
             $resp->data = $storeCartResp->data;
             return 200;
         }
@@ -375,14 +358,13 @@ class StoreService
         }
     }
 
-    public static function add_product_to_cart_by_locator(string $request_contents_json, ?Response &$resp) : int
+    public static function add_product_to_cart_by_locator(?vAccount $account, string $request_contents_json, ?Response &$resp) : int
     {
         $resp = new Response(false, "Unkown error encountered while adding product to cart");
 
-        if (!Session::isLoggedIn()) {
-            $endpoint_name = Endpoint::calculate_endpoint_resource_name();
-            $resp = new Response(false, "$endpoint_name: Authentication required");
-            return 401;
+        if (is_null($account))
+        {
+            throw new LogicException("Account cannot be null. Require an Account Session before calling this function");
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -432,6 +414,12 @@ class StoreService
 
         $cart = static::vCartFromJson($cart);
 
+        if($cart->account->equals($account));
+        {
+            $resp->message = "Cart does not belong to account";
+            return 403;
+        }
+
         $productResp = StoreController::getProductByLocator($productLocator);
 
         if(!$productResp->success)
@@ -461,14 +449,13 @@ class StoreService
         }
     }
 
-    public static function add_product_to_cart_by_id(string $request_contents_json, ?Response &$resp) : int
+    public static function add_product_to_cart_by_id(?vAccount $account, string $request_contents_json, ?Response &$resp) : int
     {
         $resp = new Response(false, "Unkown error encountered while adding product to cart");
 
-        if (!Session::isLoggedIn()) {
-            $endpoint_name = Endpoint::calculate_endpoint_resource_name();
-            $resp = new Response(false, "$endpoint_name: Authentication required");
-            return 401;
+        if (is_null($account))
+        {
+            throw new LogicException("Account cannot be null. Require an Account Session before calling this function");
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -520,6 +507,12 @@ class StoreService
 
         $cart = static::vCartFromJson($cart);
 
+        if($cart->account->equals($account))
+        {
+            $resp->message = "Cart does not belong to account";
+            return 403;
+        }
+
         $addProductToCartResp = StoreController::addProductToCart($product, $cart);
 
         if(!$addProductToCartResp->success)
@@ -551,14 +544,13 @@ class StoreService
         }
     }
 
-    public static function remove_coupon_from_cart_product(string $request_contents_json, ?Response &$resp) : int
+    public static function remove_coupon_from_cart_product(?vAccount $account, string $request_contents_json, ?Response &$resp) : int
     {
         $resp = new Response(false, "Unkown error encountered while removing coupon from cart product");
 
-        if (!Session::isLoggedIn()) {
-            $endpoint_name = Endpoint::calculate_endpoint_resource_name();
-            $resp = new Response(false, "$endpoint_name: Authentication required");
-            return 401;
+        if (is_null($account))
+        {
+            throw new LogicException("Account cannot be null. Require an Account Session before calling this function");
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -593,8 +585,13 @@ class StoreService
 
         StoreService::initialize();
 
-
         $vCartProduct = static::vCartItemFromJson($cartProduct);
+
+        if(StoreController::doesCartProductBelongToAccount($account, $vCartProduct))
+        {
+            $resp->message = "Cart Product does not belong to account";
+            return 403;
+        }
 
         if(is_null($vCartProduct->couponGroupAssignmentId) || is_null($vCartProduct->coupon))
         {
@@ -615,14 +612,13 @@ class StoreService
         return 200;
     }
 
-    public static function apply_coupon(string $request_contents_json, ?Response &$resp) : int
+    public static function apply_coupon(?vAccount $account, string $request_contents_json, ?Response &$resp) : int
     {
         $resp = new Response(false, "Unkown error encountered while applying coupon");
 
-        if (!Session::isLoggedIn()) {
-            $endpoint_name = Endpoint::calculate_endpoint_resource_name();
-            $resp = new Response(false, "$endpoint_name: Authentication required");
-            return 401;
+        if (is_null($account))
+        {
+            throw new LogicException("Account cannot be null. Require an Account Session before calling this function");
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -680,6 +676,12 @@ class StoreService
 
         $vCart = static::vCartFromJson($cart);
 
+        if($cart->account->equals($account))
+        {
+            $resp->message = "Cart does not belong to account";
+            return 403;
+        }
+
         $applyCouponResp = StoreController::tryApplyCouponToCart($vCart, $couponResp->data);
 
         if(!$applyCouponResp->success)
@@ -706,14 +708,13 @@ class StoreService
         return 200;
     }
 
-    public static function checkout_cart(string $request_contents_json, ?Response &$resp) : int
+    public static function checkout_cart(?vAccount $account, string $request_contents_json, ?Response &$resp) : int
     {
         $resp = new Response(false, "Unkown error encountered while checking out cart");
 
-        if (!Session::isLoggedIn()) {
-            $endpoint_name = Endpoint::calculate_endpoint_resource_name();
-            $resp = new Response(false, "$endpoint_name: Authentication required");
-            return 401;
+        if (is_null($account))
+        {
+            throw new LogicException("Account cannot be null. Require an Account Session before calling this function");
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -748,6 +749,12 @@ class StoreService
         StoreService::initialize();
 
         $vCart = static::vCartFromJson($cart);
+
+        if($vCart->account->equals($account))
+        {
+            $resp->message = "Cart does not belong to account";
+            return 403;
+        }
 
         $checkoutCartResp = StoreController::checkoutCart($vCart);
 

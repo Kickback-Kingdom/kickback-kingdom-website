@@ -90,21 +90,19 @@ class StoreClient {
         }
     }
 
-    static async getCart(accountId, storeLocator){
-        if (!accountId) {
-            throw new Error('Account ID is required');
-        }
-
+    static async getCart(storeLocator){
         try {
+            const bodyData = {
+                "storeLocator": storeLocator
+            };
+
             const response = await fetch(`api/v2/server/store/get-cart`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body:{
-                    accountId,
-                    storeLocator
-                }
+                body: JSON.stringify(bodyData)
             });
 
             if (!response.ok) {
@@ -121,13 +119,13 @@ class StoreClient {
             }
 
             if (!jsonData.success) {
-                throw new Error(jsonData.message || `Failed to get cart for account ${accountId} and store locator ${storeLocator}`);
+                throw new Error(jsonData.message || `Failed to get cart for store locator ${storeLocator}`);
             }
 
             return jsonData;
 
         } catch (error) {
-            console.error(`Store.getCart(${accountId}, ${storeLocator}) failed:`, error);
+            console.error(`Store.getCart(${storeLocator}) failed:`, error);
             throw error;
         }
     }
@@ -137,16 +135,23 @@ class StoreClient {
             throw new Error('Cart is required');
         }
 
+        if (!productId) {
+            throw new Error('ProductId is required');
+        }
+
+        const bodyData = {
+            "cart": cart,
+            "productId": productId
+        };
+
         try {
             const response = await fetch(`api/v2/server/store/add-product-to-cart-by-id`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body:{
-                    cart,
-                    productId
-                }
+                body: JSON.stringify(bodyData)
             });
 
             if (!response.ok) {
@@ -179,16 +184,23 @@ class StoreClient {
             throw new Error('Cart is required');
         }
 
+        if (!productLocator) {
+            throw new Error('productLocator is required');
+        }
+
+        const bodyData = {
+            "cart": cart,
+            "productLocator": productLocator
+        };
+
         try {
             const response = await fetch(`api/v2/server/store/add-product-to-cart-by-locator`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body:{
-                    cart,
-                    productLocator
-                }
+                body: JSON.stringify(bodyData)
             });
 
             if (!response.ok) {
@@ -221,15 +233,18 @@ class StoreClient {
             throw new Error('CartProduct is required');
         }
 
+        const bodyData = {
+            "cartProduct": cartProduct,
+        };
+
         try {
             const response = await fetch(`api/v2/server/store/remove-product-from-cart`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body:{
-                    cartProduct
-                }
+                body: JSON.stringify(bodyData)
             });
 
             if (!response.ok) {
@@ -262,15 +277,18 @@ class StoreClient {
             throw new Error('Cart is required');
         }
 
+        const bodyData = {
+            "cart": cart,
+        };
+
         try {
             const response = await fetch(`api/v2/server/store/checkout-cart`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body:{
-                    cart
-                }
+                body: JSON.stringify(bodyData)
             });
 
             if (!response.ok) {
@@ -307,16 +325,19 @@ class StoreClient {
             throw new Error('Coupon Code is required');
         }
 
+        const bodyData = {
+            "cart": cart,
+            "couponCode": couponCode
+        };
+
         try {
             const response = await fetch(`api/v2/server/store/apply-coupon`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body:{
-                    cart,
-                    couponCode
-                }
+                body: JSON.stringify(bodyData)
             });
 
             if (!response.ok) {
@@ -349,15 +370,18 @@ class StoreClient {
             throw new Error('CartProduct is required');
         }
 
+        const bodyData = {
+            "cartProduct": cartProduct,
+        };
+
         try {
             const response = await fetch(`api/v2/server/store/remove-coupon-from-product`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body:{
-                    cartProduct
-                }
+                body: JSON.stringify(bodyData)
             });
 
             if (!response.ok) {

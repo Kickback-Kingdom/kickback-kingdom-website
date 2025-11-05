@@ -5029,6 +5029,76 @@ class StoreController
         }  
     }
 
+    public static function getCartFromCartProduct(vCartItem $cartProduct) : Response
+    {
+        $resp = new Response(false, "unknown error in getting cart from cart product", null);
+
+        try
+        {
+            $selectSql = "SELECT
+                vc.ctime,
+                vc.crand,
+                vc.account_username,
+                vc.store_name, 
+                vc.store_locator,
+                vc.checked_out,
+                vc.void,
+                vc.account_ctime,
+                vc.account_crand,
+                vc.store_owner_ctime,
+                vc.store_owner_crand,
+                vc.store_ctime,
+                vc.store_crand,
+                vc.transaction_ctime,
+                vc.transaction_crand
+                FROM v_cart vc
+                JOIN v_cart_item vci ON vci.cart_ctime = vc.ctime AND vci.cart_crand = vc.crand
+                WHERE vci.cart_product_link_ctime = ? AND vci.cart_product_link_crand = ?;";
+
+            $params = [$cartProduct->ctime, $cartProduct->crand];
+
+            $selectResult = Database::executeSqlQuery($selectSql, $params);
+
+            if(!$selectResult)
+            {
+                $resp->message = "Failed to select cart for account";
+                return $resp;
+            } 
+
+            if($selectResult->num_rows <= 0)
+            {
+                $resp->message = "cart not found after insertion";
+                return $resp;
+            }
+
+            $row = $selectResult->fetch_assoc();
+
+            $cartView = static::cartToView($row);
+
+            $cartItemsResp = static::getItemsInCart($cartView);
+
+            if(!$cartItemsResp->success)
+            {
+                $resp->message = "Failed to get cart items : $cartItemsResp->message";
+                return $resp;
+            }
+
+            $cartView->cartProducts = $cartItemsResp->data;
+
+            $cartView->totals = static::calculateCartTotalPriceCompnents($cartView->cartProducts);
+
+            $resp->success = true;
+            $resp->message = "Cart returned for account";
+            $resp->data = $cartView; 
+        }
+        catch(Exception $e)
+        {
+            throw new Exception("Exception caught while getting cart from cart product : $e");
+        }
+
+        return $resp;
+    }
+
     private static function createAssocProductIdTopriceArrayForPopulateProductsWithBaseprice(mysqli_result $result) : array
     {
         $price = [];
@@ -6036,5 +6106,22 @@ class StoreController
         $coupon->removed = boolval($row["removed"]);
 
         return $coupon;
+    }
+
+
+    public static function doesCartProductBelongToAccount(vAccount $account, vCartItem $cartProduct) : bool
+    {
+        $sql = "SELECT 1 FROM cart c 
+        JOIN v_cart_item vci ON c.ctime = vci.cart_ctime AND c.crand = vci.cart_crand
+        JOIN account a ON a.id = c.ref_account_crand
+        WHERE c.checked_out = 0 AND c.removed = 0 AND
+        c.ref_account_crand = ? AND vci.cart_product_link_ctime = ? AND vci.cart_product_link_crand = ?;";
+        $params = [$account->crand, $cartProduct->ctime, $cartProduct->crand];
+
+        $result = Database::executeSqlQuery($sql, $params);
+
+        if(!$result) throw new Exception("Result returned false while checking if cart product belongs to account");
+
+        return $result->num_rows > 0;
     }
 }
