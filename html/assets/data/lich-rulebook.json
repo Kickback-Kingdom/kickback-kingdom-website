@@ -533,7 +533,7 @@
             },
             {
               "rid": "BLK-001",
-              "text": "Blocking: Equipment with ≥1 defense can block damage to an Avatar. If incoming damage ≥ defense, all damage is prevented and the equipment is destroyed. If incoming damage < defense, no damage is dealt. Blocking requires tapping the equipment.",
+              "text": "Blocking: Equipment with ≥1 defense can block damage to an Avatar. If incoming damage ≥ defense, all damage is prevented and the equipment is destroyed. If incoming damage < defense, no loss of life occurs. Blocking requires tapping the equipment.",
               "tags": [
                 "blocking",
                 "equipment"
@@ -541,14 +541,14 @@
             },
             {
               "rid": "DMG-001",
-              "text": "Damage is only 'dealt' when it successfully reduces health of a target.",
+              "text": "Damage is 'dealt' when it results in either loss of life and/or it is blocked",
               "tags": [
                 "damage"
               ]
             },
             {
               "rid": "ATK-001",
-              "text": "An attack is any action that hinders movement, reduces health/defense, or applies statuses to a target.",
+              "text": "An attack is any action done that involves an enemy",
               "tags": [
                 "attacks"
               ]
