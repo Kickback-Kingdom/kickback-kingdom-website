@@ -16,7 +16,10 @@ $prefillCrand = $_GET['event_crand'] ?? '';
 <?php require("../php-components/base-page-head.php"); ?>
 
 <body class="bg-body-secondary container p-0">
-    <?php require("../php-components/base-page-components.php"); ?>
+    <?php
+    require("../php-components/base-page-components.php");
+    require("../php-components/ad-carousel.php"); 
+    ?>
     <main class="container pt-3 bg-body" style="margin-bottom: 56px;">
         <div class="row">
             <div class="col-12 col-xl-9">
