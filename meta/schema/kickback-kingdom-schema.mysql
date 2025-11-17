@@ -858,6 +858,100 @@ CREATE TABLE `trade` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `secret_santa_events`
+--
+
+DROP TABLE IF EXISTS `secret_santa_events`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `secret_santa_events` (
+  `ctime` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  `crand` int(11) NOT NULL,
+  `owner_id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `invite_token` char(36) NOT NULL,
+  `signup_deadline` datetime NOT NULL,
+  `gift_deadline` datetime NOT NULL,
+  `DateCreated` timestamp NOT NULL DEFAULT utc_timestamp(),
+  PRIMARY KEY (`ctime`,`crand`),
+  UNIQUE KEY `invite_token_unique` (`invite_token`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `secret_santa_exclusion_groups`
+--
+
+DROP TABLE IF EXISTS `secret_santa_exclusion_groups`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `secret_santa_exclusion_groups` (
+  `ctime` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  `crand` int(11) NOT NULL,
+  `event_ctime` datetime(6) NOT NULL,
+  `event_crand` int(11) NOT NULL,
+  `group_name` varchar(100) NOT NULL,
+  PRIMARY KEY (`ctime`,`crand`),
+  KEY `secret_santa_exclusion_groups_event_idx` (`event_ctime`,`event_crand`),
+  CONSTRAINT `secret_santa_exclusion_groups_event_fk` FOREIGN KEY (`event_ctime`,`event_crand`) REFERENCES `secret_santa_events` (`ctime`,`crand`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `secret_santa_participants`
+--
+
+DROP TABLE IF EXISTS `secret_santa_participants`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `secret_santa_participants` (
+  `ctime` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  `crand` int(11) NOT NULL,
+  `event_ctime` datetime(6) NOT NULL,
+  `event_crand` int(11) NOT NULL,
+  `account_id` int(11) DEFAULT NULL,
+  `display_name` varchar(100) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `exclusion_group_ctime` datetime(6) DEFAULT NULL,
+  `exclusion_group_crand` int(11) DEFAULT NULL,
+  `DateCreated` timestamp NOT NULL DEFAULT utc_timestamp(),
+  PRIMARY KEY (`ctime`,`crand`),
+  UNIQUE KEY `unique_event_email` (`event_ctime`,`event_crand`,`email`),
+  KEY `secret_santa_participants_exclusion_group_idx` (`exclusion_group_ctime`,`exclusion_group_crand`),
+  CONSTRAINT `secret_santa_participants_event_fk` FOREIGN KEY (`event_ctime`,`event_crand`) REFERENCES `secret_santa_events` (`ctime`,`crand`),
+  CONSTRAINT `secret_santa_participants_exclusion_group_fk` FOREIGN KEY (`exclusion_group_ctime`,`exclusion_group_crand`) REFERENCES `secret_santa_exclusion_groups` (`ctime`,`crand`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `secret_santa_pairs`
+--
+
+DROP TABLE IF EXISTS `secret_santa_pairs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `secret_santa_pairs` (
+  `ctime` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  `crand` int(11) NOT NULL,
+  `event_ctime` datetime(6) NOT NULL,
+  `event_crand` int(11) NOT NULL,
+  `giver_participant_ctime` datetime(6) NOT NULL,
+  `giver_participant_crand` int(11) NOT NULL,
+  `receiver_participant_ctime` datetime(6) NOT NULL,
+  `receiver_participant_crand` int(11) NOT NULL,
+  `pairing_email_sent_at` timestamp NULL DEFAULT NULL,
+  `DateCreated` timestamp NOT NULL DEFAULT utc_timestamp(),
+  PRIMARY KEY (`ctime`,`crand`),
+  UNIQUE KEY `unique_giver_per_event` (`event_ctime`,`event_crand`,`giver_participant_ctime`,`giver_participant_crand`),
+  KEY `secret_santa_pairs_receiver_idx` (`receiver_participant_ctime`,`receiver_participant_crand`),
+  CONSTRAINT `secret_santa_pairs_event_fk` FOREIGN KEY (`event_ctime`,`event_crand`) REFERENCES `secret_santa_events` (`ctime`,`crand`),
+  CONSTRAINT `secret_santa_pairs_giver_fk` FOREIGN KEY (`giver_participant_ctime`,`giver_participant_crand`) REFERENCES `secret_santa_participants` (`ctime`,`crand`),
+  CONSTRAINT `secret_santa_pairs_receiver_fk` FOREIGN KEY (`receiver_participant_ctime`,`receiver_participant_crand`) REFERENCES `secret_santa_participants` (`ctime`,`crand`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Temporary table structure for view `v_account_badge_count`
 --
 
