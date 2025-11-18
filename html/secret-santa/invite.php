@@ -566,6 +566,26 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         }
 
         function setCountdowns(signupDate, giftDate) {
+            const countdownElements = [
+                countdownCard,
+                signupCountdown,
+                giftCountdown,
+                countSignupDays,
+                countSignupHours,
+                countSignupMinutes,
+                countSignupSeconds,
+                countGiftDays,
+                countGiftHours,
+                countGiftMinutes,
+                countGiftSeconds,
+                countdownNote
+            ];
+
+            if (countdownElements.some(el => !el)) {
+                console.warn('Countdown elements missing; skipping timer updates.');
+                return;
+            }
+
             if (countdownInterval) {
                 clearInterval(countdownInterval);
             }
@@ -700,6 +720,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         }
 
         function updateJoinVisibility(alreadyJoinedMessage = 'You are already registered for this exchange.') {
+            if (!joinRows || !inviteStatus) return;
+
             if (isCurrentUserParticipant()) {
                 joinRows.style.display = 'none';
                 inviteStatus.textContent = alreadyJoinedMessage;
@@ -709,6 +731,11 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         }
 
         function renderEvent(event) {
+            if (!eventDetailsCard || !joinRows || !exclusionBuilderCard || !participantListCard) {
+                console.warn('Invite page elements missing; cannot render event UI.');
+                return;
+            }
+
             eventDetailsCard.style.display = 'block';
             eventNameEl.textContent = event.name;
             const signup = new Date(event.signup_deadline + 'Z');
@@ -748,32 +775,32 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         }
 
         async function validateInvite(token) {
-            inviteStatus.textContent = 'Checking invite...';
-            eventDetailsCard.style.display = 'none';
-            joinRows.style.display = 'none';
-            exclusionBuilderCard.style.display = 'none';
-            countdownCard.style.display = 'none';
+            if (inviteStatus) inviteStatus.textContent = 'Checking invite...';
+            if (eventDetailsCard) eventDetailsCard.style.display = 'none';
+            if (joinRows) joinRows.style.display = 'none';
+            if (exclusionBuilderCard) exclusionBuilderCard.style.display = 'none';
+            if (countdownCard) countdownCard.style.display = 'none';
             currentEvent = null;
             exclusionGroups = [];
             participants = [];
-            participantListCard.style.display = 'none';
+            if (participantListCard) participantListCard.style.display = 'none';
             try {
                 const resp = await getJson(`/api/v1/secret-santa/validate-invite.php?invite_token=${encodeURIComponent(token)}`);
-                inviteStatus.textContent = resp.message || '';
+                if (inviteStatus) inviteStatus.textContent = resp.message || '';
                 if (resp.success) {
                     currentEvent = resp.data;
                     renderEvent(resp.data);
                 }
             } catch (err) {
                 console.error(err);
-                inviteStatus.textContent = 'Unable to validate invite token right now.';
+                if (inviteStatus) inviteStatus.textContent = 'Unable to validate invite token right now.';
             }
         }
 
         if (inviteTokenFromUrl) {
             validateInvite(inviteTokenFromUrl);
         } else {
-            inviteStatus.textContent = 'No invite token detected. Please use your invite link.';
+            if (inviteStatus) inviteStatus.textContent = 'No invite token detected. Please use your invite link.';
         }
 
         joinForm.addEventListener('submit', async (e) => {
