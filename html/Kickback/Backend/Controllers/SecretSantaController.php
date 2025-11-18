@@ -163,7 +163,7 @@ class SecretSantaController
         }
 
         $stmt->bind_param(
-            'sissssii',
+            'sisisssi',
             $ctime,
             $crand,
             $event['ctime'],
