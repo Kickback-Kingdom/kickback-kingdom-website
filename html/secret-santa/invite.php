@@ -215,12 +215,21 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                         <small class="text-muted">We'll use the account tied to your invite link.</small>
                                     </div>
                                 </div>
-                                <form id="joinForm" class="row g-3" data-display-name="<?php echo htmlspecialchars($defaultDisplayName); ?>" data-email="<?php echo htmlspecialchars($defaultEmail); ?>">
+                                <form id="joinForm" class="row g-3">
                                     <div class="col-12">
                                         <div class="p-3 bg-body-secondary rounded-3">
-                                            <div class="small text-uppercase text-muted mb-1">Joining as</div>
-                                            <div class="fw-semibold" id="participantNameDisplay"><?php echo htmlspecialchars($defaultDisplayName ?: 'Unknown adventurer'); ?></div>
-                                            <div class="text-muted" id="participantEmailDisplay"><?php echo htmlspecialchars($defaultEmail ?: 'No email on file'); ?></div>
+                                            <div class="small text-uppercase text-muted mb-2">Joining as</div>
+                                            <div class="row g-3">
+                                                <div class="col-12 col-md-6">
+                                                    <label class="form-label" for="participantDisplayName">Display name</label>
+                                                    <input class="form-control" id="participantDisplayName" value="<?php echo htmlspecialchars($defaultDisplayName); ?>" placeholder="Secret Santa adventurer">
+                                                </div>
+                                                <div class="col-12 col-md-6">
+                                                    <label class="form-label" for="participantEmail">Email</label>
+                                                    <input class="form-control" type="email" id="participantEmail" value="<?php echo htmlspecialchars($defaultEmail); ?>" placeholder="you@example.com">
+                                                    <div class="form-text">We'll use this email to confirm your signup.</div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <input type="hidden" id="participantExclusionCtime">
@@ -270,6 +279,36 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     </div>
                                 </form>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4" id="participantListCard" style="display:none;">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded-circle bg-success-subtle text-success-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                <i class="fa-solid fa-list-check"></i>
+                            </div>
+                            <div>
+                                <h2 class="h6 mb-0">Who's already in</h2>
+                                <small class="text-muted">Participants and their exclusion groups.</small>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0" id="participantTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col">Name</th>
+                                        <th scope="col">Email</th>
+                                        <th scope="col">Exclusion group</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="participantTableBody">
+                                    <tr class="table-light">
+                                        <td colspan="3" class="text-center text-muted">No one has signed up yet.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -360,6 +399,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const joinRows = document.getElementById('joinRows');
         const joinForm = document.getElementById('joinForm');
         const joinStatus = document.getElementById('joinStatus');
+        const participantDisplayName = document.getElementById('participantDisplayName');
+        const participantEmail = document.getElementById('participantEmail');
         const participantExclusionCtime = document.getElementById('participantExclusionCtime');
         const participantExclusionCrand = document.getElementById('participantExclusionCrand');
         const exclusionSelect = document.getElementById('exclusionSelect');
@@ -368,6 +409,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const exclusionBuilderStatus = document.getElementById('exclusionBuilderStatus');
         const newExclusionCtime = document.getElementById('newExclusionCtime');
         const newExclusionCrand = document.getElementById('newExclusionCrand');
+        const participantListCard = document.getElementById('participantListCard');
+        const participantTableBody = document.getElementById('participantTableBody');
         const countdownCard = document.getElementById('countdownCard');
         const signupCountdown = document.getElementById('signupCountdown');
         const giftCountdown = document.getElementById('giftCountdown');
@@ -385,6 +428,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         let currentEvent = null;
         let currentExclusionGroup = { ctime: '', crand: '' };
         let exclusionGroups = [];
+        let participants = [];
 
         async function getJson(url) {
             const resp = await fetch(url, { credentials: 'include' });
@@ -492,6 +536,35 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             });
         }
 
+        function getExclusionName(ctime, crand) {
+            if (!ctime || !crand) return '';
+            const match = exclusionGroups.find(group => group.ctime === ctime && String(group.crand) === String(crand));
+            return match ? match.name : '';
+        }
+
+        function renderParticipants() {
+            participantTableBody.innerHTML = '';
+
+            if (!participants.length) {
+                participantTableBody.innerHTML = '<tr class="table-light"><td colspan="3" class="text-center text-muted">No one has signed up yet.</td></tr>';
+                participantListCard.style.display = 'block';
+                return;
+            }
+
+            participants.forEach(person => {
+                const row = document.createElement('tr');
+                const exclusionName = person.exclusion_group_name || getExclusionName(person.exclusion_group_ctime, person.exclusion_group_crand);
+                row.innerHTML = `
+                    <td>${person.display_name || 'Unknown adventurer'}</td>
+                    <td>${person.email || ''}</td>
+                    <td>${exclusionName || 'None'}</td>
+                `;
+                participantTableBody.appendChild(row);
+            });
+
+            participantListCard.style.display = 'block';
+        }
+
         function renderEvent(event) {
             eventDetailsCard.style.display = 'block';
             eventNameEl.textContent = event.name;
@@ -504,6 +577,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             setExclusionGroup('', '');
             exclusionGroups = event.exclusion_groups || [];
             renderExclusionOptions(exclusionGroups);
+            participants = event.participants || [];
+            renderParticipants();
 
             const now = new Date();
             const signupDate = signup > now ? signup : null;
@@ -534,6 +609,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             countdownCard.style.display = 'none';
             currentEvent = null;
             exclusionGroups = [];
+            participants = [];
+            participantListCard.style.display = 'none';
             try {
                 const resp = await getJson(`/api/v1/secret-santa/validate-invite.php?invite_token=${encodeURIComponent(token)}`);
                 inviteStatus.textContent = resp.message || '';
@@ -558,8 +635,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             if (!currentEvent) return;
             joinStatus.textContent = 'Submitting...';
             try {
-                const displayName = joinForm.dataset.displayName || 'Secret Santa adventurer';
-                const email = joinForm.dataset.email || '';
+                const displayName = participantDisplayName.value.trim() || 'Secret Santa adventurer';
+                const email = participantEmail.value.trim();
 
                 if (!email) {
                     joinStatus.textContent = 'Missing account email. Please update your profile and try again.';
@@ -576,6 +653,15 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                 joinStatus.textContent = resp.message || '';
                 if (resp.success && resp.data && resp.data.event) {
                     inviteStatus.textContent = 'You are in!';
+                    const addedParticipant = resp.data.participant || {
+                        display_name: displayName,
+                        email: email,
+                        exclusion_group_ctime: participantExclusionCtime.value,
+                        exclusion_group_crand: participantExclusionCrand.value
+                    };
+                    addedParticipant.exclusion_group_name = getExclusionName(addedParticipant.exclusion_group_ctime, addedParticipant.exclusion_group_crand);
+                    participants.push(addedParticipant);
+                    renderParticipants();
                 }
             } catch (err) {
                 console.error(err);
@@ -613,6 +699,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                     });
                     renderExclusionOptions(exclusionGroups);
                     setExclusionGroup(resp.data.ctime, resp.data.crand);
+                    renderParticipants();
                 }
             } catch (err) {
                 console.error(err);
