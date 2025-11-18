@@ -531,7 +531,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             groups.forEach(group => {
                 const option = document.createElement('option');
                 option.value = `${group.ctime}|${group.crand}`;
-                option.textContent = group.name;
+                option.textContent = group.group_name;
                 exclusionSelect.appendChild(option);
             });
         }
@@ -539,7 +539,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         function getExclusionName(ctime, crand) {
             if (!ctime || !crand) return '';
             const match = exclusionGroups.find(group => group.ctime === ctime && String(group.crand) === String(crand));
-            return match ? match.name : '';
+            return match ? match.group_name : '';
         }
 
         function renderParticipants() {

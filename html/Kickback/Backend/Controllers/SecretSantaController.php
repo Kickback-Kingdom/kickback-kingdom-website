@@ -12,6 +12,7 @@ use Kickback\Services\Database;
 use Kickback\Services\Session;
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
+use Kickback\Backend\Models\RecordId;
 
 class SecretSantaController
 {
@@ -44,7 +45,9 @@ class SecretSantaController
             return new Response(false, 'Gift deadline must be after signup deadline.', null);
         }
 
-        [$ctime, $crand] = self::generateRecordId();
+        $newRecordId = new RecordId();
+        $ctime = $newRecordId->ctime;
+        $crand = $newRecordId->crand; 
         $inviteToken = self::generateInviteToken();
 
         $conn = self::getConnection();
@@ -101,7 +104,7 @@ class SecretSantaController
         if ($participantsResp->success) {
             $groupsByKey = [];
             foreach ($eventResp->data['exclusion_groups'] as $group) {
-                $groupsByKey[$group['ctime'] . ':' . $group['crand']] = $group['name'];
+                $groupsByKey[$group['ctime'] . ':' . $group['crand']] = $group['group_name'];
             }
 
             $participants = array_map(function ($participant) use ($groupsByKey) {
@@ -144,7 +147,9 @@ class SecretSantaController
             return new Response(true, 'Already joined.', $participantResp->data);
         }
 
-        [$ctime, $crand] = self::generateRecordId();
+        $newRecordId = new RecordId();
+        $ctime = $newRecordId->ctime;
+        $crand = $newRecordId->crand; 
 
         $conn = self::getConnection();
 
@@ -232,10 +237,12 @@ class SecretSantaController
             ]);
         }
 
-        [$ctime, $crand] = self::generateRecordId();
+        $newRecordId = new RecordId();
+        $ctime = $newRecordId->ctime;
+        $crand = $newRecordId->crand; 
 
         $stmt = $conn->prepare(
-            "INSERT INTO secret_santa_exclusion_groups (ctime, crand, event_ctime, event_crand, name) VALUES (?, ?, ?, ?, ?)"
+            "INSERT INTO secret_santa_exclusion_groups (ctime, crand, event_ctime, event_crand, group_name) VALUES (?, ?, ?, ?, ?)"
         );
 
         if ($stmt === false) {
@@ -305,7 +312,9 @@ class SecretSantaController
         }
 
         foreach ($pairs as $pair) {
-            [$ctime, $crand] = self::generateRecordId();
+            $newRecordId = new RecordId();
+            $ctime = $newRecordId->ctime;
+            $crand = $newRecordId->crand; 
             $stmt->bind_param(
                 'siiiiiii',
                 $ctime,
@@ -514,7 +523,7 @@ class SecretSantaController
         $conn = self::getConnection();
 
         $stmt = $conn->prepare(
-            "SELECT ctime, crand, name FROM secret_santa_exclusion_groups WHERE event_ctime = ? AND event_crand = ?"
+            "SELECT ctime, crand, group_name FROM secret_santa_exclusion_groups WHERE event_ctime = ? AND event_crand = ?"
         );
 
         if ($stmt === false) {
@@ -604,22 +613,6 @@ class SecretSantaController
         return isset($giver['exclusion_group_ctime'], $giver['exclusion_group_crand'], $receiver['exclusion_group_ctime'], $receiver['exclusion_group_crand'])
             && $giver['exclusion_group_ctime'] === $receiver['exclusion_group_ctime']
             && $giver['exclusion_group_crand'] === $receiver['exclusion_group_crand'];
-    }
-
-    private static function generateRecordId(): array
-    {
-        $conn = self::getConnection();
-
-        $stmt = $conn->prepare("SELECT TIME_FORMAT(NOW(3), '%Y%m%d%H%i%s%f') as id");
-        if ($stmt === false || !$stmt->execute()) {
-            return ["", 0];
-        }
-
-        $result = $stmt->get_result();
-        $row = $result ? $result->fetch_assoc() : null;
-        $stmt->close();
-
-        return [$row['id'] ?? '', rand(0, 2000000000)];
     }
 
     private static function generateInviteToken(): string
