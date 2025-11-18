@@ -221,12 +221,16 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                             <div class="small text-uppercase text-muted mb-2">Joining as</div>
                                             <div class="row g-3">
                                                 <div class="col-12 col-md-6">
-                                                    <label class="form-label" for="participantDisplayName">Display name</label>
-                                                    <input class="form-control" id="participantDisplayName" value="<?php echo htmlspecialchars($defaultDisplayName); ?>" placeholder="Secret Santa adventurer">
+                                                    <div class="form-label mb-1">Display name</div>
+                                                    <div class="fw-semibold" id="participantDisplayNameText">
+                                                        <?php echo htmlspecialchars($defaultDisplayName) ?: 'Secret Santa adventurer'; ?>
+                                                    </div>
                                                 </div>
                                                 <div class="col-12 col-md-6">
-                                                    <label class="form-label" for="participantEmail">Email</label>
-                                                    <input class="form-control" type="email" id="participantEmail" value="<?php echo htmlspecialchars($defaultEmail); ?>" placeholder="you@example.com">
+                                                    <div class="form-label mb-1">Email</div>
+                                                    <div class="fw-semibold" id="participantEmailText">
+                                                        <?php echo htmlspecialchars($defaultEmail) ?: 'Update your account email to join'; ?>
+                                                    </div>
                                                     <div class="form-text">We'll use this email to confirm your signup.</div>
                                                 </div>
                                             </div>
@@ -391,6 +395,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
     <?php require("../php-components/base-page-javascript.php"); ?>
     <script>
         const inviteTokenFromUrl = <?php echo json_encode($inviteToken); ?>;
+        const accountDisplayName = <?php echo json_encode($defaultDisplayName); ?>;
+        const accountEmail = <?php echo json_encode($defaultEmail); ?>;
         const inviteStatus = document.getElementById('inviteStatus');
         const eventDetailsCard = document.getElementById('eventDetailsCard');
         const eventNameEl = document.getElementById('eventName');
@@ -399,8 +405,6 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const joinRows = document.getElementById('joinRows');
         const joinForm = document.getElementById('joinForm');
         const joinStatus = document.getElementById('joinStatus');
-        const participantDisplayName = document.getElementById('participantDisplayName');
-        const participantEmail = document.getElementById('participantEmail');
         const participantExclusionCtime = document.getElementById('participantExclusionCtime');
         const participantExclusionCrand = document.getElementById('participantExclusionCrand');
         const exclusionSelect = document.getElementById('exclusionSelect');
@@ -635,8 +639,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             if (!currentEvent) return;
             joinStatus.textContent = 'Submitting...';
             try {
-                const displayName = participantDisplayName.value.trim() || 'Secret Santa adventurer';
-                const email = participantEmail.value.trim();
+                const displayName = (accountDisplayName || '').trim() || 'Secret Santa adventurer';
+                const email = (accountEmail || '').trim();
 
                 if (!email) {
                     joinStatus.textContent = 'Missing account email. Please update your profile and try again.';
