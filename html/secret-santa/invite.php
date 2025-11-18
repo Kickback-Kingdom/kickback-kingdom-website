@@ -34,22 +34,83 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
     </div>
     <style>
         .invite-hero {
-            background: linear-gradient(135deg, #0d6efd 0%, #6f42c1 50%, #4d0f2c 100%);
+            position: relative;
+            background: radial-gradient(circle at 10% 20%, rgba(111, 66, 193, 0.3) 0, transparent 30%),
+                radial-gradient(circle at 80% 0, rgba(13, 110, 253, 0.35) 0, transparent 32%),
+                linear-gradient(135deg, #0a1a2f 0%, #1f2f55 50%, #29132a 100%);
+            color: #f8f9fa;
         }
 
-        .invite-hero .hero-content {
-            max-width: 760px;
+        .invite-hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
+            pointer-events: none;
         }
 
-        .invite-hero .hero-pill {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 999px;
+        .invite-hero .hero-grid {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            align-items: stretch;
+        }
+
+        @media (min-width: 992px) {
+            .invite-hero .hero-grid {
+                grid-template-columns: 1.1fr 0.9fr;
+            }
+        }
+
+        .invite-hero .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
             padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+
+        .invite-hero .hero-title {
+            font-size: clamp(2.25rem, 3vw + 1.5rem, 3rem);
+            line-height: 1.1;
+        }
+
+        .token-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 0.75rem;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-weight: 600;
+        }
+
+        .token-code {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 0.65rem;
+            padding: 0.65rem 0.9rem;
+            color: #fff;
+            font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        .hero-card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(241, 243, 246, 0.96));
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 1rem 2.5rem rgba(9, 14, 30, 0.25);
         }
 
         .countdown-card {
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(248, 249, 250, 0.95));
+            background: transparent;
         }
 
         .countdown-grid {
@@ -68,18 +129,18 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             border: 1px solid var(--bs-border-color-translucent);
             border-radius: 1rem;
             padding: 1rem 1.25rem;
-            background: rgba(255, 255, 255, 0.7);
+            background: #fff;
             height: 100%;
         }
 
         .count-chip {
-            min-width: 92px;
-            padding: 0.6rem 0.75rem;
+            min-width: 90px;
+            padding: 0.65rem 0.8rem;
             background: #0d6efd;
             color: #fff;
-            border-radius: 0.8rem;
+            border-radius: 0.9rem;
             text-align: center;
-            box-shadow: 0 0.35rem 1rem rgba(13, 110, 253, 0.15);
+            box-shadow: 0 0.35rem 1rem rgba(13, 110, 253, 0.18);
         }
 
         .count-chip small {
@@ -97,12 +158,6 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
 
         .count-number.pulse {
             animation: pulse 0.6s ease;
-        }
-
-        @media (min-width: 992px) {
-            .invite-hero .card {
-                min-height: 100%;
-            }
         }
 
         @keyframes pulse {
@@ -129,88 +184,45 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                 ?>
 
                 <!-- HERO / INVITE LOOKUP -->
-                <section class="invite-hero position-relative overflow-hidden rounded-4 mb-4 shadow-lg border-0 text-light">
-                    <div class="row g-4 g-lg-5 align-items-center p-4 p-md-5">
-                        <div class="col-lg-7 col-xl-7">
-                            <div class="hero-content d-flex flex-column gap-3 gap-lg-4">
-                                <div class="d-inline-flex align-items-center gap-2 small text-light text-opacity-75 hero-pill">
-                                    <span class="badge rounded-pill bg-light text-dark">
-                                        <i class="fa-solid fa-sleigh me-1"></i> Invite only
-                                    </span>
-                                    <span>Bring your code, join the merriment.</span>
-                                </div>
-                                <div class="d-flex flex-column gap-2">
-                                    <h1 class="display-5 fw-bold mb-0">Join your Secret Santa adventure</h1>
-                                    <p class="lead mb-0 text-light text-opacity-90">
-                                        Enter the invite token from your host, preview the rules, and watch the countdown to gift
-                                        day. Everything you need to hop in is right here.
-                                    </p>
-                                </div>
-                                <div class="row row-cols-1 row-cols-sm-2 g-3">
-                                    <div class="col">
-                                        <div class="h-100 p-3 bg-white bg-opacity-10 border border-light border-opacity-25 rounded-3 d-flex align-items-start gap-2">
-                                            <i class="fa-solid fa-shield-heart mt-1"></i>
-                                            <div class="small text-light text-opacity-90">Private tokens keep your exchange safe.</div>
-                                        </div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="h-100 p-3 bg-white bg-opacity-10 border border-light border-opacity-25 rounded-3 d-flex align-items-start gap-2">
-                                            <i class="fa-solid fa-wand-magic-sparkles mt-1"></i>
-                                            <div class="small text-light text-opacity-90">Pairing rules and budget at a glance.</div>
-                                        </div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="h-100 p-3 bg-white bg-opacity-10 border border-light border-opacity-25 rounded-3 d-flex align-items-start gap-2">
-                                            <i class="fa-solid fa-bell mt-1"></i>
-                                            <div class="small text-light text-opacity-90">Live countdowns keep everyone on the same page.</div>
-                                        </div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="h-100 p-3 bg-white bg-opacity-10 border border-light border-opacity-25 rounded-3 d-flex align-items-start gap-2">
-                                            <i class="fa-solid fa-hand-holding-heart mt-1"></i>
-                                            <div class="small text-light text-opacity-90">Join with your account in just one click.</div>
-                                        </div>
-                                    </div>
-                                </div>
+                <section class="invite-hero rounded-4 mb-4 shadow-lg overflow-hidden border-0">
+                    <div class="hero-grid p-4 p-md-5">
+                        <div class="d-flex flex-column gap-3 gap-lg-4">
+                            <div class="eyebrow text-light text-opacity-85">
+                                <i class="fa-solid fa-sleigh"></i>
+                                Secret Santa Invitation
                             </div>
+                            <div class="d-flex flex-column gap-2">
+                                <h1 class="hero-title fw-bold mb-0">Claim your spot in the gift exchange</h1>
+                                <p class="lead mb-0 text-light text-opacity-85">
+                                    Load the invite, see the deadlines in real time, and get ready for reveal day. Your host’s token keeps
+                                    the exchange private and coordinated.
+                                </p>
+                            </div>
+                            <div class="d-flex flex-wrap align-items-center gap-2 gap-md-3">
+                                <span class="token-chip">
+                                    <i class="fa-solid fa-lock"></i>
+                                    Invite token
+                                </span>
+                                <code class="token-code" id="inviteTokenDisplay"><?php echo htmlspecialchars($inviteToken ?: 'Not provided'); ?></code>
+                            </div>
+                            <div id="inviteStatus" class="small text-light text-opacity-85"></div>
                         </div>
-                        <div class="col-lg-5 col-xl-5 mt-2 mt-lg-0">
-                            <div class="card bg-white bg-opacity-95 border-0 shadow-lg rounded-3 text-start h-100">
-                                <div class="card-body p-4 d-flex flex-column gap-3">
-                                    <div class="d-flex align-items-center">
-                                        <span class="rounded-circle bg-success-subtle text-success-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 44px; height: 44px;">
-                                            <i class="fa-solid fa-gifts"></i>
-                                        </span>
+                        <div>
+                            <div class="card hero-card rounded-4">
+                                <div class="card-body p-4 p-md-4 d-flex flex-column gap-3">
+                                    <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
                                         <div>
-                                            <div class="small text-uppercase text-muted mb-0">Invite confirmed</div>
-                                            <h2 class="h5 mb-0">You're ready to join</h2>
+                                            <div class="small text-uppercase text-muted mb-1">Current event</div>
+                                            <h2 class="h4 mb-1" id="heroEventTitle">Secret Santa exchange</h2>
+                                            <div class="text-muted" id="heroEventSubtitle">Use your invite link to load the event details.</div>
                                         </div>
+                                        <span class="badge bg-primary-subtle text-primary-emphasis align-self-start">Live countdowns</span>
                                     </div>
-                                    <p class="small text-muted mb-0">
-                                        You already followed a valid invite link. We'll load the event details automatically and let you hop in.
-                                    </p>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge bg-success-subtle text-success-emphasis">Invite token locked</span>
-                                        <code class="text-muted" id="inviteTokenDisplay"><?php echo htmlspecialchars($inviteToken ?: 'Not provided'); ?></code>
-                                    </div>
-                                    <div id="inviteStatus" class="small text-muted"></div>
-                                    <div class="countdown-card border rounded-3 p-3 shadow-sm" id="countdownCard" style="display: none;">
-                                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="rounded-circle bg-primary-subtle text-primary-emphasis d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
-                                                    <i class="fa-solid fa-hourglass-half"></i>
-                                                </span>
-                                                <div>
-                                                    <div class="small text-uppercase text-muted mb-0">Countdowns</div>
-                                                    <strong>Key dates for this exchange</strong>
-                                                </div>
-                                            </div>
-                                            <span class="badge bg-primary-subtle text-primary-emphasis">Live updates</span>
-                                        </div>
+                                    <div class="countdown-card" id="countdownCard" style="display: none;">
                                         <div class="countdown-grid">
                                             <div class="countdown-block d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3" id="signupCountdown" style="display:none;">
                                                 <div class="d-flex align-items-center gap-2 text-start">
-                                                    <span class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                                    <span class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
                                                         <i class="fa-solid fa-user-clock"></i>
                                                     </span>
                                                     <div>
@@ -239,7 +251,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                             </div>
                                             <div class="countdown-block d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3" id="giftCountdown" style="display:none;">
                                                 <div class="d-flex align-items-center gap-2 text-start">
-                                                    <span class="rounded-circle bg-warning-subtle text-warning-emphasis d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                                    <span class="rounded-circle bg-warning-subtle text-warning-emphasis d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
                                                         <i class="fa-solid fa-gift"></i>
                                                     </span>
                                                     <div>
@@ -267,7 +279,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                                 </div>
                                             </div>
                                         </div>
-                                        <p class="small text-muted mt-2 mb-0" id="countdownNote"></p>
+                                        <p class="small text-muted mt-3 mb-0" id="countdownNote"></p>
                                     </div>
                                 </div>
                             </div>
@@ -489,6 +501,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const accountDisplayName = <?php echo json_encode($defaultDisplayName); ?>;
         const accountEmail = <?php echo json_encode($defaultEmail); ?>;
         const inviteStatus = document.getElementById('inviteStatus');
+        const heroEventTitle = document.getElementById('heroEventTitle');
+        const heroEventSubtitle = document.getElementById('heroEventSubtitle');
         const eventDetailsCard = document.getElementById('eventDetailsCard');
         const eventNameEl = document.getElementById('eventName');
         const eventDeadlinesEl = document.getElementById('eventDeadlines');
@@ -666,6 +680,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             const signup = new Date(event.signup_deadline + 'Z');
             const gift = new Date(event.gift_deadline + 'Z');
             eventDeadlinesEl.textContent = `Signup closes ${signup.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })} • Gifts due ${gift.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`;
+            heroEventTitle.textContent = event.name;
+            heroEventSubtitle.textContent = `Signup closes ${signup.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })} • Gifts due ${gift.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`;
             eventDescEl.textContent = event.description || 'No description provided.';
             joinRows.style.display = '';
             exclusionBuilderCard.style.display = 'block';
