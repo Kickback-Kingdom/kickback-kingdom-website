@@ -26,6 +26,7 @@ class Item extends RecordId
 
     public bool $isContainer;
     public int $containerSize; // -1 = infinite
+    public bool $fungible;
 
     public ?ItemCategory $containerItemCategory = null;
     public ?ItemCategory $itemCategory = null;

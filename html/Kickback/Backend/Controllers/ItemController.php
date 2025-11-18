@@ -38,9 +38,10 @@ class ItemController
                 is_container,
                 container_size,
                 container_item_category,
-                item_category
+                item_category,
+                is_fungible
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ";
     
         $stmt = $conn->prepare($sql);
@@ -64,7 +65,7 @@ class ItemController
             $mediaIdBack = $item->mediaBack->crand;
         }
         $stmt->bind_param(
-            'iiiiissiiiiiiiiii',
+            'iiiiissiiiiiiiiiii',
             $typeValue,
             $rarityValue,
             $item->mediaLarge->crand,
@@ -81,7 +82,8 @@ class ItemController
             $item->isContainer,
             $item->containerSize,
             $containerItemCategory,
-            $itemCategory
+            $itemCategory,
+            (int)$item->isFungible
         );
     
         if (!$stmt->execute()) {
@@ -312,6 +314,11 @@ class ItemController
         if (array_key_exists("item_category", $row) && $row["item_category"] !== null) {
             $category = (int)$row["item_category"];
             $item->itemCategory = ItemCategory::tryFrom($category);
+        }
+
+        if(array_key_exists("is_fungible", $row))
+        {
+            $item->isFungible = $row["is_fungible"];
         }
 
         return $item;

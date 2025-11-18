@@ -28,11 +28,14 @@ class vItem extends vRecordId
 
     public bool $redeemable;
     public bool $useable;
+    public bool $fungible;
 
     public bool $isContainer;
     public int $containerSize; // -1 = infinite
     public ?ItemCategory $containerItemCategory = null;
     public ?ItemCategory $itemCategory = null;
+
+    public bool $isFungible;
 
     /** @var array<vLichCard> */
     public array $auxData;
