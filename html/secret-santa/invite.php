@@ -94,46 +94,76 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                             <i class="fa-solid fa-gifts"></i>
                                         </span>
                                         <div>
-                                            <div class="small text-uppercase text-muted mb-0">Step 1</div>
-                                            <h2 class="h5 mb-0">Validate your invite</h2>
+                                            <div class="small text-uppercase text-muted mb-0">Invite confirmed</div>
+                                            <h2 class="h5 mb-0">You're ready to join</h2>
                                         </div>
                                     </div>
-                                    <form class="row g-2" id="inviteLookupForm">
-                                        <div class="col-12">
-                                            <label class="form-label small mb-1" for="inviteTokenInput">Invite token</label>
-                                            <input class="form-control" id="inviteTokenInput" value="<?php echo htmlspecialchars($inviteToken); ?>" placeholder="e.g. 4fa31b9c8d7e8c52" required>
-                                        </div>
-                                        <div class="col-12">
-                                            <button class="btn btn-success w-100" type="submit">Check my spot</button>
-                                        </div>
-                                    </form>
-                                    <div id="inviteStatus" class="small text-muted mt-2"></div>
+                                    <p class="small text-muted mb-3">
+                                        You already followed a valid invite link. We'll load the event details automatically and let you hop in.
+                                    </p>
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="badge bg-success-subtle text-success-emphasis">Invite token locked</span>
+                                        <code class="text-muted" id="inviteTokenDisplay"><?php echo htmlspecialchars($inviteToken ?: 'Not provided'); ?></code>
+                                    </div>
+                                    <div id="inviteStatus" class="small text-muted mb-3"></div>
                                     <div class="border rounded-3 p-3 mt-3 countdown-card" id="countdownCard" style="display: none;">
                                         <div class="d-flex align-items-center mb-2">
                                             <span class="rounded-circle bg-primary-subtle text-primary-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
                                                 <i class="fa-solid fa-hourglass-half"></i>
                                             </span>
                                             <div>
-                                                <div class="small text-uppercase text-muted mb-0">Countdown</div>
-                                                <strong id="countdownLabel">Until gift exchange</strong>
+                                                <div class="small text-uppercase text-muted mb-0">Countdowns</div>
+                                                <strong>Key dates for this exchange</strong>
                                             </div>
                                         </div>
-                                        <div class="d-flex justify-content-between text-center">
-                                            <div class="flex-fill">
-                                                <div class="display-6 fw-bold text-primary count-number" id="countDays">--</div>
-                                                <div class="small text-muted">Days</div>
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <div class="d-flex justify-content-between text-center border rounded-3 p-3 h-100" id="signupCountdown" style="display:none;">
+                                                    <div class="flex-fill">
+                                                        <div class="small text-uppercase text-muted">Until signups close</div>
+                                                        <div class="display-6 fw-bold text-primary count-number" id="countSignupDays">--</div>
+                                                        <div class="small text-muted">Days</div>
+                                                    </div>
+                                                    <div class="flex-fill">
+                                                        <div class="small text-uppercase text-muted">&nbsp;</div>
+                                                        <div class="display-6 fw-bold text-primary count-number" id="countSignupHours">--</div>
+                                                        <div class="small text-muted">Hours</div>
+                                                    </div>
+                                                    <div class="flex-fill">
+                                                        <div class="small text-uppercase text-muted">&nbsp;</div>
+                                                        <div class="display-6 fw-bold text-primary count-number" id="countSignupMinutes">--</div>
+                                                        <div class="small text-muted">Minutes</div>
+                                                    </div>
+                                                    <div class="flex-fill">
+                                                        <div class="small text-uppercase text-muted">&nbsp;</div>
+                                                        <div class="display-6 fw-bold text-primary count-number" id="countSignupSeconds">--</div>
+                                                        <div class="small text-muted">Seconds</div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="flex-fill">
-                                                <div class="display-6 fw-bold text-primary count-number" id="countHours">--</div>
-                                                <div class="small text-muted">Hours</div>
-                                            </div>
-                                            <div class="flex-fill">
-                                                <div class="display-6 fw-bold text-primary count-number" id="countMinutes">--</div>
-                                                <div class="small text-muted">Minutes</div>
-                                            </div>
-                                            <div class="flex-fill">
-                                                <div class="display-6 fw-bold text-primary count-number" id="countSeconds">--</div>
-                                                <div class="small text-muted">Seconds</div>
+                                            <div class="col-12">
+                                                <div class="d-flex justify-content-between text-center border rounded-3 p-3 h-100" id="giftCountdown" style="display:none;">
+                                                    <div class="flex-fill">
+                                                        <div class="small text-uppercase text-muted">Until gift exchange</div>
+                                                        <div class="display-6 fw-bold text-primary count-number" id="countGiftDays">--</div>
+                                                        <div class="small text-muted">Days</div>
+                                                    </div>
+                                                    <div class="flex-fill">
+                                                        <div class="small text-uppercase text-muted">&nbsp;</div>
+                                                        <div class="display-6 fw-bold text-primary count-number" id="countGiftHours">--</div>
+                                                        <div class="small text-muted">Hours</div>
+                                                    </div>
+                                                    <div class="flex-fill">
+                                                        <div class="small text-uppercase text-muted">&nbsp;</div>
+                                                        <div class="display-6 fw-bold text-primary count-number" id="countGiftMinutes">--</div>
+                                                        <div class="small text-muted">Minutes</div>
+                                                    </div>
+                                                    <div class="flex-fill">
+                                                        <div class="small text-uppercase text-muted">&nbsp;</div>
+                                                        <div class="display-6 fw-bold text-primary count-number" id="countGiftSeconds">--</div>
+                                                        <div class="small text-muted">Seconds</div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         <p class="small text-muted mt-2 mb-0" id="countdownNote"></p>
@@ -171,21 +201,27 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                         <i class="fa-solid fa-user-plus"></i>
                                     </div>
                                     <div>
-                                        <h2 class="h5 mb-0">Your details</h2>
-                                        <small class="text-muted">Share where to send your assignment.</small>
+                                        <h2 class="h5 mb-0">Join this exchange</h2>
+                                        <small class="text-muted">We'll use the account tied to your invite link.</small>
                                     </div>
                                 </div>
-                                <form id="joinForm" class="row g-3">
-                                    <div class="col-12 col-md-6">
-                                        <label class="form-label" for="participantName">Display name</label>
-                                        <input class="form-control" id="participantName" value="<?php echo htmlspecialchars($defaultDisplayName); ?>" placeholder="Ayla Starling" required>
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <label class="form-label" for="participantEmail">Email</label>
-                                        <input class="form-control" type="email" id="participantEmail" value="<?php echo htmlspecialchars($defaultEmail); ?>" placeholder="ayla@example.com" required>
+                                <form id="joinForm" class="row g-3" data-display-name="<?php echo htmlspecialchars($defaultDisplayName); ?>" data-email="<?php echo htmlspecialchars($defaultEmail); ?>">
+                                    <div class="col-12">
+                                        <div class="p-3 bg-body-secondary rounded-3">
+                                            <div class="small text-uppercase text-muted mb-1">Joining as</div>
+                                            <div class="fw-semibold" id="participantNameDisplay"><?php echo htmlspecialchars($defaultDisplayName ?: 'Unknown adventurer'); ?></div>
+                                            <div class="text-muted" id="participantEmailDisplay"><?php echo htmlspecialchars($defaultEmail ?: 'No email on file'); ?></div>
+                                        </div>
                                     </div>
                                     <input type="hidden" id="participantExclusionCtime">
                                     <input type="hidden" id="participantExclusionCrand">
+                                    <div class="col-12">
+                                        <label class="form-label" for="exclusionSelect">Exclusion group</label>
+                                        <select class="form-select" id="exclusionSelect">
+                                            <option value="">No exclusion group</option>
+                                        </select>
+                                        <div class="form-text">Optional: keep yourself out of a specific pairing pool.</div>
+                                    </div>
                                     <div class="col-12">
                                         <div class="d-flex align-items-center gap-2">
                                             <button class="btn btn-success" type="submit">Join event</button>
@@ -305,8 +341,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
 
     <?php require("../php-components/base-page-javascript.php"); ?>
     <script>
-        const inviteLookupForm = document.getElementById('inviteLookupForm');
-        const inviteTokenInput = document.getElementById('inviteTokenInput');
+        const inviteTokenFromUrl = <?php echo json_encode($inviteToken); ?>;
         const inviteStatus = document.getElementById('inviteStatus');
         const eventDetailsCard = document.getElementById('eventDetailsCard');
         const eventNameEl = document.getElementById('eventName');
@@ -317,22 +352,29 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const joinStatus = document.getElementById('joinStatus');
         const participantExclusionCtime = document.getElementById('participantExclusionCtime');
         const participantExclusionCrand = document.getElementById('participantExclusionCrand');
+        const exclusionSelect = document.getElementById('exclusionSelect');
         const exclusionBuilderCard = document.getElementById('exclusionBuilderCard');
         const exclusionBuilder = document.getElementById('exclusionBuilder');
         const exclusionBuilderStatus = document.getElementById('exclusionBuilderStatus');
         const newExclusionCtime = document.getElementById('newExclusionCtime');
         const newExclusionCrand = document.getElementById('newExclusionCrand');
         const countdownCard = document.getElementById('countdownCard');
-        const countdownLabel = document.getElementById('countdownLabel');
-        const countDays = document.getElementById('countDays');
-        const countHours = document.getElementById('countHours');
-        const countMinutes = document.getElementById('countMinutes');
-        const countSeconds = document.getElementById('countSeconds');
+        const signupCountdown = document.getElementById('signupCountdown');
+        const giftCountdown = document.getElementById('giftCountdown');
+        const countSignupDays = document.getElementById('countSignupDays');
+        const countSignupHours = document.getElementById('countSignupHours');
+        const countSignupMinutes = document.getElementById('countSignupMinutes');
+        const countSignupSeconds = document.getElementById('countSignupSeconds');
+        const countGiftDays = document.getElementById('countGiftDays');
+        const countGiftHours = document.getElementById('countGiftHours');
+        const countGiftMinutes = document.getElementById('countGiftMinutes');
+        const countGiftSeconds = document.getElementById('countGiftSeconds');
         const countdownNote = document.getElementById('countdownNote');
         const countNumbers = document.querySelectorAll('.count-number');
         let countdownInterval = null;
         let currentEvent = null;
         let currentExclusionGroup = { ctime: '', crand: '' };
+        let exclusionGroups = [];
 
         async function getJson(url) {
             const resp = await fetch(url, { credentials: 'include' });
@@ -350,31 +392,36 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             return resp.json();
         }
 
-        function setCountdown(targetDate, label, note) {
+        function setCountdowns(signupDate, giftDate) {
             if (countdownInterval) {
                 clearInterval(countdownInterval);
             }
 
-            if (!targetDate) {
+            if (!signupDate && !giftDate) {
                 countdownCard.style.display = 'none';
                 return;
             }
 
             countdownCard.style.display = 'block';
-            countdownLabel.textContent = label;
-            countdownNote.textContent = note || '';
+            countdownNote.textContent = '';
 
-            const updateCountdown = () => {
+            const updateBlock = (targetDate, elements) => {
+                if (!targetDate) {
+                    elements.container.style.display = 'none';
+                    return false;
+                }
+
                 const now = new Date();
                 const diff = targetDate - now;
 
+                elements.container.style.display = 'flex';
+
                 if (diff <= 0) {
-                    countDays.textContent = '00';
-                    countHours.textContent = '00';
-                    countMinutes.textContent = '00';
-                    countSeconds.textContent = '00';
-                    countdownNote.textContent = 'Countdown finished—check with your host for the latest details.';
-                    return;
+                    elements.days.textContent = '00';
+                    elements.hours.textContent = '00';
+                    elements.minutes.textContent = '00';
+                    elements.seconds.textContent = '00';
+                    return true;
                 }
 
                 const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -382,20 +429,57 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                 const minutes = Math.floor((diff / (1000 * 60)) % 60);
                 const seconds = Math.floor((diff / 1000) % 60);
 
-                countDays.textContent = String(days).padStart(2, '0');
-                countHours.textContent = String(hours).padStart(2, '0');
-                countMinutes.textContent = String(minutes).padStart(2, '0');
-                countSeconds.textContent = String(seconds).padStart(2, '0');
+                elements.days.textContent = String(days).padStart(2, '0');
+                elements.hours.textContent = String(hours).padStart(2, '0');
+                elements.minutes.textContent = String(minutes).padStart(2, '0');
+                elements.seconds.textContent = String(seconds).padStart(2, '0');
+                return false;
+            };
+
+            const updateCountdown = () => {
+                const signupEnded = !signupDate ? false : updateBlock(signupDate, {
+                    container: signupCountdown,
+                    days: countSignupDays,
+                    hours: countSignupHours,
+                    minutes: countSignupMinutes,
+                    seconds: countSignupSeconds
+                });
+
+                const giftEnded = !giftDate ? false : updateBlock(giftDate, {
+                    container: giftCountdown,
+                    days: countGiftDays,
+                    hours: countGiftHours,
+                    minutes: countGiftMinutes,
+                    seconds: countGiftSeconds
+                });
 
                 countNumbers.forEach(el => {
                     el.classList.remove('pulse');
                     void el.offsetWidth;
                     el.classList.add('pulse');
                 });
+
+                if (signupEnded && giftEnded) {
+                    countdownNote.textContent = 'Countdown finished—check with your host for the latest details.';
+                } else if (signupEnded && giftDate) {
+                    countdownNote.textContent = 'Signups are closed. Gift exchange countdown continues below.';
+                } else {
+                    countdownNote.textContent = '';
+                }
             };
 
             updateCountdown();
             countdownInterval = setInterval(updateCountdown, 1000);
+        }
+
+        function renderExclusionOptions(groups) {
+            exclusionSelect.innerHTML = '<option value="">No exclusion group</option>';
+            groups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = `${group.ctime}|${group.crand}`;
+                option.textContent = group.name;
+                exclusionSelect.appendChild(option);
+            });
         }
 
         function renderEvent(event) {
@@ -408,12 +492,13 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             joinRows.style.display = '';
             exclusionBuilderCard.style.display = 'block';
             setExclusionGroup('', '');
+            exclusionGroups = event.exclusion_groups || [];
+            renderExclusionOptions(exclusionGroups);
 
             const now = new Date();
-            const targetDate = signup > now ? signup : gift;
-            const label = signup > now ? 'Until signups close' : 'Until gift exchange';
-            const note = signup > now ? 'Join before the lock to get paired.' : 'If you are already in, check your match!';
-            setCountdown(targetDate, label, note);
+            const signupDate = signup > now ? signup : null;
+            const giftDate = gift;
+            setCountdowns(signupDate, giftDate);
         }
 
         function setExclusionGroup(ctime, crand) {
@@ -425,6 +510,10 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             participantExclusionCrand.value = currentExclusionGroup.crand;
             newExclusionCtime.value = currentExclusionGroup.ctime;
             newExclusionCrand.value = currentExclusionGroup.crand;
+            const matchValue = currentExclusionGroup.ctime && currentExclusionGroup.crand
+                ? `${currentExclusionGroup.ctime}|${currentExclusionGroup.crand}`
+                : '';
+            exclusionSelect.value = matchValue;
         }
 
         async function validateInvite(token) {
@@ -434,6 +523,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             exclusionBuilderCard.style.display = 'none';
             countdownCard.style.display = 'none';
             currentEvent = null;
+            exclusionGroups = [];
             try {
                 const resp = await getJson(`/api/v1/secret-santa/validate-invite.php?invite_token=${encodeURIComponent(token)}`);
                 inviteStatus.textContent = resp.message || '';
@@ -447,15 +537,10 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             }
         }
 
-        inviteLookupForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const token = inviteTokenInput.value.trim();
-            if (!token) return;
-            validateInvite(token);
-        });
-
-        if (inviteTokenInput.value) {
-            validateInvite(inviteTokenInput.value);
+        if (inviteTokenFromUrl) {
+            validateInvite(inviteTokenFromUrl);
+        } else {
+            inviteStatus.textContent = 'No invite token detected. Please use your invite link.';
         }
 
         joinForm.addEventListener('submit', async (e) => {
@@ -463,10 +548,18 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             if (!currentEvent) return;
             joinStatus.textContent = 'Submitting...';
             try {
+                const displayName = joinForm.dataset.displayName || 'Secret Santa adventurer';
+                const email = joinForm.dataset.email || '';
+
+                if (!email) {
+                    joinStatus.textContent = 'Missing account email. Please update your profile and try again.';
+                    return;
+                }
+
                 const resp = await postForm('/api/v1/secret-santa/join-event.php', {
                     invite_token: currentEvent.invite_token,
-                    display_name: document.getElementById('participantName').value,
-                    email: document.getElementById('participantEmail').value,
+                    display_name: displayName,
+                    email: email,
                     ...(participantExclusionCtime.value ? { exclusion_group_ctime: participantExclusionCtime.value } : {}),
                     ...(participantExclusionCrand.value ? { exclusion_group_crand: participantExclusionCrand.value } : {})
                 });
@@ -503,11 +596,27 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                 exclusionBuilderStatus.textContent = resp.message || '';
                 if (resp.success && resp.data) {
                     setExclusionGroup(resp.data.ctime, resp.data.crand);
+                    exclusionGroups.push({
+                        ctime: resp.data.ctime,
+                        crand: resp.data.crand,
+                        name: document.getElementById('newExclusionName').value
+                    });
+                    renderExclusionOptions(exclusionGroups);
+                    setExclusionGroup(resp.data.ctime, resp.data.crand);
                 }
             } catch (err) {
                 console.error(err);
                 exclusionBuilderStatus.textContent = 'Could not save exclusion group.';
             }
+        });
+
+        exclusionSelect.addEventListener('change', (e) => {
+            if (!e.target.value) {
+                setExclusionGroup('', '');
+                return;
+            }
+            const [ctime, crand] = e.target.value.split('|');
+            setExclusionGroup(ctime, crand);
         });
     </script>
 </body>
