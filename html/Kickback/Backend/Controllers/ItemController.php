@@ -83,7 +83,7 @@ class ItemController
             $item->containerSize,
             $containerItemCategory,
             $itemCategory,
-            (int)$item->isFungible
+            (int)$item->fungible
         );
     
         if (!$stmt->execute()) {
