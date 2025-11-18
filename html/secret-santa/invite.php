@@ -54,14 +54,23 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             z-index: 1;
             display: grid;
             grid-template-columns: 1fr;
+            grid-template-areas:
+                "content"
+                "card";
             gap: 1.5rem;
             align-items: stretch;
         }
 
-        @media (min-width: 992px) {
-            .invite-hero .hero-grid {
-                grid-template-columns: 1.1fr 0.9fr;
-            }
+        .invite-hero .hero-content {
+            grid-area: content;
+        }
+
+        .invite-hero .event-timing {
+            grid-area: card;
+        }
+
+        .invite-hero .event-timing .hero-card {
+            width: 100%;
         }
 
         .invite-hero .eyebrow {
@@ -186,7 +195,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                 <!-- HERO / INVITE LOOKUP -->
                 <section class="invite-hero rounded-4 mb-4 shadow-lg overflow-hidden border-0">
                     <div class="hero-grid p-4 p-md-5">
-                        <div class="d-flex flex-column gap-3 gap-lg-4">
+                        <div class="d-flex flex-column gap-3 gap-lg-4 hero-content">
                             <div class="eyebrow text-light text-opacity-85">
                                 <i class="fa-solid fa-sleigh"></i>
                                 Secret Santa Invitation
@@ -207,7 +216,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                             </div>
                             <div id="inviteStatus" class="small text-light text-opacity-85"></div>
                         </div>
-                        <div>
+                        <div class="event-timing">
                             <div class="card hero-card rounded-4">
                                 <div class="card-body p-4 p-md-4 d-flex flex-column gap-3">
                                     <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
