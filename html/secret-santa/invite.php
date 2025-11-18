@@ -5,6 +5,9 @@ $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession
 require("../php-components/base-page-pull-active-account-info.php");
 
 $inviteToken = $_GET['invite_token'] ?? '';
+$kickbackAccount = $session->success ? $session->data : null;
+$defaultDisplayName = $kickbackAccount ? trim(($kickbackAccount->firstName ?? '') . ' ' . ($kickbackAccount->lastName ?? '')) : '';
+$defaultEmail = $kickbackAccount->email ?? '';
 $pageTitle = "Join Secret Santa";
 $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
 ?>
@@ -79,21 +82,14 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                         <form id="joinForm" class="row g-2">
                             <div class="col-12 col-md-6">
                                 <label class="form-label" for="participantName">Display name</label>
-                                <input class="form-control" id="participantName" placeholder="Ayla Starling" required>
+                                <input class="form-control" id="participantName" value="<?php echo htmlspecialchars($defaultDisplayName); ?>" placeholder="Ayla Starling" required>
                             </div>
                             <div class="col-12 col-md-6">
                                 <label class="form-label" for="participantEmail">Email</label>
-                                <input class="form-control" type="email" id="participantEmail" placeholder="ayla@example.com" required>
+                                <input class="form-control" type="email" id="participantEmail" value="<?php echo htmlspecialchars($defaultEmail); ?>" placeholder="ayla@example.com" required>
                             </div>
-                            <div class="col-12 col-md-6">
-                                <label class="form-label" for="participantExclusionCtime">Exclusion group ctime (optional)</label>
-                                <input class="form-control" id="participantExclusionCtime" placeholder="20241130125959999">
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label class="form-label" for="participantExclusionCrand">Exclusion group crand (optional)</label>
-                                <input class="form-control" id="participantExclusionCrand" placeholder="1234">
-                                <div class="form-text">Ask the organizer if you should join a group.</div>
-                            </div>
+                            <input type="hidden" id="participantExclusionCtime">
+                            <input type="hidden" id="participantExclusionCrand">
                             <div class="col-12">
                                 <div class="d-flex align-items-center gap-2">
                                     <button class="btn btn-success" type="submit">Join event</button>
@@ -120,14 +116,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                 <label class="form-label" for="newExclusionName">Group name</label>
                                 <input class="form-control" id="newExclusionName" placeholder="Roommates">
                             </div>
-                            <div class="col-6 col-lg-3">
-                                <label class="form-label" for="newExclusionCtime">Existing ctime (optional)</label>
-                                <input class="form-control" id="newExclusionCtime" placeholder="20241130125959999">
-                            </div>
-                            <div class="col-6 col-lg-2">
-                                <label class="form-label" for="newExclusionCrand">Existing crand</label>
-                                <input class="form-control" id="newExclusionCrand" placeholder="1234">
-                            </div>
+                            <input type="hidden" id="newExclusionCtime">
+                            <input type="hidden" id="newExclusionCrand">
                             <div class="col-12 col-lg-2 d-grid">
                                 <button class="btn btn-outline-secondary" type="submit">Save group</button>
                             </div>
@@ -155,10 +145,15 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const joinFormCard = document.getElementById('joinFormCard');
         const joinForm = document.getElementById('joinForm');
         const joinStatus = document.getElementById('joinStatus');
+        const participantExclusionCtime = document.getElementById('participantExclusionCtime');
+        const participantExclusionCrand = document.getElementById('participantExclusionCrand');
         const exclusionBuilderCard = document.getElementById('exclusionBuilderCard');
         const exclusionBuilder = document.getElementById('exclusionBuilder');
         const exclusionBuilderStatus = document.getElementById('exclusionBuilderStatus');
+        const newExclusionCtime = document.getElementById('newExclusionCtime');
+        const newExclusionCrand = document.getElementById('newExclusionCrand');
         let currentEvent = null;
+        let currentExclusionGroup = { ctime: '', crand: '' };
 
         async function getJson(url) {
             const resp = await fetch(url, { credentials: 'include' });
@@ -185,6 +180,18 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             eventDescEl.textContent = event.description || 'No description provided.';
             joinFormCard.style.display = 'block';
             exclusionBuilderCard.style.display = 'block';
+            setExclusionGroup('', '');
+        }
+
+        function setExclusionGroup(ctime, crand) {
+            currentExclusionGroup = {
+                ctime: ctime ?? '',
+                crand: crand ?? ''
+            };
+            participantExclusionCtime.value = currentExclusionGroup.ctime;
+            participantExclusionCrand.value = currentExclusionGroup.crand;
+            newExclusionCtime.value = currentExclusionGroup.ctime;
+            newExclusionCrand.value = currentExclusionGroup.crand;
         }
 
         async function validateInvite(token) {
@@ -226,8 +233,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                     invite_token: currentEvent.invite_token,
                     display_name: document.getElementById('participantName').value,
                     email: document.getElementById('participantEmail').value,
-                    exclusion_group_ctime: document.getElementById('participantExclusionCtime').value,
-                    exclusion_group_crand: document.getElementById('participantExclusionCrand').value
+                    ...(participantExclusionCtime.value ? { exclusion_group_ctime: participantExclusionCtime.value } : {}),
+                    ...(participantExclusionCrand.value ? { exclusion_group_crand: participantExclusionCrand.value } : {})
                 });
                 joinStatus.textContent = resp.message || '';
                 if (resp.success && resp.data && resp.data.event) {
@@ -244,17 +251,24 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             if (!currentEvent) return;
             exclusionBuilderStatus.textContent = 'Saving...';
             try {
-                const resp = await postForm('/api/v1/secret-santa/exclusion-group.php', {
+                const payload = {
                     event_ctime: currentEvent.ctime,
                     event_crand: currentEvent.crand,
-                    name: document.getElementById('newExclusionName').value,
-                    exclusion_group_ctime: document.getElementById('newExclusionCtime').value,
-                    exclusion_group_crand: document.getElementById('newExclusionCrand').value
-                });
+                    name: document.getElementById('newExclusionName').value
+                };
+
+                if (newExclusionCtime.value) {
+                    payload.exclusion_group_ctime = newExclusionCtime.value;
+                }
+
+                if (newExclusionCrand.value) {
+                    payload.exclusion_group_crand = newExclusionCrand.value;
+                }
+
+                const resp = await postForm('/api/v1/secret-santa/exclusion-group.php', payload);
                 exclusionBuilderStatus.textContent = resp.message || '';
                 if (resp.success && resp.data) {
-                    document.getElementById('participantExclusionCtime').value = resp.data.ctime ?? '';
-                    document.getElementById('participantExclusionCrand').value = resp.data.crand ?? '';
+                    setExclusionGroup(resp.data.ctime, resp.data.crand);
                 }
             } catch (err) {
                 console.error(err);
