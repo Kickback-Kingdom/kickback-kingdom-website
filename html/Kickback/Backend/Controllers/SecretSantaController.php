@@ -85,7 +85,19 @@ class SecretSantaController
 
     public static function validateInvite(string $inviteToken): Response
     {
-        return self::fetchEventByToken($inviteToken);
+        $eventResp = self::fetchEventByToken($inviteToken);
+        if (!$eventResp->success) {
+            return $eventResp;
+        }
+
+        $exclusionResp = self::fetchExclusionGroups($eventResp->data['ctime'], (int)$eventResp->data['crand']);
+        if ($exclusionResp->success) {
+            $eventResp->data['exclusion_groups'] = $exclusionResp->data;
+        } else {
+            $eventResp->data['exclusion_groups'] = [];
+        }
+
+        return new Response(true, $eventResp->message, $eventResp->data);
     }
 
     public static function joinEvent(string $inviteToken, string $displayName, string $email, ?string $exclusionCtime, ?int $exclusionCrand): Response
@@ -462,6 +474,31 @@ class SecretSantaController
         $stmt->close();
 
         return new Response(true, 'Participants fetched.', $participants);
+    }
+
+    private static function fetchExclusionGroups(string $eventCtime, int $eventCrand): Response
+    {
+        $conn = self::getConnection();
+
+        $stmt = $conn->prepare(
+            "SELECT ctime, crand, name FROM secret_santa_exclusion_groups WHERE event_ctime = ? AND event_crand = ?"
+        );
+
+        if ($stmt === false) {
+            return new Response(false, 'Failed to prepare exclusion groups fetch.', null);
+        }
+
+        $stmt->bind_param('si', $eventCtime, $eventCrand);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return new Response(false, 'Failed to fetch exclusion groups.', null);
+        }
+
+        $result = $stmt->get_result();
+        $groups = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        $stmt->close();
+
+        return new Response(true, 'Exclusion groups fetched.', $groups);
     }
 
     private static function fetchAssignmentsForEvent(string $eventCtime, int $eventCrand): Response
