@@ -118,7 +118,8 @@ class SecretSantaController
                     'email' => $participant['email'],
                     'exclusion_group_ctime' => $participant['exclusion_group_ctime'],
                     'exclusion_group_crand' => $participant['exclusion_group_crand'],
-                    'exclusion_group_name' => $groupName
+                    'exclusion_group_name' => $groupName,
+                    'account_id' => $participant['account_id'] ?? null
                 ];
             }, $participantsResp->data);
 
@@ -130,8 +131,15 @@ class SecretSantaController
         return new Response(true, $eventResp->message, $eventResp->data);
     }
 
-    public static function joinEvent(string $inviteToken, string $displayName, string $email, ?string $exclusionCtime, ?int $exclusionCrand): Response
+    public static function joinEvent(string $inviteToken, string $displayName, string $email, ?string $exclusionCtime, ?int $exclusionCrand, ?int $accountId = null): Response
     {
+        $authResp = self::requireLogin();
+        if (!$authResp->success) {
+            return $authResp;
+        }
+        $account = $authResp->data;
+        $accountId = $accountId ?? $account->crand;
+
         $eventResp = self::fetchEventByToken($inviteToken);
         if (!$eventResp->success) {
             return $eventResp;
@@ -142,20 +150,35 @@ class SecretSantaController
             return new Response(false, 'Signups are closed for this event.', null);
         }
 
-        $participantResp = self::fetchParticipant($event['ctime'], $event['crand'], $email);
-        if ($participantResp->success) {
-            return new Response(true, 'Already joined.', $participantResp->data);
+        $existingParticipant = null;
+
+        if (!is_null($accountId)) {
+            $participantByAccountResp = self::fetchParticipantByAccount($event['ctime'], $event['crand'], $accountId);
+            if ($participantByAccountResp->success) {
+                $existingParticipant = $participantByAccountResp;
+            }
+        }
+
+        if (is_null($existingParticipant)) {
+            $participantResp = self::fetchParticipant($event['ctime'], $event['crand'], $email);
+            if ($participantResp->success) {
+                $existingParticipant = $participantResp;
+            }
+        }
+
+        if (!is_null($existingParticipant)) {
+            return new Response(true, 'Already joined.', $existingParticipant->data);
         }
 
         $newRecordId = new RecordId();
         $ctime = $newRecordId->ctime;
-        $crand = $newRecordId->crand; 
+        $crand = $newRecordId->crand;
 
         $conn = self::getConnection();
 
         $stmt = $conn->prepare(
-            "INSERT INTO secret_santa_participants (ctime, crand, event_ctime, event_crand, display_name, email, exclusion_group_ctime, exclusion_group_crand) " .
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO secret_santa_participants (ctime, crand, event_ctime, event_crand, display_name, email, exclusion_group_ctime, exclusion_group_crand, account_id) " .
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
 
         if ($stmt === false) {
@@ -163,7 +186,7 @@ class SecretSantaController
         }
 
         $stmt->bind_param(
-            'sisisssi',
+            'sisisssii',
             $ctime,
             $crand,
             $event['ctime'],
@@ -171,7 +194,8 @@ class SecretSantaController
             $displayName,
             $email,
             $exclusionCtime,
-            $exclusionCrand
+            $exclusionCrand,
+            $accountId
         );
 
         if (!$stmt->execute()) {
@@ -188,7 +212,8 @@ class SecretSantaController
                 'display_name' => $displayName,
                 'email' => $email,
                 'exclusion_group_ctime' => $exclusionCtime,
-                'exclusion_group_crand' => $exclusionCrand
+                'exclusion_group_crand' => $exclusionCrand,
+                'account_id' => $accountId
             ]
         ]);
     }
@@ -477,6 +502,35 @@ class SecretSantaController
         }
 
         $stmt->bind_param('sis', $eventCtime, $eventCrand, $email);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return new Response(false, 'Failed to fetch participant.', null);
+        }
+
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
+
+        if (!$row) {
+            return new Response(false, 'Participant not found.', null);
+        }
+
+        return new Response(true, 'Participant found.', $row);
+    }
+
+    private static function fetchParticipantByAccount(string $eventCtime, int $eventCrand, int $accountId): Response
+    {
+        $conn = self::getConnection();
+
+        $stmt = $conn->prepare(
+            "SELECT * FROM secret_santa_participants WHERE event_ctime = ? AND event_crand = ? AND account_id = ?"
+        );
+
+        if ($stmt === false) {
+            return new Response(false, 'Failed to prepare participant lookup.', null);
+        }
+
+        $stmt->bind_param('sii', $eventCtime, $eventCrand, $accountId);
         if (!$stmt->execute()) {
             $stmt->close();
             return new Response(false, 'Failed to fetch participant.', null);

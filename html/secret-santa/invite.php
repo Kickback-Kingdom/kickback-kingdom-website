@@ -552,6 +552,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const inviteTokenFromUrl = <?php echo json_encode($inviteToken); ?>;
         const accountDisplayName = <?php echo json_encode($defaultDisplayName); ?>;
         const accountEmail = <?php echo json_encode($defaultEmail); ?>;
+        const accountCrand = <?php echo json_encode($kickbackAccount ? $kickbackAccount->crand : null); ?>;
         const inviteStatus = document.getElementById('inviteStatus');
         const heroEventTitle = document.getElementById('heroEventTitle');
         const heroEventSubtitle = document.getElementById('heroEventSubtitle');
@@ -726,6 +727,30 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             participantListCard.style.display = 'block';
         }
 
+        function isCurrentUserParticipant() {
+            const emailLower = (accountEmail || '').trim().toLowerCase();
+
+            return participants.some(participant => {
+                const participantEmail = (participant.email || '').trim().toLowerCase();
+                const participantAccountId = participant.account_id ?? participant.account_crand ?? null;
+
+                if (accountCrand !== null && participantAccountId !== null && String(participantAccountId) === String(accountCrand)) {
+                    return true;
+                }
+
+                return !!emailLower && !!participantEmail && participantEmail === emailLower;
+            });
+        }
+
+        function updateJoinVisibility(alreadyJoinedMessage = 'You are already registered for this exchange.') {
+            if (isCurrentUserParticipant()) {
+                joinRows.style.display = 'none';
+                inviteStatus.textContent = alreadyJoinedMessage;
+            } else {
+                joinRows.style.display = '';
+            }
+        }
+
         function renderEvent(event) {
             eventDetailsCard.style.display = 'block';
             eventNameEl.textContent = event.name;
@@ -742,6 +767,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             renderExclusionOptions(exclusionGroups);
             participants = event.participants || [];
             renderParticipants();
+            updateJoinVisibility();
 
             const now = new Date();
             const signupDate = signup > now ? signup : null;
@@ -822,9 +848,11 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                         exclusion_group_ctime: participantExclusionCtime.value,
                         exclusion_group_crand: participantExclusionCrand.value
                     };
+                    addedParticipant.account_id = resp.data.participant?.account_id ?? accountCrand ?? null;
                     addedParticipant.exclusion_group_name = getExclusionName(addedParticipant.exclusion_group_ctime, addedParticipant.exclusion_group_crand);
                     participants.push(addedParticipant);
                     renderParticipants();
+                    updateJoinVisibility('You are in!');
                 }
             } catch (err) {
                 console.error(err);
