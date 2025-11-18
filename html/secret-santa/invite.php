@@ -33,8 +33,38 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
 
     </div>
     <style>
+        .countdown-card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(248, 249, 250, 0.95));
+        }
+
+        .countdown-block {
+            border: 1px solid var(--bs-border-color-translucent);
+            border-radius: 1rem;
+            padding: 1rem 1.25rem;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .count-chip {
+            min-width: 92px;
+            padding: 0.6rem 0.75rem;
+            background: #0d6efd;
+            color: #fff;
+            border-radius: 0.8rem;
+            text-align: center;
+            box-shadow: 0 0.35rem 1rem rgba(13, 110, 253, 0.15);
+        }
+
+        .count-chip small {
+            display: block;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
         .count-number {
             transition: transform 0.2s ease;
+            line-height: 1;
         }
 
         .count-number.pulse {
@@ -66,12 +96,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
 
                 <!-- HERO / INVITE LOOKUP -->
                 <section class="position-relative overflow-hidden rounded-4 mb-4 shadow-lg border-0 text-light"
-                    style="
-                        background:
-                            radial-gradient(circle at 15% 10%, rgba(255,255,255,0.18), transparent 35%),
-                            radial-gradient(circle at 85% 15%, rgba(255,193,7,0.25), transparent 40%),
-                            linear-gradient(135deg, #0d6efd 0%, #6f42c1 45%, #842029 100%);
-                    ">
+                    style="background: linear-gradient(135deg, #0d6efd 0%, #6f42c1 50%, #4d0f2c 100%);">
                     <div class="row g-0 align-items-center p-4 p-md-5">
                         <div class="col-lg-7">
                             <div class="d-inline-flex align-items-center mb-2 small text-light text-opacity-75">
@@ -116,62 +141,75 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                         <code class="text-muted" id="inviteTokenDisplay"><?php echo htmlspecialchars($inviteToken ?: 'Not provided'); ?></code>
                                     </div>
                                     <div id="inviteStatus" class="small text-muted mb-3"></div>
-                                    <div class="border rounded-3 p-3 mt-3 countdown-card" id="countdownCard" style="display: none;">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <span class="rounded-circle bg-primary-subtle text-primary-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
-                                                <i class="fa-solid fa-hourglass-half"></i>
-                                            </span>
-                                            <div>
-                                                <div class="small text-uppercase text-muted mb-0">Countdowns</div>
-                                                <strong>Key dates for this exchange</strong>
+                                    <div class="countdown-card border rounded-3 p-3 mt-3 shadow-sm" id="countdownCard" style="display: none;">
+                                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="rounded-circle bg-primary-subtle text-primary-emphasis d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                                    <i class="fa-solid fa-hourglass-half"></i>
+                                                </span>
+                                                <div>
+                                                    <div class="small text-uppercase text-muted mb-0">Countdowns</div>
+                                                    <strong>Key dates for this exchange</strong>
+                                                </div>
                                             </div>
+                                            <span class="badge bg-primary-subtle text-primary-emphasis">Live updates</span>
                                         </div>
-                                        <div class="row g-3">
-                                            <div class="col-12">
-                                                <div class="d-flex justify-content-between text-center border rounded-3 p-3 h-100" id="signupCountdown" style="display:none;">
-                                                    <div class="flex-fill">
+                                        <div class="vstack gap-3">
+                                            <div class="countdown-block d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3" id="signupCountdown" style="display:none;">
+                                                <div class="d-flex align-items-center gap-2 text-start">
+                                                    <span class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                                        <i class="fa-solid fa-user-clock"></i>
+                                                    </span>
+                                                    <div>
                                                         <div class="small text-uppercase text-muted">Until signups close</div>
-                                                        <div class="display-6 fw-bold text-primary count-number" id="countSignupDays">--</div>
-                                                        <div class="small text-muted">Days</div>
+                                                        <div class="fw-semibold text-secondary">Lock in before names are drawn.</div>
                                                     </div>
-                                                    <div class="flex-fill">
-                                                        <div class="small text-uppercase text-muted">&nbsp;</div>
-                                                        <div class="display-6 fw-bold text-primary count-number" id="countSignupHours">--</div>
-                                                        <div class="small text-muted">Hours</div>
+                                                </div>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    <div class="count-chip">
+                                                        <div class="display-6 fw-bold count-number" id="countSignupDays">--</div>
+                                                        <small>Days</small>
                                                     </div>
-                                                    <div class="flex-fill">
-                                                        <div class="small text-uppercase text-muted">&nbsp;</div>
-                                                        <div class="display-6 fw-bold text-primary count-number" id="countSignupMinutes">--</div>
-                                                        <div class="small text-muted">Minutes</div>
+                                                    <div class="count-chip">
+                                                        <div class="display-6 fw-bold count-number" id="countSignupHours">--</div>
+                                                        <small>Hours</small>
                                                     </div>
-                                                    <div class="flex-fill">
-                                                        <div class="small text-uppercase text-muted">&nbsp;</div>
-                                                        <div class="display-6 fw-bold text-primary count-number" id="countSignupSeconds">--</div>
-                                                        <div class="small text-muted">Seconds</div>
+                                                    <div class="count-chip">
+                                                        <div class="display-6 fw-bold count-number" id="countSignupMinutes">--</div>
+                                                        <small>Minutes</small>
+                                                    </div>
+                                                    <div class="count-chip">
+                                                        <div class="display-6 fw-bold count-number" id="countSignupSeconds">--</div>
+                                                        <small>Seconds</small>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-12">
-                                                <div class="d-flex justify-content-between text-center border rounded-3 p-3 h-100" id="giftCountdown" style="display:none;">
-                                                    <div class="flex-fill">
+                                            <div class="countdown-block d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3" id="giftCountdown" style="display:none;">
+                                                <div class="d-flex align-items-center gap-2 text-start">
+                                                    <span class="rounded-circle bg-warning-subtle text-warning-emphasis d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                                        <i class="fa-solid fa-gift"></i>
+                                                    </span>
+                                                    <div>
                                                         <div class="small text-uppercase text-muted">Until gift exchange</div>
-                                                        <div class="display-6 fw-bold text-primary count-number" id="countGiftDays">--</div>
-                                                        <div class="small text-muted">Days</div>
+                                                        <div class="fw-semibold text-secondary">Count down to reveal day.</div>
                                                     </div>
-                                                    <div class="flex-fill">
-                                                        <div class="small text-uppercase text-muted">&nbsp;</div>
-                                                        <div class="display-6 fw-bold text-primary count-number" id="countGiftHours">--</div>
-                                                        <div class="small text-muted">Hours</div>
+                                                </div>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    <div class="count-chip">
+                                                        <div class="display-6 fw-bold count-number" id="countGiftDays">--</div>
+                                                        <small>Days</small>
                                                     </div>
-                                                    <div class="flex-fill">
-                                                        <div class="small text-uppercase text-muted">&nbsp;</div>
-                                                        <div class="display-6 fw-bold text-primary count-number" id="countGiftMinutes">--</div>
-                                                        <div class="small text-muted">Minutes</div>
+                                                    <div class="count-chip">
+                                                        <div class="display-6 fw-bold count-number" id="countGiftHours">--</div>
+                                                        <small>Hours</small>
                                                     </div>
-                                                    <div class="flex-fill">
-                                                        <div class="small text-uppercase text-muted">&nbsp;</div>
-                                                        <div class="display-6 fw-bold text-primary count-number" id="countGiftSeconds">--</div>
-                                                        <div class="small text-muted">Seconds</div>
+                                                    <div class="count-chip">
+                                                        <div class="display-6 fw-bold count-number" id="countGiftMinutes">--</div>
+                                                        <small>Minutes</small>
+                                                    </div>
+                                                    <div class="count-chip">
+                                                        <div class="display-6 fw-bold count-number" id="countGiftSeconds">--</div>
+                                                        <small>Seconds</small>
                                                     </div>
                                                 </div>
                                             </div>
