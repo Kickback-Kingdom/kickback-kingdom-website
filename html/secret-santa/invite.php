@@ -52,11 +52,24 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(248, 249, 250, 0.95));
         }
 
+        .countdown-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+
+        @media (min-width: 768px) {
+            .countdown-grid {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            }
+        }
+
         .countdown-block {
             border: 1px solid var(--bs-border-color-translucent);
             border-radius: 1rem;
             padding: 1rem 1.25rem;
             background: rgba(255, 255, 255, 0.7);
+            height: 100%;
         }
 
         .count-chip {
@@ -194,7 +207,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                             </div>
                                             <span class="badge bg-primary-subtle text-primary-emphasis">Live updates</span>
                                         </div>
-                                        <div class="vstack gap-3">
+                                        <div class="countdown-grid">
                                             <div class="countdown-block d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3" id="signupCountdown" style="display:none;">
                                                 <div class="d-flex align-items-center gap-2 text-start">
                                                     <span class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
