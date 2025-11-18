@@ -36,11 +36,11 @@ class StoreTester
     {
         StoreController::runUnitTests();
         
-        static::createBlankTestDatabase();
+        //static::createBlankTestDatabase();
 
         //static::temp_populate_DB();
         
-        static::test_apply_override_coupon_checkout_cart();
+        // static::test_apply_override_coupon_checkout_cart();
         // static::test_apply_coupon_checkout_cart();
         // static::test_apply_coupon();
         // static::manualtest_getStoreById();
@@ -1161,11 +1161,11 @@ class StoreTester
 
         for($i = 0; $i < count($price); $i++)
         {
-            $price = $price[$i];
+            $priceComponent = $price[$i];
 
             if($i !== 0) $priceValue .= " UNION ALL ";
 
-            $priceValue .= "(SELECT '$price->ctime' AS price_component_ctime, $price->crand as price_component_crand)";
+            $priceValue .= "(SELECT '$priceComponent->ctime' AS price_component_ctime, $priceComponent->crand as price_component_crand)";
 
         }
 
@@ -1191,7 +1191,7 @@ class StoreTester
 
         for($priceComponentIndex = 0; $priceComponentIndex < count($price); $priceComponentIndex++)
         {
-            $price = $price[$priceComponentIndex];
+            $priceComponent = $price[$priceComponentIndex];
 
             for($i = 0; $i < count($accountLootAmount); $i++)
             {
@@ -1199,9 +1199,9 @@ class StoreTester
 
                 $matchingPrice = null;
 
-                if($lootAmountRow["item_id"] === $price->item->crand)
+                if($lootAmountRow["item_id"] === $priceComponent->item->crand)
                 {
-                    $matchingPrice = $price;
+                    $matchingPrice = $priceComponent;
                 }
 
                 if(is_null($matchingPrice))
