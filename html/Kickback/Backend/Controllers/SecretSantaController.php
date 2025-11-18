@@ -97,6 +97,33 @@ class SecretSantaController
             $eventResp->data['exclusion_groups'] = [];
         }
 
+        $participantsResp = self::fetchParticipantsForEvent($eventResp->data['ctime'], (int)$eventResp->data['crand']);
+        if ($participantsResp->success) {
+            $groupsByKey = [];
+            foreach ($eventResp->data['exclusion_groups'] as $group) {
+                $groupsByKey[$group['ctime'] . ':' . $group['crand']] = $group['name'];
+            }
+
+            $participants = array_map(function ($participant) use ($groupsByKey) {
+                $groupKey = $participant['exclusion_group_ctime'] . ':' . $participant['exclusion_group_crand'];
+                $groupName = ($participant['exclusion_group_ctime'] && $participant['exclusion_group_crand'])
+                    ? ($groupsByKey[$groupKey] ?? null)
+                    : null;
+
+                return [
+                    'display_name' => $participant['display_name'],
+                    'email' => $participant['email'],
+                    'exclusion_group_ctime' => $participant['exclusion_group_ctime'],
+                    'exclusion_group_crand' => $participant['exclusion_group_crand'],
+                    'exclusion_group_name' => $groupName
+                ];
+            }, $participantsResp->data);
+
+            $eventResp->data['participants'] = $participants;
+        } else {
+            $eventResp->data['participants'] = [];
+        }
+
         return new Response(true, $eventResp->message, $eventResp->data);
     }
 
@@ -151,7 +178,13 @@ class SecretSantaController
         return new Response(true, 'Joined Secret Santa.', [
             'ctime' => $ctime,
             'crand' => $crand,
-            'event' => $event
+            'event' => $event,
+            'participant' => [
+                'display_name' => $displayName,
+                'email' => $email,
+                'exclusion_group_ctime' => $exclusionCtime,
+                'exclusion_group_crand' => $exclusionCrand
+            ]
         ]);
     }
 
