@@ -16,8 +16,18 @@ $pageDesc = "Set up a new Secret Santa event.";
 <body class="bg-body-secondary container p-0">
     <?php
     require("../php-components/base-page-components.php");
-    require("../php-components/ad-carousel.php"); 
     ?>
+    <!--TOP BANNER-->
+    <div class="d-none d-md-block w-100 ratio" style="--bs-aspect-ratio: 26%; margin-top: 56px">
+
+        <img src="/assets/media/events/1768.png" class="" />
+
+    </div>
+    <div class="d-block d-md-none w-100 ratio" style="margin-top: 56px; --bs-aspect-ratio: 46.3%;">
+
+        <img src="/assets/media/events/1769.png" />
+
+    </div>
     <main class="container pt-3 bg-body" style="margin-bottom: 56px;">
         <div class="row">
             <div class="col-12 col-xl-9">
