@@ -1,6 +1,8 @@
 <?php
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
+use Kickback\Backend\Controllers\SecretSantaController;
+
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("../php-components/base-page-pull-active-account-info.php");
 
@@ -11,6 +13,66 @@ $defaultEmail = $kickbackAccount->email ?? '';
 $redirectTarget = 'secret-santa/invite.php' . ($inviteToken ? '?invite_token=' . urlencode($inviteToken) : '');
 $loginRedirectUrl = \Kickback\Common\Version::urlBetaPrefix() . '/login.php?redirect=' . rawurlencode($redirectTarget);
 $managePageBaseUrl = \Kickback\Common\Version::urlBetaPrefix() . '/secret-santa/manage.php';
+$prefetchedEvent = null;
+$prefetchedParticipants = [];
+$invitePrefetchMessage = '';
+
+if ($inviteToken) {
+    try {
+        $inviteValidationResponse = SecretSantaController::validateInvite($inviteToken);
+        $invitePrefetchMessage = $inviteValidationResponse->message ?? '';
+
+        if ($inviteValidationResponse->success && is_array($inviteValidationResponse->data ?? null)) {
+            $prefetchedEvent = $inviteValidationResponse->data;
+            if (isset($prefetchedEvent['participants']) && is_array($prefetchedEvent['participants'])) {
+                $prefetchedParticipants = $prefetchedEvent['participants'];
+            }
+        }
+    } catch (\Throwable $th) {
+        $invitePrefetchMessage = 'Unable to validate invite token right now.';
+        $prefetchedEvent = null;
+        $prefetchedParticipants = [];
+    }
+}
+
+$userIsParticipant = false;
+$userIsHost = false;
+$prefetchedEventName = $prefetchedEvent['name'] ?? 'this exchange';
+
+if ($prefetchedEvent && $kickbackAccount) {
+    $accountCrand = $kickbackAccount->crand ?? null;
+    $accountEmail = $kickbackAccount->email ?? '';
+
+    if (!is_null($accountCrand) && isset($prefetchedEvent['owner_id']) && (string)$prefetchedEvent['owner_id'] === (string)$accountCrand) {
+        $userIsHost = true;
+    }
+
+    foreach ($prefetchedParticipants as $participant) {
+        $participantAccountId = $participant['account_id'] ?? null;
+        if (!is_null($accountCrand) && !is_null($participantAccountId) && (string)$participantAccountId === (string)$accountCrand) {
+            $userIsParticipant = true;
+            break;
+        }
+
+        $participantEmail = $participant['email'] ?? '';
+        if ($participantEmail && $accountEmail && strcasecmp($participantEmail, $accountEmail) === 0) {
+            $userIsParticipant = true;
+            break;
+        }
+    }
+}
+
+if ($userIsHost) {
+    $userIsParticipant = true;
+}
+
+$joinRowsState = $userIsHost ? 'host' : ($userIsParticipant ? 'participant' : 'default');
+$joinRowsInitialStyle = $prefetchedEvent ? '' : 'display:none;';
+$hostManageUrl = $managePageBaseUrl;
+
+if ($prefetchedEvent && !empty($prefetchedEvent['invite_token'])) {
+    $hostManageUrl = $managePageBaseUrl . '?invite_token=' . urlencode($prefetchedEvent['invite_token']);
+}
 $isLoggedIn = $kickbackAccount !== null;
 $pageTitle = "Join Secret Santa";
 $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
@@ -230,6 +292,33 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             display: grid;
             grid-template-columns: 1fr;
             gap: 1rem;
+        }
+
+        #joinRows[data-state="participant"] #joinFormSection,
+        #joinRows[data-state="participant"] #joinLoginPrompt,
+        #joinRows[data-state="host"] #joinFormSection,
+        #joinRows[data-state="host"] #joinLoginPrompt {
+            display: none !important;
+        }
+
+        #joinRows[data-state="host"] #joinHostPrompt {
+            display: flex !important;
+        }
+
+        .join-state-banner {
+            border: 1px solid var(--bs-border-color-translucent);
+            border-radius: 1rem;
+            background: var(--bs-success-bg-subtle);
+            color: var(--bs-success-text-emphasis);
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .join-state-banner.join-state-host {
+            background: var(--bs-warning-bg-subtle);
+            color: var(--bs-warning-text-emphasis);
         }
 
         .join-cta {
@@ -511,7 +600,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         </div>
 
         <!-- JOIN + EXCLUSIONS -->
-        <div class="row mb-4" id="joinRows" style="display:none;">
+        <div class="row mb-4" id="joinRows" data-state="<?php echo htmlspecialchars($joinRowsState); ?>" style="<?php echo htmlspecialchars($joinRowsInitialStyle); ?>">
             <div class="col-12">
                         <div class="card shadow-sm border-0" id="joinFormCard">
                             <div class="card-body p-4 d-flex flex-column gap-4">
@@ -531,16 +620,34 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     </div>
                                 </div>
 
-                                <div id="joinHostPrompt" class="join-cta d-none">
+                                <?php if ($prefetchedEvent && $userIsParticipant && !$userIsHost) : ?>
+                                    <div class="join-state-banner" id="prefetchedJoinBanner">
+                                        <i class="fa-solid fa-circle-check fs-5"></i>
+                                        <div>
+                                            <div class="fw-semibold">You're already registered for <?php echo htmlspecialchars($prefetchedEventName); ?>.</div>
+                                            <small>Look out for assignment emails or ask your host if details change.</small>
+                                        </div>
+                                    </div>
+                                <?php elseif ($prefetchedEvent && $userIsHost) : ?>
+                                    <div class="join-state-banner join-state-host" id="prefetchedJoinBanner">
+                                        <i class="fa-solid fa-crown fs-5"></i>
+                                        <div>
+                                            <div class="fw-semibold">You're hosting <?php echo htmlspecialchars($prefetchedEventName); ?>.</div>
+                                            <small>Use the manage button below to adjust signups or reroll matches.</small>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
+                                <div id="joinHostPrompt" class="join-cta<?php echo $userIsHost ? '' : ' d-none'; ?>">
                                     <div class="join-cta-icon bg-warning-subtle text-warning-emphasis">
                                         <i class="fa-solid fa-crown"></i>
                                     </div>
                                     <div class="flex-grow-1">
-                                        <div class="fw-semibold mb-1">You're hosting <span id="joinHostEventName">this exchange</span></div>
+                                        <div class="fw-semibold mb-1">You're hosting <span id="joinHostEventName"><?php echo htmlspecialchars($prefetchedEventName); ?></span></div>
                                         <p class="mb-0 text-muted small">Open the control room to adjust signups, reroll pairings, and send assignment emails.</p>
                                     </div>
                                     <div class="text-end">
-                                        <a id="joinHostManageLink" href="<?php echo htmlspecialchars($managePageBaseUrl); ?>" class="btn btn-primary">
+                                        <a id="joinHostManageLink" href="<?php echo htmlspecialchars($hostManageUrl); ?>" class="btn btn-primary">
                                             <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Manage event
                                         </a>
                                         <div class="small text-muted mt-2">Jumps to your host dashboard.</div>
@@ -786,6 +893,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const accountCrand = <?php echo json_encode($kickbackAccount ? $kickbackAccount->crand : null); ?>;
         const isLoggedIn = <?php echo json_encode($isLoggedIn); ?>;
         const managePageBaseUrl = <?php echo json_encode($managePageBaseUrl); ?>;
+        const prefetchedEvent = <?php echo json_encode($prefetchedEvent); ?>;
+        const invitePrefetchMessage = <?php echo json_encode($invitePrefetchMessage); ?>;
         const inviteStatus = document.getElementById('inviteStatus');
         const heroEventTitle = document.getElementById('heroEventTitle');
         const heroEventSubtitle = document.getElementById('heroEventSubtitle');
@@ -1226,7 +1335,12 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             }
         }
 
-        if (inviteTokenFromUrl) {
+        if (prefetchedEvent) {
+            setStatus(inviteStatus, invitePrefetchMessage || 'Invite loaded.');
+            currentEvent = prefetchedEvent;
+            renderEvent(prefetchedEvent);
+        } else if (inviteTokenFromUrl) {
+            setStatus(inviteStatus, invitePrefetchMessage || 'Checking invite...');
             validateInvite(inviteTokenFromUrl);
         } else {
             setStatus(inviteStatus, 'No invite token detected. Please use your invite link.');
