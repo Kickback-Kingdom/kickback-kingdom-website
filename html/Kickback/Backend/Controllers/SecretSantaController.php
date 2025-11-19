@@ -292,7 +292,7 @@ class SecretSantaController
         $conn = self::getConnection();
 
         $assignmentStmt = $conn->prepare(
-            "DELETE FROM secret_santa_assignments WHERE event_ctime = ? AND event_crand = ? AND (giver_ctime = ? AND giver_crand = ? OR receiver_ctime = ? AND receiver_crand = ?)"
+            "DELETE FROM secret_santa_pairs WHERE event_ctime = ? AND event_crand = ? AND ((giver_participant_ctime = ? AND giver_participant_crand = ?) OR (receiver_participant_ctime = ? AND receiver_participant_crand = ?))"
         );
 
         if ($assignmentStmt === false) {
@@ -454,7 +454,7 @@ class SecretSantaController
         $conn = self::getConnection();
 
         $stmt = $conn->prepare(
-            "INSERT INTO secret_santa_assignments (ctime, crand, event_ctime, event_crand, giver_ctime, giver_crand, receiver_ctime, receiver_crand) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO secret_santa_pairs (ctime, crand, event_ctime, event_crand, giver_participant_ctime, giver_participant_crand, receiver_participant_ctime, receiver_participant_crand) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
         );
 
         if ($stmt === false) {
@@ -533,8 +533,8 @@ class SecretSantaController
             $mail->setFrom(ServiceCredentials::GMAIL_USERNAME, 'Kickback Secret Santa');
 
             foreach ($assignmentsResp->data as $assignment) {
-                $giverKey = $assignment['giver_ctime'] . ':' . $assignment['giver_crand'];
-                $receiverKey = $assignment['receiver_ctime'] . ':' . $assignment['receiver_crand'];
+                $giverKey = $assignment['giver_participant_ctime'] . ':' . $assignment['giver_participant_crand'];
+                $receiverKey = $assignment['receiver_participant_ctime'] . ':' . $assignment['receiver_participant_crand'];
 
                 if (!isset($participantsById[$giverKey]) || !isset($participantsById[$receiverKey])) {
                     continue;
@@ -756,7 +756,7 @@ class SecretSantaController
         $conn = self::getConnection();
 
         $stmt = $conn->prepare(
-            "SELECT * FROM secret_santa_assignments WHERE event_ctime = ? AND event_crand = ?"
+            "SELECT * FROM secret_santa_pairs WHERE event_ctime = ? AND event_crand = ?"
         );
 
         if ($stmt === false) {
