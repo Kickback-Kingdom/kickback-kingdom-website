@@ -70,6 +70,45 @@ $joinRowsState = $userIsHost ? 'host' : ($userIsParticipant ? 'participant' : 'd
 $joinRowsInitialStyle = $prefetchedEvent ? '' : 'display:none;';
 $hostManageUrl = $managePageBaseUrl;
 
+$serverAssignmentsGenerated = (bool)($prefetchedEvent['assignments_generated'] ?? false);
+$serverCurrentAssignment = is_array($prefetchedEvent['current_assignment'] ?? null) ? $prefetchedEvent['current_assignment'] : null;
+$serverAssignmentReceiver = is_array($serverCurrentAssignment['receiver'] ?? null) ? $serverCurrentAssignment['receiver'] : null;
+
+$assignmentGiftDeadlineText = '';
+
+if (!empty($prefetchedEvent['gift_deadline'])) {
+    try {
+        $giftDeadline = new DateTime($prefetchedEvent['gift_deadline'], new DateTimeZone('UTC'));
+        $giftDeadline->setTimezone(new DateTimeZone(date_default_timezone_get()));
+        $assignmentGiftDeadlineText = 'Gift reveal: ' . $giftDeadline->format('M j, Y g:i A');
+    } catch (\Throwable $th) {
+        $assignmentGiftDeadlineText = '';
+    }
+}
+
+$assignmentCardVisible = $prefetchedEvent && ($userIsParticipant || ($serverAssignmentsGenerated && !$isLoggedIn));
+$assignmentSpinnerVisible = $assignmentCardVisible && $userIsParticipant && !$serverAssignmentsGenerated;
+$assignmentDetailsVisible = $assignmentCardVisible && $userIsParticipant && $serverAssignmentsGenerated && !empty($serverAssignmentReceiver);
+$assignmentLoginVisible = $assignmentCardVisible && !$userIsParticipant && $serverAssignmentsGenerated && !$isLoggedIn;
+
+$assignmentTitleText = 'Matching status';
+$assignmentSubtitleText = "We'll let you know the moment names are ready.";
+
+if ($assignmentLoginVisible) {
+    $assignmentTitleText = 'View your Secret Santa assignment';
+    $assignmentSubtitleText = 'Log in to reveal who you are gifting to.';
+} elseif ($assignmentSpinnerVisible) {
+    $assignmentTitleText = 'Matching underway';
+    $assignmentSubtitleText = 'We are finalizing signups and drawing names shortly.';
+} elseif ($assignmentCardVisible && $userIsParticipant && $serverAssignmentsGenerated) {
+    $assignmentTitleText = 'Your Secret Santa assignment';
+    if ($assignmentDetailsVisible) {
+        $assignmentSubtitleText = 'Keep it secret and start planning a gift!';
+    } else {
+        $assignmentSubtitleText = 'We could not find your assignment yet. Please check with your host if this seems incorrect.';
+    }
+}
+
 if ($prefetchedEvent && !empty($prefetchedEvent['invite_token'])) {
     $hostManageUrl = $managePageBaseUrl . '?invite_token=' . urlencode($prefetchedEvent['invite_token']);
 }
@@ -564,33 +603,40 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             </div>
         </div>
 
-        <div class="card shadow-sm border-0 mb-4 d-none" id="assignmentStatusCard">
+        <div
+            class="card shadow-sm border-0 mb-4<?php echo $assignmentCardVisible ? '' : ' d-none'; ?>"
+            id="assignmentStatusCard"
+            data-assignments-generated="<?php echo $serverAssignmentsGenerated ? 'true' : 'false'; ?>"
+            data-user-participant="<?php echo $userIsParticipant ? 'true' : 'false'; ?>"
+            data-should-prompt-login="<?php echo ($serverAssignmentsGenerated && !$isLoggedIn) ? 'true' : 'false'; ?>"
+            data-current-assignment="<?php echo $serverCurrentAssignment ? htmlspecialchars(json_encode($serverCurrentAssignment)) : ''; ?>"
+        >
             <div class="card-body p-4 d-flex flex-column gap-3">
                 <div class="d-flex align-items-center gap-3">
                     <div class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
                         <i class="fa-solid fa-hat-wizard"></i>
                     </div>
                     <div>
-                        <h2 class="h5 mb-1" id="assignmentStatusTitle">Matching status</h2>
-                        <p class="mb-0 text-muted" id="assignmentStatusSubtitle">We'll let you know the moment names are ready.</p>
+                        <h2 class="h5 mb-1" id="assignmentStatusTitle"><?php echo htmlspecialchars($assignmentTitleText); ?></h2>
+                        <p class="mb-0 text-muted" id="assignmentStatusSubtitle"><?php echo htmlspecialchars($assignmentSubtitleText); ?></p>
                     </div>
                 </div>
-                <div id="assignmentSpinnerSection" class="d-flex align-items-center gap-3 text-muted">
+                <div id="assignmentSpinnerSection" class="d-flex align-items-center gap-3 text-muted<?php echo $assignmentSpinnerVisible ? '' : ' d-none'; ?>">
                     <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
                     <div>
                         <div class="fw-semibold mb-1">Matching underway</div>
                         <p class="text-muted small mb-0">We're locking in the final signups and drawing names shortly.</p>
                     </div>
                 </div>
-                <div id="assignmentDetailsSection" class="d-none">
+                <div id="assignmentDetailsSection" class="<?php echo $assignmentDetailsVisible ? '' : 'd-none'; ?>">
                     <div class="border rounded-3 p-3 bg-light-subtle">
                         <div class="small text-uppercase text-muted mb-1">You're gifting to</div>
-                        <div class="fs-5 fw-semibold" id="assignmentReceiverName"></div>
-                        <div class="text-muted" id="assignmentReceiverEmail"></div>
-                        <div class="text-muted mt-2 small" id="assignmentGiftDeadline"></div>
+                        <div class="fs-5 fw-semibold" id="assignmentReceiverName"><?php echo htmlspecialchars($serverAssignmentReceiver['display_name'] ?? ''); ?></div>
+                        <div class="text-muted" id="assignmentReceiverEmail"><?php echo htmlspecialchars($serverAssignmentReceiver['email'] ?? ''); ?></div>
+                        <div class="text-muted mt-2 small" id="assignmentGiftDeadline"><?php echo htmlspecialchars($assignmentGiftDeadlineText); ?></div>
                     </div>
                 </div>
-                <div id="assignmentLoginSection" class="d-none">
+                <div id="assignmentLoginSection" class="<?php echo $assignmentLoginVisible ? '' : 'd-none'; ?>">
                     <p class="mb-3 text-muted">Log in to reveal your Secret Santa assignment.</p>
                     <a href="<?php echo htmlspecialchars($loginRedirectUrl); ?>" class="btn btn-primary" id="assignmentLoginButton">
                         <i class="fa-solid fa-right-to-bracket me-1"></i>Log In
@@ -940,13 +986,23 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const assignmentReceiverEmail = document.getElementById('assignmentReceiverEmail');
         const assignmentGiftDeadline = document.getElementById('assignmentGiftDeadline');
         const assignmentLoginSection = document.getElementById('assignmentLoginSection');
+        const serverAssignmentDefaults = assignmentStatusCard
+            ? {
+                  assignmentsGenerated: assignmentStatusCard.dataset.assignmentsGenerated === 'true',
+                  userIsParticipant: assignmentStatusCard.dataset.userParticipant === 'true',
+                  shouldPromptLogin: assignmentStatusCard.dataset.shouldPromptLogin === 'true',
+                  currentAssignment: assignmentStatusCard.dataset.currentAssignment
+                      ? JSON.parse(assignmentStatusCard.dataset.currentAssignment)
+                      : null
+              }
+            : { assignmentsGenerated: false, userIsParticipant: false, shouldPromptLogin: false, currentAssignment: null };
         let countdownInterval = null;
         let currentEvent = null;
         let currentExclusionGroup = { ctime: '', crand: '' };
         let exclusionGroups = [];
         let participants = [];
-        let assignmentsGenerated = false;
-        let currentAssignment = null;
+        let assignmentsGenerated = serverAssignmentDefaults.assignmentsGenerated;
+        let currentAssignment = serverAssignmentDefaults.currentAssignment;
 
         function setStatus(element, message) {
             if (!element) return;
@@ -1132,6 +1188,10 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         function isCurrentUserParticipant() {
             const emailLower = (accountEmail || '').trim().toLowerCase();
 
+            if (participants.length === 0 && serverAssignmentDefaults.userIsParticipant) {
+                return true;
+            }
+
             return participants.some(participant => {
                 const participantEmail = (participant.email || '').trim().toLowerCase();
                 const participantAccountId = participant.account_id ?? participant.account_crand ?? null;
@@ -1211,6 +1271,12 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         function setAssignmentStateFromEvent(event) {
             assignmentsGenerated = !!(event && event.assignments_generated);
             currentAssignment = event && event.current_assignment ? event.current_assignment : null;
+            if (assignmentStatusCard) {
+                assignmentStatusCard.dataset.assignmentsGenerated = assignmentsGenerated ? 'true' : 'false';
+                assignmentStatusCard.dataset.currentAssignment = currentAssignment ? JSON.stringify(currentAssignment) : '';
+                assignmentStatusCard.dataset.userParticipant = isCurrentUserParticipant() ? 'true' : 'false';
+                assignmentStatusCard.dataset.shouldPromptLogin = assignmentsGenerated && !isLoggedIn ? 'true' : 'false';
+            }
             updateAssignmentStatus();
         }
 
