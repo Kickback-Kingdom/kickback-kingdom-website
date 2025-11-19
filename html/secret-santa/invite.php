@@ -9,7 +9,8 @@ $kickbackAccount = $session->success ? $session->data : null;
 $defaultDisplayName = $kickbackAccount ? trim(($kickbackAccount->firstName ?? '') . ' ' . ($kickbackAccount->lastName ?? '')) : '';
 $defaultEmail = $kickbackAccount->email ?? '';
 $redirectTarget = 'secret-santa/invite.php' . ($inviteToken ? '?invite_token=' . urlencode($inviteToken) : '');
-$assignmentLoginUrl = \Kickback\Common\Version::urlBetaPrefix() . '/login.php?redirect=' . rawurlencode($redirectTarget);
+$loginRedirectUrl = \Kickback\Common\Version::urlBetaPrefix() . '/login.php?redirect=' . rawurlencode($redirectTarget);
+$managePageBaseUrl = \Kickback\Common\Version::urlBetaPrefix() . '/secret-santa/manage.php';
 $isLoggedIn = $kickbackAccount !== null;
 $pageTitle = "Join Secret Santa";
 $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
@@ -231,6 +232,32 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             gap: 1rem;
         }
 
+        .join-cta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            border-radius: 1.25rem;
+            border: 1px dashed rgba(13, 110, 253, 0.25);
+            background: linear-gradient(135deg, rgba(13, 110, 253, 0.08), rgba(111, 66, 193, 0.05));
+            box-shadow: 0 10px 30px rgba(12, 23, 52, 0.08);
+        }
+
+        .join-cta + .join-cta {
+            margin-top: 1rem;
+        }
+
+        .join-cta-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: 0 1rem 2rem rgba(13, 110, 253, 0.15);
+        }
+
         .join-panel {
             background: linear-gradient(145deg, #ffffff 0%, #f7f9ff 50%, #ffffff 100%);
             border: 1px solid var(--bs-border-color-translucent);
@@ -270,6 +297,18 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         @media (min-width: 992px) {
             .join-layout {
                 grid-template-columns: 1fr 1.15fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .join-cta {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .join-cta .text-end {
+                width: 100%;
+                text-align: left !important;
             }
         }
 
@@ -450,8 +489,11 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                 <div id="assignmentSpinnerSection" class="d-flex align-items-center gap-3 text-muted">
                     <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
                     <div>
-                        <div class="fw-semibold">Waiting for your match</div>
-                        <small class="text-muted">Your host is still preparing assignments.</small>
+                        <div class="fw-semibold mb-1">Waiting for your match</div>
+                        <ol class="text-muted small ps-3 mb-0">
+                            <li>Hang tight while others may still be signing up.</li>
+                            <li>Hang tight while the pairings are being generated.</li>
+                        </ol>
                     </div>
                 </div>
                 <div id="assignmentDetailsSection" class="d-none">
@@ -464,7 +506,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                 </div>
                 <div id="assignmentLoginSection" class="d-none">
                     <p class="mb-3 text-muted">Log in to reveal your Secret Santa assignment.</p>
-                    <a href="<?php echo htmlspecialchars($assignmentLoginUrl); ?>" class="btn btn-primary" id="assignmentLoginButton">
+                    <a href="<?php echo htmlspecialchars($loginRedirectUrl); ?>" class="btn btn-primary" id="assignmentLoginButton">
                         <i class="fa-solid fa-right-to-bracket me-1"></i>Log In
                     </a>
                 </div>
@@ -492,92 +534,122 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     </div>
                                 </div>
 
-                                <div class="join-layout">
-                                    <div class="join-panel" id="exclusionBuilderCard">
-                                        <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
-                                            <div>
-                                                <div class="join-pill"><i class="fa-solid fa-user"></i> Your details</div>
-                                                <div class="small text-muted mt-2">Double-check what your host will see.</div>
-                                            </div>
-                                            <span class="badge bg-light text-secondary border">Auto-filled</span>
-                                        </div>
-                                        <div class="d-flex flex-column gap-3">
-                                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-                                                <div>
-                                                    <div class="small text-muted">Display name</div>
-                                                    <div class="fw-semibold fs-6" id="participantDisplayNameText">
-                                                        <?php echo htmlspecialchars($defaultDisplayName) ?: 'Secret Santa adventurer'; ?>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <div class="small text-muted">Email</div>
-                                                    <div class="fw-semibold fs-6" id="participantEmailText">
-                                                        <?php echo htmlspecialchars($defaultEmail) ?: 'Update your account email to join'; ?>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="join-meta">
-                                                <div class="small text-muted">Why we need this</div>
-                                                <ul class="list-unstyled small text-secondary mb-0 d-flex flex-column gap-1">
-                                                    <li class="d-flex gap-2"><i class="fa-solid fa-envelope text-primary"></i><span>We email your confirmation and assignment.</span></li>
-                                                    <li class="d-flex gap-2"><i class="fa-solid fa-pen-to-square text-success"></i><span>Your host can recognize who joined.</span></li>
-                                                </ul>
-                                            </div>
-                                        </div>
+                                <div id="joinHostPrompt" class="join-cta d-none">
+                                    <div class="join-cta-icon bg-warning-subtle text-warning-emphasis">
+                                        <i class="fa-solid fa-crown"></i>
                                     </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold mb-1">You're hosting <span id="joinHostEventName">this exchange</span></div>
+                                        <p class="mb-0 text-muted small">Open the control room to adjust signups, reroll pairings, and send assignment emails.</p>
+                                    </div>
+                                    <div class="text-end">
+                                        <a id="joinHostManageLink" href="<?php echo htmlspecialchars($managePageBaseUrl); ?>" class="btn btn-primary">
+                                            <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Manage event
+                                        </a>
+                                        <div class="small text-muted mt-2">Jumps to your host dashboard.</div>
+                                    </div>
+                                </div>
 
-                                    <div class="join-panel d-flex flex-column gap-4">
-                                        <div class="d-flex align-items-center gap-3 flex-wrap">
-                                            <div class="rounded-circle bg-secondary-subtle text-secondary-emphasis d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                                <i class="fa-solid fa-people-group"></i>
+                                <div id="joinLoginPrompt" class="join-cta d-none">
+                                    <div class="join-cta-icon bg-primary text-white">
+                                        <i class="fa-solid fa-right-to-bracket"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold mb-1">Log in to save your spot</div>
+                                        <p class="mb-0 text-muted small">We'll auto-fill your name, email, and unlock match preferences instantly.</p>
+                                    </div>
+                                    <div class="d-flex flex-column align-items-stretch">
+                                        <a href="<?php echo htmlspecialchars($loginRedirectUrl); ?>" class="btn btn-success">
+                                            <i class="fa-solid fa-magic me-2"></i>Log in & join
+                                        </a>
+                                        <small class="text-muted text-center mt-2">Takes less than 10 seconds.</small>
+                                    </div>
+                                </div>
+
+                                <div id="joinFormSection">
+                                    <div class="join-layout">
+                                        <div class="join-panel" id="exclusionBuilderCard">
+                                            <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                                                <div>
+                                                    <div class="join-pill"><i class="fa-solid fa-user"></i> Your details</div>
+                                                    <div class="small text-muted mt-2">Double-check what your host will see.</div>
+                                                </div>
+                                                <span class="badge bg-light text-secondary border">Auto-filled</span>
                                             </div>
-                                            <div>
-                                                <div class="fw-semibold mb-1">Match preferences</div>
-                                                <small class="text-muted">Choose or create an exclusion group without leaving the signup.</small>
+                                            <div class="d-flex flex-column gap-3">
+                                                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                                                    <div>
+                                                        <div class="small text-muted">Display name</div>
+                                                        <div class="fw-semibold fs-6" id="participantDisplayNameText">
+                                                            <?php echo htmlspecialchars($defaultDisplayName) ?: 'Secret Santa adventurer'; ?>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div class="small text-muted">Email</div>
+                                                        <div class="fw-semibold fs-6" id="participantEmailText">
+                                                            <?php echo htmlspecialchars($defaultEmail) ?: 'Update your account email to join'; ?>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="join-meta">
+                                                    <div class="small text-muted">Why we need this</div>
+                                                    <ul class="list-unstyled small text-secondary mb-0 d-flex flex-column gap-1">
+                                                        <li class="d-flex gap-2"><i class="fa-solid fa-envelope text-primary"></i><span>We email your confirmation and assignment.</span></li>
+                                                        <li class="d-flex gap-2"><i class="fa-solid fa-pen-to-square text-success"></i><span>Your host can recognize who joined.</span></li>
+                                                    </ul>
+                                                </div>
                                             </div>
-                                            <div class="ms-auto join-hint"><i class="fa-solid fa-shield-heart"></i> Keeps matches fair</div>
                                         </div>
 
-                                        <div class="row g-3 align-items-start">
-                                            <div class="col-12">
-                                                <form id="joinForm" class="d-flex flex-column gap-3">
-                                                    <input type="hidden" id="participantExclusionCtime">
-                                                    <input type="hidden" id="participantExclusionCrand">
+                                        <div class="join-panel d-flex flex-column gap-4">
+                                            <div class="d-flex align-items-center gap-3 flex-wrap">
+                                                <div class="rounded-circle bg-secondary-subtle text-secondary-emphasis d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                    <i class="fa-solid fa-people-group"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-semibold mb-1">Match preferences</div>
+                                                    <small class="text-muted">Choose or create an exclusion group without leaving the signup.</small>
+                                                </div>
+                                                <div class="ms-auto join-hint"><i class="fa-solid fa-shield-heart"></i> Keeps matches fair</div>
+                                            </div>
 
-                                                    <div class="d-flex flex-column gap-2">
-                                                        <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
-                                                            <label class="form-label mb-0" for="exclusionSelect">Exclusion group (optional)</label>
-                                                            <div class="d-flex gap-2">
-                                                                <button type="button" class="btn btn-outline-primary btn-sm" id="openExclusionModal">
-                                                                    <i class="fa-solid fa-users-gear me-1"></i>Add group
-                                                                </button>
-                                                                <button type="button" class="btn btn-outline-secondary btn-sm" id="refreshExclusions">
-                                                                    <i class="fa-solid fa-rotate me-1"></i>Refresh
-                                                                </button>
+                                            <div class="row g-3 align-items-start">
+                                                <div class="col-12">
+                                                    <form id="joinForm" class="d-flex flex-column gap-3">
+                                                        <input type="hidden" id="participantExclusionCtime">
+                                                        <input type="hidden" id="participantExclusionCrand">
+
+                                                        <div class="d-flex flex-column gap-2">
+                                                            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                                                <label class="form-label mb-0" for="exclusionSelect">Exclusion group (optional)</label>
+                                                                <div class="d-flex gap-2">
+                                                                    <button type="button" class="btn btn-outline-primary btn-sm" id="openExclusionModal">
+                                                                        <i class="fa-solid fa-users-gear me-1"></i>Add group
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="refreshExclusions">
+                                                                        <i class="fa-solid fa-rotate me-1"></i>Refresh
+                                                                    </button>
+                                                                </div>
                                                             </div>
+                                                            <select class="form-select shadow-sm" id="exclusionSelect">
+                                                                <option value="">No exclusion group</option>
+                                                            </select>
+                                                            <div class="form-text">Pick who should never draw each other. Couples or roommates usually share a group.</div>
                                                         </div>
-                                                        <select class="form-select shadow-sm" id="exclusionSelect">
-                                                            <option value="">No exclusion group</option>
-                                                        </select>
-                                                        <div class="form-text">Pick who should never draw each other. Couples or roommates usually share a group.</div>
-                                                    </div>
 
-                                                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3 pt-1">
-                                                        <button class="btn btn-success px-4" type="submit">
-                                                            <i class="fa-solid fa-gift me-2"></i>Join event
-                                                        </button>
-                                                        <div id="joinStatus" class="small text-muted"></div>
-                                                    </div>
-                                                </form>
+                                                        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3 pt-1">
+                                                            <button class="btn btn-success px-4" type="submit">
+                                                                <i class="fa-solid fa-gift me-2"></i>Join event
+                                                            </button>
+                                                            <div id="joinStatus" class="small text-muted"></div>
+                                                        </div>
+                                                    </form>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+                                
                 <div class="modal fade" id="exclusionModal" tabindex="-1" aria-labelledby="exclusionModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
@@ -716,12 +788,18 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const accountEmail = <?php echo json_encode($defaultEmail); ?>;
         const accountCrand = <?php echo json_encode($kickbackAccount ? $kickbackAccount->crand : null); ?>;
         const isLoggedIn = <?php echo json_encode($isLoggedIn); ?>;
+        const managePageBaseUrl = <?php echo json_encode($managePageBaseUrl); ?>;
         const inviteStatus = document.getElementById('inviteStatus');
         const heroEventTitle = document.getElementById('heroEventTitle');
         const heroEventSubtitle = document.getElementById('heroEventSubtitle');
         const eventDetailsCard = document.getElementById('eventDetailsCard');
         const eventDescEl = document.getElementById('eventDescription');
         const joinRows = document.getElementById('joinRows');
+        const joinFormSection = document.getElementById('joinFormSection');
+        const joinLoginPrompt = document.getElementById('joinLoginPrompt');
+        const joinHostPrompt = document.getElementById('joinHostPrompt');
+        const joinHostEventName = document.getElementById('joinHostEventName');
+        const joinHostManageLink = document.getElementById('joinHostManageLink');
         const joinForm = document.getElementById('joinForm');
         const joinStatus = document.getElementById('joinStatus');
         const participantExclusionCtime = document.getElementById('participantExclusionCtime');
@@ -773,6 +851,15 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             if (!element) return;
             element.textContent = message || '';
             if (message) {
+                element.classList.remove('d-none');
+            } else {
+                element.classList.add('d-none');
+            }
+        }
+
+        function toggleSection(element, shouldShow) {
+            if (!element) return;
+            if (shouldShow) {
                 element.classList.remove('d-none');
             } else {
                 element.classList.add('d-none');
@@ -985,7 +1072,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
 
             if (!assignmentsGenerated) {
                 assignmentStatusTitle.textContent = "We'll draw names soon";
-                assignmentStatusSubtitle.textContent = 'Hang tight while your host prepares the list.';
+                assignmentStatusSubtitle.textContent = 'Hang tight—signups may still be wrapping up and the system is generating pairings.';
                 if (assignmentSpinnerSection) assignmentSpinnerSection.classList.remove('d-none');
                 if (assignmentDetailsSection) assignmentDetailsSection.classList.add('d-none');
                 if (assignmentGiftDeadline) assignmentGiftDeadline.textContent = '';
@@ -1029,7 +1116,40 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         function updateJoinVisibility(alreadyJoinedMessage = 'You are already registered for this exchange.') {
             if (!joinRows || !inviteStatus) return;
 
-            if (isCurrentUserParticipant()) {
+            const userIsParticipant = isCurrentUserParticipant();
+            const userIsHost = Boolean(
+                currentEvent && accountCrand !== null && currentEvent.owner_id && String(currentEvent.owner_id) === String(accountCrand)
+            );
+            const shouldShowLoginPrompt = !isLoggedIn;
+            const shouldShowHostPrompt = userIsHost;
+            const shouldShowForm = !shouldShowLoginPrompt && !shouldShowHostPrompt && !userIsParticipant;
+
+            toggleSection(joinLoginPrompt, shouldShowLoginPrompt);
+            toggleSection(joinHostPrompt, shouldShowHostPrompt);
+            toggleSection(joinFormSection, shouldShowForm);
+
+            if (shouldShowHostPrompt) {
+                joinRows.style.display = '';
+                if (joinHostEventName && currentEvent?.name) {
+                    joinHostEventName.textContent = currentEvent.name;
+                }
+                if (joinHostManageLink) {
+                    const manageUrl = currentEvent?.invite_token
+                        ? `${managePageBaseUrl}?invite_token=${encodeURIComponent(currentEvent.invite_token)}`
+                        : managePageBaseUrl;
+                    joinHostManageLink.href = manageUrl;
+                }
+                updateAssignmentStatus();
+                return;
+            }
+
+            if (shouldShowLoginPrompt) {
+                joinRows.style.display = '';
+                updateAssignmentStatus();
+                return;
+            }
+
+            if (userIsParticipant) {
                 joinRows.style.display = 'none';
                 setStatus(inviteStatus, alreadyJoinedMessage);
             } else {
