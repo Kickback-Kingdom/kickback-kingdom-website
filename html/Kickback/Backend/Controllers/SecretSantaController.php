@@ -86,6 +86,52 @@ class SecretSantaController
         ]);
     }
 
+    public static function listOwnerEvents(): Response
+    {
+        $authResp = self::requireLogin();
+        if (!$authResp->success) {
+            return $authResp;
+        }
+
+        $account = $authResp->data;
+        $conn = self::getConnection();
+
+        $stmt = $conn->prepare(
+            "SELECT e.ctime, e.crand, e.name, e.description, e.invite_token, e.signup_deadline, e.gift_deadline, " .
+                "COALESCE(p.participant_count, 0) AS participant_count, COALESCE(g.group_count, 0) AS exclusion_group_count " .
+                "FROM secret_santa_events e " .
+                "LEFT JOIN (" .
+                "    SELECT event_ctime, event_crand, COUNT(*) AS participant_count " .
+                "    FROM secret_santa_participants " .
+                "    GROUP BY event_ctime, event_crand" .
+                ") p ON p.event_ctime = e.ctime AND p.event_crand = e.crand " .
+                "LEFT JOIN (" .
+                "    SELECT event_ctime, event_crand, COUNT(*) AS group_count " .
+                "    FROM secret_santa_exclusion_groups " .
+                "    GROUP BY event_ctime, event_crand" .
+                ") g ON g.event_ctime = e.ctime AND g.event_crand = e.crand " .
+                "WHERE e.owner_id = ? " .
+                "ORDER BY e.ctime DESC"
+        );
+
+        if ($stmt === false) {
+            return new Response(false, 'Failed to prepare event lookup.', null);
+        }
+
+        $stmt->bind_param('i', $account->crand);
+
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return new Response(false, 'Failed to fetch events.', null);
+        }
+
+        $result = $stmt->get_result();
+        $events = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        return new Response(true, 'Owned events fetched.', $events);
+    }
+
     public static function validateInvite(string $inviteToken): Response
     {
         $eventResp = self::fetchEventByToken($inviteToken);

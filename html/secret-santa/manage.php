@@ -38,19 +38,34 @@ $prefillCrand = $_GET['event_crand'] ?? '';
                 $activePageName = "Secret Santa Owner Dashboard";
                 require("../php-components/base-page-breadcrumbs.php");
                 ?>
-
                 <div class="card shadow-sm mb-3">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-2">
-                            <div class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 48px; height: 48px;">
-                                <i class="fa-solid fa-clipboard-list fa-lg"></i>
+                            <div class="rounded-circle bg-primary-subtle text-primary-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 48px; height: 48px;">
+                                <i class="fa-solid fa-sleigh fa-lg"></i>
                             </div>
                             <div>
-                                <h1 class="h4 mb-0">Owner controls</h1>
-                                <small class="text-muted">Use your event identifiers to unlock tools below.</small>
+                                <h1 class="h4 mb-0">Your Secret Santa events</h1>
+                                <small class="text-muted">Select an event you own to load its details below.</small>
                             </div>
                         </div>
-                        <div class="row g-3">
+                        <div id="ownerEventsStatus" class="small text-muted mb-2">Loading your events...</div>
+                        <div id="ownerEventsList" class="list-group list-group-flush"></div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                <i class="fa-solid fa-clipboard-list"></i>
+                            </div>
+                            <div>
+                                <h2 class="h5 mb-0">Selected event</h2>
+                                <small class="text-muted">Fields below update when you choose an event.</small>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-3">
                             <div class="col-12 col-md-4">
                                 <label class="form-label" for="eventCtime">Event ctime</label>
                                 <input class="form-control" id="eventCtime" value="<?php echo htmlspecialchars($prefillCtime); ?>" placeholder="20241130125959999">
@@ -63,6 +78,45 @@ $prefillCrand = $_GET['event_crand'] ?? '';
                                 <label class="form-label" for="eventInviteToken">Invite token</label>
                                 <input class="form-control" id="eventInviteToken" value="<?php echo htmlspecialchars($prefillInvite); ?>" placeholder="8fd0b1cc1ca223ff">
                                 <div class="form-text">Share with participants for joining.</div>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-12 col-lg-6">
+                                <div class="text-uppercase small text-muted">Event name</div>
+                                <div id="selectedEventName" class="fw-semibold">No event selected yet.</div>
+                                <div id="selectedEventDescription" class="text-muted"></div>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <div class="text-uppercase small text-muted">Signups close</div>
+                                <div id="selectedSignupDeadline" class="fw-semibold text-nowrap">—</div>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <div class="text-uppercase small text-muted">Gift deadline</div>
+                                <div id="selectedGiftDeadline" class="fw-semibold text-nowrap">—</div>
+                            </div>
+                            <div class="col-12 col-lg-6">
+                                <div class="text-uppercase small text-muted">Invite token</div>
+                                <div id="selectedInviteToken" class="fw-semibold">—</div>
+                            </div>
+                            <div class="col-12 col-lg-6">
+                                <div class="text-uppercase small text-muted">Participation</div>
+                                <div id="selectedEventCounts" class="fw-semibold">—</div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-1">
+                            <div class="col-12 col-lg-6">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <div class="fw-semibold">Participants</div>
+                                    <span id="participantsCount" class="badge text-bg-light"></span>
+                                </div>
+                                <div id="participantsList" class="small text-muted">Select an event to view who has joined.</div>
+                            </div>
+                            <div class="col-12 col-lg-6">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <div class="fw-semibold">Exclusion groups</div>
+                                    <span id="exclusionCount" class="badge text-bg-light"></span>
+                                </div>
+                                <div id="exclusionList" class="small text-muted">Select an event to view exclusion groups.</div>
                             </div>
                         </div>
                     </div>
@@ -182,6 +236,23 @@ $prefillCrand = $_GET['event_crand'] ?? '';
 
     <?php require("../php-components/base-page-javascript.php"); ?>
     <script>
+        const ownerEventsList = document.getElementById('ownerEventsList');
+        const ownerEventsStatus = document.getElementById('ownerEventsStatus');
+        const eventCtimeInput = document.getElementById('eventCtime');
+        const eventCrandInput = document.getElementById('eventCrand');
+        const eventInviteInput = document.getElementById('eventInviteToken');
+        const selectedEventName = document.getElementById('selectedEventName');
+        const selectedEventDescription = document.getElementById('selectedEventDescription');
+        const selectedSignupDeadline = document.getElementById('selectedSignupDeadline');
+        const selectedGiftDeadline = document.getElementById('selectedGiftDeadline');
+        const selectedInviteToken = document.getElementById('selectedInviteToken');
+        const selectedEventCounts = document.getElementById('selectedEventCounts');
+        const participantsList = document.getElementById('participantsList');
+        const participantsCount = document.getElementById('participantsCount');
+        const exclusionList = document.getElementById('exclusionList');
+        const exclusionCount = document.getElementById('exclusionCount');
+        let activeEventKey = null;
+
         const exclusionForm = document.getElementById('exclusionGroupForm');
         const exclusionStatus = document.getElementById('exclusionStatus');
         const generatePairsBtn = document.getElementById('generatePairsBtn');
@@ -193,11 +264,161 @@ $prefillCrand = $_GET['event_crand'] ?? '';
 
         function getEventFields() {
             return {
-                ctime: document.getElementById('eventCtime').value.trim(),
-                crand: document.getElementById('eventCrand').value.trim(),
-                invite: document.getElementById('eventInviteToken').value.trim()
+                ctime: eventCtimeInput.value.trim(),
+                crand: eventCrandInput.value.trim(),
+                invite: eventInviteInput.value.trim()
             };
         }
+
+        function setEventFields(evt) {
+            eventCtimeInput.value = evt.ctime ?? '';
+            eventCrandInput.value = evt.crand ?? '';
+            eventInviteInput.value = evt.invite_token ?? '';
+        }
+
+        function setEventSummary(evt) {
+            selectedEventName.textContent = evt.name || 'No event selected yet.';
+            selectedEventDescription.textContent = evt.description || '';
+            selectedSignupDeadline.textContent = evt.signup_deadline || '—';
+            selectedGiftDeadline.textContent = evt.gift_deadline || '—';
+            selectedInviteToken.textContent = evt.invite_token || '—';
+            selectedEventCounts.textContent = `${evt.participant_count ?? 0} participants • ${evt.exclusion_group_count ?? 0} exclusion groups`;
+            participantsList.textContent = 'Loading participants...';
+            exclusionList.textContent = 'Loading exclusion groups...';
+            participantsCount.textContent = '';
+            exclusionCount.textContent = '';
+        }
+
+        function renderParticipants(participants) {
+            if (!participants || !participants.length) {
+                participantsList.textContent = 'No one has joined this event yet.';
+                participantsCount.textContent = '0';
+                return;
+            }
+
+            const list = document.createElement('ul');
+            list.className = 'list-group list-group-flush small';
+
+            participants.forEach((person) => {
+                const item = document.createElement('li');
+                item.className = 'list-group-item px-0';
+                const group = person.exclusion_group_name ? ` • ${person.exclusion_group_name}` : '';
+                item.textContent = `${person.display_name} (${person.email})${group}`;
+                list.appendChild(item);
+            });
+
+            participantsList.innerHTML = '';
+            participantsList.appendChild(list);
+            participantsCount.textContent = participants.length;
+        }
+
+        function renderExclusionGroups(groups) {
+            if (!groups || !groups.length) {
+                exclusionList.textContent = 'No exclusion groups yet.';
+                exclusionCount.textContent = '0';
+                return;
+            }
+
+            const list = document.createElement('ul');
+            list.className = 'list-group list-group-flush small';
+
+            groups.forEach((group) => {
+                const item = document.createElement('li');
+                item.className = 'list-group-item px-0';
+                item.textContent = `${group.group_name} (${group.ctime}:${group.crand})`;
+                list.appendChild(item);
+            });
+
+            exclusionList.innerHTML = '';
+            exclusionList.appendChild(list);
+            exclusionCount.textContent = groups.length;
+        }
+
+        function highlightSelected(listItem) {
+            ownerEventsList.querySelectorAll('.list-group-item').forEach((el) => {
+                el.classList.toggle('active', el === listItem);
+            });
+        }
+
+        async function loadEventDetails(evt, listItem) {
+            activeEventKey = `${evt.ctime}:${evt.crand}`;
+            if (listItem) {
+                highlightSelected(listItem);
+            }
+
+            setEventFields(evt);
+            setEventSummary(evt);
+
+            try {
+                const resp = await fetch(`/api/v1/secret-santa/validate-invite.php?invite_token=${encodeURIComponent(evt.invite_token)}`, { credentials: 'include' });
+                const data = await resp.json();
+                if (!data.success) {
+                    participantsList.textContent = data.message || 'Unable to load participants.';
+                    exclusionList.textContent = data.message || 'Unable to load exclusion groups.';
+                    return;
+                }
+
+                const eventData = data.data || {};
+                renderParticipants(eventData.participants || []);
+                renderExclusionGroups(eventData.exclusion_groups || []);
+                selectedEventCounts.textContent = `${(eventData.participants || []).length} participants • ${(eventData.exclusion_groups || []).length} exclusion groups`;
+            } catch (err) {
+                console.error(err);
+                participantsList.textContent = 'Unable to load participants.';
+                exclusionList.textContent = 'Unable to load exclusion groups.';
+            }
+        }
+
+        function renderEventList(events) {
+            ownerEventsList.innerHTML = '';
+
+            if (!events || !events.length) {
+                ownerEventsStatus.textContent = 'No Secret Santa events yet. Create one to get started!';
+                return;
+            }
+
+            ownerEventsStatus.textContent = 'Click an event to load its data below.';
+
+            events.forEach((evt, idx) => {
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-start';
+                item.innerHTML = `
+                    <div class="me-2">
+                        <div class="fw-semibold">${evt.name}</div>
+                        <div class="text-muted small">Invite: ${evt.invite_token}</div>
+                        <div class="text-muted small">Signups: ${evt.signup_deadline} · Gifts: ${evt.gift_deadline}</div>
+                    </div>
+                    <span class="badge text-bg-secondary align-self-center">${evt.participant_count ?? 0} joined</span>
+                `;
+
+                item.addEventListener('click', () => loadEventDetails(evt, item));
+                ownerEventsList.appendChild(item);
+
+                if (idx === 0 && !activeEventKey) {
+                    loadEventDetails(evt, item);
+                }
+            });
+        }
+
+        async function fetchOwnerEvents() {
+            ownerEventsStatus.textContent = 'Loading your events...';
+            try {
+                const resp = await fetch('/api/v1/secret-santa/list-owner-events.php', { credentials: 'include' });
+                const data = await resp.json();
+                if (!data.success) {
+                    ownerEventsStatus.textContent = data.message || 'Unable to load events.';
+                    return;
+                }
+
+                renderEventList(data.data || []);
+            } catch (err) {
+                console.error(err);
+                ownerEventsStatus.textContent = 'Unable to load events right now.';
+            }
+        }
+
+        fetchOwnerEvents();
 
         async function postForm(url, params) {
             const formData = new FormData();
