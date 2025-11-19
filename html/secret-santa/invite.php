@@ -331,7 +331,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     <span class="badge bg-secondary-subtle text-secondary-emphasis">Takes 10 seconds</span>
                                 </div>
 
-                                <div class="p-3 bg-body-secondary rounded-3">
+                                <div class="p-3 bg-body-secondary rounded-3" id="exclusionBuilderCard">
                                     <div class="small text-uppercase text-muted mb-2">You're joining as</div>
                                     <div class="row g-3 align-items-center">
                                         <div class="col-12 col-md-6">
