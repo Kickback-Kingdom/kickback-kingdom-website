@@ -221,7 +221,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     </div>
                                     <div class="countdown-card" id="countdownCard" style="display: none;">
                                         <div class="countdown-grid">
-                                            <div class="countdown-block d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3" id="signupCountdown" style="display:none;">
+                                            <div class="countdown-block d-flex flex-column gap-3" id="signupCountdown" style="display:none;">
                                                 <div class="d-flex align-items-center gap-2 text-start">
                                                     <span class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
                                                         <i class="fa-solid fa-user-clock"></i>
@@ -250,7 +250,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="countdown-block d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3" id="giftCountdown" style="display:none;">
+                                            <div class="countdown-block d-flex flex-column gap-3" id="giftCountdown" style="display:none;">
                                                 <div class="d-flex align-items-center gap-2 text-start">
                                                     <span class="rounded-circle bg-warning-subtle text-warning-emphasis d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
                                                         <i class="fa-solid fa-gift"></i>
@@ -287,8 +287,6 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                         </div>
                     </div>
                 </section>
-
-                <p id="inviteStatus" class="text-muted mb-4 d-none"></p>
 
                 <!-- EVENT DETAILS -->
                 <div class="card shadow-sm border-0 mb-4" id="eventDetailsCard" style="display:none;">
