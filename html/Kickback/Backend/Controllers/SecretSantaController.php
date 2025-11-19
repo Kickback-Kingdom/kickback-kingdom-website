@@ -139,6 +139,9 @@ class SecretSantaController
             return $eventResp;
         }
 
+        $currentAccount = null;
+        Session::readCurrentAccountInto($currentAccount);
+
         $exclusionResp = self::fetchExclusionGroups($eventResp->data['ctime'], (int)$eventResp->data['crand']);
         if ($exclusionResp->success) {
             $eventResp->data['exclusion_groups'] = $exclusionResp->data;
@@ -153,6 +156,7 @@ class SecretSantaController
                 $groupsByKey[$group['ctime'] . ':' . $group['crand']] = $group['group_name'];
             }
 
+            $currentParticipant = null;
             $participants = array_map(function ($participant) use ($groupsByKey) {
                 $groupKey = $participant['exclusion_group_ctime'] . ':' . $participant['exclusion_group_crand'];
                 $groupName = ($participant['exclusion_group_ctime'] && $participant['exclusion_group_crand'])
@@ -171,9 +175,73 @@ class SecretSantaController
                 ];
             }, $participantsResp->data);
 
+            if (!is_null($currentAccount)) {
+                foreach ($participants as $participant) {
+                    $participantAccountId = $participant['account_id'] ?? null;
+                    if (!is_null($participantAccountId) && (int)$participantAccountId === (int)$currentAccount->crand) {
+                        $currentParticipant = $participant;
+                        break;
+                    }
+
+                    if (
+                        is_null($participantAccountId)
+                        && !empty($participant['email'])
+                        && !empty($currentAccount->email)
+                        && strcasecmp($participant['email'], $currentAccount->email) === 0
+                    ) {
+                        $currentParticipant = $participant;
+                        break;
+                    }
+                }
+            }
+
             $eventResp->data['participants'] = $participants;
         } else {
             $eventResp->data['participants'] = [];
+            $currentParticipant = null;
+        }
+
+        $eventResp->data['assignments_generated'] = false;
+        $eventResp->data['current_assignment'] = null;
+
+        $assignmentsResp = self::fetchAssignmentsForEvent($eventResp->data['ctime'], (int)$eventResp->data['crand']);
+        if ($assignmentsResp->success && !empty($assignmentsResp->data)) {
+            $eventResp->data['assignments_generated'] = true;
+
+            if (!is_null($currentParticipant) && !empty($eventResp->data['participants'])) {
+                $participantsByKey = [];
+                foreach ($eventResp->data['participants'] as $participant) {
+                    $participantsByKey[$participant['ctime'] . ':' . $participant['crand']] = $participant;
+                }
+
+                $currentParticipantKey = $currentParticipant['ctime'] . ':' . $currentParticipant['crand'];
+
+                foreach ($assignmentsResp->data as $assignment) {
+                    $giverKey = $assignment['giver_participant_ctime'] . ':' . $assignment['giver_participant_crand'];
+                    if ($giverKey !== $currentParticipantKey) {
+                        continue;
+                    }
+
+                    $receiverKey = $assignment['receiver_participant_ctime'] . ':' . $assignment['receiver_participant_crand'];
+                    if (!isset($participantsByKey[$receiverKey])) {
+                        break;
+                    }
+
+                    $receiver = $participantsByKey[$receiverKey];
+                    $eventResp->data['current_assignment'] = [
+                        'receiver' => [
+                            'display_name' => $receiver['display_name'],
+                            'email' => $receiver['email'],
+                            'exclusion_group_name' => $receiver['exclusion_group_name'] ?? null,
+                        ],
+                        'participant' => [
+                            'display_name' => $currentParticipant['display_name'],
+                            'email' => $currentParticipant['email'],
+                        ],
+                    ];
+                    break;
+                }
+            }
         }
 
         return new Response(true, $eventResp->message, $eventResp->data);
