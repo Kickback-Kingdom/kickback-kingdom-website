@@ -482,18 +482,15 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                         <i class="fa-solid fa-hat-wizard"></i>
                     </div>
                     <div>
-                        <h2 class="h5 mb-1" id="assignmentStatusTitle">Assignment status</h2>
-                        <p class="mb-0 text-muted" id="assignmentStatusSubtitle">We'll let you know when names are drawn.</p>
+                        <h2 class="h5 mb-1" id="assignmentStatusTitle">Matching status</h2>
+                        <p class="mb-0 text-muted" id="assignmentStatusSubtitle">We'll let you know the moment names are ready.</p>
                     </div>
                 </div>
                 <div id="assignmentSpinnerSection" class="d-flex align-items-center gap-3 text-muted">
                     <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
                     <div>
-                        <div class="fw-semibold mb-1">Waiting for your match</div>
-                        <ol class="text-muted small ps-3 mb-0">
-                            <li>Hang tight while others may still be signing up.</li>
-                            <li>Hang tight while the pairings are being generated.</li>
-                        </ol>
+                        <div class="fw-semibold mb-1">Matching underway</div>
+                        <p class="text-muted small mb-0">We're locking in the final signups and drawing names shortly.</p>
                     </div>
                 </div>
                 <div id="assignmentDetailsSection" class="d-none">
@@ -1071,8 +1068,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             if (assignmentLoginSection) assignmentLoginSection.classList.add('d-none');
 
             if (!assignmentsGenerated) {
-                assignmentStatusTitle.textContent = "We'll draw names soon";
-                assignmentStatusSubtitle.textContent = 'Hang tight—signups may still be wrapping up and the system is generating pairings.';
+                assignmentStatusTitle.textContent = 'Matching underway';
+                assignmentStatusSubtitle.textContent = 'We are finalizing signups and drawing names shortly.';
                 if (assignmentSpinnerSection) assignmentSpinnerSection.classList.remove('d-none');
                 if (assignmentDetailsSection) assignmentDetailsSection.classList.add('d-none');
                 if (assignmentGiftDeadline) assignmentGiftDeadline.textContent = '';
