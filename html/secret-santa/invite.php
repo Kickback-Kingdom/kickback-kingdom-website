@@ -142,8 +142,16 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             height: 100%;
         }
 
+        .countdown-values {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.75rem;
+            align-items: stretch;
+        }
+
         .count-chip {
-            min-width: 90px;
+            width: 100%;
+            min-width: 0;
             padding: 0.65rem 0.8rem;
             background: #0d6efd;
             color: #fff;
@@ -242,7 +250,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                                         <div class="fw-semibold text-secondary">Lock in before names are drawn.</div>
                                                     </div>
                                                 </div>
-                                                <div class="d-flex flex-wrap gap-2">
+                                                <div class="countdown-values">
                                                     <div class="count-chip">
                                                         <div class="display-6 fw-bold count-number" id="countSignupDays">--</div>
                                                         <small>Days</small>
@@ -271,7 +279,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                                         <div class="fw-semibold text-secondary">Count down to reveal day.</div>
                                                     </div>
                                                 </div>
-                                                <div class="d-flex flex-wrap gap-2">
+                                                <div class="countdown-values">
                                                     <div class="count-chip">
                                                         <div class="display-6 fw-bold count-number" id="countGiftDays">--</div>
                                                         <small>Days</small>
