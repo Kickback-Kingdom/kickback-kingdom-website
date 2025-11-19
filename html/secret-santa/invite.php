@@ -311,32 +311,35 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                 <div class="row mb-4" id="joinRows" style="display:none;">
                     <div class="col-12">
                         <div class="card shadow-sm border-0" id="joinFormCard">
-                            <div class="card-body p-4 d-flex flex-column gap-3">
-                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="rounded-circle bg-primary-subtle text-primary-emphasis d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                            <i class="fa-solid fa-user-plus"></i>
+                            <div class="card-body p-4 d-flex flex-column gap-4">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pb-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="rounded-circle bg-primary-subtle text-primary-emphasis d-inline-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                            <i class="fa-solid fa-user-plus fs-5"></i>
                                         </div>
                                         <div>
-                                            <h2 class="h5 mb-0">Join this exchange</h2>
-                                            <small class="text-muted">Confirm your details and hop in.</small>
+                                            <h2 class="h5 mb-1">Join this exchange</h2>
+                                            <div class="text-muted small mb-0">Confirm your details, choose a group, and hop in.</div>
                                         </div>
                                     </div>
-                                    <span class="badge bg-secondary-subtle text-secondary-emphasis">Takes 10 seconds</span>
+                                    <div class="text-end">
+                                        <span class="badge bg-secondary-subtle text-secondary-emphasis me-2">Takes 10 seconds</span>
+                                        <span class="badge bg-success-subtle text-success-emphasis"><i class="fa-solid fa-shield-heart me-1"></i>Safe matching</span>
+                                    </div>
                                 </div>
 
-                                <div class="p-3 bg-body-secondary rounded-3" id="exclusionBuilderCard">
-                                    <div class="small text-uppercase text-muted mb-2">You're joining as</div>
-                                    <div class="row g-3 align-items-center">
+                                <div class="p-3 p-md-4 bg-body-secondary rounded-4" id="exclusionBuilderCard">
+                                    <div class="small text-uppercase text-muted mb-3">You're joining as</div>
+                                    <div class="row g-4 align-items-center">
                                         <div class="col-12 col-md-6">
                                             <div class="small text-muted">Display name</div>
-                                            <div class="fw-semibold" id="participantDisplayNameText">
+                                            <div class="fw-semibold fs-6" id="participantDisplayNameText">
                                                 <?php echo htmlspecialchars($defaultDisplayName) ?: 'Secret Santa adventurer'; ?>
                                             </div>
                                         </div>
                                         <div class="col-12 col-md-6">
                                             <div class="small text-muted">Email</div>
-                                            <div class="fw-semibold" id="participantEmailText">
+                                            <div class="fw-semibold fs-6" id="participantEmailText">
                                                 <?php echo htmlspecialchars($defaultEmail) ?: 'Update your account email to join'; ?>
                                             </div>
                                             <div class="form-text mb-0">We'll use this email to confirm your signup.</div>
@@ -344,13 +347,13 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     </div>
                                 </div>
 
-                                <div class="p-3 bg-body-secondary rounded-3 d-flex flex-column gap-3">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="rounded-circle bg-secondary-subtle text-secondary-emphasis d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                <div class="p-3 p-md-4 bg-body-secondary rounded-4 d-flex flex-column gap-4">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="rounded-circle bg-secondary-subtle text-secondary-emphasis d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
                                             <i class="fa-solid fa-people-group"></i>
                                         </div>
                                         <div>
-                                            <div class="fw-semibold mb-0">Match preferences</div>
+                                            <div class="fw-semibold mb-1">Match preferences</div>
                                             <small class="text-muted">Choose or create an exclusion group without leaving the signup.</small>
                                         </div>
                                     </div>
@@ -361,21 +364,28 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                                 <input type="hidden" id="participantExclusionCtime">
                                                 <input type="hidden" id="participantExclusionCrand">
 
-                                                <div>
+                                                <div class="d-flex flex-column gap-2">
                                                     <div class="d-flex justify-content-between align-items-center gap-2">
-                                                        <label class="form-label mb-1" for="exclusionSelect">Exclusion group (optional)</label>
-                                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="openExclusionModal">
-                                                            <i class="fa-solid fa-plus me-1"></i>Add group
-                                                        </button>
+                                                        <label class="form-label mb-0" for="exclusionSelect">Exclusion group (optional)</label>
+                                                        <div class="d-flex gap-2">
+                                                            <button type="button" class="btn btn-outline-primary btn-sm" id="openExclusionModal">
+                                                                <i class="fa-solid fa-users-gear me-1"></i>Add group
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="refreshExclusions">
+                                                                <i class="fa-solid fa-rotate me-1"></i>Refresh
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                    <select class="form-select" id="exclusionSelect">
+                                                    <select class="form-select shadow-sm" id="exclusionSelect">
                                                         <option value="">No exclusion group</option>
                                                     </select>
                                                     <div class="form-text">Pick who should never draw each other. Couples or roommates usually share a group.</div>
                                                 </div>
 
-                                                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2">
-                                                    <button class="btn btn-success" type="submit">Join event</button>
+                                                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3 pt-1">
+                                                    <button class="btn btn-success px-4" type="submit">
+                                                        <i class="fa-solid fa-gift me-2"></i>Join event
+                                                    </button>
                                                     <div id="joinStatus" class="small text-muted"></div>
                                                 </div>
                                             </form>
@@ -546,6 +556,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const exclusionModalElement = document.getElementById('exclusionModal');
         const exclusionModal = exclusionModalElement ? new bootstrap.Modal(exclusionModalElement) : null;
         const openExclusionModalBtn = document.getElementById('openExclusionModal');
+        const refreshExclusionsBtn = document.getElementById('refreshExclusions');
         const participantListCard = document.getElementById('participantListCard');
         const participantTableBody = document.getElementById('participantTableBody');
         const countdownCard = document.getElementById('countdownCard');
@@ -849,6 +860,23 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
 
             exclusionModalElement.addEventListener('hidden.bs.modal', () => {
                 resetExclusionBuilder();
+            });
+        }
+
+        if (refreshExclusionsBtn) {
+            const defaultRefreshContent = refreshExclusionsBtn.innerHTML;
+            refreshExclusionsBtn.addEventListener('click', async () => {
+                if (!currentEvent?.invite_token) return;
+                refreshExclusionsBtn.disabled = true;
+                refreshExclusionsBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Refreshing';
+                try {
+                    await validateInvite(currentEvent.invite_token);
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    refreshExclusionsBtn.disabled = false;
+                    refreshExclusionsBtn.innerHTML = defaultRefreshContent;
+                }
             });
         }
 
