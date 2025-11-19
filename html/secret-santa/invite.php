@@ -12,6 +12,7 @@ $defaultDisplayName = $kickbackAccount ? trim(($kickbackAccount->firstName ?? ''
 $defaultEmail = $kickbackAccount->email ?? '';
 $redirectTarget = 'secret-santa/invite.php' . ($inviteToken ? '?invite_token=' . urlencode($inviteToken) : '');
 $loginRedirectUrl = \Kickback\Common\Version::urlBetaPrefix() . '/login.php?redirect=' . rawurlencode($redirectTarget);
+$registerRedirectUrl = \Kickback\Common\Version::urlBetaPrefix() . '/register.php?redirect=' . rawurlencode($redirectTarget);
 $managePageBaseUrl = \Kickback\Common\Version::urlBetaPrefix() . '/secret-santa/manage.php';
 $prefetchedEvent = null;
 $prefetchedParticipants = [];
@@ -701,13 +702,20 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                 </div>
 
                                 <div id="joinLoginPrompt" class="card mt-4 shadow-sm rounded<?php echo $isLoggedIn ? ' d-none' : ''; ?>">
-                                    <div class="card-body text-center py-4">
-                                        <div class="mb-4">
-                                            <img src="/assets/media/logo.png" alt="Kickback Kingdom" style="width: 150px; height: 150px;">
+                                    <div class="card-body py-4 px-4 px-md-5 text-center d-flex flex-column gap-3">
+                                        <div class="d-flex flex-column gap-2">
+                                            <div class="mb-2">
+                                                <img src="/assets/media/logo.png" alt="Kickback Kingdom" style="width: 150px; height: 150px;">
+                                            </div>
+                                            <h5 class="mb-1"><i class="fa-solid fa-exclamation-triangle fa-lg me-2 text-muted"></i> Account needed</h5>
+                                            <p class="mb-0 text-muted">Your host asked that everyone join through their Write of Passage invite. Create an account to continue.</p>
                                         </div>
-                                        <h5><i class="fa-solid fa-exclamation-triangle fa-lg me-2 text-muted"></i> Access Restricted</h5>
-                                        <p class="mb-4">You must be logged in to gain access to Kickback Kingdom Secret Santa events.</p>
-                                        <a href="<?php echo htmlspecialchars($loginRedirectUrl); ?>" class="btn btn-primary">Log In</a>
+                                        <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-2">
+                                            <a href="<?php echo htmlspecialchars($loginRedirectUrl); ?>" class="btn btn-outline-primary w-100 w-md-auto">Log in</a>
+                                            <a id="hostSignupLink" href="<?php echo htmlspecialchars($registerRedirectUrl); ?>" class="btn btn-primary w-100 w-md-auto">
+                                                Get the host signup link
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -716,8 +724,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                         <div class="join-panel" id="exclusionBuilderCard">
                                             <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
                                                 <div>
-                                                    <div class="join-pill"><i class="fa-solid fa-user"></i> Your details</div>
-                                                    <div class="small text-muted mt-2">Double-check what your host will see.</div>
+                                                    <div class="join-pill"><i class="fa-solid fa-user"></i> You, as the giver</div>
+                                                    <div class="small text-muted mt-2">We pre-fill your profile so your host knows who joined.</div>
                                                 </div>
                                                 <span class="badge bg-light text-secondary border">Auto-filled</span>
                                             </div>
@@ -749,48 +757,50 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                         <div class="join-panel d-flex flex-column gap-4">
                                             <div class="d-flex align-items-center gap-3 flex-wrap">
                                                 <div class="rounded-circle bg-secondary-subtle text-secondary-emphasis d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                                    <i class="fa-solid fa-people-group"></i>
+                                                    <i class="fa-solid fa-gift"></i>
                                                 </div>
                                                 <div>
-                                                    <div class="fw-semibold mb-1">Match preferences</div>
-                                                    <small class="text-muted">Choose or create an exclusion group without leaving the signup.</small>
+                                                    <div class="fw-semibold mb-1">How should your Santa encourage you?</div>
+                                                    <small class="text-muted">Share one thing you want to learn or try so your Santa can choose a thoughtful push.</small>
                                                 </div>
-                                                <div class="ms-auto join-hint"><i class="fa-solid fa-shield-heart"></i> Keeps matches fair</div>
+                                                <div class="ms-auto join-hint"><i class="fa-solid fa-stars"></i> Still a surprise</div>
                                             </div>
 
-                                            <div class="row g-3 align-items-start">
-                                                <div class="col-12">
-                                                    <form id="joinForm" class="d-flex flex-column gap-3">
-                                                        <input type="hidden" id="participantExclusionCtime">
-                                                        <input type="hidden" id="participantExclusionCrand">
+                                            <form id="joinForm" class="d-flex flex-column gap-4">
+                                                <input type="hidden" id="participantExclusionCtime">
+                                                <input type="hidden" id="participantExclusionCrand">
 
-                                                        <div class="d-flex flex-column gap-2">
-                                                            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
-                                                                <label class="form-label mb-0" for="exclusionSelect">Exclusion group (optional)</label>
-                                                                <div class="d-flex gap-2">
-                                                                    <button type="button" class="btn btn-outline-primary btn-sm" id="openExclusionModal">
-                                                                        <i class="fa-solid fa-users-gear me-1"></i>Add group
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="refreshExclusions">
-                                                                        <i class="fa-solid fa-rotate me-1"></i>Refresh
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                            <select class="form-select shadow-sm" id="exclusionSelect">
-                                                                <option value="">No exclusion group</option>
-                                                            </select>
-                                                            <div class="form-text">Pick who should never draw each other. Couples or roommates usually share a group.</div>
-                                                        </div>
+                                                <div class="d-flex flex-column gap-2">
+                                                    <label class="form-label mb-1" for="interest">Learning or trying next</label>
+                                                    <textarea class="form-control shadow-sm" id="interest" rows="3" placeholder="Example: Learning to draw, wants to cook more, wants to relax more"></textarea>
+                                                    <div class="form-text">Keep it short. Your Santa will pick a gift that nudges you toward this goal.</div>
+                                                </div>
 
-                                                        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3 pt-1">
-                                                            <button class="btn btn-success px-4" type="submit">
-                                                                <i class="fa-solid fa-gift me-2"></i>Join event
+                                                <div class="d-flex flex-column gap-2">
+                                                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                                        <label class="form-label mb-0" for="exclusionSelect">Exclusion group (optional)</label>
+                                                        <div class="d-flex gap-2">
+                                                            <button type="button" class="btn btn-outline-primary btn-sm" id="openExclusionModal">
+                                                                <i class="fa-solid fa-users-gear me-1"></i>Add group
                                                             </button>
-                                                            <div id="joinStatus" class="small text-muted"></div>
+                                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="refreshExclusions">
+                                                                <i class="fa-solid fa-rotate me-1"></i>Refresh
+                                                            </button>
                                                         </div>
-                                                    </form>
+                                                    </div>
+                                                    <select class="form-select shadow-sm" id="exclusionSelect">
+                                                        <option value="">No exclusion group</option>
+                                                    </select>
+                                                    <div class="form-text">Pick who should never draw each other. Couples or roommates usually share a group.</div>
                                                 </div>
-                                            </div>
+
+                                                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3 pt-1">
+                                                    <button class="btn btn-success px-4" type="submit">
+                                                        <i class="fa-solid fa-gift me-2"></i>Join event
+                                                    </button>
+                                                    <div id="joinStatus" class="small text-muted"></div>
+                                                </div>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
@@ -838,12 +848,13 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     <tr>
                                         <th scope="col">Name</th>
                                         <th scope="col">Email</th>
+                                        <th scope="col">Encouragement focus</th>
                                         <th scope="col">Exclusion group</th>
                                     </tr>
                                 </thead>
                                 <tbody id="participantTableBody">
                                     <tr class="table-light">
-                                        <td colspan="3" class="text-center text-muted">No one has signed up yet.</td>
+                                        <td colspan="4" class="text-center text-muted">No one has signed up yet.</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -933,6 +944,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const accountEmail = <?php echo json_encode($defaultEmail); ?>;
         const accountCrand = <?php echo json_encode($kickbackAccount ? $kickbackAccount->crand : null); ?>;
         const isLoggedIn = <?php echo json_encode($isLoggedIn); ?>;
+        const registerRedirectUrl = <?php echo json_encode($registerRedirectUrl); ?>;
         const managePageBaseUrl = <?php echo json_encode($managePageBaseUrl); ?>;
         const prefetchedEvent = <?php echo json_encode($prefetchedEvent); ?>;
         const invitePrefetchMessage = <?php echo json_encode($invitePrefetchMessage); ?>;
@@ -949,8 +961,10 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const joinHostManageLink = document.getElementById('joinHostManageLink');
         const joinForm = document.getElementById('joinForm');
         const joinStatus = document.getElementById('joinStatus');
+        const hostSignupLink = document.getElementById('hostSignupLink');
         const participantExclusionCtime = document.getElementById('participantExclusionCtime');
         const participantExclusionCrand = document.getElementById('participantExclusionCrand');
+        const interestInput = document.getElementById('interest');
         const exclusionSelect = document.getElementById('exclusionSelect');
         const exclusionBuilderCard = document.getElementById('exclusionBuilderCard');
         const exclusionBuilder = document.getElementById('exclusionBuilder');
@@ -1003,6 +1017,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         let participants = [];
         let assignmentsGenerated = serverAssignmentDefaults.assignmentsGenerated;
         let currentAssignment = serverAssignmentDefaults.currentAssignment;
+        let hostSignupRedirect = registerRedirectUrl;
+        let hasQueuedSignupRedirect = false;
 
         function setStatus(element, message) {
             if (!element) return;
@@ -1159,7 +1175,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             participantTableBody.innerHTML = '';
 
             if (!participants.length) {
-                participantTableBody.innerHTML = '<tr class="table-light"><td colspan="3" class="text-center text-muted">No one has signed up yet.</td></tr>';
+                participantTableBody.innerHTML = '<tr class="table-light"><td colspan="4" class="text-center text-muted">No one has signed up yet.</td></tr>';
                 participantListCard.style.display = 'block';
                 return;
             }
@@ -1170,6 +1186,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                 row.innerHTML = `
                     <td>${person.display_name || 'Unknown adventurer'}</td>
                     <td>${person.email || ''}</td>
+                    <td>${person.interest || '—'}</td>
                     <td>${exclusionName || 'None'}</td>
                 `;
                 participantTableBody.appendChild(row);
@@ -1312,6 +1329,12 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
 
             if (shouldShowLoginPrompt) {
                 joinRows.style.display = '';
+                if (!hasQueuedSignupRedirect && hostSignupRedirect) {
+                    hasQueuedSignupRedirect = true;
+                    setTimeout(() => {
+                        window.location.href = hostSignupRedirect;
+                    }, 400);
+                }
                 updateAssignmentStatus();
                 return;
             }
@@ -1339,6 +1362,11 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             heroEventTitle.textContent = event.name;
             heroEventSubtitle.textContent = `Signup closes ${signup.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })} • Gifts due ${gift.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`;
             eventDescEl.textContent = event.description || 'No description provided.';
+            hostSignupRedirect = event.write_of_passage_link || event.host_signup_link || registerRedirectUrl;
+            if (hostSignupLink) {
+                hostSignupLink.href = hostSignupRedirect;
+                hostSignupLink.textContent = event.write_of_passage_link || event.host_signup_link ? 'Sign up with the host link' : 'Create an account to join';
+            }
             joinRows.style.display = '';
             exclusionBuilderCard.style.display = 'block';
             setExclusionGroup('', '');
@@ -1379,6 +1407,9 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             currentEvent = null;
             exclusionGroups = [];
             participants = [];
+            hostSignupRedirect = registerRedirectUrl;
+            hasQueuedSignupRedirect = false;
+            if (hostSignupLink) hostSignupLink.href = hostSignupRedirect;
             if (participantListCard) participantListCard.style.display = 'none';
             assignmentsGenerated = false;
             currentAssignment = null;
@@ -1444,6 +1475,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             try {
                 const displayName = (accountDisplayName || '').trim() || 'Secret Santa adventurer';
                 const email = (accountEmail || '').trim();
+                const interest = (interestInput?.value || '').trim();
 
                 if (!email) {
                     joinStatus.textContent = 'Missing account email. Please update your profile and try again.';
@@ -1454,6 +1486,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                     invite_token: currentEvent.invite_token,
                     display_name: displayName,
                     email: email,
+                    ...(interest ? { interest } : {}),
                     ...(participantExclusionCtime.value ? { exclusion_group_ctime: participantExclusionCtime.value } : {}),
                     ...(participantExclusionCrand.value ? { exclusion_group_crand: participantExclusionCrand.value } : {})
                 });
@@ -1463,6 +1496,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                     const addedParticipant = resp.data.participant || {
                         display_name: displayName,
                         email: email,
+                        interest,
                         exclusion_group_ctime: participantExclusionCtime.value,
                         exclusion_group_crand: participantExclusionCrand.value
                     };
