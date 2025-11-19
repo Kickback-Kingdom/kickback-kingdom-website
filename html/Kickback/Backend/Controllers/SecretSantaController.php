@@ -160,6 +160,8 @@ class SecretSantaController
                     : null;
 
                 return [
+                    'ctime' => $participant['ctime'],
+                    'crand' => $participant['crand'],
                     'display_name' => $participant['display_name'],
                     'email' => $participant['email'],
                     'exclusion_group_ctime' => $participant['exclusion_group_ctime'],
@@ -260,6 +262,83 @@ class SecretSantaController
                 'exclusion_group_ctime' => $exclusionCtime,
                 'exclusion_group_crand' => $exclusionCrand,
                 'account_id' => $accountId
+            ]
+        ]);
+    }
+
+    public static function removeParticipant(string $eventCtime, int $eventCrand, string $participantCtime, int $participantCrand): Response
+    {
+        $authResp = self::requireLogin();
+        if (!$authResp->success) {
+            return $authResp;
+        }
+
+        $account = $authResp->data;
+        $eventResp = self::fetchEventById($eventCtime, $eventCrand);
+        if (!$eventResp->success) {
+            return $eventResp;
+        }
+
+        $ownerCheck = self::eventOwnerRequired($eventResp->data, $account->crand);
+        if (!is_null($ownerCheck)) {
+            return $ownerCheck;
+        }
+
+        $participantResp = self::fetchParticipantById($eventCtime, $eventCrand, $participantCtime, $participantCrand);
+        if (!$participantResp->success) {
+            return $participantResp;
+        }
+
+        $conn = self::getConnection();
+
+        $assignmentStmt = $conn->prepare(
+            "DELETE FROM secret_santa_assignments WHERE event_ctime = ? AND event_crand = ? AND (giver_ctime = ? AND giver_crand = ? OR receiver_ctime = ? AND receiver_crand = ?)"
+        );
+
+        if ($assignmentStmt === false) {
+            return new Response(false, 'Failed to prepare assignment removal.', null);
+        }
+
+        $assignmentStmt->bind_param(
+            'sisisi',
+            $eventCtime,
+            $eventCrand,
+            $participantCtime,
+            $participantCrand,
+            $participantCtime,
+            $participantCrand
+        );
+
+        if (!$assignmentStmt->execute()) {
+            $assignmentStmt->close();
+            return new Response(false, 'Failed to clear assignments for participant.', null);
+        }
+
+        $assignmentStmt->close();
+
+        $participantStmt = $conn->prepare(
+            "DELETE FROM secret_santa_participants WHERE ctime = ? AND crand = ? AND event_ctime = ? AND event_crand = ?"
+        );
+
+        if ($participantStmt === false) {
+            return new Response(false, 'Failed to prepare participant removal.', null);
+        }
+
+        $participantStmt->bind_param('sisi', $participantCtime, $participantCrand, $eventCtime, $eventCrand);
+
+        if (!$participantStmt->execute()) {
+            $participantStmt->close();
+            return new Response(false, 'Failed to remove participant.', null);
+        }
+
+        $participantStmt->close();
+
+        return new Response(true, 'Participant removed from event.', [
+            'removed_participant' => [
+                'ctime' => $participantCtime,
+                'crand' => $participantCrand,
+                'email' => $participantResp->data['email'],
+                'display_name' => $participantResp->data['display_name']
             ]
         ]);
     }
@@ -548,6 +627,35 @@ class SecretSantaController
         }
 
         $stmt->bind_param('sis', $eventCtime, $eventCrand, $email);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return new Response(false, 'Failed to fetch participant.', null);
+        }
+
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
+
+        if (!$row) {
+            return new Response(false, 'Participant not found.', null);
+        }
+
+        return new Response(true, 'Participant found.', $row);
+    }
+
+    private static function fetchParticipantById(string $eventCtime, int $eventCrand, string $participantCtime, int $participantCrand): Response
+    {
+        $conn = self::getConnection();
+
+        $stmt = $conn->prepare(
+            "SELECT * FROM secret_santa_participants WHERE event_ctime = ? AND event_crand = ? AND ctime = ? AND crand = ?"
+        );
+
+        if ($stmt === false) {
+            return new Response(false, 'Failed to prepare participant lookup.', null);
+        }
+
+        $stmt->bind_param('sisi', $eventCtime, $eventCrand, $participantCtime, $participantCrand);
         if (!$stmt->execute()) {
             $stmt->close();
             return new Response(false, 'Failed to fetch participant.', null);
