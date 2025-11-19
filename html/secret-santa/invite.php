@@ -184,6 +184,44 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             min-width: 0;
         }
 
+        .event-details-card {
+            border: 1px solid var(--bs-border-color-translucent);
+            background: #ffffff;
+            border-radius: 1.5rem;
+        }
+
+        .host-note-panel {
+            background: linear-gradient(145deg, #fff8ff 0%, #f5f9ff 50%, #ffffff 100%);
+            border: 1px dashed rgba(90, 99, 235, 0.25);
+            border-radius: 1.25rem;
+            padding: 1.25rem;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .host-note-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: linear-gradient(180deg, #4f46e5 0%, #7c3aed 100%);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(79, 70, 229, 0.35);
+        }
+
+        .host-note-text {
+            white-space: pre-line;
+            font-size: 1rem;
+            line-height: 1.65;
+        }
+
+        .host-note-meta {
+            border-top: 1px solid var(--bs-border-color-translucent);
+            padding-top: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
         .count-number.pulse {
             animation: pulse 0.6s ease;
         }
@@ -308,20 +346,41 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                 </section>
 
                 <!-- EVENT DETAILS -->
-                <div class="card shadow-sm border-0 mb-4" id="eventDetailsCard" style="display:none;">
+                <div class="card shadow-sm border-0 mb-4 event-details-card" id="eventDetailsCard" style="display:none;">
                     <div class="card-body p-4 d-flex flex-column gap-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
-                                <i class="fa-solid fa-calendar-check"></i>
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            <div class="host-note-icon">
+                                <i class="fa-solid fa-scroll"></i>
                             </div>
-                            <div>
-                                <div class="small text-uppercase text-muted mb-1">Event details</div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                    <span class="badge bg-primary-subtle text-primary-emphasis">Host notes</span>
+                                    <span class="badge bg-info-subtle text-info-emphasis">Read before joining</span>
+                                </div>
                                 <h2 class="h5 mb-1">Notes from your host</h2>
-                                <div class="text-muted small">Read the description before you jump in.</div>
+                                <div class="text-muted small">These details keep everyone on the same page.</div>
                             </div>
                         </div>
-                        <div class="bg-body-secondary rounded-4 p-3">
-                            <p id="eventDescription" class="mb-0 text-secondary"></p>
+                        <div class="host-note-panel">
+                            <div class="d-flex flex-column flex-md-row gap-3 align-items-start">
+                                <div class="d-flex flex-column gap-2 flex-grow-1">
+                                    <p id="eventDescription" class="mb-0 text-secondary host-note-text"></p>
+                                    <div class="host-note-meta d-flex flex-wrap gap-3 text-muted small">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fa-solid fa-lightbulb text-warning"></i>
+                                            <span>Check back for last-minute updates or changes.</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fa-solid fa-envelope-open-text text-primary"></i>
+                                            <span>Invite emails include the host's contact info.</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fa-solid fa-gift text-success"></i>
+                                            <span>Bring the vibe: budget, theme, and swap rules all live here.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
