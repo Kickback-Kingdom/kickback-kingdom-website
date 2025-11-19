@@ -163,6 +163,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         .count-number {
             transition: transform 0.2s ease;
             line-height: 1;
+            white-space: nowrap;
+            font-size: clamp(1.35rem, 5vw, 2.5rem);
         }
 
         .count-number.pulse {
