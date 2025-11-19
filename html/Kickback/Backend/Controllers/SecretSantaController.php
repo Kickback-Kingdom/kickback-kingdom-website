@@ -168,6 +168,7 @@ class SecretSantaController
                     'crand' => $participant['crand'],
                     'display_name' => $participant['display_name'],
                     'email' => $participant['email'],
+                    'interest' => $participant['interest'] ?? null,
                     'exclusion_group_ctime' => $participant['exclusion_group_ctime'],
                     'exclusion_group_crand' => $participant['exclusion_group_crand'],
                     'exclusion_group_name' => $groupName,
@@ -247,7 +248,7 @@ class SecretSantaController
         return new Response(true, $eventResp->message, $eventResp->data);
     }
 
-    public static function joinEvent(string $inviteToken, string $displayName, string $email, ?string $exclusionCtime, ?int $exclusionCrand, ?int $accountId = null): Response
+    public static function joinEvent(string $inviteToken, string $displayName, string $email, ?string $exclusionCtime, ?int $exclusionCrand, ?int $accountId = null, ?string $interest = null): Response
     {
         $authResp = self::requireLogin();
         if (!$authResp->success) {
@@ -293,8 +294,8 @@ class SecretSantaController
         $conn = self::getConnection();
 
         $stmt = $conn->prepare(
-            "INSERT INTO secret_santa_participants (ctime, crand, event_ctime, event_crand, display_name, email, exclusion_group_ctime, exclusion_group_crand, account_id) " .
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO secret_santa_participants (ctime, crand, event_ctime, event_crand, display_name, email, exclusion_group_ctime, exclusion_group_crand, account_id, interest) " .
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
 
         if ($stmt === false) {
@@ -302,7 +303,7 @@ class SecretSantaController
         }
 
         $stmt->bind_param(
-            'sisisssii',
+            'sisisssiis',
             $ctime,
             $crand,
             $event['ctime'],
@@ -311,7 +312,8 @@ class SecretSantaController
             $email,
             $exclusionCtime,
             $exclusionCrand,
-            $accountId
+            $accountId,
+            $interest
         );
 
         if (!$stmt->execute()) {
@@ -329,7 +331,8 @@ class SecretSantaController
                 'email' => $email,
                 'exclusion_group_ctime' => $exclusionCtime,
                 'exclusion_group_crand' => $exclusionCrand,
-                'account_id' => $accountId
+                'account_id' => $accountId,
+                'interest' => $interest
             ]
         ]);
     }
