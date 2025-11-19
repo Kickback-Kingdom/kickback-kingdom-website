@@ -36,16 +36,37 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                 $activePageName = "Secret Santa Owner Dashboard";
                 require("../php-components/base-page-breadcrumbs.php");
                 ?>
-                <div class="card shadow-sm mb-3">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="rounded-circle bg-primary-subtle text-primary-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 48px; height: 48px;">
-                                <i class="fa-solid fa-sleigh fa-lg"></i>
+                <div class="card shadow-sm border-0 bg-primary-subtle mb-3">
+                    <div class="card-body d-lg-flex align-items-center justify-content-between gap-3">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-light d-inline-flex align-items-center justify-content-center me-3" style="width: 52px; height: 52px;">
+                                <i class="fa-solid fa-gift"></i>
                             </div>
                             <div>
-                                <h1 class="h4 mb-0">Your Secret Santa events</h1>
-                                <small class="text-muted">Select an event you own to load its details below.</small>
+                                <h1 class="h4 mb-1">All-in-one host workspace</h1>
+                                <p class="mb-0 text-muted">Review signups, manage exclusions, and reveal assignments from a single, organized dashboard.</p>
                             </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge text-bg-primary">Plan</span>
+                            <span class="badge text-bg-success">Pair</span>
+                            <span class="badge text-bg-info text-dark">Notify</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-primary-subtle text-primary-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 48px; height: 48px;">
+                                    <i class="fa-solid fa-sleigh fa-lg"></i>
+                                </div>
+                                <div>
+                                    <h2 class="h5 mb-0">Your Secret Santa events</h2>
+                                    <small class="text-muted">Select an event you own to load its details below.</small>
+                                </div>
+                            </div>
+                            <span class="badge text-bg-light">Host view</span>
                         </div>
                         <div id="ownerEventsStatus" class="small text-muted mb-2">Loading your events...</div>
                         <div id="ownerEventsList" class="list-group list-group-flush"></div>
@@ -63,27 +84,40 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                                 <small class="text-muted">Details below update when you choose an event.</small>
                             </div>
                         </div>
+                        <p class="text-muted small mb-3">Use the list above to pick an event. Your selection keeps the participation, exclusion, and assignment tools in sync.</p>
                         <div class="row g-3">
-                            <div class="col-12 col-lg-6">
-                                <div class="text-uppercase small text-muted">Event name</div>
-                                <div id="selectedEventName" class="fw-semibold">No event selected yet.</div>
-                                <div id="selectedEventDescription" class="text-muted"></div>
+                            <div class="col-12 col-lg-8">
+                                <div class="p-3 bg-light rounded-3 h-100">
+                                    <div class="text-uppercase small text-muted">Event name</div>
+                                    <div id="selectedEventName" class="fw-semibold">No event selected yet.</div>
+                                    <div id="selectedEventDescription" class="text-muted mb-0"></div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-4">
+                                <div class="p-3 border rounded-3 h-100 bg-body-tertiary">
+                                    <div class="text-uppercase small text-muted">Invite token</div>
+                                    <div id="selectedInviteToken" class="fw-semibold">—</div>
+                                    <div class="text-muted small">Share with teammates to let them join.</div>
+                                </div>
                             </div>
                             <div class="col-6 col-lg-3">
-                                <div class="text-uppercase small text-muted">Signups close</div>
-                                <div id="selectedSignupDeadline" class="fw-semibold text-nowrap">—</div>
+                                <div class="p-3 border rounded-3 h-100">
+                                    <div class="text-uppercase small text-muted">Signups close</div>
+                                    <div id="selectedSignupDeadline" class="fw-semibold text-nowrap">—</div>
+                                </div>
                             </div>
                             <div class="col-6 col-lg-3">
-                                <div class="text-uppercase small text-muted">Gift deadline</div>
-                                <div id="selectedGiftDeadline" class="fw-semibold text-nowrap">—</div>
+                                <div class="p-3 border rounded-3 h-100">
+                                    <div class="text-uppercase small text-muted">Gift deadline</div>
+                                    <div id="selectedGiftDeadline" class="fw-semibold text-nowrap">—</div>
+                                </div>
                             </div>
                             <div class="col-12 col-lg-6">
-                                <div class="text-uppercase small text-muted">Invite token</div>
-                                <div id="selectedInviteToken" class="fw-semibold">—</div>
-                            </div>
-                            <div class="col-12 col-lg-6">
-                                <div class="text-uppercase small text-muted">Participation</div>
-                                <div id="selectedEventCounts" class="fw-semibold">—</div>
+                                <div class="p-3 bg-success-subtle rounded-3 h-100">
+                                    <div class="text-uppercase small text-success-emphasis">Participation</div>
+                                    <div id="selectedEventCounts" class="fw-semibold">—</div>
+                                    <div class="text-muted small mb-0">Counts update automatically when you manage participants or exclusion groups below.</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -100,12 +134,13 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                                 <small class="text-muted">See everyone who joined and remove them if needed.</small>
                             </div>
                         </div>
+                        <p class="text-muted small mb-2">Need to make a quick change? Use the Kick button to remove a name before drawing pairs.</p>
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div class="fw-semibold">Current list</div>
                             <span id="participantsCount" class="badge text-bg-light"></span>
                         </div>
                         <div class="table-responsive">
-                            <table class="table table-sm align-middle" id="participantsTable">
+                            <table class="table table-sm table-hover align-middle" id="participantsTable">
                                 <thead>
                                     <tr>
                                         <th>Name</th>
@@ -136,6 +171,7 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                                 <small class="text-muted">Keep people in the same household or team from gifting each other.</small>
                             </div>
                         </div>
+                        <p class="text-muted small">Add as many groups as you need—Kickback Kingdom will honor them when creating pairs.</p>
 
                         <form id="exclusionGroupForm" class="row g-2 align-items-end">
                             <div class="col-12 col-lg-5">
@@ -170,13 +206,14 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                                 <small class="text-muted">Generate pairs after signups close and send them out.</small>
                             </div>
                         </div>
+                        <p class="text-muted small mb-2">Preview the pairs before you email everyone. We only send messages once per click.</p>
                         <div class="d-flex flex-wrap gap-2 mb-3">
                             <button class="btn btn-primary" id="generatePairsBtn" type="button">Generate pairs</button>
                             <button class="btn btn-outline-primary" id="emailAssignmentsBtn" type="button">Email assignments</button>
                             <div id="assignmentStatus" class="small text-muted align-self-center"></div>
                         </div>
                         <div class="table-responsive">
-                            <table class="table table-sm align-middle" id="assignmentTable">
+                            <table class="table table-sm table-hover align-middle" id="assignmentTable">
                                 <thead>
                                     <tr>
                                         <th>Giver</th>
