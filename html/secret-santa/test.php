@@ -40,6 +40,13 @@ try {
 
     ensure(!empty($pairs), 'Expected to generate valid assignments when exclusion groups allow it.');
 
+    echo "Generated assignments:\n";
+    foreach ($pairs as $pair) {
+        $giverName = $pair['giver']['display_name'];
+        $receiverName = $pair['receiver']['display_name'];
+        echo "- {$giverName} → {$receiverName}\n";
+    }
+
     foreach ($pairs as $pair) {
         ensure(
             $pair['giver']['ctime'] !== $pair['receiver']['ctime'] || $pair['giver']['crand'] !== $pair['receiver']['crand'],
@@ -58,6 +65,11 @@ try {
 
     $blockedPairs = callSecretSantaPrivate('generateAssignments', [$blockedParticipants]);
     ensure(empty($blockedPairs), 'Should not generate assignments when exclusion groups prevent valid pairings.');
+
+    echo "\nBlocked participants example (all in the same exclusion group):\n";
+    foreach ($blockedParticipants as $participant) {
+        echo "- {$participant['display_name']} (group {$participant['exclusion_group_ctime']})\n";
+    }
 
     echo "All exclusion group unit tests passed.\n";
     exit(0);
