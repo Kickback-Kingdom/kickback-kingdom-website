@@ -20,32 +20,61 @@ $prefillInvite = $_GET['invite_token'] ?? '';
     ?>
     <style>
         .event-hero {
-            background: linear-gradient(120deg, rgba(13, 110, 253, 0.12), rgba(13, 202, 240, 0.12));
-            border: 1px solid rgba(13, 110, 253, 0.18);
-            border-radius: 1rem;
+            position: relative;
+            background: radial-gradient(circle at 20% 20%, rgba(13, 110, 253, 0.16), rgba(13, 202, 240, 0.08)),
+                linear-gradient(135deg, #f8fbff, #ffffff);
+            border: 1px solid rgba(13, 110, 253, 0.14);
+            border-radius: 1.25rem;
+            overflow: hidden;
+            box-shadow: 0 1.25rem 2.5rem rgba(13, 110, 253, 0.08);
+        }
+
+        .event-hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 80% 0%, rgba(32, 201, 151, 0.08), transparent 45%);
+            pointer-events: none;
         }
 
         .event-hero .icon-circle {
-            width: 60px;
-            height: 60px;
+            width: 72px;
+            height: 72px;
+            box-shadow: 0 0.75rem 1.5rem rgba(13, 110, 253, 0.25);
+        }
+
+        .event-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 0.85rem;
+            border-radius: 999px;
+            background: #f8f9fb;
+            border: 1px solid var(--bs-border-color-translucent);
+            font-weight: 600;
+            color: var(--bs-body-color);
         }
 
         .owner-event-card {
             border: 1px solid var(--bs-border-color-translucent);
-            border-radius: 0.9rem;
-            transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+            border-radius: 1rem;
+            transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.04);
         }
 
-        .owner-event-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.06);
+        .owner-event-card:hover,
+        .owner-event-card:focus-visible {
+            transform: translateY(-3px);
+            box-shadow: 0 0.75rem 1.5rem rgba(13, 110, 253, 0.14);
             border-color: var(--bs-primary);
+            outline: none;
         }
 
         .owner-event-card.active {
             border-color: var(--bs-primary);
-            box-shadow: 0 0.5rem 1rem rgba(13, 110, 253, 0.15);
-            background: linear-gradient(180deg, rgba(13, 110, 253, 0.08), #fff);
+            box-shadow: 0 0.85rem 1.7rem rgba(13, 110, 253, 0.16);
+            background: linear-gradient(180deg, rgba(13, 110, 253, 0.05), #ffffff);
         }
 
         .event-meta > span {
@@ -71,36 +100,27 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                 require("../php-components/base-page-breadcrumbs.php");
                 ?>
                 <div class="card shadow-sm border-0 mb-3 event-hero">
-                    <div class="card-body d-lg-flex align-items-center justify-content-between gap-4">
+                    <div class="card-body d-lg-flex align-items-center justify-content-between gap-4 position-relative">
                         <div class="d-flex align-items-start gap-3 flex-grow-1">
                             <div class="rounded-circle bg-primary text-light d-inline-flex align-items-center justify-content-center icon-circle flex-shrink-0">
                                 <i class="fa-solid fa-gifts fa-lg"></i>
                             </div>
                             <div>
-                                <div class="d-flex align-items-center gap-3 flex-wrap mb-1">
+                                <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
                                     <h1 class="h4 mb-0">Secret Santa host control room</h1>
-                                    <span class="badge text-bg-light text-primary-emphasis">Updated view</span>
+                                    <span class="badge text-bg-primary-subtle text-primary-emphasis">Plan · Protect · Share</span>
                                 </div>
-                                <p class="mb-3 text-muted">Everything you need to guide your event from signups to assignments in one clean, readable space.</p>
-                                <div class="row g-2 small text-muted">
-                                    <div class="col-auto d-flex align-items-center gap-2">
-                                        <span class="badge text-bg-primary"><i class="fa-solid fa-list-check me-1"></i> Organize</span>
-                                        <span>Review participants and make quick edits.</span>
-                                    </div>
-                                    <div class="col-auto d-flex align-items-center gap-2">
-                                        <span class="badge text-bg-success"><i class="fa-solid fa-people-arrows me-1"></i> Pair</span>
-                                        <span>Lock in exclusions before drawing names.</span>
-                                    </div>
-                                    <div class="col-auto d-flex align-items-center gap-2">
-                                        <span class="badge text-bg-info text-dark"><i class="fa-solid fa-paper-plane me-1"></i> Share</span>
-                                        <span>Send invites and assignment emails confidently.</span>
-                                    </div>
+                                <p class="mb-3 text-muted">Guide every event from signups to gift day with clearer lists, quicker edits, and confident messaging.</p>
+                                <div class="d-flex flex-wrap gap-2 text-muted">
+                                    <span class="event-pill"><i class="fa-solid fa-list-check text-primary"></i>Track signups</span>
+                                    <span class="event-pill"><i class="fa-solid fa-people-arrows text-success"></i>Lock exclusions</span>
+                                    <span class="event-pill"><i class="fa-solid fa-paper-plane text-info"></i>Send assignments</span>
                                 </div>
                             </div>
                         </div>
                         <div class="text-end small text-muted d-none d-lg-block">
-                            <div class="fw-semibold text-primary">Tip</div>
-                            <div>Click an event to load its details, then manage participants and pairs below.</div>
+                            <div class="fw-semibold text-primary text-uppercase">Quick start</div>
+                            <div>Pick an event below to sync participants, exclusions, and assignments in one view.</div>
                         </div>
                     </div>
                 </div>
@@ -113,17 +133,17 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                                 </div>
                                 <div>
                                     <h2 class="h5 mb-0">Your Secret Santa events</h2>
-                                    <small class="text-muted">Pick an event to unlock the participant, exclusion, and assignment tools.</small>
+                                    <small class="text-muted">Choose an event to open participant, exclusion, and assignment tools.</small>
                                 </div>
                             </div>
                             <div class="d-flex align-items-center gap-2 flex-wrap">
-                                <span class="badge text-bg-light">Host view</span>
                                 <span class="badge text-bg-primary-subtle text-primary-emphasis">Step 1 · Choose an event</span>
+                                <span class="badge text-bg-light">Host dashboard</span>
                             </div>
                         </div>
                         <div class="alert alert-primary-subtle text-primary-emphasis small d-flex align-items-center gap-2" role="status">
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
-                            <span>We automatically load the first event or any invite passed in the URL.</span>
+                            <span>We load the first event automatically or any invite token included in your link.</span>
                         </div>
                         <div id="ownerEventsStatus" class="small text-muted mb-2">Loading your events...</div>
                         <div id="ownerEventsList" class="list-group list-group-flush d-flex flex-column gap-2"></div>
@@ -496,26 +516,32 @@ $prefillInvite = $_GET['invite_token'] ?? '';
             events.forEach((evt, idx) => {
                 const item = document.createElement('button');
                 item.type = 'button';
-                item.className = 'list-group-item list-group-item-action owner-event-card';
+                item.className = 'list-group-item list-group-item-action owner-event-card p-0 text-start';
                 item.innerHTML = `
-                    <div class="d-flex flex-wrap w-100 justify-content-between align-items-start gap-3">
-                        <div class="d-flex align-items-start gap-3">
-                            <div class="rounded-circle bg-primary-subtle text-primary-emphasis d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">
+                    <div class="p-3 d-flex flex-column gap-2 w-100">
+                        <div class="d-flex align-items-start gap-3 flex-wrap">
+                            <div class="rounded-circle bg-primary-subtle text-primary-emphasis d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width: 46px; height: 46px;">
                                 <i class="fa-solid fa-gift"></i>
                             </div>
-                            <div>
-                                <div class="fw-semibold">${evt.name}</div>
-                                <div class="text-muted small event-meta d-flex flex-wrap gap-2 mt-1">
-                                    <span class="badge text-bg-light border"><i class="fa-solid fa-ticket me-1"></i>${evt.invite_token}</span>
-                                    <span><i class="fa-solid fa-calendar-check me-1"></i>Signups: ${evt.signup_deadline}</span>
-                                    <span><i class="fa-solid fa-calendar-day me-1"></i>Gifts: ${evt.gift_deadline}</span>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <div class="fw-semibold">${evt.name}</div>
+                                        <span class="badge text-bg-primary-subtle text-primary-emphasis">${evt.participant_count ?? 0} joined</span>
+                                    </div>
+                                    <span class="text-primary fw-semibold small d-flex align-items-center gap-1">
+                                        <i class="fa-solid fa-arrow-turn-up"></i>
+                                        Open tools
+                                    </span>
+                                </div>
+                                <div class="text-muted small d-flex flex-wrap gap-2 mt-2 event-meta">
+                                    <span class="event-pill"><i class="fa-solid fa-ticket"></i>${evt.invite_token}</span>
+                                    <span class="event-pill"><i class="fa-solid fa-calendar-check"></i>Signups: ${evt.signup_deadline}</span>
+                                    <span class="event-pill"><i class="fa-solid fa-calendar-day"></i>Gifts: ${evt.gift_deadline}</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="text-end d-flex flex-column align-items-end gap-2">
-                            <span class="badge text-bg-secondary">${evt.participant_count ?? 0} joined</span>
-                            <span class="small text-muted">Tap to load details</span>
-                        </div>
+                        <div class="text-muted small">Participants, exclusions, and assignments will sync after you select this event.</div>
                     </div>
                 `;
 
