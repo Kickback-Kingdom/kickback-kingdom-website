@@ -8,8 +8,6 @@ $pageTitle = "Secret Santa Owner Dashboard";
 $pageDesc = "Manage Secret Santa signups, exclusion groups, and assignments.";
 
 $prefillInvite = $_GET['invite_token'] ?? '';
-$prefillCtime = $_GET['event_ctime'] ?? '';
-$prefillCrand = $_GET['event_crand'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -62,22 +60,7 @@ $prefillCrand = $_GET['event_crand'] ?? '';
                             </div>
                             <div>
                                 <h2 class="h5 mb-0">Selected event</h2>
-                                <small class="text-muted">Fields below update when you choose an event.</small>
-                            </div>
-                        </div>
-                        <div class="row g-3 mb-3">
-                            <div class="col-12 col-md-4">
-                                <label class="form-label" for="eventCtime">Event ctime</label>
-                                <input class="form-control" id="eventCtime" value="<?php echo htmlspecialchars($prefillCtime); ?>" placeholder="20241130125959999">
-                            </div>
-                            <div class="col-12 col-md-4">
-                                <label class="form-label" for="eventCrand">Event crand</label>
-                                <input class="form-control" id="eventCrand" value="<?php echo htmlspecialchars($prefillCrand); ?>" placeholder="123456789">
-                            </div>
-                            <div class="col-12 col-md-4">
-                                <label class="form-label" for="eventInviteToken">Invite token</label>
-                                <input class="form-control" id="eventInviteToken" value="<?php echo htmlspecialchars($prefillInvite); ?>" placeholder="8fd0b1cc1ca223ff">
-                                <div class="form-text">Share with participants for joining.</div>
+                                <small class="text-muted">Details below update when you choose an event.</small>
                             </div>
                         </div>
                         <div class="row g-3">
@@ -138,14 +121,6 @@ $prefillCrand = $_GET['event_crand'] ?? '';
                             <div class="col-12 col-lg-5">
                                 <label class="form-label" for="exclusionName">Group name</label>
                                 <input class="form-control" id="exclusionName" placeholder="QA Team" required>
-                            </div>
-                            <div class="col-6 col-lg-3">
-                                <label class="form-label" for="exclusionCtime">Existing ctime (optional)</label>
-                                <input class="form-control" id="exclusionCtime" placeholder="20241130125959999">
-                            </div>
-                            <div class="col-6 col-lg-2">
-                                <label class="form-label" for="exclusionCrand">Existing crand</label>
-                                <input class="form-control" id="exclusionCrand" placeholder="1234">
                             </div>
                             <div class="col-12 col-lg-2 d-grid">
                                 <button class="btn btn-secondary" type="submit">Save group</button>
@@ -211,14 +186,6 @@ $prefillCrand = $_GET['event_crand'] ?? '';
                                 <label class="form-label" for="ownerEmail">Email</label>
                                 <input class="form-control" type="email" id="ownerEmail" placeholder="robin@example.com" required>
                             </div>
-                            <div class="col-12 col-md-6">
-                                <label class="form-label" for="ownerExclusionCtime">Exclusion group ctime (optional)</label>
-                                <input class="form-control" id="ownerExclusionCtime" placeholder="20241130125959999">
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label class="form-label" for="ownerExclusionCrand">Exclusion group crand (optional)</label>
-                                <input class="form-control" id="ownerExclusionCrand" placeholder="1234">
-                            </div>
                             <div class="col-12">
                                 <div class="d-flex align-items-center gap-2">
                                     <button class="btn btn-outline-secondary" type="submit">Submit join</button>
@@ -238,9 +205,6 @@ $prefillCrand = $_GET['event_crand'] ?? '';
     <script>
         const ownerEventsList = document.getElementById('ownerEventsList');
         const ownerEventsStatus = document.getElementById('ownerEventsStatus');
-        const eventCtimeInput = document.getElementById('eventCtime');
-        const eventCrandInput = document.getElementById('eventCrand');
-        const eventInviteInput = document.getElementById('eventInviteToken');
         const selectedEventName = document.getElementById('selectedEventName');
         const selectedEventDescription = document.getElementById('selectedEventDescription');
         const selectedSignupDeadline = document.getElementById('selectedSignupDeadline');
@@ -251,7 +215,8 @@ $prefillCrand = $_GET['event_crand'] ?? '';
         const participantsCount = document.getElementById('participantsCount');
         const exclusionList = document.getElementById('exclusionList');
         const exclusionCount = document.getElementById('exclusionCount');
-        let activeEventKey = null;
+        let activeEventData = null;
+        const prefillInvite = '<?php echo htmlspecialchars($prefillInvite); ?>';
 
         const exclusionForm = document.getElementById('exclusionGroupForm');
         const exclusionStatus = document.getElementById('exclusionStatus');
@@ -262,18 +227,12 @@ $prefillCrand = $_GET['event_crand'] ?? '';
         const ownerJoinForm = document.getElementById('ownerJoinForm');
         const ownerJoinStatus = document.getElementById('ownerJoinStatus');
 
-        function getEventFields() {
-            return {
-                ctime: eventCtimeInput.value.trim(),
-                crand: eventCrandInput.value.trim(),
-                invite: eventInviteInput.value.trim()
+        function setActiveEvent(evt) {
+            activeEventData = {
+                ctime: evt.ctime ?? '',
+                crand: evt.crand ?? '',
+                invite: evt.invite_token ?? ''
             };
-        }
-
-        function setEventFields(evt) {
-            eventCtimeInput.value = evt.ctime ?? '';
-            eventCrandInput.value = evt.crand ?? '';
-            eventInviteInput.value = evt.invite_token ?? '';
         }
 
         function setEventSummary(evt) {
@@ -325,7 +284,7 @@ $prefillCrand = $_GET['event_crand'] ?? '';
             groups.forEach((group) => {
                 const item = document.createElement('li');
                 item.className = 'list-group-item px-0';
-                item.textContent = `${group.group_name} (${group.ctime}:${group.crand})`;
+                item.textContent = `${group.group_name}`;
                 list.appendChild(item);
             });
 
@@ -341,12 +300,11 @@ $prefillCrand = $_GET['event_crand'] ?? '';
         }
 
         async function loadEventDetails(evt, listItem) {
-            activeEventKey = `${evt.ctime}:${evt.crand}`;
+            setActiveEvent(evt);
             if (listItem) {
                 highlightSelected(listItem);
             }
 
-            setEventFields(evt);
             setEventSummary(evt);
 
             try {
@@ -379,6 +337,8 @@ $prefillCrand = $_GET['event_crand'] ?? '';
 
             ownerEventsStatus.textContent = 'Click an event to load its data below.';
 
+            let autoSelected = false;
+
             events.forEach((evt, idx) => {
                 const item = document.createElement('button');
                 item.type = 'button';
@@ -395,7 +355,9 @@ $prefillCrand = $_GET['event_crand'] ?? '';
                 item.addEventListener('click', () => loadEventDetails(evt, item));
                 ownerEventsList.appendChild(item);
 
-                if (idx === 0 && !activeEventKey) {
+                const shouldPrefill = prefillInvite && evt.invite_token === prefillInvite;
+                if (!autoSelected && (shouldPrefill || (!prefillInvite && idx === 0))) {
+                    autoSelected = true;
                     loadEventDetails(evt, item);
                 }
             });
@@ -449,20 +411,17 @@ $prefillCrand = $_GET['event_crand'] ?? '';
         exclusionForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             exclusionStatus.textContent = 'Saving group...';
-            const evt = getEventFields();
+            if (!activeEventData) {
+                exclusionStatus.textContent = 'Select an event first.';
+                return;
+            }
             try {
                 const resp = await postForm('/api/v1/secret-santa/exclusion-group.php', {
-                    event_ctime: evt.ctime,
-                    event_crand: evt.crand,
-                    name: document.getElementById('exclusionName').value,
-                    exclusion_group_ctime: document.getElementById('exclusionCtime').value,
-                    exclusion_group_crand: document.getElementById('exclusionCrand').value
+                    event_ctime: activeEventData.ctime,
+                    event_crand: activeEventData.crand,
+                    name: document.getElementById('exclusionName').value
                 });
                 exclusionStatus.textContent = resp.message || '';
-                if (resp.success && resp.data) {
-                    document.getElementById('exclusionCtime').value = resp.data.ctime ?? '';
-                    document.getElementById('exclusionCrand').value = resp.data.crand ?? '';
-                }
             } catch (err) {
                 console.error(err);
                 exclusionStatus.textContent = 'Unable to save exclusion group.';
@@ -471,11 +430,14 @@ $prefillCrand = $_GET['event_crand'] ?? '';
 
         generatePairsBtn.addEventListener('click', async () => {
             assignmentStatus.textContent = 'Generating pairs...';
-            const evt = getEventFields();
+            if (!activeEventData) {
+                assignmentStatus.textContent = 'Select an event first.';
+                return;
+            }
             try {
                 const resp = await postForm('/api/v1/secret-santa/generate-pairs.php', {
-                    event_ctime: evt.ctime,
-                    event_crand: evt.crand
+                    event_ctime: activeEventData.ctime,
+                    event_crand: activeEventData.crand
                 });
                 assignmentStatus.textContent = resp.message || '';
                 if (resp.success) {
@@ -489,11 +451,14 @@ $prefillCrand = $_GET['event_crand'] ?? '';
 
         emailAssignmentsBtn.addEventListener('click', async () => {
             assignmentStatus.textContent = 'Sending assignment emails...';
-            const evt = getEventFields();
+            if (!activeEventData) {
+                assignmentStatus.textContent = 'Select an event first.';
+                return;
+            }
             try {
                 const resp = await postForm('/api/v1/secret-santa/email-assignments.php', {
-                    event_ctime: evt.ctime,
-                    event_crand: evt.crand
+                    event_ctime: activeEventData.ctime,
+                    event_crand: activeEventData.crand
                 });
                 assignmentStatus.textContent = resp.message || '';
             } catch (err) {
@@ -505,14 +470,15 @@ $prefillCrand = $_GET['event_crand'] ?? '';
         ownerJoinForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             ownerJoinStatus.textContent = 'Submitting...';
-            const evt = getEventFields();
+            if (!activeEventData) {
+                ownerJoinStatus.textContent = 'Select an event first.';
+                return;
+            }
             try {
                 const resp = await postForm('/api/v1/secret-santa/join-event.php', {
-                    invite_token: evt.invite,
+                    invite_token: activeEventData.invite,
                     display_name: document.getElementById('ownerDisplayName').value,
-                    email: document.getElementById('ownerEmail').value,
-                    exclusion_group_ctime: document.getElementById('ownerExclusionCtime').value,
-                    exclusion_group_crand: document.getElementById('ownerExclusionCrand').value
+                    email: document.getElementById('ownerEmail').value
                 });
                 ownerJoinStatus.textContent = resp.message || '';
             } catch (err) {
