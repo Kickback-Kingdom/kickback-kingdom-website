@@ -654,19 +654,14 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     </div>
                                 </div>
 
-                                <div id="joinLoginPrompt" class="join-cta d-none">
-                                    <div class="join-cta-icon bg-primary text-white">
-                                        <i class="fa-solid fa-right-to-bracket"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="fw-semibold mb-1">Log in to save your spot</div>
-                                        <p class="mb-0 text-muted small">We'll auto-fill your name, email, and unlock match preferences instantly.</p>
-                                    </div>
-                                    <div class="d-flex flex-column align-items-stretch">
-                                        <a href="<?php echo htmlspecialchars($loginRedirectUrl); ?>" class="btn btn-success">
-                                            <i class="fa-solid fa-magic me-2"></i>Log in & join
-                                        </a>
-                                        <small class="text-muted text-center mt-2">Takes less than 10 seconds.</small>
+                                <div id="joinLoginPrompt" class="card mt-4 shadow-sm rounded<?php echo $isLoggedIn ? ' d-none' : ''; ?>">
+                                    <div class="card-body text-center py-4">
+                                        <div class="mb-4">
+                                            <img src="/assets/media/logo.png" alt="Kickback Kingdom" style="width: 150px; height: 150px;">
+                                        </div>
+                                        <h5><i class="fa-solid fa-exclamation-triangle fa-lg me-2 text-muted"></i> Access Restricted</h5>
+                                        <p class="mb-4">You must be logged in to gain access to Kickback Kingdom Secret Santa events.</p>
+                                        <a href="<?php echo htmlspecialchars($loginRedirectUrl); ?>" class="btn btn-primary">Log In</a>
                                     </div>
                                 </div>
 
