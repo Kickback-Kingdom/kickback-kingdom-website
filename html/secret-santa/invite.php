@@ -309,18 +309,20 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
 
                 <!-- EVENT DETAILS -->
                 <div class="card shadow-sm border-0 mb-4" id="eventDetailsCard" style="display:none;">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 44px; height: 44px;">
+                    <div class="card-body p-4 d-flex flex-column gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
                                 <i class="fa-solid fa-calendar-check"></i>
                             </div>
                             <div>
-                                <div class="small text-uppercase text-muted mb-0">Event unlocked</div>
-                                <h2 class="h5 mb-0" id="eventName"></h2>
-                                <small class="text-muted" id="eventDeadlines"></small>
+                                <div class="small text-uppercase text-muted mb-1">Event details</div>
+                                <h2 class="h5 mb-1">Notes from your host</h2>
+                                <div class="text-muted small">Read the description before you jump in.</div>
                             </div>
                         </div>
-                        <p id="eventDescription" class="mb-0 text-secondary"></p>
+                        <div class="bg-body-secondary rounded-4 p-3">
+                            <p id="eventDescription" class="mb-0 text-secondary"></p>
+                        </div>
                     </div>
                 </div>
 
@@ -555,8 +557,6 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const heroEventTitle = document.getElementById('heroEventTitle');
         const heroEventSubtitle = document.getElementById('heroEventSubtitle');
         const eventDetailsCard = document.getElementById('eventDetailsCard');
-        const eventNameEl = document.getElementById('eventName');
-        const eventDeadlinesEl = document.getElementById('eventDeadlines');
         const eventDescEl = document.getElementById('eventDescription');
         const joinRows = document.getElementById('joinRows');
         const joinForm = document.getElementById('joinForm');
@@ -801,10 +801,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             }
 
             eventDetailsCard.style.display = 'block';
-            eventNameEl.textContent = event.name;
             const signup = new Date(event.signup_deadline + 'Z');
             const gift = new Date(event.gift_deadline + 'Z');
-            eventDeadlinesEl.textContent = `Signup closes ${signup.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })} • Gifts due ${gift.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`;
             heroEventTitle.textContent = event.name;
             heroEventSubtitle.textContent = `Signup closes ${signup.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })} • Gifts due ${gift.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`;
             eventDescEl.textContent = event.description || 'No description provided.';
