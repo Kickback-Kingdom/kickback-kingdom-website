@@ -27,11 +27,13 @@ function ensure(bool $condition, string $message): void
 
 try {
     $participantsWithGroups = [
-        ['ctime' => 't1', 'crand' => 1, 'display_name' => 'Aurora', 'exclusion_group_ctime' => 'g1', 'exclusion_group_crand' => 101],
-        ['ctime' => 't2', 'crand' => 2, 'display_name' => 'Bram', 'exclusion_group_ctime' => 'g2', 'exclusion_group_crand' => 202],
-        ['ctime' => 't3', 'crand' => 3, 'display_name' => 'Ciri', 'exclusion_group_ctime' => 'g1', 'exclusion_group_crand' => 101],
-        ['ctime' => 't4', 'crand' => 4, 'display_name' => 'Dain', 'exclusion_group_ctime' => 'g3', 'exclusion_group_crand' => 303],
-        ['ctime' => 't5', 'crand' => 5, 'display_name' => 'Edda', 'exclusion_group_ctime' => null, 'exclusion_group_crand' => null],
+        ['ctime' => 't1', 'crand' => 1, 'display_name' => 'Eric', 'exclusion_group_ctime' => 'g1', 'exclusion_group_crand' => 101],
+        ['ctime' => 't2', 'crand' => 2, 'display_name' => 'Giovanna', 'exclusion_group_ctime' => 'g1', 'exclusion_group_crand' => 101],
+        ['ctime' => 't3', 'crand' => 3, 'display_name' => 'Helen', 'exclusion_group_ctime' => 'g1', 'exclusion_group_crand' => 101],
+        ['ctime' => 't4', 'crand' => 4, 'display_name' => 'Alex', 'exclusion_group_ctime' => 'g2', 'exclusion_group_crand' => 202],
+        ['ctime' => 't5', 'crand' => 5, 'display_name' => 'Carley', 'exclusion_group_ctime' => 'g2', 'exclusion_group_crand' => 202],
+        ['ctime' => 't6', 'crand' => 6, 'display_name' => 'Jp', 'exclusion_group_ctime' => 'g3', 'exclusion_group_crand' => 303],
+        ['ctime' => 't7', 'crand' => 7, 'display_name' => 'Luisa', 'exclusion_group_ctime' => 'g3', 'exclusion_group_crand' => 303],
     ];
 
     $pairs = callSecretSantaPrivate('generateAssignments', [$participantsWithGroups]);
