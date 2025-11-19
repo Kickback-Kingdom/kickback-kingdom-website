@@ -86,22 +86,42 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                                 <div id="selectedEventCounts" class="fw-semibold">—</div>
                             </div>
                         </div>
-                        <div class="row g-3 mt-1">
-                            <div class="col-12 col-lg-6">
-                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                    <div class="fw-semibold">Participants</div>
-                                    <span id="participantsCount" class="badge text-bg-light"></span>
-                                </div>
-                                <div id="participantsList" class="small text-muted">Select an event to view who has joined.</div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded-circle bg-light text-dark d-inline-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                <i class="fa-solid fa-people-group"></i>
                             </div>
-                            <div class="col-12 col-lg-6">
-                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                    <div class="fw-semibold">Exclusion groups</div>
-                                    <span id="exclusionCount" class="badge text-bg-light"></span>
-                                </div>
-                                <div id="exclusionList" class="small text-muted">Select an event to view exclusion groups.</div>
+                            <div>
+                                <h2 class="h5 mb-0">Participants</h2>
+                                <small class="text-muted">See everyone who joined and remove them if needed.</small>
                             </div>
                         </div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="fw-semibold">Current list</div>
+                            <span id="participantsCount" class="badge text-bg-light"></span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle" id="participantsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Exclusion group</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="table-light">
+                                        <td colspan="4" class="text-center text-muted">Select an event to view participants.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="participantsStatus" class="small text-muted mt-2"></div>
                     </div>
                 </div>
 
@@ -129,6 +149,13 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                                 <div id="exclusionStatus" class="small text-muted"></div>
                             </div>
                         </form>
+                        <div class="border-top pt-3 mt-3">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <div class="fw-semibold">Current groups</div>
+                                <span id="exclusionCount" class="badge text-bg-light"></span>
+                            </div>
+                            <div id="exclusionList" class="small text-muted">Select an event to view exclusion groups.</div>
+                        </div>
                     </div>
                 </div>
 
@@ -166,35 +193,6 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                     </div>
                 </div>
 
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="rounded-circle bg-warning-subtle text-warning-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
-                                <i class="fa-solid fa-user-pen"></i>
-                            </div>
-                            <div>
-                                <h2 class="h5 mb-0">Participation adjustments</h2>
-                                <small class="text-muted">Re-submit a participant using the invite token if they need help.</small>
-                            </div>
-                        </div>
-                        <form id="ownerJoinForm" class="row g-2">
-                            <div class="col-12 col-md-6">
-                                <label class="form-label" for="ownerDisplayName">Display name</label>
-                                <input class="form-control" id="ownerDisplayName" placeholder="Robin the Red" required>
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label class="form-label" for="ownerEmail">Email</label>
-                                <input class="form-control" type="email" id="ownerEmail" placeholder="robin@example.com" required>
-                            </div>
-                            <div class="col-12">
-                                <div class="d-flex align-items-center gap-2">
-                                    <button class="btn btn-outline-secondary" type="submit">Submit join</button>
-                                    <div id="ownerJoinStatus" class="small text-muted"></div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
             </div>
             <?php require("../php-components/base-page-discord.php"); ?>
         </div>
@@ -211,8 +209,9 @@ $prefillInvite = $_GET['invite_token'] ?? '';
         const selectedGiftDeadline = document.getElementById('selectedGiftDeadline');
         const selectedInviteToken = document.getElementById('selectedInviteToken');
         const selectedEventCounts = document.getElementById('selectedEventCounts');
-        const participantsList = document.getElementById('participantsList');
+        const participantsTableBody = document.querySelector('#participantsTable tbody');
         const participantsCount = document.getElementById('participantsCount');
+        const participantsStatus = document.getElementById('participantsStatus');
         const exclusionList = document.getElementById('exclusionList');
         const exclusionCount = document.getElementById('exclusionCount');
         let activeEventData = null;
@@ -224,15 +223,15 @@ $prefillInvite = $_GET['invite_token'] ?? '';
         const emailAssignmentsBtn = document.getElementById('emailAssignmentsBtn');
         const assignmentTable = document.getElementById('assignmentTable').querySelector('tbody');
         const assignmentStatus = document.getElementById('assignmentStatus');
-        const ownerJoinForm = document.getElementById('ownerJoinForm');
-        const ownerJoinStatus = document.getElementById('ownerJoinStatus');
 
         function setActiveEvent(evt) {
-            activeEventData = {
-                ctime: evt.ctime ?? '',
-                crand: evt.crand ?? '',
-                invite: evt.invite_token ?? ''
-            };
+            activeEventData = evt ? { ...evt } : null;
+        }
+
+        function resetParticipantsTable(message) {
+            participantsTableBody.innerHTML = `<tr class="table-light"><td colspan="4" class="text-center text-muted">${message}</td></tr>`;
+            participantsCount.textContent = '';
+            participantsStatus.textContent = '';
         }
 
         function setEventSummary(evt) {
@@ -242,32 +241,90 @@ $prefillInvite = $_GET['invite_token'] ?? '';
             selectedGiftDeadline.textContent = evt.gift_deadline || '—';
             selectedInviteToken.textContent = evt.invite_token || '—';
             selectedEventCounts.textContent = `${evt.participant_count ?? 0} participants • ${evt.exclusion_group_count ?? 0} exclusion groups`;
-            participantsList.textContent = 'Loading participants...';
+            resetParticipantsTable('Loading participants...');
             exclusionList.textContent = 'Loading exclusion groups...';
-            participantsCount.textContent = '';
             exclusionCount.textContent = '';
         }
 
+        function updateSelectedCounts(participants, groups) {
+            selectedEventCounts.textContent = `${participants.length} participants • ${groups.length} exclusion groups`;
+            participantsCount.textContent = participants.length;
+            exclusionCount.textContent = groups.length;
+        }
+
+        async function kickParticipant(participant, button) {
+            if (!activeEventData) {
+                participantsStatus.textContent = 'Select an event first.';
+                return;
+            }
+
+            const confirmed = confirm(`Remove ${participant.display_name} from this event?`);
+            if (!confirmed) {
+                return;
+            }
+
+            participantsStatus.textContent = `Removing ${participant.display_name}...`;
+            button.disabled = true;
+
+            try {
+                const resp = await postForm('/api/v1/secret-santa/remove-participant.php', {
+                    event_ctime: activeEventData.ctime,
+                    event_crand: activeEventData.crand,
+                    participant_ctime: participant.ctime,
+                    participant_crand: participant.crand
+                });
+                participantsStatus.textContent = resp.message || '';
+                if (resp.success) {
+                    loadEventDetails(activeEventData);
+                }
+            } catch (err) {
+                console.error(err);
+                participantsStatus.textContent = 'Unable to remove participant right now.';
+            } finally {
+                button.disabled = false;
+            }
+        }
+
         function renderParticipants(participants) {
+            participantsStatus.textContent = '';
+            participantsTableBody.innerHTML = '';
+
             if (!participants || !participants.length) {
-                participantsList.textContent = 'No one has joined this event yet.';
+                resetParticipantsTable('No one has joined this event yet.');
                 participantsCount.textContent = '0';
                 return;
             }
 
-            const list = document.createElement('ul');
-            list.className = 'list-group list-group-flush small';
-
             participants.forEach((person) => {
-                const item = document.createElement('li');
-                item.className = 'list-group-item px-0';
-                const group = person.exclusion_group_name ? ` • ${person.exclusion_group_name}` : '';
-                item.textContent = `${person.display_name} (${person.email})${group}`;
-                list.appendChild(item);
+                const row = document.createElement('tr');
+
+                const nameCell = document.createElement('td');
+                nameCell.textContent = person.display_name;
+
+                const emailCell = document.createElement('td');
+                emailCell.className = 'text-muted small';
+                emailCell.textContent = person.email;
+
+                const groupCell = document.createElement('td');
+                groupCell.textContent = person.exclusion_group_name || '—';
+
+                const actionCell = document.createElement('td');
+                actionCell.className = 'text-end';
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-outline-danger btn-sm';
+                removeBtn.textContent = 'Kick';
+                removeBtn.addEventListener('click', () => kickParticipant(person, removeBtn));
+                actionCell.appendChild(removeBtn);
+
+                row.appendChild(nameCell);
+                row.appendChild(emailCell);
+                row.appendChild(groupCell);
+                row.appendChild(actionCell);
+
+                participantsTableBody.appendChild(row);
             });
 
-            participantsList.innerHTML = '';
-            participantsList.appendChild(list);
             participantsCount.textContent = participants.length;
         }
 
@@ -311,18 +368,21 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                 const resp = await fetch(`/api/v1/secret-santa/validate-invite.php?invite_token=${encodeURIComponent(evt.invite_token)}`, { credentials: 'include' });
                 const data = await resp.json();
                 if (!data.success) {
-                    participantsList.textContent = data.message || 'Unable to load participants.';
+                    resetParticipantsTable(data.message || 'Unable to load participants.');
                     exclusionList.textContent = data.message || 'Unable to load exclusion groups.';
                     return;
                 }
 
                 const eventData = data.data || {};
-                renderParticipants(eventData.participants || []);
-                renderExclusionGroups(eventData.exclusion_groups || []);
-                selectedEventCounts.textContent = `${(eventData.participants || []).length} participants • ${(eventData.exclusion_groups || []).length} exclusion groups`;
+                const participants = eventData.participants || [];
+                const groups = eventData.exclusion_groups || [];
+                activeEventData = { ...evt, participant_count: participants.length, exclusion_group_count: groups.length };
+                renderParticipants(participants);
+                renderExclusionGroups(groups);
+                updateSelectedCounts(participants, groups);
             } catch (err) {
                 console.error(err);
-                participantsList.textContent = 'Unable to load participants.';
+                resetParticipantsTable('Unable to load participants.');
                 exclusionList.textContent = 'Unable to load exclusion groups.';
             }
         }
@@ -422,6 +482,9 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                     name: document.getElementById('exclusionName').value
                 });
                 exclusionStatus.textContent = resp.message || '';
+                if (resp.success) {
+                    loadEventDetails(activeEventData);
+                }
             } catch (err) {
                 console.error(err);
                 exclusionStatus.textContent = 'Unable to save exclusion group.';
@@ -464,26 +527,6 @@ $prefillInvite = $_GET['invite_token'] ?? '';
             } catch (err) {
                 console.error(err);
                 assignmentStatus.textContent = 'Failed to send assignment emails.';
-            }
-        });
-
-        ownerJoinForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            ownerJoinStatus.textContent = 'Submitting...';
-            if (!activeEventData) {
-                ownerJoinStatus.textContent = 'Select an event first.';
-                return;
-            }
-            try {
-                const resp = await postForm('/api/v1/secret-santa/join-event.php', {
-                    invite_token: activeEventData.invite,
-                    display_name: document.getElementById('ownerDisplayName').value,
-                    email: document.getElementById('ownerEmail').value
-                });
-                ownerJoinStatus.textContent = resp.message || '';
-            } catch (err) {
-                console.error(err);
-                ownerJoinStatus.textContent = 'Join request failed.';
             }
         });
     </script>
