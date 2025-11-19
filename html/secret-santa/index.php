@@ -234,10 +234,10 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                                                     participants directly from the Kingdom. Everyone gets their person, and the gift
                                                     exchange begins.
                                                 </p>
-                                                <a class="small" href="<?php echo Version::urlBetaPrefix(); ?>/secret-santa/assignments.php">
-                                                    Review assignments
-                                                    <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i>
-                                                </a>
+                                            <a class="small" href="<?php echo Version::urlBetaPrefix(); ?>/secret-santa/manage.php">
+                                                Review assignments in the owner dashboard
+                                                <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i>
+                                            </a>
                                             </div>
                                         </div>
 
