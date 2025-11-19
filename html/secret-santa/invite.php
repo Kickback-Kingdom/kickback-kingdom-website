@@ -207,14 +207,6 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     the exchange private and coordinated.
                                 </p>
                             </div>
-                            <div class="d-flex flex-wrap align-items-center gap-2 gap-md-3">
-                                <span class="token-chip">
-                                    <i class="fa-solid fa-lock"></i>
-                                    Invite token
-                                </span>
-                                <code class="token-code" id="inviteTokenDisplay"><?php echo htmlspecialchars($inviteToken ?: 'Not provided'); ?></code>
-                            </div>
-                            <div id="inviteStatus" class="small text-light text-opacity-85"></div>
                         </div>
                         <div class="event-timing">
                             <div class="card hero-card rounded-4">
@@ -296,6 +288,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                     </div>
                 </section>
 
+                <div id="inviteStatus" class="alert alert-primary bg-primary-subtle text-primary-emphasis border-0 mb-4 d-none"></div>
+
                 <!-- EVENT DETAILS -->
                 <div class="card shadow-sm border-0 mb-4" id="eventDetailsCard" style="display:none;">
                     <div class="card-body p-4">
@@ -350,49 +344,54 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     </div>
                                 </div>
 
-                                <form id="joinForm" class="row g-3 align-items-end">
-                                    <input type="hidden" id="participantExclusionCtime">
-                                    <input type="hidden" id="participantExclusionCrand">
-
-                                    <div class="col-12 col-md-8">
-                                        <label class="form-label mb-1" for="exclusionSelect">Exclusion group (optional)</label>
-                                        <select class="form-select" id="exclusionSelect">
-                                            <option value="">No exclusion group</option>
-                                        </select>
-                                        <div class="form-text">Pick who should never draw each other. Couples or roommates usually share a group.</div>
-                                    </div>
-
-                                    <div class="col-12 col-md-4 d-grid gap-2">
-                                        <button class="btn btn-success" type="submit">Join event</button>
-                                        <div id="joinStatus" class="small text-muted"></div>
-                                    </div>
-                                </form>
-
-                                <div class="p-3 bg-body-secondary rounded-3">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                <div class="p-3 bg-body-secondary rounded-3 d-flex flex-column gap-3">
+                                    <div class="d-flex align-items-center gap-2">
                                         <div class="rounded-circle bg-secondary-subtle text-secondary-emphasis d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                                             <i class="fa-solid fa-people-group"></i>
                                         </div>
                                         <div>
-                                            <div class="fw-semibold mb-0">Need a new exclusion group?</div>
-                                            <small class="text-muted">Add it, then pick it from the list above.</small>
+                                            <div class="fw-semibold mb-0">Match preferences</div>
+                                            <small class="text-muted">Choose or create an exclusion group without leaving the signup.</small>
                                         </div>
                                     </div>
-                                    <form id="exclusionBuilder" class="row g-2 align-items-end">
-                                        <div class="col-12 col-md-8">
-                                            <label class="form-label" for="newExclusionName">Group name</label>
-                                            <input class="form-control" id="newExclusionName" placeholder="Roommates, partners, work team">
+
+                                    <div class="row g-3 align-items-start">
+                                        <div class="col-12 col-lg-7">
+                                            <form id="joinForm" class="d-flex flex-column gap-3">
+                                                <input type="hidden" id="participantExclusionCtime">
+                                                <input type="hidden" id="participantExclusionCrand">
+
+                                                <div>
+                                                    <label class="form-label mb-1" for="exclusionSelect">Exclusion group (optional)</label>
+                                                    <select class="form-select" id="exclusionSelect">
+                                                        <option value="">No exclusion group</option>
+                                                    </select>
+                                                    <div class="form-text">Pick who should never draw each other. Couples or roommates usually share a group.</div>
+                                                </div>
+
+                                                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2">
+                                                    <button class="btn btn-success" type="submit">Join event</button>
+                                                    <div id="joinStatus" class="small text-muted"></div>
+                                                </div>
+                                            </form>
                                         </div>
-                                        <input type="hidden" id="newExclusionCtime">
-                                        <input type="hidden" id="newExclusionCrand">
-                                        <div class="col-12 col-md-4 d-grid">
-                                            <label class="form-label opacity-0">Add group</label>
-                                            <button class="btn btn-outline-secondary" type="submit">Add exclusion group</button>
+                                        <div class="col-12 col-lg-5">
+                                            <div class="bg-white rounded-3 border h-100 p-3 shadow-sm">
+                                                <div class="d-flex align-items-center gap-2 mb-2">
+                                                    <span class="badge bg-light text-secondary border">New group</span>
+                                                    <span class="small text-muted">Keep specific people apart.</span>
+                                                </div>
+                                                <form id="exclusionBuilder" class="d-flex flex-column gap-2 h-100">
+                                                    <label class="form-label mb-1" for="newExclusionName">Group name</label>
+                                                    <input class="form-control" id="newExclusionName" placeholder="Roommates, partners, work team">
+                                                    <input type="hidden" id="newExclusionCtime">
+                                                    <input type="hidden" id="newExclusionCrand">
+                                                    <button class="btn btn-outline-secondary mt-auto" type="submit">Add exclusion group</button>
+                                                    <div id="exclusionBuilderStatus" class="small text-muted mb-0"></div>
+                                                </form>
+                                            </div>
                                         </div>
-                                        <div class="col-12">
-                                            <div id="exclusionBuilderStatus" class="small text-muted"></div>
-                                        </div>
-                                    </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -548,6 +547,16 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         let currentExclusionGroup = { ctime: '', crand: '' };
         let exclusionGroups = [];
         let participants = [];
+
+        function setStatus(element, message) {
+            if (!element) return;
+            element.textContent = message || '';
+            if (message) {
+                element.classList.remove('d-none');
+            } else {
+                element.classList.add('d-none');
+            }
+        }
 
         async function getJson(url) {
             const resp = await fetch(url, { credentials: 'include' });
@@ -724,9 +733,10 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
 
             if (isCurrentUserParticipant()) {
                 joinRows.style.display = 'none';
-                inviteStatus.textContent = alreadyJoinedMessage;
+                setStatus(inviteStatus, alreadyJoinedMessage);
             } else {
                 joinRows.style.display = '';
+                setStatus(inviteStatus, inviteStatus.textContent);
             }
         }
 
@@ -775,7 +785,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         }
 
         async function validateInvite(token) {
-            if (inviteStatus) inviteStatus.textContent = 'Checking invite...';
+            setStatus(inviteStatus, 'Checking invite...');
             if (eventDetailsCard) eventDetailsCard.style.display = 'none';
             if (joinRows) joinRows.style.display = 'none';
             if (exclusionBuilderCard) exclusionBuilderCard.style.display = 'none';
@@ -786,21 +796,21 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             if (participantListCard) participantListCard.style.display = 'none';
             try {
                 const resp = await getJson(`/api/v1/secret-santa/validate-invite.php?invite_token=${encodeURIComponent(token)}`);
-                if (inviteStatus) inviteStatus.textContent = resp.message || '';
+                setStatus(inviteStatus, resp.message || '');
                 if (resp.success) {
                     currentEvent = resp.data;
                     renderEvent(resp.data);
                 }
             } catch (err) {
                 console.error(err);
-                if (inviteStatus) inviteStatus.textContent = 'Unable to validate invite token right now.';
+                setStatus(inviteStatus, 'Unable to validate invite token right now.');
             }
         }
 
         if (inviteTokenFromUrl) {
             validateInvite(inviteTokenFromUrl);
         } else {
-            if (inviteStatus) inviteStatus.textContent = 'No invite token detected. Please use your invite link.';
+            setStatus(inviteStatus, 'No invite token detected. Please use your invite link.');
         }
 
         joinForm.addEventListener('submit', async (e) => {
@@ -825,7 +835,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                 });
                 joinStatus.textContent = resp.message || '';
                 if (resp.success && resp.data && resp.data.event) {
-                    inviteStatus.textContent = 'You are in!';
+                    setStatus(inviteStatus, 'You are in!');
                     const addedParticipant = resp.data.participant || {
                         display_name: displayName,
                         email: email,
