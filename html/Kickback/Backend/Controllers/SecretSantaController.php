@@ -681,7 +681,7 @@ class SecretSantaController
                                 </tr>
                             </table>
                             <p style="margin: 18px 0 12px; font-size: 14px; color: rgba(255,255,255,0.78);">{$description}</p>
-                            <p style="margin: 0; font-size: 14px; color: rgba(255,255,255,0.7);">Happy gifting! — The Kickback Kingdom Team</p>
+                            <p style="margin: 0; font-size: 14px; color: rgba(255,255,255,0.7);">Happy gifting! — Kickback Kingdom</p>
                         </td>
                     </tr>
                 </table>
