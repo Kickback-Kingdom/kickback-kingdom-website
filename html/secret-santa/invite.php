@@ -8,6 +8,9 @@ $inviteToken = $_GET['invite_token'] ?? '';
 $kickbackAccount = $session->success ? $session->data : null;
 $defaultDisplayName = $kickbackAccount ? trim(($kickbackAccount->firstName ?? '') . ' ' . ($kickbackAccount->lastName ?? '')) : '';
 $defaultEmail = $kickbackAccount->email ?? '';
+$redirectTarget = 'secret-santa/invite.php' . ($inviteToken ? '?invite_token=' . urlencode($inviteToken) : '');
+$assignmentLoginUrl = \Kickback\Common\Version::urlBetaPrefix() . '/login.php?redirect=' . rawurlencode($redirectTarget);
+$isLoggedIn = $kickbackAccount !== null;
 $pageTitle = "Join Secret Santa";
 $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
 ?>
@@ -429,13 +432,48 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4 d-none" id="assignmentStatusCard">
+            <div class="card-body p-4 d-flex flex-column gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="fa-solid fa-hat-wizard"></i>
+                    </div>
+                    <div>
+                        <h2 class="h5 mb-1" id="assignmentStatusTitle">Assignment status</h2>
+                        <p class="mb-0 text-muted" id="assignmentStatusSubtitle">We'll let you know when names are drawn.</p>
                     </div>
                 </div>
+                <div id="assignmentSpinnerSection" class="d-flex align-items-center gap-3 text-muted">
+                    <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                    <div>
+                        <div class="fw-semibold">Waiting for your match</div>
+                        <small class="text-muted">Your host is still preparing assignments.</small>
+                    </div>
+                </div>
+                <div id="assignmentDetailsSection" class="d-none">
+                    <div class="border rounded-3 p-3 bg-light-subtle">
+                        <div class="small text-uppercase text-muted mb-1">You're gifting to</div>
+                        <div class="fs-5 fw-semibold" id="assignmentReceiverName"></div>
+                        <div class="text-muted" id="assignmentReceiverEmail"></div>
+                        <div class="text-muted mt-2 small" id="assignmentGiftDeadline"></div>
+                    </div>
+                </div>
+                <div id="assignmentLoginSection" class="d-none">
+                    <p class="mb-3 text-muted">Log in to reveal your Secret Santa assignment.</p>
+                    <a href="<?php echo htmlspecialchars($assignmentLoginUrl); ?>" class="btn btn-primary" id="assignmentLoginButton">
+                        <i class="fa-solid fa-right-to-bracket me-1"></i>Log In
+                    </a>
+                </div>
+            </div>
+        </div>
 
-                <!-- JOIN + EXCLUSIONS -->
-                <div class="row mb-4" id="joinRows" style="display:none;">
-                    <div class="col-12">
+        <!-- JOIN + EXCLUSIONS -->
+        <div class="row mb-4" id="joinRows" style="display:none;">
+            <div class="col-12">
                         <div class="card shadow-sm border-0" id="joinFormCard">
                             <div class="card-body p-4 d-flex flex-column gap-4">
                                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pb-2 border-bottom">
@@ -677,6 +715,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const accountDisplayName = <?php echo json_encode($defaultDisplayName); ?>;
         const accountEmail = <?php echo json_encode($defaultEmail); ?>;
         const accountCrand = <?php echo json_encode($kickbackAccount ? $kickbackAccount->crand : null); ?>;
+        const isLoggedIn = <?php echo json_encode($isLoggedIn); ?>;
         const inviteStatus = document.getElementById('inviteStatus');
         const heroEventTitle = document.getElementById('heroEventTitle');
         const heroEventSubtitle = document.getElementById('heroEventSubtitle');
@@ -713,11 +752,22 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const countGiftSeconds = document.getElementById('countGiftSeconds');
         const countdownNote = document.getElementById('countdownNote');
         const countNumbers = document.querySelectorAll('.count-number');
+        const assignmentStatusCard = document.getElementById('assignmentStatusCard');
+        const assignmentStatusTitle = document.getElementById('assignmentStatusTitle');
+        const assignmentStatusSubtitle = document.getElementById('assignmentStatusSubtitle');
+        const assignmentSpinnerSection = document.getElementById('assignmentSpinnerSection');
+        const assignmentDetailsSection = document.getElementById('assignmentDetailsSection');
+        const assignmentReceiverName = document.getElementById('assignmentReceiverName');
+        const assignmentReceiverEmail = document.getElementById('assignmentReceiverEmail');
+        const assignmentGiftDeadline = document.getElementById('assignmentGiftDeadline');
+        const assignmentLoginSection = document.getElementById('assignmentLoginSection');
         let countdownInterval = null;
         let currentEvent = null;
         let currentExclusionGroup = { ctime: '', crand: '' };
         let exclusionGroups = [];
         let participants = [];
+        let assignmentsGenerated = false;
+        let currentAssignment = null;
 
         function setStatus(element, message) {
             if (!element) return;
@@ -906,6 +956,76 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             });
         }
 
+        function updateAssignmentStatus() {
+            if (!assignmentStatusCard || !assignmentStatusTitle || !assignmentStatusSubtitle) {
+                return;
+            }
+
+            const userIsParticipant = isCurrentUserParticipant();
+            const shouldPromptLogin = assignmentsGenerated && !isLoggedIn;
+
+            if (!userIsParticipant && !shouldPromptLogin) {
+                assignmentStatusCard.classList.add('d-none');
+                return;
+            }
+
+            assignmentStatusCard.classList.remove('d-none');
+
+            if (!userIsParticipant && shouldPromptLogin) {
+                assignmentStatusTitle.textContent = 'View your Secret Santa assignment';
+                assignmentStatusSubtitle.textContent = 'Log in to reveal who you are gifting to.';
+                if (assignmentSpinnerSection) assignmentSpinnerSection.classList.add('d-none');
+                if (assignmentDetailsSection) assignmentDetailsSection.classList.add('d-none');
+                if (assignmentGiftDeadline) assignmentGiftDeadline.textContent = '';
+                if (assignmentLoginSection) assignmentLoginSection.classList.remove('d-none');
+                return;
+            }
+
+            if (assignmentLoginSection) assignmentLoginSection.classList.add('d-none');
+
+            if (!assignmentsGenerated) {
+                assignmentStatusTitle.textContent = "We'll draw names soon";
+                assignmentStatusSubtitle.textContent = 'Hang tight while your host prepares the list.';
+                if (assignmentSpinnerSection) assignmentSpinnerSection.classList.remove('d-none');
+                if (assignmentDetailsSection) assignmentDetailsSection.classList.add('d-none');
+                if (assignmentGiftDeadline) assignmentGiftDeadline.textContent = '';
+                return;
+            }
+
+            if (assignmentSpinnerSection) assignmentSpinnerSection.classList.add('d-none');
+            assignmentStatusTitle.textContent = 'Your Secret Santa assignment';
+
+            if (currentAssignment && currentAssignment.receiver) {
+                assignmentStatusSubtitle.textContent = 'Keep it secret and start planning a gift!';
+                if (assignmentDetailsSection) assignmentDetailsSection.classList.remove('d-none');
+                if (assignmentReceiverName) {
+                    assignmentReceiverName.textContent = currentAssignment.receiver.display_name || 'Mystery adventurer';
+                }
+                if (assignmentReceiverEmail) {
+                    assignmentReceiverEmail.textContent = currentAssignment.receiver.email || 'No email provided.';
+                }
+                if (assignmentGiftDeadline) {
+                    if (currentEvent && currentEvent.gift_deadline) {
+                        const giftDate = new Date(currentEvent.gift_deadline + 'Z');
+                        assignmentGiftDeadline.textContent = `Gift reveal: ${giftDate.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`;
+                    } else {
+                        assignmentGiftDeadline.textContent = '';
+                    }
+                }
+                return;
+            }
+
+            assignmentStatusSubtitle.textContent = 'We could not find your assignment yet. Please check with your host if this seems incorrect.';
+            if (assignmentDetailsSection) assignmentDetailsSection.classList.add('d-none');
+            if (assignmentGiftDeadline) assignmentGiftDeadline.textContent = '';
+        }
+
+        function setAssignmentStateFromEvent(event) {
+            assignmentsGenerated = !!(event && event.assignments_generated);
+            currentAssignment = event && event.current_assignment ? event.current_assignment : null;
+            updateAssignmentStatus();
+        }
+
         function updateJoinVisibility(alreadyJoinedMessage = 'You are already registered for this exchange.') {
             if (!joinRows || !inviteStatus) return;
 
@@ -916,6 +1036,8 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                 joinRows.style.display = '';
                 setStatus(inviteStatus, inviteStatus.textContent);
             }
+
+            updateAssignmentStatus();
         }
 
         function renderEvent(event) {
@@ -937,6 +1059,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             renderExclusionOptions(exclusionGroups);
             participants = event.participants || [];
             renderParticipants();
+            setAssignmentStateFromEvent(event);
             updateJoinVisibility();
 
             const now = new Date();
@@ -970,6 +1093,9 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             exclusionGroups = [];
             participants = [];
             if (participantListCard) participantListCard.style.display = 'none';
+            assignmentsGenerated = false;
+            currentAssignment = null;
+            updateAssignmentStatus();
             try {
                 const resp = await getJson(`/api/v1/secret-santa/validate-invite.php?invite_token=${encodeURIComponent(token)}`);
                 setStatus(inviteStatus, resp.message || '');
