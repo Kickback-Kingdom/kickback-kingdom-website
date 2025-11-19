@@ -222,6 +222,54 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             margin-top: 0.75rem;
         }
 
+        .join-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .join-panel {
+            background: linear-gradient(145deg, #ffffff 0%, #f7f9ff 50%, #ffffff 100%);
+            border: 1px solid var(--bs-border-color-translucent);
+            border-radius: 1.25rem;
+            padding: 1.25rem;
+            box-shadow: 0 10px 30px rgba(12, 23, 52, 0.08);
+        }
+
+        .join-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            background: rgba(13, 110, 253, 0.08);
+            color: #0d6efd;
+            font-weight: 600;
+        }
+
+        .join-meta {
+            border-top: 1px dashed var(--bs-border-color-translucent);
+            margin-top: 1rem;
+            padding-top: 1rem;
+        }
+
+        .join-hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.55rem 0.85rem;
+            border-radius: 0.85rem;
+            background: rgba(40, 167, 69, 0.08);
+            color: #198754;
+            font-weight: 600;
+        }
+
+        @media (min-width: 992px) {
+            .join-layout {
+                grid-template-columns: 1fr 1.15fr;
+            }
+        }
+
         .count-number.pulse {
             animation: pulse 0.6s ease;
         }
@@ -406,67 +454,84 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     </div>
                                 </div>
 
-                                <div class="p-3 p-md-4 bg-body-secondary rounded-4" id="exclusionBuilderCard">
-                                    <div class="small text-uppercase text-muted mb-3">You're joining as</div>
-                                    <div class="row g-4 align-items-center">
-                                        <div class="col-12 col-md-6">
-                                            <div class="small text-muted">Display name</div>
-                                            <div class="fw-semibold fs-6" id="participantDisplayNameText">
-                                                <?php echo htmlspecialchars($defaultDisplayName) ?: 'Secret Santa adventurer'; ?>
+                                <div class="join-layout">
+                                    <div class="join-panel" id="exclusionBuilderCard">
+                                        <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                                            <div>
+                                                <div class="join-pill"><i class="fa-solid fa-user"></i> Your details</div>
+                                                <div class="small text-muted mt-2">Double-check what your host will see.</div>
                                             </div>
+                                            <span class="badge bg-light text-secondary border">Auto-filled</span>
                                         </div>
-                                        <div class="col-12 col-md-6">
-                                            <div class="small text-muted">Email</div>
-                                            <div class="fw-semibold fs-6" id="participantEmailText">
-                                                <?php echo htmlspecialchars($defaultEmail) ?: 'Update your account email to join'; ?>
-                                            </div>
-                                            <div class="form-text mb-0">We'll use this email to confirm your signup.</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="p-3 p-md-4 bg-body-secondary rounded-4 d-flex flex-column gap-4">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="rounded-circle bg-secondary-subtle text-secondary-emphasis d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                            <i class="fa-solid fa-people-group"></i>
-                                        </div>
-                                        <div>
-                                            <div class="fw-semibold mb-1">Match preferences</div>
-                                            <small class="text-muted">Choose or create an exclusion group without leaving the signup.</small>
-                                        </div>
-                                    </div>
-
-                                    <div class="row g-3 align-items-start">
-                                        <div class="col-12">
-                                            <form id="joinForm" class="d-flex flex-column gap-3">
-                                                <input type="hidden" id="participantExclusionCtime">
-                                                <input type="hidden" id="participantExclusionCrand">
-
-                                                <div class="d-flex flex-column gap-2">
-                                                    <div class="d-flex justify-content-between align-items-center gap-2">
-                                                        <label class="form-label mb-0" for="exclusionSelect">Exclusion group (optional)</label>
-                                                        <div class="d-flex gap-2">
-                                                            <button type="button" class="btn btn-outline-primary btn-sm" id="openExclusionModal">
-                                                                <i class="fa-solid fa-users-gear me-1"></i>Add group
-                                                            </button>
-                                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="refreshExclusions">
-                                                                <i class="fa-solid fa-rotate me-1"></i>Refresh
-                                                            </button>
-                                                        </div>
+                                        <div class="d-flex flex-column gap-3">
+                                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                                                <div>
+                                                    <div class="small text-muted">Display name</div>
+                                                    <div class="fw-semibold fs-6" id="participantDisplayNameText">
+                                                        <?php echo htmlspecialchars($defaultDisplayName) ?: 'Secret Santa adventurer'; ?>
                                                     </div>
-                                                    <select class="form-select shadow-sm" id="exclusionSelect">
-                                                        <option value="">No exclusion group</option>
-                                                    </select>
-                                                    <div class="form-text">Pick who should never draw each other. Couples or roommates usually share a group.</div>
                                                 </div>
+                                                <div>
+                                                    <div class="small text-muted">Email</div>
+                                                    <div class="fw-semibold fs-6" id="participantEmailText">
+                                                        <?php echo htmlspecialchars($defaultEmail) ?: 'Update your account email to join'; ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="join-meta">
+                                                <div class="small text-muted">Why we need this</div>
+                                                <ul class="list-unstyled small text-secondary mb-0 d-flex flex-column gap-1">
+                                                    <li class="d-flex gap-2"><i class="fa-solid fa-envelope text-primary"></i><span>We email your confirmation and assignment.</span></li>
+                                                    <li class="d-flex gap-2"><i class="fa-solid fa-pen-to-square text-success"></i><span>Your host can recognize who joined.</span></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3 pt-1">
-                                                    <button class="btn btn-success px-4" type="submit">
-                                                        <i class="fa-solid fa-gift me-2"></i>Join event
-                                                    </button>
-                                                    <div id="joinStatus" class="small text-muted"></div>
-                                                </div>
-                                            </form>
+                                    <div class="join-panel d-flex flex-column gap-4">
+                                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                                            <div class="rounded-circle bg-secondary-subtle text-secondary-emphasis d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="fa-solid fa-people-group"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold mb-1">Match preferences</div>
+                                                <small class="text-muted">Choose or create an exclusion group without leaving the signup.</small>
+                                            </div>
+                                            <div class="ms-auto join-hint"><i class="fa-solid fa-shield-heart"></i> Keeps matches fair</div>
+                                        </div>
+
+                                        <div class="row g-3 align-items-start">
+                                            <div class="col-12">
+                                                <form id="joinForm" class="d-flex flex-column gap-3">
+                                                    <input type="hidden" id="participantExclusionCtime">
+                                                    <input type="hidden" id="participantExclusionCrand">
+
+                                                    <div class="d-flex flex-column gap-2">
+                                                        <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                                            <label class="form-label mb-0" for="exclusionSelect">Exclusion group (optional)</label>
+                                                            <div class="d-flex gap-2">
+                                                                <button type="button" class="btn btn-outline-primary btn-sm" id="openExclusionModal">
+                                                                    <i class="fa-solid fa-users-gear me-1"></i>Add group
+                                                                </button>
+                                                                <button type="button" class="btn btn-outline-secondary btn-sm" id="refreshExclusions">
+                                                                    <i class="fa-solid fa-rotate me-1"></i>Refresh
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <select class="form-select shadow-sm" id="exclusionSelect">
+                                                            <option value="">No exclusion group</option>
+                                                        </select>
+                                                        <div class="form-text">Pick who should never draw each other. Couples or roommates usually share a group.</div>
+                                                    </div>
+
+                                                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3 pt-1">
+                                                        <button class="btn btn-success px-4" type="submit">
+                                                            <i class="fa-solid fa-gift me-2"></i>Join event
+                                                        </button>
+                                                        <div id="joinStatus" class="small text-muted"></div>
+                                                    </div>
+                                                </form>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
