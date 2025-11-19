@@ -288,7 +288,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                     </div>
                 </section>
 
-                <div id="inviteStatus" class="alert alert-primary bg-primary-subtle text-primary-emphasis border-0 mb-4 d-none"></div>
+                <p id="inviteStatus" class="text-muted mb-4 d-none"></p>
 
                 <!-- EVENT DETAILS -->
                 <div class="card shadow-sm border-0 mb-4" id="eventDetailsCard" style="display:none;">
@@ -356,13 +356,18 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     </div>
 
                                     <div class="row g-3 align-items-start">
-                                        <div class="col-12 col-lg-7">
+                                        <div class="col-12">
                                             <form id="joinForm" class="d-flex flex-column gap-3">
                                                 <input type="hidden" id="participantExclusionCtime">
                                                 <input type="hidden" id="participantExclusionCrand">
 
                                                 <div>
-                                                    <label class="form-label mb-1" for="exclusionSelect">Exclusion group (optional)</label>
+                                                    <div class="d-flex justify-content-between align-items-center gap-2">
+                                                        <label class="form-label mb-1" for="exclusionSelect">Exclusion group (optional)</label>
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="openExclusionModal">
+                                                            <i class="fa-solid fa-plus me-1"></i>Add group
+                                                        </button>
+                                                    </div>
                                                     <select class="form-select" id="exclusionSelect">
                                                         <option value="">No exclusion group</option>
                                                     </select>
@@ -375,24 +380,34 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                                 </div>
                                             </form>
                                         </div>
-                                        <div class="col-12 col-lg-5">
-                                            <div class="bg-white rounded-3 border h-100 p-3 shadow-sm">
-                                                <div class="d-flex align-items-center gap-2 mb-2">
-                                                    <span class="badge bg-light text-secondary border">New group</span>
-                                                    <span class="small text-muted">Keep specific people apart.</span>
-                                                </div>
-                                                <form id="exclusionBuilder" class="d-flex flex-column gap-2 h-100">
-                                                    <label class="form-label mb-1" for="newExclusionName">Group name</label>
-                                                    <input class="form-control" id="newExclusionName" placeholder="Roommates, partners, work team">
-                                                    <input type="hidden" id="newExclusionCtime">
-                                                    <input type="hidden" id="newExclusionCrand">
-                                                    <button class="btn btn-outline-secondary mt-auto" type="submit">Add exclusion group</button>
-                                                    <div id="exclusionBuilderStatus" class="small text-muted mb-0"></div>
-                                                </form>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="exclusionModal" tabindex="-1" aria-labelledby="exclusionModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exclusionModalLabel">Add exclusion group</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="exclusionBuilder" class="d-flex flex-column gap-3">
+                                    <div>
+                                        <label class="form-label mb-1" for="newExclusionName">Group name</label>
+                                        <input class="form-control" id="newExclusionName" placeholder="Roommates, partners, work team">
+                                    </div>
+                                    <input type="hidden" id="newExclusionCtime">
+                                    <input type="hidden" id="newExclusionCrand">
+                                    <div id="exclusionBuilderStatus" class="small text-muted mb-0"></div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button class="btn btn-primary" form="exclusionBuilder" type="submit">Add exclusion group</button>
                             </div>
                         </div>
                     </div>
@@ -525,8 +540,12 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const exclusionBuilderCard = document.getElementById('exclusionBuilderCard');
         const exclusionBuilder = document.getElementById('exclusionBuilder');
         const exclusionBuilderStatus = document.getElementById('exclusionBuilderStatus');
+        const newExclusionName = document.getElementById('newExclusionName');
         const newExclusionCtime = document.getElementById('newExclusionCtime');
         const newExclusionCrand = document.getElementById('newExclusionCrand');
+        const exclusionModalElement = document.getElementById('exclusionModal');
+        const exclusionModal = exclusionModalElement ? new bootstrap.Modal(exclusionModalElement) : null;
+        const openExclusionModalBtn = document.getElementById('openExclusionModal');
         const participantListCard = document.getElementById('participantListCard');
         const participantTableBody = document.getElementById('participantTableBody');
         const countdownCard = document.getElementById('countdownCard');
@@ -713,6 +732,13 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             participantListCard.style.display = 'block';
         }
 
+        function resetExclusionBuilder() {
+            if (newExclusionName) newExclusionName.value = '';
+            if (newExclusionCtime) newExclusionCtime.value = currentExclusionGroup.ctime || '';
+            if (newExclusionCrand) newExclusionCrand.value = currentExclusionGroup.crand || '';
+            if (exclusionBuilderStatus) exclusionBuilderStatus.textContent = '';
+        }
+
         function isCurrentUserParticipant() {
             const emailLower = (accountEmail || '').trim().toLowerCase();
 
@@ -813,6 +839,19 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             setStatus(inviteStatus, 'No invite token detected. Please use your invite link.');
         }
 
+        if (openExclusionModalBtn && exclusionModal) {
+            openExclusionModalBtn.addEventListener('click', () => {
+                if (!currentEvent) return;
+                resetExclusionBuilder();
+                exclusionModal.show();
+                setTimeout(() => newExclusionName && newExclusionName.focus(), 200);
+            });
+
+            exclusionModalElement.addEventListener('hidden.bs.modal', () => {
+                resetExclusionBuilder();
+            });
+        }
+
         joinForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!currentEvent) return;
@@ -880,11 +919,12 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                     exclusionGroups.push({
                         ctime: resp.data.ctime,
                         crand: resp.data.crand,
-                        name: document.getElementById('newExclusionName').value
+                        group_name: document.getElementById('newExclusionName').value
                     });
                     renderExclusionOptions(exclusionGroups);
                     setExclusionGroup(resp.data.ctime, resp.data.crand);
                     renderParticipants();
+                    if (exclusionModal) exclusionModal.hide();
                 }
             } catch (err) {
                 console.error(err);
