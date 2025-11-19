@@ -150,6 +150,10 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             border-radius: 0.9rem;
             text-align: center;
             box-shadow: 0 0.35rem 1rem rgba(13, 110, 253, 0.18);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.1rem;
         }
 
         .count-chip small {
@@ -164,7 +168,12 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             transition: transform 0.2s ease;
             line-height: 1;
             white-space: nowrap;
-            font-size: clamp(1.35rem, 5vw, 2.5rem);
+            font-size: clamp(1.1rem, 5vw, 2.25rem);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-width: 0;
         }
 
         .count-number.pulse {
