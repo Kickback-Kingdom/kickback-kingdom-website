@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: (__DIR__ . "/..")) . "/Kickback/init.php");
 
 use Kickback\Backend\Controllers\SecretSantaController;
+use Kickback\Services\Session;
 
 /**
  * Invoke a private static method on SecretSantaController.
@@ -26,6 +27,14 @@ function ensure(bool $condition, string $message): void
 }
 
 try {
+    $account = null;
+    ensure(
+        Session::readCurrentAccountInto($account) && !is_null($account),
+        'You must be logged in to trigger the Secret Santa test email.'
+    );
+
+    ensure(!empty($account->email), 'Logged in account does not have a valid email address.');
+
     $participantsWithGroups = [
         ['ctime' => 't1', 'crand' => 1, 'display_name' => 'Eric', 'exclusion_group_ctime' => 'g1', 'exclusion_group_crand' => 101],
         ['ctime' => 't2', 'crand' => 2, 'display_name' => 'Giovanna', 'exclusion_group_ctime' => 'g1', 'exclusion_group_crand' => 101],
@@ -57,6 +66,22 @@ try {
         ensure(!$inSameGroup, 'Assignments must not pair members of the same exclusion group.');
     }
 
+    $testPair = $pairs[array_key_first($pairs)];
+    $testGiver = $testPair['giver'];
+    $testReceiver = $testPair['receiver'];
+
+    $recipientName = trim(($account->firstName ?? '') . ' ' . ($account->lastName ?? ''));
+    $recipientName = $recipientName !== '' ? $recipientName : $account->username;
+
+    $emailResp = SecretSantaController::sendTestAssignmentEmail(
+        $account->email,
+        $recipientName,
+        $testGiver,
+        $testReceiver
+    );
+
+    ensure($emailResp->success, $emailResp->message);
+
     $blockedParticipants = [
         ['ctime' => 't10', 'crand' => 10, 'display_name' => 'Finn', 'exclusion_group_ctime' => 'g-lock', 'exclusion_group_crand' => 1],
         ['ctime' => 't11', 'crand' => 11, 'display_name' => 'Gwen', 'exclusion_group_ctime' => 'g-lock', 'exclusion_group_crand' => 1],
@@ -72,8 +97,12 @@ try {
     }
 
     echo "All exclusion group unit tests passed.\n";
+    echo "A test assignment email was sent to {$account->email}.\n";
     exit(0);
 } catch (AssertionError $e) {
     echo "Secret Santa exclusion group test failed: {$e->getMessage()}\n";
+    exit(1);
+} catch (Exception $e) {
+    echo "Secret Santa test email failed: {$e->getMessage()}\n";
     exit(1);
 }
