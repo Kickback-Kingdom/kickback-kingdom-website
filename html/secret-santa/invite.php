@@ -1,13 +1,14 @@
 <?php
 require_once(($_SERVER["DOCUMENT_ROOT"] ?: __DIR__) . "/Kickback/init.php");
 
+use Kickback\Services\Session;
 use Kickback\Backend\Controllers\SecretSantaController;
 
 $session = require(\Kickback\SCRIPT_ROOT . "/api/v1/engine/session/verifySession.php");
 require("../php-components/base-page-pull-active-account-info.php");
 
 $inviteToken = $_GET['invite_token'] ?? '';
-$kickbackAccount = $session->success ? $session->data : null;
+$kickbackAccount = Session::getCurrentAccount();
 $defaultDisplayName = $kickbackAccount ? trim(($kickbackAccount->firstName ?? '') . ' ' . ($kickbackAccount->lastName ?? '')) : '';
 $defaultEmail = $kickbackAccount->email ?? '';
 $redirectTarget = 'secret-santa/invite.php' . ($inviteToken ? '?invite_token=' . urlencode($inviteToken) : '');
@@ -87,10 +88,10 @@ if (!empty($prefetchedEvent['gift_deadline'])) {
     }
 }
 
-$assignmentCardVisible = $prefetchedEvent && ($userIsParticipant || ($serverAssignmentsGenerated && !$isLoggedIn));
+$assignmentCardVisible = $prefetchedEvent && ($userIsParticipant || ($serverAssignmentsGenerated && !Session::isLoggedIn()));
 $assignmentSpinnerVisible = $assignmentCardVisible && $userIsParticipant && !$serverAssignmentsGenerated;
 $assignmentDetailsVisible = $assignmentCardVisible && $userIsParticipant && $serverAssignmentsGenerated && !empty($serverAssignmentReceiver);
-$assignmentLoginVisible = $assignmentCardVisible && !$userIsParticipant && $serverAssignmentsGenerated && !$isLoggedIn;
+$assignmentLoginVisible = $assignmentCardVisible && !$userIsParticipant && $serverAssignmentsGenerated && !Session::isLoggedIn();
 
 $assignmentTitleText = 'Matching status';
 $assignmentSubtitleText = "We'll let you know the moment names are ready.";
@@ -113,7 +114,6 @@ if ($assignmentLoginVisible) {
 if ($prefetchedEvent && !empty($prefetchedEvent['invite_token'])) {
     $hostManageUrl = $managePageBaseUrl . '?invite_token=' . urlencode($prefetchedEvent['invite_token']);
 }
-$isLoggedIn = $kickbackAccount !== null;
 $pageTitle = "Join Secret Santa";
 $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
 ?>
@@ -609,7 +609,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
             id="assignmentStatusCard"
             data-assignments-generated="<?php echo $serverAssignmentsGenerated ? 'true' : 'false'; ?>"
             data-user-participant="<?php echo $userIsParticipant ? 'true' : 'false'; ?>"
-            data-should-prompt-login="<?php echo ($serverAssignmentsGenerated && !$isLoggedIn) ? 'true' : 'false'; ?>"
+            data-should-prompt-login="<?php echo ($serverAssignmentsGenerated && !Session::isLoggedIn()) ? 'true' : 'false'; ?>"
             data-current-assignment="<?php echo $serverCurrentAssignment ? htmlspecialchars(json_encode($serverCurrentAssignment)) : ''; ?>"
         >
             <div class="card-body p-4 d-flex flex-column gap-3">
@@ -701,7 +701,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     </div>
                                 </div>
 
-                                <div id="joinLoginPrompt" class="card mt-4 shadow-sm rounded<?php echo $isLoggedIn ? ' d-none' : ''; ?>">
+                                <div id="joinLoginPrompt" class="card mt-4 shadow-sm rounded<?php echo Session::isLoggedIn() ? ' d-none' : ''; ?>">
                                     <div class="card-body py-4 px-4 px-md-5 text-center d-flex flex-column gap-3">
                                         <div class="d-flex flex-column gap-2">
                                             <div class="mb-2">
@@ -719,7 +719,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     </div>
                                 </div>
 
-                                <div id="joinFormSection" class="join-panel d-flex flex-column gap-4<?php echo $isLoggedIn ? '' : ' d-none'; ?>">
+                                <div id="joinFormSection" class="join-panel d-flex flex-column gap-4<?php echo Session::isLoggedIn() ? '' : ' d-none'; ?>">
                                     <form id="joinForm" class="d-flex flex-column gap-4">
                                         <div class="d-flex align-items-start gap-3 flex-wrap pb-2 border-bottom">
                                             <div class="join-pill"><i class="fa-solid fa-user"></i> You, as the giver</div>
@@ -939,7 +939,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
         const accountDisplayName = <?php echo json_encode($defaultDisplayName); ?>;
         const accountEmail = <?php echo json_encode($defaultEmail); ?>;
         const accountCrand = <?php echo json_encode($kickbackAccount ? $kickbackAccount->crand : null); ?>;
-        const isLoggedIn = <?php echo json_encode($isLoggedIn); ?>;
+        const isLoggedIn = <?php echo json_encode(Session::isLoggedIn()); ?>;
         const registerRedirectUrl = <?php echo json_encode($registerRedirectUrl); ?>;
         const managePageBaseUrl = <?php echo json_encode($managePageBaseUrl); ?>;
         const prefetchedEvent = <?php echo json_encode($prefetchedEvent); ?>;
