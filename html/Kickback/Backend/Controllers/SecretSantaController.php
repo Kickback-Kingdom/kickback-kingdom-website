@@ -523,21 +523,40 @@ class SecretSantaController
         }
 
         $conn = self::getConnection();
+        $conn->begin_transaction();
+
+        $deleteStmt = $conn->prepare(
+            "DELETE FROM secret_santa_pairs WHERE event_ctime = ? AND event_crand = ?"
+        );
+
+        if ($deleteStmt === false) {
+            $conn->rollback();
+            return new Response(false, 'Failed to prepare assignment cleanup.', null);
+        }
+
+        $deleteStmt->bind_param('si', $eventCtime, $eventCrand);
+        if (!$deleteStmt->execute()) {
+            $deleteStmt->close();
+            $conn->rollback();
+            return new Response(false, 'Failed to clear previous assignments.', null);
+        }
+        $deleteStmt->close();
 
         $stmt = $conn->prepare(
             "INSERT INTO secret_santa_pairs (ctime, crand, event_ctime, event_crand, giver_participant_ctime, giver_participant_crand, receiver_participant_ctime, receiver_participant_crand) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
         );
 
         if ($stmt === false) {
+            $conn->rollback();
             return new Response(false, 'Failed to prepare assignment save.', null);
         }
 
         foreach ($pairs as $pair) {
             $newRecordId = new RecordId();
             $ctime = $newRecordId->ctime;
-            $crand = $newRecordId->crand; 
+            $crand = $newRecordId->crand;
             $stmt->bind_param(
-                'siiiiiii',
+                'sisisisi',
                 $ctime,
                 $crand,
                 $eventCtime,
@@ -550,12 +569,33 @@ class SecretSantaController
 
             if (!$stmt->execute()) {
                 $stmt->close();
+                $conn->rollback();
                 return new Response(false, 'Failed to save assignments.', null);
             }
         }
 
         $stmt->close();
-        return new Response(true, 'Assignments generated.', $pairs);
+        $conn->commit();
+
+        $uniqueGivers = [];
+        $uniqueReceivers = [];
+
+        foreach ($pairs as $pair) {
+            $uniqueGivers[$pair['giver']['ctime'] . ':' . $pair['giver']['crand']] = true;
+            $uniqueReceivers[$pair['receiver']['ctime'] . ':' . $pair['receiver']['crand']] = true;
+        }
+
+        $participantCount = count($participants);
+        $pairCount = count($pairs);
+        $allAssigned = $pairCount === $participantCount
+            && count($uniqueGivers) === $participantCount
+            && count($uniqueReceivers) === $participantCount;
+
+        return new Response(true, 'Assignments generated.', [
+            'participant_count' => $participantCount,
+            'pair_count' => $pairCount,
+            'all_assigned' => $allAssigned,
+        ]);
     }
 
     public static function sendTestAssignmentEmail(
