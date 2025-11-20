@@ -719,7 +719,7 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     </div>
                                 </div>
 
-                                <div id="joinFormSection" class="join-panel d-flex flex-column gap-4">
+                                <div id="joinFormSection" class="join-panel d-flex flex-column gap-4<?php echo $isLoggedIn ? '' : ' d-none'; ?>">
                                     <form id="joinForm" class="d-flex flex-column gap-4">
                                         <div class="d-flex align-items-start gap-3 flex-wrap pb-2 border-bottom">
                                             <div class="join-pill"><i class="fa-solid fa-user"></i> You, as the giver</div>
