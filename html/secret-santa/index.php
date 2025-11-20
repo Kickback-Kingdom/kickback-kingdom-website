@@ -73,7 +73,7 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                                 </a>
                             </div>
                             <p class="small mb-0 text-light text-opacity-75">
-                                Already have an event? Use your invite token to jump straight in.
+                                Already have an event? Paste your invite link below to jump straight in—no codes needed.
                             </p>
                         </div>
 
@@ -88,20 +88,20 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                                             <i class="fa-solid fa-gifts"></i>
                                         </span>
                                         <div>
-                                            <h2 class="h5 mb-0">Join with your code</h2>
+                                            <h2 class="h5 mb-0">Join your event</h2>
                                             <small class="text-muted">
-                                                Enter the invite token shared by your host.
+                                                Paste the full invite link (URL) your host shared.
                                             </small>
                                         </div>
                                     </div>
                                     <form class="row g-2" action="<?php echo Version::urlBetaPrefix(); ?>/secret-santa/invite.php" method="get">
                                         <div class="col-12">
-                                            <label for="heroInviteToken" class="form-label small mb-1">Invite token</label>
+                                            <label for="heroInviteToken" class="form-label small mb-1">Invite link (URL)</label>
                                             <input
                                                 class="form-control"
                                                 id="heroInviteToken"
                                                 name="invite_token"
-                                                placeholder="e.g. 4fa31b9c8d7e8c52"
+                                                placeholder="Paste the full event invite link from your host"
                                                 required>
                                         </div>
                                         <div class="col-12">
@@ -111,7 +111,7 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                                         </div>
                                     </form>
                                     <p class="small text-muted mt-2 mb-0">
-                                        Tokens stay private to your group and are validated before you join.
+                                        Links stay private to your group and are validated before you join.
                                     </p>
                                 </div>
                             </div>
@@ -159,7 +159,7 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                                                 <h4 class="h6 mb-1">Host creates the event</h4>
                                                 <p class="mb-1 text-secondary small">
                                                     Set the name, date, budget, and optional gift theme. Kickback Kingdom generates
-                                                    an invite token and shareable link for you.
+                                                    a shareable invite link for you.
                                                 </p>
                                                 <a class="small" href="<?php echo Version::urlBetaPrefix(); ?>/secret-santa/create-event.php">
                                                     Open the event creator
@@ -176,19 +176,19 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                                                 2
                                             </div>
                                             <div>
-                                                <h4 class="h6 mb-1">Everyone joins with the invite token</h4>
+                                                <h4 class="h6 mb-1">Everyone joins with the invite link</h4>
                                                 <p class="mb-1 text-secondary small">
-                                                    Participants enter the invite token, fill in their name and email, and can flag
+                                                    Participants paste the invite link you share, fill in their name and email, and can flag
                                                     anyone they should not be paired with (for example, partners or housemates).
                                                 </p>
                                                 <form class="row g-2 mt-2" action="<?php echo Version::urlBetaPrefix(); ?>/secret-santa/invite.php" method="get">
                                                     <div class="col-sm-8">
-                                                        <label for="timelineInviteToken" class="form-label small mb-1">Invite token</label>
+                                                        <label for="timelineInviteToken" class="form-label small mb-1">Invite link (URL)</label>
                                                         <input
                                                             class="form-control form-control-sm"
                                                             id="timelineInviteToken"
                                                             name="invite_token"
-                                                            placeholder="e.g. 4fa31b9c8d7e8c52"
+                                                            placeholder="Paste the full event invite link from your host"
                                                             required>
                                                     </div>
                                                     <div class="col-sm-4 d-flex align-items-end">
@@ -413,7 +413,7 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                                         </li>
                                         <li class="d-flex align-items-start mb-2">
                                             <i class="fa-solid fa-check text-success me-2 mt-1"></i>
-                                            <span>Invite tokens that are easy to share and validate.</span>
+                                            <span>Invite links that are easy to share and validate.</span>
                                         </li>
                                         <li class="d-flex align-items-start mb-0">
                                             <i class="fa-solid fa-check text-success me-2 mt-1"></i>
@@ -444,7 +444,7 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                                             <strong>Create</strong> an event with your date, budget, and theme.
                                         </li>
                                         <li class="mb-2">
-                                            <strong>Share</strong> the invite token with your crew
+                                            <strong>Share</strong> the invite link with your crew
                                             or send invitations directly from the dashboard.
                                         </li>
                                         <li class="mb-0">
