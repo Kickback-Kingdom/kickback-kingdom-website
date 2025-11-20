@@ -87,8 +87,10 @@
 	        $assignmentGiftDeadlineText = '';
 	    }
 	}
-	
-	$assignmentCardVisible = $prefetchedEvent && ($userIsParticipant || ($serverAssignmentsGenerated && !Session::isLoggedIn()));
+    
+    $assignmentCardVisible = $prefetchedEvent && Session::isLoggedIn() && $userIsParticipant && !$serverAssignmentsGenerated;
+
+
 	$assignmentSpinnerVisible = $assignmentCardVisible && $userIsParticipant && !$serverAssignmentsGenerated;
 	$assignmentDetailsVisible = $assignmentCardVisible && $userIsParticipant && $serverAssignmentsGenerated && !empty($serverAssignmentReceiver);
 	$assignmentLoginVisible = $assignmentCardVisible && !$userIsParticipant && $serverAssignmentsGenerated && !Session::isLoggedIn();
@@ -606,10 +608,6 @@
 												<div class="text-muted small mb-0">Confirm your details, choose a group, and hop in.</div>
 											</div>
 										</div>
-										<div class="text-end">
-											<span class="badge bg-secondary-subtle text-secondary-emphasis me-2">Takes 10 seconds</span>
-											<span class="badge bg-success-subtle text-success-emphasis"><i class="fa-solid fa-shield-heart me-1"></i>Safe matching</span>
-										</div>
 									</div>
 									<?php if ($prefetchedEvent && $userIsParticipant && !$userIsHost) : ?>
 									<div class="join-state-banner" id="prefetchedJoinBanner">
@@ -643,23 +641,33 @@
 											<div class="small text-muted mt-2">Jumps to your host dashboard.</div>
 										</div>
 									</div>
-									<div id="joinLoginPrompt" class="card mt-4 shadow-sm rounded<?php echo Session::isLoggedIn() ? ' d-none' : ''; ?>">
-										<div class="card-body py-4 px-4 px-md-5 text-center d-flex flex-column gap-3">
-											<div class="d-flex flex-column gap-2">
-												<div class="mb-2">
-													<img src="/assets/media/logo.png" alt="Kickback Kingdom" style="width: 150px; height: 150px;">
-												</div>
-												<h5 class="mb-1"><i class="fa-solid fa-exclamation-triangle fa-lg me-2 text-muted"></i> Account needed</h5>
-												<p class="mb-0 text-muted">Your host asked that everyone join through their Write of Passage invite. Create an account to continue.</p>
-											</div>
-											<div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-2">
-												<a href="<?php echo htmlspecialchars($loginRedirectUrl); ?>" class="btn btn-outline-primary w-100 w-md-auto">Log in</a>
-												<a id="hostSignupLink" href="<?php echo htmlspecialchars($registerRedirectUrl); ?>" class="btn btn-primary w-100 w-md-auto">
-												Get the host signup link
-												</a>
-											</div>
-										</div>
-									</div>
+                                    <div id="joinLoginPrompt" class="card mt-4 shadow-sm rounded<?php echo Session::isLoggedIn() ? ' d-none' : ''; ?>">
+                                        <div class="card-body py-4 px-4 px-md-5 text-center d-flex flex-column gap-3">
+
+                                            <div class="d-flex flex-column gap-2">
+                                                <div class="mb-2">
+                                                    <img src="/assets/media/logo.png" alt="Kickback Kingdom" style="width: 150px; height: 150px;">
+                                                </div>
+
+                                                <h5 class="mb-1">
+                                                    <i class="fa-solid fa-exclamation-triangle fa-lg me-2 text-muted"></i>
+                                                    Login Required
+                                                </h5>
+
+                                                <p class="mb-0 text-muted">
+                                                    You must be logged in to view the Secret Santa page.
+                                                </p>
+                                            </div>
+
+                                            <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-2">
+                                                <a href="<?php echo htmlspecialchars($loginRedirectUrl); ?>" class="btn btn-primary w-100 w-md-auto">
+                                                    Log In
+                                                </a>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
 									<div id="joinFormSection" class="join-panel d-flex flex-column gap-4<?php echo Session::isLoggedIn() ? '' : ' d-none'; ?>">
 										<form id="joinForm" class="d-flex flex-column gap-4">
 											<div class="d-flex align-items-start gap-3 flex-wrap pb-2 border-bottom">
@@ -1280,39 +1288,87 @@
 			
 			    updateAssignmentStatus();
 			}
-			
 			function renderEvent(event) {
-			    if (!eventDetailsCard || !joinRows || !exclusionBuilderCard || !participantListCard) {
-			        console.warn('Invite page elements missing; cannot render event UI.');
-			        return;
-			    }
-			
-			    eventDetailsCard.style.display = 'block';
-			    const signup = new Date(event.signup_deadline + 'Z');
-			    const gift = new Date(event.gift_deadline + 'Z');
-			    heroEventTitle.textContent = event.name;
-			    heroEventSubtitle.textContent = `Signup closes ${signup.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })} • Gifts due ${gift.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`;
-			    eventDescEl.textContent = event.description || 'No description provided.';
-			    hostSignupRedirect = event.write_of_passage_link || event.host_signup_link || registerRedirectUrl;
-			    if (hostSignupLink) {
-			        hostSignupLink.href = hostSignupRedirect;
-			        hostSignupLink.textContent = event.write_of_passage_link || event.host_signup_link ? 'Sign up with the host link' : 'Create an account to join';
-			    }
-			    joinRows.style.display = '';
-			    exclusionBuilderCard.style.display = 'block';
-			    setExclusionGroup('', '');
-			    exclusionGroups = event.exclusion_groups || [];
-			    renderExclusionOptions(exclusionGroups);
-			    participants = event.participants || [];
-			    renderParticipants();
-			    setAssignmentStateFromEvent(event);
-			    updateJoinVisibility();
-			
-			    const now = new Date();
-			    const signupDate = signup > now ? signup : null;
-			    const giftDate = gift;
-			    setCountdowns(signupDate, giftDate);
-			}
+                debugger;
+                if (!eventDetailsCard || !joinRows || !participantListCard) {
+                    console.warn('Invite page elements missing; cannot render event UI.');
+                    return;
+                }
+
+                eventDetailsCard.style.display = 'block';
+
+                // Host-only card
+                if (exclusionBuilderCard) {
+                    exclusionBuilderCard.style.display = 'block';
+                }
+
+                // Load exclusion groups only if the UI exists
+                setExclusionGroup('', '');
+                exclusionGroups = event.exclusion_groups || [];
+                if (exclusionBuilderCard) {
+                    renderExclusionOptions(exclusionGroups);
+                }
+
+                // --- SAFE DATE PARSER FOR MYSQL DATETIME ---
+                function parseUtcDate(raw) {
+                    if (!raw) return null;
+                    const iso = raw.replace(' ', 'T') + 'Z';
+                    const d = new Date(iso);
+                    return isNaN(d.getTime()) ? null : d;
+                }
+
+                const signup = parseUtcDate(event.signup_deadline);
+                const gift   = parseUtcDate(event.gift_deadline);
+
+
+                // --- HERO TITLE / SUBTITLE ---
+                heroEventTitle.textContent = event.name;
+
+                if (signup && gift) {
+                    heroEventSubtitle.textContent =
+                        `Signup closes ${signup.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}` +
+                        ` • Gifts due ${gift.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`;
+                } else if (gift) {
+                    heroEventSubtitle.textContent =
+                        `Gifts due ${gift.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`;
+                } else {
+                    heroEventSubtitle.textContent = 'Use your invite link to load the event details.';
+                }
+
+                eventDescEl.textContent = event.description || 'No description provided.';
+
+                // --- SIGNUP REDIRECT ---
+                hostSignupRedirect = event.write_of_passage_link || event.host_signup_link || registerRedirectUrl;
+                if (hostSignupLink) {
+                    hostSignupLink.href = hostSignupRedirect;
+                    hostSignupLink.textContent =
+                        (event.write_of_passage_link || event.host_signup_link)
+                        ? 'Sign up with the host link'
+                        : 'Create an account to join';
+                }
+
+                joinRows.style.display = '';
+
+                // --- PARTICIPANTS ---
+                participants = event.participants || [];
+                renderParticipants();
+
+                // --- ASSIGNMENT STATUS ---
+                setAssignmentStateFromEvent(event);
+                updateJoinVisibility();
+
+                // --- COUNTDOWN LOGIC ---
+                const now = new Date();
+
+                // signup countdown only shows if still in the future
+                const signupDate = signup && signup > now ? signup : null;
+
+                // gift countdown ALWAYS shows until the date has passed
+                const giftDate = gift ? gift : null;
+
+                setCountdowns(signupDate, giftDate);
+            }
+
 			
 			function setExclusionGroup(ctime, crand) {
 			    currentExclusionGroup = {
