@@ -485,10 +485,6 @@
 									<i class="fa-solid fa-scroll"></i>
 								</div>
 								<div class="flex-grow-1">
-									<div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-										<span class="badge bg-primary-subtle text-primary-emphasis">Host notes</span>
-										<span class="badge bg-info-subtle text-info-emphasis">Read before joining</span>
-									</div>
 									<h2 class="h5 mb-1">Notes from your host</h2>
 									<div class="text-muted small">These details keep everyone on the same page.</div>
 								</div>
