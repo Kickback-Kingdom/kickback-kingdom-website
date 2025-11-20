@@ -76,46 +76,9 @@
 	$serverCurrentAssignment = is_array($prefetchedEvent['current_assignment'] ?? null) ? $prefetchedEvent['current_assignment'] : null;
 	$serverAssignmentReceiver = is_array($serverCurrentAssignment['receiver'] ?? null) ? $serverCurrentAssignment['receiver'] : null;
 	
-	$assignmentGiftDeadlineText = '';
-	
-	if (!empty($prefetchedEvent['gift_deadline'])) {
-	    try {
-	        $giftDeadline = new DateTime($prefetchedEvent['gift_deadline'], new DateTimeZone('UTC'));
-	        $giftDeadline->setTimezone(new DateTimeZone(date_default_timezone_get()));
-	        $assignmentGiftDeadlineText = 'Gift reveal: ' . $giftDeadline->format('M j, Y g:i A');
-	    } catch (\Throwable $th) {
-	        $assignmentGiftDeadlineText = '';
-	    }
-	}
-    
-    $assignmentCardVisible = $prefetchedEvent && Session::isLoggedIn() && $userIsParticipant && !$serverAssignmentsGenerated;
-
-
-	$assignmentSpinnerVisible = $assignmentCardVisible && $userIsParticipant && !$serverAssignmentsGenerated;
-	$assignmentDetailsVisible = $assignmentCardVisible && $userIsParticipant && $serverAssignmentsGenerated && !empty($serverAssignmentReceiver);
-	$assignmentLoginVisible = $assignmentCardVisible && !$userIsParticipant && $serverAssignmentsGenerated && !Session::isLoggedIn();
-	
-	$assignmentTitleText = 'Matching status';
-	$assignmentSubtitleText = "We'll let you know the moment names are ready.";
-	
-	if ($assignmentLoginVisible) {
-	    $assignmentTitleText = 'View your Secret Santa assignment';
-	    $assignmentSubtitleText = 'Log in to reveal who you are gifting to.';
-	} elseif ($assignmentSpinnerVisible) {
-	    $assignmentTitleText = 'Matching underway';
-	    $assignmentSubtitleText = 'We are finalizing signups and drawing names shortly.';
-	} elseif ($assignmentCardVisible && $userIsParticipant && $serverAssignmentsGenerated) {
-	    $assignmentTitleText = 'Your Secret Santa assignment';
-	    if ($assignmentDetailsVisible) {
-	        $assignmentSubtitleText = 'Keep it secret and start planning a gift!';
-	    } else {
-	        $assignmentSubtitleText = 'We could not find your assignment yet. Please check with your host if this seems incorrect.';
-	    }
-	}
-	
-	if ($prefetchedEvent && !empty($prefetchedEvent['invite_token'])) {
-	    $hostManageUrl = $managePageBaseUrl . '?invite_token=' . urlencode($prefetchedEvent['invite_token']);
-	}
+        if ($prefetchedEvent && !empty($prefetchedEvent['invite_token'])) {
+            $hostManageUrl = $managePageBaseUrl . '?invite_token=' . urlencode($prefetchedEvent['invite_token']);
+        }
 	$pageTitle = "Join Secret Santa";
 	$pageDesc = "Join a Kickback Kingdom Secret Santa event.";
 	?>
@@ -553,46 +516,26 @@
 							</div>
 						</div>
 					</div>
-					<div
-						class="card shadow-sm border-0 mb-4<?php echo $assignmentCardVisible ? '' : ' d-none'; ?>"
-						id="assignmentStatusCard"
-						data-assignments-generated="<?php echo $serverAssignmentsGenerated ? 'true' : 'false'; ?>"
-						data-user-participant="<?php echo $userIsParticipant ? 'true' : 'false'; ?>"
-						data-should-prompt-login="<?php echo ($serverAssignmentsGenerated && !Session::isLoggedIn()) ? 'true' : 'false'; ?>"
-						data-current-assignment="<?php echo $serverCurrentAssignment ? htmlspecialchars(json_encode($serverCurrentAssignment)) : ''; ?>">
-						<div class="card-body p-4 d-flex flex-column gap-3">
-							<div class="d-flex align-items-center gap-3">
-								<div class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-									<i class="fa-solid fa-hat-wizard"></i>
-								</div>
-								<div>
-									<h2 class="h5 mb-1" id="assignmentStatusTitle"><?php echo htmlspecialchars($assignmentTitleText); ?></h2>
-									<p class="mb-0 text-muted" id="assignmentStatusSubtitle"><?php echo htmlspecialchars($assignmentSubtitleText); ?></p>
-								</div>
-							</div>
-							<div id="assignmentSpinnerSection" class="d-flex align-items-center gap-3 text-muted<?php echo $assignmentSpinnerVisible ? '' : ' d-none'; ?>">
-								<div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
-								<div>
-									<div class="fw-semibold mb-1">Matching underway</div>
-									<p class="text-muted small mb-0">We're locking in the final signups and drawing names shortly.</p>
-								</div>
-							</div>
-							<div id="assignmentDetailsSection" class="<?php echo $assignmentDetailsVisible ? '' : 'd-none'; ?>">
-								<div class="border rounded-3 p-3 bg-light-subtle">
-									<div class="small text-uppercase text-muted mb-1">You're gifting to</div>
-									<div class="fs-5 fw-semibold" id="assignmentReceiverName"><?php echo htmlspecialchars($serverAssignmentReceiver['display_name'] ?? ''); ?></div>
-									<div class="text-muted" id="assignmentReceiverEmail"><?php echo htmlspecialchars($serverAssignmentReceiver['email'] ?? ''); ?></div>
-									<div class="text-muted mt-2 small" id="assignmentGiftDeadline"><?php echo htmlspecialchars($assignmentGiftDeadlineText); ?></div>
-								</div>
-							</div>
-							<div id="assignmentLoginSection" class="<?php echo $assignmentLoginVisible ? '' : 'd-none'; ?>">
-								<p class="mb-3 text-muted">Log in to reveal your Secret Santa assignment.</p>
-								<a href="<?php echo htmlspecialchars($loginRedirectUrl); ?>" class="btn btn-primary" id="assignmentLoginButton">
-								<i class="fa-solid fa-right-to-bracket me-1"></i>Log In
-								</a>
-							</div>
-						</div>
-					</div>
+                                        <div class="card shadow-sm border-0 mb-4 d-none" id="assignmentEmailCard">
+                                                <div class="card-body p-4 d-flex flex-column gap-3">
+                                                        <div class="d-flex align-items-center gap-3">
+                                                                <div class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                                                        <i class="fa-solid fa-envelope-circle-check"></i>
+                                                                </div>
+                                                                <div>
+                                                                        <h2 class="h5 mb-1" id="assignmentEmailTitle">Assignment email status</h2>
+                                                                        <p class="mb-0 text-muted" id="assignmentEmailSubtitle">We'll email your match when assignments are ready.</p>
+                                                                </div>
+                                                        </div>
+                                                        <div class="d-flex flex-column flex-md-row gap-2 align-items-start" id="assignmentEmailActions">
+                                                                <button class="btn btn-primary d-none" id="resendAssignmentEmail">
+                                                                        <i class="fa-solid fa-arrow-rotate-right me-1"></i>Resend my assignment email
+                                                                </button>
+                                                                <div class="text-muted small" id="assignmentEmailNote"></div>
+                                                        </div>
+                                                        <div class="text-muted small" id="assignmentEmailStatus"></div>
+                                                </div>
+                                        </div>
 					<!-- JOIN + EXCLUSIONS -->
 					<div class="row mb-4" id="joinRows" data-state="<?php echo htmlspecialchars($joinRowsState); ?>" style="<?php echo htmlspecialchars($joinRowsInitialStyle); ?>">
 						<div class="col-12">
@@ -930,25 +873,17 @@
 			const countGiftSeconds = document.getElementById('countGiftSeconds');
 			const countdownNote = document.getElementById('countdownNote');
 			const countNumbers = document.querySelectorAll('.count-number');
-			const assignmentStatusCard = document.getElementById('assignmentStatusCard');
-			const assignmentStatusTitle = document.getElementById('assignmentStatusTitle');
-			const assignmentStatusSubtitle = document.getElementById('assignmentStatusSubtitle');
-			const assignmentSpinnerSection = document.getElementById('assignmentSpinnerSection');
-			const assignmentDetailsSection = document.getElementById('assignmentDetailsSection');
-			const assignmentReceiverName = document.getElementById('assignmentReceiverName');
-			const assignmentReceiverEmail = document.getElementById('assignmentReceiverEmail');
-			const assignmentGiftDeadline = document.getElementById('assignmentGiftDeadline');
-			const assignmentLoginSection = document.getElementById('assignmentLoginSection');
-			const serverAssignmentDefaults = assignmentStatusCard
-			    ? {
-			          assignmentsGenerated: assignmentStatusCard.dataset.assignmentsGenerated === 'true',
-			          userIsParticipant: assignmentStatusCard.dataset.userParticipant === 'true',
-			          shouldPromptLogin: assignmentStatusCard.dataset.shouldPromptLogin === 'true',
-			          currentAssignment: assignmentStatusCard.dataset.currentAssignment
-			              ? JSON.parse(assignmentStatusCard.dataset.currentAssignment)
-			              : null
-			      }
-			    : { assignmentsGenerated: false, userIsParticipant: false, shouldPromptLogin: false, currentAssignment: null };
+                        const assignmentEmailCard = document.getElementById('assignmentEmailCard');
+                        const assignmentEmailTitle = document.getElementById('assignmentEmailTitle');
+                        const assignmentEmailSubtitle = document.getElementById('assignmentEmailSubtitle');
+                        const assignmentEmailNote = document.getElementById('assignmentEmailNote');
+                        const assignmentEmailStatus = document.getElementById('assignmentEmailStatus');
+                        const resendAssignmentEmailButton = document.getElementById('resendAssignmentEmail');
+                        const serverAssignmentDefaults = {
+                            assignmentsGenerated: <?php echo json_encode($serverAssignmentsGenerated); ?>,
+                            userIsParticipant: <?php echo json_encode($userIsParticipant); ?>,
+                            currentAssignment: <?php echo json_encode($serverCurrentAssignment); ?>
+                        };
 			let countdownInterval = null;
 			let currentEvent = null;
 			let currentExclusionGroup = { ctime: '', crand: '' };
@@ -1160,81 +1095,50 @@
 			    });
 			}
 			
-			function updateAssignmentStatus() {
-			    if (!assignmentStatusCard || !assignmentStatusTitle || !assignmentStatusSubtitle) {
-			        return;
-			    }
-			
-			    const userIsParticipant = isCurrentUserParticipant();
-			    const shouldPromptLogin = assignmentsGenerated && !isLoggedIn;
-			
-			    if (!userIsParticipant && !shouldPromptLogin) {
-			        assignmentStatusCard.classList.add('d-none');
-			        return;
-			    }
-			
-			    assignmentStatusCard.classList.remove('d-none');
-			
-			    if (!userIsParticipant && shouldPromptLogin) {
-			        assignmentStatusTitle.textContent = 'View your Secret Santa assignment';
-			        assignmentStatusSubtitle.textContent = 'Log in to reveal who you are gifting to.';
-			        if (assignmentSpinnerSection) assignmentSpinnerSection.classList.add('d-none');
-			        if (assignmentDetailsSection) assignmentDetailsSection.classList.add('d-none');
-			        if (assignmentGiftDeadline) assignmentGiftDeadline.textContent = '';
-			        if (assignmentLoginSection) assignmentLoginSection.classList.remove('d-none');
-			        return;
-			    }
-			
-			    if (assignmentLoginSection) assignmentLoginSection.classList.add('d-none');
-			
-			    if (!assignmentsGenerated) {
-			        assignmentStatusTitle.textContent = 'Matching underway';
-			        assignmentStatusSubtitle.textContent = 'We are finalizing signups and drawing names shortly.';
-			        if (assignmentSpinnerSection) assignmentSpinnerSection.classList.remove('d-none');
-			        if (assignmentDetailsSection) assignmentDetailsSection.classList.add('d-none');
-			        if (assignmentGiftDeadline) assignmentGiftDeadline.textContent = '';
-			        return;
-			    }
-			
-			    if (assignmentSpinnerSection) assignmentSpinnerSection.classList.add('d-none');
-			    assignmentStatusTitle.textContent = 'Your Secret Santa assignment';
-			
-			    if (currentAssignment && currentAssignment.receiver) {
-			        assignmentStatusSubtitle.textContent = 'Keep it secret and start planning a gift!';
-			        if (assignmentDetailsSection) assignmentDetailsSection.classList.remove('d-none');
-			        if (assignmentReceiverName) {
-			            assignmentReceiverName.textContent = currentAssignment.receiver.display_name || 'Mystery adventurer';
-			        }
-			        if (assignmentReceiverEmail) {
-			            assignmentReceiverEmail.textContent = currentAssignment.receiver.email || 'No email provided.';
-			        }
-			        if (assignmentGiftDeadline) {
-			            if (currentEvent && currentEvent.gift_deadline) {
-			                const giftDate = new Date(currentEvent.gift_deadline + 'Z');
-			                assignmentGiftDeadline.textContent = `Gift reveal: ${giftDate.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`;
-			            } else {
-			                assignmentGiftDeadline.textContent = '';
-			            }
-			        }
-			        return;
-			    }
-			
-			    assignmentStatusSubtitle.textContent = 'We could not find your assignment yet. Please check with your host if this seems incorrect.';
-			    if (assignmentDetailsSection) assignmentDetailsSection.classList.add('d-none');
-			    if (assignmentGiftDeadline) assignmentGiftDeadline.textContent = '';
-			}
-			
-			function setAssignmentStateFromEvent(event) {
-			    assignmentsGenerated = !!(event && event.assignments_generated);
-			    currentAssignment = event && event.current_assignment ? event.current_assignment : null;
-			    if (assignmentStatusCard) {
-			        assignmentStatusCard.dataset.assignmentsGenerated = assignmentsGenerated ? 'true' : 'false';
-			        assignmentStatusCard.dataset.currentAssignment = currentAssignment ? JSON.stringify(currentAssignment) : '';
-			        assignmentStatusCard.dataset.userParticipant = isCurrentUserParticipant() ? 'true' : 'false';
-			        assignmentStatusCard.dataset.shouldPromptLogin = assignmentsGenerated && !isLoggedIn ? 'true' : 'false';
-			    }
-			    updateAssignmentStatus();
-			}
+                        function updateAssignmentEmailState() {
+                            if (!assignmentEmailCard) {
+                                return;
+                            }
+
+                            const userIsParticipant = isCurrentUserParticipant();
+                            const canShow = isLoggedIn && currentEvent && userIsParticipant;
+
+                            if (!canShow) {
+                                assignmentEmailCard.classList.add('d-none');
+                                return;
+                            }
+
+                            assignmentEmailCard.classList.remove('d-none');
+                            if (assignmentEmailStatus) {
+                                assignmentEmailStatus.textContent = '';
+                            }
+
+                            const assignmentsReady = assignmentsGenerated && !!currentAssignment;
+
+                            if (!assignmentsReady) {
+                                if (assignmentEmailTitle) assignmentEmailTitle.textContent = 'Assignment email pending';
+                                if (assignmentEmailSubtitle)
+                                    assignmentEmailSubtitle.textContent = 'We will email your match as soon as assignments are finalized.';
+                                toggleSection(resendAssignmentEmailButton, false);
+                                if (assignmentEmailNote) assignmentEmailNote.textContent = 'Waiting on the host to send assignments.';
+                                return;
+                            }
+
+                            if (assignmentEmailTitle) assignmentEmailTitle.textContent = 'Assignment email sent';
+                            if (assignmentEmailSubtitle)
+                                assignmentEmailSubtitle.textContent = 'We sent your Secret Santa match to your inbox.';
+                            toggleSection(resendAssignmentEmailButton, true);
+                            if (assignmentEmailNote)
+                                assignmentEmailNote.textContent = accountEmail
+                                    ? `We'll resend to ${accountEmail}.`
+                                    : 'We will resend your assignment email.';
+                        }
+
+                        function setAssignmentStateFromEvent(event) {
+                            assignmentsGenerated = !!(event && event.assignments_generated);
+                            currentAssignment = event && event.current_assignment ? event.current_assignment : null;
+                            updateAssignmentEmailState();
+                        }
 			
 			function updateJoinVisibility(alreadyJoinedMessage = 'You are already registered for this exchange.') {
 			    if (!joinRows || !inviteStatus) return;
@@ -1262,7 +1166,7 @@
 			                : managePageBaseUrl;
 			            joinHostManageLink.href = manageUrl;
 			        }
-			        updateAssignmentStatus();
+                                updateAssignmentEmailState();
 			        return;
 			    }
 			
@@ -1274,7 +1178,7 @@
 			                window.location.href = hostSignupRedirect;
 			            }, 400);
 			        }
-			        updateAssignmentStatus();
+                                updateAssignmentEmailState();
 			        return;
 			    }
 			
@@ -1286,10 +1190,9 @@
 			        setStatus(inviteStatus, inviteStatus.textContent);
 			    }
 			
-			    updateAssignmentStatus();
+                            updateAssignmentEmailState();
 			}
-			function renderEvent(event) {
-                debugger;
+                        function renderEvent(event) {
                 if (!eventDetailsCard || !joinRows || !participantListCard) {
                     console.warn('Invite page elements missing; cannot render event UI.');
                     return;
@@ -1400,7 +1303,7 @@
 			    if (participantListCard) participantListCard.style.display = 'none';
 			    assignmentsGenerated = false;
 			    currentAssignment = null;
-			    updateAssignmentStatus();
+                            updateAssignmentEmailState();
 			    try {
 			        const resp = await getJson(`/api/v1/secret-santa/validate-invite.php?invite_token=${encodeURIComponent(token)}`);
 			        setStatus(inviteStatus, resp.message || '');
@@ -1438,11 +1341,11 @@
 			    });
 			}
 			
-			if (refreshExclusionsBtn) {
-			    const defaultRefreshContent = refreshExclusionsBtn.innerHTML;
-			    refreshExclusionsBtn.addEventListener('click', async () => {
-			        if (!currentEvent?.invite_token) return;
-			        refreshExclusionsBtn.disabled = true;
+                        if (refreshExclusionsBtn) {
+                            const defaultRefreshContent = refreshExclusionsBtn.innerHTML;
+                            refreshExclusionsBtn.addEventListener('click', async () => {
+                                if (!currentEvent?.invite_token) return;
+                                refreshExclusionsBtn.disabled = true;
 			        refreshExclusionsBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Refreshing';
 			        try {
 			            await validateInvite(currentEvent.invite_token);
@@ -1451,9 +1354,35 @@
 			        } finally {
 			            refreshExclusionsBtn.disabled = false;
 			            refreshExclusionsBtn.innerHTML = defaultRefreshContent;
-			        }
-			    });
-			}
+                                }
+                            });
+                        }
+
+                        if (resendAssignmentEmailButton) {
+                            const defaultResendContent = resendAssignmentEmailButton.innerHTML;
+                            resendAssignmentEmailButton.addEventListener('click', async () => {
+                                if (!currentEvent || !assignmentsGenerated || !currentAssignment) {
+                                    setStatus(assignmentEmailStatus, 'Assignments are not ready yet.');
+                                    return;
+                                }
+
+                                resendAssignmentEmailButton.disabled = true;
+                                resendAssignmentEmailButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Sending';
+                                try {
+                                    const resp = await postForm('/api/v1/secret-santa/resend-assignment.php', {
+                                        event_ctime: currentEvent.ctime,
+                                        event_crand: currentEvent.crand
+                                    });
+                                    setStatus(assignmentEmailStatus, resp.message || '');
+                                } catch (err) {
+                                    console.error(err);
+                                    setStatus(assignmentEmailStatus, 'Unable to resend your assignment right now.');
+                                } finally {
+                                    resendAssignmentEmailButton.disabled = false;
+                                    resendAssignmentEmailButton.innerHTML = defaultResendContent;
+                                }
+                            });
+                        }
 			
 			joinForm.addEventListener('submit', async (e) => {
 			    e.preventDefault();
