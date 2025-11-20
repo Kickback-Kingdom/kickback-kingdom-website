@@ -560,8 +560,6 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
                 </section>
 
                 <!-- EVENT DETAILS -->
@@ -800,138 +798,144 @@ $pageDesc = "Join a Kickback Kingdom Secret Santa event.";
                                         </div>
                                     </form>
                                 </div>
-                                
-                <div class="modal fade" id="exclusionModal" tabindex="-1" aria-labelledby="exclusionModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="exclusionModalLabel">Add exclusion group</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form id="exclusionBuilder" class="d-flex flex-column gap-3">
-                                    <div>
-                                        <label class="form-label mb-1" for="newExclusionName">Group name</label>
-                                        <input class="form-control" id="newExclusionName" placeholder="Roommates, partners, work team">
-                                    </div>
-                                    <input type="hidden" id="newExclusionCtime">
-                                    <input type="hidden" id="newExclusionCrand">
-                                    <div id="exclusionBuilderStatus" class="small text-muted mb-0"></div>
-                                </form>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button class="btn btn-primary" form="exclusionBuilder" type="submit">Add exclusion group</button>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="card shadow-sm border-0 mb-4" id="participantListCard" style="display:none;">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="rounded-circle bg-success-subtle text-success-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
-                                <i class="fa-solid fa-list-check"></i>
+                    <div class="modal fade" id="exclusionModal" tabindex="-1" aria-labelledby="exclusionModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="exclusionModalLabel">Add exclusion group</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="exclusionBuilder" class="d-flex flex-column gap-3">
+                                        <div>
+                                            <label class="form-label mb-1" for="newExclusionName">Group name</label>
+                                            <input class="form-control" id="newExclusionName" placeholder="Roommates, partners, work team">
+                                        </div>
+                                        <input type="hidden" id="newExclusionCtime">
+                                        <input type="hidden" id="newExclusionCrand">
+                                        <div id="exclusionBuilderStatus" class="small text-muted mb-0"></div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button class="btn btn-primary" form="exclusionBuilder" type="submit">Add exclusion group</button>
+                                </div>
                             </div>
-                            <div>
-                                <h2 class="h6 mb-0">Who's already in</h2>
-                                <small class="text-muted">Participants and their exclusion groups.</small>
-                            </div>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-0" id="participantTable">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th scope="col">Name</th>
-                                        <th scope="col">Email</th>
-                                        <th scope="col">Encouragement focus</th>
-                                        <th scope="col">Exclusion group</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="participantTableBody">
-                                    <tr class="table-light">
-                                        <td colspan="4" class="text-center text-muted">No one has signed up yet.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
                         </div>
                     </div>
-                </div>
 
-                <!-- RULES / FUN COPY -->
-                <section class="mb-4">
-                    <div class="card shadow-sm border-0">
+                    <div class="card shadow-sm border-0 mb-4" id="participantListCard" style="display:none;">
                         <div class="card-body p-4">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="rounded-circle bg-warning-subtle text-warning-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 42px; height: 42px;">
-                                    <i class="fa-solid fa-scroll"></i>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-success-subtle text-success-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                    <i class="fa-solid fa-list-check"></i>
                                 </div>
                                 <div>
-                                    <div class="small text-uppercase text-muted mb-0">House rules</div>
-                                    <h2 class="h5 mb-0">Make the exchange fair and festive</h2>
+                                    <h2 class="h6 mb-0">Who's already in</h2>
+                                    <small class="text-muted">Participants and their exclusion groups.</small>
                                 </div>
                             </div>
-                            <div class="row g-4 mt-1">
-                                <div class="col-md-4">
-                                    <h3 class="h6 mb-1">Pairing magic</h3>
-                                    <ul class="list-unstyled small text-secondary mb-0">
-                                        <li class="d-flex align-items-start mb-1">
-                                            <i class="fa-solid fa-check text-success me-2 mt-1"></i>
-                                            <span>No self-pairing—we only match you with someone new.</span>
-                                        </li>
-                                        <li class="d-flex align-items-start mb-1">
-                                            <i class="fa-solid fa-check text-success me-2 mt-1"></i>
-                                            <span>Exclusion groups keep partners, roommates, or teams apart.</span>
-                                        </li>
-                                        <li class="d-flex align-items-start">
-                                            <i class="fa-solid fa-check text-success me-2 mt-1"></i>
-                                            <span>Hosts can reroll pairings if plans change.</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <div class="col-md-4">
-                                    <h3 class="h6 mb-1">Timeline checkpoints</h3>
-                                    <ul class="list-unstyled small text-secondary mb-0">
-                                        <li class="d-flex align-items-start mb-1">
-                                            <i class="fa-solid fa-check text-success me-2 mt-1"></i>
-                                            <span>Signup closes before names are drawn.</span>
-                                        </li>
-                                        <li class="d-flex align-items-start mb-1">
-                                            <i class="fa-solid fa-check text-success me-2 mt-1"></i>
-                                            <span>Gift exchange day gets a live countdown right here.</span>
-                                        </li>
-                                        <li class="d-flex align-items-start">
-                                            <i class="fa-solid fa-check text-success me-2 mt-1"></i>
-                                            <span>Hosts can reopen signups if new friends appear.</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <div class="col-md-4">
-                                    <h3 class="h6 mb-1">Budget + vibe</h3>
-                                    <ul class="list-unstyled small text-secondary mb-0">
-                                        <li class="d-flex align-items-start mb-1">
-                                            <i class="fa-solid fa-check text-success me-2 mt-1"></i>
-                                            <span>Stick to the posted budget so everyone feels comfy.</span>
-                                        </li>
-                                        <li class="d-flex align-items-start mb-1">
-                                            <i class="fa-solid fa-check text-success me-2 mt-1"></i>
-                                            <span>Use the description for any theme, wishlist, or swap rules.</span>
-                                        </li>
-                                        <li class="d-flex align-items-start">
-                                            <i class="fa-solid fa-check text-success me-2 mt-1"></i>
-                                            <span>Have fun! The Kingdom keeps the admin tidy.</span>
-                                        </li>
-                                    </ul>
-                                </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0" id="participantTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Email</th>
+                                            <th scope="col">Encouragement focus</th>
+                                            <th scope="col">Exclusion group</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="participantTableBody">
+                                        <tr class="table-light">
+                                            <td colspan="4" class="text-center text-muted">No one has signed up yet.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
             </div>
-            <?php require("../php-components/base-page-discord.php"); ?>
+
+            <!-- RULES / FUN COPY -->
+            <section class="mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="rounded-circle bg-warning-subtle text-warning-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 42px; height: 42px;">
+                                <i class="fa-solid fa-scroll"></i>
+                            </div>
+                            <div>
+                                <div class="small text-uppercase text-muted mb-0">House rules</div>
+                                <h2 class="h5 mb-0">Make the exchange fair and festive</h2>
+                            </div>
+                        </div>
+                        <div class="row g-4 mt-1">
+                            <div class="col-md-4">
+                                <h3 class="h6 mb-1">Pairing magic</h3>
+                                <ul class="list-unstyled small text-secondary mb-0">
+                                    <li class="d-flex align-items-start mb-1">
+                                        <i class="fa-solid fa-check text-success me-2 mt-1"></i>
+                                        <span>No self-pairing—we only match you with someone new.</span>
+                                    </li>
+                                    <li class="d-flex align-items-start mb-1">
+                                        <i class="fa-solid fa-check text-success me-2 mt-1"></i>
+                                        <span>Exclusion groups keep partners, roommates, or teams apart.</span>
+                                    </li>
+                                    <li class="d-flex align-items-start">
+                                        <i class="fa-solid fa-check text-success me-2 mt-1"></i>
+                                        <span>Hosts can reroll pairings if plans change.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+                                <h3 class="h6 mb-1">Timeline checkpoints</h3>
+                                <ul class="list-unstyled small text-secondary mb-0">
+                                    <li class="d-flex align-items-start mb-1">
+                                        <i class="fa-solid fa-check text-success me-2 mt-1"></i>
+                                        <span>Signup closes before names are drawn.</span>
+                                    </li>
+                                    <li class="d-flex align-items-start mb-1">
+                                        <i class="fa-solid fa-check text-success me-2 mt-1"></i>
+                                        <span>Gift exchange day gets a live countdown right here.</span>
+                                    </li>
+                                    <li class="d-flex align-items-start">
+                                        <i class="fa-solid fa-check text-success me-2 mt-1"></i>
+                                        <span>Hosts can reopen signups if new friends appear.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+                                <h3 class="h6 mb-1">Budget + vibe</h3>
+                                <ul class="list-unstyled small text-secondary mb-0">
+                                    <li class="d-flex align-items-start mb-1">
+                                        <i class="fa-solid fa-check text-success me-2 mt-1"></i>
+                                        <span>Stick to the posted budget so everyone feels comfy.</span>
+                                    </li>
+                                    <li class="d-flex align-items-start mb-1">
+                                        <i class="fa-solid fa-check text-success me-2 mt-1"></i>
+                                        <span>Use the description for any theme, wishlist, or swap rules.</span>
+                                    </li>
+                                    <li class="d-flex align-items-start">
+                                        <i class="fa-solid fa-check text-success me-2 mt-1"></i>
+                                        <span>Have fun! The Kingdom keeps the admin tidy.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
-        <?php require("../php-components/base-page-footer.php"); ?>
-    </main>
+        <?php require("../php-components/base-page-discord.php"); ?>
+        </div>
+    </div>
+    <?php require("../php-components/base-page-footer.php"); ?>
+</main>
 
     <?php require("../php-components/base-page-javascript.php"); ?>
     <script>
