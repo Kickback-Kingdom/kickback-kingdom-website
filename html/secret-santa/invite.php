@@ -493,20 +493,6 @@
 								<div class="d-flex flex-column flex-md-row gap-3 align-items-start">
 									<div class="d-flex flex-column gap-2 flex-grow-1">
 										<p id="eventDescription" class="mb-0 text-secondary host-note-text"></p>
-										<div class="host-note-meta d-flex flex-wrap gap-3 text-muted small">
-											<div class="d-flex align-items-center gap-2">
-												<i class="fa-solid fa-lightbulb text-warning"></i>
-												<span>Check back for last-minute updates or changes.</span>
-											</div>
-											<div class="d-flex align-items-center gap-2">
-												<i class="fa-solid fa-envelope-open-text text-primary"></i>
-												<span>Invite emails include the host's contact info.</span>
-											</div>
-											<div class="d-flex align-items-center gap-2">
-												<i class="fa-solid fa-gift text-success"></i>
-												<span>Bring the vibe: budget, theme, and swap rules all live here.</span>
-											</div>
-										</div>
 									</div>
 								</div>
 							</div>
@@ -554,14 +540,6 @@
 										<div>
 											<div class="fw-semibold">You're already registered for <?php echo htmlspecialchars($prefetchedEventName); ?>.</div>
 											<small>Look out for assignment emails or ask your host if details change.</small>
-										</div>
-									</div>
-									<?php elseif ($prefetchedEvent && $userIsHost) : ?>
-									<div class="join-state-banner join-state-host" id="prefetchedJoinBanner">
-										<i class="fa-solid fa-crown fs-5"></i>
-										<div>
-											<div class="fw-semibold">You're hosting <?php echo htmlspecialchars($prefetchedEventName); ?>.</div>
-											<small>Use the manage button below to adjust signups or reroll matches.</small>
 										</div>
 									</div>
 									<?php endif; ?>
@@ -727,7 +705,7 @@
 											<tr>
 												<th scope="col">Name</th>
 												<th scope="col">Email</th>
-												<th scope="col">Encouragement focus</th>
+												<th scope="col">Interest</th>
 												<th scope="col">Exclusion group</th>
 											</tr>
 										</thead>
