@@ -674,6 +674,98 @@ class SecretSantaController
         return new Response(true, 'Assignment emails sent.', null);
     }
 
+    public static function resendAssignmentEmail(string $eventCtime, int $eventCrand): Response
+    {
+        $authResp = self::requireLogin();
+        if (!$authResp->success) {
+            return $authResp;
+        }
+        $account = $authResp->data;
+
+        $eventResp = self::fetchEventById($eventCtime, $eventCrand);
+        if (!$eventResp->success) {
+            return $eventResp;
+        }
+        $event = $eventResp->data;
+
+        $participantsResp = self::fetchParticipantsForEvent($eventCtime, $eventCrand);
+        if (!$participantsResp->success) {
+            return $participantsResp;
+        }
+
+        $participants = $participantsResp->data ?? [];
+        $participantsByKey = [];
+        $currentParticipant = null;
+        foreach ($participants as $participant) {
+            $participantsByKey[$participant['ctime'] . ':' . $participant['crand']] = $participant;
+
+            $participantAccountId = $participant['account_id'] ?? null;
+            if (!is_null($participantAccountId) && (int)$participantAccountId === (int)$account->crand) {
+                $currentParticipant = $participant;
+                continue;
+            }
+
+            if (
+                is_null($participantAccountId)
+                && !empty($participant['email'])
+                && !empty($account->email)
+                && strcasecmp($participant['email'], $account->email) === 0
+            ) {
+                $currentParticipant = $participant;
+            }
+        }
+
+        if (is_null($currentParticipant)) {
+            return new Response(false, 'You need to join the exchange before we can email your assignment.', null);
+        }
+
+        $assignmentsResp = self::fetchAssignmentsForEvent($eventCtime, $eventCrand);
+        if (!$assignmentsResp->success) {
+            return $assignmentsResp;
+        }
+
+        if (empty($assignmentsResp->data)) {
+            return new Response(false, 'Assignments have not been generated yet.', null);
+        }
+
+        $participantKey = $currentParticipant['ctime'] . ':' . $currentParticipant['crand'];
+        $receiver = null;
+
+        foreach ($assignmentsResp->data as $assignment) {
+            $giverKey = $assignment['giver_participant_ctime'] . ':' . $assignment['giver_participant_crand'];
+            if ($giverKey !== $participantKey) {
+                continue;
+            }
+
+            $receiverKey = $assignment['receiver_participant_ctime'] . ':' . $assignment['receiver_participant_crand'];
+            if (!isset($participantsByKey[$receiverKey])) {
+                continue;
+            }
+
+            $receiver = $participantsByKey[$receiverKey];
+            break;
+        }
+
+        if (is_null($receiver)) {
+            return new Response(false, 'We could not locate your assignment. Please ask your host for help.', null);
+        }
+
+        $recipientEmail = $currentParticipant['email'] ?? ($account->email ?? '');
+        if (empty($recipientEmail)) {
+            return new Response(false, 'We need an email on file to send your assignment.', null);
+        }
+
+        $recipientName = $currentParticipant['display_name'] ?? ($account->display_name ?? 'Secret Santa adventurer');
+
+        return self::sendAssignmentEmail(
+            $recipientEmail,
+            $recipientName,
+            $currentParticipant,
+            $receiver,
+            $event
+        );
+    }
+
     private static function sendAssignmentEmail(
         string $recipientEmail,
         string $recipientName,
