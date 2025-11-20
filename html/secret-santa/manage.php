@@ -342,6 +342,15 @@ $prefillInvite = $_GET['invite_token'] ?? '';
             activeEventData = evt ? { ...evt } : null;
         }
 
+        function updateAssignmentControls(assignmentsGenerated, message = '') {
+            generatePairsBtn.disabled = assignmentsGenerated;
+            if (assignmentsGenerated) {
+                assignmentStatus.textContent = message || 'Pairs already generated. Resend the existing assignments via email.';
+            } else {
+                assignmentStatus.textContent = message;
+            }
+        }
+
         function resetParticipantsTable(message) {
             participantsTableBody.innerHTML = `<tr class="table-light"><td colspan="4" class="text-center text-muted">${message}</td></tr>`;
             participantsCount.textContent = '';
@@ -477,6 +486,7 @@ $prefillInvite = $_GET['invite_token'] ?? '';
             }
 
             setEventSummary(evt);
+            updateAssignmentControls(false);
 
             try {
                 const resp = await fetch(`/api/v1/secret-santa/validate-invite.php?invite_token=${encodeURIComponent(evt.invite_token)}`, { credentials: 'include' });
@@ -490,10 +500,19 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                 const eventData = data.data || {};
                 const participants = eventData.participants || [];
                 const groups = eventData.exclusion_groups || [];
-                activeEventData = { ...evt, participant_count: participants.length, exclusion_group_count: groups.length };
+                const assignmentsGenerated = !!eventData.assignments_generated;
+                activeEventData = {
+                    ...evt,
+                    participant_count: participants.length,
+                    exclusion_group_count: groups.length,
+                    assignments_generated: assignmentsGenerated
+                };
                 renderParticipants(participants);
                 renderExclusionGroups(groups);
                 updateSelectedCounts(participants, groups);
+                if (assignmentsGenerated) {
+                    updateAssignmentControls(true);
+                }
             } catch (err) {
                 console.error(err);
                 resetParticipantsTable('Unable to load participants.');
@@ -630,12 +649,22 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                 assignmentStatus.textContent = 'Select an event first.';
                 return;
             }
+
+            if (activeEventData.assignments_generated) {
+                updateAssignmentControls(true);
+                return;
+            }
             try {
                 const resp = await postForm('/api/v1/secret-santa/generate-pairs.php', {
                     event_ctime: activeEventData.ctime,
                     event_crand: activeEventData.crand
                 });
-                assignmentStatus.textContent = resp.message || '';
+                activeEventData.assignments_generated = !!resp.success;
+                if (resp.success) {
+                    updateAssignmentControls(true, resp.message || 'Assignments generated.');
+                } else {
+                    assignmentStatus.textContent = resp.message || '';
+                }
                 if (resp.success) {
                     renderAssignments(resp.data || []);
                 }
