@@ -150,7 +150,7 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                     </div>
                 </div>
 
-                <div class="card shadow-sm mb-3">
+                <div class="card shadow-sm mb-3 requires-event">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
                             <div class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
@@ -200,7 +200,7 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                     </div>
                 </div>
 
-                <div class="card shadow-sm mb-3">
+                <div class="card shadow-sm mb-3 requires-event">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
                             <div class="rounded-circle bg-light text-dark d-inline-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
@@ -211,7 +211,7 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                                 <small class="text-muted">See everyone who joined and remove them if needed.</small>
                             </div>
                         </div>
-                        <p class="text-muted small mb-2">Need to make a quick change? Use the Kick button to remove a name before drawing pairs.</p>
+                        <p class="text-muted small mb-2">Need to make a quick change? Use the Kick button to remove a name before generating assignments.</p>
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div class="fw-semibold">Current list</div>
                             <span id="participantsCount" class="badge text-bg-light"></span>
@@ -237,7 +237,7 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                     </div>
                 </div>
 
-                <div class="card shadow-sm mb-3">
+                <div class="card shadow-sm mb-3 requires-event">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
                             <div class="rounded-circle bg-secondary-subtle text-secondary-emphasis d-inline-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
@@ -248,7 +248,7 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                                 <small class="text-muted">Keep people in the same household or team from gifting each other.</small>
                             </div>
                         </div>
-                        <p class="text-muted small">Add as many groups as you need—Kickback Kingdom will honor them when creating pairs.</p>
+                        <p class="text-muted small">Add as many groups as you need—Kickback Kingdom will honor them when generating assignments.</p>
 
                         <form id="exclusionGroupForm" class="row g-2 align-items-end">
                             <div class="col-12 col-lg-5">
@@ -279,30 +279,15 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                                 <i class="fa-solid fa-envelope-open-text"></i>
                             </div>
                             <div>
-                                <h2 class="h5 mb-0">Assignments</h2>
-                                <small class="text-muted">Generate pairs after signups close and send them out.</small>
+                                <h2 class="h5 mb-0">Assignments & notifications</h2>
+                                <small class="text-muted">Generate assignments and email participants without exposing pairs.</small>
                             </div>
                         </div>
-                        <p class="text-muted small mb-2">Preview the pairs before you email everyone. We only send messages once per click.</p>
-                        <div class="d-flex flex-wrap gap-2 mb-3">
-                            <button class="btn btn-primary" id="generatePairsBtn" type="button">Generate pairs</button>
-                            <button class="btn btn-outline-primary" id="emailAssignmentsBtn" type="button">Email assignments</button>
+                        <p class="text-muted small mb-2">We handle pairing behind the scenes. Use the buttons below to create assignments and send the emails when you're ready.</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-primary" id="generatePairsBtn" type="button">Generate assignments</button>
+                            <button class="btn btn-outline-primary" id="emailAssignmentsBtn" type="button">Email participants</button>
                             <div id="assignmentStatus" class="small text-muted align-self-center"></div>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover align-middle" id="assignmentTable">
-                                <thead>
-                                    <tr>
-                                        <th>Giver</th>
-                                        <th>Receiver</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="table-light">
-                                        <td colspan="2" class="text-center text-muted">Assignments will appear here after generation.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
                         </div>
                     </div>
                 </div>
@@ -335,17 +320,28 @@ $prefillInvite = $_GET['invite_token'] ?? '';
         const exclusionStatus = document.getElementById('exclusionStatus');
         const generatePairsBtn = document.getElementById('generatePairsBtn');
         const emailAssignmentsBtn = document.getElementById('emailAssignmentsBtn');
-        const assignmentTable = document.getElementById('assignmentTable').querySelector('tbody');
         const assignmentStatus = document.getElementById('assignmentStatus');
+        const eventSections = document.querySelectorAll('.requires-event');
+
+        function toggleEventSections(enabled) {
+            eventSections.forEach((section) => section.classList.toggle('d-none', !enabled));
+            generatePairsBtn.disabled = !enabled;
+            emailAssignmentsBtn.disabled = !enabled;
+        }
+
+        toggleEventSections(false);
 
         function setActiveEvent(evt) {
             activeEventData = evt ? { ...evt } : null;
+            if (!activeEventData) {
+                toggleEventSections(false);
+            }
         }
 
         function updateAssignmentControls(assignmentsGenerated, message = '') {
             generatePairsBtn.disabled = assignmentsGenerated;
             if (assignmentsGenerated) {
-                assignmentStatus.textContent = message || 'Pairs already generated. Resend the existing assignments via email.';
+                assignmentStatus.textContent = message || 'Assignments already generated. Resend the existing notifications via email.';
             } else {
                 assignmentStatus.textContent = message;
             }
@@ -358,6 +354,20 @@ $prefillInvite = $_GET['invite_token'] ?? '';
         }
 
         function setEventSummary(evt) {
+            if (!evt) {
+                selectedEventName.textContent = 'No event selected yet.';
+                selectedEventDescription.textContent = '';
+                selectedSignupDeadline.textContent = '—';
+                selectedGiftDeadline.textContent = '—';
+                selectedInviteToken.textContent = '—';
+                selectedEventCounts.textContent = '—';
+                resetParticipantsTable('Select an event to view participants.');
+                exclusionList.textContent = 'Select an event to view exclusion groups.';
+                exclusionCount.textContent = '';
+                assignmentStatus.textContent = '';
+                return;
+            }
+
             selectedEventName.textContent = evt.name || 'No event selected yet.';
             selectedEventDescription.textContent = evt.description || '';
             selectedSignupDeadline.textContent = evt.signup_deadline || '—';
@@ -367,7 +377,10 @@ $prefillInvite = $_GET['invite_token'] ?? '';
             resetParticipantsTable('Loading participants...');
             exclusionList.textContent = 'Loading exclusion groups...';
             exclusionCount.textContent = '';
+            toggleEventSections(true);
         }
+
+        setEventSummary(null);
 
         function updateSelectedCounts(participants, groups) {
             selectedEventCounts.textContent = `${participants.length} participants • ${groups.length} exclusion groups`;
@@ -525,6 +538,8 @@ $prefillInvite = $_GET['invite_token'] ?? '';
 
             if (!events || !events.length) {
                 ownerEventsStatus.textContent = 'No Secret Santa events yet. Create one to get started!';
+                setActiveEvent(null);
+                setEventSummary(null);
                 return;
             }
 
@@ -560,7 +575,7 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                                 </div>
                             </div>
                         </div>
-                        <div class="text-muted small">Participants, exclusions, and assignments will sync after you select this event.</div>
+                        <div class="text-muted small">Participants and exclusions will sync after you select this event.</div>
                     </div>
                 `;
 
@@ -605,21 +620,6 @@ $prefillInvite = $_GET['invite_token'] ?? '';
             return resp.json();
         }
 
-        function renderAssignments(pairs) {
-            assignmentTable.innerHTML = '';
-            if (!pairs || !pairs.length) {
-                assignmentTable.innerHTML = '<tr class="table-light"><td colspan="2" class="text-center text-muted">No assignments returned yet.</td></tr>';
-                return;
-            }
-            pairs.forEach((pair) => {
-                const row = document.createElement('tr');
-                const giver = `${pair.giver.display_name} (${pair.giver.email})`;
-                const receiver = `${pair.receiver.display_name} (${pair.receiver.email})`;
-                row.innerHTML = `<td>${giver}</td><td>${receiver}</td>`;
-                assignmentTable.appendChild(row);
-            });
-        }
-
         exclusionForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             exclusionStatus.textContent = 'Saving group...';
@@ -644,7 +644,7 @@ $prefillInvite = $_GET['invite_token'] ?? '';
         });
 
         generatePairsBtn.addEventListener('click', async () => {
-            assignmentStatus.textContent = 'Generating pairs...';
+            assignmentStatus.textContent = 'Generating assignments...';
             if (!activeEventData) {
                 assignmentStatus.textContent = 'Select an event first.';
                 return;
@@ -665,12 +665,9 @@ $prefillInvite = $_GET['invite_token'] ?? '';
                 } else {
                     assignmentStatus.textContent = resp.message || '';
                 }
-                if (resp.success) {
-                    renderAssignments(resp.data || []);
-                }
             } catch (err) {
                 console.error(err);
-                assignmentStatus.textContent = 'Failed to generate pairs.';
+                assignmentStatus.textContent = 'Failed to generate assignments.';
             }
         });
 
