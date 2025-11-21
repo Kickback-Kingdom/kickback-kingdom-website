@@ -268,9 +268,7 @@
 			gap: 1rem;
 			}
 			#joinRows[data-state="participant"] #joinFormSection,
-			#joinRows[data-state="participant"] #joinLoginPrompt,
-			#joinRows[data-state="host"] #joinFormSection,
-			#joinRows[data-state="host"] #joinLoginPrompt {
+			#joinRows[data-state="participant"] #joinLoginPrompt {
 			display: none !important;
 			}
 			#joinRows[data-state="host"] #joinHostPrompt {
