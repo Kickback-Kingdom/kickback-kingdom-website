@@ -149,59 +149,60 @@ class SecretSantaController
             $eventResp->data['exclusion_groups'] = [];
         }
 
-        $participantsResp = self::fetchParticipantsForEvent($eventResp->data['ctime'], (int)$eventResp->data['crand']);
-        if ($participantsResp->success) {
-            $groupsByKey = [];
-            foreach ($eventResp->data['exclusion_groups'] as $group) {
-                $groupsByKey[$group['ctime'] . ':' . $group['crand']] = $group['group_name'];
-            }
+        $eventResp->data['participants'] = [];
+        $currentParticipant = null;
 
-            $currentParticipant = null;
-            $participants = array_map(function ($participant) use ($groupsByKey) {
-                $groupKey = $participant['exclusion_group_ctime'] . ':' . $participant['exclusion_group_crand'];
-                $groupName = ($participant['exclusion_group_ctime'] && $participant['exclusion_group_crand'])
-                    ? ($groupsByKey[$groupKey] ?? null)
-                    : null;
+        if (Session::IsLoggedIn()) {
+            $participantsResp = self::fetchParticipantsForEvent($eventResp->data['ctime'], (int)$eventResp->data['crand']);
+            if ($participantsResp->success) {
+                $groupsByKey = [];
+                foreach ($eventResp->data['exclusion_groups'] as $group) {
+                    $groupsByKey[$group['ctime'] . ':' . $group['crand']] = $group['group_name'];
+                }
 
-                return [
-                    'ctime' => $participant['ctime'],
-                    'crand' => $participant['crand'],
-                    'display_name' => $participant['display_name'],
-                    'email' => $participant['email'],
-                    'interest' => $participant['interest'] ?? null,
-                    'exclusion_group_ctime' => $participant['exclusion_group_ctime'],
-                    'exclusion_group_crand' => $participant['exclusion_group_crand'],
-                    'exclusion_group_name' => $groupName,
-                    'account_id' => $participant['account_id'] ?? null
-                ];
-            }, $participantsResp->data);
+                $currentParticipant = null;
+                $participants = array_map(function ($participant) use ($groupsByKey) {
+                    $groupKey = $participant['exclusion_group_ctime'] . ':' . $participant['exclusion_group_crand'];
+                    $groupName = ($participant['exclusion_group_ctime'] && $participant['exclusion_group_crand'])
+                        ? ($groupsByKey[$groupKey] ?? null)
+                        : null;
 
-            if (!is_null($currentAccount)) {
-                foreach ($participants as $participant) {
-                    $participantAccountId = $participant['account_id'] ?? null;
-                    if (!is_null($participantAccountId) && (int)$participantAccountId === (int)$currentAccount->crand) {
-                        $currentParticipant = $participant;
-                        break;
-                    }
+                    return [
+                        'ctime' => $participant['ctime'],
+                        'crand' => $participant['crand'],
+                        'display_name' => $participant['display_name'],
+                        'email' => $participant['email'],
+                        'interest' => $participant['interest'] ?? null,
+                        'exclusion_group_ctime' => $participant['exclusion_group_ctime'],
+                        'exclusion_group_crand' => $participant['exclusion_group_crand'],
+                        'exclusion_group_name' => $groupName,
+                        'account_id' => $participant['account_id'] ?? null
+                    ];
+                }, $participantsResp->data);
 
-                    if (
-                        is_null($participantAccountId)
-                        && !empty($participant['email'])
-                        && !empty($currentAccount->email)
-                        && strcasecmp($participant['email'], $currentAccount->email) === 0
-                    ) {
-                        $currentParticipant = $participant;
-                        break;
+                if (!is_null($currentAccount)) {
+                    foreach ($participants as $participant) {
+                        $participantAccountId = $participant['account_id'] ?? null;
+                        if (!is_null($participantAccountId) && (int)$participantAccountId === (int)$currentAccount->crand) {
+                            $currentParticipant = $participant;
+                            break;
+                        }
+
+                        if (
+                            is_null($participantAccountId)
+                            && !empty($participant['email'])
+                            && !empty($currentAccount->email)
+                            && strcasecmp($participant['email'], $currentAccount->email) === 0
+                        ) {
+                            $currentParticipant = $participant;
+                            break;
+                        }
                     }
                 }
+
+                $eventResp->data['participants'] = $participants;
             }
-
-            $eventResp->data['participants'] = $participants;
-        } else {
-            $eventResp->data['participants'] = [];
-            $currentParticipant = null;
         }
-
         $eventResp->data['assignments_generated'] = false;
         $eventResp->data['current_assignment'] = null;
 
@@ -428,10 +429,7 @@ class SecretSantaController
         }
         $event = $eventResp->data;
 
-        $ownerCheck = self::eventOwnerRequired($event, $account->crand);
-        if (!is_null($ownerCheck)) {
-            return $ownerCheck;
-        }
+
 
         $conn = self::getConnection();
 

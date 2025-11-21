@@ -589,15 +589,10 @@
 										<form id="joinForm" class="d-flex flex-column gap-4">
 											<div class="d-flex align-items-start gap-3 flex-wrap pb-2 border-bottom">
 												<div class="join-pill"><i class="fa-solid fa-user"></i> You, as the giver</div>
-												<div class="d-flex flex-column">
-													<div class="fw-semibold">Your profile is ready to join</div>
-													<div class="small text-muted">We pre-fill your info so your host knows who joined.</div>
-												</div>
-												<span class="badge bg-light text-secondary border ms-auto">Auto-filled</span>
 											</div>
 											<div class="row gy-3">
 												<div class="col-md-6">
-													<div class="small text-muted">Display name</div>
+													<div class="small text-muted">Full Name</div>
 													<div class="fw-semibold fs-6" id="participantDisplayNameText">
 														<?php echo htmlspecialchars($defaultDisplayName) ?: 'Secret Santa adventurer'; ?>
 													</div>
@@ -608,31 +603,21 @@
 														<?php echo htmlspecialchars($defaultEmail) ?: 'Update your account email to join'; ?>
 													</div>
 												</div>
-												<div class="col-12">
-													<div class="join-meta">
-														<div class="small text-muted">Why we need this</div>
-														<ul class="list-unstyled small text-secondary mb-0 d-flex flex-column gap-1">
-															<li class="d-flex gap-2"><i class="fa-solid fa-envelope text-primary"></i><span>We email your confirmation and assignment.</span></li>
-															<li class="d-flex gap-2"><i class="fa-solid fa-pen-to-square text-success"></i><span>Your host can recognize who joined.</span></li>
-														</ul>
-													</div>
-												</div>
 											</div>
 											<div class="d-flex align-items-center gap-3 flex-wrap">
 												<div class="rounded-circle bg-secondary-subtle text-secondary-emphasis d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
 													<i class="fa-solid fa-gift"></i>
 												</div>
 												<div>
-													<div class="fw-semibold mb-1">How should your Santa encourage you?</div>
-													<small class="text-muted">Share one thing you want to learn or try so your Santa can choose a thoughtful push.</small>
+													<div class="fw-semibold mb-1">What should your Santa know about you?</div>
+													<small class="text-muted">Share one thing you want to learn, try or enjoy doing so your Santa can choose a thoughtful gift.</small>
 												</div>
-												<div class="ms-auto join-hint"><i class="fa-solid fa-stars"></i> Still a surprise</div>
 											</div>
 											<input type="hidden" id="participantExclusionCtime">
 											<input type="hidden" id="participantExclusionCrand">
 											<div class="d-flex flex-column gap-2">
-												<label class="form-label mb-1" for="interest">Learning or trying next</label>
-												<textarea class="form-control shadow-sm" id="interest" rows="3" placeholder="Example: Learning to draw, wants to cook more, wants to relax more"></textarea>
+												<label class="form-label mb-1" for="interest">I would like my Santa to know that ...</label>
+												<textarea class="form-control shadow-sm" id="interest" rows="3" placeholder="Example: I am Learning to draw, I would like to cook more, I need to relax more"></textarea>
 												<div class="form-text">Keep it short. Your Santa will pick a gift that nudges you toward this goal.</div>
 											</div>
 											<div class="d-flex flex-column gap-2">
@@ -1020,6 +1005,7 @@
 			}
 			
 			function renderParticipants() {
+                <?php echo (!Session::IsLoggedIn() ? "return;" : ""); ?> 
 			    participantTableBody.innerHTML = '';
 			
 			    if (!participants.length) {
