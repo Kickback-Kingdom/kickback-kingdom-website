@@ -4,7 +4,7 @@ use Kickback\Backend\Controllers\TreasureHuntController;
 use Kickback\Common\Version;
 $pageVisitId = AnalyticController::getCurrentPage();
 
-
+$pageImage = "https://kickback-kingdom.com/assets/media/context/loading.gif";
 if (!isset($pageTitle))
 {
     $pageTitle = "Kickback Kingdom";
