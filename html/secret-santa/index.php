@@ -48,13 +48,13 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                             linear-gradient(135deg, #0d6efd 0%, #842029 55%, #0b1729 100%);
                     ">
                     <div class="row g-0 align-items-center text-light p-4 p-md-5">
-                        <div class="col-md-7">
+                        <div class="col">
                             <div class="d-inline-flex align-items-center mb-2 small text-light text-opacity-75">
                                 <span class="badge rounded-pill bg-light text-dark me-2">
                                     <i class="fa-solid fa-snowflake me-1"></i> Holiday event toolkit
                                 </span>
                                 <span class="text-light text-opacity-75">
-                                    For families, guilds, and teams
+                                    For families, friends, and teams
                                 </span>
                             </div>
                             <h1 class="display-5 fw-bold mb-3">
@@ -72,50 +72,9 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                                     <i class="fa-solid fa-circle-info me-1"></i> See how it works
                                 </a>
                             </div>
-                            <p class="small mb-0 text-light text-opacity-75">
-                                Already have an event? Paste your invite link below to jump straight in—no codes needed.
-                            </p>
                         </div>
 
-                        <div class="col-md-5 text-center text-md-end mt-4 mt-md-0">
-                            <div class="card bg-white bg-opacity-90 border-0 shadow-lg d-inline-block text-start w-100"
-                                 style="max-width: 360px;">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <span
-                                            class="rounded-circle bg-danger-subtle text-danger-emphasis d-inline-flex align-items-center justify-content-center me-2"
-                                            style="width: 44px; height: 44px;">
-                                            <i class="fa-solid fa-gifts"></i>
-                                        </span>
-                                        <div>
-                                            <h2 class="h5 mb-0">Join your event</h2>
-                                            <small class="text-muted">
-                                                Paste the full invite link (URL) your host shared.
-                                            </small>
-                                        </div>
-                                    </div>
-                                    <form class="row g-2" action="<?php echo Version::urlBetaPrefix(); ?>/secret-santa/invite.php" method="get">
-                                        <div class="col-12">
-                                            <label for="heroInviteToken" class="form-label small mb-1">Invite link (URL)</label>
-                                            <input
-                                                class="form-control"
-                                                id="heroInviteToken"
-                                                name="invite_token"
-                                                placeholder="Paste the full event invite link from your host"
-                                                required>
-                                        </div>
-                                        <div class="col-12">
-                                            <button class="btn btn-danger w-100" type="submit">
-                                                Join event
-                                            </button>
-                                        </div>
-                                    </form>
-                                    <p class="small text-muted mt-2 mb-0">
-                                        Links stay private to your group and are validated before you join.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                        
                     </div>
                 </section>
 
@@ -142,7 +101,7 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                     <!-- Steps + Hero Imagery -->
                     <div class="row g-4 align-items-stretch mb-4">
                         <!-- Steps timeline -->
-                        <div class="col-12 col-lg-7">
+                        <div class="col-12">
                             <div class="card shadow-sm border-0 h-100">
                                 <div class="card-body p-4">
                                     <h3 class="h5 mb-3">Step-by-step flow</h3>
@@ -178,25 +137,8 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                                             <div>
                                                 <h4 class="h6 mb-1">Everyone joins with the invite link</h4>
                                                 <p class="mb-1 text-secondary small">
-                                                    Participants paste the invite link you share, fill in their name and email, and can flag
-                                                    anyone they should not be paired with (for example, partners or housemates).
+                                                    Participants use the invite link you share, fill in their interests and exclusion group (for example, partners or housemates).
                                                 </p>
-                                                <form class="row g-2 mt-2" action="<?php echo Version::urlBetaPrefix(); ?>/secret-santa/invite.php" method="get">
-                                                    <div class="col-sm-8">
-                                                        <label for="timelineInviteToken" class="form-label small mb-1">Invite link (URL)</label>
-                                                        <input
-                                                            class="form-control form-control-sm"
-                                                            id="timelineInviteToken"
-                                                            name="invite_token"
-                                                            placeholder="Paste the full event invite link from your host"
-                                                            required>
-                                                    </div>
-                                                    <div class="col-sm-4 d-flex align-items-end">
-                                                        <button class="btn btn-success btn-sm w-100" type="submit">
-                                                            Join event
-                                                        </button>
-                                                    </div>
-                                                </form>
                                             </div>
                                         </div>
 
@@ -230,8 +172,8 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                                             <div>
                                                 <h4 class="h6 mb-1">Assignments are revealed and emailed</h4>
                                                 <p class="mb-1 text-secondary small">
-                                                    The host previews the giver/receiver list, then sends assignment emails to all
-                                                    participants directly from the Kingdom. Everyone gets their person, and the gift
+                                                    The host reviews participants list, then sends randomly paired and private assignment emails to all
+                                                    participants directly from Kickback Kingdom. Everyone gets their person, and the gift
                                                     exchange begins.
                                                 </p>
                                             <a class="small" href="<?php echo Version::urlBetaPrefix(); ?>/secret-santa/manage.php">
@@ -246,66 +188,7 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                             </div>
                         </div>
 
-                        <!-- Imagery column -->
-                        <div class="col-12 col-lg-5">
-                            <div class="d-flex flex-column gap-3 h-100">
-                                <!-- Host illustration card -->
-                                <div class="card shadow-sm border-0 h-100">
-                                    <div class="card-body p-3">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <span
-                                                class="rounded-circle bg-danger-subtle text-danger-emphasis d-inline-flex align-items-center justify-content-center me-2"
-                                                style="width: 40px; height: 40px;">
-                                                <i class="fa-solid fa-hat-wizard"></i>
-                                            </span>
-                                            <div>
-                                                <div class="small text-uppercase text-muted mb-0">Host view</div>
-                                                <h3 class="h6 mb-0">Event overview and signups</h3>
-                                            </div>
-                                        </div>
-                                        <div class="ratio ratio-16x9 mb-2">
-                                            <!-- Replace src with your actual host dashboard image/screenshot -->
-                                            <img
-                                                src="/media/secret-santa/host-dashboard-placeholder.png"
-                                                class="img-fluid rounded-3 border"
-                                                alt="Host dashboard overview for Kickback Kingdom Secret Santa">
-                                        </div>
-                                        <p class="small text-secondary mb-0">
-                                            Hosts can see who has joined, pending invites, and whether the event is ready
-                                            to lock and draw names.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <!-- Participant illustration card -->
-                                <div class="card shadow-sm border-0 h-100">
-                                    <div class="card-body p-3">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <span
-                                                class="rounded-circle bg-success-subtle text-success-emphasis d-inline-flex align-items-center justify-content-center me-2"
-                                                style="width: 40px; height: 40px;">
-                                                <i class="fa-solid fa-gift"></i>
-                                            </span>
-                                            <div>
-                                                <div class="small text-uppercase text-muted mb-0">Participant view</div>
-                                                <h3 class="h6 mb-0">Join and see your assignment</h3>
-                                            </div>
-                                        </div>
-                                        <div class="ratio ratio-16x9 mb-2">
-                                            <!-- Replace src with your actual participant screen image/screenshot -->
-                                            <img
-                                                src="/media/secret-santa/participant-signup-placeholder.png"
-                                                class="img-fluid rounded-3 border"
-                                                alt="Participant signup and assignment screen for Kickback Kingdom Secret Santa">
-                                        </div>
-                                        <p class="small text-secondary mb-0">
-                                            Participants have a simple signup flow and receive a clear assignment email
-                                            when pairings are finalized.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
                     </div>
 
                     <!-- Rules -->
@@ -383,80 +266,7 @@ $pageDesc = "Host and join Kickback Kingdom Secret Santa events.";
                 </section>
 
 
-                <!-- SMOOTH SIGNUPS / CHECKLIST -->
-                <section class="mb-5">
-                    <div class="row g-4 align-items-stretch">
-                        <!-- Smooth signups card -->
-                        <div class="col-lg-6">
-                            <div class="card shadow-sm border-0 h-100">
-                                <div class="card-body p-4">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div
-                                            class="rounded-circle bg-success-subtle text-success-emphasis d-inline-flex align-items-center justify-content-center me-2"
-                                            style="width: 40px; height: 40px;">
-                                            <i class="fa-solid fa-seedling"></i>
-                                        </div>
-                                        <h2 class="h5 mb-0">Smooth signups for everyone</h2>
-                                    </div>
-                                    <p class="text-secondary mb-3">
-                                        Hosts get clear visibility while participants breeze through signups.
-                                        Every step is labeled so nobody is left guessing.
-                                    </p>
-                                    <ul class="list-unstyled mb-0 small text-secondary">
-                                        <li class="d-flex align-items-start mb-2">
-                                            <i class="fa-solid fa-check text-success me-2 mt-1"></i>
-                                            <span>Deadline reminders for hosts and participants.</span>
-                                        </li>
-                                        <li class="d-flex align-items-start mb-2">
-                                            <i class="fa-solid fa-check text-success me-2 mt-1"></i>
-                                            <span>Exclusion groups to avoid awkward pairings.</span>
-                                        </li>
-                                        <li class="d-flex align-items-start mb-2">
-                                            <i class="fa-solid fa-check text-success me-2 mt-1"></i>
-                                            <span>Invite links that are easy to share and validate.</span>
-                                        </li>
-                                        <li class="d-flex align-items-start mb-0">
-                                            <i class="fa-solid fa-check text-success me-2 mt-1"></i>
-                                            <span>All inside Kickback Kingdom, no external tools required.</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Host checklist card -->
-                        <div class="col-lg-6">
-                            <div class="card shadow-sm border-0 h-100">
-                                <div class="card-body p-4">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div
-                                            class="rounded-circle bg-primary-subtle text-primary-emphasis d-inline-flex align-items-center justify-content-center me-2"
-                                            style="width: 40px; height: 40px;">
-                                            <i class="fa-solid fa-timeline"></i>
-                                        </div>
-                                        <div>
-                                            <h3 class="h5 mb-0">Host checklist</h3>
-                                            <small class="text-muted">Three quick steps to launch.</small>
-                                        </div>
-                                    </div>
-                                    <ol class="mb-0 ps-3 small text-secondary">
-                                        <li class="mb-2">
-                                            <strong>Create</strong> an event with your date, budget, and theme.
-                                        </li>
-                                        <li class="mb-2">
-                                            <strong>Share</strong> the invite link with your crew
-                                            or send invitations directly from the dashboard.
-                                        </li>
-                                        <li class="mb-0">
-                                            <strong>Reveal</strong> pairings when signups close and email
-                                            assignments instantly.
-                                        </li>
-                                    </ol>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                
 
 
                 <!-- FAQ -->
